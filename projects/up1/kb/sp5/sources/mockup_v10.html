@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>uPlanner One — Curriculum Design (demo agente · v10 · resumen superior + malla a ancho completo)</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<style>
+/* ===== Tokens REALES de uP1 (theme-tokens.css) — light-dark() + color-scheme ===== */
+:root{
+  color-scheme: light;  /* claro */
+
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f0f0f0,#212121);
+  --up1-gray-100: light-dark(#e1e1e1,#2c2c2c);
+  --up1-gray-200: light-dark(#d3d3d3,#3a3a3a);
+  --up1-gray-300: light-dark(#c5c5c5,#525252);
+  --up1-gray-400: light-dark(#b6b6b6,#737373);
+  --up1-gray-500: light-dark(#a9a9a9,#a3a3a3);
+  --up1-gray-600: light-dark(#9b9b9b,#d4d4d4);
+  --up1-gray-700: light-dark(#525252,#e5e5e5);
+  --up1-gray-900: light-dark(#262626,#fafafa);
+
+  --up1-color-primary-50: light-dark(#E7F2F3, rgba(45,212,191,.1));
+  --up1-color-primary-100: light-dark(#B6D9DC, rgba(45,212,191,.15));
+  --up1-color-primary-500: light-dark(#0a808c,#2dd4bf);
+  --up1-color-primary-600: light-dark(#12717b,#14b8a6);
+  --up1-color-primary: var(--up1-color-primary-500);
+  --up1-color-primary-hover: var(--up1-color-primary-600);
+  --up1-color-primary-light: var(--up1-color-primary-50);
+
+  --up1-color-success-500: light-dark(#22946e,#22c55e);
+  --up1-color-danger-500: light-dark(#9c2121,#ef4444);
+  --up1-color-danger-50: light-dark(#fef2f2, rgba(239,68,68,.1));
+  --up1-color-warning-500: light-dark(#f59e0b,#f59e0b);
+  --up1-color-warning-50: light-dark(#fffbeb, rgba(245,158,11,.1));
+  --up1-color-warning-700: light-dark(#b45309,#fbbf24);
+  --up1-color-info-500: light-dark(#21498a,#38bdf8);
+
+  --up1-text-primary: var(--up1-gray-900);
+  --up1-text-secondary: var(--up1-gray-700);
+  --up1-text-muted: var(--up1-gray-600);
+  --up1-text-inverse: light-dark(#ffffff,#1a1a1a);
+  --up1-bg-body: var(--up1-gray-50);
+  --up1-bg-primary: var(--up1-gray-0);
+  --up1-bg-secondary: var(--up1-gray-100);
+  --up1-bg-tertiary: var(--up1-gray-200);
+  --up1-border-color: var(--up1-gray-200);
+  --up1-shadow-sm: 0 2px 4px light-dark(rgba(0,0,0,.075),rgba(0,0,0,.4));
+  --up1-shadow-lg: 0 8px 16px light-dark(rgba(0,0,0,.12),rgba(0,0,0,.6));
+  --up1-radius: .375rem; --up1-radius-md:.5rem; --up1-radius-lg:.75rem;
+
+  /* RecordList */
+  --up1-recordlist-cell-bg: light-dark(var(--up1-bg-primary),#0f172a);
+  --up1-recordlist-container-bg: light-dark(var(--up1-bg-primary),#0f172a);
+  --up1-recordlist-header-bg: var(--up1-bg-secondary);
+  --up1-recordlist-header-text: var(--up1-text-secondary);
+  --up1-recordlist-header-sorted-bg: light-dark(var(--up1-color-primary-100), rgba(45,212,191,.15));
+  --up1-recordlist-row-hover-bg: var(--up1-bg-secondary);
+
+  --bs-primary: var(--up1-color-primary);
+  --bs-primary-rgb: 10,128,140;
+  --bs-body-font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+html[data-bs-theme="dark"]{ --bs-primary-rgb:45,212,191; }
+
+body{ font-family:var(--bs-body-font-family); background:var(--up1-bg-body); color:var(--up1-text-primary); font-size:.875rem; }
+[v-cloak]{ display:none; }
+
+.btn{ font-weight:500; transition:all .15s ease-in-out; }
+.btn-primary{ --bs-btn-bg:var(--up1-color-primary); --bs-btn-border-color:var(--up1-color-primary);
+  --bs-btn-hover-bg:var(--up1-color-primary-hover); --bs-btn-hover-border-color:var(--up1-color-primary-hover);
+  --bs-btn-color:var(--up1-text-inverse); --bs-btn-hover-color:var(--up1-text-inverse); }
+.btn-icon-minimal{ color:var(--up1-text-secondary); background:transparent; border:1px solid var(--up1-border-color); }
+.btn-icon-minimal:hover{ color:var(--up1-text-primary); background:var(--up1-bg-secondary); }
+.btn-icon-minimal.active{ color:var(--up1-text-inverse); background:var(--up1-color-primary); border-color:var(--up1-color-primary); }
+
+.badge.bg-secondary{ background-color:var(--up1-text-primary)!important; color:var(--up1-bg-primary); }
+.badge.bg-info{ background-color:var(--up1-color-info-500)!important; color:#fff; }
+.badge.bg-success{ background-color:var(--up1-color-success-500)!important; color:#fff; }
+.badge.bg-danger{ background-color:var(--up1-color-danger-500)!important; color:#fff; }
+.badge.bg-warning{ background-color:var(--up1-color-warning-500)!important; color:#1a1a1a; }
+.badge.bg-dark{ background-color:var(--up1-text-primary)!important; color:var(--up1-bg-primary); }
+
+.app-rail{ width:88px; background:var(--up1-bg-primary); border-right:1px solid var(--up1-border-color); }
+.rail-item{ border:1px solid transparent; border-radius:var(--up1-radius-md); color:var(--up1-text-muted); }
+.rail-item:hover{ background:var(--up1-bg-secondary); }
+.rail-item.active{ background:var(--up1-color-primary-50); border-color:var(--up1-color-primary-100); color:var(--up1-color-primary); }
+.app-header{ height:56px; background:var(--up1-bg-primary); border-bottom:1px solid var(--up1-border-color); }
+.app-tabs{ height:44px; background:var(--up1-bg-primary); border-bottom:1px solid var(--up1-border-color); overflow-x:auto; }
+.obj-tab2{ height:100%; background:none; border:0; outline:none; padding:0; color:var(--up1-text-muted); font-weight:500; font-size:.9rem; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0; }
+.obj-tab2:hover{ color:var(--up1-text-primary); }
+.obj-tab2.active{ color:var(--up1-color-primary); font-weight:600; border-bottom-color:var(--up1-color-primary); }
+.content-area{ background:var(--up1-bg-body); }
+
+/* RecordList */
+.record-list-title{ font-size:1.875rem; font-weight:700; color:var(--up1-text-primary); }
+.rl-info{ color:var(--up1-text-muted); font-size:.875rem; }
+.rl-search{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); color:var(--up1-text-primary); border-radius:var(--up1-radius); }
+.rl-search::placeholder{ color:var(--up1-text-muted); }
+.rl-card{ background:var(--up1-recordlist-container-bg); border:1px solid var(--up1-border-color); border-radius:.5rem; overflow-x:auto; }
+.rl-table{ width:100%; border-collapse:collapse; }
+.rl-table thead th{ background:var(--up1-recordlist-header-bg); color:var(--up1-recordlist-header-text); font-weight:700; font-size:.8125rem; padding:.85rem 1rem; border-bottom:1px solid var(--up1-border-color); white-space:nowrap; }
+.rl-table thead th.sorted{ background:var(--up1-recordlist-header-sorted-bg); color:var(--up1-color-primary); }
+.rl-table tbody td{ padding:.85rem 1rem; font-size:.875rem; color:var(--up1-text-primary); background:var(--up1-recordlist-cell-bg); border-bottom:1px solid var(--up1-border-color); }
+.rl-table tbody tr:hover td{ background:var(--up1-recordlist-row-hover-bg); }
+.rl-table tbody tr{ cursor:pointer; }
+.rl-link{ color:var(--up1-color-primary); text-decoration:none; font-weight:500; }
+.rl-link:hover{ text-decoration:underline; }
+.rl-chk{ width:40px; }
+.rl-caret{ font-size:.6rem; opacity:.6; margin-left:.25rem; }
+.rl-pagebtn{ width:34px; height:34px; border:1px solid var(--up1-border-color); background:var(--up1-bg-primary); color:var(--up1-text-secondary); border-radius:var(--up1-radius); display:inline-flex; align-items:center; justify-content:center; }
+.rl-pagebtn.active{ border-color:var(--up1-color-primary); color:var(--up1-color-primary); }
+.rl-perpage{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); color:var(--up1-text-primary); border-radius:var(--up1-radius); }
+
+/* Detail */
+.lo-tab{ padding:.6rem 1rem; border:none; background:none; border-bottom:2px solid transparent; color:var(--up1-text-secondary); font-weight:500; white-space:nowrap; font-size:.875rem; }
+.lo-tab:hover{ color:var(--up1-text-primary); }
+.lo-tab.is-active{ border-bottom-color:var(--up1-color-primary); color:var(--up1-color-primary); font-weight:600; }
+/* ── Campos: look fiel a @vueform/vueform (tema bootstrap) del layout uP1 ── */
+.field-label{ font-size:.875rem; font-weight:500; color:var(--up1-text-primary); margin-bottom:.3rem; line-height:1.3; }
+.field-label .req-mark{ color:var(--up1-color-danger-500,#9c2121); margin-left:2px; }
+.field-value{ background:var(--up1-gray-50); border:1px solid var(--up1-gray-100); color:var(--up1-text-secondary); border-radius:var(--up1-radius); padding:.5rem .75rem; font-size:.875rem; min-height:2.5rem; display:flex; align-items:center; }
+.vf-field{ margin-bottom:.85rem; }
+.vf-help{ font-size:.75rem; color:var(--up1-text-muted); margin-top:.25rem; display:block; }
+/* Focus ring uPlanner (primary) en todos los controles, igual que vueform-uplanner.css */
+.form-control:focus,.form-select:focus{ border-color:var(--up1-color-primary)!important; box-shadow:0 0 0 .2rem rgba(10,128,140,.25)!important; outline:0; }
+/* Modo view de RecordDetail: inputs "sunken" (gray-50 / gray-100 / text-secondary) */
+.recorddetail.mode-view .form-control,.recorddetail.mode-view .form-select{ background:var(--up1-gray-50)!important; border-color:var(--up1-gray-100)!important; color:var(--up1-text-secondary)!important; box-shadow:none!important; }
+/* Chip que identifica el componente real (RecordDetail · Vueform) */
+.rd-chip{ display:inline-flex; align-items:center; gap:5px; font-size:.66rem; font-weight:600; color:var(--up1-color-primary); background:var(--up1-color-primary-50,rgba(10,128,140,.1)); border:1px solid var(--up1-color-primary-100,rgba(10,128,140,.28)); border-radius:999px; padding:2px 9px; }
+.up1-card{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-lg); }
+
+/* eval tree */
+.cst-node__row{ display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:4px; white-space:nowrap; }
+.cst-node__row--root{ background:var(--up1-bg-secondary); border-bottom:1px solid var(--up1-border-color); font-weight:600; }
+.cst-node__row--child{ border-left:2px solid var(--up1-border-color); margin-left:12px; }
+.cst-node__metric{ color:var(--up1-text-primary); background:var(--up1-bg-tertiary); padding:2px 6px; border-radius:4px; font-size:.75rem; font-weight:500; }
+.cst-node__name{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.cst-node__count{ color:var(--up1-text-muted); font-size:.75rem; }
+
+/* ===== Yupi (comportamiento original: dockeado / flotante / FAB) ===== */
+.yupi-panel{ width:360px; background:var(--up1-bg-primary); border-left:1px solid var(--up1-border-color); }
+.yupi-float{ position:fixed; bottom:90px; right:24px; width:360px; height:460px; background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-lg); box-shadow:var(--up1-shadow-lg); z-index:1050; overflow:hidden; }
+.yupi-suggest{ background:var(--up1-bg-secondary); border:1px solid transparent; border-radius:var(--up1-radius-md); text-align:left; color:var(--up1-text-secondary); font-size:.78rem; }
+.yupi-suggest:hover{ border-color:var(--up1-border-color); }
+.yupi-bubble-user{ background:var(--up1-bg-secondary); color:var(--up1-text-primary); border-radius:14px 14px 2px 14px; }
+.ai-chip{ background:var(--up1-color-primary-50); color:var(--up1-color-primary); }
+.yupi-input{ background:transparent; border:0; color:var(--up1-text-primary); }
+.yupi-input::placeholder{ color:var(--up1-text-muted); }
+.chat-actions{ opacity:0; transition:opacity .15s; }
+.chat-msg-bot:hover .chat-actions{ opacity:1; }
+.chat-act-btn{ background:none; border:0; color:var(--up1-text-muted); padding:2px; font-size:.72rem; }
+.chat-act-btn:hover{ color:var(--up1-color-primary); }
+.yupi-fab{ position:fixed; bottom:24px; right:24px; width:56px; height:56px; z-index:1060; }
+.yupi-fab .ping{ position:absolute; inset:0; border-radius:50%; background:var(--up1-color-primary); opacity:.25; animation:ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
+@keyframes ping{ 75%,100%{ transform:scale(1.6); opacity:0; } }
+.cursor-pointer{ cursor:pointer; }
+@keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+.animate-fade-in{ animation:fadeIn .35s ease-out forwards; }
+.toast-wrap{ border-left:4px solid var(--up1-color-primary); background:var(--up1-bg-primary); }
+/* Dashboard métricas */
+.dash-card{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-lg); }
+.dash-num{ font-size:2.4rem; font-weight:700; line-height:1; }
+.dash-pivot{ color:var(--up1-text-muted); font-size:.72rem; cursor:pointer; }
+.dash-pivot:hover{ color:var(--up1-color-primary); }
+.dash-filter-box{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius); font-size:.78rem; color:var(--up1-text-secondary); }
+.bar-v{ width:36px; border-radius:4px 4px 0 0; }
+.bar-track{ background:var(--up1-bg-secondary); border-radius:4px; overflow:hidden; }
+.bar-fill{ border-radius:4px; height:100%; }
+/* ===== Componente Malla curricular (comparador D1/D2/D3) ===== */
+.m-switch{display:inline-flex;background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:3px;gap:3px}
+.m-switch button{border:0;background:transparent;color:var(--up1-text-secondary);font-weight:600;font-size:.8rem;padding:6px 12px;border-radius:var(--up1-radius);cursor:pointer;display:flex;align-items:center;gap:6px}
+.m-switch button.on{background:var(--up1-color-primary);color:var(--up1-text-inverse)}
+.m-toggle{display:inline-flex;background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:3px}
+.m-toggle button{border:0;background:transparent;font-size:.75rem;font-weight:600;color:var(--up1-text-secondary);padding:5px 11px;border-radius:var(--up1-radius);cursor:pointer}
+.m-toggle button.on{background:var(--up1-text-primary);color:var(--up1-bg-primary)}
+.m-credbar{height:9px;border-radius:999px;background:var(--up1-bg-secondary);overflow:hidden;min-width:150px}
+.m-credbar>span{display:block;height:100%;background:var(--up1-color-primary)}
+.m-pe{background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-left:4px solid var(--up1-gray-400);border-radius:var(--up1-radius-md);padding:8px 10px;cursor:pointer;transition:all .15s;position:relative}
+.m-pe:hover{box-shadow:var(--up1-shadow-sm);transform:translateY(-1px)}
+.m-pe.sel{outline:2px solid var(--up1-color-primary);outline-offset:1px}
+.m-pe.dim{opacity:.4}
+.m-pe .code{font-size:.66rem;font-weight:600;color:var(--up1-text-muted)}
+.m-pe .nm{font-size:.8rem;font-weight:600;line-height:1.2;margin:1px 0 3px}
+.m-pe .meta{font-size:.68rem;color:var(--up1-text-secondary);display:flex;gap:8px;align-items:center}
+.m-pe.nucleo{border-left-color:var(--up1-color-primary)} .m-pe.fg{border-left-color:var(--up1-color-info-500)}
+.m-pe.elec{border-left-color:var(--up1-color-warning-500)} .m-pe.integ{border-left-color:#6b21a8}
+.m-tag{font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
+.m-tag.nucleo{background:var(--up1-color-primary-50);color:var(--up1-color-primary)} .m-tag.fg{background:rgba(33,73,138,.12);color:var(--up1-color-info-500)}
+.m-tag.elec{background:var(--up1-color-warning-50);color:var(--up1-color-warning-700)} .m-tag.integ{background:#f0e6f7;color:#6b21a8}
+.m-pre{position:absolute;top:7px;right:7px;font-size:.7rem;color:var(--up1-color-warning-500)}
+.m-pool{border:1.5px dashed var(--up1-color-warning-500);background:var(--up1-color-warning-50);border-radius:var(--up1-radius-md);padding:8px 10px;cursor:pointer;transition:all .15s}
+.m-pool:hover{box-shadow:var(--up1-shadow-sm)}
+.m-pool.sel{outline:2px solid var(--up1-color-warning-500);outline-offset:1px}
+.m-pool .nm{font-size:.78rem;font-weight:700;color:var(--up1-color-warning-700)}
+.m-pool .rule{font-size:.68rem;color:var(--up1-text-secondary)}
+.m-cols{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+.m-col{flex:0 0 184px;min-width:184px}
+.m-colh{font-size:.72rem;font-weight:700;color:var(--up1-text-secondary);text-align:center;padding:6px;background:var(--up1-bg-secondary);border-radius:var(--up1-radius);margin-bottom:8px}
+.m-colh small{display:block;font-weight:500;color:var(--up1-text-muted)}
+.m-col .m-pe,.m-col .m-pool{margin-bottom:8px}
+.m-panel{background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);padding:14px;height:100%}
+.m-reqcard{background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:10px;margin-bottom:12px}
+.m-reqcard .ttl{font-size:.78rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.m-rn .gnode{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--up1-text-secondary);margin:3px 0}
+.m-rn .comb{font-size:.6rem;font-weight:800;padding:1px 6px;border-radius:4px;background:var(--up1-text-primary);color:var(--up1-bg-primary);letter-spacing:.05em}
+.m-rn .kids{margin-left:14px;border-left:2px solid var(--up1-border-color);padding-left:10px}
+.m-leaf{display:flex;align-items:flex-start;gap:7px;font-size:.74rem;padding:4px 0}
+.m-leaf .st{flex:0 0 auto;width:16px;text-align:center;margin-top:1px}
+.m-leaf .lbl{flex:1;line-height:1.25}
+.m-leaf .rt{font-size:.6rem;color:var(--up1-text-muted);font-weight:600}
+.m-st-sat{color:var(--up1-color-success-500)} .m-st-prog{color:var(--up1-color-warning-500)} .m-st-miss{color:var(--up1-gray-600)}
+.m-v-ok{color:var(--up1-color-success-500)} .m-v-warn{color:var(--up1-color-warning-500)} .m-v-error{color:var(--up1-color-danger-500)}
+.m-mini{display:inline-block;height:5px;width:120px;border-radius:999px;background:var(--up1-bg-secondary);overflow:hidden;vertical-align:middle}
+.m-mini>span{display:block;height:100%;background:var(--up1-color-warning-500)}
+.m-drow{font-size:.72rem;padding:3px 0;border-bottom:1px dashed var(--up1-border-color);display:flex;justify-content:space-between}
+.m-lane{display:grid;grid-template-columns:180px repeat(4,1fr);border-top:1px solid var(--up1-border-color);min-height:84px}
+.m-lane .lh{padding:8px 8px 8px 12px}
+.m-lane .lname{font-size:.78rem;font-weight:700}
+.m-lane .lcred{font-size:.66rem;color:var(--up1-text-muted);margin:3px 0}
+.m-lane .cell{border-left:1px solid var(--up1-border-color);padding:8px 6px;display:flex;flex-direction:column;gap:6px}
+.m-phead{display:grid;grid-template-columns:180px repeat(4,1fr)}
+.m-phead .ph{font-size:.72rem;font-weight:700;color:var(--up1-text-secondary);text-align:center;padding:8px 6px;border-left:1px solid var(--up1-border-color)}
+.m-stripe{width:100%;height:6px;border-radius:999px;background:var(--up1-bg-secondary);overflow:hidden;margin-top:2px}
+.m-stripe>span{display:block;height:100%}
+.m-titul{background:var(--up1-color-warning-50);border:1.5px solid var(--up1-color-warning-500);border-radius:var(--up1-radius-md);padding:11px 14px;margin-top:12px}
+.m-canvas{position:relative;width:1020px;height:340px}
+.m-canvas svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.m-gn{position:absolute;width:150px;border-radius:var(--up1-radius-md);padding:7px 9px;background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);box-shadow:var(--up1-shadow-sm);cursor:pointer;z-index:2;transition:transform .15s}
+.m-gn:hover{transform:translateY(-2px)}
+.m-gn.nucleo{border-top:3px solid var(--up1-color-primary)} .m-gn.fg{border-top:3px solid var(--up1-color-info-500)}
+.m-gn.elec{border-top:3px solid var(--up1-color-warning-500)} .m-gn.integ{border-top:3px solid #6b21a8}
+.m-gn .code{font-size:.62rem;color:var(--up1-text-muted);font-weight:600}
+.m-gn .nm{font-size:.76rem;font-weight:700;line-height:1.15}
+.m-gn.pool{border:1.5px dashed var(--up1-color-warning-500);background:var(--up1-color-warning-50)}
+.m-gn.milestone{background:#f0e6f7;border:1.5px solid #6b21a8;border-radius:999px;text-align:center}
+.m-gn.diploma{background:var(--up1-color-primary);color:var(--up1-text-inverse);border:0;width:130px;text-align:center;border-radius:var(--up1-radius-lg)}
+.m-gn.diploma .nm{color:var(--up1-text-inverse)}
+.m-cmark{position:absolute;top:-2px;font-size:.66rem;font-weight:700;color:var(--up1-text-muted)}
+.m-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.7rem;color:var(--up1-text-secondary);margin-top:14px}
+.m-legend .it{display:flex;align-items:center;gap:5px}
+.m-sw{width:14px;height:10px;border-radius:3px;display:inline-block}
+.m-gn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-gn.sel{outline:2px solid var(--up1-color-primary);outline-offset:1px}
+.m-gn.dim{opacity:.3} .m-pool.dim{opacity:.4}
+.m-stat{flex:1 1 150px;min-width:150px;display:flex;align-items:center;gap:10px;background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:10px 12px 10px 14px;position:relative;overflow:hidden;transition:box-shadow .15s,transform .15s}
+.m-stat:hover{box-shadow:var(--up1-shadow-sm);transform:translateY(-1px)}
+.m-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,var(--up1-color-primary))}
+.m-stat-ic{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--accent,var(--up1-color-primary));background:color-mix(in srgb, var(--accent,var(--up1-color-primary)) 15%, transparent)}
+.m-stat-body{min-width:0;flex:1 1 auto}
+.m-stat-v{font-size:1.2rem;font-weight:700;line-height:1.05}
+.m-stat-l{font-size:.62rem;color:var(--up1-text-muted);text-transform:uppercase;letter-spacing:.03em;margin-top:1px;line-height:1.15}
+.m-stat-bar{height:4px;border-radius:999px;background:var(--up1-bg-secondary);overflow:hidden;margin-top:5px}
+.m-stat-bar>span{display:block;height:100%;border-radius:999px}
+.m-catchip{cursor:pointer;border:1px solid transparent;border-radius:var(--up1-radius);padding:4px 8px;transition:all .12s}
+.m-catchip:hover{background:var(--up1-bg-secondary)}
+.m-catchip.on{border-color:var(--up1-border-color);background:var(--up1-bg-secondary)}
+.m-catchip.off{opacity:.4}
+.malla-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1099}
+.malla-expanded{position:fixed;inset:16px;z-index:1100;background:var(--up1-bg-body);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);box-shadow:var(--up1-shadow-lg);padding:18px 22px;overflow:auto}
+.malla-expanded .m-col{flex-basis:200px;min-width:200px}
+/* ===== Review experto: usabilidad / accesibilidad / diseño ===== */
+.m-pe:focus-visible,.m-pool:focus-visible,.m-milestone:focus-visible,.m-catchip:focus-visible,.m-toggle button:focus-visible{outline:2px solid var(--up1-color-primary);outline-offset:2px}
+.m-colh{position:sticky;top:0;z-index:3}
+.m-colh-warn{color:var(--up1-color-warning-700)!important;font-weight:700}
+.m-pe-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.m-pe .code{font-size:.66rem;font-weight:700;letter-spacing:.02em;color:var(--up1-text-muted)}
+.m-cr{font-weight:700;font-size:.84rem;color:var(--up1-text-primary);white-space:nowrap}
+.m-cr small{font-size:.62rem;color:var(--up1-text-muted);font-weight:500;margin-left:1px}
+.m-pe .nm{font-size:.82rem;font-weight:600;line-height:1.25;color:var(--up1-text-primary);margin:2px 0 5px}
+.m-pe .meta{font-size:.66rem;color:var(--up1-text-secondary);display:flex;align-items:center;justify-content:space-between;gap:6px}
+.m-tag{font-size:.62rem;display:inline-flex;align-items:center;gap:3px}
+.m-req-hint{font-size:.64rem;color:var(--up1-text-muted);display:inline-flex;align-items:center;gap:3px;cursor:help}
+.m-milestone{display:flex;align-items:center;gap:7px;background:#f3eafb;border:1px solid #dcc7ee;border-left:4px solid #6b21a8;border-radius:var(--up1-radius-md);padding:8px 10px;margin-bottom:8px;cursor:pointer;font-size:.78rem;font-weight:600;color:#5b1a93;transition:box-shadow .15s,transform .15s}
+.m-milestone:hover{box-shadow:var(--up1-shadow-sm);transform:translateY(-1px)}
+.m-milestone.sel{outline:2px solid #6b21a8;outline-offset:1px}
+.m-milestone.dim{opacity:.4}
+.m-milestone .m-ms-tag{margin-left:auto;font-size:.56rem;text-transform:uppercase;letter-spacing:.04em;background:#6b21a8;color:#fff;padding:2px 7px;border-radius:999px;font-weight:700}
+.m-stat .l{font-size:.64rem}
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* ===== Modo construcción (autoría libre + ingesta) ===== */
+.m-empty{text-align:center;padding:40px 24px;border:2px dashed var(--up1-border-color);border-radius:var(--up1-radius-lg);background:var(--up1-bg-primary)}
+.m-add{width:100%;border:1.5px dashed var(--up1-gray-300);background:transparent;color:var(--up1-text-muted);border-radius:var(--up1-radius-md);padding:7px;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .12s;margin-top:2px}
+.m-add:hover{border-color:var(--up1-color-primary);color:var(--up1-color-primary);background:var(--up1-color-primary-50)}
+.m-col.drop{outline:2px dashed var(--up1-color-primary);outline-offset:3px;border-radius:var(--up1-radius-md)}
+.m-addperiod{flex:0 0 90px;min-width:90px;align-self:flex-start;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:64px;margin-top:30px;border:1.5px dashed var(--up1-gray-300);border-radius:var(--up1-radius-md);color:var(--up1-text-muted);cursor:pointer;font-size:.72rem;font-weight:600}
+.m-addperiod:hover{border-color:var(--up1-color-primary);color:var(--up1-color-primary);background:var(--up1-color-primary-50)}
+.m-pe[draggable=true],.m-milestone[draggable=true]{cursor:grab}
+.m-pe.dragging,.m-milestone.dragging{opacity:.45}
+.m-modal-bd{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1100;display:flex;align-items:flex-start;justify-content:center;padding:48px 20px;overflow:auto}
+.m-modal{background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);box-shadow:var(--up1-shadow-lg);max-width:560px;width:100%;padding:18px 20px}
+.m-cat-pick{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--up1-border-color);border-radius:var(--up1-radius);cursor:pointer;margin-bottom:6px}
+.m-cat-pick:hover{background:var(--up1-bg-secondary);border-color:var(--up1-color-primary)}
+/* Menú de acciones de fila (lista) */
+.rl-menu-bd{position:fixed;inset:0;z-index:1040}
+.rl-menu{position:fixed;z-index:1041;transform:translateX(-90%);background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);box-shadow:var(--up1-shadow-lg);min-width:150px;padding:4px}
+.rl-menu-item{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:var(--up1-text-primary);font-size:.82rem;padding:8px 12px;border-radius:var(--up1-radius);cursor:pointer;text-align:left}
+.rl-menu-item:hover{background:var(--up1-bg-secondary);color:var(--up1-color-primary)}
+/* Dock externo del comparador de propuesta (no es parte del producto) */
+.m-dock{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:1090;display:flex;align-items:center;gap:12px;background:rgba(20,22,24,.93);backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:7px 12px 7px 14px;box-shadow:0 10px 28px rgba(0,0,0,.38)}
+.m-dock-label{color:#cbd5e1;font-size:.66rem;font-weight:600;display:flex;align-items:center;gap:5px;white-space:nowrap;border-right:1px solid rgba(255,255,255,.16);padding-right:11px}
+.m-dock .m-switch,.m-dock .m-toggle{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.13)}
+.m-dock .m-switch button,.m-dock .m-toggle button{color:#cbd5e1;font-size:.74rem;padding:4px 10px}
+.m-dock .m-switch button.on{background:var(--up1-color-primary);color:#fff}
+.m-dock .m-toggle button.on{background:#fff;color:#111}
+/* ── v7: estrategia de prerrequisitos al agregar ── */
+.pq-switch{display:inline-flex;align-items:center;gap:4px;background:var(--up1-bg-secondary);border:1px solid var(--up1-border-color);border-radius:999px;padding:3px 4px 3px 10px}
+.pq-switch-lbl{font-size:.64rem;font-weight:600;color:var(--up1-text-muted);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-right:2px}
+.pq-switch button{border:0;background:transparent;color:var(--up1-text-secondary);font-size:.68rem;font-weight:600;padding:4px 9px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.pq-switch button:hover{color:var(--up1-color-primary)}
+.pq-switch button.on{background:var(--up1-color-primary);color:#fff}
+.pq-banner{background:var(--up1-color-warning-50);border:1px solid var(--up1-color-warning-500);border-left:4px solid var(--up1-color-warning-700);border-radius:var(--up1-radius-md);padding:10px 12px}
+.pq-banner-list{display:flex;flex-wrap:wrap;gap:6px}
+.pq-chip{font-size:.68rem;background:var(--up1-bg-primary);border:1px solid var(--up1-color-warning-500);color:var(--up1-color-warning-700);border-radius:999px;padding:2px 9px;cursor:pointer}
+.pq-chip:hover{background:var(--up1-color-warning-50)}
+.pq-badge{background:var(--up1-color-warning-50);color:var(--up1-color-warning-700);font-weight:600}
+.m-pe.pq-flag{border-left:4px solid var(--up1-color-warning-700)}
+.pq-misslist{list-style:none;padding:0;margin:0;font-size:.78rem}
+.pq-misslist li{padding:3px 0;color:var(--up1-text-primary)}
+.pq-misslist li i{color:var(--up1-color-warning-700)}
+/* ── v9: editor de líneas de formación ── */
+.m-catdot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.m-swatch{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
+.m-swatch.on{border-color:var(--up1-text-primary);box-shadow:0 0 0 2px var(--up1-bg-primary) inset}
+.m-icobtn{width:30px;height:30px;border-radius:var(--up1-radius);border:1px solid var(--up1-border-color);background:var(--up1-bg-primary);color:var(--up1-text-secondary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.m-icobtn.on{border-color:var(--up1-color-primary);color:var(--up1-color-primary);background:var(--up1-color-primary-50)}
+/* ── v9: modal de agregar en 2 pasos (tipo → picker) ── */
+.m-steps{display:flex;align-items:center;gap:8px;font-size:.7rem;font-weight:600}
+.m-step{color:var(--up1-text-muted);white-space:nowrap}
+.m-step.on{color:var(--up1-color-primary)}
+.m-step.done{color:var(--up1-color-success-500,#22946e)}
+.m-step-sep{flex:1;height:1px;background:var(--up1-border-color)}
+.m-typecard{width:100%;height:100%;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;border:1.5px solid var(--up1-border-color);border-radius:var(--up1-radius-md);background:var(--up1-bg-primary);padding:12px 14px;cursor:pointer;transition:all .12s}
+.m-typecard:hover{border-color:var(--up1-color-primary)}
+.m-typecard.on{border-color:var(--up1-color-primary);background:var(--up1-color-primary-50);box-shadow:0 0 0 .15rem rgba(10,128,140,.15)}
+.m-typecard i{font-size:1.1rem;color:var(--up1-color-primary)}
+.m-typecard .ttl{font-weight:700;font-size:.85rem;color:var(--up1-text-primary)}
+.m-typecard .sub{font-size:.68rem;color:var(--up1-text-muted);font-weight:400;line-height:1.3}
+.m-sumbar{display:flex;flex-wrap:wrap;gap:6px;background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);padding:8px 10px}
+.m-sumstat{flex:1 1 120px;min-width:110px;display:flex;flex-direction:column;gap:1px;padding:4px 10px;border-right:1px solid var(--up1-border-color)}
+.m-sumstat:last-child{border-right:0}
+.m-sumstat .lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.03em;color:var(--up1-text-muted);font-weight:600;white-space:nowrap}
+.m-sumstat .val{font-size:.95rem;font-weight:700;color:var(--up1-text-primary);line-height:1.2}
+</style>
+</head>
+<body>
+<div id="app" v-cloak class="d-flex" style="height:100vh;overflow:hidden;">
+
+  <!-- RAIL -->
+  <aside class="app-rail d-flex flex-column align-items-center py-3 flex-shrink-0">
+    <div class="text-uppercase fw-bold mb-3" style="font-size:10px;letter-spacing:.08em;color:var(--up1-text-muted);">Apps</div>
+    <div class="d-flex flex-column gap-1 w-100 px-2">
+      <button v-for="a in apps" :key="a.id" @click="a.id==='curriculum' && (view='list')"
+        class="rail-item d-flex flex-column align-items-center justify-content-center py-2 px-1" :class="{active:a.id==='curriculum'}">
+        <i :class="['bi',a.icon]" style="font-size:1.25rem;"></i>
+        <span class="text-center mt-1" style="font-size:9px;font-weight:500;line-height:1.1;">{{ a.name }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+    <!-- HEADER (sin ícono de uPlanner) -->
+    <header class="app-header d-flex align-items-center justify-content-between px-4 flex-shrink-0">
+      <span class="fs-5 fw-bold" style="color:var(--up1-text-primary);">uPlanner</span>
+      <div class="d-flex align-items-center gap-3" style="color:var(--up1-text-secondary);">
+        <span class="d-flex align-items-center gap-1 cursor-pointer" style="font-size:.8rem;"><i class="bi bi-translate"></i> ES <i class="bi bi-caret-down-fill" style="font-size:.55rem;"></i></span>
+        <i class="bi bi-sun cursor-pointer fs-6"></i>
+        <span class="position-relative cursor-pointer"><i class="bi bi-bell fs-6"></i><span v-if="unread" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.55rem;">{{ unread }}</span></span>
+        <div class="d-flex align-items-center gap-1 border rounded px-2 py-1" style="border-color:var(--up1-border-color)!important;">
+          <i class="bi bi-person-badge"></i>
+          <div class="d-flex flex-column lh-1"><span class="text-uppercase fw-bold" style="font-size:9px;color:var(--up1-text-muted);">Rol</span><span class="fw-semibold" style="font-size:.75rem;color:var(--up1-text-primary);">{{ role }}</span></div>
+          <i class="bi bi-caret-down-fill" style="font-size:.55rem;"></i>
+        </div>
+        <div class="text-end lh-sm d-none d-lg-block"><div class="fw-semibold" style="font-size:.75rem;color:var(--up1-text-primary);">esteban.cortes@uplanner.com</div><div style="font-size:.7rem;color:var(--up1-text-muted);">{{ role }}</div></div>
+        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:34px;height:34px;background:var(--up1-color-primary);color:var(--up1-text-inverse);">?</div>
+      </div>
+    </header>
+
+    <!-- OBJECT TABS -->
+    <div class="app-tabs d-flex align-items-center px-4 gap-4 flex-shrink-0">
+      <button v-for="o in objTabs" :key="o.key" @click="setObj(o.key)" class="obj-tab2 d-flex align-items-center gap-1" :class="{active: objKey===o.key}">{{ o.title }} <i class="bi bi-caret-down-fill" style="font-size:.55rem;"></i></button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="d-flex flex-grow-1" style="overflow:hidden;">
+      <main class="flex-grow-1 content-area overflow-auto p-4">
+
+        <!-- DASHBOARD MÉTRICAS -->
+        <div v-if="view==='list' && objKey==='metrics'" class="container-fluid animate-fade-in">
+          <h2 class="record-list-title mb-3">Métricas de diseño curricular</h2>
+          <!-- Filtros -->
+          <div class="dash-card p-3 mb-3 d-flex align-items-end gap-3 flex-wrap">
+            <div v-for="f in dashFilters" :key="f.label">
+              <div class="field-label" style="margin-bottom:.25rem;">{{ f.label }}</div>
+              <div class="dash-filter-box px-2 py-1 d-flex align-items-center justify-content-between gap-3" style="min-width:140px;"><span>{{ f.value }}</span><i class="bi bi-caret-down-fill" style="font-size:.55rem;color:var(--up1-text-muted);"></i></div>
+            </div>
+            <button class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1 ms-auto" style="height:34px;"><i class="bi bi-funnel"></i> Más filtros</button>
+          </div>
+          <!-- KPIs -->
+          <div class="row g-3 mb-3">
+            <div v-for="k in dashKpis" :key="k.label" class="col-6 col-lg-4 col-xl-2">
+              <div class="dash-card p-3 h-100 d-flex flex-column">
+                <div class="d-flex justify-content-end gap-2 text-muted" style="font-size:.7rem;"><i class="bi bi-gear"></i><i class="bi bi-arrows-fullscreen"></i></div>
+                <div class="text-center my-2"><div class="dash-num" :style="{color:k.color}">{{ k.value }}</div></div>
+                <div class="text-center rl-info" style="font-size:.78rem;line-height:1.2;">{{ k.label }}</div>
+                <div class="text-center mt-2"><span class="dash-pivot"><i class="bi bi-table"></i> Ver pivote</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Gráficos -->
+          <div class="row g-3">
+            <div class="col-lg-6">
+              <div class="dash-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3"><span class="fw-bold">Documentos por estado</span><i class="bi bi-arrows-fullscreen text-muted" style="font-size:.7rem;"></i></div>
+                <div class="d-flex align-items-end justify-content-around" style="height:190px;">
+                  <div v-for="b in estadoBars" :key="b.label" class="d-flex flex-column align-items-center justify-content-end" style="flex:1;height:100%;">
+                    <div class="mb-1 fw-semibold" style="font-size:.78rem;color:var(--up1-text-secondary);">{{ b.value }}</div>
+                    <div class="bar-v" :style="{height:(b.value/estadoMax*150)+'px',background:b.color}"></div>
+                    <div class="mt-2 text-center" style="font-size:.7rem;color:var(--up1-text-muted);">{{ b.label }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="dash-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3"><span class="fw-bold">Programas de asignatura por facultad</span><i class="bi bi-arrows-fullscreen text-muted" style="font-size:.7rem;"></i></div>
+                <div class="d-flex flex-column gap-3 pt-3">
+                  <div v-for="b in facultadBars" :key="b.label" class="d-flex align-items-center gap-2">
+                    <div style="width:150px;font-size:.75rem;color:var(--up1-text-secondary);text-align:right;">{{ b.label }}</div>
+                    <div class="bar-track flex-grow-1" style="height:18px;"><div class="bar-fill" :style="{width:(b.value/facultadMax*100)+'%',background:b.color}"></div></div>
+                    <div style="width:32px;font-size:.75rem;color:var(--up1-text-secondary);">{{ b.value }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIST -->
+        <div v-else-if="view==='list'" class="container-fluid animate-fade-in">
+          <h2 class="record-list-title mb-3">{{ currentObj.title }} <i class="bi bi-caret-down" style="font-size:1rem;color:var(--up1-text-muted);"></i></h2>
+          <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+            <small class="rl-info">{{ currentObj.rows.length }} elementos. Ordenado por name. sin filtros. Actualizado hace unos segundos.</small>
+            <div class="d-flex align-items-center gap-2">
+              <button v-if="objKey!=='historial'" class="btn btn-primary btn-sm d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Crear registro</button>
+              <div class="position-relative">
+                <i class="bi bi-search position-absolute" style="left:.6rem;top:50%;transform:translateY(-50%);color:var(--up1-text-muted);font-size:.8rem;"></i>
+                <input class="rl-search py-1 ps-4 pe-2" style="width:240px;font-size:.8rem;height:34px;" placeholder="Buscar en esta lista...">
+              </div>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-funnel-fill"></i></button>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-gear"></i></button>
+              <button class="btn btn-icon-minimal btn-sm active" style="height:34px;"><i class="bi bi-list-ul"></i></button>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-grid-3x3-gap"></i></button>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+          </div>
+          <div class="rl-card">
+            <table class="rl-table">
+              <thead><tr>
+                <th class="rl-chk text-center"><input type="checkbox" class="form-check-input"></th>
+                <th v-for="(col,ci) in currentObj.cols" :key="col.key" :class="ci===0 ? 'sorted' : ''">{{ col.label }} <i class="rl-caret" :class="ci===0 ? 'bi bi-caret-up-fill' : 'bi bi-caret-up'"></i></th>
+                <th class="text-end">Acciones</th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="(row,ri) in currentObj.rows" :key="ri" @click="objKey!=='historial' && openView(objKey, row)" :style="objKey!=='historial' ? 'cursor:pointer;' : 'cursor:default;'">
+                  <td class="rl-chk text-center" @click.stop><input type="checkbox" class="form-check-input"></td>
+                  <td v-for="col in currentObj.cols" :key="col.key" :style="col.type==='wrap' ? 'white-space:normal;min-width:240px;' : ''">
+                    <template v-if="col.type==='badge'"><span v-if="row[col.key] && row[col.key] !== '—'" class="badge bg-info">{{ row[col.key] }}</span><span v-else class="text-muted">—</span></template>
+                    <a v-else-if="col.type==='link'" class="rl-link">{{ row[col.key] }}</a>
+                    <span v-else-if="col.type==='estado'" style="color:var(--up1-color-primary);">{{ row[col.key] }}</span>
+                    <span v-else>{{ row[col.key] }}</span>
+                  </td>
+                  <td class="text-end" @click.stop>
+                    <button v-if="objKey!=='historial'" class="rl-pagebtn" :class="{active: mRowMenu && mRowMenu.ri===ri}" @click="openRowMenu($event, ri)" aria-label="Acciones" aria-haspopup="true"><i class="bi bi-caret-down-fill" style="font-size:.7rem;"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Menú de acciones de fila -->
+          <div v-if="mRowMenu" class="rl-menu-bd" @click="mRowMenu=null"></div>
+          <div v-if="mRowMenu" class="rl-menu" :style="{left:mRowMenu.x+'px', top:(mRowMenu.y+8)+'px'}">
+            <button class="rl-menu-item" @click="openView(objKey, currentObj.rows[mRowMenu.ri]); mRowMenu=null"><i class="bi bi-eye"></i> Ver</button>
+            <button v-if="mRowEditable(currentObj.rows[mRowMenu.ri])" class="rl-menu-item" @click="openEdit(objKey, currentObj.rows[mRowMenu.ri]); mRowMenu=null"><i class="bi bi-pencil"></i> Editar</button>
+            <button v-if="objKey==='plans'" class="rl-menu-item" @click="openMalla(currentObj.rows[mRowMenu.ri]); mRowMenu=null"><i class="bi bi-grid-3x3-gap"></i> Malla curricular</button>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+            <small class="rl-info">1-{{ currentObj.rows.length }} de {{ currentObj.rows.length }}</small>
+            <div class="d-flex align-items-center gap-1">
+              <span class="rl-pagebtn"><i class="bi bi-chevron-double-left" style="font-size:.7rem;"></i></span>
+              <span class="rl-pagebtn"><i class="bi bi-chevron-left" style="font-size:.7rem;"></i></span>
+              <span class="rl-pagebtn active">1</span>
+              <span class="rl-pagebtn"><i class="bi bi-chevron-right" style="font-size:.7rem;"></i></span>
+              <span class="rl-pagebtn"><i class="bi bi-chevron-double-right" style="font-size:.7rem;"></i></span>
+            </div>
+            <div class="d-flex align-items-center gap-2 rl-info"><span>Mostrar</span><select class="rl-perpage py-1 px-2" style="font-size:.8rem;"><option>5</option><option>10</option><option>25</option></select><span>por página</span></div>
+          </div>
+        </div>
+
+        <!-- DETAIL -->
+        <div v-else class="container-fluid animate-fade-in">
+          <button @click="view='list'" class="btn btn-link text-decoration-none px-0 mb-3 d-inline-flex align-items-center gap-2" style="color:var(--up1-text-secondary);"><i class="bi bi-arrow-left"></i> Volver</button>
+          <div class="d-flex border-bottom mb-4" style="overflow-x:auto;border-color:var(--up1-border-color)!important;">
+            <button v-for="t in detailTabs" :key="t.key" @click="tab=t.key" class="lo-tab d-flex align-items-center gap-1" :class="{'is-active':tab===t.key}">
+              {{ t.label }}<span v-if="t.ai" class="badge ai-chip d-inline-flex align-items-center gap-1" style="font-size:8px;"><i class="bi bi-stars"></i> AGENTE</span>
+            </button>
+          </div>
+          <div v-if="tab==='general'" class="animate-fade-in">
+            <div class="mb-3"><div class="field-label">Estado</div><span class="badge rounded-pill d-inline-flex align-items-center gap-1" :class="statusClass(displayStatus)"><i :class="displayStatus==='En revisión' ? 'bi bi-hourglass-split' : (displayStatus==='Borrador' ? 'bi bi-pencil-fill' : 'bi bi-check-circle-fill')"></i> {{ displayStatus }}</span></div>
+
+            <template v-if="detailObj==='programs'">
+              <div class="mb-3"><div class="field-label">Nombre</div><div class="field-value">{{ current.name }}</div></div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Código</div><div class="field-value">{{ current.code }}</div></div>
+                <div class="col-md-4"><div class="field-label">Grado</div><div class="field-value">{{ current.degree }}</div></div>
+                <div class="col-md-4"><div class="field-label">Modalidad</div><div class="field-value">{{ current.modality }}</div></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6"><div class="field-label">Duración</div><div class="field-value">{{ current.duration }}</div></div>
+                <div class="col-md-6"><div class="field-label">Unidad Organizativa</div><div class="field-value">{{ current.unit }}</div></div>
+              </div>
+            </template>
+
+            <template v-else-if="detailObj==='plans'">
+              <div class="mb-3"><div class="field-label">Nombre</div><div class="field-value">{{ current.name }}</div></div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Código</div><div class="field-value">{{ current.code }}</div></div>
+                <div class="col-md-4"><div class="field-label">Programa Académico</div><div class="field-value">{{ current.program }}</div></div>
+                <div class="col-md-4"><div class="field-label">Tipo</div><div class="field-value">{{ current.type }}</div></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6"><div class="field-label">Créditos</div><div class="field-value">{{ current.credits }}</div></div>
+                <div class="col-md-6"><div class="field-label">Versión</div><div class="field-value">{{ current.version }}</div></div>
+              </div>
+            </template>
+
+            <template v-else-if="detailObj==='syllabus'">
+              <div class="mb-3"><div class="field-label">Nombre</div><div class="field-value">{{ current.name }}</div></div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Código</div><div class="field-value">{{ current.code }}</div></div>
+                <div class="col-md-4"><div class="field-label">Versión</div><div class="field-value">{{ current.version }}</div></div>
+                <div class="col-md-4"><div class="field-label">Idioma</div><div class="field-value">es</div></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Nivel</div><div class="field-value">{{ current.level }}</div></div>
+                <div class="col-md-4"><div class="field-label">Créditos</div><div class="field-value">{{ current.credits }}</div></div>
+                <div class="col-md-4"><div class="field-label">Código de sección</div><div class="field-value">{{ current.section }}</div></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Código docente</div><div class="field-value">{{ current.teacherCode }}</div></div>
+                <div class="col-md-4"><div class="field-label">Nombre docente</div><div class="field-value">{{ current.teacher }}</div></div>
+                <div class="col-md-4"><div class="field-label">Periodo académico</div><div class="field-value">{{ current.period }}</div></div>
+              </div>
+              <div class="mb-3" style="max-width:60%;"><div class="field-label">Unidad organizacional</div><div class="field-value">{{ current.sede }}</div></div>
+              <div class="mb-3"><div class="field-label">Descripción</div><div class="field-value" style="line-height:1.6;">{{ current.description }}</div></div>
+            </template>
+
+            <template v-else>
+              <div class="mb-3"><div class="field-label">Nombre</div><div class="field-value">{{ current.name }}</div></div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Código</div><div class="field-value">{{ current.code }}</div></div>
+                <div class="col-md-4"><div class="field-label">Versión</div><div class="field-value">{{ current.version }}</div></div>
+                <div class="col-md-4"><div class="field-label">Idioma</div><div class="field-value">es</div></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6"><div class="field-label">Nivel</div><div class="field-value">{{ current.level }}</div></div>
+                <div class="col-md-6"><div class="field-label">Créditos</div><div class="field-value">{{ current.credits }}</div></div>
+              </div>
+              <div class="mb-3" style="max-width:60%;"><div class="field-label">Unidad organizativa</div><div class="field-value">{{ current.unit }}</div></div>
+              <div class="mb-3"><div class="field-label">Descripción</div><div class="field-value" style="line-height:1.6;">{{ current.description }}</div></div>
+            </template>
+          </div>
+          <div v-else-if="detailObj==='activity' && !isEcuaciones" class="text-center py-5" style="color:var(--up1-text-muted);"><i class="bi bi-info-circle fs-3 d-block mb-2"></i>Esta maqueta detalla a fondo el programa <strong>Ecuaciones Diferenciales</strong>. Vuelve y ábrelo para ver el flujo completo.</div>
+          <div v-else-if="tab==='eval'" class="animate-fade-in">
+            <h4 class="fw-bold mb-1">Componentes de evaluación</h4>
+            <p class="rl-info mb-1">Estructura del esquema de evaluación (componentes y sub-componentes con sus ponderaciones).</p>
+            <div class="up1-card p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-2" style="border-bottom:1px solid var(--up1-border-color);"><span class="rl-info" style="font-size:.75rem;">8 en total — 1 de nivel raíz</span></div>
+              <div class="cst-node__row cst-node__row--root">
+                <i class="bi bi-caret-down-fill" style="font-size:.7rem;color:var(--up1-text-secondary);"></i>
+                <span class="badge bg-secondary" style="font-size:.7rem;">NF</span><span class="badge bg-info" style="font-size:.7rem;">Sumativa</span>
+                <span class="cst-node__name">Nota Final</span><span class="cst-node__metric">100%</span><span class="cst-node__count">(7)</span>
+              </div>
+              <div v-for="c in evalChildren" :key="c.code" class="cst-node__row cst-node__row--child">
+                <span class="badge bg-secondary" style="font-size:.7rem;">{{ c.code }}</span>
+                <span class="badge bg-info" style="font-size:.7rem;" :style="c.type==='Formativa' ? 'opacity:.78;' : ''">{{ c.type }}</span>
+                <span class="cst-node__name">{{ c.name }}</span><span class="cst-node__metric">{{ c.weight }}%</span>
+              </div>
+            </div>
+          </div>
+          <!-- ===== PESTAÑA LÍNEAS DE FORMACIÓN (requirementCategory del plan) ===== -->
+          <div v-else-if="tab==='formacion'" class="animate-fade-in container-fluid">
+            <h2 class="record-list-title mb-2">Líneas de formación <i class="bi bi-caret-down" style="font-size:1rem;color:var(--up1-text-muted);"></i></h2>
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+              <small class="rl-info">{{ mCategories.length }} elementos. Ordenado por position. sin filtros.<span v-if="!mEditable"> · <i class="bi bi-eye"></i> solo lectura (abre el plan en modo edición para definir o editar).</span></small>
+              <div class="d-flex align-items-center gap-2">
+                <button v-if="mEditable" class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="mOpenCatEdit(null)"><i class="bi bi-plus-lg"></i> Crear registro</button>
+                <div class="position-relative">
+                  <i class="bi bi-search position-absolute" style="left:.6rem;top:50%;transform:translateY(-50%);color:var(--up1-text-muted);font-size:.8rem;"></i>
+                  <input class="rl-search py-1 ps-4 pe-2" style="width:220px;font-size:.8rem;height:34px;" placeholder="Buscar en esta lista...">
+                </div>
+                <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-funnel-fill"></i></button>
+                <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-gear"></i></button>
+                <button class="btn btn-icon-minimal btn-sm active" style="height:34px;"><i class="bi bi-list-ul"></i></button>
+                <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-arrow-clockwise"></i></button>
+              </div>
+            </div>
+            <div class="rl-card">
+              <table class="rl-table">
+                <thead><tr>
+                  <th class="rl-chk text-center"><input type="checkbox" class="form-check-input"></th>
+                  <th class="sorted">Línea de formación <i class="rl-caret bi bi-caret-up-fill"></i></th>
+                  <th>Código <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th>Créditos (act / mín) <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th class="text-center">Obligatorias <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th class="text-center">Electivas <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th class="text-end">Acciones</th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="c in mCategories" :key="c.key" style="cursor:default;">
+                    <td class="rl-chk text-center" @click.stop><input type="checkbox" class="form-check-input"></td>
+                    <td><span class="d-flex align-items-center gap-2"><span class="m-catdot" :style="{background:c.color}"></span><i :class="['bi',catIcon(c.key)]" :style="{color:c.color}" aria-hidden="true"></i> <strong>{{ c.name }}</strong></span></td>
+                    <td class="text-muted">{{ c.code || '—' }}</td>
+                    <td :style="{color: c.current<c.min?'var(--up1-color-warning-700)':'var(--up1-text-primary)', fontWeight:600}">{{ c.current }} / {{ c.min }}<span v-if="c.max" class="text-muted" style="font-weight:400;"> · máx {{ c.max }}</span></td>
+                    <td class="text-center">{{ mCatCounts(c.key).oblig }}</td>
+                    <td class="text-center">{{ mCatCounts(c.key).elec }}</td>
+                    <td class="text-end" @click.stop><button class="rl-pagebtn" :class="{active:lfMenu&&lfMenu.key===c.key}" @click="lfOpenMenu($event,c)" aria-label="Acciones" aria-haspopup="true"><i class="bi bi-caret-down-fill" style="font-size:.7rem;"></i></button></td>
+                  </tr>
+                  <tr v-if="!mCategories.length"><td colspan="7" class="text-center text-muted py-3">Sin líneas de formación. Agrega la primera.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+              <small class="rl-info">1-{{ mCategories.length }} de {{ mCategories.length }}</small>
+              <div class="d-flex align-items-center gap-1">
+                <span class="rl-pagebtn"><i class="bi bi-chevron-double-left" style="font-size:.7rem;"></i></span>
+                <span class="rl-pagebtn"><i class="bi bi-chevron-left" style="font-size:.7rem;"></i></span>
+                <span class="rl-pagebtn active">1</span>
+                <span class="rl-pagebtn"><i class="bi bi-chevron-right" style="font-size:.7rem;"></i></span>
+                <span class="rl-pagebtn"><i class="bi bi-chevron-double-right" style="font-size:.7rem;"></i></span>
+              </div>
+            </div>
+
+            <!-- Menú de acciones de fila (línea de formación) -->
+            <div v-if="lfMenu" class="rl-menu-bd" @click="lfMenu=null"></div>
+            <div v-if="lfMenu" class="rl-menu" :style="{left:lfMenu.x+'px', top:(lfMenu.y+8)+'px'}">
+              <button class="rl-menu-item" @click="mOpenCatEdit(lfMenu.cat,'view')"><i class="bi bi-eye"></i> Ver</button>
+              <button v-if="mEditable" class="rl-menu-item" @click="mOpenCatEdit(lfMenu.cat,'edit')"><i class="bi bi-pencil"></i> Editar</button>
+              <button v-if="mEditable" class="rl-menu-item" @click="mDeleteCat(lfMenu.cat.key); lfMenu=null"><i class="bi bi-trash"></i> Eliminar</button>
+            </div>
+
+            <!-- Modal: agregar / editar línea de formación -->
+            <div v-if="mCatEditOpen && mCatEdit" class="m-modal-bd" @click.self="mCatEditOpen=false">
+              <div class="m-modal recorddetail mode-edit" role="dialog" aria-modal="true" aria-label="Línea de formación">
+                <div class="d-flex justify-content-between align-items-center mb-2"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi" :class="mCatMode==='view'?'bi-eye':'bi-bookmark-star'" style="color:var(--up1-color-primary);"></i> {{ mCatMode==='view'?'Ver':(mCatIsNew?'Nueva':'Editar') }} línea de formación <span class="rd-chip"><i class="bi bi-card-list"></i> requirementCategory</span></h5><button class="btn btn-icon-minimal btn-sm" @click="mCatEditOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button></div>
+                <div class="row g-2 mb-2">
+                  <div class="col-8"><label class="field-label">Nombre</label><input v-model="mCatEdit.name" :disabled="mCatMode==='view'" class="form-control form-control-sm" placeholder="Ej. Ciencias Básicas"></div>
+                  <div class="col-4"><label class="field-label">Código</label><input v-model="mCatEdit.code" :disabled="mCatMode==='view'" class="form-control form-control-sm" placeholder="CB"></div>
+                </div>
+                <div class="row g-2 mb-2">
+                  <div class="col-3"><label class="field-label">Créditos mín</label><input type="number" min="0" v-model.number="mCatEdit.min" :disabled="mCatMode==='view'" class="form-control form-control-sm"></div>
+                  <div class="col-3"><label class="field-label">Créditos máx</label><input type="number" min="0" v-model.number="mCatEdit.max" :disabled="mCatMode==='view'" class="form-control form-control-sm" placeholder="—"></div>
+                  <div class="col-6"><label class="field-label">Etiqueta corta</label><input v-model="mCatEdit.short" :disabled="mCatMode==='view'" class="form-control form-control-sm" :placeholder="mCatEdit.name||'(usa el nombre)'"></div>
+                </div>
+                <label class="field-label">Color e ícono</label>
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                  <button v-for="col in mCatColors" :key="col" class="m-swatch" :class="{on:mCatEdit.color===col}" :style="{background:col}" :disabled="mCatMode==='view'" @click="mCatEdit.color=col" :aria-label="'Elegir color'"></button>
+                  <span style="width:1px;height:22px;background:var(--up1-border-color);"></span>
+                  <button v-for="ic in mCatIcons" :key="ic" class="m-icobtn" :class="{on:mCatEdit.icon===ic}" :disabled="mCatMode==='view'" @click="mCatEdit.icon=ic" :aria-label="'Elegir ícono'"><i :class="['bi',ic]"></i></button>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                  <button class="btn btn-sm btn-outline-secondary" @click="mCatEditOpen=false">{{ mCatMode==='view'?'Cerrar':'Cancelar' }}</button>
+                  <button v-if="mCatMode!=='view'" class="btn btn-primary btn-sm" :disabled="!mCatEdit.name" @click="mSaveCat()">Guardar línea</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== PESTAÑA MALLA CURRICULAR (vista única D1 + modo expandido) ===== -->
+          <div v-else-if="tab==='malla'" class="animate-fade-in">
+            <div v-if="mExpanded" class="malla-backdrop" @click="closeMalla()" aria-hidden="true"></div>
+            <div class="malla-body" :class="{'malla-expanded':mExpanded}" :role="mExpanded?'dialog':null" :aria-modal="mExpanded?'true':null" aria-label="Malla curricular">
+              <!-- Toolbar: título + lente + expandir -->
+              <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
+                <div>
+                  <h4 class="fw-bold mb-0">Malla curricular</h4>
+                  <p class="rl-info mb-0" style="font-size:.78rem;">{{ mPlan.program }} · {{ mPlan.name }} · {{ mPlan.type }}</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span v-if="mEditable" class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background:var(--up1-color-primary-50);color:var(--up1-color-primary);font-size:.64rem;padding:.35rem .6rem;"><i class="bi bi-pencil-fill"></i> Modo edición</span>
+                  <span v-else class="badge rounded-pill d-inline-flex align-items-center gap-1" style="background:var(--up1-gray-100);color:var(--up1-text-secondary);font-size:.64rem;padding:.35rem .6rem;"><i class="bi bi-eye"></i> Solo lectura</span>
+                  <button v-if="mExpanded" class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1" style="height:32px;" aria-label="Cerrar malla" @click="closeMalla()"><i class="bi bi-x-lg" aria-hidden="true"></i> Cerrar</button>
+                </div>
+              </div>
+
+              <!-- Banner de alerta persistente: asignaturas con prerrequisitos no ubicados (visible en build) -->
+              <div v-if="mKind==='build' && mPrereqIssues.length" class="pq-banner mb-3">
+                <div class="d-flex align-items-start gap-2">
+                  <i class="bi bi-exclamation-triangle-fill" style="color:var(--up1-color-warning-700);font-size:1rem;margin-top:1px;"></i>
+                  <div class="flex-grow-1">
+                    <div class="fw-bold" style="font-size:.82rem;color:var(--up1-color-warning-700);">{{ mPrereqIssues.length }} asignatura(s) con prerrequisitos no ubicados antes en la malla</div>
+                    <div class="pq-banner-list mt-1">
+                      <span v-for="i in mPrereqIssues" :key="i.id" class="pq-chip" role="button" tabindex="0" @click="mallaFocus=i.id" @keydown.enter.prevent="mallaFocus=i.id" :title="'Faltan: '+[...i.absent,...i.late].map(o=>o.code).join(', ')">
+                        <strong>{{ i.code }}</strong> · falta {{ [...i.absent,...i.late].map(o=>o.code).join(', ') }}
+                      </span>
+                    </div>
+                  </div>
+                  <button v-if="mEditable" class="btn btn-sm btn-primary d-flex align-items-center gap-1" style="white-space:nowrap;" @click="mResolveAll()"><i class="bi bi-magic"></i> Resolver todo</button>
+                </div>
+              </div>
+
+              <!-- Resumen del plan — barra horizontal a ancho completo, sobre los filtros -->
+              <div class="m-sumbar mb-3">
+                <div class="m-sumstat"><span class="lbl">Créditos del diseño</span><span class="val" :style="{color: mMetrics.designCredits<mMetrics.reqCredits?'var(--up1-color-warning-700)':'var(--up1-text-primary)'}">{{ mMetrics.designCredits }} / {{ mMetrics.reqCredits }}</span></div>
+                <div class="m-sumstat"><span class="lbl">{{ mPlan.unit==='Nivel'?'Niveles':'Períodos' }}</span><span class="val">{{ mMetrics.periods }}</span></div>
+                <div class="m-sumstat"><span class="lbl">Asignaturas</span><span class="val">{{ mMetrics.courses }}</span></div>
+                <div class="m-sumstat"><span class="lbl">Carga máx. / {{ mPlan.unit==='Nivel'?'nivel':'sem' }}</span><span class="val">{{ mMetrics.maxLoad }} <small style="font-weight:600;font-size:.7rem;">créd</small></span></div>
+              </div>
+
+              <!-- Líneas de formación (categorías) — clic para resaltar -->
+              <div class="mb-1 d-flex align-items-center gap-2" style="font-size:.66rem;color:var(--up1-text-muted);"><span><i class="bi bi-funnel"></i> Líneas de formación — clic para resaltar en la malla</span><span v-if="mCatFilter.length" style="color:var(--up1-color-primary);cursor:pointer;" @click="mCatFilter=[]">· limpiar</span></div>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <div v-for="c in mCategories" :key="c.key" class="m-catchip" :class="{on:mCatFilter.includes(c.key), off:mCatFilter.length>0 && !mCatFilter.includes(c.key)}" style="flex:1 1 180px;min-width:160px;" role="button" tabindex="0" :aria-pressed="mCatFilter.includes(c.key)" :aria-label="'Resaltar línea de formación '+c.name" @click="mToggleCat(c.key)" @keydown.enter.prevent="mToggleCat(c.key)" @keydown.space.prevent="mToggleCat(c.key)">
+                  <div class="d-flex justify-content-between align-items-center" style="font-size:.7rem;">
+                    <span class="fw-semibold d-flex align-items-center gap-1" :style="{color:c.color}"><i :class="['bi',catIcon(c.key)]" aria-hidden="true"></i>{{ c.name }}</span>
+                    <span class="text-muted">{{ c.current }}/{{ c.min }} créd</span>
+                  </div>
+                  <div class="m-stripe"><span :style="{width:Math.min(100,c.current/c.min*100)+'%',background:c.color}"></span></div>
+                </div>
+              </div>
+
+              <!-- Filtro de electivos — derivado de los bloques (OptionPool) ya añadidos a la malla -->
+              <template v-if="mPoolsPresent.length">
+                <div class="mb-1 d-flex align-items-center gap-2" style="font-size:.66rem;color:var(--up1-text-muted);"><span><i class="bi bi-collection"></i> Electivos añadidos — clic para resaltar el bloque</span><span v-if="mElecFilter.length" style="color:var(--up1-color-primary);cursor:pointer;" @click="mElecFilter=[]">· limpiar</span></div>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <div v-for="p in mPoolsPresent" :key="p.name" class="m-catchip" :class="{on:mElecFilter.includes(p.name), off:mElecFilter.length>0 && !mElecFilter.includes(p.name)}" style="flex:0 1 auto;" role="button" tabindex="0" :aria-pressed="mElecFilter.includes(p.name)" :aria-label="'Resaltar '+p.name" @click="mToggleElec(p.name)" @keydown.enter.prevent="mToggleElec(p.name)" @keydown.space.prevent="mToggleElec(p.name)">
+                    <span class="fw-semibold d-flex align-items-center gap-1" style="font-size:.7rem;color:var(--up1-color-warning-700);"><i class="bi bi-collection" aria-hidden="true"></i> {{ p.name }} <span class="text-muted" style="font-weight:400;">· {{ p.n }} electiva(s)</span></span>
+                  </div>
+                </div>
+              </template>
+
+              <div v-if="mPlan.nonSequential" class="mb-3 p-2 rounded d-flex align-items-center gap-2" style="font-size:.72rem;background:rgba(33,73,138,.08);color:var(--up1-color-info-500);"><i class="bi bi-info-circle-fill"></i> <span>Plan <strong>modular</strong> — el orden es sugerido por prerrequisitos; los módulos no están atados a un semestre fijo. Las columnas representan <strong>niveles</strong> (profundidad de dependencias), no semestres.</span></div>
+
+              <!-- Empty state (plan en construcción, sin asignaturas) -->
+              <div v-if="mEditable && !mEntries.length" class="m-empty mb-3">
+                <i class="bi bi-grid-1x2 fs-2" style="color:var(--up1-text-muted);" aria-hidden="true"></i>
+                <div class="fw-bold mt-2" style="font-size:1.05rem;">Empieza tu malla curricular</div>
+                <p class="rl-info mb-3 mx-auto" style="font-size:.84rem;max-width:480px;">Construye la malla agregando asignaturas a cada período con <strong>+ Asignatura</strong>, y suma los períodos que necesite el plan.</p>
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                  <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="mOpenAdd(1)"><i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar asignatura</button>
+                </div>
+              </div>
+
+              <!-- Bloques electivos existentes (OptionPool) para autocompletar -->
+              <datalist id="elecBlocks"><option v-for="p in mPoolsPresent" :key="p.name" :value="p.name"></option></datalist>
+
+              <!-- Modal: catálogo de asignaturas (búsqueda + filtro depto + multiselección) -->
+              <div v-if="mAddTo!=null" class="m-modal-bd" @click.self="mAddTo=null">
+                <div class="m-modal" role="dialog" aria-modal="true" aria-label="Agregar asignaturas">
+                  <div class="d-flex justify-content-between align-items-center mb-2"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi bi-plus-circle" style="color:var(--up1-color-primary);"></i> Agregar asignaturas <span class="text-muted" style="font-weight:400;font-size:.8rem;"><template v-if="!mPlan.nonSequential">· Sem {{ mAddTo }}</template><template v-else>· al plan</template></span></h5><button class="btn btn-icon-minimal btn-sm" @click="mAddTo=null" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button></div>
+                  <div class="m-steps mb-3"><span class="m-step" :class="{on:mAddStep===1, done:mAddStep>1}"><i class="bi" :class="mAddStep>1?'bi-check-circle-fill':'bi-1-circle'"></i> Tipo de asignación</span><span class="m-step-sep"></span><span class="m-step" :class="{on:mAddStep===2}"><i class="bi bi-2-circle"></i> Seleccionar asignaturas</span></div>
+
+                  <!-- PASO 1: tipo de asignación (obligatorias u opcionales) -->
+                  <template v-if="mAddStep===1">
+                    <p class="rl-info mb-2" style="font-size:.78rem;">¿Qué tipo de asignaturas vas a asignar a este plan?</p>
+                    <div class="mb-1">
+                      <label class="field-label">Tipo de asignación</label>
+                      <select v-model="mAddRole" class="form-select form-select-sm"><option value="oblig">Obligatoria</option><option value="elec">Electiva (opcional)</option></select>
+                    </div>
+                    <div v-if="mAddRole==='elec'" class="mt-2">
+                      <label class="field-label">Bloque electivo (OptionPool)</label>
+                      <input v-model="mAddPool" list="elecBlocks" class="form-control form-control-sm" placeholder="Ej. Electivo de Especialización" aria-label="Bloque electivo">
+                      <span class="vf-help">Reutiliza un bloque existente o crea uno nuevo. Es una entidad con nombre propio, independiente de la línea de formación.</span>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                      <button class="btn btn-icon-minimal btn-sm" @click="mAddTo=null">Cancelar</button>
+                      <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" :disabled="mAddRole==='elec' && !mAddPool.trim()" @click="mAddStep=2">Siguiente <i class="bi bi-arrow-right"></i></button>
+                    </div>
+                  </template>
+
+                  <!-- PASO 2: picker del catálogo de asignaturas -->
+                  <template v-else>
+                    <p class="rl-info mb-2 d-flex align-items-center gap-2 flex-wrap" style="font-size:.76rem;">
+                      <span class="badge d-inline-flex align-items-center gap-1" :style="mAddRole==='elec' ? 'background:var(--up1-color-warning-50);color:var(--up1-color-warning-700);' : 'background:var(--up1-color-primary-50);color:var(--up1-color-primary);'"><i :class="['bi', mAddRole==='elec'?'bi-collection':'bi-bookmark-check-fill']" aria-hidden="true"></i> {{ mAddRole==='elec' ? ('Opcionales · '+(mAddPool||'Electivos')) : 'Obligatorias' }}</span>
+                      <span>Catálogo de <strong>Activity</strong> — busca, filtra y selecciona varias.</span>
+                    </p>
+                    <div class="d-flex gap-2 mb-2 flex-wrap">
+                      <div class="position-relative flex-grow-1" style="min-width:180px;">
+                        <i class="bi bi-search position-absolute" style="left:.6rem;top:50%;transform:translateY(-50%);color:var(--up1-text-muted);font-size:.8rem;" aria-hidden="true"></i>
+                        <input v-model="mPickSearch" class="form-control form-control-sm ps-4" style="font-size:.8rem;" placeholder="Buscar por nombre o código…" aria-label="Buscar asignatura">
+                      </div>
+                      <select v-model="mPickDept" class="form-select form-select-sm" style="max-width:210px;font-size:.8rem;" aria-label="Filtrar por departamento"><option value="">Todos los departamentos</option><option v-for="d in mDepts" :key="d" :value="d">{{ d }}</option></select>
+                    </div>
+                    <div style="max-height:300px;overflow:auto;">
+                      <label v-for="c in mPickList" :key="c.code" class="m-cat-pick" style="cursor:pointer;">
+                        <span class="d-flex align-items-center gap-2"><input type="checkbox" class="form-check-input m-0" :value="c.code" v-model="mPickSel"><span><strong style="font-size:.8rem;">{{ c.name }}</strong> <span class="text-muted" style="font-size:.7rem;">· {{ c.code }} · {{ c.dept }}</span></span></span>
+                        <span class="text-muted" style="font-size:.74rem;white-space:nowrap;">{{ c.credits }} cr</span>
+                      </label>
+                      <div v-if="!mPickList.length" class="rl-info text-center py-3" style="font-size:.8rem;">Sin resultados.</div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                      <button class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1" @click="mAddStep=1"><i class="bi bi-arrow-left"></i> Atrás</button>
+                      <div class="d-flex gap-2 align-items-center">
+                        <span class="rl-info" style="font-size:.72rem;">{{ mPickSel.length }} seleccionada(s)</span>
+                        <button class="btn btn-primary btn-sm" :disabled="!mPickSel.length" @click="mAddSelected()">Agregar{{ mPickSel.length ? ' ('+mPickSel.length+')' : '' }}</button>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Modal: BLOQUEO por prerrequisitos faltantes (estrategia "Bloquear") -->
+              <div v-if="mPendingAdd" class="m-modal-bd" @click.self="mPendingBack()">
+                <div class="m-modal" role="dialog" aria-modal="true" aria-label="No se puede asignar: prerrequisitos faltantes">
+                  <div class="d-flex justify-content-between align-items-center mb-1"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi bi-shield-exclamation" style="color:var(--up1-color-danger-500,#9c2121);"></i> No se puede completar la asignación</h5><button class="btn btn-icon-minimal btn-sm" @click="mPendingBack()" aria-label="Volver"><i class="bi bi-x-lg"></i></button></div>
+                  <p class="rl-info mb-2" style="font-size:.78rem;">La asignación requiere prerrequisitos que <strong>aún no están ubicados antes</strong> en la malla. Debes agregarlos primero en un período anterior:</p>
+                  <ul class="pq-misslist mb-2">
+                    <li v-for="o in mPendingAdd.missing" :key="o.code">
+                      <i class="bi bi-arrow-return-right"></i> <strong>{{ o.code }}</strong> — {{ (o.label||'').replace(/^(Aprobar|Obtener) /,'') }}
+                      <span class="text-muted" style="font-size:.72rem;">· requisito de {{ o.forCode }}<template v-if="o.reason==='late'"> · está en Sem {{ o.at }}, debe ir antes</template></span>
+                    </li>
+                  </ul>
+                  <div class="mb-3 p-2 rounded" style="font-size:.72rem;background:var(--up1-gray-100);color:var(--up1-text-secondary);line-height:1.45;"><i class="bi bi-info-circle"></i> No es posible asignar un curso sin haber ubicado antes sus prerrequisitos. <strong>Volver</strong> regresa a la selección para corregirla; <strong>Cancelar</strong> descarta la asignación.</div>
+                  <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-outline-danger" @click="mPendingCancel()">Cancelar</button>
+                    <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="mPendingBack()"><i class="bi bi-arrow-left"></i> Volver a la selección</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal flotante: editar / quitar asignatura de la malla -->
+              <div v-if="mEditOpen && mEditEntry" class="m-modal-bd" @click.self="mEditOpen=false">
+                <div class="m-modal recorddetail mode-edit" role="dialog" aria-modal="true" aria-label="Editar asignatura en la malla">
+                  <div class="d-flex justify-content-between align-items-center mb-1 gap-2"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi bi-pencil-square" style="color:var(--up1-color-primary);"></i> {{ mEditEntry.short||mEditEntry.name }} <span class="rd-chip"><i class="bi bi-pencil"></i> RecordDetail · edit</span></h5><button class="btn btn-icon-minimal btn-sm" @click="mEditOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button></div>
+                  <p class="rl-info mb-3" style="font-size:.74rem;">{{ mEditEntry.code }} · datos de esta asignatura <strong>en la malla</strong> (contexto del plan)</p>
+                  <div class="row g-2 mb-2">
+                    <div class="col-4"><label class="field-label">Créditos</label><input type="number" min="0" class="form-control form-control-sm" :value="mEditEntry.credits" @input="mSetField(mEditEntry.id,'credits',Number($event.target.value))"></div>
+                    <div class="col-8"><label class="field-label">Línea de formación</label><select class="form-select form-select-sm" :value="mEditEntry.cat" @change="mSetField(mEditEntry.id,'cat',$event.target.value)"><option v-for="c in mCategories" :key="c.key" :value="c.key">{{ c.name }}</option></select></div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="field-label">Rol en la malla</label>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                      <select class="form-select form-select-sm" style="max-width:200px;" :value="mEditEntry.poolName?'elec':'oblig'" @change="mSetRole(mEditEntry.id,$event.target.value)"><option value="oblig">Obligatoria</option><option value="elec">Electiva</option></select>
+                      <input v-if="mEditEntry.poolName" :value="mEditEntry.poolName" @input="mSetPool(mEditEntry.id,$event.target.value)" list="elecBlocks" class="form-control form-control-sm" style="max-width:260px;font-size:.78rem;" placeholder="Bloque electivo (OptionPool)" aria-label="Bloque electivo">
+                    </div>
+                    <span v-if="mEditEntry.poolName" class="vf-help"><i class="bi bi-collection"></i> Miembro del bloque electivo <strong>“{{ mEditEntry.poolName }}”</strong> (OptionPool con nombre propio, independiente de la línea de formación). Reutiliza un bloque existente o nómbralo.</span>
+                    <span v-else class="vf-help">Obligatoria: cuenta directo a los créditos de su línea. Marca <strong>Electiva</strong> para asignarla a un bloque electivo.</span>
+                  </div>
+                  <div class="mb-3 p-2 rounded" style="font-size:.72rem;background:var(--up1-gray-100);color:var(--up1-text-secondary);line-height:1.45;"><i class="bi bi-info-circle" aria-hidden="true"></i> Los <strong>prerrequisitos y correquisitos</strong> se definen en el <strong>Programa de asignatura</strong> (pestaña Requisitos), no en la malla — son del curso, no del plan.</div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" @click="mRemoveEntry(mEditEntry.id); mEditOpen=false"><i class="bi bi-trash"></i> Quitar de la malla</button>
+                    <button class="btn btn-primary btn-sm" @click="mEditOpen=false">Listo</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- No-secuencial: el nivel se deriva automáticamente de los prerrequisitos al agregar/quitar -->
+              <div v-if="mEditable && mPlan.nonSequential" class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="mOpenAdd(1)"><i class="bi bi-plus-lg"></i> Agregar módulo</button>
+                <span class="rl-info" style="font-size:.7rem;"><i class="bi bi-info-circle"></i> Los niveles (columnas) se recalculan <strong>automáticamente</strong> según los prerrequisitos — no se asignan a mano.</span>
+              </div>
+
+              <!-- Detalle del bloque electivo enfocado (OptionPool) — ancho completo, sobre la malla -->
+              <div v-if="mFocusEntry && mFocusEntry.kind==='pool'" class="m-reqcard recorddetail mode-view mb-3">
+                <div class="ttl d-flex justify-content-between align-items-center gap-2"><span><i class="bi bi-collection" style="color:var(--up1-color-warning-500);"></i> {{ mFocusEntry.pool.label }}</span><span class="rd-chip"><i class="bi bi-card-list"></i> RecordDetail · OptionPool</span></div>
+                <div class="row g-2 mb-2">
+                  <div class="col-sm-4"><label class="field-label">Selección</label><div class="field-value">Elegir {{ mFocusEntry.pool.pick }} de {{ mFocusEntry.pool.options.length }}</div></div>
+                  <div class="col-sm-4"><label class="field-label">Créditos mínimos</label><div class="field-value">{{ mFocusEntry.pool.minCredits }} créd</div></div>
+                  <div class="col-sm-4"><label class="field-label">Membresía</label><div class="field-value">{{ mFocusEntry.pool.membershipBy }}</div></div>
+                </div>
+                <label class="field-label">Opciones del bloque</label>
+                <div class="row g-2"><div v-for="o in mFocusEntry.pool.options" :key="o.code" class="col-sm-6"><div class="m-drow"><span>{{ o.name }} <span class="text-muted">· {{ o.code }}</span></span><span>{{ o.credits }} cr</span></div></div></div>
+              </div>
+              <div class="row g-3">
+                <!-- Grid de la malla — ANCHO COMPLETO -->
+                <div class="col-12">
+                  <div class="m-cols" role="list" aria-label="Malla curricular por período">
+                    <div v-for="p in mPeriods" :key="p.n" class="m-col" :class="{drop: mEditable && mDragId}" role="listitem" @dragover.prevent @drop="mOnDrop(p.n)">
+                      <div class="m-colh">{{ p.label }}<small :class="{'m-colh-warn':mCreditsOf(p.n)>33}" :title="mCreditsOf(p.n)>33?'Carga alta para el período':''">{{ mCreditsOf(p.n) }} créd.</small></div>
+                      <template v-for="e in mEntriesIn(p.n)" :key="e.id">
+                        <!-- Bloque electivo (OptionPool) -->
+                        <div v-if="e.kind==='pool'" class="m-pool" :class="{sel:mallaFocus===e.id, dim:mDim(e), dragging:mDragId===e.id}" role="button" tabindex="0"
+                             :draggable="mEditable && !mPlan.nonSequential" @dragstart="mDragId=e.id" @dragend="mDragId=null"
+                             :aria-label="'Bloque electivo '+e.name+'. Elegir '+e.pool.pick+' de '+e.pool.options.length+', mínimo '+e.pool.minCredits+' créditos.'"
+                             @click="mallaFocus=e.id" @keydown.enter.prevent="mallaFocus=e.id" @keydown.space.prevent="mallaFocus=e.id">
+                          <div class="nm"><i class="bi bi-collection" aria-hidden="true"></i> {{ e.name }}</div>
+                          <div class="rule">Elegir {{ e.pool.pick }} de {{ e.pool.options.length }} · ≥{{ e.pool.minCredits }} créd.</div>
+                        </div>
+                        <!-- Asignatura (curso) -->
+                        <div v-else class="m-pe" :class="[e.cat,{sel:mallaFocus===e.id, dim:mDim(e), dragging:mDragId===e.id, 'pq-flag':!!mEntryIssue(e.id)}]" role="button" tabindex="0"
+                             :draggable="mEditable && !mPlan.nonSequential" @dragstart="mDragId=e.id" @dragend="mDragId=null"
+                             :aria-label="e.name+' ('+e.code+'), '+e.credits+' créditos, '+e.catLabel+(e.prereq?'. '+mPrereqText(e):'')+(mEntryIssue(e.id)?'. Atención: prerrequisitos no ubicados antes en la malla.':'')"
+                             @click="mOnCardClick(e)" @keydown.enter.prevent="mOnCardClick(e)" @keydown.space.prevent="mOnCardClick(e)">
+                          <div class="m-pe-top">
+                            <span class="code">{{ e.code }}</span>
+                            <span class="m-cr">{{ e.credits }}<small>cr</small></span>
+                          </div>
+                          <div class="nm">{{ e.name }}</div>
+                          <div class="meta">
+                            <span class="m-tag" :class="e.cat"><i :class="['bi',catIcon(e.cat)]" aria-hidden="true"></i> {{ catLabelOf(e.cat) }}</span>
+                            <span v-if="e.poolName" class="m-req-hint" :title="'Electivo · '+e.poolName+' (derivado de OptionPool)'" style="background:var(--up1-color-warning-50);color:var(--up1-color-warning-700);"><i class="bi bi-collection" aria-hidden="true"></i> electivo</span>
+                            <span v-if="mEntryIssue(e.id)" class="m-req-hint pq-badge" :title="'Prerrequisitos no ubicados antes: '+[...mEntryIssue(e.id).absent,...mEntryIssue(e.id).late].map(o=>o.code).join(', ')"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> prereq</span>
+                            <span v-else-if="e.prereq" class="m-req-hint" :title="mPrereqText(e)"><i class="bi bi-diagram-2" aria-hidden="true"></i> req.</span>
+                          </div>
+                        </div>
+                      </template>
+                      <button v-if="mEditable && !mPlan.nonSequential" class="m-add" @click="mOpenAdd(p.n)"><i class="bi bi-plus-lg"></i> Asignatura</button>
+                    </div>
+                    <div v-if="mEditable && !mPlan.nonSequential" class="m-addperiod" @click="mAddPeriod()" role="button" tabindex="0" @keydown.enter.prevent="mAddPeriod()" aria-label="Agregar período"><i class="bi bi-plus-lg"></i> Período</div>
+                  </div>
+                </div>
+
+            </div>
+            </div>
+          </div>
+
+          <!-- ===== PESTAÑA REQUISITOS (prereqs/coreqs del curso · owner=activity) ===== -->
+          <div v-else-if="tab==='requisitos'" class="animate-fade-in">
+            <h2 class="record-list-title mb-2">Requisitos <i class="bi bi-caret-down" style="font-size:1rem;color:var(--up1-text-muted);"></i></h2>
+
+            <div v-if="detailObj==='syllabus'" class="mb-3 p-2 rounded d-flex align-items-center gap-2 flex-wrap" style="font-size:.74rem;background:rgba(33,73,138,.07);">
+              <i class="bi bi-link-45deg" style="color:var(--up1-color-info-500);" aria-hidden="true"></i>
+              <span>Requisitos <strong>heredados del Programa de asignatura</strong> vía MADS.</span>
+              <div class="m-toggle ms-auto" role="group" aria-label="Modo de override del sílabo">
+                <button :class="{on:reqOverride==='inherit'}" @click="reqOverride='inherit'">Hereda</button>
+                <button :class="{on:reqOverride==='add'}" @click="reqOverride='add'">Agrega</button>
+                <button :class="{on:reqOverride==='replace'}" @click="reqOverride='replace'">Reemplaza</button>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+              <small class="rl-info">{{ reqRows.length }} elementos. Ordenado por vía. sin filtros.</small>
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" @click="reqRuleOpen=true"><i class="bi bi-diagram-2"></i> Ver regla unificada</button>
+                <button v-if="reqEditable" class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="reqOpenAdd()"><i class="bi bi-plus-lg"></i> Crear registro</button>
+                <div class="position-relative"><i class="bi bi-search position-absolute" style="left:.6rem;top:50%;transform:translateY(-50%);color:var(--up1-text-muted);font-size:.8rem;"></i><input class="rl-search py-1 ps-4 pe-2" style="width:220px;font-size:.8rem;height:34px;" placeholder="Buscar en esta lista..."></div>
+                <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-funnel-fill"></i></button>
+                <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-gear"></i></button>
+                <button class="btn btn-icon-minimal btn-sm active" style="height:34px;"><i class="bi bi-list-ul"></i></button>
+                <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-arrow-clockwise"></i></button>
+              </div>
+            </div>
+
+            <div class="rl-card">
+              <table class="rl-table">
+                <thead><tr>
+                  <th class="rl-chk text-center"><input type="checkbox" class="form-check-input"></th>
+                  <th class="sorted">Clase <i class="rl-caret bi bi-caret-up-fill"></i></th>
+                  <th>Requisito <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th>Condición <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th>Vía <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th>Exig. <i class="rl-caret bi bi-caret-up"></i></th>
+                  <th class="text-end">Acciones</th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="r in reqRows" :key="r.key" style="cursor:default;">
+                    <td class="rl-chk text-center" @click.stop><input type="checkbox" class="form-check-input"></td>
+                    <td><span class="badge" style="background:var(--up1-color-primary-50);color:var(--up1-color-primary);font-size:.6rem;">{{ r.clase }}</span><br><span class="text-muted" style="font-size:.58rem;">{{ r.family }}</span></td>
+                    <td>{{ r.name }}</td>
+                    <td style="font-size:.78rem;">{{ r.cond }}</td>
+                    <td><span class="badge" style="background:var(--up1-gray-100);color:var(--up1-text-secondary);font-size:.62rem;">Vía {{ r.via }}</span></td>
+                    <td><span class="badge" :class="r.hard?'bg-secondary':''" :style="r.hard?'font-size:.56rem;':'font-size:.56rem;background:var(--up1-color-warning-50);color:var(--up1-color-warning-700);'">{{ r.hard?'Obligatorio':'Recomendado' }}</span></td>
+                    <td class="text-end" @click.stop><button class="rl-pagebtn" :class="{active:reqMenu&&reqMenu.key===r.key}" @click="reqOpenMenu($event,r)" aria-label="Acciones" aria-haspopup="true"><i class="bi bi-caret-down-fill" style="font-size:.7rem;"></i></button></td>
+                  </tr>
+                  <tr v-if="!reqRows.length"><td colspan="7" class="text-center rl-info py-4" style="font-size:.82rem;"><i class="bi bi-check-circle d-block mb-1 fs-5"></i>Sin requisitos — matrícula libre.<span v-if="reqEditable"> Usa “Crear registro”.</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+              <small class="rl-info">1-{{ reqRows.length }} de {{ reqRows.length }}</small>
+              <div class="d-flex align-items-center gap-1">
+                <span class="rl-pagebtn"><i class="bi bi-chevron-double-left" style="font-size:.7rem;"></i></span>
+                <span class="rl-pagebtn"><i class="bi bi-chevron-left" style="font-size:.7rem;"></i></span>
+                <span class="rl-pagebtn active">1</span>
+                <span class="rl-pagebtn"><i class="bi bi-chevron-right" style="font-size:.7rem;"></i></span>
+                <span class="rl-pagebtn"><i class="bi bi-chevron-double-right" style="font-size:.7rem;"></i></span>
+              </div>
+            </div>
+
+            <!-- Menú de acciones de fila (requisito) -->
+            <div v-if="reqMenu" class="rl-menu-bd" @click="reqMenu=null"></div>
+            <div v-if="reqMenu" class="rl-menu" :style="{left:reqMenu.x+'px', top:(reqMenu.y+8)+'px'}">
+              <button class="rl-menu-item" @click="reqRowOpenFn(reqMenu.row,'view')"><i class="bi bi-eye"></i> Ver</button>
+              <button v-if="reqEditable" class="rl-menu-item" @click="reqRowOpenFn(reqMenu.row,'edit')"><i class="bi bi-pencil"></i> Editar</button>
+              <button v-if="reqEditable" class="rl-menu-item" @click="reqRemove(reqMenu.row.viaId,reqMenu.row.itemId)"><i class="bi bi-trash"></i> Eliminar</button>
+            </div>
+
+            <!-- Modal flotante: ver / editar una entrada de requisito -->
+            <div v-if="reqRowOpen && reqRow" class="m-modal-bd" @click.self="reqRowOpen=false">
+              <div class="m-modal recorddetail" :class="reqRowMode==='edit'?'mode-edit':'mode-view'" role="dialog" aria-modal="true" aria-label="Requisito">
+                <div class="d-flex justify-content-between align-items-center mb-2"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi" :class="reqRowMode==='edit'?'bi-pencil-square':'bi-eye'" style="color:var(--up1-color-primary);"></i> {{ reqRowMode==='edit'?'Editar':'Ver' }} requisito <span class="rd-chip"><i class="bi bi-card-list"></i> requirement</span></h5><button class="btn btn-icon-minimal btn-sm" @click="reqRowOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button></div>
+                <div class="row g-2 mb-2">
+                  <div class="col-6"><label class="field-label">Clase</label><div class="field-value">{{ reqRow.clase }} <span class="text-muted" style="font-size:.7rem;">· {{ reqRow.family }}</span></div></div>
+                  <div class="col-6"><label class="field-label">Vía</label><div class="field-value">Vía {{ reqRow.via }}</div></div>
+                </div>
+                <div class="mb-2"><label class="field-label">Requisito</label><div class="field-value">{{ reqRow.name }}</div></div>
+                <div class="mb-2"><label class="field-label">Condición</label><div class="field-value">{{ reqRow.cond }}</div></div>
+                <div class="mb-3"><label class="field-label">Exigencia</label>
+                  <select v-if="reqRowMode==='edit'" class="form-select form-select-sm" :value="reqRow.hard?'hard':'soft'" @change="reqSetHard(reqRow.viaId,reqRow.itemId,$event.target.value==='hard')"><option value="hard">Obligatorio</option><option value="soft">Recomendado</option></select>
+                  <div v-else class="field-value">{{ reqRow.hard?'Obligatorio':'Recomendado' }}</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                  <button class="btn btn-icon-minimal btn-sm" @click="reqRowOpen=false">{{ reqRowMode==='edit'?'Cancelar':'Cerrar' }}</button>
+                  <button v-if="reqRowMode==='edit'" class="btn btn-primary btn-sm" @click="reqRowOpen=false">Guardar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal: agregar requisito (catálogo + tipo + vía) -->
+            <div v-if="reqAddOpen" class="m-modal-bd" @click.self="reqAddOpen=false">
+              <div class="m-modal" role="dialog" aria-modal="true" aria-label="Agregar requisito">
+                <div class="d-flex justify-content-between align-items-center mb-2"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi bi-plus-circle" style="color:var(--up1-color-primary);"></i> Agregar requisito</h5><button class="btn btn-icon-minimal btn-sm" @click="reqAddOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button></div>
+                <div class="m-steps mb-3"><span class="m-step" :class="{on:reqAddStep===1, done:reqAddStep>1}"><i class="bi" :class="reqAddStep>1?'bi-check-circle-fill':'bi-1-circle'"></i> Clase de requisito</span><span class="m-step-sep"></span><span class="m-step" :class="{on:reqAddStep===2}"><i class="bi bi-2-circle"></i> Detalle</span></div>
+
+                <!-- PASO 1: clase de requisito + vía + exigencia -->
+                <template v-if="reqAddStep===1">
+                  <div class="mb-3">
+                    <label class="field-label">Tipo de requisito</label>
+                    <select v-model="reqAddClass" class="form-select form-select-sm"><option v-for="c in reqClasses" :key="c.k" :value="c.k">{{ c.label }}</option></select>
+                  </div>
+                  <div class="row g-2">
+                    <div class="col-6"><label class="field-label">Vía</label><select v-model="reqAddViaId" class="form-select form-select-sm" style="font-size:.8rem;"><option v-for="(v,vi) in reqVias" :key="v.id" :value="v.id">Vía {{ vi+1 }}{{ v.items.length?'':' (vacía)' }}</option><option value="new">+ Nueva vía (O)</option></select></div>
+                    <div class="col-6"><label class="field-label">Exigencia</label><select v-model="reqAddHard" class="form-select form-select-sm" style="font-size:.8rem;"><option value="hard">Obligatorio</option><option value="soft">Recomendado</option></select></div>
+                  </div>
+                  <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button class="btn btn-icon-minimal btn-sm" @click="reqAddOpen=false">Cancelar</button>
+                    <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="reqAddStep=2">Siguiente <i class="bi bi-arrow-right"></i></button>
+                  </div>
+                </template>
+
+                <!-- PASO 2: detalle de la clase elegida -->
+                <template v-else>
+                  <p class="rl-info mb-2 d-flex align-items-center gap-2 flex-wrap" style="font-size:.74rem;"><span class="badge" style="background:var(--up1-color-primary-50);color:var(--up1-color-primary);"><i :class="['bi',(reqClasses.find(c=>c.k===reqAddClass)||{}).icon]"></i> {{ reqClassLabel(reqAddClass) }}</span> <span class="text-muted">· {{ reqAddHard==='hard'?'Obligatorio':'Recomendado' }}</span></p>
+
+                <!-- Curso / Electivo (RecordState / Group) -->
+                <template v-if="reqAddClass==='course' || reqAddClass==='pool'">
+                  <p class="rl-info mb-2" style="font-size:.74rem;">Catálogo de <strong>Activity</strong>. Busca, filtra por departamento y selecciona.</p>
+                  <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <div class="position-relative flex-grow-1" style="min-width:180px;">
+                      <i class="bi bi-search position-absolute" style="left:.6rem;top:50%;transform:translateY(-50%);color:var(--up1-text-muted);font-size:.8rem;" aria-hidden="true"></i>
+                      <input v-model="reqPickSearch" class="form-control form-control-sm ps-4" style="font-size:.8rem;" placeholder="Buscar por nombre o código…" aria-label="Buscar asignatura">
+                    </div>
+                    <select v-model="reqPickDept" class="form-select form-select-sm" style="max-width:210px;font-size:.8rem;" aria-label="Filtrar por departamento"><option value="">Todos los departamentos</option><option v-for="d in mDepts" :key="d" :value="d">{{ d }}</option></select>
+                  </div>
+                  <div style="max-height:220px;overflow:auto;">
+                    <label v-for="c in reqPickList" :key="c.code" class="m-cat-pick" style="cursor:pointer;">
+                      <span class="d-flex align-items-center gap-2"><input type="checkbox" class="form-check-input m-0" :value="c.code" v-model="reqPickSel"><span><strong style="font-size:.8rem;">{{ c.name }}</strong> <span class="text-muted" style="font-size:.7rem;">· {{ c.code }} · {{ c.dept }}</span></span></span>
+                      <span class="text-muted" style="font-size:.74rem;white-space:nowrap;">{{ c.credits }} cr</span>
+                    </label>
+                    <div v-if="!reqPickList.length" class="rl-info text-center py-3" style="font-size:.8rem;">Sin resultados.</div>
+                  </div>
+                  <div class="row g-2 mt-1" v-if="reqAddClass==='course'">
+                    <div class="col-sm-6"><label class="field-label">Concurrencia (timing)</label><select v-model="reqTiming" class="form-select form-select-sm" style="font-size:.78rem;"><option value="Before">Antes (prerrequisito)</option><option value="Concurrent">En paralelo (correquisito)</option><option value="Either">Antes o en paralelo</option></select></div>
+                    <div class="col-sm-3"><label class="field-label">Nota mín.</label><input type="number" step="0.1" v-model="reqMinGrade" class="form-control form-control-sm" style="font-size:.78rem;" placeholder="—"></div>
+                    <div class="col-sm-3 d-flex align-items-end"><label class="d-flex align-items-center gap-1" style="font-size:.72rem;cursor:pointer;"><input type="checkbox" class="form-check-input m-0" v-model="reqAnti"> Anti-requisito</label></div>
+                  </div>
+                  <div class="row g-2 mt-1" v-else>
+                    <div class="col-sm-6"><label class="field-label">Exigir al menos (K de N)</label><input type="number" min="1" v-model="reqPoolMin" class="form-control form-control-sm" style="font-size:.78rem;"></div>
+                    <div class="col-sm-6 d-flex align-items-end"><span class="rl-info" style="font-size:.7rem;">Se crea un Group(OR, minToSatisfy) con los cursos elegidos.</span></div>
+                  </div>
+                </template>
+
+                <!-- Métrica (MetricThreshold) -->
+                <template v-else-if="reqAddClass==='credits' || reqAddClass==='gpa' || reqAddClass==='period'">
+                  <p class="rl-info mb-2" style="font-size:.74rem;"><strong>MetricThreshold</strong> — cantidad medible del avance vs. umbral.</p>
+                  <div class="row g-2">
+                    <div class="col-sm-4"><label class="field-label">Operador</label><select v-model="reqOp" class="form-select form-select-sm" style="font-size:.78rem;"><option value=">=">&ge;</option><option value=">">&gt;</option><option value="=">=</option><option value="<=">&le;</option><option value="<">&lt;</option></select></div>
+                    <div class="col-sm-4"><label class="field-label">Valor</label><input type="number" v-model="reqVal" class="form-control form-control-sm" style="font-size:.78rem;" :placeholder="reqAddClass==='gpa'?'ej. 5.0':reqAddClass==='period'?'ej. 5':'ej. 120'"></div>
+                    <div class="col-sm-4" v-if="reqAddClass==='credits'"><label class="field-label">Ámbito</label><select v-model="reqScopeKey" class="form-select form-select-sm" style="font-size:.78rem;"><option v-for="s in reqScopes" :key="s.key" :value="s.key">Créditos {{ s.label }}</option></select></div>
+                    <div class="col-sm-4" v-else><label class="field-label">Métrica</label><input class="form-control form-control-sm" style="font-size:.78rem;" :value="reqAddClass==='gpa'?'GPA':'Período / nivel'" disabled></div>
+                  </div>
+                </template>
+
+                <!-- Competencia (RecordState) -->
+                <template v-else-if="reqAddClass==='competency'">
+                  <p class="rl-info mb-2" style="font-size:.74rem;"><strong>RecordState</strong> — nivel de competencia logrado.</p>
+                  <div class="row g-2">
+                    <div class="col-sm-8"><label class="field-label">Competencia</label><select v-model="reqCompCode" class="form-select form-select-sm" style="font-size:.8rem;"><option v-for="c in reqCompetencies" :key="c.code" :value="c.code">{{ c.name }}</option></select></div>
+                    <div class="col-sm-4"><label class="field-label">Nivel mín.</label><input type="number" min="1" v-model="reqCompLevel" class="form-control form-control-sm" style="font-size:.78rem;"></div>
+                  </div>
+                </template>
+
+                <!-- Programa / cohorte / consentimiento (AttributeMatch) -->
+                <template v-else-if="reqAddClass==='program'">
+                  <p class="rl-info mb-2" style="font-size:.74rem;"><strong>AttributeMatch</strong> — pertenencia/atributo del estudiante.</p>
+                  <div class="row g-2 mb-2">
+                    <div class="col-sm-6"><label class="field-label">Dimensión</label><select v-model="reqDim" class="form-select form-select-sm" style="font-size:.78rem;"><option value="Program">Programa</option><option value="StudentGroup">Cohorte / Grupo</option><option value="Consent">Consentimiento</option></select></div>
+                    <div class="col-sm-6"><label class="field-label">Modo</label><select v-model="reqMode" class="form-select form-select-sm" style="font-size:.78rem;"><option value="Include">Incluir (solo estos)</option><option value="Exclude">Excluir</option></select></div>
+                  </div>
+                  <div style="max-height:170px;overflow:auto;">
+                    <label v-for="o in reqAttrOptions" :key="o.code" class="m-cat-pick" style="cursor:pointer;"><span class="d-flex align-items-center gap-2"><input type="checkbox" class="form-check-input m-0" :value="o.code" v-model="reqAttrSel"><span style="font-size:.8rem;">{{ o.name }}</span></span></label>
+                  </div>
+                </template>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 gap-2">
+                  <button class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1" @click="reqAddStep=1"><i class="bi bi-arrow-left"></i> Atrás</button>
+                  <button class="btn btn-primary btn-sm" @click="reqConfirmAdd()">Agregar requisito</button>
+                </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Modal flotante: visualización de la regla unificada (árbol requirement) -->
+            <div v-if="reqRuleOpen" class="m-modal-bd" @click.self="reqRuleOpen=false">
+              <div class="m-modal" role="dialog" aria-modal="true" aria-label="Regla de elegibilidad">
+                <div class="d-flex justify-content-between align-items-center mb-2"><h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1rem;"><i class="bi bi-diagram-2" style="color:var(--up1-color-primary);"></i> Regla de elegibilidad <span class="text-muted" style="font-weight:400;font-size:.8rem;">· requirement (owner=activity)</span></h5><button class="btn btn-icon-minimal btn-sm" @click="reqRuleOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button></div>
+                <p class="rl-info mb-2" style="font-size:.76rem;">Para cursar <strong>{{ current.code }}</strong>: {{ reqHumanText }}</p>
+                <req-node v-if="reqTree" :node="reqTree" :lens="'design'"></req-node>
+                <div v-else class="rl-info" style="font-size:.78rem;"><i class="bi bi-check-circle"></i> Sin requisitos — matrícula libre.</div>
+                <div class="d-flex align-items-center mt-3 gap-2">
+                  <button v-if="reqEditable" class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1" @click="reqAddVia()"><i class="bi bi-signpost-split" aria-hidden="true"></i> Agregar vía alternativa (O)</button>
+                  <button class="btn btn-primary btn-sm ms-auto" @click="reqRuleOpen=false">Cerrar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="animate-fade-in">
+            <h4 class="fw-bold mb-1">{{ sectionTable.title }}</h4>
+            <p class="rl-info mb-3">{{ sectionTable.rows.length }} elementos. Ordenado por position.<span v-if="tab==='ra' && demo.bloom" style="color:var(--up1-color-primary);"> · Reescritos por Yupi (taxonomía de Bloom)</span></p>
+            <div class="rl-card">
+              <table class="rl-table">
+                <thead><tr>
+                  <th class="rl-chk text-center"><input type="checkbox" class="form-check-input"></th>
+                  <th v-for="(col,ci) in sectionTable.cols" :key="col.key" :class="ci===0 ? 'sorted' : ''">{{ col.label }} <i class="rl-caret" :class="ci===0 ? 'bi bi-caret-up-fill' : 'bi bi-caret-up'"></i></th>
+                  <th class="text-end">Acciones</th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="(row,ri) in sectionTable.rows" :key="ri">
+                    <td class="rl-chk text-center"><input type="checkbox" class="form-check-input"></td>
+                    <td v-for="col in sectionTable.cols" :key="col.key" :style="col.type==='wrap' ? 'white-space:normal;min-width:300px;' : ''">
+                      <template v-if="col.type==='badge'"><span v-if="row[col.key] && row[col.key] !== '—'" class="badge bg-info">{{ row[col.key] }}</span><span v-else class="text-muted">—</span></template>
+                      <span v-else-if="col.type==='estado'" style="color:var(--up1-color-primary);">{{ row[col.key] }}</span>
+                      <a v-else-if="col.type==='link'" class="rl-link">{{ row[col.key] }}</a>
+                      <span v-else>{{ row[col.key] }}</span>
+                    </td>
+                    <td class="text-end"><i class="bi bi-caret-down-fill" style="color:var(--up1-text-muted);"></i></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Yupi removido para MVP (sin interacción con el agente por ahora) -->
+    </div>
+  </div>
+
+  <!-- Yupi flotante y FAB removidos para MVP (sin interacción con el agente por ahora) -->
+
+  <!-- TOASTS -->
+  <div class="position-fixed d-flex flex-column gap-2" style="bottom:24px;left:24px;z-index:1080;">
+    <div v-for="t in toasts" :key="t.id" class="toast-wrap shadow rounded-end p-3 d-flex gap-3 animate-fade-in" style="width:320px;">
+      <i class="bi bi-check-circle-fill fs-5" style="color:var(--up1-color-primary);"></i>
+      <div><div class="fw-bold" style="font-size:.85rem;">{{ t.title }}</div><div class="rl-info" style="font-size:.75rem;">{{ t.message }}</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp, ref, computed, watch, nextTick, onMounted } = Vue;
+const ReqNode = {
+  name:'req-node',
+  props:['node','lens'],
+  template:`
+    <div class="m-rn">
+      <template v-if="node.type==='group'">
+        <div class="gnode"><span class="comb">{{ node.combinator }}{{ node.minToSatisfy?(' · '+node.minToSatisfy+' de '+node.children.length):'' }}</span> {{ node.label }}</div>
+        <div class="kids"><req-node v-for="(c,i) in node.children" :key="i" :node="c" :lens="lens"></req-node></div>
+      </template>
+      <template v-else>
+        <div class="m-leaf">
+          <span class="st" :class="lens==='validate'?('m-v-'+(node.v||'ok')):''" role="img" :aria-label="lens==='validate' ? (node.v==='warn'?'Advertencia':node.v==='error'?'Inconsistente':'Válido') : 'Requisito'">
+            <i v-if="lens!=='validate'" class="bi bi-dot" style="color:var(--up1-gray-500);" aria-hidden="true"></i>
+            <i v-else-if="node.v==='warn'" class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <i v-else-if="node.v==='error'" class="bi bi-x-circle-fill" aria-hidden="true"></i>
+            <i v-else class="bi bi-check-circle-fill" aria-hidden="true"></i>
+          </span>
+          <span class="lbl">{{ node.label }} <span class="rt">· {{ node.rt }}</span>
+            <span v-if="lens==='validate' && node.note" class="d-block text-muted" style="font-size:.64rem;margin-top:1px;">{{ node.note }}</span>
+          </span>
+        </div>
+      </template>
+    </div>`
+};
+createApp({
+  components:{ 'req-node':ReqNode },
+  setup(){
+    const apps=[
+      {id:'curriculum',name:'Curriculum Design',icon:'bi-mortarboard-fill'},
+      {id:'mapping',name:'Curriculum Mapping',icon:'bi-diagram-3'},
+      {id:'assessment',name:'Learning Assessment',icon:'bi-clipboard-check'},
+      {id:'retention',name:'Retention & Wellbeing',icon:'bi-heart-pulse'},
+    ];
+    const role=ref('Jefe de carrera'); const view=ref('list'); const tab=ref('general');
+    const chatOpen=ref(true); const chatDocked=ref(false);
+    const input=ref(''); const msgs=ref([]); const toasts=ref([]);
+    const demo=ref({bloom:false,coverage:false,status:'Borrador'});
+
+    const ecua={ name:'Ecuaciones Diferenciales', code:'111026C', status:'Borrador', version:'v2022-actual', level:'Pregrado', levelRaw:'Undergraduate', credits:3, unit:'Departamento de Matemáticas',
+      description:'Curso que brinda herramientas conceptuales para el planteamiento y solución de ecuaciones diferenciales ordinarias como instrumento matemático para la modelización de fenómenos descriptos por una variable escalar (crecimiento poblacional, enfriamiento, propagación de enfermedades, circuitos eléctricos). Confluyen nociones de derivación, integración y álgebra lineal. Metodología basada en Aprendizaje Basado en Problemas (ABP).' };
+    const redes={ name:'Introduccion a las Redes', code:'TIR101', status:'Borrador', version:'v2022-actual', level:'Técnico Profesional', levelRaw:'TechnicalProfessional', credits:4, unit:'Escuela de Tecnologías',
+      description:'Programa de asignatura del área de tecnologías de la información.' };
+    const programs=[ecua, redes];
+    const current=ref(ecua);
+    const isEcuaciones=computed(()=> current.value.code==='111026C');
+
+    // ===== Selector de objetos (4 pestañas) con columnas estándar deducidas del modelo funcional =====
+    // ===== Dashboard "Métricas de diseño curricular" =====
+    const dashFilters=[{label:'Semestre',value:'2026-1'},{label:'Año cohorte',value:'Todos'},{label:'Programa',value:'Todos'},{label:'Facultad',value:'Todas'},{label:'Estado',value:'Todos'}];
+    const dashKpis=[{value:'248',label:'Programas de asignatura',color:'var(--up1-color-primary)'},{value:'72%',label:'Publicados / vigentes',color:'var(--up1-color-success-500)'},{value:'36',label:'Planes de estudio activos',color:'var(--up1-color-primary)'},{value:'18',label:'Documentos en revisión',color:'var(--up1-color-warning-500)'},{value:'84%',label:'Cobertura de competencias (prom.)',color:'var(--up1-color-primary)'},{value:'91%',label:'Sílabos con secciones completas',color:'var(--up1-color-success-500)'}];
+    const estadoBars=[{label:'Borrador',value:64,color:'var(--up1-text-muted)'},{label:'En revisión',value:18,color:'var(--up1-color-warning-500)'},{label:'Aprobado',value:42,color:'var(--up1-color-info-500)'},{label:'Publicado',value:124,color:'var(--up1-color-success-500)'}];
+    const facultadBars=[{label:'Ingeniería',value:86,color:'var(--up1-color-primary)'},{label:'Ciencias de la Salud',value:54,color:'var(--up1-color-info-500)'},{label:'Ciencias Jurídicas',value:38,color:'var(--up1-color-warning-500)'},{label:'Ciencias Sociales',value:70,color:'var(--up1-color-success-500)'}];
+    const estadoMax=Math.max(...estadoBars.map(b=>b.value));
+    const facultadMax=Math.max(...facultadBars.map(b=>b.value));
+
+    // Columnas reales del objeto ChangeLog (layout default_ChangeLog_list) — compartidas por Historial del programa y Historial general
+    const clCols=[{key:'date',label:'Fecha'},{key:'activity',label:'Actividad',type:'link'},{key:'entityType',label:'Tipo entidad'},{key:'section',label:'Sección'},{key:'item',label:'Item'},{key:'action',label:'Acción',type:'badge'},{key:'source',label:'Origen'},{key:'field',label:'Campo'},{key:'user',label:'Usuario'}];
+    const objTabs=[
+      { key:'metrics', title:'Métricas de diseño curricular' },
+      { key:'programs', title:'Programas Académicos',
+        cols:[{key:'name',label:'Nombre',type:'link'},{key:'status',label:'Estado',type:'estado'},{key:'code',label:'Código'},{key:'degree',label:'Grado'},{key:'modality',label:'Modalidad'},{key:'duration',label:'Duración'},{key:'unit',label:'Unidad Organizativa',type:'link'}],
+        rows:[
+          {name:'Ingeniería Civil Industrial',status:'Vigente',code:'ICI',degree:'Licenciatura',modality:'Presencial',duration:'11 semestres',unit:'Facultad de Ingeniería'},
+          {name:'Licenciatura en Matemáticas',status:'Vigente',code:'LMAT',degree:'Licenciatura',modality:'Presencial',duration:'8 semestres',unit:'Facultad de Ciencias'},
+          {name:'Técnico en Redes',status:'Borrador',code:'TNR',degree:'Técnico de Nivel Superior',modality:'Presencial',duration:'5 semestres',unit:'Escuela de Tecnologías'},
+        ] },
+      { key:'plans', title:'Planes de estudio',
+        cols:[{key:'name',label:'Nombre',type:'link'},{key:'status',label:'Estado',type:'estado'},{key:'code',label:'Código'},{key:'program',label:'Programa Académico',type:'link'},{key:'type',label:'Tipo'},{key:'credits',label:'Créditos'},{key:'version',label:'Versión'}],
+        rows:[
+          {name:'Plan Ing. Civil Industrial 2024',status:'Vigente',code:'PICI-2024',program:'Ingeniería Civil Industrial',type:'Secuencial',credits:360,version:'v2024'},
+          {name:'Plan Matemáticas 2022',status:'Vigente',code:'PMAT-2022',program:'Licenciatura en Matemáticas',type:'Secuencial',credits:240,version:'v2022'},
+          {name:'Plan Magíster en Ciencia de Datos 2025',status:'Vigente',code:'PMDS-2025',program:'Magíster en Ciencia de Datos',type:'Modular · sin semestres fijos',credits:150,version:'v2025'},
+          {name:'Plan Magíster en Ciencia de Datos 2026',status:'Borrador',code:'PMDS-2026',program:'Magíster en Ciencia de Datos',type:'Modular · en diseño',credits:150,version:'v2026'},
+          {name:'Plan Ing. Ambiental 2026',status:'Borrador',code:'PAMB-2026',program:'Ingeniería Ambiental',type:'Secuencial · en diseño',credits:300,version:'v2026'},
+        ] },
+      { key:'activity', title:'Programas de asignatura',
+        cols:[{key:'name',label:'Nombre',type:'link'},{key:'status',label:'Estado',type:'estado'},{key:'code',label:'Código'},{key:'version',label:'Versión'},{key:'levelRaw',label:'Nivel'},{key:'unit',label:'Unidad Organizativa',type:'link'}],
+        rows: programs },
+      { key:'syllabus', title:'Syllabus',
+        cols:[{key:'name',label:'Nombre',type:'link'},{key:'status',label:'Estado',type:'estado'},{key:'code',label:'Código'},{key:'section',label:'Sección'},{key:'period',label:'Periodo'},{key:'teacher',label:'Docente'}],
+        rows:[
+          {name:'Cálculo I — Sección 2',status:'Publicado',code:'MAT101',section:'NRC 14312',period:'2026-1',teacher:'Juan Pérez',teacherCode:'JPEREZ',sede:'Sede Casa Central',version:'v2022-actual',level:'Pregrado',credits:6,description:'Sílabo de Cálculo I para la Sección 2, período 2026-1.'},
+          {name:'Ecuaciones Diferenciales — Sección 1',status:'Borrador',code:'111026C',section:'NRC 14320',period:'2026-1',teacher:'Carla Soto',teacherCode:'CSOTO',sede:'Sede Casa Central',version:'v2022-actual',level:'Pregrado',credits:3,description:'Sílabo de Ecuaciones Diferenciales para la Sección 1, período 2026-1.'},
+          {name:'Introducción a las Redes — Sección 1',status:'En revisión',code:'TIR101',section:'NRC 18317',period:'2026-1',teacher:'Adaulfo Mendoza',teacherCode:'AMENDOZA',sede:'Sede Providencia',version:'v2022-actual',level:'Técnico Profesional',credits:4,description:'Sílabo de Introducción a las Redes para la Sección 1, período 2026-1.'},
+        ] },
+      { key:'historial', title:'Historial', readonly:true, cols: clCols, rows:[
+          {date:'2026-06-05 10:42',activity:'Ecuaciones Diferenciales',entityType:'Activity',section:'—',item:'—',action:'StateTransition',source:'Workflow',field:'currentStatusId',user:'Esteban Cortés'},
+          {date:'2026-06-05 09:30',activity:'Plan Ing. Civil Industrial 2024',entityType:'CurriculumPlan',section:'PlanEntry',item:'MAT101 — Cálculo I',action:'Update',source:'DirectEdit',field:'credits',user:'Daniel Gálvez'},
+          {date:'2026-06-04 16:10',activity:'Matriz de Competencias — Ingeniería',entityType:'CompetencyNode',section:'—',item:'Pensamiento Crítico',action:'Create',source:'DirectEdit',field:'—',user:'Esteban Cortés'},
+          {date:'2026-06-04 14:55',activity:'Cálculo I — Sección 2',entityType:'Offering',section:'EvaluationComponent',item:'Quiz 3',action:'Update',source:'MADS',field:'weight',user:'Sistema'},
+          {date:'2026-06-03 12:20',activity:'Introduccion a las Redes',entityType:'CurricularSection',section:'Content',item:'Unidad 2',action:'Update',source:'DirectEdit',field:'hours',user:'Carla Soto'},
+          {date:'2026-06-02 08:05',activity:'Alerta de retención — Matías González',entityType:'RetentionAlert',section:'—',item:'—',action:'Create',source:'SystemCalculation',field:'—',user:'Sistema'},
+        ] },
+    ];
+    const objKey=ref('plans');
+    const currentObj=computed(()=> objTabs.find(o=>o.key===objKey.value));
+    const setObj=(k)=>{ objKey.value=k; view.value='list'; };
+
+    const detailObj=ref('activity');
+    const activityTabs=[{key:'general',label:'General'},{key:'requisitos',label:'Requisitos'},{key:'modalidades',label:'Modalidades'},{key:'ra',label:'Resultados de aprendizaje'},{key:'contenidos',label:'Contenidos'},{key:'sesiones',label:'Sesiones'},{key:'eval',label:'Evaluación'},{key:'biblio',label:'Bibliografía'},{key:'historial',label:'Historial'}];
+    const detailTabsByObj={ programs:[{key:'general',label:'General'},{key:'perfil',label:'Perfil de egreso'},{key:'planes',label:'Planes de estudio'},{key:'historial',label:'Historial'}], plans:[{key:'general',label:'General'},{key:'formacion',label:'Líneas de formación'},{key:'malla',label:'Malla curricular'},{key:'historial',label:'Historial'}], activity:activityTabs, syllabus:activityTabs };
+    const detailTabs=computed(()=> detailTabsByObj[detailObj.value] || activityTabs);
+    const raList=ref([
+      {code:'RA1',original:'Resuelve ecuaciones diferenciales ordinarias empleando técnicas estándares, a partir de su clasificación para identificar su aplicabilidad.',bloom:'Resuelve ecuaciones diferenciales ordinarias seleccionando y justificando la técnica estándar adecuada según su clasificación, para identificar contextos de aplicabilidad.',level:'Aplicar'},
+      {code:'RA2',original:'Analiza el comportamiento de la familia de soluciones para una ecuación diferencial ordinaria dada, mediante métodos cualitativos o computacionales.',bloom:'Analiza el comportamiento de la familia de soluciones de una EDO mediante métodos cualitativos y computacionales, contrastando representaciones para fundamentar conclusiones.',level:'Analizar'},
+      {code:'RA3',original:'Modela situaciones clásicas de las ciencias y la ingeniería utilizando ecuaciones diferenciales para aproximar el estado real del problema.',bloom:'Modela situaciones de las ciencias y la ingeniería formulando y evaluando ecuaciones diferenciales que aproximen el estado real del problema y permitan interpretar su comportamiento.',level:'Crear'},
+    ]);
+    const contenidos=['Unidad 1 — EDO de primer orden y clasificación','Unidad 2 — EDO lineales y aplicaciones','Unidad 3 — Sistemas y métodos cualitativos'];
+    const evalChildren=[{code:'Q1',type:'Formativa',name:'Quiz 1',weight:11},{code:'Q2',type:'Formativa',name:'Quiz 2',weight:11},{code:'Q3',type:'Formativa',name:'Quiz 3',weight:11},{code:'Q4',type:'Formativa',name:'Quiz 4',weight:11},{code:'Q5',type:'Formativa',name:'Quiz 5',weight:11},{code:'Q6',type:'Formativa',name:'Quiz 6',weight:11},{code:'EP',type:'Sumativa',name:'Examen Parcial',weight:34}];
+    const biblio=['Zill, D. G. (2018). Ecuaciones diferenciales con aplicaciones de modelado (11.ª ed.). Cengage Learning.','Boyce, W., & DiPrima, R. (2017). Elementary Differential Equations and Boundary Value Problems (11th ed.). Wiley.','Nagle, R. K., Saff, E., & Snider, A. (2018). Fundamentals of Differential Equations (9th ed.). Pearson.','Simmons, G. F. (2016). Differential Equations with Applications and Historical Notes (3rd ed.). CRC Press.','Edwards, C. H., & Penney, D. (2008). Ecuaciones diferenciales y problemas con valores en la frontera (4.ª ed.). Pearson.'];
+    const competencias=ref([{name:'Razonamiento Cuantitativo',ra:['RA1'],evidence:true},{name:'Modelamiento Matemático',ra:['RA2','RA3'],evidence:true},{name:'Resolución de Problemas',ra:['RA1','RA3'],evidence:true},{name:'Pensamiento Crítico',ra:[],evidence:false}]);
+    const suggestions=[{text:'Abre el programa de Ecuaciones Diferenciales',icon:'bi-box-arrow-up-right'},{text:'Reescribe los RA con taxonomía de Bloom',icon:'bi-stars'},{text:'Envía el programa a revisión',icon:'bi-send'}];
+
+    // Tabla por pestaña del detalle (formato RecordList) — columnas estándar deducidas de los RecordTypes
+    const sectionTable=computed(()=>{
+      const t=tab.value;
+      if(t==='modalidades') return { title:'Modalidades', cols:[{key:'name',label:'Nombre',type:'link'},{key:'code',label:'Código'},{key:'delivery',label:'Modo de entrega'},{key:'theory',label:'Teóricas'},{key:'practice',label:'Prácticas'},{key:'lab',label:'Laboratorio'},{key:'autonomous',label:'Autónomas'}], rows:[{name:'Presencial',code:'PRES',delivery:'Presencial',theory:3,practice:2,lab:0,autonomous:4}] };
+      if(t==='ra') return { title:'Resultados de aprendizaje del programa', cols:[{key:'code',label:'Código'},{key:'text',label:'Resultado de aprendizaje',type:'wrap'},{key:'level',label:'Nivel Bloom',type:'badge'}], rows: raList.value.map(r=>({code:r.code, text: demo.value.bloom?r.bloom:r.original, level: demo.value.bloom?r.level:'—'})) };
+      if(t==='contenidos') return { title:'Contenidos', cols:[{key:'name',label:'Nombre',type:'wrap'},{key:'type',label:'Tipo'},{key:'hours',label:'Horas'}], rows:[{name:'Unidad 1 — EDO de primer orden y clasificación',type:'Teórico',hours:18},{name:'Unidad 2 — EDO lineales y aplicaciones',type:'Teórico-Práctico',hours:24},{name:'Unidad 3 — Sistemas y métodos cualitativos',type:'Práctico',hours:18}] };
+      if(t==='sesiones') return { title:'Sesiones', cols:[{key:'name',label:'Nombre',type:'wrap'},{key:'week',label:'Semana'},{key:'type',label:'Tipo de actividad'},{key:'duration',label:'Duración (h)'}], rows:[{name:'Introducción y motivación',week:1,type:'Clase magistral',duration:3},{name:'EDO de variables separables',week:2,type:'Clase magistral',duration:3},{name:'Taller de modelado',week:3,type:'Taller',duration:2},{name:'EDO lineales de primer orden',week:4,type:'Clase magistral',duration:3},{name:'Evaluación parcial 1',week:5,type:'Evaluación',duration:2},{name:'Sistemas de EDO y plano de fase',week:6,type:'Clase magistral',duration:3}] };
+      if(t==='biblio') return { title:'Bibliografía', cols:[{key:'title',label:'Referencia',type:'wrap'},{key:'author',label:'Autor'},{key:'year',label:'Año'},{key:'format',label:'Tipo'}], rows:[{title:'Ecuaciones diferenciales con aplicaciones de modelado (11.ª ed.)',author:'Zill, D. G.',year:2018,format:'Libro'},{title:'Elementary Differential Equations and Boundary Value Problems (11th ed.)',author:'Boyce, W.; DiPrima, R.',year:2017,format:'Libro'},{title:'Fundamentals of Differential Equations (9th ed.)',author:'Nagle, R. K.; Saff, E.; Snider, A.',year:2018,format:'Libro'},{title:'Differential Equations with Applications and Historical Notes (3rd ed.)',author:'Simmons, G. F.',year:2016,format:'Libro'},{title:'Ecuaciones diferenciales y problemas con valores en la frontera (4.ª ed.)',author:'Edwards, C. H.; Penney, D.',year:2008,format:'Libro'}] };
+      if(t==='perfil') return { title:'Perfil de egreso', cols:[{key:'code',label:'Código'},{key:'name',label:'Competencia',type:'wrap'},{key:'dimension',label:'Dimensión'},{key:'level',label:'Nivel esperado'}], rows:[{code:'C1',name:'Razonamiento Cuantitativo',dimension:'Disciplinar',level:'Avanzado'},{code:'C2',name:'Modelamiento y Resolución de Problemas',dimension:'Disciplinar',level:'Avanzado'},{code:'C3',name:'Pensamiento Crítico',dimension:'Transversal',level:'Intermedio'},{code:'C4',name:'Comunicación Efectiva',dimension:'Transversal',level:'Intermedio'},{code:'C5',name:'Trabajo en Equipo',dimension:'Transversal',level:'Intermedio'}] };
+      if(t==='planes') return { title:'Planes de estudio', cols:[{key:'name',label:'Nombre',type:'link'},{key:'status',label:'Estado',type:'estado'},{key:'code',label:'Código'},{key:'type',label:'Tipo'},{key:'credits',label:'Créditos'},{key:'version',label:'Versión'}], rows: objTabs.find(x=>x.key==='plans').rows.filter(p=>p.program===current.value.name) };
+      if(t==='malla') return { title:'Malla curricular', cols:[{key:'period',label:'Periodo'},{key:'code',label:'Código'},{key:'name',label:'Asignatura',type:'wrap'},{key:'credits',label:'Créditos'},{key:'type',label:'Tipo'},{key:'prereq',label:'Prerrequisitos'}], rows:[{period:'Semestre 1',code:'MAT101',name:'Cálculo I',credits:6,type:'Obligatorio',prereq:'—'},{period:'Semestre 1',code:'FIS101',name:'Física General',credits:6,type:'Obligatorio',prereq:'—'},{period:'Semestre 2',code:'MAT102',name:'Cálculo II',credits:6,type:'Obligatorio',prereq:'MAT101'},{period:'Semestre 2',code:'111026C',name:'Ecuaciones Diferenciales',credits:3,type:'Obligatorio',prereq:'MAT102'},{period:'Semestre 3',code:'EST201',name:'Estadística',credits:5,type:'Obligatorio',prereq:'MAT102'},{period:'Semestre 3',code:'ELE-IA',name:'Electivo: Introducción a la IA',credits:4,type:'Electivo',prereq:'—'}] };
+      if(t==='historial'){ const c=current.value; const etype={programs:'AcademicProgram',plans:'CurriculumPlan',activity:'Activity',syllabus:'Offering'}[detailObj.value]||'Activity'; const rows=[]; if(detailObj.value==='activity' && c.code==='111026C'){ if(demo.value.status==='En revisión') rows.push({date:'ahora',activity:c.name,entityType:'Activity',section:'—',item:'—',action:'StateTransition',source:'Workflow',field:'currentStatusId',user:'Esteban Cortés'}); if(demo.value.bloom) ['RA1','RA2','RA3'].forEach(x=> rows.push({date:'ahora',activity:c.name,entityType:'CurricularSection',section:'LearningOutcome',item:x,action:'Update',source:'DirectEdit',field:'name',user:'Esteban Cortés'})); rows.push({date:'2026-05-21 11:02',activity:c.name,entityType:'CurricularSection',section:'EvaluationComponent',item:'Examen Parcial',action:'Update',source:'DirectEdit',field:'weight',user:'Esteban Cortés'}); } rows.push({date:'2026-05-20 09:14',activity:c.name,entityType:etype,section:'—',item:'—',action:'Create',source:'Import',field:'—',user:'Sistema'}); return { title:'Historial', cols: clCols, rows }; }
+      return { title:'', cols:[], rows:[] };
+    });
+    const unread=computed(()=> demo.value.status==='En revisión' ? 1 : 0);
+    const scroll=async()=>{ await nextTick(); document.querySelectorAll('.yupi-scroll').forEach(c=>c.scrollTop=c.scrollHeight); };
+    const yupi=(html,d=700)=>{ setTimeout(()=>{ msgs.value.push({role:'bot',text:html}); scroll(); },d); };
+    const openRecord=(key,row)=>{ objKey.value=key; detailObj.value=key; current.value=row; view.value='detail'; tab.value=(detailTabsByObj[key]||activityTabs)[0].key; };
+    const openView=(key,row)=>{ mEditMode.value=false; openRecord(key,row); };
+    const openEdit=(key,row)=>{ mEditMode.value=true; openRecord(key,row); };
+    const openMalla=(row)=>{ openView('plans',row); tab.value='malla'; mExpanded.value=true; };
+    const closeMalla=()=>{ mExpanded.value=false; view.value='list'; };
+    const mRowEditable=(row)=> !!(row && /en dise/i.test(row.type||''));
+    const mRowMenu=ref(null); // {ri, x, y}
+    const openRowMenu=(e,ri)=>{ mRowMenu.value = (mRowMenu.value && mRowMenu.value.ri===ri) ? null : {ri, x:e.clientX, y:e.clientY}; };
+    const openProgram=(p)=>openRecord('activity',p);
+    const displayStatus=computed(()=> (detailObj.value==='activity' && current.value.code==='111026C') ? demo.value.status : (current.value.status || 'Borrador'));
+    const statusClass=(s)=> s==='En revisión' ? 'bg-warning' : (s==='Vigente' || s==='Publicado') ? 'bg-success' : 'bg-dark';
+    const bloom=()=>{ openProgram(ecua); demo.value.bloom=true; tab.value='ra'; };
+    const coverage=(fromBtn)=>{ openProgram(ecua); demo.value.coverage=true; tab.value='cobertura'; if(fromBtn){ msgs.value.push({role:'user',text:'¿Dónde hay brechas de cobertura?'}); yupi('🎯 3 de 4 competencias con evidencia directa. ⚠️ <strong>Pensamiento Crítico</strong> es una brecha — sin evidencia directa.'); } };
+    const review=()=>{ demo.value.status='En revisión'; const id=Date.now(); toasts.value.push({id,title:'Programa enviado a revisión',message:'Ecuaciones Diferenciales (111026C) · Borrador → En revisión'}); setTimeout(()=>{ toasts.value=toasts.value.filter(t=>t.id!==id); },5000); };
+    const send=(text)=>{
+      if(!text||!text.trim())return; msgs.value.push({role:'user',text}); input.value=''; scroll();
+      const t=text.toLowerCase();
+      if(/(abre|abrir|ecuaciones|programa)/.test(t) && view.value==='list'){ openProgram(ecua); yupi('Abrí el <strong>Programa de Ecuaciones Diferenciales (111026C)</strong>. Tienes su estructura completa: resultados de aprendizaje, contenidos, evaluación, bibliografía. ¿Lo trabajamos?'); return; }
+      if(/(bloom|verbos|reescrib|redacta|resultados de aprendizaje)/.test(t)){ bloom(); yupi('✏️ Reescribí los 3 resultados de aprendizaje afinando los verbos según la <strong>taxonomía de Bloom</strong> y etiqueté su nivel cognitivo (Aplicar / Analizar / Crear). Revisa el resaltado en <strong>Resultados de aprendizaje</strong>.'); return; }
+      if(/(revisi[óo]n|env[ií]a|enviar|aprob|workflow|gobern)/.test(t)){ openProgram(ecua); review(); tab.value='historial'; yupi('✅ Envié el programa a <strong>revisión</strong>. Como <strong>Jefe de carrera</strong> tienes el permiso para hacerlo (un Docente no podría). La transición <em>Borrador → En revisión</em> quedó <strong>registrada en la bitácora de auditoría</strong> (pestaña Historial).'); return; }
+      yupi(`Entendido, estoy procesando tu solicitud sobre <strong>"${text}"</strong> en <strong>Curriculum Design</strong>.`,900);
+    };
+    // ===== Datos de Malla — dataset-driven: el plan abierto decide Secuencial (ICI) o Modular (Magíster) =====
+    const mallaView=ref('d1'); const mallaLens=ref('design'); const mallaFocus=ref(null); const mCatFilter=ref([]); const mExpanded=ref(false); const mEditMode=ref(false);
+    const mCatIcon={nucleo:'bi-mortarboard-fill', fg:'bi-people-fill', elec:'bi-stars', integ:'bi-flag-fill'};
+    const mPrereqText=(e)=> e && e.pre ? 'Requiere '+(e.pre.mode==='OR'?'uno de':'todos')+': '+e.pre.of.map(o=>o.label.replace(/^(Aprobar|Obtener) /,'')).join(e.pre.mode==='OR'?' Ó ':' · ') : '';
+    onMounted(()=>{ window.addEventListener('keydown', ev=>{ if(ev.key==='Escape' && mExpanded.value) closeMalla(); }); });
+    const mToggleCat=(k)=>{ mCatFilter.value = mCatFilter.value.includes(k) ? mCatFilter.value.filter(x=>x!==k) : [...mCatFilter.value,k]; };
+    // v9: filtro de electivos derivado de los bloques (OptionPool) ya añadidos
+    const mElecFilter=ref([]);
+    const mToggleElec=(p)=>{ mElecFilter.value = mElecFilter.value.includes(p) ? mElecFilter.value.filter(x=>x!==p) : [...mElecFilter.value,p]; };
+    const mPoolsPresent=computed(()=>{ const m=new Map(); mEntries.value.forEach(e=>{ if(e.poolName) m.set(e.poolName,(m.get(e.poolName)||0)+1); }); return [...m.entries()].map(([name,n])=>({name,n})); });
+    const mCFG={label:'Curso de Formación General',pick:1,minCredits:5,membershipBy:'category',options:[{code:'CFG-ART',name:'Apreciación del Arte',credits:5},{code:'CFG-HIS',name:'Historia y Sociedad',credits:5},{code:'CFG-FIL',name:'Filosofía y Ética',credits:5},{code:'CFG-MUS',name:'Música y Cultura',credits:5},{code:'CFG-LIT',name:'Literatura Contemporánea',credits:5},{code:'CFG-DEP',name:'Deporte y Salud',credits:5}]};
+    const mPoolEsp={label:'Electivos de Especialización',pick:4,minCredits:24,membershipBy:'specialization',options:[{code:'IN5A1',name:'Analítica de Negocios',credits:6},{code:'IN5A2',name:'Gestión de Operaciones Avanzada',credits:6},{code:'IN5A3',name:'Finanzas Corporativas',credits:6},{code:'IN5A4',name:'Economía de Empresas',credits:6},{code:'IN5A5',name:'Tecnologías de Información',credits:6},{code:'IN5A6',name:'Gestión de Personas',credits:6},{code:'IN5A7',name:'Sistemas de Transporte y Logística',credits:6},{code:'IN5A8',name:'Energía y Sustentabilidad',credits:6}]};
+    const mPoolProf={label:'Electivo Profesional',pick:2,minCredits:12,membershipBy:'specialization',options:[{code:'IN6P1',name:'Estrategia Competitiva',credits:6},{code:'IN6P2',name:'Innovación y Modelos de Negocio',credits:6},{code:'IN6P3',name:'Ciencia de Datos Aplicada',credits:6},{code:'IN6P4',name:'Gestión de Proyectos',credits:6},{code:'IN6P5',name:'Negocios Internacionales',credits:6},{code:'IN6P6',name:'Emprendimiento Tecnológico',credits:6}]};
+    const modPoolElec={label:'Electivos de Profundización',pick:3,minCredits:36,membershipBy:'specialization',options:[{code:'EL-NLP',name:'Procesamiento de Lenguaje Natural',credits:12},{code:'EL-CV',name:'Visión Computacional',credits:12},{code:'EL-MLO',name:'MLOps y Productivización',credits:12},{code:'EL-TS',name:'Series de Tiempo',credits:12},{code:'EL-OPT',name:'Optimización Avanzada',credits:12},{code:'EL-RES',name:'IA Responsable',credits:12},{code:'EL-CLD',name:'Cloud para Datos',credits:12},{code:'EL-BIO',name:'Bioestadística',credits:12}]};
+
+    // --- Dataset MODULAR: Magíster en Ciencia de Datos (sin semestres fijos; el orden lo sugieren los prerrequisitos) ---
+    const MOD={
+      plan:{ program:'Magíster en Ciencia de Datos', name:'Plan 2025', type:'Modular · sin semestres fijos', unit:'Nivel', awardLabel:'GRADO', nonSequential:true, creditsTotal:150 },
+      periods:[{n:1,label:'Nivel 1'},{n:2,label:'Nivel 2'},{n:3,label:'Nivel 3'},{n:4,label:'Nivel 4'}],
+      categories:[
+        {key:'nucleo',name:'Núcleo (Fundamentos y Métodos)',min:72,color:'var(--up1-color-primary)'},
+        {key:'fg',name:'Habilidades Profesionales',min:12,color:'var(--up1-color-info-500)'},
+        {key:'elec',name:'Electivos de Profundización',min:36,color:'var(--up1-color-warning-500)'},
+        {key:'integ',name:'Proyecto de Grado',min:30,color:'#6b21a8'},
+      ],
+      titulacion:{ type:'group',combinator:'AND',label:'Requisitos de graduación — Magíster en Ciencia de Datos',children:[
+        {type:'leaf',rt:'CreditThreshold',target:150,label:'Aprobar ≥ 150 créditos del programa'},
+        {type:'leaf',rt:'OptionPool',label:'Completar electivos de profundización (3 · ≥36 créd.)',v:'ok',note:'Pool con 8 opciones · 96 créd disponibles ≥ 36'},
+        {type:'leaf',rt:'EventCompleted',label:'Aprobar Proyecto de Grado (DS501)',v:'ok',note:'Proyecto de Grado definido en el plan'},
+        {type:'group',combinator:'OR',label:'Cierre del grado',children:[
+          {type:'leaf',rt:'EventCompleted',label:'Defensa de Proyecto ante comisión',v:'ok',note:'Defensa modelada como hito'},
+          {type:'leaf',rt:'EventCompleted',label:'Artículo o publicación asociada',v:'warn',note:'Vía sin objeto asociado en la malla'},
+        ]},
+      ]},
+      entries:[
+        // Nivel 1 — Fundamentos (sin prerrequisitos: cursables al ingresar)
+        {id:'mo-ds101',code:'DS101',name:'Fundamentos de Programación para Datos',short:'Fund. Programación',credits:9,cat:'nucleo',catLabel:'Núcleo',period:1,kind:'course'},
+        {id:'mo-ds102',code:'DS102',name:'Estadística para Ciencia de Datos',short:'Estadística DS',credits:9,cat:'nucleo',catLabel:'Núcleo',period:1,kind:'course'},
+        {id:'mo-ds103',code:'DS103',name:'Álgebra Lineal y Optimización',short:'Álgebra y Optim.',credits:9,cat:'nucleo',catLabel:'Núcleo',period:1,kind:'course'},
+        {id:'mo-ds401',code:'DS401',name:'Ética y Gobernanza de Datos',short:'Ética de Datos',credits:6,cat:'fg',catLabel:'Habilidades',period:1,kind:'course'},
+        // Nivel 2 — Métodos
+        {id:'mo-ds201',code:'DS201',name:'Machine Learning',credits:12,cat:'nucleo',catLabel:'Núcleo',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'DS102',label:'Aprobar Estadística para Ciencia de Datos (DS102)'},{code:'DS103',label:'Aprobar Álgebra Lineal y Optimización (DS103)'}]}},
+        {id:'mo-ds202',code:'DS202',name:'Bases de Datos y Big Data',short:'BD y Big Data',credits:9,cat:'nucleo',catLabel:'Núcleo',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'DS101',label:'Aprobar Fundamentos de Programación (DS101)'}]}},
+        {id:'mo-ds203',code:'DS203',name:'Visualización y Storytelling',short:'Visualización',credits:6,cat:'fg',catLabel:'Habilidades',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'DS101',label:'Aprobar Fundamentos de Programación (DS101)'}]}},
+        // Nivel 3 — Avanzado + electivos
+        {id:'mo-ds301',code:'DS301',name:'Deep Learning',credits:12,cat:'nucleo',catLabel:'Núcleo',period:3,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'DS201',label:'Aprobar Machine Learning (DS201)'}]}},
+        {id:'mo-ds302',code:'DS302',name:'Inferencia Causal',credits:9,cat:'nucleo',catLabel:'Núcleo',period:3,kind:'course',prereq:true,pre:{mode:'OR',of:[{code:'DS102',label:'Aprobar Estadística (DS102)'},{code:'DS201',label:'Aprobar Machine Learning (DS201)'}]}},
+        {id:'mo-poolelec',name:'Electivos de Profundización',short:'Electivos Profundización',cat:'elec',period:3,kind:'pool',pool:modPoolElec},
+        {id:'mo-ds402',code:'DS402',name:'Gestión de Proyectos de Datos',short:'Gestión Proyectos',credits:6,cat:'fg',catLabel:'Habilidades',period:3,kind:'course'},
+        // Nivel 4 — Proyecto de grado
+        {id:'mo-ds501',code:'DS501',name:'Proyecto de Grado',short:'Proyecto de Grado',credits:30,cat:'integ',catLabel:'Grado',period:4,kind:'thesis',prereq:true,pre:{mode:'AND',of:[{code:'DS301',label:'Aprobar Deep Learning (DS301)'}]}},
+      ],
+    };
+
+    // --- Dataset SECUENCIAL: Ingeniería Civil Industrial (adaptado de FCFM/DII U. de Chile) ---
+    const SEQ={
+      plan:{ program:'Ingeniería Civil Industrial', name:'Plan de Estudios 2021', type:'Secuencial · 10 semestres', unit:'Sem', awardLabel:'TÍTULO', nonSequential:false, creditsTotal:360 },
+      periods:[{n:1,label:'Sem 1'},{n:2,label:'Sem 2'},{n:3,label:'Sem 3'},{n:4,label:'Sem 4'},{n:5,label:'Sem 5'},{n:6,label:'Sem 6'},{n:7,label:'Sem 7'},{n:8,label:'Sem 8'},{n:9,label:'Sem 9'},{n:10,label:'Sem 10'}],
+      categories:[
+        {key:'nucleo',name:'Ciencias e Ingeniería',min:240,color:'var(--up1-color-primary)'},
+        {key:'fg',name:'Formación Transversal',min:35,color:'var(--up1-color-info-500)'},
+        {key:'elec',name:'Electivos de Especialización',min:36,color:'var(--up1-color-warning-500)'},
+        {key:'integ',name:'Práctica y Título',min:30,color:'#6b21a8'},
+      ],
+      titulacion:{ type:'group',combinator:'AND',label:'Requisitos de titulación — Ingeniero/a Civil Industrial',children:[
+        {type:'leaf',rt:'CreditThreshold',target:360,label:'Aprobar ≥ 360 créditos del plan'},
+        {type:'leaf',rt:'OptionPool',label:'Completar línea de especialización (4 electivos · ≥24 créd.)',v:'ok',note:'Pool con 8 opciones · 48 créd disponibles ≥ 24'},
+        {type:'leaf',rt:'EventCompleted',label:'Aprobar Práctica Profesional Extendida (IN6192)',v:'ok',note:'Práctica definida en el plan (Sem 10)'},
+        {type:'leaf',rt:'EventCompleted',label:'Aprobar Proyecto de Título (IN6193)',v:'ok',note:'Proyecto de Título definido en el plan (Sem 10)'},
+        {type:'group',combinator:'OR',label:'Examen final de titulación',children:[
+          {type:'leaf',rt:'EventCompleted',label:'Aprobar Examen de Título',v:'ok',note:'Examen de Título modelado como hito (Sem 10)'},
+          {type:'leaf',rt:'EventCompleted',label:'Defensa de Memoria ante comisión',v:'warn',note:'Vía sin objeto asociado en la malla'},
+        ]},
+      ]},
+      entries:[
+      // Semestre 1 — Plan Común
+      {id:'m-ma1001',code:'MA1001',name:'Introducción al Cálculo',short:'Intro al Cálculo',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:1,kind:'course'},
+      {id:'m-ma1101',code:'MA1101',name:'Introducción al Álgebra',short:'Intro al Álgebra',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:1,kind:'course'},
+      {id:'m-fi1000',code:'FI1000',name:'Física Newtoniana',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:1,kind:'course'},
+      {id:'m-in1001',code:'IN1001',name:'Introducción a la Ingeniería Industrial',short:'Intro Ing. Industrial',credits:5,cat:'nucleo',catLabel:'Cs. e Ing.',period:1,kind:'course'},
+      {id:'m-ing1',code:'ING001',name:'Inglés I',credits:3,cat:'fg',catLabel:'Transversal',period:1,kind:'course'},
+      // Semestre 2
+      {id:'m-ma1002',code:'MA1002',name:'Cálculo en una Variable',short:'Cálculo 1 Variable',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA1001',label:'Aprobar Introducción al Cálculo (MA1001)',status:'satisfied'}]}},
+      {id:'m-ma1102',code:'MA1102',name:'Álgebra Lineal',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA1101',label:'Aprobar Introducción al Álgebra (MA1101)',status:'satisfied'}]}},
+      {id:'m-fi1001',code:'FI1001',name:'Mecánica',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'FI1000',label:'Aprobar Física Newtoniana (FI1000)',status:'satisfied'}]}},
+      {id:'m-cc1001',code:'CC1001',name:'Fundamentos de Programación',short:'Fund. Programación',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:2,kind:'course'},
+      {id:'m-ing2',code:'ING002',name:'Inglés II',credits:3,cat:'fg',catLabel:'Transversal',period:2,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'ING001',label:'Aprobar Inglés I (ING001)',status:'satisfied'}]}},
+      // Semestre 3
+      {id:'m-ma2001',code:'MA2001',name:'Cálculo en Varias Variables',short:'Cálculo Varias Var.',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:3,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA1002',label:'Aprobar Cálculo en una Variable (MA1002)',status:'satisfied'},{code:'MA1102',label:'Aprobar Álgebra Lineal (MA1102)',status:'satisfied'}]}},
+      {id:'m-fi2002',code:'FI2002',name:'Electromagnetismo',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:3,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'FI1001',label:'Aprobar Mecánica (FI1001)',status:'satisfied'}]}},
+      {id:'m-qm1000',code:'QM1000',name:'Química',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:3,kind:'course'},
+      {id:'m-cc1002',code:'CC1002',name:'Introducción a la Programación',short:'Intro Programación',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:3,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'CC1001',label:'Aprobar Fundamentos de Programación (CC1001)',status:'satisfied'}]}},
+      {id:'m-in2201',code:'IN2201',name:'Economía',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:3,kind:'course'},
+      // Semestre 4
+      {id:'m-ma2002',code:'MA2002',name:'Cálculo Avanzado y Aplicaciones',short:'Cálculo Avanzado',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:4,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA2001',label:'Aprobar Cálculo en Varias Variables (MA2001)',status:'satisfied'}]}},
+      {id:'m-ma2601',code:'MA2601',name:'Ecuaciones Diferenciales',short:'Ecuaciones Dif.',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:4,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA2001',label:'Aprobar Cálculo en Varias Variables (MA2001)',status:'satisfied'}]}},
+      {id:'m-fi2004',code:'FI2004',name:'Termodinámica',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:4,kind:'course',prereq:true,pre:{mode:'OR',of:[{code:'FI2002',label:'Aprobar Electromagnetismo (FI2002)',status:'satisfied'},{code:'QM1000',label:'Aprobar Química (QM1000)',status:'satisfied'}]}},
+      {id:'m-in3141',code:'IN3141',name:'Probabilidades',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:4,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA2002',label:'Aprobar Cálculo Avanzado (MA2002)',status:'satisfied'}]}},
+      {id:'m-cfg1',name:'Curso de Formación General I',short:'CFG I',cat:'fg',period:4,kind:'pool',pool:mCFG},
+      // Semestre 5 — Especialidad
+      {id:'m-in3171',code:'IN3171',name:'Modelamiento y Optimización',short:'Modelamiento y Optim.',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:5,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'MA2001',label:'Aprobar Cálculo en Varias Variables (MA2001)',status:'satisfied'},{code:'IN2201',label:'Aprobar Economía (IN2201)',status:'satisfied'}]}},
+      {id:'m-in3301',code:'IN3301',name:'Evaluación de Proyectos',short:'Eval. de Proyectos',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:5,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN2201',label:'Aprobar Economía (IN2201)',status:'satisfied'}]}},
+      {id:'m-in3242',code:'IN3242',name:'Estadística',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:5,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN3141',label:'Aprobar Probabilidades (IN3141)',status:'satisfied'}]}},
+      {id:'m-in3101',code:'IN3101',name:'Taller de Liderazgo e Innovación Social',short:'Taller Liderazgo',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:5,kind:'course'},
+      {id:'m-ing3',code:'ING003',name:'Inglés III',credits:3,cat:'fg',catLabel:'Transversal',period:5,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'ING002',label:'Aprobar Inglés II (ING002)',status:'satisfied'}]}},
+      // Semestre 6
+      {id:'m-in3272',code:'IN3272',name:'Decisiones Bajo Incertidumbre',short:'Decisiones Incert.',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:6,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN3171',label:'Aprobar Modelamiento y Optimización (IN3171)',status:'satisfied'}]}},
+      {id:'m-in4151',code:'IN4151',name:'Ingeniería de la Información',short:'Ing. de la Información',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:6,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'CC1002',label:'Aprobar Introducción a la Programación (CC1002)',status:'satisfied'}]}},
+      {id:'m-in4143',code:'IN4143',name:'Análisis de Datos e Inferencia Causal',short:'Análisis de Datos',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:6,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN3242',label:'Aprobar Estadística (IN3242)',status:'satisfied'}]}},
+      {id:'m-in4123',code:'IN4123',name:'Macroeconomía',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:6,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN2201',label:'Aprobar Economía (IN2201)',status:'satisfied'}]}},
+      // Semestre 7
+      {id:'m-in4102',code:'IN4102',name:'Taller de Concepción y Diseño de Proyectos',short:'Taller de Proyectos',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:7,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN3301',label:'Aprobar Evaluación de Proyectos (IN3301)',status:'satisfied'}]}},
+      {id:'m-in4252',code:'IN4252',name:'Marketing',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:7,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN2201',label:'Aprobar Economía (IN2201)',status:'satisfied'}]}},
+      {id:'m-in4301',code:'IN4301',name:'Finanzas',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:7,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN3301',label:'Aprobar Evaluación de Proyectos (IN3301)',status:'satisfied'}]}},
+      {id:'m-cfg2',name:'Curso de Formación General II',short:'CFG II',cat:'fg',period:7,kind:'pool',pool:mCFG},
+      // Semestre 8
+      {id:'m-in4401',code:'IN4401',name:'Comportamiento Organizacional',short:'Comport. Organizacional',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:8,kind:'course'},
+      {id:'m-in5301',code:'IN5301',name:'Gestión de Operaciones',short:'Gestión de Operaciones',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:8,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN3171',label:'Aprobar Modelamiento y Optimización (IN3171)',status:'satisfied'}]}},
+      {id:'m-in5501',code:'IN5501',name:'Dirección Estratégica',short:'Dir. Estratégica',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:8,kind:'course',prereq:true,pre:{mode:'AND',of:[{code:'IN4123',label:'Aprobar Macroeconomía (IN4123)',status:'progress'}]}},
+      {id:'m-poolesp1',name:'Electivos de Especialización',short:'Electivos Especialización',cat:'elec',period:8,kind:'pool',pool:mPoolEsp},
+      // Semestre 9
+      {id:'m-in5701',code:'IN5701',name:'Innovación y Emprendimiento',short:'Innovación y Emprend.',credits:6,cat:'nucleo',catLabel:'Cs. e Ing.',period:9,kind:'course'},
+      {id:'m-poolprof',name:'Electivo Profesional',short:'Electivo Profesional',cat:'elec',period:9,kind:'pool',pool:mPoolProf},
+      {id:'m-cfg3',name:'Curso de Formación General III',short:'CFG III',cat:'fg',period:9,kind:'pool',pool:mCFG},
+      // Semestre 10 — Práctica y Título
+      {id:'m-in6192',code:'IN6192',name:'Práctica Profesional Extendida',short:'Práctica Profesional',credits:15,cat:'integ',catLabel:'Título',period:10,kind:'internship'},
+      {id:'m-in6193',code:'IN6193',name:'Proyecto de Título',short:'Proyecto de Título',credits:15,cat:'integ',catLabel:'Título',period:10,kind:'thesis',prereq:true,pre:{mode:'AND',of:[{code:'IN6192',label:'Aprobar Práctica Profesional Extendida (IN6192)',status:'missing'}]}},
+      ],
+    };
+    // Precalcula créditos del diseño, cobertura por categoría y valida la(s) hoja(s) de crédito de la titulación
+    const buildDS=(ds)=>{
+      ds.designCredits = ds.entries.reduce((s,e)=> s+(e.credits||0)+(e.pool?e.pool.minCredits:0),0);
+      ds.categories.forEach(c=>{ c.current = ds.entries.filter(e=>e.cat===c.key).reduce((s,e)=> s+(e.credits||0)+(e.pool?e.pool.minCredits:0),0); });
+      const walk=(n)=>{ if(!n) return; if(n.type==='group'){ n.children.forEach(walk); } else if(n.rt==='CreditThreshold'&&n.target){ n.v=ds.designCredits>=n.target?'ok':'warn'; n.note='El diseño suma '+ds.designCredits+' créditos'+(ds.designCredits>=n.target?'':' — bajo el requisito de '+n.target); } };
+      walk(ds.titulacion); return ds;
+    };
+    buildDS(SEQ); buildDS(MOD);
+
+    // ===== Planes EN CONSTRUCCIÓN (editables) — secuencial y modular (no-secuencial) =====
+    const buildPlanSeq={ program:'Ingeniería Ambiental', name:'Plan 2026 (en diseño)', type:'Secuencial · en diseño', unit:'Sem', awardLabel:'TÍTULO', nonSequential:false, creditsTotal:300 };
+    const buildPlanMod={ program:'Magíster en Ciencia de Datos', name:'Plan 2026 (en diseño)', type:'Modular · en diseño', unit:'Nivel', awardLabel:'GRADO', nonSequential:true, creditsTotal:150 };
+    const buildCatsSeq=[
+      {key:'nucleo',name:'Ciencias e Ingeniería',short:'Cs. e Ing.',code:'CI',min:180,max:null,icon:'bi-mortarboard-fill',color:'var(--up1-color-primary)'},
+      {key:'fg',name:'Formación Transversal',short:'Transversal',code:'FT',min:30,max:null,icon:'bi-people-fill',color:'var(--up1-color-info-500)'},
+      {key:'elec',name:'Formación Electiva',short:'Electiva',code:'EL',min:50,max:null,icon:'bi-stars',color:'var(--up1-color-warning-500)'},
+      {key:'integ',name:'Práctica y Título',short:'Título',code:'PT',min:40,max:null,icon:'bi-flag-fill',color:'#6b21a8'},
+    ];
+    const buildCatsMod=[
+      {key:'nucleo',name:'Núcleo (Fundamentos y Métodos)',short:'Núcleo',code:'NU',min:72,max:null,icon:'bi-mortarboard-fill',color:'var(--up1-color-primary)'},
+      {key:'fg',name:'Habilidades Profesionales',short:'Habilidades',code:'HP',min:12,max:null,icon:'bi-people-fill',color:'var(--up1-color-info-500)'},
+      {key:'elec',name:'Electivos de Profundización',short:'Electivos',code:'EL',min:36,max:null,icon:'bi-stars',color:'var(--up1-color-warning-500)'},
+      {key:'integ',name:'Proyecto de Grado',short:'Proyecto',code:'PG',min:30,max:null,icon:'bi-flag-fill',color:'#6b21a8'},
+    ];
+    const seqTitulacion={ type:'group',combinator:'AND',label:'Requisitos de titulación',children:[
+      {type:'leaf',rt:'CreditThreshold',target:300,label:'Aprobar ≥ 300 créditos del plan'},
+    ]};
+    const modTitulacion=MOD.titulacion;
+    // semilla modular: módulos del Magíster (solo cursos; el nivel se DERIVA de prerrequisitos)
+    const modSeed=MOD.entries.filter(e=>e.kind!=='pool');
+    const buildPlan=ref(buildPlanSeq);
+    const buildTitulacion=ref(seqTitulacion);
+    const buildCategories=ref(buildCatsSeq.map(c=>({...c})));
+    const buildPeriods=ref([{n:1,label:'Sem 1'},{n:2,label:'Sem 2'},{n:3,label:'Sem 3'},{n:4,label:'Sem 4'}]);
+    const buildEntries=ref([]);
+    let mUid=1;
+    // No-secuencial: nivel = 1 + max(nivel de sus prerrequisitos-curso presentes en el plan)
+    const mReorderLevels=()=>{
+      const list=buildEntries.value.slice(); const byCode={}; list.forEach(e=>{ byCode[e.code]=e; }); const lvl={};
+      const calc=(e,seen)=>{ if(lvl[e.id]!=null) return lvl[e.id]; if(seen.has(e.id)) return 1; seen.add(e.id);
+        const pre=(e.pre&&Array.isArray(e.pre.of))?e.pre.of.filter(o=>!o.rt||o.rt==='CourseApproved'):[];
+        const preLv=pre.map(o=>byCode[o.code]).filter(Boolean).map(pe=>calc(pe,seen));
+        const L=preLv.length?1+Math.max(...preLv):1; lvl[e.id]=L; return L; };
+      list.forEach(e=>calc(e,new Set()));
+      buildEntries.value=list.map(e=>({...e,period:lvl[e.id]||1}));
+    };
+    // Carga el plan editable correcto (secuencial vs modular) al abrirlo
+    const initBuild=(mode)=>{
+      if(mode==='mod'){
+        buildPlan.value=buildPlanMod; buildTitulacion.value=modTitulacion; buildCategories.value=buildCatsMod.map(c=>({...c}));
+        buildPeriods.value=[{n:1,label:'Nivel 1'}]; buildEntries.value=modSeed.map(e=>({...e,poolName:null})); mReorderLevels();
+      } else {
+        buildPlan.value=buildPlanSeq; buildTitulacion.value=seqTitulacion; buildCategories.value=buildCatsSeq.map(c=>({...c}));
+        buildPeriods.value=[{n:1,label:'Sem 1'},{n:2,label:'Sem 2'},{n:3,label:'Sem 3'},{n:4,label:'Sem 4'}]; buildEntries.value=[];
+      }
+      mallaFocus.value=null;
+    };
+    watch(()=> (current.value&&current.value.code)||null, ()=>{ const t=(current.value&&current.value.type)||''; if(/en dise/i.test(t)) initBuild(/modular/i.test(t)?'mod':'seq'); });
+    const catOf=(k)=> buildCategories.value.find(c=>c.key===k);
+    const catLabelOf=(k)=>{ const c=catOf(k); return c?(c.short||c.name):''; };
+    const catIcon=(k)=>{ const c=catOf(k); return c&&c.icon?c.icon:'bi-bookmark-fill'; };
+    // Opción B — el OptionPool de electivos se genera desde la LÍNEA DE FORMACIÓN del curso
+    const poolNameFor=(k)=>{ const c=catOf(k); return 'Electivos de '+(c?c.name:'—'); };
+    const mkPre=(mode,...codes)=>({mode, of:codes.map(c=>({code:c[0],label:'Aprobar '+c[1]+' ('+c[0]+')'}))});
+    const mCatalog=[
+      {code:'MAT110',name:'Cálculo I',credits:6,cat:'nucleo',dept:'Matemáticas'},
+      {code:'MAT120',name:'Álgebra y Geometría',credits:6,cat:'nucleo',dept:'Matemáticas'},
+      {code:'MAT210',name:'Cálculo II',credits:6,cat:'nucleo',dept:'Matemáticas',prereq:true,pre:mkPre('AND',['MAT110','Cálculo I'])},
+      {code:'EST200',name:'Estadística',credits:5,cat:'nucleo',dept:'Matemáticas',prereq:true,pre:mkPre('AND',['MAT210','Cálculo II'])},
+      {code:'QUI100',name:'Química General',credits:6,cat:'nucleo',dept:'Química'},
+      {code:'QUI200',name:'Química Orgánica',credits:5,cat:'nucleo',dept:'Química',prereq:true,pre:mkPre('AND',['QUI100','Química General'])},
+      {code:'FIS110',name:'Física I',credits:6,cat:'nucleo',dept:'Física',prereq:true,pre:mkPre('AND',['MAT110','Cálculo I'])},
+      {code:'FIS120',name:'Física II',credits:6,cat:'nucleo',dept:'Física',prereq:true,pre:mkPre('AND',['FIS110','Física I'],['MAT210','Cálculo II'])},
+      {code:'BIO100',name:'Biología Ambiental',credits:5,cat:'nucleo',dept:'Biología'},
+      {code:'AMB210',name:'Ecología',credits:5,cat:'nucleo',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['BIO100','Biología Ambiental'])},
+      {code:'AMB220',name:'Hidrología',credits:5,cat:'nucleo',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['FIS120','Física II'])},
+      {code:'AMB310',name:'Gestión de Residuos',credits:5,cat:'nucleo',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['QUI200','Química Orgánica'])},
+      {code:'AMB320',name:'Evaluación de Impacto Ambiental',credits:6,cat:'nucleo',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['AMB210','Ecología'])},
+      {code:'AMB330',name:'Tratamiento de Aguas',credits:5,cat:'nucleo',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['AMB220','Hidrología'])},
+      {code:'ECO200',name:'Economía Ambiental',credits:5,cat:'nucleo',dept:'Economía y Gestión'},
+      {code:'ECO210',name:'Gestión de Proyectos',credits:5,cat:'nucleo',dept:'Economía y Gestión',prereq:true,pre:mkPre('AND',['ECO200','Economía Ambiental'])},
+      {code:'ING100',name:'Inglés I',credits:3,cat:'fg',dept:'Idiomas'},
+      {code:'ING200',name:'Inglés II',credits:3,cat:'fg',dept:'Idiomas',prereq:true,pre:mkPre('AND',['ING100','Inglés I'])},
+      {code:'CFG100',name:'Formación General',credits:5,cat:'fg',dept:'Formación General'},
+      {code:'CFG200',name:'Ética Profesional',credits:4,cat:'fg',dept:'Formación General'},
+      {code:'AMB400',name:'Práctica Profesional',credits:12,cat:'integ',kind:'internship',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['AMB320','Evaluación de Impacto Ambiental'])},
+      {code:'AMB450',name:'Proyecto de Título',credits:15,cat:'integ',kind:'thesis',dept:'Ing. Ambiental',prereq:true,pre:mkPre('AND',['AMB400','Práctica Profesional'])},
+    ];
+    const mEditable=computed(()=> mKind.value==='build' && mEditMode.value);
+    const mSetPreMode=(id,mode)=>{ buildEntries.value=buildEntries.value.map(x=> (x.id===id && x.pre)?{...x,pre:{...x.pre,mode}}:x); };
+    const mAddTo=ref(null); const mIngestOpen=ref(false); const mDragId=ref(null);
+    const mMkEntry=(c,period,poolName)=>({id:'b'+(mUid++), code:c.code, name:c.name, short:c.name, credits:c.credits, cat:c.cat, catLabel:catLabelOf(c.cat), period, kind:c.kind||'course', poolName: poolName||null, prereq: !!c.pre, pre: c.pre ? {mode:c.pre.mode, of:c.pre.of.map(o=>({...o}))} : undefined});
+    const mAddCourse=(c)=>{ if(mAddTo.value==null) return; buildEntries.value=[...buildEntries.value, mMkEntry(c,mAddTo.value)]; mAddTo.value=null; };
+    const mAddPeriod=()=>{ const n=buildPeriods.value.length+1; buildPeriods.value=[...buildPeriods.value,{n,label:'Sem '+n}]; };
+    const mRemoveEntry=(id)=>{ buildEntries.value=buildEntries.value.filter(e=>e.id!==id); if(mallaFocus.value===id) mallaFocus.value=null; if(buildPlan.value.nonSequential) mReorderLevels(); };
+    const mSetField=(id,k,v)=>{ buildEntries.value=buildEntries.value.map(e=>{ if(e.id!==id) return e; const ne={...e,[k]:v}; if(k==='cat') ne.catLabel=catLabelOf(v); return ne; }); };
+    // bloque electivo (OptionPool) — entidad propia, independiente de la línea de formación
+    const mSetPool=(id,name)=>{ buildEntries.value=buildEntries.value.map(e=> e.id===id?{...e, poolName:(name&&name.trim())||null }:e); };
+    // Opción B: el rol (obligatoria/electiva) acopla la membresía al OptionPool de su línea
+    const mSetRole=(id,role)=>{ buildEntries.value=buildEntries.value.map(e=> e.id===id?{...e, poolName: role==='elec'?(e.poolName||'Electivos'):null }:e); };
+    const mOnDrop=(periodN)=>{ const id=mDragId.value; if(!id) return; buildEntries.value=buildEntries.value.map(e=> e.id===id?{...e,period:periodN}:e); mDragId.value=null; };
+    const mIngest=()=>{
+      buildPeriods.value=[{n:1,label:'Sem 1'},{n:2,label:'Sem 2'},{n:3,label:'Sem 3'},{n:4,label:'Sem 4'},{n:5,label:'Sem 5'},{n:6,label:'Sem 6'}];
+      const seed=[['MAT110',1],['QUI100',1],['BIO100',1],['ING100',1],['MAT120',2],['FIS110',2],['CFG100',2],['AMB210',3],['EST200',3],['ECO200',3],['AMB220',4],['AMB310',4],['AMB320',5],['AMB400',6],['AMB450',6]];
+      buildEntries.value=seed.map(([code,period])=> mMkEntry(mCatalog.find(x=>x.code===code),period));
+      mIngestOpen.value=false; mallaFocus.value=null;
+      toasts.value.push({id:Date.now(),title:'Malla estructurada',message:'15 asignaturas en 6 semestres. Revisa categorías y prerrequisitos.'});
+    };
+
+    // Picker: multiselección + búsqueda + filtro por departamento
+    const mPickSearch=ref(''); const mPickDept=ref(''); const mPickSel=ref([]);
+    const mDepts=[...new Set(mCatalog.map(c=>c.dept))];
+    const mPickList=computed(()=> mCatalog.filter(c=> (!mPickDept.value||c.dept===mPickDept.value) && (!mPickSearch.value || (c.name+' '+c.code).toLowerCase().includes(mPickSearch.value.toLowerCase())) ));
+    const mAddRole=ref('oblig'); const mAddPool=ref(''); const mAddStep=ref(1);
+    const mOpenAdd=(p)=>{ mAddTo.value=p; mPickSel.value=[]; mPickSearch.value=''; mPickDept.value=''; mAddRole.value='oblig'; mAddPool.value=''; mAddStep.value=1; };
+
+    /* ===== v8: prerrequisitos exigidos al agregar (bloqueante) ===== */
+    // hojas tipo-curso de una regla (ignora hitos/competencias/etc.)
+    const preCourseLeaves=(obj)=> (obj && obj.pre && Array.isArray(obj.pre.of)) ? obj.pre.of.filter(o=>!o.rt || o.rt==='CourseApproved') : [];
+    // prereqs no satisfechos de un curso ubicado en `period`, contra `list`
+    const missingPrereqs=(course,period,list)=>{ const out={absent:[],late:[]}; preCourseLeaves(course).forEach(o=>{ const occ=list.filter(e=>e.code===o.code); if(!occ.length) out.absent.push(o); else if(!occ.some(e=>e.period<period)) out.late.push(o); }); return out; };
+    const findCat=(code)=> mCatalog.find(x=>x.code===code);
+    // resolución recursiva: agrega `code` (y sus prereqs) a workList en el período anterior
+    const resolveInto=(workList,code,targetPeriod)=>{ const added=[],unresolved=[]; const cat=findCat(code); if(!cat){ unresolved.push({code,reason:'no-catalog'}); return {added,unresolved}; } if(workList.some(e=>e.code===code && e.period<targetPeriod)) return {added,unresolved}; const place=targetPeriod-1; if(place<1){ unresolved.push({code,label:cat.name,reason:'no-room'}); return {added,unresolved}; } const ent=mMkEntry(cat,place,null); ent.autoAdded=true; workList.push(ent); added.push(ent); preCourseLeaves(cat).forEach(o=>{ const r=resolveInto(workList,o.code,place); added.push(...r.added); unresolved.push(...r.unresolved); }); return {added,unresolved}; };
+    // alta efectiva. role='elec' → cada curso entra al OptionPool de SU línea de formación (derivado)
+    const doAdd=(courses,period,poolName,includeMissing)=>{ let work=[...buildEntries.value]; const autoAdded=[],unresolved=[]; courses.forEach(c=>work.push(mMkEntry(c,period, poolName||null))); if(includeMissing){ courses.forEach(c=>preCourseLeaves(c).forEach(o=>{ const r=resolveInto(work,o.code,period); autoAdded.push(...r.added); unresolved.push(...r.unresolved); })); } buildEntries.value=work; return {autoAdded,unresolved}; };
+    const mPendingAdd=ref(null);
+    const mAddSelected=()=>{
+      const p=mAddTo.value; const role=mAddRole.value;
+      const poolName = role==='elec' ? (mAddPool.value.trim()||'Electivos') : null;
+      const courses=mPickSel.value.map(code=>mCatalog.find(x=>x.code===code)).filter(Boolean);
+      if(!courses.length){ mAddTo.value=null; return; }
+      const nonSeq=buildPlan.value.nonSequential;
+      const preview=[...buildEntries.value, ...courses.map(c=>mMkEntry(c,p,poolName))];
+      // faltantes = prereq-curso NO satisfecho. Secuencial: no está, o está pero no antes (late).
+      // No-secuencial: solo "ausente" — el nivel se deriva, así que la posición nunca queda mal.
+      const missAll=[];
+      courses.forEach(c=>{ const m=missingPrereqs(c,p,preview);
+        m.absent.forEach(o=>{ if(!missAll.some(x=>x.code===o.code)) missAll.push({code:o.code,label:o.label,reason:'absent',forCode:c.code}); });
+        if(!nonSeq) m.late.forEach(o=>{ const at=(buildEntries.value.find(e=>e.code===o.code)||{}).period; if(!missAll.some(x=>x.code===o.code)) missAll.push({code:o.code,label:o.label,reason:'late',at,forCode:c.code}); });
+      });
+      if(missAll.length){
+        // BLOQUEA: no se completa la asignación. Guarda selección para "Volver".
+        mPendingAdd.value={period:p,role,poolName,selCodes:[...mPickSel.value],courses,missing:missAll}; mAddTo.value=null;
+      } else {
+        doAdd(courses,p,poolName,false); mAddTo.value=null; mPickSel.value=[];
+        if(nonSeq) mReorderLevels(); // recalcula niveles desde prerrequisitos
+      }
+    };
+    // "Volver": reabre el modal de asignación con la misma selección para corregir
+    const mPendingBack=()=>{ const pa=mPendingAdd.value; if(!pa) return; mAddTo.value=pa.period; mPickSel.value=[...pa.selCodes]; mAddRole.value=pa.role; mAddPool.value=pa.poolName&&pa.role==='elec'?pa.poolName:''; mAddStep.value=2; mPendingAdd.value=null; };
+    const mPendingCancel=()=>{ mPendingAdd.value=null; mPickSel.value=[]; };
+
+    /* ===== v9: edición de líneas de formación (requirementCategory del plan) ===== */
+    let catUid=1;
+    const mCatColors=['var(--up1-color-primary)','var(--up1-color-info-500)','var(--up1-color-warning-500)','#6b21a8','var(--up1-color-success-500)','#0e7490'];
+    const mCatIcons=['bi-mortarboard-fill','bi-people-fill','bi-stars','bi-flag-fill','bi-diagram-3-fill','bi-book-fill','bi-cpu-fill','bi-globe2'];
+    const mCatEditOpen=ref(false); const mCatEdit=ref(null); const mCatIsNew=ref(false);
+    const mCatMode=ref('edit');
+    const mOpenCatEdit=(c,mode)=>{ mCatIsNew.value=!c; mCatMode.value=mode||'edit'; lfMenu.value=null; mCatEdit.value = c? {...c} : {key:'cat'+(catUid++)+'-'+(buildCategories.value.length+1), name:'', short:'', code:'', min:0, max:null, icon:mCatIcons[0], color:mCatColors[0]}; mCatEditOpen.value=true; };
+    const mSaveCat=()=>{ const c=mCatEdit.value; if(!c||!c.name){ return; } if(!c.short) c.short=c.name; const arr=buildCategories.value.slice(); const i=arr.findIndex(x=>x.key===c.key); if(i>=0) arr[i]={...c}; else arr.push({...c}); buildCategories.value=arr; mCatEditOpen.value=false; mCatEdit.value=null; };
+    const mDeleteCat=(key)=>{ if(buildEntries.value.some(e=>e.cat===key)){ toasts.value.push({id:Date.now(),title:'No se puede eliminar la línea',message:'Hay asignaturas asignadas a esta línea. Reasígnalas o quítalas primero.'}); return; } buildCategories.value=buildCategories.value.filter(c=>c.key!==key); };
+    // conteo por línea: obligatorias vs electivas (Opción B: electivas = miembros del pool de la línea)
+    const mCatCounts=(key)=>{ const es=mEntries.value.filter(e=>e.cat===key && (e.kind==='course'||e.kind==='internship'||e.kind==='thesis')); return { oblig: es.filter(e=>!e.poolName).length, elec: es.filter(e=>e.poolName).length, credits: es.reduce((s,e)=>s+(e.credits||0),0) }; };
+    const mResolveAll=()=>{ let work=[...buildEntries.value]; const added=[],unresolved=[]; mPrereqIssues.value.forEach(issue=>issue.absent.forEach(o=>{ const r=resolveInto(work,o.code,issue.period); added.push(...r.added); unresolved.push(...r.unresolved); })); buildEntries.value=work; if(added.length) toasts.value.push({id:Date.now(),title:'Prerrequisitos ubicados',message:added.length+' asignatura(s) agregadas.'}); if(unresolved.length) toasts.value.push({id:Date.now()+1,title:'Quedan pendientes',message:unresolved.length+' no caben antes del primer período.'}); };
+    // Prerrequisitos / correquisitos (regla requirement en la Activity)
+    const mReqPick=ref(''); const mReqType=ref('prereq');
+    const mCourseOptions=computed(()=> mEntries.value.filter(e=> e.id!==mallaFocus.value && (e.kind==='course'||e.kind==='internship'||e.kind==='thesis')));
+    const mAddReq=(id)=>{ const c=buildEntries.value.find(x=>x.code===mReqPick.value); if(!c) return; const co=mReqType.value==='coreq'; const item={code:c.code, label:(co?'Cursar ':'Aprobar ')+c.name+' ('+c.code+')', rt:co?'CourseTaken':'CourseApproved', rel:mReqType.value}; buildEntries.value=buildEntries.value.map(x=>{ if(x.id!==id) return x; const of=(x.pre?x.pre.of.filter(o=>o.code!==c.code):[]).concat([item]); return {...x, pre:{mode:'AND',of}, prereq:true}; }); mReqPick.value=''; };
+    const mRemoveReq=(id,code)=>{ buildEntries.value=buildEntries.value.map(x=>{ if(x.id!==id) return x; const of=(x.pre?x.pre.of:[]).filter(o=>o.code!==code); return {...x, pre: of.length?{mode:'AND',of}:null, prereq: of.length>0}; }); };
+
+    // ===== Pestaña REQUISITOS (motor de reglas — 4 familias v0.28: Group/RecordState/MetricThreshold/AttributeMatch) =====
+    let reqUid=1;
+    const reqMilestones=[{code:'HITO-LIC',name:'Licenciatura'},{code:'HITO-BACH',name:'Bachillerato'}];
+    const reqCompetencies=[{code:'COMP-PROG',name:'Programación'},{code:'COMP-COM',name:'Comunicación efectiva'},{code:'COMP-INV',name:'Investigación'}];
+    const reqPrograms=[{code:'PROG-ICI',name:'Ingeniería Civil Industrial'},{code:'PROG-MAG',name:'Magíster en Ciencia de Datos'},{code:'COH-2025',name:'Cohorte 2025'}];
+    const reqScopes=[{key:'plan',label:'del plan'},{key:'nucleo',label:'de Núcleo'},{key:'fg',label:'de Formación General'}];
+    const reqVias=ref([
+      {id:'rv'+(reqUid++), items:[ {id:'i'+(reqUid++),kind:'course',code:'MAT110',mustBe:'Approved',timing:'Before',hard:true}, {id:'i'+(reqUid++),kind:'course',code:'MAT120',mustBe:'Approved',timing:'Before',hard:true} ]},
+      {id:'rv'+(reqUid++), items:[ {id:'i'+(reqUid++),kind:'course',code:'MAT210',mustBe:'Approved',timing:'Before',hard:true} ]},
+    ]);
+    const reqOverride=ref('inherit'); // syllabus: inherit | add | replace
+    const reqEditable=computed(()=> detailObj.value==='activity' || (detailObj.value==='syllabus' && reqOverride.value!=='inherit'));
+    const reqInfo=(code)=> mCatalog.find(c=>c.code===code) || {code,name:code};
+    const reqViasNonEmpty=computed(()=> reqVias.value.filter(v=>v.items.length));
+    const reqFamily=(it)=> it.kind==='metric'?'MetricThreshold' : it.kind==='attr'?'AttributeMatch' : 'RecordState';
+    const reqClase=(it)=> ({course:'Curso',pool:'Electivo (K-de-N)',metric:(it.metric==='Credits'?'Créditos':it.metric==='GPA'?'GPA':'Nivel/Período'),attr:'Programa/Cohorte',ms:'Hito',comp:'Competencia'})[it.kind]||'—';
+    const reqItemName=(it)=>{ if(it.kind==='course'){const c=reqInfo(it.code);return c.name+' ('+it.code+')';} if(it.kind==='pool')return it.minToSatisfy+' de '+it.courses.length+' cursos'; if(it.kind==='metric')return it.metric==='Credits'?('Créditos '+(it.scopeLabel||'')):it.metric==='GPA'?'GPA':'Período/Nivel'; if(it.kind==='attr')return it.label; if(it.kind==='ms'||it.kind==='comp')return it.name; return ''; };
+    const reqItemCond=(it)=>{ if(it.kind==='course')return it.negate?'No haberlo cursado/aprobado':((it.mustBe==='Taken'?(it.timing==='Either'?'Cursar (antes o en paralelo)':'Cursar en paralelo'):'Aprobado')+(it.minGrade?' · nota ≥'+it.minGrade:'')); if(it.kind==='pool')return 'Aprobar al menos '+it.minToSatisfy; if(it.kind==='metric')return it.operator+' '+it.value; if(it.kind==='attr')return it.mode==='Exclude'?'Excluir':'Incluir (solo)'; if(it.kind==='ms')return 'Hito alcanzado'; if(it.kind==='comp')return 'Nivel ≥ '+it.minLevel; return ''; };
+    const reqRows=computed(()=> reqVias.value.flatMap((v,vi)=> v.items.map(it=>({key:it.id, viaId:v.id, itemId:it.id, via:vi+1, clase:reqClase(it), family:reqFamily(it), name:reqItemName(it), cond:reqItemCond(it), hard:it.hard!==false}))));
+    const reqCounts=computed(()=>{ let t=0,rec=0; reqVias.value.forEach(v=>v.items.forEach(it=>{t++; if(it.hard===false)rec++;})); return {total:t, rec, vias:reqViasNonEmpty.value.length}; });
+    const reqLeaf=(it)=>{
+      if(it.kind==='course'){const c=reqInfo(it.code);return {type:'leaf',rt:'RecordState',label:(it.negate?'No haber aprobado ':(it.mustBe==='Taken'?'Cursar ':'Aprobar '))+c.name+' ('+it.code+')'+(it.minGrade?' nota ≥'+it.minGrade:'')+(it.timing==='Concurrent'?' [coreq]':it.timing==='Either'?' [pre/coreq]':'')};}
+      if(it.kind==='pool')return {type:'group',combinator:'OR',minToSatisfy:it.minToSatisfy,label:'Elegir '+it.minToSatisfy+' de '+it.courses.length,children:it.courses.map(c=>({type:'leaf',rt:'RecordState',label:'Aprobar '+c.name+' ('+c.code+')'}))};
+      if(it.kind==='metric'){const lbl=it.metric==='Credits'?('≥ '+it.value+' créditos '+(it.scopeLabel||'')):it.metric==='GPA'?('GPA '+it.operator+' '+it.value):('Período '+it.operator+' '+it.value);return {type:'leaf',rt:'MetricThreshold',label:lbl};}
+      if(it.kind==='attr')return {type:'leaf',rt:'AttributeMatch',label:(it.mode==='Exclude'?'Excepto ':'Solo ')+it.label};
+      if(it.kind==='ms')return {type:'leaf',rt:'RecordState',label:it.name+' alcanzado'};
+      if(it.kind==='comp')return {type:'leaf',rt:'RecordState',label:it.name+' nivel ≥ '+it.minLevel};
+      return {type:'leaf',rt:'?',label:'?'};
+    };
+    const reqTree=computed(()=>{ const vias=reqViasNonEmpty.value; if(!vias.length) return null; const viaNode=(v)=>{ const ls=v.items.map(reqLeaf); return ls.length===1?ls[0]:{type:'group',combinator:'AND',label:'Todos de la vía',children:ls}; }; if(vias.length===1) return viaNode(vias[0]); return {type:'group',combinator:'OR',label:'Cualquiera de las vías',children:vias.map(viaNode)}; });
+    const reqItemShort=(it)=> it.kind==='course'?((it.negate?'¬':'')+it.code+(it.timing==='Concurrent'?'*':'')) : it.kind==='pool'?(it.minToSatisfy+'/'+it.courses.length+' elec') : it.kind==='metric'?(it.metric==='Credits'?('≥'+it.value+'cr'):it.metric==='GPA'?('GPA≥'+it.value):('Sem≥'+it.value)) : it.kind==='attr'?it.label : it.kind==='ms'?it.name : it.kind==='comp'?(it.name+'≥'+it.minLevel) : '?';
+    const reqHumanText=computed(()=>{ const vias=reqViasNonEmpty.value; if(!vias.length) return 'sin requisitos (matrícula libre).'; return vias.map(v=>'('+v.items.map(reqItemShort).join(' Y ')+')').join('  Ó  '); });
+    // editor
+    const reqAddOpen=ref(false); const reqAddClass=ref('course'); const reqAddViaId=ref(''); const reqAddHard=ref('hard'); const reqAddStep=ref(1); const reqRuleOpen=ref(false);
+    const reqClasses=[{k:'course',label:'Curso (prerreq/correq)',icon:'bi-mortarboard-fill'},{k:'pool',label:'Electivos K de N',icon:'bi-collection'},{k:'credits',label:'Créditos mínimos',icon:'bi-coin'}];
+    const reqClassLabel=(k)=>{ const c=reqClasses.find(x=>x.k===k); return c?c.label:''; };
+    const reqPickSearch=ref(''); const reqPickDept=ref(''); const reqPickSel=ref([]); const reqTiming=ref('Before'); const reqMinGrade=ref(''); const reqAnti=ref(false); const reqPoolMin=ref(2);
+    const reqPickList=computed(()=> mCatalog.filter(c=> c.code!==(current.value&&current.value.code) && (!reqPickDept.value||c.dept===reqPickDept.value) && (!reqPickSearch.value||(c.name+' '+c.code).toLowerCase().includes(reqPickSearch.value.toLowerCase())) ));
+    const reqOp=ref('>='); const reqVal=ref(''); const reqScopeKey=ref('plan');
+    const reqDim=ref('Program'); const reqAttrSel=ref([]); const reqMode=ref('Include');
+    const reqAttrOptions=computed(()=> reqDim.value==='Consent'?[{code:'Instructor',name:'Docente'},{code:'Department',name:'Departamento'},{code:'Unit',name:'Unidad'}]:reqPrograms);
+    const reqMsCode=ref(reqMilestones[0].code); const reqCompCode=ref(reqCompetencies[0].code); const reqCompLevel=ref(3);
+    const reqOpenAdd=()=>{ reqAddOpen.value=true; reqAddStep.value=1; reqAddClass.value='course'; reqAddViaId.value=(reqVias.value[0]&&reqVias.value[0].id)||'new'; reqAddHard.value='hard'; reqPickSel.value=[]; reqPickSearch.value=''; reqPickDept.value=''; reqTiming.value='Before'; reqMinGrade.value=''; reqAnti.value=false; reqPoolMin.value=2; reqOp.value='>='; reqVal.value=''; reqScopeKey.value='plan'; reqDim.value='Program'; reqAttrSel.value=[]; reqMode.value='Include'; };
+    const reqAddVia=()=>{ reqVias.value=[...reqVias.value,{id:'rv'+(reqUid++),items:[]}]; };
+    const reqPushItems=(vid,items)=>{ if(vid==='new'){ const nv={id:'rv'+(reqUid++),items:[]}; reqVias.value=[...reqVias.value,nv]; vid=nv.id; } reqVias.value=reqVias.value.map(v=> v.id!==vid?v:{...v,items:[...v.items,...items]}); };
+    const reqConfirmAdd=()=>{ const hard=reqAddHard.value==='hard'; const cl=reqAddClass.value; const items=[];
+      if(cl==='course'){ reqPickSel.value.forEach(code=>{ const c=reqInfo(code); items.push({id:'i'+(reqUid++),kind:'course',code,name:c.name,mustBe: reqTiming.value==='Before'?'Approved':'Taken', timing:reqTiming.value, minGrade: reqMinGrade.value?Number(reqMinGrade.value):undefined, negate:reqAnti.value, hard}); }); }
+      else if(cl==='pool'){ if(reqPickSel.value.length) items.push({id:'i'+(reqUid++),kind:'pool',minToSatisfy:Math.max(1,Math.min(Number(reqPoolMin.value),reqPickSel.value.length)),courses:reqPickSel.value.map(code=>{const c=reqInfo(code);return {code,name:c.name};}),hard}); }
+      else if(cl==='credits'){ const sc=reqScopes.find(s=>s.key===reqScopeKey.value); items.push({id:'i'+(reqUid++),kind:'metric',metric:'Credits',operator:reqOp.value,value:Number(reqVal.value||0),scopeLabel:sc?sc.label:'',hard}); }
+      else if(cl==='gpa'){ items.push({id:'i'+(reqUid++),kind:'metric',metric:'GPA',operator:reqOp.value,value:Number(reqVal.value||0),hard}); }
+      else if(cl==='period'){ items.push({id:'i'+(reqUid++),kind:'metric',metric:'PeriodIndex',operator:reqOp.value,value:Number(reqVal.value||0),hard}); }
+      else if(cl==='milestone'){ const m=reqMilestones.find(x=>x.code===reqMsCode.value); items.push({id:'i'+(reqUid++),kind:'ms',code:m.code,name:m.name,hard}); }
+      else if(cl==='competency'){ const c=reqCompetencies.find(x=>x.code===reqCompCode.value); items.push({id:'i'+(reqUid++),kind:'comp',code:c.code,name:c.name,minLevel:Number(reqCompLevel.value),hard}); }
+      else if(cl==='program'){ const opts=reqAttrOptions.value; const labels=reqAttrSel.value.map(cd=>(opts.find(o=>o.code===cd)||{name:cd}).name).join(', '); items.push({id:'i'+(reqUid++),kind:'attr',dimension:reqDim.value,label:(reqDim.value==='Consent'?'Autorización: ':reqDim.value==='Program'?'Programa: ':'Cohorte/Grupo: ')+labels,mode:reqMode.value,hard}); }
+      if(items.length) reqPushItems(reqAddViaId.value, items);
+      reqAddOpen.value=false;
+    };
+    const reqRemove=(viaId,itemId)=>{ reqVias.value=reqVias.value.map(v=> v.id!==viaId?v:{...v,items:v.items.filter(i=>i.id!==itemId)}); reqMenu.value=null; };
+    // menús de acciones por fila (estándar) + modal ver/editar de una entrada de requisito
+    const lfMenu=ref(null);
+    const lfOpenMenu=(e,c)=>{ lfMenu.value=(lfMenu.value&&lfMenu.value.key===c.key)?null:{key:c.key, x:e.clientX, y:e.clientY, cat:c}; };
+    const reqMenu=ref(null);
+    const reqOpenMenu=(e,r)=>{ reqMenu.value=(reqMenu.value&&reqMenu.value.key===r.key)?null:{key:r.key, x:e.clientX, y:e.clientY, row:r}; };
+    const reqRowOpen=ref(false); const reqRowMode=ref('view'); const reqRow=ref(null);
+    const reqRowOpenFn=(r,mode)=>{ reqRow.value={...r}; reqRowMode.value=mode; reqRowOpen.value=true; reqMenu.value=null; };
+    const reqSetHard=(viaId,itemId,hard)=>{ reqVias.value=reqVias.value.map(v=> v.id!==viaId?v:{...v,items:v.items.map(i=> i.id!==itemId?i:{...i,hard})}); if(reqRow.value) reqRow.value={...reqRow.value,hard}; };
+
+    // El plan abierto (current) decide el dataset activo
+    const mKind=computed(()=>{ const t=(current.value&&current.value.type)||''; if(/en dise/i.test(t)) return 'build'; if(/modular|carrusel|carousel/i.test(t)) return 'mod'; return 'seq'; });
+    const mDS=computed(()=>{
+      if(mKind.value==='build'){ const E=buildEntries.value; const cr=(arr)=>arr.reduce((s,e)=>s+(e.credits||0)+(e.pool?e.pool.minCredits:0),0);
+        const bp=buildPlan.value;
+        const periods = bp.nonSequential ? Array.from({length:Math.max(1,...E.map(e=>e.period||1))},(_,i)=>({n:i+1,label:'Nivel '+(i+1)})) : buildPeriods.value;
+        return { plan:bp, periods, entries:E, titulacion:buildTitulacion.value, designCredits:cr(E), categories: buildCategories.value.map(c=>({...c, current:cr(E.filter(e=>e.cat===c.key))})) }; }
+      return mKind.value==='mod'?MOD:SEQ;
+    });
+    const mPlan=computed(()=> mDS.value.plan);
+    const mPeriods=computed(()=> mDS.value.periods);
+    const mCategories=computed(()=> mDS.value.categories);
+    const mEntries=computed(()=> mDS.value.entries);
+    const mTitulacion=computed(()=> mDS.value.titulacion);
+    const mDesignCredits=computed(()=> mDS.value.designCredits);
+    const mCodeId=computed(()=>{ const m={}; mEntries.value.forEach(e=>{ if(e.code) m[e.code]=e.id; }); return m; });
+    // v7: asignaturas con prerrequisitos no ubicados antes en la malla (solo build)
+    const mPrereqIssues=computed(()=>{ if(mKind.value!=='build') return []; const list=mEntries.value; const res=[]; list.forEach(e=>{ const m=missingPrereqs(e,e.period,list); if(m.absent.length||m.late.length) res.push({id:e.id,code:e.code,name:e.short||e.name,period:e.period,absent:m.absent,late:m.late}); }); return res; });
+    const mEntryIssue=(id)=> mPrereqIssues.value.find(i=>i.id===id);
+    const mEntriesIn=(n)=> mEntries.value.filter(e=>e.period===n);
+    const mLaneEntries=(cat,n)=> mEntries.value.filter(e=>e.cat===cat && e.period===n);
+    const mCreditsOf=(n)=> mEntries.value.filter(e=>e.period===n && e.credits).reduce((s,e)=>s+e.credits,0);
+    const mFocusEntry=computed(()=> mEntries.value.find(e=>e.id===mallaFocus.value));
+    // Edición/eliminación de una asignatura de la malla → modal flotante
+    const mEditOpen=ref(false); const mEditId=ref(null);
+    const mEditEntry=computed(()=> mEntries.value.find(e=>e.id===mEditId.value));
+    const mOnCardClick=(e)=>{ mallaFocus.value=e.id; if(mEditable.value && (e.kind==='course'||e.kind==='internship'||e.kind==='thesis')){ mEditId.value=e.id; mEditOpen.value=true; } };
+    // Validación del DISEÑO (no avance del estudiante). El rótulo de período es "Sem" o "Nivel" según el plan.
+    const mVPrereq=(o,ownerPeriod)=>{
+      const U=mPlan.value.unit;
+      if(o.rt==='MilestoneReached'){ const m=mEntries.value.find(e=>e.code===o.code); return m?{v:'ok',note:'Hito definido ('+U+' '+m.period+')'}:{v:'warn',note:'El hito referenciado no está en la malla'}; }
+      const p=mEntries.value.find(e=>e.code===o.code);
+      const co = o.rel==='coreq' || o.rt==='CourseTaken';
+      if(!p) return {v:'warn',note:'El requisito no está en la malla'};
+      if(p.period>ownerPeriod) return {v:'error',note:(co?'Correquisito':'Prerrequisito')+' en '+U+' '+p.period+' posterior a '+U+' '+ownerPeriod};
+      if(!co && p.period===ownerPeriod) return {v:'error',note:'Prerrequisito en el mismo '+U+' — debe cursarse antes'};
+      return {v:'ok',note: co ? ('Correquisito · '+U+' '+p.period+' (mismo período permitido)') : (U+' '+p.period+' · cursable antes de '+U+' '+ownerPeriod)};
+    };
+    const mLeaf=(o)=>({type:'leaf',rt:o.rt||'CourseApproved',label:o.label});
+    const mReqOf=(e)=>{ if(!e||!e.pre) return null; const items=e.pre.of.map(o=>{ const lf=mLeaf(o); const r=mVPrereq(o,e.period); lf.v=r.v; lf.note=r.note; return lf; }); if(items.length===1) return items[0]; return {type:'group',combinator:e.pre.mode||'AND',label:'Prerrequisitos de '+e.name,children:items}; };
+    const mFocusReq=computed(()=> mReqOf(mFocusEntry.value));
+    const mIsDimmed=(id)=>{ const f=mFocusEntry.value; if(!f||f.id===id||!f.pre) return false; const ids=f.pre.of.map(o=>mCodeId.value[o.code]).filter(Boolean); return !ids.includes(id); };
+    const mDim=(e)=>{ const catA=mCatFilter.value.length>0, elecA=mElecFilter.value.length>0; if(catA||elecA){ const mc=catA&&mCatFilter.value.includes(e.cat); const me=elecA&&e.poolName&&mElecFilter.value.includes(e.poolName); return !(mc||me); } return mallaFocus.value ? mIsDimmed(e.id) : false; };
+    const mCountV=(node,acc)=>{ if(!node) return acc; if(node.type==='group'){ node.children.forEach(c=>mCountV(c,acc)); } else { if(node.v==='warn') acc.warn++; if(node.v==='error') acc.error++; } return acc; };
+    const mIssues=computed(()=>{
+      if(mKind.value==='build'){
+        const out=[]; const E=mEntries.value;
+        if(!E.length){ out.push({label:'Malla vacía', note:'Ingesta una malla existente o agrega asignaturas para empezar', v:'warn'}); return out; }
+        const dc=mDesignCredits.value, req=mPlan.value.creditsTotal;
+        if(dc<req) out.push({label:'Créditos insuficientes', note:'El diseño suma '+dc+' de '+req+' créditos', v:'warn'});
+        const empty=mPeriods.value.filter(p=>!E.some(e=>e.period===p.n));
+        if(empty.length) out.push({label:'Períodos sin asignaturas', note:empty.map(p=>p.label).join(', '), v:'warn'});
+        if(!E.some(e=>e.kind==='thesis'||e.kind==='internship'||e.kind==='milestone')) out.push({label:'Sin actividad de cierre', note:'Agrega práctica, proyecto de título o examen de grado', v:'warn'});
+        return out;
+      }
+      const out=[]; const walk=(n)=>{ if(!n) return; if(n.type==='group'){ n.children.forEach(walk); } else if(n.v==='warn'||n.v==='error'){ out.push({label:n.label, note:n.note, v:n.v}); } }; walk(mTitulacion.value); return out;
+    });
+    const mValSummary=computed(()=>{ if(mKind.value==='build'){ return {warn:mIssues.value.length, error:0}; } const acc={warn:0,error:0}; mCountV(mTitulacion.value,acc); mCountV(mFocusReq.value,acc); return acc; });
+    const mMetrics=computed(()=>{
+      const E=mEntries.value; const pools=E.filter(e=>e.kind==='pool');
+      const loads=mPeriods.value.map(p=> E.filter(e=>e.period===p.n).reduce((s,e)=>s+(e.credits||0)+(e.pool?e.pool.minCredits:0),0));
+      const electiveCred=pools.reduce((s,e)=>s+(e.pool?e.pool.minCredits:0),0);
+      return { courses:E.filter(e=>e.kind!=='pool'&&e.kind!=='milestone').length, pools:pools.length, milestones:E.filter(e=>e.kind==='milestone').length, prereqRules:E.filter(e=>e.pre).length,
+               designCredits:mDesignCredits.value, reqCredits:mPlan.value.creditsTotal, maxLoad:Math.max(...loads), elecPct:Math.round(electiveCred/mDesignCredits.value*100), periods:mPeriods.value.length };
+    });
+    const mStats=computed(()=>{
+      const M=mMetrics.value, avisos=mValSummary.value.warn+mValSummary.value.error, under=M.designCredits<M.reqCredits;
+      const unit=mPlan.value.unit==='Nivel'?'nivel':'sem';
+      return [
+        { key:'cred', color:'var(--up1-color-primary)', value:M.designCredits+'/'+M.reqCredits, label:'Créditos diseño / req.', valColor: under?'var(--up1-color-warning-700)':'var(--up1-color-primary)', pct:Math.min(100,M.designCredits/M.reqCredits*100) },
+        { key:'load', color:'var(--up1-color-info-500)', value:M.maxLoad, label:'Carga máx / '+unit },
+        { key:'asig', color:'var(--up1-color-primary)', value:M.courses, label:'Asignaturas' },
+        { key:'val', color: avisos?'var(--up1-color-warning-500)':'var(--up1-color-success-500)', value:avisos, label:'Avisos validación', valColor: avisos?'var(--up1-color-warning-700)':'var(--up1-color-success-500)' },
+      ];
+    });
+    // D3 layout computado (columnas = período/nivel; escala a N)
+    const mColW=180,mRowH=82,mPadX=18,mPadY=24,mNodeW=150,mNodeH=50;
+    const mGraph=computed(()=>{ const byCol={}; const nodes=mEntries.value.map(e=>{ const c=e.period; byCol[c]=byCol[c]||0; const row=byCol[c]++; return {id:e.id,code:e.code,name:e.short||e.name,cat:e.cat,kind:e.kind||'course',x:mPadX+(c-1)*mColW,y:mPadY+row*mRowH}; }); nodes.push({id:'m-diploma',name:mPlan.value.awardLabel,cat:'integ',kind:'diploma',x:mPadX+mPeriods.value.length*mColW,y:mPadY+mRowH}); return nodes; });
+    const mGById=(id)=> mGraph.value.find(g=>g.id===id);
+    const mEdges=computed(()=>{ const ed=[]; const E=mEntries.value; E.forEach(e=>{ if(e.pre){ e.pre.of.forEach(o=>{ const f=mCodeId.value[o.code]; if(f) ed.push({from:f,to:e.id,kind:e.pre.mode==='OR'?'or':'and'}); }); } }); const maxP=Math.max(...E.map(e=>e.period)); E.filter(e=>e.kind==='thesis'||(e.kind==='milestone'&&e.period===maxP)).forEach(e=> ed.push({from:e.id,to:'m-diploma',kind:'and',hi:true})); return ed; });
+    const mEdgePath=(e)=>{ const a=mGById(e.from),b=mGById(e.to); if(!a||!b) return ''; const x1=a.x+(a.kind==='diploma'?130:mNodeW), y1=a.y+(a.kind==='diploma'?26:mNodeH/2); const x2=b.x, y2=b.y+(b.kind==='diploma'?26:mNodeH/2); const mx=(x1+x2)/2; return `M ${x1},${y1} C ${mx},${y1} ${mx},${y2} ${x2},${y2}`; };
+    const mColMarkers=computed(()=>{ const arr=mPeriods.value.map((p,i)=>({label:p.label,left:mPadX+i*mColW})); arr.push({label:mPlan.value.awardLabel,left:mPadX+mPeriods.value.length*mColW}); return arr; });
+    const mCanvasW=computed(()=> mPadX+mPeriods.value.length*mColW+200);
+    const mCanvasH=computed(()=>{ const cnt={}; mEntries.value.forEach(e=>cnt[e.period]=(cnt[e.period]||0)+1); const mx=Math.max(2,...Object.values(cnt)); return mPadY+mx*mRowH+20; });
+
+    return { apps, role, view, tab, chatOpen, chatDocked, input, msgs, toasts, demo, programs, current, isEcuaciones, objTabs, objKey, currentObj, setObj, detailObj, detailTabs, sectionTable, raList, evalChildren, suggestions, unread, openRecord, openView, openEdit, openMalla, closeMalla, mRowEditable, mRowMenu, openRowMenu, openProgram, displayStatus, statusClass, send, dashFilters, dashKpis, estadoBars, facultadBars, estadoMax, facultadMax,
+             mallaView, mallaLens, mallaFocus, mPlan, mPeriods, mCategories, mTitulacion, mEntries, mEntriesIn, mLaneEntries, mCreditsOf, mFocusEntry, mFocusReq, mIsDimmed, mDim, mCatFilter, mToggleCat, mMetrics, mStats, mExpanded, mCatIcon, mPrereqText, mGraph, mEdges, mEdgePath, mColMarkers, mCanvasW, mCanvasH, mValSummary, mIssues,
+             mKind, mEditable, mEditMode, mSetPreMode, mCatalog, mAddTo, mIngestOpen, mDragId, mAddCourse, mAddPeriod, mRemoveEntry, mSetField, mOnDrop, mIngest,
+             mPickSearch, mPickDept, mPickSel, mDepts, mPickList, mOpenAdd, mAddSelected, mAddRole, mAddStep, mEditOpen, mEditId, mEditEntry, mOnCardClick, mReqPick, mReqType, mCourseOptions, mAddReq, mRemoveReq,
+             catIcon, catLabelOf, catOf, mSetRole, mSetPool, mAddPool, mCatCounts, mCatColors, mCatIcons, mCatEditOpen, mCatEdit, mCatIsNew, mOpenCatEdit, mSaveCat, mDeleteCat,
+             mElecFilter, mToggleElec, mPoolsPresent,
+             mPrereqIssues, mEntryIssue, mResolveAll, mPendingAdd, mPendingBack, mPendingCancel,
+             reqVias, reqOverride, reqEditable, reqViasNonEmpty, reqRows, reqCounts, reqTree, reqHumanText, reqClase, reqFamily,
+             reqAddOpen, reqAddStep, reqRuleOpen, reqClassLabel, reqAddClass, reqAddViaId, reqAddHard, reqClasses, reqPickSearch, reqPickDept, reqPickSel, reqPickList, reqTiming, reqMinGrade, reqAnti, reqPoolMin,
+             reqOp, reqVal, reqScopeKey, reqScopes, reqDim, reqAttrSel, reqMode, reqAttrOptions, reqMsCode, reqMilestones, reqCompCode, reqCompetencies, reqCompLevel, reqPrograms,
+             reqOpenAdd, reqAddVia, reqConfirmAdd, reqRemove,
+             lfMenu, lfOpenMenu, reqMenu, reqOpenMenu, reqRowOpen, reqRowMode, reqRow, reqRowOpenFn, reqSetHard, mCatMode };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

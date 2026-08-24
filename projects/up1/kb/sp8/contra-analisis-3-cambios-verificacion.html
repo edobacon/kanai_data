@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SP8 - Contra-analisis de la propuesta de 3 cambios (verificacion contra codigo)</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f0f2f5;
+    --text: #1a1d24; --text-soft: #4a4f5a; --text-mute: #6b7280;
+    --border: #e2e5ea; --border-strong: #cbd0d8;
+    --accent: #3056d3; --accent-soft: #eaeeff;
+    --ok: #1a7f4b; --ok-bg: #e6f5ec;
+    --warn: #b26a00; --warn-bg: #fdf0dd;
+    --err: #c0392b; --err-bg: #fbe8e6;
+    --neutral: #556; --neutral-bg: #eceef1;
+    --code-bg: #f2f3f6; --code-text: #22303c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --surface: #1c1f26; --surface-2: #232732;
+      --text: #e8eaed; --text-soft: #b6bcc6; --text-mute: #8a909c;
+      --border: #2c313b; --border-strong: #3a4150;
+      --accent: #7d97f4; --accent-soft: #232b45;
+      --ok: #5fd39a; --ok-bg: #16301f;
+      --warn: #e5ab52; --warn-bg: #33260f;
+      --err: #f0857a; --err-bg: #3a1714;
+      --neutral: #9aa2b0; --neutral-bg: #262a33;
+      --code-bg: #232732; --code-text: #cfd6e0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --surface: #1c1f26; --surface-2: #232732;
+    --text: #e8eaed; --text-soft: #b6bcc6; --text-mute: #8a909c;
+    --border: #2c313b; --border-strong: #3a4150;
+    --accent: #7d97f4; --accent-soft: #232b45;
+    --ok: #5fd39a; --ok-bg: #16301f;
+    --warn: #e5ab52; --warn-bg: #33260f;
+    --err: #f0857a; --err-bg: #3a1714;
+    --neutral: #9aa2b0; --neutral-bg: #262a33;
+    --code-bg: #232732; --code-text: #cfd6e0;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f0f2f5;
+    --text: #1a1d24; --text-soft: #4a4f5a; --text-mute: #6b7280;
+    --border: #e2e5ea; --border-strong: #cbd0d8;
+    --accent: #3056d3; --accent-soft: #eaeeff;
+    --ok: #1a7f4b; --ok-bg: #e6f5ec;
+    --warn: #b26a00; --warn-bg: #fdf0dd;
+    --err: #c0392b; --err-bg: #fbe8e6;
+    --neutral: #556; --neutral-bg: #eceef1;
+    --code-bg: #f2f3f6; --code-text: #22303c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.6; font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.doc { border-bottom: 2px solid var(--border-strong); padding-bottom: 24px; margin-bottom: 32px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 44px 0 14px; padding-top: 8px; letter-spacing: -0.01em; }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  p { margin: 0 0 14px; color: var(--text-soft); }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--text-mute); margin-top: 12px; }
+  .meta b { color: var(--text-soft); font-weight: 600; }
+  code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); color: var(--code-text); padding: 1px 6px; border-radius: 5px; }
+  pre { background: var(--code-bg); color: var(--code-text); padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.5; border: 1px solid var(--border); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; margin: 18px 0; }
+  .card.err { border-left: 4px solid var(--err); }
+  .card.warn { border-left: 4px solid var(--warn); }
+  .card.ok { border-left: 4px solid var(--ok); }
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; vertical-align: middle; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.err { background: var(--err-bg); color: var(--err); }
+  .pill.neutral { background: var(--neutral-bg); color: var(--neutral); }
+  .pill.info { background: var(--accent-soft); color: var(--accent); }
+  .tag { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; white-space:nowrap; }
+  .tag.rompe { background: var(--err-bg); color: var(--err); }
+  .tag.ajuste { background: var(--warn-bg); color: var(--warn); }
+  .tag.lectura { background: var(--ok-bg); color: var(--ok); }
+  .tag.cross { background: var(--accent-soft); color: var(--accent); }
+  blockquote { margin: 10px 0; padding: 10px 16px; border-left: 3px solid var(--border-strong); background: var(--surface-2); border-radius: 0 8px 8px 0; color: var(--text-soft); font-style: italic; }
+  blockquote cite { display:block; font-style: normal; font-size: 12px; color: var(--text-mute); margin-top: 6px; }
+  .lede { font-size: 18px; color: var(--text); background: var(--surface-2); border-radius: 12px; padding: 18px 22px; margin: 0 0 8px; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  .scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  .scroll table { margin: 0; }
+  th, td { text-align: left; padding: 11px 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-soft); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  td b { color: var(--text); }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; color: var(--text-soft); }
+  li { margin: 4px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 4px; font-size: 13px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .src { font-family: var(--mono); font-size: 12px; color: var(--text-mute); }
+  .lvl { font-weight: 700; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .foot { font-size: 13px; color: var(--text-mute); margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .kpi-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 18px 0 6px; }
+  .kpi { flex: 1 1 160px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi .n { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  .kpi .l { font-size: 12px; color: var(--text-mute); text-transform: uppercase; letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow">SP8 · Contra-analisis</p>
+  <h1>Verificacion contra codigo de la propuesta de 3 cambios acotados</h1>
+  <p>Revision independiente de la propuesta <code>propuesta-3-cambios-impacto-cd</code>. Cada afirmacion se contrasto contra el codigo real de los mods y el core del object-manager, no contra el documento. Ademas se traza el <b>blast radius</b> de cada cambio (que se rompe o requiere ajuste en otros mods y core) y se <b>contrasta contra Confluence</b> (modelo de objetos de LA y Engagement, precedente UPONE-1283). El objetivo es decidir si la propuesta se puede acordar tal cual, y separar lo que es correcto de lo que induce a error.</p>
+  <div class="meta">
+    <span><b>Fecha:</b> 2026-08-04</span>
+    <span><b>Alcance verificado:</b> curriculum-design, academic-scheduling, uengagement-up1, core (object-manager + suite)</span>
+    <span><b>Raiz mods:</b> <code>uplanner/up1/mods</code></span>
+    <span><b>Metodo:</b> lectura de codigo (objects, logic, sync, codegen, i18n)</span>
+  </div>
+</header>
+
+<p class="lede">Veredicto general: el analisis es <b>correcto en el fondo</b> (los tres problemas existen y son reales), pero contiene <b>tres imprecisiones que cambian la decision</b> y <b>numeros equivocados</b> en un hallazgo de plataforma. No lo aprobaria tal cual sin corregir esos puntos.</p>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="n" style="color:var(--ok)">7</div><div class="l">Afirmaciones correctas</div></div>
+  <div class="kpi"><div class="n" style="color:var(--warn)">4</div><div class="l">Imprecisas (efecto OK, causa/detalle mal)</div></div>
+  <div class="kpi"><div class="n" style="color:var(--err)">2</div><div class="l">Erroneas o refutadas</div></div>
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--ok)"></span> <b>Correcto</b>: se sostiene en codigo</span>
+  <span><span class="dot" style="background:var(--warn)"></span> <b>Impreciso</b>: el efecto es real, el detalle o la causa esta mal</span>
+  <span><span class="dot" style="background:var(--err)"></span> <b>Erroneo</b>: la afirmacion es falsa o refutable</span>
+</div>
+
+<h2>Como leer el "nivel" de diferencia</h2>
+<p>Cuando una afirmacion difiere del codigo, clasifico <b>a que nivel</b> difiere, porque no todas las diferencias pesan igual:</p>
+<ul>
+  <li><b>Cosmetico</b>: naming o ubicacion; no cambia la decision.</li>
+  <li><b>De causa</b>: el sintoma es real pero el diagnostico de por que ocurre esta mal; peligroso porque el fix se disena sobre una premisa falsa.</li>
+  <li><b>De numeros</b>: una metrica citada no coincide con el codigo.</li>
+  <li><b>De alcance</b>: la afirmacion ubica mal quien es dueno o que mods toca.</li>
+  <li><b>Estructural</b>: apunta (o deberia apuntar) a un problema de plataforma mas amplio que el fix puntual.</li>
+</ul>
+
+<hr>
+
+<h2>Cambio 1 - Modelo curricular (curriculum-design + academic-scheduling)</h2>
+<p><b>Objetivo de la propuesta:</b> permitir que un curso se dicte con varias actividades (Catedra, Laboratorio), cada una con cupo, sala, docente y horario. Declarar componentes en curriculum-design y programarlos en academic-scheduling.</p>
+
+<div class="card err">
+  <p><span class="pill err">Erroneo</span> <b>"Crear RecordType nuevo <code>CurricularSection</code>"</b> &nbsp; <span class="lvl" style="color:var(--err)">Nivel: de alcance</span></p>
+  <p><code>CurricularSection</code> <b>ya existe</b> como objeto en <span class="src">curriculum-design/objects/CurricularSection.json</span>, con FK polimorfica <code>ownerType</code>/<code>ownerId</code> (enum <code>Activity | Offering | Curriculum</code>) y jerarquia self-FK <code>parentId</code>. Sus recordTypes actuales son <code>LearningOutcome, Modality, Session, EvaluationComponent, Content, Bibliography, CustomSection, ApprovalCondition</code>. Ninguno modela "componente requerido de dictado".</p>
+  <p><b>Diferencia real:</b> lo nuevo no es un objeto, es un <b>recordType/uso nuevo dentro de un objeto existente</b>, o un modelado distinto. Importa porque el diseno y el esfuerzo cambian: extender un enum de recordType no es lo mismo que crear un objeto, y hay que decidir si "declarar componentes" encaja en la semantica actual de <code>CurricularSection</code> (owner polimorfico) o merece su propio objeto.</p>
+</div>
+
+<div class="card ok">
+  <p><span class="pill ok">Correcto</span> <b>Campos <code>componentId</code> y <code>requiredResourceTypeId</code> en <code>Section</code>; <code>ResourceTypes</code> referenciable</b></p>
+  <p><span class="src">academic-scheduling/objects/Section.json</span> existe, no tiene esos dos campos (grep cero coincidencias), y <code>ResourceTypes</code> existe y ya es destino de FK (<span class="src">objects/ResourceTypeAssignment.json:29</span>). La FK propuesta es viable.</p>
+</div>
+
+<div class="card warn">
+  <p><span class="pill warn">Impreciso</span> <b><code>ActivityLine</code> = "pivote Offering-Activity, quien ejecuta y donde"</b> &nbsp; <span class="lvl" style="color:var(--warn)">Nivel: de alcance + cosmetico</span></p>
+  <ul>
+    <li><b>Ubicacion:</b> <code>ActivityLine</code> vive en <b>uengagement-up1</b> (<span class="src">uengagement-up1/objects/ActivityLine.json</span>), no en curriculum-design/academic-scheduling. Si el diseno lo trata como pieza de nuestro dominio, esta mal ubicado.</li>
+    <li><b>Cadena real:</b> <code>Offering &rarr; ActivityLine &rarr; Activity</code> (no hay FK directa Offering&rarr;Activity). Su pivote propio es <b>Activity &harr; OrgUnit</b> (M:N con identidad por contexto de ejecucion).</li>
+    <li><b>"Donde":</b> es la unidad organizacional ejecutora, <b>no la sala</b>. La sala y el horario viven en <code>ScenarioSectionAssignment</code>. Leer "donde" como ubicacion fisica es incorrecto.</li>
+  </ul>
+  <p>El argumento de fondo (no mezclar "como se dicta el curso" con "quien ejecuta y donde") se sostiene; la descripcion tecnica del objeto no.</p>
+</div>
+
+<div class="card ok">
+  <p><span class="pill ok">Correcto</span> <b>Section ya soporta N secciones del mismo curso; alcance de 4 layouts + mutacion custom + i18n</b></p>
+  <p>La mutacion <code>createSection</code> (<span class="src">academic-scheduling/logic/section-create.resolver.js</span>) autonumera <code>{activityCode}-{seq}</code> por <code>activityId+termId</code>, y el objeto declara <code>uniqueConstraints: [["activityId","termId","code"]]</code>. Layouts de Section: exactamente 4 (<code>section-create/edit/list/view</code>). i18n en es/en/pt. El alcance declarado (mutaciones custom, 4 layouts, i18n) es exacto.</p>
+</div>
+
+<h2>Cambio 2 - Traducciones del RT Servicio (uengagement-up1)</h2>
+<p><b>Objetivo:</b> que carguen las etiquetas de Servicio en las pantallas de engagement.</p>
+
+<div class="card ok">
+  <p><span class="pill ok">Correcto</span> <b>El efecto: las etiquetas no cargan</b></p>
+  <p>El archivo <code>activity.i18n.json</code> existe en minuscula en los 3 idiomas (<span class="src">uengagement-up1/lang/{es,en,pt}/activity.i18n.json</span>). La cascada busca los stems <code>Activity</code> y <code>rt__Service__Activity</code> y el match es case-sensitive, asi que <code>activity</code> nunca matchea. El RT <code>rt__Service__Activity</code> existe (RT file + schema GraphQL <span class="src">dynamic.js:2324</span> + 4 layouts + seed).</p>
+</div>
+
+<div class="card err">
+  <p><span class="pill err">Erroneo</span> <b>Causa citada: "la derivacion no reconstruye PascalCase de dos palabras"</b> &nbsp; <span class="lvl" style="color:var(--err)">Nivel: de causa</span></p>
+  <p>La funcion de derivacion (<span class="src">suite/utils/i18nBridge.ts</span>, <code>buildLevels</code> 79-94) solo capitaliza el primer caracter de <code>parts[2]</code>. Para <code>rt__Service__Activity</code> el base es <b>una sola palabra</b> y la derivacion produce <code>Activity</code> <b>correctamente</b>. Lo que rompe en este caso es el <b>case del nombre de archivo</b> (<code>activity</code> vs <code>Activity</code>) mas no usar el nombre completo del RT, no la reconstruccion multi-palabra.</p>
+  <p>El bug de dos palabras <b>si existe</b> (deriva <code>Curricularsection</code>, no <code>CurricularSection</code>) pero afecta a <b>otros</b> RTs, y esos no se rompen porque nombran su i18n con el RT completo. Diagnosticar la causa mal lleva a un fix que "parece" resolver un problema general cuando en realidad el problema concreto es de naming del archivo.</p>
+</div>
+
+<div class="card err">
+  <p><span class="pill err">Refutado</span> <b>"11 de 25 RecordTypes con mismatch; 8 en curriculum-design"</b> &nbsp; <span class="lvl" style="color:var(--err)">Nivel: de numeros</span></p>
+  <ul>
+    <li><b>Total real:</b> 26 RecordTypes (por archivos de definicion y por schema GraphQL generado), no 25.</li>
+    <li><b>Mismatches estrictos:</b> 13 (o 8 si se cuentan solo los <code>curricularsection</code> multi-palabra). El "11" parece un cruce entre total y por-mod.</li>
+    <li><b>"8 en curriculum-design":</b> se sostiene para el grupo <code>curricularsection</code>.</li>
+    <li><b>Matiz clave:</b> esos 8 <b>no estan rotos en produccion</b> porque curriculum-design nombra sus i18n con el RT completo (<code>rt__Bibliography__curricularsection.i18n.json</code>, etc.), que si matchea por el nivel <code>objectName</code>.</li>
+  </ul>
+</div>
+
+<h2>Cambio 3 - Transformacion trim (uengagement-up1 + curriculum-design)</h2>
+
+<div class="card ok">
+  <p><span class="pill ok">Correcto</span> <b>El trim se pierde en el merge</b></p>
+  <p>curriculum-design ya declara <code>transformations: [{type:"trim"}]</code> en <code>Activity.code</code> y <code>Activity.name</code> (<span class="src">curriculum-design/objects/activity.json:56-67</span>). uengagement-up1 define los mismos campos <b>sin</b> transformacion (<span class="src">uengagement-up1/objects/Activity.json:19-24</span>). El merge produce un <code>Activity</code> final sin trim.</p>
+</div>
+
+<div class="card warn">
+  <p><span class="pill warn">Impreciso</span> <b>Mecanica del merge: "fs.readdir sin ordenar determina el ganador"</b> &nbsp; <span class="lvl" style="color:var(--warn)">Nivel: de causa</span></p>
+  <p>El ganador <b>no</b> lo decide <code>fs.readdir</code>: <span class="src">object-manager/scripts/sync/fileSync.js:506</span> ordena las fuentes con <code>sort((a,b) =&gt; a.modName.localeCompare(b.modName))</code>. Es <b>last-mod-wins determinista</b>: <code>curriculum-design</code> &lt; <code>uengagement-up1</code>, asi que engagement va ultimo y pisa. Para un campo preexistente que difiere y no es core, <code>applyModToObject</code> sobrescribe (fileSync.js:781-790) pese a autodescribirse "append-only".</p>
+  <p><b>Por que importa:</b> el fix no es "arreglar el orden aleatorio". El orden ya es fijo y siempre favorece a engagement. El fix es (a) agregar trim en engagement, o (b) cambiar la politica de merge para no pisar <code>transformations</code>.</p>
+</div>
+
+<h2>Hallazgos de plataforma</h2>
+
+<div class="card ok">
+  <p><span class="pill ok">Correcto</span> <b>La nullability la define <code>required</code>, no <code>not_null</code></b> (para objetos de negocio base)</p>
+  <p><span class="src">object-manager/src/services/codegen/generatePrismaSchema.js:422</span>: <code>let isOptional = !required.includes(fieldName)</code>. Documentado en el propio codigo (UPONE-1465). Matiz: <code>not_null</code> <b>si</b> se lee en el path Extended (linea 630) y otros; que <code>code</code>/<code>name</code> lleven <code>not_null:true</code> es irrelevante para la columna base, lo que la hace NOT NULL es estar en <code>required</code> (y lo estan).</p>
+</div>
+
+<div class="card ok">
+  <p><span class="pill ok">Correcto</span> <b>Tres objetos escritos por dos modulos: <code>Activity</code>, <code>Offering</code>, <code>ProgramEnrollment</code></b></p>
+  <p>Barriendo todos los <code>mods/*/objects/*.json</code> por <code>title</code>, los unicos titulos duplicados son esos tres, y en los tres casos los mods son <b>curriculum-design + uengagement-up1</b>. <code>ProgramEnrollment</code> lo agrego curriculum-design el 2026-07-13 (commit c5b13c5, UPONE-1393). <code>uengagement</code> sin sufijo no tiene <code>objects/</code>, no participa.</p>
+</div>
+
+<div class="card warn">
+  <p><span class="pill warn">Impreciso</span> <b>"Precedente documentado en <code>dbSync.js</code> de academic-scheduling"</b> &nbsp; <span class="lvl" style="color:var(--warn)">Nivel: cosmetico + de alcance</span></p>
+  <p>No existe <code>dbSync.js</code> dentro de academic-scheduling. El unico esta en el core (<span class="src">object-manager/scripts/sync/dbSync.js</span>) y sus <code>fs.readdir</code> sin ordenar aplican a <b>seeds/capabilities/apps/layouts (fase 7/8)</b>, no a la fusion de objetos. El precedente citado esta en un comentario de <span class="src">academic-scheduling/CLAUDE.md:93</span>. Es decir: el problema de orden no garantizado es real, pero es sobre seeds, no sobre el merge del <code>trim</code>.</p>
+</div>
+
+<hr>
+
+<h2>Blast radius (radio de impacto hacia otros mods y core)</h2>
+<p>Trazado de consumidores reales de cada elemento afectado, en todos los mods y en el core (resolvers, seeds, layouts, i18n, componentes, FKs entrantes/salientes, codegen). Veredicto: <b>ROMPE</b> consumidores existentes / <b>AJUSTE</b> requerido para que el cambio surta efecto o se exponga / <b>LECTURA</b> (aditivo, no afecta a quien ya existe).</p>
+
+<div class="legend">
+  <span><span class="tag rompe">ROMPE</span> quiebra consumidores actuales</span>
+  <span><span class="tag ajuste">AJUSTE</span> requiere tocar mas archivos de lo declarado</span>
+  <span><span class="tag lectura">LECTURA</span> aditivo, sin ruptura</span>
+  <span><span class="tag cross">CROSS-MOD</span> crea o toca acople entre mods</span>
+</div>
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="min-width:150px">Cambio</th>
+      <th>Consumidores / superficie de impacto</th>
+      <th style="min-width:150px">Veredicto</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>C1.1</b> Section +<code>componentId</code>, +<code>requiredResourceTypeId</code></td>
+      <td>Section hoy solo se consume dentro de academic-scheduling (FKs entrantes: <code>ScenarioSection</code>, <code>SectionInstructor</code>). Para que los campos surtan efecto hay que tocar la mutacion <code>createSection</code> (<span class="src">section-create.resolver.js:94-99</span>, lista blanca de campos), los 4 layouts y el i18n. <b>El acople nuevo:</b> <code>componentId &rarr; CurricularSection</code> seria el <b>primer consumidor cross-mod de CurricularSection</b> (hoy cero referencias externas), o sea un acople nuevo academic-scheduling &rarr; curriculum-design.</td>
+      <td><span class="tag ajuste">AJUSTE</span> <span class="tag cross">CROSS-MOD</span><br><span class="src">Aditivo nullable: no rompe. Choca con la regla "Never create cross-mod dependencies" (CLAUDE.md).</span></td>
+    </tr>
+    <tr>
+      <td><b>C2</b> Rename i18n del RT Servicio</td>
+      <td>Solo afecta la resolucion i18n de la suite para <code>rt__Service__Activity</code>. No toca modelo ni FKs. El rename no rompe nada; el resto de mods que ya funcionan (curriculum-design, curriculum-mapping) no se ven afectados porque nombran su i18n con el RT completo.</td>
+      <td><span class="tag lectura">LECTURA</span><br><span class="src">Cambio contenido, bajo riesgo.</span></td>
+    </tr>
+    <tr>
+      <td><b>C3</b> <code>trim</code> en <code>Activity.code/name</code></td>
+      <td>FKs entrantes a Activity (a quien impacta el objeto mergeado): <code>ActivityLine</code> (ue), <code>planEntry</code> y <code>Offering</code> (cd), <code>Section</code> e <code>InstructorCourseAssignment</code> (academic-scheduling, cross-mod), self <code>previousVersionId</code>. <b>Riesgo concreto:</b> la migracion uPlanning &rarr; academic-scheduling matchea por codigo y <code>Section.code = {activity.code}-{seq}</code> (<span class="src">section-create.resolver.js:61-70</span>); si el trim llega a aplicar, codigos con espacios existentes cambian y el match puede variar.</td>
+      <td><span class="tag ajuste">AJUSTE</span> <span class="tag cross">CROSS-MOD</span><br><span class="src">Debe hacerse en AMBOS mods: solo en curriculum-design es no-op (el merge lo pisa).</span></td>
+    </tr>
+    <tr>
+      <td><b>C4</b> Tocar <code>Offering</code> / <code>ProgramEnrollment</code> (co-propiedad)</td>
+      <td>Acople cd&harr;ue de altisimo fan-out. Offering: eventos, flows FLOW-01..04, ~25 layouts de engagement, resolvers, ai-agent, up1-manager. ProgramEnrollment: todo el modulo de retencion (5 layouts <code>retention_ProgramEnrollment_*</code>, 6 report-definitions + 6 templates, <code>StudentRiskFactor</code>, <code>PlanEnrollment</code>).</td>
+      <td><span class="tag lectura">LECTURA</span> si aditivo nullable / <span class="tag rompe">ROMPE</span> si tocas un campo compartido o un enum que el otro mod consume. <span class="tag cross">CROSS-MOD</span></td>
+    </tr>
+    <tr>
+      <td><b>C5</b> (implicito) Politica de merge + i18n de co-propiedad</td>
+      <td>Hoy el unico objeto co-propiedad que <b>pierde transformations</b> en el merge es <code>Activity</code> (trim en name+code). Offering y ProgramEnrollment se salvan porque sus campos por mod son disjuntos. i18n: <code>Offering</code> y <code>Activity</code> tienen archivo en ambos mods (colision de namespace, last-writer por layerOrder).</td>
+      <td><span class="tag ajuste">AJUSTE</span> de plataforma<br><span class="src">Decision de politica, no fix de campo.</span></td>
+    </tr>
+    <tr>
+      <td><b>C6</b> (hipotetico) "Arreglar" codegen para leer <code>not_null</code></td>
+      <td>Volveria NOT NULL toda columna con <code>not_null:true</code> que hoy no esta en <code>required</code>: ~16 objetos. Criticos (sin <code>static_default</code>, romperian el migrate con filas NULL existentes): <code>PlanEnrollment</code>, <code>ProgramEnrollment</code>, <code>Term</code>, <code>Offering.usedCapacity</code>, <code>Attendance.status</code>, <code>FormTemplate.feedbackCount</code>. Varios son co-propiedad, interactua con C4/C5.</td>
+      <td><span class="tag rompe">ROMPE</span> migracion<br><span class="src">No tocar sin backfill previo. Solo enumerado como riesgo.</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Lectura del blast radius:</b> ninguno de los tres cambios propuestos ROMPE consumidores existentes por si mismo (son aditivos o de i18n). Los riesgos reales son (a) el <b>acople cross-mod nuevo</b> que introduce C1 (academic-scheduling pasa a depender de un objeto de curriculum-design, contra la regla de no crear dependencias cross-mod), y (b) que C3 <b>no surta efecto</b> si se aplica en un solo mod. El fan-out grave (C4/C6) esta en <i>tocar</i> los objetos co-propiedad o el codegen, no en los tres cambios acotados.</p>
+
+<h2>Contraste Confluence vs codigo real</h2>
+<p>Cada afirmacion de la doc de Confluence se verifico contra el codigo implementado, para determinar el <b>caso final</b> y donde la doc <b>difiere</b> de lo que existe. Resultado: la doc valida varias de nuestras correcciones, pero ella misma esta <b>desactualizada o equivocada en 4 de 6 puntos</b>. El codigo, no la doc, es la fuente de verdad.</p>
+
+<div class="legend">
+  <span><span class="tag lectura">CONCUERDA</span> doc == codigo</span>
+  <span><span class="tag ajuste">DIFIERE</span> doc != codigo</span>
+  <span><span class="tag rompe">DESACTUALIZADO</span> doc describe algo ya superado</span>
+</div>
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th style="min-width:130px">Tema</th><th>Confluence dice</th><th>Codigo real</th><th style="min-width:130px">Veredicto</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>RTs de Activity</b></td>
+      <td>Doc Engagement: <code>Service · Course · Extension · Degree</code> (4). Doc LA: <code>{Course, Service}</code>.</td>
+      <td>enum real = <code>["Course","Service"]</code> (<span class="src">activity.json:73</span>, Base:81-84). No existe ningun <code>rt__Extension__*</code> ni <code>rt__Degree__*</code>. ue Activity ni siquiera declara <code>recordType</code>.</td>
+      <td><span class="tag ajuste">DIFIERE</span><br><span class="src">Doc Engagement inventa 2 RTs. Doc LA correcta.</span></td>
+    </tr>
+    <tr>
+      <td><b>RTs de CurricularSection</b></td>
+      <td>Lista cerrada de 12 RTs.</td>
+      <td><code>recordType</code> es <b>string libre sin enum</b> (<span class="src">CurricularSection.json:44-48</span>). Solo 8 tienen RT file real. Faltan file: <code>ApprovalCondition, GeneralData, GraduationProfileItem, EntryProfile</code>.</td>
+      <td><span class="tag ajuste">DIFIERE</span><br><span class="src">8 de 12 implementados; ni siquiera es enum cerrado.</span></td>
+    </tr>
+    <tr>
+      <td><b>Campos Modality / Content</b></td>
+      <td>Modality: theoryHours, practiceHours, labHours, autonomousHours, isDefault, deliveryMode (Presencial/Online/Hybrid). Content: hours, contentType (Theoretical/Practical/Laboratory).</td>
+      <td>Campos <b>existen</b> (<span class="src">rt__Modality__curricularsection.json</span>, <span class="src">rt__Content__curricularsection.json</span>). Pero <code>deliveryMode</code> enum real = <code>[InPerson, Virtual, Hybrid, Synchronous, Asynchronous]</code> (no los 3 de la doc). <b>NO existe ningun campo de "tipo de sala"</b> en ninguno.</td>
+      <td><span class="tag lectura">CONCUERDA</span> campos<br><span class="tag ajuste">DIFIERE</span> enum · <span class="src">gap: tipo de sala no existe</span></td>
+    </tr>
+    <tr>
+      <td><b>Offering (colision)</b></td>
+      <td>Doc LA: "el offering del codigo es el de engagement (<code>serviceId</code>, maxCapacity); el offering academico/silabo <b>no existe aun</b>". Doc Eng: FK <code>activityLineId</code>.</td>
+      <td>El Offering mergeado es <b>ambos conceptos</b>: <code>recordType ["ServiceOffer","Syllabus"]</code>, coexisten <code>activityLineId</code> (required) y <code>activityId</code> (nullable), <code>lifecycleStatus [Draft/InReview/Active/Archived]</code>. <code>serviceId</code> <b>no existe</b>.</td>
+      <td><span class="tag rompe">DESACTUALIZADO</span><br><span class="src">El silabo YA existe (recordType=Syllabus). Es activityLineId, no serviceId.</span></td>
+    </tr>
+    <tr>
+      <td><b>programEnrollment / planEnrollment</b></td>
+      <td>programEnrollment = ancla durable; planEnrollment = binding temporal (effectiveFrom/To, reason) colgando de programEnrollment.</td>
+      <td>Ambos existen. PlanEnrollment tiene <code>programEnrollmentId</code>, <code>effectiveFrom</code> (not_null), <code>effectiveTo</code> (null=vigente), <code>reason [Initial/PlanChange/Migration/CatalogUpdate]</code>, <code>status [Active/Closed]</code>.</td>
+      <td><span class="tag lectura">CONCUERDA</span><br><span class="src">Modelo implementado tal cual.</span></td>
+    </tr>
+    <tr>
+      <td><b>Casing del RT Servicio</b></td>
+      <td>Documenta minuscula como canonico: <code>rt__Service__activity</code>.</td>
+      <td>El codigo ejecutable usa <b>mayuscula</b> <code>rt__Service__Activity</code> (RT file, Prisma, GraphQL <span class="src">dynamic.js:2324</span>, layouts, upsert real). La minuscula solo en comentarios/RBAC/un test. Course si es minuscula.</td>
+      <td><span class="tag ajuste">DIFIERE</span><br><span class="src">La doc invierte cual es el canonico.</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Lectura del contraste:</b> la doc de Confluence no es confiable como fuente de verdad para estos cambios (4 de 6 puntos difieren del codigo). Los puntos que la doc <b>si confirma</b> y que sostienen el contra-analisis: (a) <code>ActivityLine</code> es Activity&harr;OrgUnit, "quien ejecuta", no la sala; (b) la co-propiedad de objetos es intencional; (c) programEnrollment/planEnrollment estan bien modelados. Los puntos donde <b>la doc esta peor que el codigo</b>: RTs de Activity inventados, Offering "silabo no existe" ya superado, y el casing canonico invertido.</p>
+
+<div class="card err">
+  <p><span class="pill err">Precedente que la propuesta no cita</span> <b>UPONE-1283 "Reduccion del modelo de objetos" (Finalizada)</b></p>
+  <blockquote>"Contexto: Existia una doble definicion del org spine que colisionaba entre el modelo de Engagement y curriculum-design. [...] Engagement establecido como spine canonico. [...] Realineacion de dependientes: CurricularSection via directChildren, Activity recordType [Course, Service]. [...] Resultado: modelo unificado, sin colision de definiciones".<cite>Jira UPONE-1283, resuelto</cite></blockquote>
+  <p><b>Por que importa:</b> el problema de fondo (colision entre engagement y curriculum-design) <b>ya se abordo una vez</b> y se resolvio declarando a <b>Engagement como spine canonico</b>. Esto genera <b>tension directa</b> con el Cambio 3, cuyo argumento es que "los campos del curso van en <code>Activity</code> de curriculum-design". Antes de agregar el <code>trim</code> hay que decidir quien es dueno de <code>Activity</code> a la luz de UPONE-1283, o el fix reabre lo que ese ticket cerro.</p>
+</div>
+
+<h2>Alternativas de modelado para el Cambio 1</h2>
+<p>La propuesta evaluo opciones y descarto extender <code>ActivityLine</code>. Aqui se hace el mismo ejercicio pero anclado al codigo verificado: por cada alternativa, por que <b>es</b> una opcion, por que <b>no</b> lo es (o su costo), y que cambios exigiria. Aplica la cascada de necesidad y reuso (reusar/reducir antes que construir).</p>
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th style="min-width:150px">Alternativa</th><th>Por que es opcion</th><th>Por que no (o su costo)</th><th>Cambios que exigiria</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>B. Reusar/extender <code>Modality</code> (o <code>Content</code>) de CurricularSection</b><br><span class="tag lectura">candidato preferente</span></td>
+      <td><code>Modality</code> <b>ya existe y verificado en codigo</b>: <code>theoryHours, practiceHours, labHours, autonomousHours, isDefault, deliveryMode</code>. Es info de <b>diseno</b> ("como se dicta"), vive en curriculum-design: exactamente el eje que la propuesta quiere declarar. Reuso puro, sin objeto nuevo, alineado con la doc.</td>
+      <td>(1) <code>Modality</code> describe <b>una modalidad con isDefault</b>, no una <b>lista de componentes programables</b> distintos (Catedra vs Laboratorio como unidades separadas con su cupo/sala/docente en scheduling). (2) <b>No existe "tipo de sala requerido"</b> (verificado: cero campos de room/sala en Modality/Content); ese es justo el <code>requiredResourceTypeId</code>. (3) <code>deliveryMode</code> enum real no mapea a tipo de sala.</td>
+      <td>Agregar un campo de tipo-de-recurso/sala a <code>Modality</code> (o a un RT nuevo <code>Component</code>); definir que <code>Section.componentId</code> apunte a una <code>CurricularSection</code> con ese recordType; evaluar cerrar el enum de <code>recordType</code> (hoy string libre); reconciliar <code>deliveryMode</code>.</td>
+    </tr>
+    <tr>
+      <td><b>A. RecordType/objeto nuevo dedicado</b><br><span class="src">(lo que la propuesta llamo mal "crear CurricularSection")</span></td>
+      <td>Expresa limpio "el programa exige Catedra + Laboratorio, cada uno con horas y tipo de sala" sin forzar semantica ajena; separa el concepto de componente programable.</td>
+      <td>Agrega superficie nueva que hay que justificar contra el reuso de la alternativa B. Si Modality/Content ya cubren horas+tipo, duplicaria el eje pedagogico y solo aportaria el "tipo de sala".</td>
+      <td>Nuevo <code>rt__Component__curricularsection.json</code> con <code>{componentType, hours, requiredResourceType}</code>; sumar el valor al <code>recordType</code>; layouts, i18n y seed nuevos.</td>
+    </tr>
+    <tr>
+      <td><b>C. Extender <code>ActivityLine</code></b><br><span class="tag rompe">descartada (confirmado)</span></td>
+      <td>Es el pivote de ejecucion; tentador colgar ahi la relacion actividad-recurso.</td>
+      <td><b>El codigo confirma que la propuesta acerto al descartarlo</b>: <code>ActivityLine</code> vive en uengagement-up1 y modela <code>activityId</code>+<code>orgUnitId</code> (Activity&harr;OrgUnit, "quien ejecuta"), info de <b>ejecucion</b>. Mezclaria "como se dicta" (diseno, curriculum-design) con "quien ejecuta y donde" (engagement): dos conceptos ortogonales en dos mods distintos, e invertiria la direccion de dependencia.</td>
+      <td>Acoplaria curriculum-design a un objeto de engagement. No recomendado.</td>
+    </tr>
+    <tr>
+      <td><b>D. Solo los 2 campos en <code>Section</code></b><br><span class="src">(sin declarar en diseno)</span></td>
+      <td>Minimo esfuerzo: los campos <code>componentId</code>/<code>requiredResourceTypeId</code> ya viven en Section (academic-scheduling).</td>
+      <td>Pierde la etapa "Diseno declara que componentes exige el programa". Sin fuente de verdad en curriculum-design, cada Section declara ad-hoc y no se valida contra lo que el programa exige. <code>componentId</code> quedaria sin destino de diseno real.</td>
+      <td>Los 2 campos + validacion; pero <code>componentId</code> necesita un destino (obliga a A o B de todos modos).</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Recomendacion de alternativa:</b> evaluar <b>B (reusar Modality/Content)</b> antes que A: es el camino de menor superficie, alineado con doc y codigo, con un unico gap conocido y acotado (agregar "tipo de sala requerido", que hoy no existe en ningun lado). <b>C queda descartada</b> y el codigo lo confirma. <b>D es insuficiente</b> sola porque <code>componentId</code> necesita un destino de diseno (A o B). En todos los casos, <code>requiredResourceTypeId &rarr; ResourceTypes</code> es intra-academic-scheduling y no agrega acople; el acople cross-mod lo introduce solo <code>componentId &rarr; CurricularSection</code>.</p>
+
+<hr>
+
+<h2>Impacto por modulo</h2>
+<p>Como afecta cada modulo en su <b>modelo</b> (definiciones de objeto/campos), en sus <b>flujos</b> (sync, codegen, resolvers, UI), el <b>nivel de impacto</b> y la <b>viabilidad</b> del cambio propuesto.</p>
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr>
+      <th style="min-width:150px">Modulo</th>
+      <th>Cambios que lo tocan</th>
+      <th>Impacto en su modelo</th>
+      <th>Impacto en sus flujos</th>
+      <th style="min-width:100px">Nivel</th>
+      <th style="min-width:120px">Viabilidad</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>curriculum-design</b><br><span class="src">(nuestro)</span></td>
+      <td>C1 (componentes), C3 (trim, ya presente), co-propiedad de Activity/Offering/ProgramEnrollment</td>
+      <td>C1: requiere modelar "componente requerido" (nuevo recordType/uso en <code>CurricularSection</code>, o nuevo objeto). C3: <b>sin cambios</b>, ya declara trim.</td>
+      <td>El acople C1 lo convierte en destino de FK cross-mod desde academic-scheduling. Nuestras <code>transformations</code> sobre Activity se pierden hoy en el merge (last-mod-wins hacia engagement).</td>
+      <td><span class="pill warn">Medio</span></td>
+      <td>Alta para C3; C1 requiere decision de modelado antes de estimar.</td>
+    </tr>
+    <tr>
+      <td><b>academic-scheduling</b></td>
+      <td>C1 (2 campos en Section + FK)</td>
+      <td>Aditivo: <code>componentId</code> (FK&rarr;CurricularSection, cross-mod) y <code>requiredResourceTypeId</code> (FK&rarr;ResourceTypes, intra-mod). No destructivo.</td>
+      <td>Toca 4 layouts de Section, la mutacion custom <code>createSection</code>, i18n es/en/pt y potencialmente validaciones de cupo/sala. Alcance real mayor que "2 campos".</td>
+      <td><span class="pill warn">Medio</span></td>
+      <td>Viable y aditivo, pero el trabajo de UI/mutacion/i18n esta subestimado en la propuesta.</td>
+    </tr>
+    <tr>
+      <td><b>uengagement-up1</b></td>
+      <td>C2 (rename i18n), C3 (falta trim), co-propiedad de Activity/Offering/ProgramEnrollment</td>
+      <td>C2: rename de 3 archivos i18n (o al RT completo <code>rt__Service__Activity.i18n.json</code>, o a <code>Activity.i18n.json</code>). C3: agregar trim a Activity.code/name para no pisar el de curriculum-design.</td>
+      <td>C2: sin efecto en modelo, solo en resolucion i18n de la suite. Es el mod que <b>gana</b> el merge y por eso borra transformaciones ajenas.</td>
+      <td><span class="pill ok">Bajo</span></td>
+      <td>Alta. C2 y C3 son cambios chicos, no destructivos, ejecutables ya.</td>
+    </tr>
+    <tr>
+      <td><b>core</b><br><span class="src">object-manager + suite</span></td>
+      <td>C2 (bug latente de derivacion), C3 (politica de merge), hallazgos de plataforma</td>
+      <td>Sin cambio de modelo, pero expone dos deudas: derivacion i18n que solo capitaliza el primer caracter (<span class="src">i18nBridge.ts</span>), y merge last-mod-wins que pisa <code>transformations</code> (<span class="src">fileSync.js</span>).</td>
+      <td>El merge de objetos co-propiedad y el orden no garantizado de seeds son riesgos transversales que exceden estos 3 cambios.</td>
+      <td><span class="pill err">Estructural</span></td>
+      <td>Los fixes puntuales son viables; la deuda de plataforma requiere decision aparte (no bloquea C2/C3).</td>
+    </tr>
+    <tr>
+      <td><b>curriculum-mapping</b></td>
+      <td>Hallazgo C2 (mismatch de derivacion)</td>
+      <td>Sin cambios. Tiene 2 RTs (<code>levelscheme</code>) con derivacion fallida.</td>
+      <td>No se rompe porque nombra i18n con el RT completo. Solo relevante como evidencia del bug de plataforma.</td>
+      <td><span class="pill neutral">Nulo/Informativo</span></td>
+      <td>No requiere accion en el marco de esta propuesta.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>El riesgo de fondo que la propuesta no eleva</h2>
+<div class="card err">
+  <p>El <code>trim</code> es solo el sintoma visible de un problema mayor: <b>tres objetos de nuestro dominio (<code>Activity</code>, <code>Offering</code>, <code>ProgramEnrollment</code>) son co-escritos por curriculum-design y uengagement-up1</b>, y el merge es <b>last-mod-wins alfabetico que siempre favorece a uengagement-up1</b>. Cualquier propiedad que definamos en curriculum-design sobre un campo que engagement tambien defina distinto (transformations, validaciones, metadata) se pierde en silencio. Esto deberia tratarse como decision de plataforma (politica de merge o dueno unico por objeto), no como un fix de un campo.</p>
+</div>
+
+<h2>Recomendacion</h2>
+<ol>
+  <li><b>No aprobar la propuesta tal cual.</b> Corregir en el documento las tres premisas erroneas para no disenar sobre una base falsa: (a) <code>CurricularSection</code> existe, no se "crea"; (b) la causa del i18n es el case del archivo, no el PascalCase de dos palabras; (c) el merge no lo decide <code>fs.readdir</code>, es last-mod-wins determinista.</li>
+  <li><b>Corregir los numeros:</b> 26 RTs (no 25) y aclarar que los 8 mismatches de curriculum-design no estan rotos hoy.</li>
+  <li><b>Ejecutar ya lo de bajo riesgo:</b> C2 (rename i18n) y C3 (trim en engagement) son chicos, aditivos y no bloquean.</li>
+  <li><b>Elevar como tema de plataforma</b> la co-propiedad Activity/Offering/ProgramEnrollment + politica last-mod-wins, <b>a la luz de UPONE-1283</b>: ese ticket ya declaro a Engagement como spine canonico. El <code>trim</code> de C3 reabre la pregunta de quien es dueno de <code>Activity</code>; hay que resolverla antes de agregar transformaciones desde curriculum-design.</li>
+  <li><b>Antes de acordar C1:</b> evaluar si <code>Modality</code>/<code>Content</code> de <code>CurricularSection</code> (que ya modelan horas teoricas/practicas/laboratorio y tipo de dictado, segun Confluence) cubren el "componente requerido" antes de crear modelado nuevo, y aceptar explicitamente el acople cross-mod academic-scheduling &rarr; curriculum-design (contra la regla de no dependencias cross-mod).</li>
+</ol>
+
+<hr>
+
+<h2>Anexo: como estan modelados CurricularSection, Activity, ActivityLine y Modality</h2>
+<p>Mapa del modelo real (verificado en codigo, no en la doc) para dar claridad sobre que es cada objeto, en que mod vive, como se relacionan y por donde los tocan las propuestas. Colores por mod; lineas punteadas rojas = FKs que <b>propone</b> agregar el Cambio 1 (no existen hoy).</p>
+
+<div class="scroll">
+<svg viewBox="0 0 960 620" style="min-width:760px; width:100%; height:auto; font-family:var(--sans);" role="img" aria-label="Diagrama de relaciones del modelo">
+  <defs>
+    <marker id="aBlue" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--accent)"/></marker>
+    <marker id="aAmber" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--warn)"/></marker>
+    <marker id="aGreen" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--ok)"/></marker>
+    <marker id="aRed" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--err)"/></marker>
+  </defs>
+
+  <!-- leyenda -->
+  <g style="font-size:11px;">
+    <rect x="8" y="8" width="14" height="10" rx="2" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/>
+    <text x="28" y="17" style="fill:var(--text-soft)">curriculum-design</text>
+    <rect x="150" y="8" width="14" height="10" rx="2" style="fill:var(--surface);stroke:var(--warn);stroke-width:2"/>
+    <text x="170" y="17" style="fill:var(--text-soft)">uengagement-up1</text>
+    <rect x="292" y="8" width="14" height="10" rx="2" style="fill:var(--surface);stroke:var(--ok);stroke-width:2"/>
+    <text x="312" y="17" style="fill:var(--text-soft)">academic-scheduling</text>
+    <line x1="452" y1="13" x2="486" y2="13" style="stroke:var(--err);stroke-width:2;stroke-dasharray:5 3"/>
+    <text x="492" y="17" style="fill:var(--text-soft)">FK propuesta (no existe hoy)</text>
+  </g>
+
+  <!-- cajas -->
+  <!-- Activity (hub, cd) -->
+  <rect x="380" y="64" width="200" height="60" rx="8" style="fill:var(--surface);stroke:var(--accent);stroke-width:2.5"/>
+  <text x="480" y="88" text-anchor="middle" style="fill:var(--text);font-weight:700;font-size:14px">Activity</text>
+  <text x="480" y="106" text-anchor="middle" style="fill:var(--text-mute);font-size:10px">programa de asignatura · RT Course/Service</text>
+
+  <!-- OrgUnit (context) -->
+  <rect x="770" y="70" width="150" height="46" rx="8" style="fill:var(--surface-2);stroke:var(--border-strong);stroke-width:1.5"/>
+  <text x="845" y="90" text-anchor="middle" style="fill:var(--text-soft);font-weight:600;font-size:12px">OrgUnit</text>
+  <text x="845" y="105" text-anchor="middle" style="fill:var(--text-mute);font-size:9px">unidad ejecutora</text>
+
+  <!-- CurricularSection (cd) -->
+  <rect x="110" y="250" width="240" height="72" rx="8" style="fill:var(--surface);stroke:var(--accent);stroke-width:2.5"/>
+  <text x="230" y="276" text-anchor="middle" style="fill:var(--text);font-weight:700;font-size:14px">CurricularSection</text>
+  <text x="230" y="294" text-anchor="middle" style="fill:var(--text-mute);font-size:10px">hijo polimorfico (ownerType/ownerId)</text>
+  <text x="230" y="309" text-anchor="middle" style="fill:var(--text-mute);font-size:10px">recordType: string libre · jerarquico</text>
+
+  <!-- ActivityLine (ue) -->
+  <rect x="690" y="250" width="210" height="60" rx="8" style="fill:var(--surface);stroke:var(--warn);stroke-width:2.5"/>
+  <text x="795" y="274" text-anchor="middle" style="fill:var(--text);font-weight:700;font-size:14px">ActivityLine</text>
+  <text x="795" y="292" text-anchor="middle" style="fill:var(--text-mute);font-size:10px">ejecucion: Activity x OrgUnit</text>
+
+  <!-- Modality (cd, RT) -->
+  <rect x="130" y="430" width="200" height="60" rx="8" style="fill:var(--surface);stroke:var(--accent);stroke-width:2;stroke-dasharray:2 2"/>
+  <text x="230" y="454" text-anchor="middle" style="fill:var(--text);font-weight:700;font-size:13px">Modality</text>
+  <text x="230" y="471" text-anchor="middle" style="fill:var(--text-mute);font-size:10px">RecordType de CurricularSection</text>
+
+  <!-- Offering (ue, context) -->
+  <rect x="690" y="430" width="210" height="52" rx="8" style="fill:var(--surface-2);stroke:var(--warn);stroke-width:1.5"/>
+  <text x="795" y="452" text-anchor="middle" style="fill:var(--text-soft);font-weight:600;font-size:12px">Offering</text>
+  <text x="795" y="468" text-anchor="middle" style="fill:var(--text-mute);font-size:9px">instancia programable (engagement)</text>
+
+  <!-- Section (as) -->
+  <rect x="390" y="428" width="200" height="72" rx="8" style="fill:var(--surface);stroke:var(--ok);stroke-width:2.5"/>
+  <text x="490" y="454" text-anchor="middle" style="fill:var(--text);font-weight:700;font-size:14px">Section</text>
+  <text x="490" y="472" text-anchor="middle" style="fill:var(--text-mute);font-size:10px">grupo programado (academic-scheduling)</text>
+
+  <!-- ResourceTypes (as) -->
+  <rect x="390" y="548" width="200" height="48" rx="8" style="fill:var(--surface-2);stroke:var(--ok);stroke-width:1.5"/>
+  <text x="490" y="568" text-anchor="middle" style="fill:var(--text-soft);font-weight:600;font-size:12px">ResourceTypes</text>
+  <text x="490" y="583" text-anchor="middle" style="fill:var(--text-mute);font-size:9px">catalogo de tipo de sala/recurso</text>
+
+  <!-- arrows -->
+  <!-- Modality -> CurricularSection -->
+  <line x1="230" y1="430" x2="230" y2="324" style="stroke:var(--accent);stroke-width:2" marker-end="url(#aBlue)"/>
+  <text x="238" y="378" style="fill:var(--accent);font-size:10px">baseObject</text>
+
+  <!-- CurricularSection -> Activity -->
+  <polyline points="230,250 230,94 378,94" style="fill:none;stroke:var(--accent);stroke-width:2" marker-end="url(#aBlue)"/>
+  <text x="238" y="150" style="fill:var(--accent);font-size:10px">ownerType/ownerId</text>
+
+  <!-- ActivityLine -> Activity -->
+  <polyline points="690,272 620,272 620,94 582,94" style="fill:none;stroke:var(--warn);stroke-width:2" marker-end="url(#aAmber)"/>
+  <text x="626" y="200" style="fill:var(--warn);font-size:10px">activityId (Cascade)</text>
+
+  <!-- ActivityLine -> OrgUnit -->
+  <polyline points="820,250 820,150 845,150 845,118" style="fill:none;stroke:var(--warn);stroke-width:2" marker-end="url(#aAmber)"/>
+  <text x="826" y="200" style="fill:var(--warn);font-size:10px">orgUnitId</text>
+
+  <!-- Offering -> ActivityLine -->
+  <line x1="795" y1="430" x2="795" y2="312" style="stroke:var(--warn);stroke-width:2" marker-end="url(#aAmber)"/>
+  <text x="803" y="375" style="fill:var(--warn);font-size:10px">activityLineId</text>
+
+  <!-- Section -> Activity (existente) -->
+  <line x1="490" y1="428" x2="490" y2="126" style="stroke:var(--ok);stroke-width:2" marker-end="url(#aGreen)"/>
+  <text x="498" y="300" style="fill:var(--ok);font-size:10px">activityId (existente)</text>
+
+  <!-- Section -> CurricularSection (PROPUESTO) -->
+  <polyline points="390,452 360,452 360,300 352,300" style="fill:none;stroke:var(--err);stroke-width:2;stroke-dasharray:5 3" marker-end="url(#aRed)"/>
+  <text x="300" y="420" style="fill:var(--err);font-size:10px;font-weight:700">componentId</text>
+
+  <!-- Section -> ResourceTypes (PROPUESTO) -->
+  <line x1="490" y1="500" x2="490" y2="546" style="stroke:var(--err);stroke-width:2;stroke-dasharray:5 3" marker-end="url(#aRed)"/>
+  <text x="498" y="528" style="fill:var(--err);font-size:10px;font-weight:700">requiredResourceTypeId</text>
+</svg>
+</div>
+
+<p><b>Lectura del diagrama.</b> <code>Activity</code> es el hub. Del lado de <b>diseno</b> (curriculum-design, azul), <code>CurricularSection</code> cuelga de <code>Activity</code> (o de Offering/Curriculum) como hijo polimorfico, y <code>Modality</code> es uno de sus RecordTypes. Del lado de <b>ejecucion</b> (engagement, ambar), <code>ActivityLine</code> vincula <code>Activity</code> con la <code>OrgUnit</code> ejecutora, y <code>Offering</code> cuelga de <code>ActivityLine</code>. Del lado de <b>programacion</b> (academic-scheduling, verde), <code>Section</code> ya apunta a <code>Activity</code>; el Cambio 1 <b>agregaria</b> dos FKs (rojo punteado): <code>componentId &rarr; CurricularSection</code> (cross-mod) y <code>requiredResourceTypeId &rarr; ResourceTypes</code> (intra-mod).</p>
+
+<h3>Activity <span class="src">curriculum-design/objects/activity.json · co-propiedad con uengagement-up1</span></h3>
+<p><b>Que es:</b> el programa de asignatura (template de la materia). Versionable, se hereda a silabos via MADS. Su <code>recordType</code> distingue <code>Course</code> (academico, con governance) de <code>Service</code> (engagement). <b>Uso:</b> es el objeto raiz del que cuelgan secciones curriculares (diseno), lineas de ejecucion (ActivityLine) y grupos programados (Section).</p>
+<div class="scroll"><table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Req</th><th>Nota</th></tr></thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>string</td><td>si</td><td><b>transformations: trim</b> (se pierde en el merge, C3)</td></tr>
+    <tr><td><code>code</code></td><td>string</td><td>si</td><td><b>transformations: trim</b> · clave de match en migracion</td></tr>
+    <tr><td><code>recordType</code></td><td>enum Course/Service</td><td>si</td><td>default Course · doc Engagement dice 4 RTs (falso)</td></tr>
+    <tr><td><code>version</code> / <code>versionLabel</code></td><td>int / string?</td><td>si / no</td><td>version numerica system-managed</td></tr>
+    <tr><td><code>previousVersionId</code></td><td>FK&rarr;Activity</td><td>no</td><td>cadena de versiones</td></tr>
+    <tr><td><code>executionUnitId</code></td><td>FK&rarr;OrgUnit</td><td>no</td><td>unidad que dicta</td></tr>
+    <tr><td><code>status</code></td><td>enum + transitions</td><td>no</td><td>Draft&rarr;InReview&rarr;Approved&rarr;Active&rarr;Deprecated&rarr;Archived</td></tr>
+    <tr><td colspan="4" class="src">Otros: language, description, credits, programLevel, purpose, externalId, isCurrent. Requeridos: name, code, recordType, version.</td></tr>
+  </tbody>
+</table></div>
+<p><span class="pill warn">Afecta C3</span> El <code>trim</code> ya esta declarado aca, pero el merge lo pisa con la version de uengagement-up1 (que no lo trae). Ademas, decidir quien es dueno de Activity (UPONE-1283).</p>
+
+<h3>CurricularSection <span class="src">curriculum-design/objects/CurricularSection.json</span></h3>
+<p><b>Que es:</b> elemento estructural o complementario de un documento curricular (resultado de aprendizaje, componente de evaluacion, contenido, sesion, modalidad, bibliografia, etc.). <b>Uso:</b> es un objeto generico y polimorfico: cuelga de <code>Activity</code>, <code>Offering</code> o <code>Curriculum</code> via <code>ownerType/ownerId</code>, es jerarquico via <code>parentId</code>, y su subtipo lo define <code>recordType</code>. <b>Ya existe</b> (la propuesta erro al llamarlo "nuevo").</p>
+<div class="scroll"><table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Req</th><th>Nota</th></tr></thead>
+  <tbody>
+    <tr><td><code>ownerType</code></td><td>enum Activity/Offering/Curriculum</td><td>si</td><td>FK polimorfica con ownerId</td></tr>
+    <tr><td><code>ownerId</code></td><td>string (poly)</td><td>si</td><td>sin FK directa</td></tr>
+    <tr><td><code>recordType</code></td><td>string <b>libre (sin enum)</b></td><td>si</td><td>8 RT files reales (doc dice 12)</td></tr>
+    <tr><td><code>parentId</code></td><td>FK&rarr;CurricularSection</td><td>no</td><td>jerarquia (Composite)</td></tr>
+    <tr><td><code>name</code></td><td>string</td><td>si</td><td>trim · unico por (ownerId, recordType)</td></tr>
+    <tr><td><code>sectionType</code></td><td>enum STRUCTURAL/COMPLEMENTARY</td><td>no</td><td></td></tr>
+    <tr><td colspan="4" class="src">Otros: position, sourceId (MADS), isSynchronizable, isVisible, isRequired. Requeridos: ownerType, ownerId, recordType, name.</td></tr>
+  </tbody>
+</table></div>
+<p><span class="pill info">Afecta C1</span> Es el hogar elegido para el "componente requerido" (por ser capa de diseno). El Cambio 1 le agrega un <b>consumidor cross-mod nuevo</b>: <code>Section.componentId &rarr; CurricularSection</code>.</p>
+
+<h3>ActivityLine <span class="src">uengagement-up1/objects/ActivityLine.json</span></h3>
+<p><b>Que es:</b> el vinculo entre una <code>Activity</code> y la <code>OrgUnit</code> que la ejecuta (M:N con identidad propia por contexto de ejecucion). <b>Uso:</b> es la pieza de <b>ejecucion</b> ("quien ejecuta"); las <code>Offering</code> de engagement cuelgan de ella. No modela diseno ni sala.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Req</th><th>Nota</th></tr></thead>
+  <tbody>
+    <tr><td><code>activityId</code></td><td>FK&rarr;Activity</td><td>si</td><td>onDelete Cascade</td></tr>
+    <tr><td><code>orgUnitId</code></td><td>FK&rarr;OrgUnit</td><td>si</td><td>unidad ejecutora</td></tr>
+    <tr><td><code>code</code></td><td>string</td><td>si</td><td>unique</td></tr>
+    <tr><td><code>status</code></td><td>enum Active/Inactive</td><td>si</td><td>default Active</td></tr>
+  </tbody>
+</table></div>
+<p><span class="pill neutral">Afecta C1 (evaluada, descartada)</span> La propuesta la evaluo como hogar del componente y la descarto; el codigo confirma que fue correcto: es ejecucion (engagement), no diseno, y mezclarlo invertiria la direccion de dependencia.</p>
+
+<h3>Modality <span class="src">curriculum-design/objects/RecordTypes/rt__Modality__curricularsection.json</span></h3>
+<p><b>Que es:</b> un RecordType de <code>CurricularSection</code> (baseObject CurricularSection). Modela la modalidad de imparticion: distribucion de horas y modo de entrega. Un programa puede tener varias (con <code>isDefault</code> marcando la principal). <b>Uso:</b> es la informacion de <b>como se dicta</b> el programa en la capa de diseno; es el candidato de reuso para el "componente" del Cambio 1.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Req</th><th>Nota</th></tr></thead>
+  <tbody>
+    <tr><td><code>code</code></td><td>string</td><td>no</td><td>unico por (ownerId, recordType)</td></tr>
+    <tr><td><code>theoryHours</code> / <code>practiceHours</code></td><td>number</td><td>no</td><td>horas teorica / practica</td></tr>
+    <tr><td><code>labHours</code> / <code>autonomousHours</code></td><td>number</td><td>no</td><td>horas laboratorio / autonomas</td></tr>
+    <tr><td><code>isDefault</code></td><td>boolean</td><td>no</td><td>modalidad principal</td></tr>
+    <tr><td><code>deliveryMode</code></td><td>enum</td><td>no</td><td>InPerson/Virtual/Hybrid/Synchronous/Asynchronous (doc dice otros 3)</td></tr>
+    <tr><td colspan="4" class="src">Hereda los campos comunes de CurricularSection (ownerType, ownerId, parentId, name...). <b>No tiene ningun campo de tipo de sala.</b></td></tr>
+  </tbody>
+</table></div>
+<p><span class="pill ok">Afecta C1 (alternativa B)</span> Cubre horas por tipo (teorica/practica/laboratorio) y modo de entrega, o sea gran parte del "componente". Lo que le falta para el caso de la propuesta es el <b>tipo de sala requerido</b>, que no existe en ningun RecordType hoy.</p>
+
+<h3>Sintesis: como los afectan las propuestas</h3>
+<div class="scroll"><table>
+  <thead><tr><th>Objeto</th><th>Mod</th><th>Rol</th><th>Propuesta que lo toca</th><th>Efecto</th></tr></thead>
+  <tbody>
+    <tr><td><b>Activity</b></td><td>curriculum-design (co-prop)</td><td>hub / template de asignatura</td><td>C3 (trim)</td><td>trim ya en cd, se pierde en merge; definir dueno (UPONE-1283)</td></tr>
+    <tr><td><b>CurricularSection</b></td><td>curriculum-design</td><td>capa de diseno, polimorfica</td><td>C1</td><td>hogar del componente; nuevo FK entrante cross-mod; <b>ya existe</b></td></tr>
+    <tr><td><b>Modality</b></td><td>curriculum-design (RT)</td><td>como se dicta (horas + modo)</td><td>C1 (alternativa B)</td><td>reuso candidato; falta "tipo de sala"</td></tr>
+    <tr><td><b>ActivityLine</b></td><td>uengagement-up1</td><td>ejecucion (Activity x OrgUnit)</td><td>C1 (evaluada)</td><td>descartada correctamente; es ejecucion, no diseno</td></tr>
+  </tbody>
+</table></div>
+
+<hr>
+
+<p class="foot">Documento generado como contra-analisis de verificacion. Toda afirmacion esta anclada a evidencia en codigo (archivo:linea) obtenida por lectura directa del working tree en <code>uplanner/up1</code>, y contrastada contra Confluence. Fuentes: propuesta revisada <code>sp8/propuesta-3-cambios-impacto-cd.html</code>; Confluence <a href="https://u-planner.atlassian.net/wiki/spaces/uP1/pages/2038366242">Modelo de objetos - Learning Assurance (2038366242)</a>, <a href="https://u-planner.atlassian.net/wiki/spaces/uP1/pages/2107080716">Modelo de objetos - Engagement (2107080716)</a>; Jira <a href="https://u-planner.atlassian.net/browse/UPONE-1283">UPONE-1283 Reduccion del modelo de objetos</a>.</p>
+
+</div>
+</body>
+</html>

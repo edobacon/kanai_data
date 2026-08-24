@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SP8 - Evaluacion de impacto por mod: InstructionalComponent</title>
+<style>
+  :root {
+    --bg:#f7f8fa;--surface:#fff;--surface-2:#f0f2f5;--text:#1a1d24;--text-soft:#4a4f5a;--text-mute:#6b7280;
+    --border:#e2e5ea;--border-strong:#cbd0d8;--accent:#3056d3;--accent-soft:#eaeeff;
+    --ok:#1a7f4b;--ok-bg:#e6f5ec;--warn:#b26a00;--warn-bg:#fdf0dd;--err:#c0392b;--err-bg:#fbe8e6;
+    --code-bg:#f2f3f6;--code-text:#22303c;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#14161a;--surface:#1c1f26;--surface-2:#232732;--text:#e8eaed;--text-soft:#b6bcc6;--text-mute:#8a909c;
+    --border:#2c313b;--border-strong:#3a4150;--accent:#7d97f4;--accent-soft:#232b45;
+    --ok:#5fd39a;--ok-bg:#16301f;--warn:#e5ab52;--warn-bg:#33260f;--err:#f0857a;--err-bg:#3a1714;
+    --code-bg:#232732;--code-text:#cfd6e0;}}
+  :root[data-theme="dark"]{--bg:#14161a;--surface:#1c1f26;--surface-2:#232732;--text:#e8eaed;--text-soft:#b6bcc6;--text-mute:#8a909c;--border:#2c313b;--border-strong:#3a4150;--accent:#7d97f4;--accent-soft:#232b45;--ok:#5fd39a;--ok-bg:#16301f;--warn:#e5ab52;--warn-bg:#33260f;--err:#f0857a;--err-bg:#3a1714;--code-bg:#232732;--code-text:#cfd6e0;}
+  :root[data-theme="light"]{--bg:#f7f8fa;--surface:#fff;--surface-2:#f0f2f5;--text:#1a1d24;--text-soft:#4a4f5a;--text-mute:#6b7280;--border:#e2e5ea;--border-strong:#cbd0d8;--accent:#3056d3;--accent-soft:#eaeeff;--ok:#1a7f4b;--ok-bg:#e6f5ec;--warn:#b26a00;--warn-bg:#fdf0dd;--err:#c0392b;--err-bg:#fbe8e6;--code-bg:#f2f3f6;--code-text:#22303c;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;font-size:16px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 80px}
+  header.doc{border-bottom:2px solid var(--border-strong);padding-bottom:24px;margin-bottom:28px}
+  .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 8px}
+  h1{font-size:28px;line-height:1.2;margin:0 0 12px;letter-spacing:-.01em}
+  h2{font-size:22px;margin:42px 0 12px;letter-spacing:-.01em}
+  h3{font-size:17px;margin:22px 0 8px}
+  p{margin:0 0 14px;color:var(--text-soft)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--code-bg);color:var(--code-text);padding:1px 6px;border-radius:5px}
+  .verdict{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0}
+  .vc{flex:1 1 220px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .vc .t{font-size:13px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;margin-bottom:6px}
+  .vc.ok{border-left:4px solid var(--ok)} .vc.ok .t{color:var(--ok)}
+  .vc.warn{border-left:4px solid var(--warn)} .vc.warn .t{color:var(--warn)}
+  .vc.err{border-left:4px solid var(--err)} .vc.err .t{color:var(--err)}
+  .vc p{margin:0;font-size:14px}
+  .modcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:0;margin:20px 0;overflow:hidden}
+  .modhead{padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+  .modhead .nm{font-size:18px;font-weight:700}
+  .modhead.cd{background:var(--accent-soft)} .modhead.cd .nm{color:var(--accent)}
+  .modhead.as{background:var(--ok-bg)} .modhead.as .nm{color:var(--ok)}
+  .modhead.eng{background:var(--warn-bg)} .modhead.eng .nm{color:var(--warn)}
+  .modhead.core{background:var(--surface-2)}
+  .modbody{padding:6px 20px 18px}
+  .badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;margin-left:auto}
+  .badge.s{background:var(--ok-bg);color:var(--ok)} .badge.m{background:var(--warn-bg);color:var(--warn)} .badge.l{background:var(--err-bg);color:var(--err)}
+  .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-mute);font-weight:700;margin:14px 0 4px}
+  ul{margin:0 0 8px;padding-left:20px;color:var(--text-soft)} li{margin:4px 0}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:5px;white-space:nowrap}
+  .tag.new{background:var(--ok-bg);color:var(--ok)} .tag.chg{background:var(--warn-bg);color:var(--warn)} .tag.brk{background:var(--err-bg);color:var(--err)}
+  .src{font-family:var(--mono);font-size:12px;color:var(--text-mute)}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+  .scroll{overflow-x:auto;border:1px solid var(--border);border-radius:12px}
+  .scroll table{margin:0}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  thead th{background:var(--surface-2);font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-soft)}
+  tbody tr:last-child td{border-bottom:none}
+  .arrow-note{text-align:center;color:var(--text-mute);font-size:13px;margin:4px 0}
+  hr{border:none;border-top:1px solid var(--border);margin:38px 0}
+  .foot{font-size:13px;color:var(--text-mute);margin-top:38px;padding-top:16px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow">SP8 · Evaluacion de impacto a nivel de codigo</p>
+  <h1>Triada Curso - Modalidad - InstructionalComponent: impacto por mod</h1>
+  <p>Que debe considerar, cambiar e implementar cada mod para llevar esta propuesta a codigo. Cada afirmacion esta anclada a evidencia verificada en el working tree (ver <code>00-registro-analisis-instructionalcomponent.md</code>).</p>
+</header>
+
+<h2>Veredicto</h2>
+<div class="verdict">
+  <div class="vc ok">
+    <div class="t">Es viable</div>
+    <p>Nada estructural lo bloquea. Reusa mecanismos que ya existen: RecordType, jerarquia <code>parentId</code>, <code>record-list</code> con <code>{{parentId}}</code>, FK cross-mod (con precedente <code>Section.activityId &#8594; Activity</code>) y el codegen que materializa RTs como tablas 1:1.</p>
+  </div>
+  <div class="vc warn">
+    <div class="t">Es un trabajo mayor</div>
+    <p>Toca los 3 mods, agrega 2 objetos nuevos (<code>InstructionalComponentType</code>, <code>SectionCluster</code>), cambia comportamiento existente (Section pasa de digitado a derivado) e incluye una migracion (remover escalares de Modality) y cambio de matricula en engagement.</p>
+  </div>
+  <div class="vc err">
+    <div class="t">Exige coordinar 3 mods</div>
+    <p>Hay dependencias en cadena: academic-scheduling depende del RT que define curriculum-design; engagement depende del <code>SectionCluster</code> de academic-scheduling. No se puede hacer en un solo mod ni en paralelo sin contrato previo.</p>
+  </div>
+</div>
+<p><b>Conclusion:</b> aprobable como iniciativa cross-mod planificada por fases, no como un cambio acotado a un mod. En curriculum-design la parte de RT + catalogo es aditiva, pero el cambio de Modality (escalares a derivados) es breaking; academic-scheduling y engagement traen cambios de comportamiento. Todo exige coordinacion.</p>
+
+<h2>curriculum-design <span class="src">(diseno · dueno del modelo)</span></h2>
+<div class="modcard">
+  <div class="modhead cd"><span class="nm">curriculum-design</span><span class="badge m">Esfuerzo: medio · aditivo (RT) + breaking (Modality)</span></div>
+  <div class="modbody">
+    <div class="lbl">Que considerar</div>
+    <ul>
+      <li><code>CurricularSection.recordType</code> es <b>string libre (sin enum)</b> (<span class="src">CurricularSection.json:44-48</span>): agregar el RT no toca ningun enum.</li>
+      <li>La jerarquia ya existe: <code>parentId</code> self-FK + <code>directChildren</code> (<span class="src">CurricularSection.json:15-22,73-81</span>). El componente cuelga de la Modality sin estructura nueva.</li>
+      <li>Los escalares de Modality (<code>theoryHours/practiceHours/labHours/deliveryMode</code>) hoy son <b>digitados</b> y tienen consumidores (layouts create/edit/view, Offering-syllabus, Activity, <code>resolveFieldKind.ts</code>, seeds, tests). Removerlos NO es aditivo.</li>
+      <li>Co-propiedad de <code>Activity</code>/<code>Offering</code> con engagement + merge last-mod-wins: cuidado al tocar campos compartidos.</li>
+    </ul>
+    <div class="lbl">Que cambiar / implementar</div>
+    <ul>
+      <li><span class="tag new">NUEVO</span> RecordType <code>rt__InstructionalComponent__curricularsection.json</code> (campos: <code>componentTypeId</code>, <code>deliveryLocation</code>, <code>synchronicity</code>, <code>hoursPerWeek</code>, <code>requiredResourceType</code> <b>enum</b>, <code>requiredInstructorCount</code>, <code>plannedGroupSize</code>, <code>isPrimary</code>, <code>requiresOwnSection</code>).</li>
+      <li><span class="tag new">NUEVO</span> objeto catalogo <code>InstructionalComponentType.json</code> + seed + i18n (RBAC hereda a nivel objeto, <span class="src">capabilities.json</span>).</li>
+      <li><span class="tag new">NUEVO</span> i18n <code>rt__InstructionalComponent__curricularsection.i18n.json</code> (nombre completo del RT, para que la cascada lo matchee).</li>
+      <li><span class="tag chg">AJUSTE</span> layout drill-in: panel <code>record-list</code> de componentes en <code>default_rt__Modality__curricularsection_view.json</code>, filtrado por <code>parentId = {{parentId}}</code>. Solo JSON.</li>
+      <li><span class="tag chg">AJUSTE</span> validacion en resolver create/update: <code>InstructionalComponent.parentId</code> debe apuntar a un <code>Modality</code> (el objeto base lo permite libremente; la regla es nuestra).</li>
+      <li><span class="tag brk">FIX TEST</span> <code>tests/integration/recordtypes-declared.test.ts:59-68</code> (set exacto de RTs).</li>
+      <li><span class="tag brk">BREAKING</span> Modality pasa a contenedor (segun la propuesta): <code>theoryHours/practiceHours/labHours</code> se vuelven derivados de los componentes y <code>deliveryMode</code> se reemplaza por <code>deliveryLocation</code> + <code>synchronicity</code> derivados (<code>autonomousHours</code> se mantiene). Como hoy son digitados, esto toca layouts create/edit/view, Offering-syllabus (<span class="src">:105-107/:83-85</span>), Activity (<span class="src">:186-188/:122-124</span>), <code>resolveFieldKind.ts:24-26</code>, seeds, i18n y tests de <code>polymorphicUpdate</code>. Se puede implementar la derivacion con el patron <code>effectiveCredits.js</code>.</li>
+      <li>codegen (auto): genera tabla <code>rt__InstructionalComponent__curricularsection</code> + tipo GraphQL.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>academic-scheduling <span class="src">(planificacion)</span></h2>
+<div class="modcard">
+  <div class="modhead as"><span class="nm">academic-scheduling</span><span class="badge l">Esfuerzo: alto · cambia comportamiento</span></div>
+  <div class="modbody">
+    <div class="lbl">Que considerar</div>
+    <ul>
+      <li><code>Section.capacity/weeklyModules/numberStudents</code> son <b>digitados</b> hoy (<span class="src">Section.json:26-37,88-93</span>); pasarlos a derivados cambia el modelo de entrada.</li>
+      <li><code>code</code> hoy = <code>{activityCode}-{seq}</code> (<span class="src">section-create.resolver.js:70</span>), autogenerado por lista blanca; el <code>uniqueConstraint</code> es <code>[activityId,termId,code]</code>.</li>
+      <li>La FK cross-mod a <code>CurricularSection</code> es viable: hay precedente en <code>Section.activityId &#8594; Activity</code> (curriculum-design).</li>
+    </ul>
+    <div class="lbl">Que cambiar / implementar</div>
+    <ul>
+      <li><span class="tag chg">AJUSTE</span> <code>Section.json</code>: <code>instructionalComponentId</code> (FK &#8594; CurricularSection, <b>cross-mod</b>), <code>sectionClusterId</code> (FK &#8594; SectionCluster), <code>requiredResourceTypeId</code> (FK &#8594; ResourceTypes, intra-mod).</li>
+      <li><span class="tag new">NUEVO</span> objeto <code>SectionCluster.json</code> + layouts + i18n + seeds (agrupa secciones de la misma modalidad para la matricula).</li>
+      <li><span class="tag chg">AJUSTE</span> <code>section-create.schema.graphql:10-17</code> + <code>section-create.resolver.js</code>: aceptar y persistir los campos nuevos (hoy hay whitelist :92-101), <b>derivar</b> <code>capacity</code>/<code>weeklyModules</code> del componente, y cambiar <code>code</code> para incluir el componente (ej. <code>FIS101-LAB3</code>) tocando <code>nextSeq</code> y el uniqueConstraint.</li>
+      <li><span class="tag chg">AJUSTE</span> invariantes de cluster (todas las secciones de un cluster son de la misma modalidad; el cluster cubre los componentes con seccion propia).</li>
+      <li><span class="tag chg">AJUSTE</span> 4 layouts de Section + 3 i18n + ~19 tests que asumen el shape actual.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>uengagement-up1 <span class="src">(ejecucion / matricula)</span></h2>
+<div class="modcard">
+  <div class="modhead eng"><span class="nm">uengagement-up1</span><span class="badge l">Esfuerzo: alto · cambio funcional</span></div>
+  <div class="modbody">
+    <div class="lbl">Que considerar</div>
+    <ul>
+      <li>La matricula hoy es <b>1 estudiante : 1 Offering</b>: <code>OfferingEnrollment</code> con <code>unique [offeringId, studentId]</code> (<span class="src">OfferingEnrollment.json:11-16</span>).</li>
+      <li>La capacidad se maneja por Offering via flows (<code>usedCapacity/maxCapacity</code>, flows <code>flow-01..04</code>).</li>
+      <li>No es cierto que engagement quede "en cero": el modelo por componente/cluster rompe el supuesto 1:1.</li>
+    </ul>
+    <div class="lbl">Que cambiar / implementar</div>
+    <ul>
+      <li><span class="tag chg">AJUSTE</span> matricula por componente dentro de un cluster: un estudiante se inscribe en una seccion por componente. Revisar el <code>unique</code> de <code>OfferingEnrollment</code> y <code>enroll-current-student.resolver.js:78-124</code> (validar combinaciones validas).</li>
+      <li><span class="tag chg">AJUSTE</span> volcado planificacion &#8594; oferta pasa a <b>1:N</b> (A2): <code>offering-create</code> y la trazabilidad hacia la seccion planificada.</li>
+      <li><span class="tag chg">AJUSTE</span> flows de capacidad/asistencia (<code>flow-01..04</code>) y <code>usedCapacity/maxCapacity</code> ante la nueva cardinalidad.</li>
+      <li><span class="tag new">FUTURO</span> calificar por componente (R3: la nota se ancla al componente <code>isPrimary</code>).</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Plataforma (codegen / sync): consideraciones, no tareas de codigo</h2>
+<div class="modcard">
+  <div class="modhead core"><span class="nm">object-manager / sync</span><span class="badge s">Sin cambios de codigo · paso operativo</span></div>
+  <div class="modbody">
+    <p style="margin:10px 0 4px"><b>No hay codigo que implementar en core.</b> Lo de abajo son restricciones que los cambios de los mods deben respetar, mas un paso operativo que esos cambios disparan; ninguna es una tarea de core en si.</p>
+    <div class="lbl">Restricciones a respetar (al implementar en los mods)</div>
+    <ul>
+      <li>El RT nuevo se materializa como tabla 1:1 (<span class="src">generatePrismaSchema.js:743-812</span>); la FK cross-mod resuelve si ambos objetos estan en el schema del tenant (<span class="src">:428-470</span>). Aditivo (CREATE TABLE).</li>
+      <li>Nullability por <code>required</code>, no <code>not_null</code> (<span class="src">:422</span>): declarar bien los required de los campos nuevos.</li>
+      <li>Merge last-mod-wins + co-propiedad <code>Activity/Offering</code>: al tocar un campo compartido, vigilar que un mod no pise al otro.</li>
+    </ul>
+    <div class="lbl">Paso operativo (consecuencia, no tarea)</div>
+    <ul>
+      <li>Tras los cambios de objetos, correr <code>codegen + sync + migrate por tenant</code>. NO es quirurgico: regenera el modelo completo de todos los mods, por eso hay que <b>coordinar la corrida</b>. Es consecuencia de los cambios, no un trabajo aparte.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Coordinacion entre mods (por que no es paralelizable sin contrato)</h2>
+<p>Las dependencias obligan un orden. El contrato de campos del <code>InstructionalComponent</code> y el enum de <code>requiredResourceType</code> deben acordarse antes de que academic-scheduling y engagement construyan encima.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Dependencia</th><th>De quien depende</th><th>Contrato a fijar antes</th></tr></thead>
+  <tbody>
+    <tr><td><code>Section.instructionalComponentId</code></td><td>academic-scheduling depende de curriculum-design</td><td>El RT <code>InstructionalComponent</code> debe existir y estar estable</td></tr>
+    <tr><td>Derivacion capacity/weeklyModules/recurso</td><td>academic-scheduling depende del shape del componente</td><td>Nombres y semantica de <code>hoursPerWeek</code>, <code>plannedGroupSize</code>, <code>requiredResourceType</code></td></tr>
+    <tr><td><code>requiredResourceType</code> (enum en diseno)</td><td>academic-scheduling mapea a su <code>ResourceTypes</code></td><td>Los valores del enum (contrato compartido cd &#8596; as; enum, no FK)</td></tr>
+    <tr><td>Matricula por componente</td><td>engagement depende de <code>SectionCluster</code> de academic-scheduling</td><td>Definicion de cluster e invariantes de matricula</td></tr>
+    <tr><td>Remocion de escalares de Modality</td><td>afecta layouts de Offering-syllabus (cd) ademas de Modality</td><td>Coordinar dentro de curriculum-design como migracion propia</td></tr>
+  </tbody>
+</table></div>
+<p class="arrow-note">Orden sugerido: <b>curriculum-design (RT + catalogo)</b> &#8594; <b>academic-scheduling (componentId + cluster + derivacion)</b> &#8594; <b>uengagement-up1 (matricula)</b> &#8594; migraciones/renames al final.</p>
+
+<h3>Dependencias entre trabajos y orden de prioridad</h3>
+<p>Desglose en trabajos concretos (WI) y sus dependencias. El <b>camino critico</b> (en rojo) es la cadena que determina la duracion minima: hasta que no cierra, engagement no puede empezar. Los trabajos fuera del camino critico pueden correr en paralelo.</p>
+
+<div class="scroll">
+<svg viewBox="0 0 990 510" style="min-width:820px;width:100%;height:auto;font-family:var(--sans)" role="img" aria-label="Diagrama de dependencias entre trabajos">
+  <defs>
+    <marker id="dN" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--text-mute)"/></marker>
+    <marker id="dC" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--err)"/></marker>
+  </defs>
+  <style>
+    .nt{font-size:12px;font-weight:700;fill:var(--text)}
+    .nd{font-size:10px;fill:var(--text-mute)}
+    .lg{font-size:12px;fill:var(--text-soft)}
+  </style>
+
+  <!-- leyenda -->
+  <rect x="14" y="12" width="12" height="12" rx="2" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/><text x="32" y="22" class="lg">curriculum-design</text>
+  <rect x="160" y="12" width="12" height="12" rx="2" style="fill:var(--surface);stroke:var(--ok);stroke-width:2"/><text x="178" y="22" class="lg">academic-scheduling</text>
+  <rect x="330" y="12" width="12" height="12" rx="2" style="fill:var(--surface);stroke:var(--warn);stroke-width:2"/><text x="348" y="22" class="lg">uengagement-up1</text>
+  <line x1="470" y1="18" x2="500" y2="18" style="stroke:var(--err);stroke-width:3"/><text x="506" y="22" class="lg">camino critico</text>
+  <text x="640" y="22" class="lg" style="fill:var(--text-mute)">linea punteada = opcional / al final</text>
+
+  <!-- edges (primero, para quedar debajo de las cajas) -->
+  <!-- CD1 -> CD2 -->
+  <path d="M210,183 C240,183 240,93 270,93" style="fill:none;stroke:var(--text-mute);stroke-width:1.6" marker-end="url(#dN)"/>
+  <!-- CD1 -> CD3 -->
+  <line x1="210" y1="188" x2="270" y2="173" style="stroke:var(--text-mute);stroke-width:1.6" marker-end="url(#dN)"/>
+  <!-- CD1 -> AS1 (critico) -->
+  <path d="M210,193 C240,193 240,323 270,323" style="fill:none;stroke:var(--err);stroke-width:2.6" marker-end="url(#dC)"/>
+  <!-- AS1 -> AS2 (critico) -->
+  <line x1="450" y1="323" x2="520" y2="323" style="stroke:var(--err);stroke-width:2.6" marker-end="url(#dC)"/>
+  <!-- AS2 -> ENG1 (critico) -->
+  <line x1="700" y1="323" x2="770" y2="323" style="stroke:var(--err);stroke-width:2.6" marker-end="url(#dC)"/>
+  <!-- AS2 -> A1 -->
+  <path d="M700,310 C740,300 750,230 770,213" style="fill:none;stroke:var(--text-mute);stroke-width:1.6;stroke-dasharray:5 3" marker-end="url(#dN)"/>
+
+  <!-- nodos -->
+  <!-- CD1 -->
+  <rect x="30" y="170" width="180" height="48" rx="9" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5"/>
+  <text x="42" y="190" class="nt">CD1 · Contrato</text>
+  <text x="42" y="206" class="nd">RT InstructionalComponent + catalogo</text>
+  <!-- CD2 -->
+  <rect x="270" y="70" width="180" height="46" rx="9" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/>
+  <text x="282" y="89" class="nt">CD2 · Modality contenedor</text>
+  <text x="282" y="105" class="nd">escalares &#8594; derivados (breaking)</text>
+  <!-- CD3 -->
+  <rect x="270" y="150" width="180" height="46" rx="9" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/>
+  <text x="282" y="169" class="nt">CD3 · Layout + i18n</text>
+  <text x="282" y="185" class="nd">drill-in + validacion + test</text>
+  <!-- AS1 -->
+  <rect x="270" y="300" width="180" height="46" rx="9" style="fill:var(--ok-bg);stroke:var(--ok);stroke-width:2.5"/>
+  <text x="282" y="319" class="nt">AS1 · Section.componentId</text>
+  <text x="282" y="335" class="nd">FK + resolver lee componentes</text>
+  <!-- AS2 -->
+  <rect x="520" y="300" width="180" height="46" rx="9" style="fill:var(--ok-bg);stroke:var(--ok);stroke-width:2.5"/>
+  <text x="532" y="319" class="nt">AS2 · SectionCluster</text>
+  <text x="532" y="335" class="nd">+ derivacion capacity/code</text>
+  <!-- ENG1 -->
+  <rect x="770" y="300" width="190" height="46" rx="9" style="fill:var(--warn-bg);stroke:var(--warn);stroke-width:2.5"/>
+  <text x="782" y="319" class="nt">ENG1 · Matricula</text>
+  <text x="782" y="335" class="nd">por componente/cluster + flows</text>
+  <!-- A1 -->
+  <rect x="770" y="190" width="190" height="46" rx="9" style="fill:var(--surface);stroke:var(--ok);stroke-width:2;stroke-dasharray:4 3"/>
+  <text x="782" y="209" class="nt">A1 · Rename (opcional)</text>
+  <text x="782" y="225" class="nd">Section &#8594; PlannedSection</text>
+  <!-- A4 -->
+  <rect x="770" y="420" width="190" height="46" rx="9" style="fill:var(--surface);stroke:var(--border-strong);stroke-width:2;stroke-dasharray:4 3"/>
+  <text x="782" y="439" class="nt">A4 · Modalidad canonica</text>
+  <text x="782" y="455" class="nd">independiente · sin dependencias</text>
+</svg>
+</div>
+
+<p>Los trabajos se ordenan por prioridad segun sus dependencias. La columna "Bloquea a" es la que fija la prioridad: mientras mas cosas bloquea, mas arriba va.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Prioridad</th><th>Trabajo</th><th>Mod</th><th>Depende de</th><th>Puede ir en paralelo con</th><th>Bloquea a</th></tr></thead>
+  <tbody>
+    <tr><td><b>1</b> <span class="tag brk">critico</span></td><td>CD1 · Contrato: RT <code>InstructionalComponent</code> + catalogo + enum <code>requiredResourceType</code></td><td>cd</td><td>&#8212; (raiz)</td><td>CD2, CD3, AS1</td><td>casi todo</td></tr>
+    <tr><td><b>2</b> <span class="tag brk">critico</span></td><td>AS1 · <code>Section.instructionalComponentId</code> + resolver que lee los componentes</td><td>as</td><td>CD1</td><td>CD2, CD3</td><td>AS2</td></tr>
+    <tr><td><b>3</b> <span class="tag brk">critico</span></td><td>AS2 · <code>SectionCluster</code> + derivacion de capacity/weeklyModules + code</td><td>as</td><td>AS1 (+ campos de CD1)</td><td>CD2, CD3</td><td>ENG1, A1</td></tr>
+    <tr><td><b>4</b> <span class="tag brk">critico</span></td><td>ENG1 · Matricula por componente/cluster + volcado 1:N + flows</td><td>eng</td><td>AS2</td><td>&#8212;</td><td>&#8212; (fin de cadena)</td></tr>
+    <tr><td>2 (paralelo)</td><td>CD2 · Modality contenedor: escalares a derivados <span class="tag brk">breaking</span></td><td>cd</td><td>CD1</td><td>AS1, CD3</td><td>&#8212;</td></tr>
+    <tr><td>2 (paralelo)</td><td>CD3 · Layout drill-in + i18n + validacion + fix test</td><td>cd</td><td>CD1</td><td>AS1, CD2</td><td>&#8212;</td></tr>
+    <tr><td>5 (opcional)</td><td>A1 · Rename <code>Section &#8594; PlannedSection</code></td><td>as</td><td>AS2</td><td>&#8212;</td><td>&#8212;</td></tr>
+    <tr><td>Cualquiera</td><td>A4 · Representacion canonica de modalidad (3 lugares)</td><td>transversal</td><td>&#8212; (independiente)</td><td>todo</td><td>&#8212;</td></tr>
+  </tbody>
+</table></div>
+
+<div class="vc err" style="margin-top:8px">
+  <div class="t">La compuerta que destraba todo</div>
+  <p>Antes de que academic-scheduling y engagement puedan construir, hay que <b>congelar el contrato de CD1</b>: los campos del <code>InstructionalComponent</code> (nombres y semantica de <code>hoursPerWeek</code>, <code>plannedGroupSize</code>, <code>requiredResourceType</code>, <code>requiredInstructorCount</code>, <code>isPrimary</code>, <code>requiresOwnSection</code>) y los <b>valores del enum <code>requiredResourceType</code></b> (contrato compartido cd &#8596; as). Sin ese contrato estable, AS1 y ENG1 trabajan sobre arena movediza.</p>
+</div>
+<p><b>Camino critico:</b> <code>CD1 &#8594; AS1 &#8594; AS2 &#8594; ENG1</code>. Es la secuencia mas larga y define el minimo de tiempo. <b>CD2 y CD3</b> quedan fuera del camino critico: pueden hacerse en paralelo a AS1 sin retrasar el total. El cambio de Modality (dentro de CD2) es breaking pero no bloquea a otros trabajos. El <b>rename A1</b> va al final; <b>A4</b> es independiente y puede tomarse cuando haya holgura.</p>
+
+<h2>Resumen de esfuerzo y naturaleza</h2>
+<div class="scroll"><table>
+  <thead><tr><th>Mod</th><th>Objetos nuevos</th><th>Cambia comportamiento</th><th>Migracion / breaking</th><th>Esfuerzo</th></tr></thead>
+  <tbody>
+    <tr><td><b>curriculum-design</b></td><td>InstructionalComponent (RT), InstructionalComponentType (catalogo)</td><td>Si (Modality: escalares a derivados)</td><td>Modality: layouts/seeds/tests que hoy los digitan</td><td><span class="tag chg">Medio</span></td></tr>
+    <tr><td><b>academic-scheduling</b></td><td>SectionCluster</td><td>Si (Section: digitado &#8594; derivado, code)</td><td>uniqueConstraint de code</td><td><span class="tag brk">Alto</span></td></tr>
+    <tr><td><b>uengagement-up1</b></td><td>-</td><td>Si (matricula 1:1 &#8594; por componente)</td><td>unique de OfferingEnrollment + flows</td><td><span class="tag brk">Alto</span></td></tr>
+  </tbody>
+</table></div>
+<p class="src">La tabla lista solo cambios de codigo a implementar. <b>core no aparece</b>: no tiene cambios; correr codegen + sync + migrate por tenant es un paso operativo que disparan los cambios de arriba, no una tarea de codigo (ver seccion de plataforma).</p>
+
+<h2>Riesgos a gestionar</h2>
+<ul>
+  <li><b>Cambio de Modality</b> (escalares a derivados, como pide la propuesta): breaking; requiere ajustar los layouts/seeds/tests que hoy los digitan.</li>
+  <li><b>Acople cross-mod</b> <code>Section.instructionalComponentId &#8594; CurricularSection</code>: nuevo consumidor externo de un objeto de CD. Contener con <code>requiredResourceType</code> como enum (dependencia unidireccional <code>as &#8594; cd</code>).</li>
+  <li><b>Co-propiedad Activity/Offering</b> + merge last-mod-wins: cualquier campo compartido que se toque se pisa entre mods.</li>
+  <li><b>Cambio de matricula en engagement</b>: afecta flows de capacidad y el volcado a ofertas (1:N). Requiere pruebas de matricula end-to-end.</li>
+  <li><b>Rename Section &#8594; PlannedSection (A1)</b>: ~40+ puntos transversales; dejarlo al final o descartarlo salvo que la ambiguedad duela.</li>
+</ul>
+
+<p class="foot">Evaluacion de impacto (SP8). Viabilidad y costos validados contra el working tree; el detalle con evidencia archivo:linea esta en <code>00-registro-analisis-instructionalcomponent.md</code>. Complementa a <code>ejemplo-opcion-baja-modality-contenedor.html</code> y <code>contra-analisis-3-cambios-verificacion.html</code>.</p>
+
+</div>
+</body>
+</html>

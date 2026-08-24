@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Actividad de curso: evidencia, efecto por mod y recomendación</title>
+<style>
+  :root {
+    --paper: #f5f3ee; --paper-raised: #ffffff; --ink: #1c2024; --ink-soft: #4a5157;
+    --label: #8b9199; --rule: #dcd8cf;
+    --accent: #3d6b64; --accent-soft: #dbe6e3; --accent-ink: #23443f;
+    --indigo: #4f5a8f; --indigo-soft: #e2e3ee; --indigo-ink: #2f3760;
+    --amber: #a8672a; --amber-soft: #f0e0cc; --amber-ink: #6b4218;
+    --rose: #93435c; --rose-soft: #f0dbe1; --rose-ink: #6b2d40;
+    --danger: #a83232; --danger-soft: #f2d9d6; --danger-ink: #7a2420;
+    --code-bg: #eae7de; --shadow: rgba(28,32,36,0.08);
+  }
+  :root[data-theme="dark"] {
+    --paper: #14171a; --paper-raised: #1b1f22; --ink: #e8e6df; --ink-soft: #a9aeb3;
+    --label: #7d848a; --rule: #2b2f33;
+    --accent: #6fa89f; --accent-soft: #1c2b29; --accent-ink: #a9d6cd;
+    --indigo: #8891c7; --indigo-soft: #23263a; --indigo-ink: #b6bcea;
+    --amber: #d99a54; --amber-soft: #362a1a; --amber-ink: #eabd85;
+    --rose: #d98aa0; --rose-soft: #3a232a; --rose-ink: #eab4c2;
+    --danger: #e0736b; --danger-soft: #3a201e; --danger-ink: #f0a9a2;
+    --code-bg: #202428; --shadow: rgba(0,0,0,0.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a; --paper-raised: #1b1f22; --ink: #e8e6df; --ink-soft: #a9aeb3;
+      --label: #7d848a; --rule: #2b2f33;
+      --accent: #6fa89f; --accent-soft: #1c2b29; --accent-ink: #a9d6cd;
+      --indigo: #8891c7; --indigo-soft: #23263a; --indigo-ink: #b6bcea;
+      --amber: #d99a54; --amber-soft: #362a1a; --amber-ink: #eabd85;
+      --rose: #d98aa0; --rose-soft: #3a232a; --rose-ink: #eab4c2;
+      --danger: #e0736b; --danger-soft: #3a201e; --danger-ink: #f0a9a2;
+      --code-bg: #202428; --shadow: rgba(0,0,0,0.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    font-size: 16.5px; line-height: 1.6; margin: 0; padding: 0 20px 96px;
+  }
+  h1,h2,h3 { font-family: "Iowan Old Style", Charter, "Georgia", serif; text-wrap: balance; color: var(--ink); font-weight: 600; }
+  code, .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace; font-size: 0.9em; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+
+  header.doc-head { max-width: 1040px; margin: 0 auto; padding: 60px 0 36px; position: relative; }
+  header.doc-head::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 210px;
+    background-image:
+      repeating-linear-gradient(90deg, var(--rule) 0, var(--rule) 1px, transparent 1px, transparent 88px),
+      repeating-linear-gradient(0deg, var(--rule) 0, var(--rule) 1px, transparent 1px, transparent 44px);
+    opacity: 0.35; mask-image: linear-gradient(to bottom, black, transparent); pointer-events: none; z-index: 0;
+  }
+  .eyebrow {
+    position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--accent-ink); background: var(--accent-soft); padding: 5px 12px 5px 10px; border-radius: 3px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1.doc-title { position: relative; z-index: 1; font-size: clamp(26px,3.6vw,38px); line-height: 1.18; margin: 20px 0 12px; max-width: 30ch; }
+  .doc-sub { position: relative; z-index: 1; color: var(--ink-soft); font-size: 17px; max-width: 68ch; margin: 0 0 20px; }
+  .doc-meta { position: relative; z-index: 1; display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--label); border-top: 1px solid var(--rule); padding-top: 16px; }
+  .doc-meta strong { color: var(--ink-soft); font-weight: 600; }
+
+  /* table of contents */
+  .toc { max-width: 1040px; margin: 24px auto 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .toc a { font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink-soft); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; }
+  .toc a:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  section { max-width: 800px; margin: 0 auto; padding: 42px 0; scroll-margin-top: 20px; }
+  section.wide { max-width: 1040px; }
+  section + section { border-top: 1px solid var(--rule); }
+  .section-label { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label); margin: 0 0 10px; }
+  h2 { font-size: 25px; margin: 0 0 16px; }
+  h3 { font-size: 18px; margin: 26px 0 10px; }
+  p { margin: 0 0 14px; color: var(--ink); max-width: 70ch; }
+  p.tight { max-width: none; }
+  ul, ol { margin: 0 0 16px; padding-left: 22px; max-width: 70ch; }
+  li { margin-bottom: 6px; }
+
+  .callout { background: var(--paper-raised); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px; padding: 16px 20px; margin: 18px 0; box-shadow: 0 1px 2px var(--shadow); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .callout-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600; margin-bottom: 6px; }
+  .callout.warn { border-left-color: var(--danger); }
+  .callout.warn .callout-label { color: var(--danger-ink); }
+  .callout.key { border-left-color: var(--amber); }
+  .callout.key .callout-label { color: var(--amber-ink); }
+
+  .chain { display: flex; align-items: stretch; gap: 0; margin: 24px 0 8px; overflow-x: auto; padding-bottom: 6px; }
+  .chain-node { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; min-width: 150px; box-shadow: 0 1px 2px var(--shadow); flex-shrink: 0; }
+  .chain-node .name { font-family: ui-monospace, monospace; font-weight: 600; font-size: 14px; }
+  .chain-node .rt { color: var(--label); font-size: 11.5px; margin-top: 4px; }
+  .chain-node .team { font-size: 10.5px; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .chain-arrow { display: flex; align-items: center; justify-content: center; padding: 0 12px; color: var(--label); font-size: 16px; flex-shrink: 0; }
+  .chain-branch { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+  .chain-node.small { padding: 9px 13px; min-width: 210px; }
+
+  .decode-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 20px 0; }
+  .decode-card { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px; padding: 16px; }
+  .decode-card .pos { font-family: ui-monospace, monospace; font-size: 20px; font-weight: 700; color: var(--accent-ink); }
+  .decode-card .what { font-size: 13px; font-weight: 600; margin: 4px 0 8px; }
+  .decode-card .ev { font-size: 12.5px; color: var(--ink-soft); }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table.grid { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 620px; font-size: 14px; }
+  table.grid th, table.grid td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+  table.grid thead th { font-family: "Iowan Old Style", Charter, serif; font-size: 14.5px; border-bottom: 2px solid var(--ink); }
+  table.grid td:first-child, table.grid .rl { color: var(--ink); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+  table.grid td { color: var(--ink-soft); }
+  table.grid tr:last-child td { border-bottom: none; }
+  table.grid code { font-size: 0.85em; }
+  table.ripple td { font-size: 13px; }
+  table.ripple td:first-child { white-space: normal; text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 13px; }
+  table.ripple td .src { display: block; font-family: ui-monospace, monospace; font-size: 10.5px; color: var(--label); font-weight: 400; margin-top: 2px; }
+
+  .landscape-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin: 22px 0 8px; }
+  .landscape-card { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px var(--shadow); display: flex; flex-direction: column; gap: 4px; }
+  .landscape-card h3 { margin: 0; font-size: 17px; }
+  .lc-sub { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--label); margin-bottom: 10px; }
+  .lc-desc { font-size: 13.5px; color: var(--ink-soft); max-width: none; margin-bottom: 10px; }
+  dl.lc-fields { margin: 0 0 12px; }
+  dl.lc-fields dt { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); margin-top: 7px; }
+  dl.lc-fields dt:first-child { margin-top: 0; }
+  dl.lc-fields dd { margin: 1px 0 0; font-size: 12px; color: var(--ink-soft); }
+  .lc-gap { margin-top: auto; padding-top: 12px; border-top: 1px dashed var(--rule); font-size: 12.5px; color: var(--amber-ink); }
+  .way-verdict { margin-bottom: 8px; }
+
+  .compare-wrap { overflow-x: auto; margin: 12px 0 8px; }
+  table.compare { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 940px; }
+  table.compare th, table.compare td { padding: 13px 15px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); font-size: 13.5px; }
+  table.compare thead th { font-family: "Iowan Old Style", Charter, serif; font-size: 15px; border-bottom: 2px solid var(--ink); }
+  table.compare .row-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--label); font-weight: 600; white-space: nowrap; }
+  table.compare td.opt-a { border-top: 3px solid var(--accent); }
+  table.compare td.opt-b { border-top: 3px solid var(--indigo); }
+  table.compare td.opt-c { border-top: 3px solid var(--amber); }
+  table.compare td.opt-d { border-top: 3px solid var(--rose); }
+  table.compare thead th.opt-a { color: var(--accent-ink); }
+  table.compare thead th.opt-b { color: var(--indigo-ink); }
+  table.compare thead th.opt-c { color: var(--amber-ink); }
+  table.compare thead th.opt-d { color: var(--rose-ink); }
+
+  .tag { display: inline-block; font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+  .tag-a { background: var(--accent-soft); color: var(--accent-ink); }
+  .tag-b { background: var(--indigo-soft); color: var(--indigo-ink); }
+  .tag-c { background: var(--amber-soft); color: var(--amber-ink); }
+  .tag-d { background: var(--rose-soft); color: var(--rose-ink); }
+
+  .option-block { border: 1px solid var(--rule); border-radius: 8px; margin: 26px 0; overflow: hidden; background: var(--paper-raised); box-shadow: 0 1px 3px var(--shadow); }
+  .option-head { padding: 16px 24px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); }
+  .option-head.a { border-left: 4px solid var(--accent); }
+  .option-head.b { border-left: 4px solid var(--indigo); }
+  .option-head.c { border-left: 4px solid var(--amber); }
+  .option-head.d { border-left: 4px solid var(--rose); }
+  .option-head h3 { margin: 0; font-size: 19px; }
+  .option-body { padding: 22px 24px; }
+  .option-body p { max-width: none; }
+  .option-body p.lead { font-size: 15px; color: var(--ink-soft); }
+  .opt-group { display: flex; align-items: center; gap: 12px; margin: 36px 0 -4px; font-family: ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .opt-group i { flex: 1; height: 1px; background: var(--rule); }
+  .opt-group.viable { color: var(--accent-ink); }
+  .opt-group.out { color: var(--label); }
+  .option-head .rp { margin-left: auto; }
+
+  .opt-meta { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; margin: 4px 0 18px; }
+  .meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--label); font-weight: 600; margin-bottom: 8px; }
+  .teams { display: flex; flex-wrap: wrap; gap: 6px; }
+  .team-chip { font-family: ui-monospace, monospace; font-size: 11.5px; padding: 3px 9px; border-radius: 3px; border: 1px solid var(--rule); }
+  .team-chip.owner { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; }
+  .team-chip.coord { background: var(--amber-soft); color: var(--amber-ink); border-color: transparent; }
+  .effort { display: flex; align-items: center; gap: 10px; }
+  .effort-dots { display: inline-flex; gap: 4px; }
+  .effort-dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--rule); display: inline-block; }
+  .effort-dots i.on { background: var(--amber); }
+  .effort-val { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+  .blast { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 6px 0 4px; }
+  .blast-mod { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; background: var(--paper); }
+  .blast-mod .bm-name { font-family: ui-monospace, monospace; font-size: 12px; font-weight: 600; color: var(--ink); }
+  .blast-mod .bm-state { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin: 6px 0 8px; display: inline-block; padding: 2px 7px; border-radius: 3px; }
+  .bm-state.modifica { background: var(--danger-soft); color: var(--danger-ink); }
+  .bm-state.coordina { background: var(--amber-soft); color: var(--amber-ink); }
+  .bm-state.intacto { background: var(--code-bg); color: var(--label); }
+  .blast-mod .bm-detail { font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+  .blast-mod.hit-modifica { border-color: var(--danger); }
+  .blast-mod.hit-coordina { border-color: var(--amber); }
+  .reltype { font-size: 13px; color: var(--ink-soft); margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--rule); }
+  .reltype strong { color: var(--ink); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 8px 0 0; font-size: 12px; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend b { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  .rp { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.03em; white-space: nowrap; }
+  .rp.intact { background: var(--code-bg); color: var(--label); }
+  .rp.add { background: var(--indigo-soft); color: var(--indigo-ink); }
+  .rp.rework { background: var(--amber-soft); color: var(--amber-ink); }
+  .rp.brk { background: var(--danger-soft); color: var(--danger-ink); }
+  .rp.ok { background: var(--accent-soft); color: var(--accent-ink); }
+
+  .rec-block { background: var(--paper-raised); border: 1px solid var(--accent); border-left: 4px solid var(--accent); border-radius: 8px; padding: 22px 26px; margin: 22px 0; box-shadow: 0 2px 10px var(--shadow); }
+  .rec-block .rec-kicker { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-ink); font-weight: 700; margin-bottom: 6px; }
+  .rec-block h3 { margin: 0 0 12px; font-size: 21px; }
+  .rec-block p { max-width: none; }
+  .stage { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px dashed var(--rule); }
+  .stage:last-child { border-bottom: none; }
+  .stage .n { font-family: ui-monospace, monospace; font-weight: 700; color: var(--accent-ink); flex-shrink: 0; }
+  .stage .t { flex: 1; }
+  .stage-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .stage-head strong { color: var(--ink); font-size: 14.5px; }
+  .who { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .wtag { font-family: ui-monospace, monospace; font-size: 10.5px; padding: 2px 7px; border-radius: 3px; background: var(--code-bg); color: var(--ink-soft); }
+  .wtag.exec { background: var(--accent-soft); color: var(--accent-ink); }
+  .wtag.own { background: var(--amber-soft); color: var(--amber-ink); }
+  .stage .t p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  .versus { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .vs-card { border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; background: var(--paper-raised); }
+  .vs-card.win { border-color: var(--accent); box-shadow: 0 2px 8px var(--shadow); }
+  .vs-card h4 { margin: 0 0 4px; font-family: "Iowan Old Style", Charter, serif; font-size: 17px; }
+  .vs-card .vs-tag { font-family: ui-monospace, monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vs-card.win .vs-tag { color: var(--accent-ink); }
+  .vs-card.alt .vs-tag { color: var(--amber-ink); }
+  .vs-card ul { margin: 12px 0 0; padding-left: 18px; font-size: 13px; }
+
+  .dismiss { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0 4px; }
+  .dismiss .d-card { border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; background: var(--paper); }
+  .dismiss .d-card .dc-h { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .dismiss .d-card.b { border-left: 3px solid var(--indigo); }
+  .dismiss .d-card.d { border-left: 3px solid var(--rose); }
+  .dismiss .d-card p { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+
+  .qlist { list-style: none; padding: 0; margin: 0; }
+  .qlist li { padding: 14px 0; border-bottom: 1px solid var(--rule); display: flex; gap: 14px; }
+  .qlist li:last-child { border-bottom: none; }
+  .qlist .qmark { font-family: "Iowan Old Style", Charter, serif; font-size: 20px; color: var(--label); flex-shrink: 0; }
+
+  .srcquote { background: var(--code-bg); border-radius: 5px; padding: 14px 18px; margin: 14px 0; }
+  .srcquote .sq-file { font-family: ui-monospace, monospace; font-size: 11px; color: var(--label); letter-spacing: 0.03em; margin-bottom: 7px; }
+  .srcquote blockquote { margin: 0; font-family: ui-monospace, monospace; font-size: 12.5px; line-height: 1.65; color: var(--ink); }
+  .origin-card { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 22px; margin: 20px 0; box-shadow: 0 1px 3px var(--shadow); }
+  .origin-card .oc-title { font-family: "Iowan Old Style", Charter, serif; font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+  .origin-meta { display: flex; flex-wrap: wrap; gap: 20px; font-size: 12.5px; color: var(--label); }
+  .origin-meta strong { color: var(--ink-soft); font-weight: 600; }
+  .findings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 4px; }
+  .finding { border: 1px solid var(--rule); border-left: 3px solid var(--amber); border-radius: 6px; padding: 13px 16px; background: var(--paper); }
+  .finding .f-n { font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber-ink); font-weight: 700; }
+  .finding .f-t { font-size: 13.5px; font-weight: 600; margin: 4px 0 6px; }
+  .finding p { font-size: 12.5px; color: var(--ink-soft); margin: 0; max-width: none; }
+  @media (max-width: 640px) { .findings { grid-template-columns: 1fr; } }
+
+  footer.doc-foot { max-width: 800px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid var(--rule); color: var(--label); font-size: 13px; }
+
+  @media (max-width: 860px) { .landscape-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .decode-grid, .blast, .opt-meta, .dismiss, .versus { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="doc-head">
+  <span class="eyebrow"><span class="dot"></span>UP1 · curriculum-design / academic-scheduling / uengagement-up1</span>
+  <h1 class="doc-title">Actividad de curso: evidencia, efecto por mod y recomendación</h1>
+  <p class="doc-sub">
+    Un curso puede impartirse mediante varias actividades (Cátedra, Práctica, Laboratorio), cada una
+    con su propio cupo, requisitos de sala, docente y horario. Hoy ese concepto no existe. Este
+    documento reúne toda la evidencia de código recogida, mide el efecto de cada camino sobre los
+    flujos ya implementados y cierra con dos caminos viables, ponderados por un criterio explícito:
+    no romper el trabajo ya implementado. La recomendación es <strong>extender ActivityLine</strong>;
+    la alternativa viable es <strong>reestructurar Modality</strong>.
+  </p>
+  <div class="doc-meta">
+    <span><strong>Estado</strong> · evaluación con recomendación, para decisión conjunta</span>
+    <span><strong>Base</strong> · verificado contra el código real de los tres mods</span>
+    <span><strong>Origen</strong> · reporte de deuda técnica up1, hallazgo 1 (sección 00)</span>
+    <span><strong>Sprint</strong> · sp7 · 27 de julio de 2026</span>
+  </div>
+  <nav class="toc">
+    <a href="#s00">00 Antecedente</a>
+    <a href="#s01">01 Pedido</a>
+    <a href="#s02">02 Piezas y dueño</a>
+    <a href="#s03">03 Cómo funciona hoy</a>
+    <a href="#s04">04 Factor estructural</a>
+    <a href="#s05">05 Caminos evaluados</a>
+    <a href="#s06">06 Efecto sobre flujos</a>
+    <a href="#s07">07 Foco: Modality</a>
+    <a href="#s08">08 Recomendación</a>
+    <a href="#s09">09 Preguntas</a>
+    <a href="#s10">Anexo: evidencia</a>
+  </nav>
+</header>
+
+<section id="s00" class="wide">
+  <p class="section-label">00 · Antecedente</p>
+  <h2>De dónde sale este análisis</h2>
+  <p>
+    Este análisis no arranca de un pedido de feature aislado. Arranca de un <strong>reporte de deuda
+    técnica de la plataforma</strong> que dejó abierta, de forma explícita, una decisión de modelado
+    sobre <code>Activity</code>. Tener ese origen a la vista importa por dos razones: acota qué se está
+    decidiendo acá y qué queda afuera, y aporta evidencia que pesa sobre el ranking de opciones.
+  </p>
+  <div class="origin-card">
+    <div class="oc-title">"Deuda técnica: dos objetos en colisión, un drift sistémico"</div>
+    <div class="origin-meta">
+      <span><strong>Autora</strong> · Laura Fierro</span>
+      <span><strong>Repositorio</strong> · up1 (monorepo)</span>
+      <span><strong>Fecha</strong> · 27 de julio de 2026</span>
+      <span><strong>Estado</strong> · dos hallazgos abiertos</span>
+    </div>
+    <div class="findings">
+      <div class="finding">
+        <div class="f-n">Hallazgo 1 · abierto</div>
+        <div class="f-t">Activity y Offering definidos por separado en dos mods</div>
+        <p>Es el que origina este documento. Se desarrolla abajo.</p>
+      </div>
+      <div class="finding">
+        <div class="f-n">Hallazgo 2 · abierto</div>
+        <div class="f-t">Drift sistémico de typeDefs GraphQL</div>
+        <p>66 errores en BASEMODEL, todos el mismo patrón (ejemplo del reporte: <code>Activity.updatedById</code>, se esperaba Int y llegó String), repartidos por academic-scheduling, curriculum-design, engagement y core. Preexistente y transversal. <strong>Fuera del alcance de este análisis:</strong> no depende de dónde viva la actividad de curso.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>El hallazgo 1, verificado en las definiciones reales</h3>
+  <p>
+    El merge append-only del sync fusiona los campos de los dos mods en el mismo objeto Base sin
+    reclamar, pero cada mod sigue describiendo una cosa distinta bajo el mismo nombre. Contrastado
+    contra los JSON de objeto de ambos mods:
+  </p>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th></th><th>uengagement-up1</th><th>curriculum-design</th></tr></thead>
+      <tbody>
+        <tr><td>Concepto declarado</td><td>"Actividad académica o de apoyo con nombre que una institución planifica y ofrece a sus estudiantes"</td><td>"Programa de asignatura": definición detallada de la asignatura más su programa completo, versionado</td></tr>
+        <tr><td>Label y género</td><td>Actividad / Actividades · femenino</td><td>Programa de asignatura / Programas de asignatura · masculino</td></tr>
+        <tr><td>Campos propios</td><td><code>planningUnitId</code>, <code>formTemplateId</code>, <code>purpose</code></td><td><code>recordType</code>, <code>version</code>, <code>versionLabel</code>, <code>previousVersionId</code>, <code>isCurrent</code>, <code>credits</code>, <code>programLevel</code>, <code>executionUnitId</code>, <code>status</code></td></tr>
+        <tr><td>Metadata que prevalece hoy</td><td>ninguna</td><td>label, género y descripción del Base fusionado</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    La consecuencia práctica: una institución que usa <code>Activity</code> desde la mirada de
+    engagement ve la UI de "Programa de asignatura", con su flujo de versionado y la capability
+    <code>activity:version</code> (declarada en <code>curriculum-design/capabilities.json</code> y
+    usada en <code>default_Activity_list</code> y <code>default_Activity_view</code>), no la suya. Sus
+    campos siguen en la tabla, pero sin etiqueta ni layout que los describa.
+  </p>
+  <p>
+    En <code>Offering</code> el cuadro está más resuelto, y el propio JSON de curriculum-design lo dice
+    textual:
+  </p>
+  <div class="srcquote">
+    <div class="sq-file">curriculum-design/objects/Offering.json · campo activityId</div>
+    <blockquote>
+      "FK → Activity, nullable (solo los sílabos la setean; los ServiceOffer de engagement quedan
+      null). Denormalización para mostrar/seleccionar la asignatura a 1 salto: <strong>el ancla real es
+      activityLineId</strong>, pero la asignatura vive a 2 saltos (offering→line→activity) y el frontend
+      no resuelve display de 2 saltos."
+    </blockquote>
+  </div>
+  <p>
+    O sea que <code>activityId</code> en Offering es una denormalización a propósito, de solo lectura
+    para los sílabos, y no hay pérdida de datos. El cabo suelto real es el label del objeto fusionado,
+    que hoy depende del orden de sync entre mods y no de una regla explícita.
+  </p>
+
+  <div class="callout key">
+    <div class="callout-label">La pregunta del reporte que origina este análisis</div>
+    <p>
+      El reporte cierra el hallazgo 1 con dos pendientes: <strong>(a)</strong> falta una regla explícita
+      de precedencia de metadata cuando dos mods comparten un objeto, y <strong>(b)</strong> para
+      <code>Activity</code> vale la pena decidir si el concepto de engagement necesita su propio objeto
+      en vez de vivir dentro del de curriculum-design.
+    </p>
+    <p>
+      Este documento aborda <strong>(b)</strong> en su forma concreta y accionable: dónde vive el nivel
+      intermedio entre el curso y su programación. <strong>No</strong> resuelve (a), que es una regla de
+      plataforma, ni el hallazgo 2 del drift GraphQL. Ambos siguen abiertos y necesitan su propia
+      decisión.
+    </p>
+  </div>
+
+  <h3>Qué le aporta el antecedente a la decisión</h3>
+  <ul>
+    <li>
+      <strong>Refuerza el descarte de B.</strong> <code>Activity</code> ya carga dos significados de
+      negocio de dos mods distintos, con etiquetas y géneros en conflicto. Meter la variante ahí suma
+      un tercer eje sobre una colisión ya reportada: agrava el problema de origen en vez de ordenarlo.
+    </li>
+    <li>
+      <strong>Refuerza A con evidencia del propio código.</strong> El JSON de curriculum-design declara
+      que el ancla real de <code>Offering</code> es <code>activityLineId</code>. La opción A no inventa
+      un pivote: usa el que el código ya reconoce como tal.
+    </li>
+    <li>
+      <strong>Deja una advertencia concreta para A.</strong> El reporte demuestra que compartir un
+      objeto entre mods sin regla de precedencia de metadata ya produjo una UI confusa. A comparte
+      <code>ActivityLine</code> con engagement, así que el recordType, las etiquetas y los layouts hay
+      que administrarlos de forma explícita, no dejarlos al orden del sync. Es exactamente el mismo
+      riesgo que originó este reporte.
+    </li>
+    <li>
+      <strong>Y explica el atractivo real de D.</strong> Modality es enteramente de curriculum-design:
+      no hay objeto compartido, así que no hereda el problema de precedencia de metadata. Esa es su
+      ventaja, y no es menor a la luz del antecedente.
+    </li>
+  </ul>
+</section>
+
+<section id="s01">
+  <p class="section-label">01 · El pedido</p>
+  <h2>Hoy no existe el concepto "actividad de un curso"</h2>
+  <p>
+    En UP1, <code>Activity</code> (recordType <code>Course</code>) es un curso. En la práctica, un
+    mismo curso se dicta mediante <strong>varias actividades distintas</strong> (por ejemplo Cátedra
+    más Laboratorio), cada una con su cupo, sus requisitos de sala y docente, y sus bloques horarios.
+    Y esas actividades cambian según el alcance: campus, departamento, jornada o docente. No hay
+    dónde representar nada de eso.
+  </p>
+  <p>Se pide crear un nivel intermedio entre el curso y su programación. El documento base insiste en modelarlo como tres ejes independientes:</p>
+  <div class="decode-grid">
+    <div class="decode-card"><div class="pos">1</div><div class="what">Tipo de actividad</div><div class="ev">Teoría, práctica, laboratorio. Define cuánta docencia directa requiere el bloque.</div></div>
+    <div class="decode-card"><div class="pos">2</div><div class="what">Tipo de sala o entrega</div><div class="ev">Aula, laboratorio, virtual. Independiente del eje 1: una práctica puede darse en aula regular.</div></div>
+    <div class="decode-card"><div class="pos">3</div><div class="what">Modalidad de impartición</div><div class="ev">Presencial, semipresencial, a distancia. Define qué combinaciones de los ejes 1 y 2 tienen sentido.</div></div>
+  </div>
+  <p>
+    Más un <strong>alcance</strong> opcional por fila (campus, departamento, jornada vía
+    <code>Shift</code>, docente vía <code>Instructor</code>) y el cupo. La meta de fondo es que ese
+    nivel intermedio sea el punto donde <code>Section</code> (estimación de programación) y
+    <code>Offering</code> (plan final, sílabo) anclen al mismo lugar.
+  </p>
+</section>
+
+<section id="s02" class="wide">
+  <p class="section-label">02 · Las piezas y su dueño</p>
+  <h2>La cadena real, con quién la mantiene</h2>
+  <div class="chain">
+    <div class="chain-node"><div class="name">Activity</div><div class="rt">multi-fila por versión · rt Course/Service</div><div class="team" style="color:var(--amber-ink)">base: uengagement-up1</div></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-node"><div class="name">ActivityLine</div><div class="rt">curso ↔ unidad ejecutora · ya 1:N</div><div class="team" style="color:var(--amber-ink)">base: uengagement-up1</div></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-branch">
+      <div class="chain-node small"><div class="name">Offering</div><div class="rt">plan final / sílabo · FK real activityLineId</div><div class="team" style="color:var(--accent-ink)">extiende: curriculum-design</div></div>
+      <div class="chain-node small"><div class="name">Section</div><div class="rt">estimación · FK activityId (Activity directo)</div><div class="team" style="color:var(--indigo-ink)">academic-scheduling</div></div>
+    </div>
+  </div>
+  <p class="tight" style="font-size:13.5px;color:var(--ink-soft);">
+    La asimetría central: <code>Offering</code> cuelga de <code>ActivityLine</code>, pero
+    <code>Section</code> cuelga de <code>Activity</code> directo. Las dos ramas no se tocan hoy.
+  </p>
+  <div class="landscape-grid">
+    <div class="landscape-card">
+      <h3>Activity</h3><div class="lc-sub">base: uengagement-up1 · extiende: curriculum-design</div>
+      <p class="lc-desc">El curso. Ya multi-fila por versión. <code>recordType</code> distingue Course de Service (Course lo declara academic-scheduling).</p>
+      <dl class="lc-fields"><dt>version, previousVersionId, isCurrent</dt><dd>versionamiento (curriculum-design)</dd><dt>polymorphicChildren</dt><dd>CurricularSection, requirement</dd></dl>
+      <div class="lc-gap"><strong>Le falta:</strong> representar más de una actividad por curso.</div>
+    </div>
+    <div class="landscape-card">
+      <h3>ActivityLine</h3><div class="lc-sub">base: uengagement-up1 · sin extensión en cd</div>
+      <p class="lc-desc">Vínculo Activity ↔ unidad ejecutora. Ya 1:N. Es el ancla real de Offering: el resolver reutiliza la primera o crea una.</p>
+      <dl class="lc-fields"><dt>activityId, orgUnitId</dt><dd>FK → Activity / OrgUnit (not_null)</dd><dt>code, status</dt><dd>único · Active/Inactive</dd></dl>
+      <div class="lc-gap"><strong>Le falta:</strong> recordTypes, tipo de actividad, tipo de sala, cupo, alcance por jornada o docente.</div>
+    </div>
+    <div class="landscape-card">
+      <h3>Modality</h3><div class="lc-sub">curriculum-design · RecordType sobre CurricularSection</div>
+      <p class="lc-desc">Desglose de horas y modo de entrega. Vive en el árbol documental del sílabo. Owner polimórfico: Activity, Offering o Curriculum.</p>
+      <dl class="lc-fields"><dt>theory/practice/lab/autonomousHours</dt><dd>desglose de horas</dd><dt>deliveryMode, isDefault</dt><dd>modo de entrega · principal</dd></dl>
+      <div class="lc-gap"><strong>Le falta:</strong> cupo, requisitos, alcance. No fue pensada como ancla de programación.</div>
+    </div>
+  </div>
+</section>
+
+<section id="s03" class="wide">
+  <p class="section-label">03 · Cómo funcionan HOY Activity y ActivityLine</p>
+  <h2>El cuadro real, verificado en código</h2>
+  <p>
+    Con las piezas a la vista, conviene ver cómo se comportan hoy de verdad. Dos hechos cambian el
+    marco respecto de lo que asumía la propuesta original.
+  </p>
+  <h3>Activity no es "1 fila = 1 curso": ya es multi-fila por versionamiento</h3>
+  <p>
+    La base vive en <code>uengagement-up1</code>; <code>curriculum-design</code> la extiende con
+    <code>version</code>, <code>previousVersionId</code>, <code>isCurrent</code> y
+    <code>polymorphicChildren</code> (CurricularSection, requirement). Un mismo curso lógico ya tiene
+    varias filas Activity, una por versión, con <code>isCurrent</code> marcando la vigente. Cualquier
+    opción que agregue "variante" como segundo eje de multiplicación interactúa con este eje de
+    versión que ya existe.
+  </p>
+  <h3>ActivityLine ya es 1:N, no 1:1</h3>
+  <p>Este es el hallazgo que corrige la premisa del documento original. La cardinalidad real hoy, capa por capa:</p>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th>Capa</th><th>Cardinalidad real</th><th>Evidencia</th></tr></thead>
+      <tbody>
+        <tr><td class="rl">Schema</td><td>N:1 (varias líneas por Activity, FK not_null + cascade)</td><td><code>ActivityLine.json:13</code>, descrita como "muchos-a-muchos Activity↔OrgUnit con identidad propia"</td></tr>
+        <tr><td class="rl">Layouts engagement</td><td>N:1, ya expuesta en UI</td><td>pestaña "Centros" (<code>engagement_ActivityLine_tab</code>) lista todas las líneas de una Activity</td></tr>
+        <tr><td class="rl">Seed engagement</td><td>N:1 real</td><td>un servicio con 3 líneas en distintos centros (<code>c-activityline-seeds.js</code>)</td></tr>
+        <tr><td class="rl">Resolver Offering (cd)</td><td>1:1 forzado</td><td><code>syllabus-offering.resolver.js:40</code> · <code>findFirst ... orderBy id asc</code> = "la primera"</td></tr>
+        <tr><td class="rl">Resolver Offering (engagement)</td><td>1:1 forzado</td><td><code>offering-create.resolver.js:38</code> · mismo patrón "la primera"</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <div class="callout-label">Consecuencia para el análisis</div>
+    <p>
+      La relación <code>ActivityLine ↔ Activity</code> <strong>no es 1:1 hoy, ya es 1:N</strong>. Lo
+      único que asume "una sola" es el path de creación de Offering, en los dos mods. Por lo tanto el
+      costo real de meter la variante en ActivityLine no está en cambiar la cardinalidad (ya está),
+      sino en <strong>sobrecargar el significado</strong> de ActivityLine y en obligar a los dos
+      resolvers a dejar de tomar "la primera".
+    </p>
+  </div>
+</section>
+
+<section id="s04" class="wide">
+  <p class="section-label">04 · El factor estructural</p>
+  <h2>Cardinalidad vs. rol: qué cambia de verdad</h2>
+  <p>
+    Hay que separar dos cosas que la propuesta original mezclaba. Solucionar los casos no es lo caro;
+    lo caro es el cambio de <strong>tipo de relación / rol de objeto</strong>, que es lo que queda sin
+    resolver aunque los casos queden cubiertos.
+  </p>
+  <ul>
+    <li><strong>Cardinalidad (1:1 vs 1:N)</strong>: en su mayoría ya está como 1:N. El único cambio real de cardinalidad es re-anclar <code>Section</code>.</li>
+    <li><strong>Semántica / rol del objeto</strong>: sobrecargar un objeto con un segundo significado. Aquí está el costo estructural.</li>
+  </ul>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th>Opción</th><th>Cardinalidad que cambia</th><th>Rol / semántica que cambia (lo estructural)</th></tr></thead>
+      <tbody>
+        <tr><td class="rl">A · ActivityLine</td><td>Ninguna en ActivityLine (ya 1:N). Re-ancla Section</td><td>Sobrecarga ActivityLine: hoy = "quién ejecuta / en qué centro" (lo usa engagement). Le sumas variante + tipo de sala + modalidad + cupo + alcance. Un objeto con dos conceptos ortogonales</td></tr>
+        <tr><td class="rl">B · Activity</td><td>Activity pasa de N filas por versión a N por versión × variante</td><td>Redefine qué es una fila Activity. Colisiona con isCurrent, previousVersionId y los 37 consumidores que asumen activityId = un curso</td></tr>
+        <tr><td class="rl">C · Objeto nuevo</td><td>Nueva relación 1:N desde Activity. Re-ancla Section</td><td>Ninguna sobre objetos existentes. Lo no resuelto: Offering y el objeto nuevo quedan en cadenas separadas</td></tr>
+        <tr><td class="rl">D · Modality</td><td>Modality tendría que aceptar ownerType=ActivityLine (hoy Activity/Offering/Curriculum)</td><td>Mezcla documental con agendamiento: Section anclaría en un nodo del árbol del sílabo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <div class="callout-label">El hilo estructural común a A y B</div>
+    <p>
+      El versionamiento. Hoy el versionado de Activity deep-clona <code>sections</code> pero
+      <strong>no</strong> ActivityLine (<code>activity.json:35</code>). Cualquier opción que meta la
+      variante dentro de Activity o ActivityLine debe resolver ese linaje: al crear la v2 de un curso,
+      sus variantes no se clonan, y <code>resolveActivityLineId</code> crearía una nueva rompiendo la
+      correspondencia. Ese ajuste es de curriculum-design.
+    </p>
+  </div>
+</section>
+
+<section id="s05" class="wide">
+  <p class="section-label">05 · Caminos evaluados</p>
+  <h2>Qué toca cada opción, quién entra y qué se rompe</h2>
+  <p>
+    Se evaluaron cuatro caminos. Dos quedan <strong>viables</strong> (A y D) y dos quedan
+    <strong>descartados</strong> (B y C). Se documentan los cuatro porque el descarte se sostiene en la
+    misma evidencia que ordena a los viables; las secciones 06 y 07 los miden a todos.
+  </p>
+  <div class="legend">
+    <span><b style="background:var(--danger)"></b> Modifica · cambia código o esquema aquí</span>
+    <span><b style="background:var(--amber)"></b> Coordina · dueño del objeto base, aprueba el cambio</span>
+    <span><b style="background:var(--code-bg)"></b> Intacto · no se toca</span>
+  </div>
+
+  <div class="opt-group viable"><span>Viables</span><i></i></div>
+
+  <div class="option-block">
+    <div class="option-head a"><span class="tag tag-a">Opción A</span><h3>RecordType nuevo sobre ActivityLine</h3><span class="rp ok">Viable · recomendada</span></div>
+    <div class="option-body">
+      <p class="lead">Extender <code>ActivityLine</code> con los tres ejes, alcance, cupo y flags de requisito. Aprovecha que ya conecta Activity con OrgUnit y que Offering ya ancla ahí.</p>
+      <div class="opt-meta">
+        <div><div class="meta-label">Equipos</div><div class="teams"><span class="team-chip owner">curriculum-design</span><span class="team-chip owner">academic-scheduling</span><span class="team-chip coord">uengagement-up1 (coordina)</span></div></div>
+        <div><div class="meta-label">Esfuerzo</div><div class="effort"><span class="effort-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="effort-val">Medio · 3 mods</span></div></div>
+      </div>
+      <div class="meta-label">Blast radius</div>
+      <div class="blast">
+        <div class="blast-mod hit-modifica"><div class="bm-name">curriculum-design</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Declarar el RT. Corregir <code>resolveActivityLineId</code> (elegir variante, no "la primera"). 8 supuestos rotos de 47 puntos: unicidad del sílabo, code <code>AL-{code}</code>, versioning deep-clone.</div></div>
+        <div class="blast-mod hit-modifica"><div class="bm-name">academic-scheduling</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Re-anclar <code>Section</code> (71 refs a activityId). Cascada: <code>InstructorCourseAssignment</code> (constraint <code>[instructorId, activityId]</code>) y <code>computeCourseCoverages</code>. Introducir el concepto ActivityLine (hoy 0 refs).</div></div>
+        <div class="blast-mod hit-coordina"><div class="bm-name">uengagement-up1</div><span class="bm-state coordina">Coordina</span><div class="bm-detail">Dueño del objeto base. Overload: sus 12 layouts y 2 resolvers leen ActivityLine como "centro ejecutor". 107 líneas / 17 archivos.</div></div>
+      </div>
+      <p class="reltype"><strong>Cambio de tipo de relación:</strong> no cambia cardinalidad (ya 1:N). Cambia el <strong>rol</strong> de ActivityLine. <strong>No resuelve solo:</strong> qué línea toma el sílabo y el clonado de variantes al versionar.</p>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-head d"><span class="tag tag-d">Opción D</span><h3>Reestructurar Modality</h3><span class="rp ok">Viable · alternativa</span></div>
+    <div class="option-body">
+      <p class="lead">Promover <code>Modality</code> de objeto documental a portadora de la variante: sumarle cupo, tipo de sala y alcance, y anclar en ella la programación. Ya aporta los ejes 1 y 3 (desglose de horas y <code>deliveryMode</code>).</p>
+      <div class="opt-meta">
+        <div><div class="meta-label">Equipos</div><div class="teams"><span class="team-chip owner">curriculum-design</span><span class="team-chip owner">academic-scheduling</span></div></div>
+        <div><div class="meta-label">Esfuerzo</div><div class="effort"><span class="effort-dots"><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="effort-val">Medio · 2 mods</span></div></div>
+      </div>
+      <div class="meta-label">Blast radius</div>
+      <div class="blast">
+        <div class="blast-mod hit-modifica"><div class="bm-name">curriculum-design</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Modality es de cd, y su huella medida es chica (sección 07): 13 archivos, 0 componentes Vue propios, 0 referencias cruzadas. Agregarle cupo, sala y alcance es barato. Hay que reinterpretar y migrar los 14 seeds, y el sílabo pasa a resolver variante.</div></div>
+        <div class="blast-mod hit-modifica"><div class="bm-name">academic-scheduling</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Re-anclar <code>Section</code> (71 refs a activityId) a un nodo del árbol documental (<code>CurricularSection</code>), más el cascade de <code>InstructorCourseAssignment</code> y cobertura.</div></div>
+        <div class="blast-mod"><div class="bm-name">uengagement-up1</div><span class="bm-state intacto">Intacto</span><div class="bm-detail">No participa: Modality es enteramente de curriculum-design. Es la ventaja propia de esta vía: cero coordinación con el dueño de los objetos base.</div></div>
+      </div>
+      <p class="reltype"><strong>Cambio de tipo de relación:</strong> Modality pasa de hoja documental a portadora operativa, y <code>Section</code> ancla en un nodo del sílabo. <strong>No resuelve solo:</strong> la mezcla de documentación con agendamiento, y la alineación con <code>Offering</code>, que sigue colgando de <code>ActivityLine</code>.</p>
+    </div>
+  </div>
+
+  <div class="opt-group out"><span>Descartadas</span><i></i></div>
+
+  <div class="option-block">
+    <div class="option-head b"><span class="tag tag-b">Opción B</span><h3>RecordType nuevo directo sobre Activity</h3><span class="rp brk">Descartada</span></div>
+    <div class="option-body">
+      <p class="lead">Un RecordType hijo de <code>Course</code> en el propio <code>Activity</code>, con el mismo mecanismo de especialización Course/Service. <strong>Descartada:</strong> es la única que rompe la malla, los prerrequisitos y los requisitos.</p>
+      <div class="opt-meta">
+        <div><div class="meta-label">Equipos</div><div class="teams"><span class="team-chip owner">curriculum-design</span><span class="team-chip owner">academic-scheduling</span><span class="team-chip coord">uengagement-up1 (coordina)</span></div></div>
+        <div><div class="meta-label">Esfuerzo</div><div class="effort"><span class="effort-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span><span class="effort-val">Medio-alto · rompe cd</span></div></div>
+      </div>
+      <div class="meta-label">Blast radius</div>
+      <div class="blast">
+        <div class="blast-mod hit-modifica"><div class="bm-name">curriculum-design</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Los 37 consumidores de activityId asumen activityId = un curso. Choca de frente con versioning: <code>isCurrent</code>, <code>previousVersionId</code>, batch, malla y requisitos.</div></div>
+        <div class="blast-mod hit-modifica"><div class="bm-name">academic-scheduling</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Section ya ancla en Activity (FK no cambia), pero la semántica sí: Section pasa a apuntar a la variante, no al curso.</div></div>
+        <div class="blast-mod hit-coordina"><div class="bm-name">uengagement-up1</div><span class="bm-state coordina">Coordina</span><div class="bm-detail">Dueño del objeto base. Asume <code>formTemplate</code> por Activity; fragmentar Activity en variantes rompe ese supuesto.</div></div>
+      </div>
+      <p class="reltype"><strong>Cambio de tipo de relación:</strong> redefine qué es una fila Activity (versión × variante en la misma tabla). <strong>No resuelve solo:</strong> la interacción con el versionamiento existente. <strong>Agravante del antecedente (sección 00):</strong> <code>Activity</code> ya es el objeto en colisión entre los dos mods; sumarle un tercer significado profundiza el hallazgo que originó este análisis.</p>
+    </div>
+  </div>
+
+  <div class="option-block">
+    <div class="option-head c"><span class="tag tag-c">Opción C</span><h3>Objeto nuevo independiente (CourseActivity)</h3><span class="rp brk">Descartada</span></div>
+    <div class="option-body">
+      <p class="lead">Una entidad propia con FK a <code>Activity</code>, desde cero, sin tocar ActivityLine ni el recordType de Activity. <strong>Descartada:</strong> duplica un pivote que ya existe y no alinea <code>Offering</code> por sí sola.</p>
+      <div class="opt-meta">
+        <div><div class="meta-label">Equipos</div><div class="teams"><span class="team-chip owner">academic-scheduling</span><span class="team-chip coord">curriculum-design (conecta Offering)</span></div></div>
+        <div><div class="meta-label">Esfuerzo</div><div class="effort"><span class="effort-dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="effort-val">Alto · aísla cd</span></div></div>
+      </div>
+      <div class="meta-label">Blast radius</div>
+      <div class="blast">
+        <div class="blast-mod hit-modifica"><div class="bm-name">academic-scheduling</div><span class="bm-state modifica">Modifica</span><div class="bm-detail">Crear el objeto entero (definición, mutaciones, permisos, layouts) + re-anclar Section + mismo cascade ICA/cobertura (71 refs).</div></div>
+        <div class="blast-mod hit-coordina"><div class="bm-name">curriculum-design</div><span class="bm-state coordina">Coordina</span><div class="bm-detail">Sus 47 puntos NO se rompen: ActivityLine y Activity quedan igual. Solo trabajo si quiere conectar Offering al objeto nuevo.</div></div>
+        <div class="blast-mod"><div class="bm-name">uengagement-up1</div><span class="bm-state intacto">Intacto</span><div class="bm-detail">No se toca ActivityLine ni Activity base.</div></div>
+      </div>
+      <p class="reltype"><strong>Cambio de tipo de relación:</strong> ninguno sobre objetos existentes; relación nueva y limpia. <strong>Motivo del descarte:</strong> duplica una relación que ya existe (<code>ActivityLine</code> ya es 1:N y ya ancla <code>Offering</code>), es la de mayor desarrollo, y deja <code>Offering</code> y el objeto nuevo en cadenas separadas salvo que cd las conecte.</p>
+    </div>
+  </div>
+</section>
+
+<section id="s06" class="wide">
+  <p class="section-label">06 · Efecto sobre los flujos ya implementados</p>
+  <h2>La tabla que decide bajo el criterio</h2>
+  <p>
+    El criterio de decisión pesa una cosa por encima del resto: <strong>no romper el trabajo ya
+    implementado</strong>. Coordinar equipos es un costo alcanzable; reconstruir un modelo o rehacer
+    un flujo en producción es descalificante. Por eso la pregunta no es "cuántos mods toca" sino
+    "cuánto de lo que toca lo <em>rompe</em> en vez de <em>agregarle</em>". La observación clave la
+    confirma el código: <strong>la malla del plan de estudio consume el curso por
+    <code>activityId</code></strong> (la arma <code>CurriculumMeshElement.vue</code> por
+    <code>blockId + activityId</code>, los prerrequisitos y requisitos también). Si la variante vive
+    sobre Activity (B), esos flujos se rompen. Si vive fuera de <code>activityId</code> (A, C, D), no.
+  </p>
+  <div class="legend">
+    <span><b style="background:var(--code-bg)"></b> Intacto · no se toca</span>
+    <span><b style="background:var(--indigo)"></b> Añade · trabajo nuevo, no rehace lo existente</span>
+    <span><b style="background:var(--amber)"></b> Rework · rehace un flujo implementado</span>
+    <span><b style="background:var(--danger)"></b> Rompe · invalida el supuesto, obliga a replantear</span>
+  </div>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th>Flujo ya implementado</th><th>A · ActivityLine</th><th>B · Activity</th><th>C · Objeto nuevo</th><th>D · Modality</th></tr></thead>
+      <tbody>
+        <tr><td>Malla / plan de estudio<span class="src">CurriculumMeshElement.vue · activityId</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp brk">Rompe</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp intact">Intacto</span></td></tr>
+        <tr><td>Prerrequisitos<span class="src">listPrereqs · activityId</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp brk">Rompe</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp intact">Intacto</span></td></tr>
+        <tr><td>Requisitos de asignatura<span class="src">requirement · ownerType=activity</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp brk">Rompe</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp intact">Intacto</span></td></tr>
+        <tr><td>Versionamiento de curso<span class="src">deep-clone sections</span></td><td><span class="rp rework">Rework</span></td><td><span class="rp brk">Rompe</span></td><td><span class="rp add">Añade</span></td><td><span class="rp intact">Intacto</span></td></tr>
+        <tr><td>Sílabo<span class="src">syllabus-offering.resolver.js</span></td><td><span class="rp rework">Rework</span></td><td><span class="rp rework">Rework</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp rework">Rework</span></td></tr>
+        <tr><td>Ofertas de servicio (engagement)<span class="src">offering-create · tab Centros</span></td><td><span class="rp rework">Rework</span></td><td><span class="rp brk">Rompe</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp intact">Intacto</span></td></tr>
+        <tr><td>Eligibilidad + cobertura docente<span class="src">InstructorCourseAssignment · computeCourseCoverages</span></td><td><span class="rp rework">Rework*</span></td><td><span class="rp rework">Rework</span></td><td><span class="rp rework">Rework</span></td><td><span class="rp rework">Rework</span></td></tr>
+        <tr><td>Modelo Modality (documental)<span class="src">rt__Modality__curricularsection</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp intact">Intacto</span></td><td><span class="rp rework">Reestructura</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12.5px; color:var(--ink-soft);">
+    * En la Opción A, el rework de eligibilidad/cobertura depende de re-anclar <code>Section</code>, que es un paso separable y diferible (ver etapas en la sección 08). El resto de las celdas de A no dependen de él.
+  </p>
+  <div class="callout key">
+    <div class="callout-label">Lo que muestra la tabla</div>
+    <p>
+      La franja roja de "Rompe" se concentra casi entera en la <strong>columna B</strong>: es la única
+      que invalida la malla, los prerrequisitos y los requisitos, los flujos que ya están implementados
+      y en uso. Eso la descalifica de entrada. <strong>A</strong>, <strong>C</strong> y <strong>D</strong>
+      dejan esos tres flujos intactos, así que el criterio principal no las separa: las separa lo que
+      viene después. <strong>C</strong> queda fuera por duplicar un pivote existente sin alcanzar la
+      alineación <code>Section↔Offering</code>. Quedan <strong>A</strong> y <strong>D</strong> como
+      caminos viables: A con rework contenido sobre un pivote que ya existe, D reestructurando
+      <code>Modality</code> dentro de un solo mod.
+    </p>
+  </div>
+
+  <h3>Cuánto trabajo cruzado, en números</h3>
+  <div class="compare-wrap">
+    <table class="compare">
+      <thead><tr><th></th><th class="opt-a">A · ActivityLine</th><th class="opt-b">B · Activity</th><th class="opt-c">C · Objeto nuevo</th><th class="opt-d">D · Modality</th></tr></thead>
+      <tbody>
+        <tr><td class="row-label">Efecto en curriculum-design</td><td class="opt-a">8 supuestos rotos de 47 pts</td><td class="opt-b">37 pts, choca con versioning (el mayor)</td><td class="opt-c">Mínimo: solo conectar Offering (opcional)</td><td class="opt-d">Reestructura Modality (huella chica)</td></tr>
+        <tr><td class="row-label">Efecto en academic-scheduling</td><td class="opt-a">Section + ICA + cobertura + concepto nuevo</td><td class="opt-b">Semántica de Section (FK igual)</td><td class="opt-c">Crea objeto + Section re-anchor</td><td class="opt-d">Section a nodo documental (forzado)</td></tr>
+        <tr><td class="row-label">Efecto en uengagement-up1</td><td class="opt-a">Overload 17 archivos + resolver</td><td class="opt-b">formTemplate por Activity se rompe</td><td class="opt-c">Intacto</td><td class="opt-d">Intacto</td></tr>
+        <tr><td class="row-label">Mods tocados</td><td class="opt-a">3</td><td class="opt-b">3</td><td class="opt-c">1 a 2</td><td class="opt-d">2</td></tr>
+        <tr><td class="row-label">Rompe flujos implementados</td><td class="opt-a">No (rework contenido)</td><td class="opt-b">Sí (malla, prereqs, requisitos)</td><td class="opt-c">No</td><td class="opt-d">No la malla; reestructura Modality</td></tr>
+        <tr><td class="row-label">Alinea Section con Offering</td><td class="opt-a">Sí, tras re-anclar Section</td><td class="opt-b">No</td><td class="opt-c">Solo si cd conecta Offering</td><td class="opt-d">No de forma natural</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s07" class="wide">
+  <p class="section-label">07 · Foco: ¿reutilizar o reestructurar Modality?</p>
+  <h2>Modality está en uso, pero su huella es chica y superficial</h2>
+  <p>
+    La opción D descansa sobre Modality, así que conviene medirla en vez de suponerla. El inventario
+    de consumidores en todos los mods da un cuadro claro: Modality está implementado y con datos
+    reales, pero es un objeto <em>hoja</em> de documentación, no un hub del que dependan otros flujos.
+  </p>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th>Tipo de consumidor</th><th>Cantidad</th><th>Qué es</th></tr></thead>
+      <tbody>
+        <tr><td>Resolvers (logic)</td><td>2</td><td>Validan "una modalidad default por dueño" en create y update</td></tr>
+        <tr><td>Helper</td><td>1</td><td><code>assertSingleDefaultModality</code></td></tr>
+        <tr><td>Layouts JSON</td><td>3</td><td>create / edit / view, con el framework genérico de RecordDetail</td></tr>
+        <tr><td>Tests</td><td>4</td><td>Suites de la validación de default</td></tr>
+        <tr><td>Seed</td><td>14 registros (2 archivos)</td><td>AIEP (13 modalidades) + Univalle (1), con horas y deliveryMode reales</td></tr>
+        <tr><td>i18n</td><td>1</td><td>Labels de columnas + enum de deliveryMode en español</td></tr>
+        <tr><td>Componentes Vue propios</td><td>0</td><td>No tiene UI dedicada; usa el RecordDetail genérico</td></tr>
+        <tr><td>Malla / plan de estudio</td><td>0</td><td>La malla no consume el desglose de horas</td></tr>
+        <tr><td>Otros mods (scheduling, engagement)</td><td>0</td><td>No lo referencian (sus campos <code>modality</code>/<code>generalModality</code> son independientes)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <div class="callout-label">Veredicto factual</div>
+    <p>
+      En uso real (schema + validación + UI + seed + i18n + tests), pero de alcance superficial:
+      ningún componente Vue propio, cero consumo desde la malla, cero referencias desde otros mods, y
+      su desglose de horas no alimenta ningún cálculo aguas abajo. Su única regla de dominio es "una
+      modalidad default por dueño".
+    </p>
+  </div>
+  <p>
+    Esto <strong>corrige una afirmación previa de este documento</strong>: reestructurar Modality no
+    arrastra mucho trabajo, su blast radius es chico. Por eso la vía Modality <strong>es viable</strong>:
+    su costo no es de tamaño, es de <strong>significado</strong>, y un costo semántico se paga, no
+    descalifica. Hay tres maneras distintas de "usar Modality", y las tres tienen veredicto propio:
+  </p>
+  <div class="landscape-grid">
+    <div class="landscape-card">
+      <h3>Reusar tal cual</h3><div class="lc-sub">Modality como ancla de la variante</div>
+      <div class="way-verdict"><span class="rp brk">No viable</span></div>
+      <p class="lc-desc">Le faltan los datos operativos que la casuística pide: cupo, tipo de sala (eje 2) y alcance. Solo aporta horas y <code>deliveryMode</code> (eje 3). Y anclar <code>Section</code> aquí la deja colgando de un nodo del árbol documental del sílabo.</p>
+    </div>
+    <div class="landscape-card">
+      <h3>Reestructurar</h3><div class="lc-sub">Promover Modality a portadora operativa · Opción D</div>
+      <div class="way-verdict"><span class="rp ok">Viable · alternativa</span></div>
+      <p class="lc-desc">Por su huella chica, agregarle cupo, sala y alcance es barato, y todo el cambio vive en un solo mod: cero coordinación con el dueño de los objetos base. El costo que se paga: convierte un objeto de documentación en uno de agendamiento, obliga a reinterpretar y migrar los 14 seeds, y <code>Section</code> igual re-ancla, ahora a un nodo del sílabo. Es la vía de reemplazo de A, no su complemento.</p>
+    </div>
+    <div class="landscape-card">
+      <h3>Complementar</h3><div class="lc-sub">La variante (Opción A) consulta Modality</div>
+      <div class="way-verdict"><span class="rp ok">Viable</span></div>
+      <p class="lc-desc">La portadora en <code>ActivityLine</code> toma horas y <code>deliveryMode</code> desde Modality en vez de duplicarlos. Modality mantiene su rol documental como fuente; la variante suma solo lo suyo (cupo, sala, alcance). Complemento de A, no alternativa.</p>
+    </div>
+  </div>
+  <div class="callout key">
+    <div class="callout-label">Lo que resuelve esta medición</div>
+    <p>
+      Modality se puede aprovechar de dos formas, y ambas siguen en pie:
+    </p>
+    <ul style="margin-top:8px;">
+      <li>
+        <strong>Como ancla</strong> (Opción D): viable. Hay que agregarle los campos que le faltan
+        (cupo, tipo de sala, alcance) y aceptar que un objeto documental pase a portar agendamiento.
+        Su ventaja es que todo el cambio vive en curriculum-design.
+      </li>
+      <li>
+        <strong>Como fuente</strong> (dentro de la Opción A): la portadora en <code>ActivityLine</code>
+        consulta horas y <code>deliveryMode</code> en vez de duplicarlos, y Modality conserva su rol
+        documental. No es un quinto camino, es una decisión de integración de A.
+      </li>
+    </ul>
+    <p>
+      Lo único que la medición descarta es <strong>reusar Modality tal cual</strong>, sin agregarle
+      campos: no alcanza para la casuística pedida. El ranking entre A y D no lo define el tamaño del
+      retrabajo, sino el encaje semántico y la alineación con <code>Offering</code>.
+    </p>
+  </div>
+</section>
+
+<section id="s08" class="wide">
+  <p class="section-label">08 · Recomendación</p>
+  <h2>Dos caminos viables: A y D, con A adelante</h2>
+  <p>
+    Aplicando el criterio (no romper lo implementado como prioridad, coordinación alcanzable,
+    reconstrucción descalificante) el campo se depura solo:
+  </p>
+  <ul>
+    <li><strong>B queda fuera</strong>: es la única que rompe la malla, los prerrequisitos y los requisitos, más el versionamiento. Reconstruye flujos en producción.</li>
+    <li><strong>C queda fuera</strong>: no rompe nada, pero duplica un pivote que ya existe (ActivityLine ya es 1:N y ya ancla Offering), es la de mayor desarrollo y deja la alineación <code>Section↔Offering</code> sin resolver. Paga el precio de A sin obtener su beneficio.</li>
+    <li><strong>A y D quedan como viables</strong>: ninguna toca la malla, y las dos cubren la casuística pedida. Se diferencian en qué objeto carga la variante y a qué costo.</li>
+  </ul>
+
+  <h3>A vs. D, cara a cara</h3>
+  <p>
+    Las dos respetan el criterio principal (ninguna rompe el plan de estudio). La diferencia está en
+    qué optimizan: A optimiza <strong>encaje y alineación</strong>, D optimiza <strong>autonomía de un
+    solo equipo</strong>.
+  </p>
+  <div class="versus">
+    <div class="vs-card win">
+      <span class="vs-tag">Recomendada</span>
+      <h4>A · Extender ActivityLine</h4>
+      <ul>
+        <li>Reutiliza el pivote que ya existe: ActivityLine ya es 1:N y ya es el ancla de Offering.</li>
+        <li>Es la única que alinea Section con Offering, que era la meta de fondo, sin objetos nuevos.</li>
+        <li>Encaja semánticamente: ActivityLine ya es una entidad operativa (quién ejecuta, dónde), no documental. Sumarle la variante extiende su rol; no lo invierte.</li>
+        <li>Su costo sobre lo implementado es <strong>rework contenido y escalonable</strong>, no reconstrucción: la etapa 1 casi no rompe nada.</li>
+        <li>Contra: toca código implementado en los tres mods; el overload de ActivityLine con engagement hay que administrarlo con recordType.</li>
+      </ul>
+    </div>
+    <div class="vs-card alt">
+      <span class="vs-tag">Alternativa viable</span>
+      <h4>D · Reestructurar Modality</h4>
+      <ul>
+        <li>Vive en un solo mod: curriculum-design es dueño de Modality. Cero coordinación con uengagement-up1, que es la dependencia más lenta de A.</li>
+        <li>Huella medida chica (sección 07): 13 archivos, 0 componentes Vue propios, 0 referencias desde otros mods. Barato de modificar.</li>
+        <li>Ya trae dos de los tres ejes: desglose de horas y <code>deliveryMode</code>.</li>
+        <li>Contra: invierte el rol del objeto, de documental a operativo, y hay que reinterpretar y migrar los 14 seeds. Le faltan cupo, tipo de sala y alcance, que hay que agregar. Y <code>Section</code> quedaría anclada a un nodo del árbol del sílabo, con <code>Offering</code> todavía colgando de <code>ActivityLine</code>: <strong>no alinea</strong>.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout">
+    <div class="callout-label">El desempate, en una línea</div>
+    <p>
+      D es más barata en coordinación; A es más barata en <em>deuda</em>. D deja dos cosas pendientes que
+      A resuelve: el encaje del objeto y la alineación <code>Section↔Offering</code>. Si esas dos no
+      importaran, D ganaría por autonomía.
+    </p>
+  </div>
+
+  <div class="rec-block">
+    <div class="rec-kicker">Recomendación · sí, sigue siendo A</div>
+    <h3>Opción A, extendida por etapas y complementada con Modality</h3>
+    <p>
+      Bajo el criterio del equipo, A y D empatan en lo esencial: ninguna rompe la malla y las dos cubren
+      la casuística. A gana el desempate por dos razones concretas: <strong>reutiliza un pivote que ya
+      es operativo y 1:N</strong> en vez de invertir el rol de un objeto documental, y es la única que
+      <strong>alcanza la alineación Section↔Offering</strong>. Como la coordinación entre equipos es un
+      costo asumido, el que A toque los tres mods no la descalifica, sobre todo porque su efecto es
+      rework contenido, no reconstrucción. La medición de Modality no movió el ranking: confirmó que D
+      es viable y barata en huella, y aportó además la integración de horas y modo de entrega que A
+      aprovecha. Las etapas mantienen el criterio en primer plano:
+    </p>
+    <div class="stage">
+      <span class="n">1</span>
+      <div class="t">
+        <div class="stage-head"><strong>Portadora de variante en ActivityLine</strong>
+          <span class="who"><span class="wtag own">objeto base: uengagement-up1</span><span class="wtag exec">ejecuta: curriculum-design</span></span></div>
+        <p>Declarar el RecordType (los tres ejes, alcance y cupo) sobre <code>ActivityLine</code>, cuyo objeto base pertenece a engagement. Como el objeto se comparte (engagement lo usa para Servicios y sus centros), engagement aprueba y valida que los campos y el RecordType nuevos no perturben su vista "Centros" ni su resolver de ofertas. Dentro de curriculum-design, ajustar <code>resolveActivityLineId</code> en el sílabo para elegir la variante en vez de tomar "la primera". El eje de horas y modo de entrega conviene tomarlo de <code>Modality</code> como fuente (sección 07) en lugar de duplicar <code>deliveryMode</code>. Por el antecedente (sección 00), en esta etapa hay que fijar de forma explícita el recordType, las etiquetas y los layouts de la variante, para no repetir en <code>ActivityLine</code> la colisión de metadata que ya ocurrió en <code>Activity</code> por dejarla al orden del sync. Rompe casi nada: la malla y el plan no consumen ActivityLine. Cubre la casuística pedida.</p>
+      </div>
+    </div>
+    <div class="stage">
+      <span class="n">2</span>
+      <div class="t">
+        <div class="stage-head"><strong>Clonado de variantes al versionar el curso</strong>
+          <span class="who"><span class="wtag own">código: curriculum-design</span><span class="wtag exec">ejecuta: curriculum-design</span></span></div>
+        <p>Hoy versionar una Activity deep-clona sus <code>sections</code> pero no sus ActivityLine (<code>activity.json</code>, <code>prefillFrom</code>). Si las líneas cargan variantes, la v2 nacería sin ellas y el resolver crearía una nueva, rompiendo el linaje. Hay que incluir las líneas-variante en el clonado. Trabajo aislado de curriculum-design.</p>
+      </div>
+    </div>
+    <div class="stage">
+      <span class="n">3</span>
+      <div class="t">
+        <div class="stage-head"><strong>Alinear Section con Offering</strong>
+          <span class="who"><span class="wtag own">código: academic-scheduling</span><span class="wtag exec">ejecuta: academic-scheduling + curriculum-design (valida)</span></span></div>
+        <p><code>Offering</code> (el sílabo) ya cuelga de <code>ActivityLine</code>; <code>Section</code> (el grupo que se programa) cuelga de <code>Activity</code> directo. "Alinear" es mover <code>Section</code> a la misma línea-variante donde ya vive <code>Offering</code>. Obliga a academic-scheduling a re-anclar <code>Section</code> y arrastrar <code>InstructorCourseAssignment</code> (<code>[instructorId, activityId]</code>) y la cobertura por curso, más migrar datos. Es el paso más pesado y el único con dependencia fuerte de otro equipo; va al final, como decisión aparte, cuando 1 y 2 estén estables.</p>
+      </div>
+    </div>
+    <p style="margin-top:14px;">
+      Escalonarla mantiene el criterio en primer plano: cada etapa deja el sistema funcionando y
+      ninguna obliga a rehacer la malla. Si el equipo prioriza avanzar sin depender de la coordinación
+      con uengagement-up1, <strong>D es la alternativa viable</strong>, aceptando el cambio de rol de
+      Modality, la migración de sus 14 seeds y que la alineación con <code>Offering</code> quede sin
+      resolver.
+    </p>
+  </div>
+
+  <h3>Por qué se descartan B y C bajo este criterio</h3>
+  <div class="dismiss">
+    <div class="d-card b">
+      <div class="dc-h">B · RecordType sobre Activity</div>
+      <p>Pone la variante sobre <code>activityId</code>, que es justo lo que consume la malla, los prerrequisitos y los requisitos. Rompe tres flujos ya implementados y colisiona con el versionamiento (<code>isCurrent</code>, <code>previousVersionId</code>). Es el caso que obliga a replantear el plan de estudio. Y carga un tercer significado sobre el objeto que el reporte de origen ya identificó en colisión entre los dos mods (sección 00).</p>
+    </div>
+    <div class="d-card c" style="border-left:3px solid var(--amber)">
+      <div class="dc-h">C · Objeto nuevo (CourseActivity)</div>
+      <p>No rompe nada, pero es la de mayor desarrollo y duplica una relación que ya existe: <code>ActivityLine</code> ya es 1:N sobre Activity y ya es el ancla de <code>Offering</code>. Además deja <code>Offering</code> y el objeto nuevo en cadenas separadas, salvo que curriculum-design haga el mismo trabajo de sílabo que pide A sin reutilizar el pivote. Crear una entidad nueva para lo que un objeto existente ya modela no se sostiene.</p>
+    </div>
+  </div>
+</section>
+
+<section id="s09">
+  <p class="section-label">09 · Preguntas para la conversación</p>
+  <h2>Antes de cerrar la decisión</h2>
+  <ul class="qlist">
+    <li><span class="qmark">?</span><span>Si ActivityLine lleva variantes, ¿qué fila toma el sílabo (Offering)? Hoy el resolver reutiliza "la primera que encuentra".</span></li>
+    <li><span class="qmark">?</span><span>¿Un sílabo documenta el curso completo o necesita volverse 1:N por variante, para no perder la correspondencia con Section?</span></li>
+    <li><span class="qmark">?</span><span>Al versionar un curso, ¿se deben clonar también las variantes/líneas? Hoy el deep-clone excluye ActivityLine.</span></li>
+    <li><span class="qmark">?</span><span>¿Está uengagement-up1 de acuerdo con extender ActivityLine, protegiendo su uso para Servicios vía recordType, o prefiere que la variante viva en otro objeto?</span></li>
+    <li><span class="qmark">?</span><span>Re-anclar Section obliga a tocar InstructorCourseAssignment y la cobertura por curso. ¿La eligibilidad y la cobertura deben seguir siendo por curso o pasar a ser por variante?</span></li>
+    <li><span class="qmark">?</span><span>Si se toma A: ¿se adopta Modality como fuente única de horas y modo de entrega que la portadora de variante consulta, o cada una mantiene su propio dato?</span></li>
+    <li><span class="qmark">?</span><span>Si se toma D: ¿es aceptable que Modality deje de ser un objeto documental y pase a portar cupo, tipo de sala y alcance? Implica reinterpretar y migrar sus 14 registros seed.</span></li>
+    <li><span class="qmark">?</span><span>Si se toma D: <code>Offering</code> seguiría colgando de <code>ActivityLine</code> y <code>Section</code> de un nodo del sílabo. ¿Se acepta convivir sin la alineación <code>Section↔Offering</code>, o se planifica cerrarla después?</span></li>
+    <li><span class="qmark">?</span><span>¿El equipo prioriza encaje y alineación (A, con coordinación de tres mods) o autonomía de un solo equipo (D, sin depender de uengagement-up1)?</span></li>
+    <li><span class="qmark">?</span><span>Del antecedente (sección 00): ¿se define ya la regla de precedencia de metadata para objetos compartidos entre mods, o se resuelve caso a caso? Si se toma A, <code>ActivityLine</code> pasa a ser el segundo objeto compartido con el mismo riesgo que hoy tiene <code>Activity</code>.</span></li>
+  </ul>
+</section>
+
+<section id="s10" class="wide">
+  <p class="section-label">Anexo · Evidencia por mod</p>
+  <h2>Los números detrás de cada afirmación</h2>
+  <p>
+    Conteos de consumidores medidos sobre el código, por mod. Cada fila de las tablas anteriores se
+    apoya en estos datos.
+  </p>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th>curriculum-design</th><th>Valor</th><th>Referencia</th></tr></thead>
+      <tbody>
+        <tr><td>Referencias a activityId</td><td>37</td><td>logic (20), modsComponents (11), config (6)</td></tr>
+        <tr><td>Referencias a activityLineId</td><td>10</td><td>todas en el flujo del sílabo (resolver + layouts de Offering)</td></tr>
+        <tr><td>Puntos críticos</td><td>47</td><td>8 se rompen si ActivityLine pasa a variante 1:N</td></tr>
+        <tr><td>Resolver del sílabo</td><td>"la primera línea"</td><td><code>syllabus-offering.resolver.js:40-72</code> (findFirst / create)</td></tr>
+        <tr><td>Versionamiento</td><td>deep-clone excluye ActivityLine</td><td><code>activity.json:35</code> · prefillFrom = ["sections"]</td></tr>
+        <tr><td>Malla / prereqs / requisitos</td><td>sobre activityId</td><td>CurriculumMeshElement.vue · listPrereqs · requirementActivityGuard.js</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th>academic-scheduling</th><th>Valor</th><th>Referencia</th></tr></thead>
+      <tbody>
+        <tr><td>Referencias a activityId</td><td>71 (15 archivos)</td><td>assign-instructor (19), section-create (12), summaryAggregates (7)</td></tr>
+        <tr><td>Referencias a ActivityLine</td><td>0</td><td>el concepto no existe en este mod</td></tr>
+        <tr><td>Ancla de Section</td><td>FK activityId → Activity</td><td><code>Section.json:46</code> · constraint recordType=Course</td></tr>
+        <tr><td>Constraint de unicidad de Section</td><td>[activityId, termId, code]</td><td><code>Section.json:10</code></td></tr>
+        <tr><td>Eligibilidad docente</td><td>por curso</td><td><code>InstructorCourseAssignment</code> · constraint [instructorId, activityId]</td></tr>
+        <tr><td>Cobertura del escenario</td><td>GROUP BY activityId</td><td><code>summaryAggregates.js:165-181</code> · computeCourseCoverages</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th>uengagement-up1</th><th>Valor</th><th>Referencia</th></tr></thead>
+      <tbody>
+        <tr><td>Puntos de consumo de ActivityLine</td><td>107 líneas / 17 archivos</td><td>2 resolvers, 12 layouts, 3 seeds</td></tr>
+        <tr><td>Resolver de ofertas</td><td>"la primera línea"</td><td><code>offering-create.resolver.js:37-70</code></td></tr>
+        <tr><td>ActivityLine en UI</td><td>N:1 ya expuesta</td><td>pestaña "Centros" lista todas las líneas de una Activity</td></tr>
+        <tr><td>Dueño de objetos base</td><td>Activity, ActivityLine, Offering, Instructor</td><td>cd y scheduling extienden / referencian</td></tr>
+        <tr><td>Supuesto propio</td><td>formTemplate por Activity</td><td>una plantilla de feedback por servicio</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table class="grid ripple">
+      <thead><tr><th>Modality (rt sobre CurricularSection)</th><th>Valor</th><th>Referencia</th></tr></thead>
+      <tbody>
+        <tr><td>Archivos que lo consumen</td><td>13</td><td>2 resolvers, 1 helper, 3 layouts, 4 tests, 2 seeds, 1 i18n</td></tr>
+        <tr><td>Registros seed</td><td>14</td><td>AIEP (13) + Univalle (1)</td></tr>
+        <tr><td>Componentes Vue propios</td><td>0</td><td>usa RecordDetail genérico</td></tr>
+        <tr><td>Consumo desde la malla</td><td>0</td><td>no alimenta el desglose de horas</td></tr>
+        <tr><td>Referencias desde otros mods</td><td>0</td><td>scheduling y engagement no lo referencian</td></tr>
+        <tr><td>Regla de dominio</td><td>una default por dueño</td><td><code>assertSingleDefaultModality</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="doc-foot">
+  Evaluación preparada a partir del hallazgo 1 del reporte de deuda técnica de up1 ("Deuda técnica: dos
+  objetos en colisión, un drift sistémico", Laura Fierro, 27 de julio de 2026), de una revisión de
+  casuísticas de programación académica y del código
+  real de los mods curriculum-design, academic-scheduling y uengagement-up1 en UP1. Conteos de
+  consumidores, FKs y constraints verificados contra definiciones de objeto, resolvers, componentes y
+  layouts. Los niveles de esfuerzo son cualitativos, derivados del radio de impacto medido. La
+  recomendación está ponderada por no romper el trabajo ya implementado; la decisión final es conjunta
+  entre equipos.
+</footer>
+
+</body>
+</html>

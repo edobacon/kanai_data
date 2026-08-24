@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SP5 — Malla curricular · lo realizado</title>
+<style>
+  :root{
+    --bg:#0f1623; --bg2:#161f30; --card:#1b2638; --card2:#21304a;
+    --fg:#e8eef7; --muted:#9aabc4; --line:#2c3a52;
+    --accent:#5aa6ff; --accent2:#7cf2c4; --warn:#ffcc66; --danger:#ff8a8a; --violet:#b79cff;
+    --code:#0b1220;
+    --radius:14px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font); color:var(--fg);
+    background:radial-gradient(1200px 800px at 75% -10%, #1d2c46 0%, var(--bg) 55%);
+    overflow:hidden;
+  }
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    padding:3.4vh 5vw 7vh;opacity:0;transition:opacity .35s ease;overflow:auto;
+  }
+  .slide.active{display:flex;opacity:1}
+  .eyebrow{font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700}
+  h1{font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.08;margin:.5rem 0;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(1.3rem,2.6vw,2.05rem);line-height:1.12;font-weight:800;letter-spacing:-.015em;margin-bottom:.15rem}
+  h2 .num{color:var(--accent);font-variant-numeric:tabular-nums}
+  .sub{color:var(--muted);font-size:clamp(.98rem,1.4vw,1.15rem);max-width:76ch;line-height:1.45}
+  .meta{margin-top:auto;color:var(--muted);font-size:.86rem;line-height:1.7;padding-top:1rem}
+  .meta b{color:var(--fg)}
+  .lead{font-size:1.05rem;line-height:1.5;margin-top:.4rem}
+  .quote{border-left:3px solid var(--accent);padding:.6rem 0 .6rem 1.1rem;margin:1.1rem 0;font-size:clamp(1.1rem,2vw,1.5rem);line-height:1.35;font-weight:600;color:var(--fg);max-width:70ch}
+
+  .badges{display:flex;gap:.5rem;flex-wrap:wrap;margin:.6rem 0 .2rem}
+  .badge{font-family:var(--mono);font-size:.76rem;padding:.26rem .58rem;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--bg2)}
+  .badge.jira{color:#0f1623;background:var(--accent);border-color:transparent;font-weight:700}
+  .badge.repo{color:var(--accent2);border-color:#2c4d44;background:#13241f}
+  .badge.ok{color:#0f1623;background:var(--accent2);border-color:transparent;font-weight:700}
+  .badge.flow{color:#cfe3ff;background:#1a2942;border-color:#2c4d6e}
+  .badge.obj{color:var(--violet);border-color:#3d3163;background:#1c1730}
+  .badge.code{color:#0f1623;background:var(--violet);border-color:transparent;font-weight:700}
+  pre.sig{color:#e8eef7} pre.sig .fn{color:var(--accent2)} pre.sig .c{color:#6b86ad}
+  .codehead{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:.1rem 0 .1rem}
+  pre.sm{font-size:.72rem;line-height:1.45}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.85rem;margin-top:1rem;align-content:start}
+  .grid.three{grid-template-columns:repeat(3,1fr)}
+  .card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1.05rem;min-width:0}
+  .card h3{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);margin-bottom:.4rem;font-weight:700}
+  .card.warnh h3{color:var(--warn)} .card.okh h3{color:var(--accent2)} .card.objh h3{color:var(--violet)}
+  .card p{font-size:.96rem;line-height:1.42;color:var(--fg)}
+  .card .muted{color:var(--muted)}
+  .card ul{margin:.15rem 0 0 1.05rem;font-size:.93rem;line-height:1.48}
+  .card ul li{margin:.12rem 0}
+  .card.span2{grid-column:span 2}
+  code{font-family:var(--mono);background:var(--code);border:1px solid var(--line);border-radius:6px;padding:.08rem .36rem;font-size:.85em;color:#cfe3ff}
+  pre{font-family:var(--mono);background:var(--code);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem;font-size:.78rem;line-height:1.5;color:#cfe3ff;overflow:auto;margin-top:.45rem}
+  pre .c{color:#6b86ad} pre .k{color:#ff9d6c} pre .g{color:#7cf2c4} pre .r{color:#ff8a8a}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-top:1rem}
+  .col{border:1px solid var(--line);border-radius:var(--radius);padding:.85rem 1rem;background:var(--card)}
+  .col .tag{font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.12rem .5rem;border-radius:6px;display:inline-block;margin-bottom:.55rem}
+  .col.ask .tag{background:#2a2140;color:var(--violet)}
+  .col.done .tag{background:#13281f;color:var(--accent2)}
+  .col p{font-size:.94rem;line-height:1.45}
+  .col ul{margin:.3rem 0 0 1.1rem;font-size:.9rem;line-height:1.5}
+  .col ul li{margin:.15rem 0}
+
+  .agenda{display:flex;flex-direction:column;gap:.55rem;margin-top:1rem}
+  .arow{display:flex;align-items:flex-start;gap:1rem;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.7rem 1.1rem}
+  .arow .ix{font-family:var(--mono);color:var(--accent);font-weight:700;font-size:1.05rem;min-width:2.6rem}
+  .arow .t{font-weight:600}
+  .arow .d{color:var(--muted);font-size:.88rem;margin-top:.12rem}
+
+  table{width:100%;border-collapse:collapse;margin-top:1rem;font-size:.88rem}
+  th,td{text-align:left;padding:.5rem .6rem;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase}
+  td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+  td .ok,td.ok{color:var(--accent2);font-weight:700}
+  tr.tot td{border-top:2px solid var(--line);font-weight:700;color:var(--fg)}
+
+  .why{display:flex;flex-direction:column;gap:.45rem;margin-top:1rem}
+  .why .item{display:flex;gap:.7rem;align-items:flex-start}
+  .why .item::before{content:"▸";color:var(--accent);font-weight:700;margin-top:.05rem}
+  .why .item p{font-size:1rem;line-height:1.4}
+  .kicker{color:var(--accent2);font-weight:700}
+  .verline{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+  .chip{font-family:var(--mono);font-size:.8rem;background:#13281f;color:var(--accent2);border:1px solid #2c4d44;border-radius:8px;padding:.2rem .55rem}
+  .chip.n{background:#0b1220;color:#cfe3ff;border-color:var(--line)}
+  .chip.w{background:#2a2410;color:var(--warn);border-color:#4d431f}
+
+  .stat{display:flex;gap:1.6rem;flex-wrap:wrap;margin-top:1.1rem}
+  .stat .s{display:flex;flex-direction:column}
+  .stat .s b{font-size:clamp(1.6rem,3.4vw,2.6rem);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+  .stat .s span{color:var(--muted);font-size:.82rem;margin-top:.25rem}
+  .stat .s.a b{color:var(--accent)} .stat .s.g b{color:var(--accent2)} .stat .s.v b{color:var(--violet)} .stat .s.w b{color:var(--warn)}
+
+  .chrome{position:fixed;left:0;right:0;bottom:0;height:5vh;min-height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 1.4rem;border-top:1px solid var(--line);background:#0c1320cc;backdrop-filter:blur(6px);z-index:10}
+  .dots{display:flex;gap:.4rem;flex-wrap:wrap;max-width:60vw}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--line);cursor:pointer;transition:all .2s}
+  .dot.active{background:var(--accent);transform:scale(1.25)}
+  .nav{display:flex;align-items:center;gap:.8rem;color:var(--muted);font-size:.82rem;font-family:var(--mono)}
+  .nav button{background:var(--card2);color:var(--fg);border:1px solid var(--line);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:1rem;transition:.15s}
+  .nav button:hover{border-color:var(--accent);color:var(--accent)}
+  .brand{font-size:.82rem;color:var(--muted);font-family:var(--mono)}
+  .brand b{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide active">
+    <div class="eyebrow">Sprint 6 · Diseño curricular · mod curriculum-design</div>
+    <h1>Malla <span style="color:var(--accent)">curricular</span></h1>
+    <p class="sub">La pantalla donde un <b>diseñador curricular arma el plan de estudios de una carrera</b>: coloca las asignaturas por semestre, las marca como obligatorias o electivas, las agrupa en líneas de formación y define sus requisitos. Todo apoyado en <b>3 objetos de datos nuevos</b>.</p>
+    <div class="badges">
+      <span class="badge jira">UPONE-1344 … 1352</span>
+      <span class="badge">épica UPONE-1267</span>
+      <span class="badge repo">rama UPONE-1267-sp5</span>
+      <span class="badge ok">9 / 9 tickets cerrados</span>
+    </div>
+    <div class="stat">
+      <div class="s a"><b>9</b><span>tickets (MC-01 … MC-09)</span></div>
+      <div class="s g"><b>47</b><span>SP comprometidos, todos entregados</span></div>
+      <div class="s v"><b>3</b><span>objetos de datos nuevos</span></div>
+      <div class="s w"><b>1212</b><span>tests verdes (desde 748)</span></div>
+    </div>
+    <div class="meta">
+      <b>Alcance:</b> mod <code>curriculum-design</code> únicamente (planes secuenciales). Versionado de malla, editor de requisitos y planes modulares → SP6.<br>
+      <b>Pendiente:</b> push a <code>develop</code> gated por revisión del team up1 (RULE-dev-004) + smoke DB-gated en tenant UPU.
+    </div>
+  </section>
+
+  <!-- 2 — QUÉ ES -->
+  <section class="slide">
+    <div class="eyebrow">En una frase</div>
+    <h2>Qué es la malla curricular</h2>
+    <p class="quote">Construir la pantalla donde un diseñador coloca las asignaturas por semestre, las marca obligatorias o electivas, las agrupa en líneas de formación y define sus requisitos.</p>
+    <div class="cols">
+      <div class="col done"><span class="tag">Entró en SP5</span>
+        <ul>
+          <li>Planes <b>secuenciales</b> (con semestres/períodos)</li>
+          <li>Obligatorias + electivas en bloques ("elegir 4 de 8")</li>
+          <li>Líneas de formación (buckets de crédito)</li>
+          <li>Filtros, drag&amp;drop, alerta de prerrequisitos</li>
+          <li>Los 3 objetos operables también vía <b>MCP / Elric</b></li>
+        </ul>
+      </div>
+      <div class="col ask"><span class="tag">Difiere a SP6</span>
+        <ul>
+          <li><b>Versionado/clonado</b> de la malla — bloqueado por un fix de core (versionar Curriculum crashea, H-7/H-3)</li>
+          <li><b>Editor de requisitos</b> del curso (modal on-edit completo)</li>
+          <li>Planes <b>modulares</b>, vigencia automática, motor de evaluación</li>
+        </ul>
+      </div>
+    </div>
+    <div class="meta"><b>Base:</b> handoff de historias + reunión de inicio (2026-06-23). Detalle en <code>SP5-plan-malla-curricular.md</code> y <code>SP5-alcance-y-justificacion.md</code>.</div>
+  </section>
+
+  <!-- 3 — QUÉ PUEDE HACER EL USUARIO -->
+  <section class="slide">
+    <div class="eyebrow">Resultado para el usuario</div>
+    <h2>Qué puede hacer un diseñador al terminar SP5</h2>
+    <div class="grid three">
+      <div class="card"><h3>1 · Ver</h3><p>Abrir un plan y ver su malla <b>organizada por períodos</b>, cada asignatura en una tarjeta con código, créditos, línea (color/ícono) y badge de electivo.</p></div>
+      <div class="card"><h3>2 · Agregar</h3><p>Añadir asignaturas del catálogo: <b>obligatorias</b> (en masa a una línea) o <b>electivas</b> dentro de un bloque con nombre ("elegir 4").</p></div>
+      <div class="card"><h3>3 · Editar / quitar</h3><p>Cambiar créditos, línea de formación, rol obligatoria↔electiva, o quitar la asignatura de la malla.</p></div>
+      <div class="card"><h3>4 · Filtrar</h3><p>Resaltar por línea y por bloque electivo, con rollup de créditos por línea y botón limpiar.</p></div>
+      <div class="card"><h3>5 · Reorganizar</h3><p><b>Drag&amp;drop</b> entre semestres (persiste período/posición) + agregar período; <b>alerta</b> si faltan prerrequisitos al agregar.</p></div>
+      <div class="card"><h3>6 · Gestionar líneas</h3><p>Pestaña CRUD de <b>líneas de formación</b>: nombre, código, créditos mín/máx, color e ícono, con estado de crédito (incompleta/en rango/excedida).</p></div>
+    </div>
+  </section>
+
+  <!-- 4 — MODELO DE DATOS -->
+  <section class="slide">
+    <div class="eyebrow">La base técnica</div>
+    <h2>Los 3 objetos de datos nuevos</h2>
+    <p class="sub">Todo se apoya en un modelo copiado de <code>CurricularSection</code> (ya en producción): FK polimórfica, self-FK y múltiples RecordTypes. Los valores calculados (créditos efectivos, electividad, estado) son <b>derivados en lectura</b> (enrichment), no columnas persistidas.</p>
+    <div class="grid three">
+      <div class="card objh"><h3>planEntry</h3><p>Una asignatura <b>colocada en la malla</b>: en qué plan, período, línea, y si es obligatoria o electiva.</p><p class="muted" style="margin-top:.35rem">FKs a Curriculum / Activity / requirementCategory · enum <code>kind</code> · <code>blockId</code> ≠ null ⇒ electiva.</p></div>
+      <div class="card objh"><h3>requirementCategory</h3><p>Una <b>línea de formación</b> — bucket de créditos (ej. "Ciencias Básicas") con mín/máx, color e ícono.</p><p class="muted" style="margin-top:.35rem">Guard de borrado: no se elimina si tiene entries asignados (FK Restrict + validación).</p></div>
+      <div class="card objh"><h3>requirement</h3><p>Una <b>regla</b> como árbol (Composite). 3 RecordTypes: <b>Group</b> (K-de-N, electivos), <b>RecordState</b> (prereqs), <b>MetricThreshold</b> (umbral de créditos).</p><p class="muted" style="margin-top:.35rem">FK polimórfica <code>ownerType/ownerId</code> + self-FK <code>parentId</code>.</p></div>
+    </div>
+    <div class="meta"><b>Reglas de plataforma re-confirmadas:</b> los mods no registran type resolvers de GraphQL (enrichment en el override de lectura) · nullability por <code>required[]</code> · enums base son enum Postgres, enums de RecordType son texto (soft). Promovido a <code>RULE-curriculum-design-017/018</code>.</div>
+  </section>
+
+  <!-- 5 — MAPA DE TICKETS -->
+  <section class="slide">
+    <div class="eyebrow">Mapa del sprint</div>
+    <h2>Los 9 tickets, todos cerrados</h2>
+    <table>
+      <thead><tr><th>MC</th><th>Jira</th><th>Qué entrega</th><th>Capa</th><th class="n">SP pub</th><th class="n">SP exec</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>1344</td><td>Modelo base: enum <code>progression</code> + flag <code>isCurrent</code></td><td>datos</td><td class="n">2</td><td class="n">2</td><td class="ok">closed</td></tr>
+        <tr><td>02</td><td>1345</td><td>Objetos <code>planEntry</code> + <code>requirementCategory</code></td><td>datos</td><td class="n">5</td><td class="n">2</td><td class="ok">closed</td></tr>
+        <tr><td>03</td><td>1346</td><td>Objeto <code>requirement</code> (Composite, 3 RT) + bloque electivo</td><td>datos</td><td class="n">7</td><td class="n">4</td><td class="ok">closed</td></tr>
+        <tr><td>04</td><td>1347</td><td>Registro del mod + cobertura MCP</td><td>config/MCP</td><td class="n">5</td><td class="n">2</td><td class="ok">closed</td></tr>
+        <tr><td>05</td><td>1348</td><td>Ver malla + modo edición + resumen</td><td>frontend</td><td class="n">5</td><td class="n">2</td><td class="ok">closed</td></tr>
+        <tr><td>06</td><td>1349</td><td>Agregar / editar asignaturas (oblig. + electivas)</td><td>frontend</td><td class="n">8</td><td class="n">4</td><td class="ok">closed</td></tr>
+        <tr><td>07</td><td>1350</td><td>Líneas de formación (CRUD + integración)</td><td>frontend</td><td class="n">5</td><td class="n">3</td><td class="ok">closed</td></tr>
+        <tr><td>08</td><td>1351</td><td>Filtros + drag&amp;drop + prereqs</td><td>frontend</td><td class="n">7</td><td class="n">7</td><td class="ok">closed</td></tr>
+        <tr><td>09</td><td>1352</td><td>Validación de requisitos en planes publicados</td><td>backend</td><td class="n">3</td><td class="n">2</td><td class="ok">closed</td></tr>
+        <tr class="tot"><td colspan="4">Total SP5 — feature completa demoable</td><td class="n">47</td><td class="n">28</td><td class="ok">9/9</td></tr>
+      </tbody>
+    </table>
+    <div class="meta"><code>SP exec</code> es menor que <code>SP pub</code> por el aceleramiento del LLM en autopilot (1 dev-equivalente); MC-08 se ejecutó al 100% por incluir su ronda de fixes de smoke.</div>
+  </section>
+
+  <!-- 6 — MC-01 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1344</span><span class="badge repo">mod curriculum-design</span><span class="badge obj">datos</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-01.</span> Modelo base — <code>progression</code> + <code>isCurrent</code></h2>
+    <p class="sub">Cerrar el tipo de progresión a un enum y agregar el flag de vigencia que necesita el picker de cursos. Sin lógica de versionado (eso es SP6).</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li><code>rt__Plan__curriculum.progression</code> → enum cerrado <b>{Sequential, Modular}</b> (default Sequential), labels i18n, widget select</li>
+        <li><code>Activity.isCurrent</code> boolean (default true): editable, visible en view, filtrable en RecordList</li>
+        <li>Seed migrado del valor inválido <code>'Credits'</code> → <code>'Sequential'</code></li>
+      </ul></div>
+      <div class="card okh"><h3>Decisión clave</h3><p>Se copió <b>exactamente el patrón de <code>periodType</code></b> (mismo estilo de enum) para coherencia de UI. El enum es <b>soft</b>: enforza en UI + MCP, el backend acepta texto (el codegen de <code>rt__</code> no genera enum Prisma) — se tolera igual que <code>periodType</code>.</p></div>
+    </div>
+    <div class="verline"><span class="chip">748/748 tests</span><span class="chip">dual-judge APPROVED (+1 fix: isCurrent en view)</span><span class="chip n">sync verificado en UPU</span><span class="chip n">follow-up MCP TICKET-090</span></div>
+  </section>
+
+  <!-- MC-01 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1344</span><span class="badge obj">JSON schema</span></div>
+    <h2><span class="num">MC-01</span> · código — enum declarativo</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">objects/RecordTypes/rt__Plan__curriculum.json</div><pre>"progression": {
+  "type": "string",
+  "enum": ["Sequential", "Modular"],
+  "static_default": "Sequential",
+  "not_null": false
+}</pre></div>
+      <div class="card"><div class="codehead">objects/activity.json</div><pre>"isCurrent": {
+  "type": "boolean",
+  "not_null": true,
+  "static_default": "true"
+}</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><p class="muted">Ninguna — el ticket es <b>puramente declarativo</b> (JSON schema). Enums, default y widget los resuelve el generic del platform, sin helpers ni resolvers propios.</p></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li>Enum copiado del patrón de <code>periodType</code> → el generic enforza el valor, <b>cero código de validación</b></li>
+        <li>Enum <b>soft</b>: el codegen de <code>rt__</code> no genera enum Prisma → enforza en UI+MCP, el backend acepta texto</li>
+        <li>Dato vivo migrado: UPU tenía <code>progression='Credits'</code> (fuera del enum) → seed a <code>'Sequential'</code> antes de cerrar el tipo</li>
+        <li><code>isCurrent</code> deliberadamente "tonto": sin trigger de recálculo (la vigencia automática es SP6)</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 7 — MC-02 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1345</span><span class="badge repo">mod curriculum-design</span><span class="badge obj">datos</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-02.</span> <code>planEntry</code> + <code>requirementCategory</code></h2>
+    <p class="sub">Los dos objetos base de la malla: el elemento colocado y la línea de formación.</p>
+    <div class="grid">
+      <div class="card objh"><h3>planEntry</h3><ul>
+        <li>FKs planId→Curriculum, activityId→Activity, categoryId→requirementCategory (<code>onDelete:Restrict</code>), self <code>sourceEntryId</code></li>
+        <li>enum <code>kind</code> {Course, Internship, Thesis}, <code>period</code> requerido</li>
+        <li>Derivados en lectura: <code>effectiveCredits</code> (credits ?? Activity.credits), <code>isElective</code> (blockId≠null)</li>
+      </ul></div>
+      <div class="card objh"><h3>requirementCategory</h3><ul>
+        <li>FK curriculumId, name, <code>minCredits ≤ maxCredits</code> validado en create+update</li>
+        <li>color / icon; <b>guard de borrado</b> defense-in-depth (FK Restrict + validación de dominio)</li>
+        <li>Derivado <code>currentCredits</code></li>
+      </ul></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card okh"><h3>Decisiones clave</h3><p>Enrichment en el <b>override de lectura</b> (los mods no pueden registrar type resolvers — <code>RULE-curriculum-design-017</code>). 5 índices vía workaround <code>ensureIndexes</code> (el codegen no honra <code>metadata.indexes</code>).</p></div>
+      <div class="card okh"><h3>Resultado</h3><p>3 sessions · <b>788/788 tests</b> (+40) · el dual-judge de S3 atrapó un bug real (<code>canEdit</code> sin layout). Sync verificado en UPU: FK enforced, seed corrió.</p></div>
+    </div>
+  </section>
+
+  <!-- MC-02 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1345</span><span class="badge obj">helpers + enrichment</span></div>
+    <h2><span class="num">MC-02</span> · código — derivados en lectura</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">logic/helpers/effectiveCredits.js</div><pre>export function computeEffectiveCredits(entryCredits, activityCredits) {
+  if (entryCredits != null) return entryCredits;
+  if (activityCredits != null) return activityCredits;
+  return null;
+}
+export function deriveIsElective(blockId) {
+  return blockId != null &amp;&amp; blockId !== '';
+}</pre></div>
+      <div class="card"><div class="codehead">logic/curriculum-read.resolver.js · enrichPlanEntryRows</div><pre>for (const item of items) {
+  const d = item?.data; if (!d) continue;
+  const credits = creditsByActivityId.get(d.activityId) ?? null;
+  d.effectiveCredits = computeEffectiveCredits(d.credits, credits);
+  d.isElective = deriveIsElective(d.blockId);
+}</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">computeEffectiveCredits</span>(entry, activity): number|null
+<span class="fn">deriveIsElective</span>(blockId): boolean
+<span class="fn">assertMinMaxCredits</span>({minCredits, maxCredits}): void <span class="c">// throws</span>
+<span class="fn">enrichPlanEntryRows</span>(prisma, items): Promise&lt;items&gt;</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li><b>Enrichment en el override de lectura, no field resolver</b> (un mod no puede registrar type resolvers): derivados inyectados en <code>item.data</code> con batch <code>findMany</code>, sin N+1</li>
+        <li><code>categoryId</code> con <code>onDelete:Restrict</code> (DB) como guard primario + fallback a validación de dominio "reasigna primero"</li>
+        <li>Una sola validación en <code>createInstance</code> (constraint H7): se despacha por <code>objectType</code> y se reusa en el update</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 8 — MC-03 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1346</span><span class="badge repo">mod curriculum-design</span><span class="badge obj">datos</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-03.</span> <code>requirement</code> (Composite) + bloque electivo</h2>
+    <p class="sub">El motor de reglas: un árbol con 3 RecordTypes. El objeto más riesgoso del sprint (su análogo histórico costó ×3.5) — cerrado sin sobresaltos porque el patrón polimórfico ya está en producción.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li>Objeto base <code>requirement</code>: <code>ownerType</code> {curriculum, activity, offering} + <code>ownerId</code> (FK polimórfica), <code>parentId</code> self, <code>effect</code>, <code>position</code></li>
+        <li>3 RecordTypes: <b>Group</b> (combinator AND/OR, K-de-N), <b>RecordState</b>, <b>MetricThreshold</b> (metric Credits)</li>
+        <li>Helper <code>buildRequirementTree.js</code> (reconstrucción del árbol plano por parentId; 7 tests: jerarquía, orphan, ciclo)</li>
+        <li>Seed: árbol EST200 + bloque electivo (OR, minToSatisfy=4, 24 créditos)</li>
+      </ul></div>
+      <div class="card okh"><h3>Decisiones clave</h3><p>Validación <code>ownerType↔ownerId</code> por <b>convención documentada</b>, no resolver (constraint H7: un solo override de <code>createInstance</code> por mod). <code>required[]</code> obligatorio en cada RT (el dual-judge de S1 atrapó su ausencia como CRITICAL). Update de <code>rt__</code> diferido a backlog (fuera del scope create+read).</p></div>
+    </div>
+    <div class="verline"><span class="chip">4 sessions</span><span class="chip">909/909 tests</span><span class="chip">dual-judge atrapó 2 defectos reales</span><span class="chip n">EST200 reconstruido OK en DB</span></div>
+  </section>
+
+  <!-- MC-03 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1346</span><span class="badge obj">Composite + árbol</span></div>
+    <h2><span class="num">MC-03</span> · código — polimórfico + reconstrucción del árbol</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">objects/requirement.json</div><pre>"ownerType": { "enum": ["curriculum","activity","offering"], "not_null": true },
+"ownerId":   { "not_null": true },   <span class="c">// FK polimórfica, sin FK real</span>
+"parentId":  { "isForeignKey": true, "references": "requirement" },
+"recordType":{ "enum": ["Group","RecordState","MetricThreshold"] }</pre></div>
+      <div class="card"><div class="codehead">logic/helpers/buildRequirementTree.js (recortado)</div><pre>export function buildRequirementTree(items) {
+  const byId = new Map();
+  for (const it of items) byId.set(it.id, { ...it, children: [] });
+  const roots = [];
+  for (const node of byId.values()) {
+    const hasParent = node.parentId != null &amp;&amp; byId.has(node.parentId);
+    if (hasParent &amp;&amp; hasCycle(node.id)) { roots.push(node); continue; }
+    hasParent ? byId.get(node.parentId).children.push(node) : roots.push(node);
+  }
+  return sortByPosition(roots);
+}</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">buildRequirementTree</span>(items): Node[]  <span class="c">// {...item, children: Node[]}</span>
+<span class="fn">isElective</span>(entry): boolean
+<span class="fn">partitionByElectivity</span>(entries): {elective[], mandatory[]}
+<span class="fn">countByCategory</span>(entries): Record&lt;id, {mandatory, elective}&gt;</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li>Enums y <code>required[]</code> por JSON schema, no por resolver: el único <code>createInstance</code> ya está tomado (H7) → el generic los enforza, <b>cero código nuevo</b></li>
+        <li>FK polimórfica <b>sin integridad referencial</b>: coherencia <code>ownerType↔ownerId</code> por convención en capa app (patrón <code>CurricularSection</code>)</li>
+        <li>Árbol = lectura flat + ensamblado en <b>helper puro sin Prisma</b> (testeable con fixtures). Sin UPDATE de RT en SP5 → no toca el <code>RT_PATTERN</code> compartido</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 9 — MC-04 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1347</span><span class="badge repo">mod + uplanner/mcp</span><span class="badge flow">config / MCP</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-04.</span> Registro del mod + cobertura MCP</h2>
+    <p class="sub">Dejar los 3 objetos operables tanto en la UI como conversacionalmente (Elric). Barato porque los contratos MCP son declarativos.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li>12 capabilities object-level (CRUD de los 3 objetos) en <code>capabilities.json</code></li>
+        <li>3 <code>ObjectContract</code> declarativos en <code>registry.ts</code> del MCP + allowlist</li>
+        <li>Resolver config-driven (~20 líneas) que resuelve <code>ownerId</code> polimórfico por nombre/código según <code>ownerType</code></li>
+        <li>Validación espejo <code>minCredits ≤ maxCredits</code> en la capa de contrato</li>
+      </ul></div>
+      <div class="card okh"><h3>Decisión clave</h3><p>Se <b>extendió el resolver config-driven</b> (<code>polymorphicFkFrom</code>) en vez de dejar <code>ownerId</code> como convención: el MCP necesita resolverlo por nombre. Se honró deliberadamente el "no-menú" de MC-02/03 sin introducir <code>_list</code> nuevos.</p></div>
+    </div>
+    <div class="verline"><span class="chip">909/909 mod</span><span class="chip">92/92 MCP</span><span class="chip">smoke vivo UPU: 5 TC pass</span><span class="chip n">min&gt;max rechazado con mensaje espejo</span></div>
+  </section>
+
+  <!-- MC-04 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1347</span><span class="badge obj">capabilities + MCP</span></div>
+    <h2><span class="num">MC-04</span> · código — contratos declarativos + FK polimórfica</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">mods/curriculum-design/capabilities.json</div><pre>{ "name": "planentry:create",          "riskLevel": "medium" },
+{ "name": "requirementcategory:delete", "riskLevel": "high" }
+<span class="c">// Object-level RBAC, sin prefijo mod/ — MC-04 (UPONE-1347)</span></pre></div>
+      <div class="card"><div class="codehead">mcp/src/contracts/resolve-inputs.ts · resolver polimórfico</div><pre>if (doc?.polymorphicFkFrom &amp;&amp; doc.polymorphicFkMap) {
+  const srcVal = data[doc.polymorphicFkFrom] ?? raw[doc.polymorphicFkFrom];
+  const targetType = doc.polymorphicFkMap[srcVal]; <span class="c">// curriculum→Curriculum…</span>
+  if (!targetType) { data[field] = value; continue; }
+  const r = await resolveReference(api, ctx, targetType, value, {...});
+}</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas (registry MCP)</h3><pre class="sig sm"><span class="fn">contractKey</span>(objectType, recordType?): string
+<span class="fn">getContract</span>(objectType, recordType?): ObjectContract?
+<span class="fn">resolveContractInputs</span>(api, ctx, contract, raw)
+  : Promise&lt;ResolveInputsResult&gt;</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li>CRUD <b>genérico declarativo</b> (<code>validatedMutations: {}</code>) para los 3 objetos — sin tools <code>cd_*</code> dedicadas (a diferencia de Activity/Curriculum)</li>
+        <li>Un solo contrato para los 3 <code>recordType</code> de <code>requirement</code>; el core valida los campos por RT, el MCP no discrimina</li>
+        <li><code>ownerId</code> es la <b>única FK polimórfica</b> del registry: se resuelve contra Curriculum/Activity/Offering según el valor canónico de <code>ownerType</code></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 10 — MC-05 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1348</span><span class="badge repo">mod curriculum-design</span><span class="badge flow">frontend</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-05.</span> Ver malla + modo edición + resumen</h2>
+    <p class="sub">De tabla estática a vista visual: grilla por período, barra de resumen y edición gateada por estado del plan.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li><code>CurriculumMeshElement.vue</code> (type <code>curriculum-mesh</code>): grid de columnas por período con tarjetas</li>
+        <li><code>curriculumMesh.logic.ts</code>: funciones puras (groupByPeriod, deriveElective, computeSummary, canEdit) + 16 tests</li>
+        <li>Barra de resumen: créditos diseño/requeridos, n.º períodos, asignaturas, carga máx por período</li>
+        <li>Gating: acciones solo en <code>mode=edit</code> + <code>Curriculum.status=Draft</code></li>
+      </ul></div>
+      <div class="card okh"><h3>Decisión clave</h3><p><b>Swap del element</b> en el tab existente en vez de crear un <code>layoutType</code> nuevo en core (mod-only, DET-16). Se reusa el <i>patrón</i> de CompositeSectionTree (no el componente): lógica pura separada del render.</p></div>
+    </div>
+    <div class="verline"><span class="chip">16/16 tests</span><span class="chip">dual-judge APPROVED (S1+S2)</span><span class="chip w">requiere 2 syncs para render → RULE-mods-050</span><span class="chip n">rowAction navegación-a-tab diferida (BUG-layout-005)</span></div>
+  </section>
+
+  <!-- MC-05 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1348</span><span class="badge obj">lógica pura + GraphQL</span></div>
+    <h2><span class="num">MC-05</span> · código — grid por período + carga</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">modsComponents/CurriculumMesh/curriculumMesh.logic.ts</div><pre>export function groupByPeriod(entries, totalPeriods, categories = [], viewPeriodCount = 0) {
+  const maxEntry = entries.reduce((m, e) =&gt; Math.max(m, e.period || 0), 0)
+  const requested = viewPeriodCount &gt; 0 ? viewPeriodCount : totalPeriods
+  const columnCount = Math.max(maxEntry, requested, 0)
+  const columns = Array.from({ length: columnCount }, () =&gt; [])
+  for (const e of entries) {
+    const idx = e.period - 1
+    if (idx &gt;= 0 &amp;&amp; idx &lt; columnCount) columns[idx].push(toCard(e, categories))
+  }
+  return columns
+}</pre></div>
+      <div class="card"><div class="codehead">useCurriculumMesh.ts · 3 listInstances en paralelo</div><pre>const [entriesRes, categoriesRes, curriculumRes] = await Promise.all([
+  query(LIST_PLAN_ENTRIES, { filters, relations: ['activity'] }),
+  query(LIST_CATEGORIES,   { filters }),
+  query(GET_CURRICULUM,    { id }),
+])</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">groupByPeriod</span>(entries, totalPeriods, categories?, viewPeriodCount?)
+<span class="fn">computeSummary</span>(entries, plan): MeshSummary
+<span class="fn">canEdit</span>(status, mode): boolean
+<span class="fn">useCurriculumMesh</span>(opts): { entries, categories, plan, refetch }</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li><b>Seam adapter/core</b>: el <code>.vue</code> es el adapter; toda la lógica pura vive en <code>.logic.ts</code> (sin Vue ni GraphQL, testeable)</li>
+        <li><code>viewPeriodCount</code> es un <b>target absoluto</b> de columnas (no delta) → evita el bug de "columna fantasma" al agregar al último período</li>
+        <li>El gating se apoya en <code>EDITABLE_STATUSES</code>, misma fuente que el guard BE de MC-09</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 11 — MC-06 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1349</span><span class="badge repo">mod curriculum-design</span><span class="badge flow">frontend</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-06.</span> Agregar y editar asignaturas</h2>
+    <p class="sub">El flujo estrella: poblar la malla con obligatorias y electivas, y editarlas.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li><code>AddEntryModal</code>: stepper 2 pasos (tipo + línea en masa → picker de Activity)</li>
+        <li><code>ActivityPicker</code>: búsqueda/filtro por departamento + <code>isCurrent</code>, multiselección, excluye cursos ya colocados</li>
+        <li><code>EditEntryModal</code>: créditos override, línea, rol obligatoria↔electiva, quitar de malla</li>
+        <li>Select-suggest Vueform <code>create:true</code> para elegir o crear bloque electivo (minToSatisfy auto)</li>
+        <li>Lógica pura extendida + <b>53 tests</b>; i18n en 3 locales</li>
+      </ul></div>
+      <div class="card okh"><h3>Decisiones clave</h3><p>Modales caseros (átomo Modal), <b>no ModalStackManager</b> (BUG-platform-011). Seam adapter/core (DEC-038): toda mutación en el element, modales presentacionales por props/eventos. Se creó <code>useBlockOptions</code> nuevo (el existente estaba hardcodeado a otros objetos).</p></div>
+    </div>
+    <div class="verline"><span class="chip">1040/1040 tests</span><span class="chip w">dual-judge atrapó 2 bugs críticos (objectType + effect) que los tests no veían</span><span class="chip">vue-tsc atrapó 5 errores que esbuild ocultaba</span></div>
+  </section>
+
+  <!-- MC-06 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1349</span><span class="badge obj">payloads + modales</span></div>
+    <h2><span class="num">MC-06</span> · código — bloque electivo como <code>requirement(Group)</code></h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">curriculumMesh.logic.ts · buildBlockPayload</div><pre>export function buildBlockPayload({ planId, label, minToSatisfy, position = 0 }) {
+  return {
+    ownerType: 'curriculum', ownerId: planId, parentId: null,
+    recordType: 'Group', effect: 'ProgressGate', combinator: 'OR',
+    label, minToSatisfy, isHardRule: false, position,
+  }
+}</pre></div>
+      <div class="card"><div class="codehead">CurriculumMeshElement.vue</div><pre><span class="c">// Debe ser 'rt__Group__requirement' para que el platform cree la fila RT</span>
+<span class="c">// con combinator/minToSatisfy. Con 'requirement' plano no se crea (F1).</span>
+const REQUIREMENT_OBJECT_TYPE = 'rt__Group__requirement'</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">buildObligatoriaPlanEntryPayloads</span>(input): PlanEntryPayload[]
+<span class="fn">buildElectivaPlanEntryPayloads</span>(input): PlanEntryPayload[]
+<span class="fn">resolveBlockSelection</span>(sel, newName, options): BlockSelection?
+<span class="fn">useActivityPicker</span>() · <span class="fn">useBlockOptions</span>()</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li><b>Modales caseros</b> (átomo Modal), no ModalStackManager (BUG-platform-011: el orchestrator no se expone a custom elements)</li>
+        <li><code>create:true</code> de Vueform descartado por el spike S3.T1 → fallback a <code>&lt;select&gt;</code> nativo + centinela <code>'__new__'</code></li>
+        <li><code>objectType='rt__Group__requirement'</code> (no plano) al crear un bloque → necesario para materializar la fila RT</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 12 — MC-07 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1350</span><span class="badge repo">mod curriculum-design</span><span class="badge flow">frontend</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-07.</span> Líneas de formación</h2>
+    <p class="sub">La pestaña CRUD de líneas embebida en el detalle del plan. Se halló que el 70% ya estaba construido por MC-02 → el ticket cerró los gaps.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li>Helpers puros <code>countByCategory</code> (obligatorias/electivas) y <code>deriveCreditStatus</code> (under/ok/over), reusando el <code>findMany</code> existente (cero N+1)</li>
+        <li>Enrichment con <code>mandatoryCount</code> / <code>electiveCount</code> / <code>creditStatus</code></li>
+        <li>Estado como texto localizado (Incompleta / En rango / Excedida)</li>
+        <li>Guard de borrado habilitado consumiendo la regla de MC-02</li>
+      </ul></div>
+      <div class="card warnh"><h3>Límite topado (ISSUE-SP5-01)</h3><p>El <b>record-list filtra las columnas a los campos persistidos</b> del objeto y descarta silenciosamente los derivados. El backend quedó listo, pero mostrar las columnas calculadas <b>no es posible mod-only</b> — requiere una decisión de core.</p></div>
+    </div>
+    <div class="verline"><span class="chip">1113/1113 tests</span><span class="chip">3 sessions · 14 tests nuevos</span><span class="chip w">ISSUE-SP5-01 abierto para el team up1</span><span class="chip n">backend mergeable</span></div>
+  </section>
+
+  <!-- MC-07 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1350</span><span class="badge obj">enrichment + guard</span></div>
+    <h2><span class="num">MC-07</span> · código — estado de crédito + guard de borrado</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">logic/helpers/creditRange.js · deriveCreditStatus</div><pre>export function deriveCreditStatus({ currentCredits, minCredits, maxCredits }) {
+  const current = Number(currentCredits ?? 0)
+  const min = minCredits == null ? null : Number(minCredits)
+  const max = maxCredits == null ? null : Number(maxCredits)
+  if (min !== null &amp;&amp; current &lt; min) return 'under'
+  if (max !== null &amp;&amp; current &gt; max) return 'over'
+  return 'ok'
+}</pre></div>
+      <div class="card"><div class="codehead">logic/helpers/categoryGuard.js · assertNoEntriesForCategory</div><pre>export async function assertNoEntriesForCategory({ prisma, categoryId }) {
+  const count = await prisma.planEntry.count({ where: { categoryId } })
+  if (count &gt; 0) {
+    throw new Error(`${ERR.REQUIREMENT_CATEGORY_HAS_ENTRIES}: la linea tiene ` +
+      `${count} asignatura(s); reasigna primero antes de borrar.`)
+  }
+}</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">countByCategory</span>(entries): Record&lt;id, {mandatory, elective}&gt;
+<span class="fn">deriveCreditStatus</span>({current, min, max}): 'under'|'ok'|'over'
+<span class="fn">assertNoEntriesForCategory</span>({prisma, categoryId}): Promise&lt;void&gt;
+<span class="fn">enrichRequirementCategoryRows</span>(prisma, items)</pre></div>
+      <div class="card warnh"><h3>Decisiones de implementación</h3><ul>
+        <li>Defense-in-depth: el guard de dominio da el mensaje "reasigna primero"; <code>onDelete:Restrict</code> es el backstop de DB</li>
+        <li>El enrichment (<code>mandatoryCount/electiveCount/creditStatus</code>) es derivado, pero el RecordList filtra columnas a campos reales → <b>no se muestra hoy</b> (ISSUE-SP5-01, gap de UI)</li>
+        <li><code>requirementCategoryDelete.resolver.js</code> es el <b>único</b> override de <code>deleteInstance</code> del mod (H7): validate-then-delegate</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 13 — MC-08 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1351</span><span class="badge repo">mod curriculum-design</span><span class="badge flow">frontend</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-08.</span> Filtros + drag&amp;drop + prereqs</h2>
+    <p class="sub">Las interacciones que hacen la malla fluida. El ticket más grande (7 SP, 5 sessions) — incluyó una ronda de fixes de smoke.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li><b>Filtros:</b> chips de línea + rollup de créditos por línea + chips de bloques electivos + limpiar</li>
+        <li><b>Prereqs:</b> chequeo <i>estructural</i> al agregar (RecordState + Group K-de-N; créditos NO alertan, DEC-035) + modal de bloqueo</li>
+        <li><b>Drag&amp;drop</b> cross-columna con sortablejs (recálculo period/position persistido) + agregar/quitar período</li>
+        <li>Chip de línea en la tarjeta + badge electivo · 66 tests nuevos</li>
+      </ul></div>
+      <div class="card warnh"><h3>Calidad que atrapó bugs</h3><ul>
+        <li>Dual-judge (DET-35): labels crudos (UUID vs código), scope vs toAdd, off-by-one del DnD (header), race de drag concurrente</li>
+        <li>Smoke S5: chips apilados, hueco del drag, "agregar período" con delta vs absoluto (<b>bug de integración</b> que unit + re-judge no vieron en node-env)</li>
+        <li>REQ-05 (doble "+"): <b>verify-first</b> reveló que ya estaba resuelto → drop sin código</li>
+      </ul></div>
+    </div>
+    <div class="verline"><span class="chip">1212/1212 tests</span><span class="chip">mutation testing verificó que los tests muerden</span><span class="chip w">smoke UI real (punteros) pendiente</span></div>
+  </section>
+
+  <!-- MC-08 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1351</span><span class="badge obj">drag&amp;drop + prereqs</span></div>
+    <h2><span class="num">MC-08</span> · código — recálculo de posición + prereqs estructurales</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">recalcPeriodPosition.logic.ts (recortado)</div><pre>export function recalcPeriodPosition({ movedEntryId, fromPeriod, toPeriod, toIndex, entries }) {
+  const moved = entries.find(e =&gt; e.id === movedEntryId)
+  if (!moved) return []
+  if (fromPeriod === toPeriod) {
+    const siblings = sortByPosition(entries.filter(e =&gt; e.period === fromPeriod))
+    const without = siblings.filter(e =&gt; e.id !== movedEntryId)
+    const idx = Math.max(0, Math.min(toIndex, without.length))
+    without.splice(idx, 0, moved)
+    return reindex(without, fromPeriod)   <span class="c">// position 0-based</span>
+  }
+  <span class="c">// cross-columna: reindexa destino + origen (cierra el hueco)</span>
+}</pre></div>
+      <div class="card"><div class="codehead">usePrereqRequirements.ts · MetricThreshold excluido</div><pre>if (recordType === 'RecordState') result.push(toRecordStatePrereq(item))
+else if (recordType === 'Group')  result.push(toGroupPrereq(item, items))
+<span class="c">// MetricThreshold: ignorado — DEC-035 no alerta por crédito</span></pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">filterHighlight</span>(cards, activeCategoryIds, activeBlockIds)
+<span class="fn">creditRollupByCategory</span>(entries, categories): Rollup[]
+<span class="fn">findMissingPrereqs</span>(targetId, targetPeriod, placed, reqs, resolver?)
+<span class="fn">recalcPeriodPosition</span>(input): PeriodPositionUpdate[]</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li>Prereqs <b>estructurales</b> (placement/período), no transcript-based: solo evalúa si el target está en un período <b>estrictamente anterior</b> (degree-audit real es SP6)</li>
+        <li><code>position</code> <b>0-based</b> (convención del módulo), distinta del 1-based de CompositeSectionTree — deliberadamente no unificadas</li>
+        <li><code>PrereqBlockModal</code> es informativo: solo Cancelar/Volver, sin "continuar igual"</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 14 — MC-09 -->
+  <section class="slide">
+    <div class="badges"><span class="badge jira">UPONE-1352</span><span class="badge repo">mod curriculum-design</span><span class="badge obj">backend</span><span class="badge ok">closed</span></div>
+    <h2><span class="num">MC-09.</span> Validación en planes publicados</h2>
+    <p class="sub">Impedir editar los requisitos de una asignatura que ya vive en planes publicados (Active), para no invalidar mallas existentes — obliga a versionar el programa.</p>
+    <div class="grid">
+      <div class="card"><h3>Qué se entregó</h3><ul>
+        <li>Helper puro <code>requirementActivityGuard</code> inyectado en los 2 overrides singleton (create + update)</li>
+        <li>Error <code>REQUIREMENT_ACTIVITY_LOCKED_BY_ACTIVE_PLAN</code> con mensaje que sugiere versionar</li>
+        <li><code>Active</code> bloquea; <code>Draft</code>/<code>Archived</code>/sin-planes permiten · 14 tests BE</li>
+        <li>FE: alerta "El plan está {estado}…" en la vista de malla (modal on-edit completo → SP6)</li>
+      </ul></div>
+      <div class="card okh"><h3>Decisiones clave</h3><p>"Publicado" = <code>Active</code> (Active-only). Estados editables/publicados como <b>constante por capa</b> derivada del enum, porque el core no expone <code>metadata</code> al FE (L2 → <code>RULE-core-028</code>; fuente única real config-driven queda como backlog).</p></div>
+    </div>
+    <div class="verline"><span class="chip">1134/1134 tests</span><span class="chip">2 sessions</span><span class="chip n">i18n 3 locales</span><span class="chip w">modal on-edit → SP6-01</span></div>
+  </section>
+
+  <!-- MC-09 CÓDIGO -->
+  <section class="slide">
+    <div class="badges"><span class="badge code">a nivel de código</span><span class="badge jira">UPONE-1352</span><span class="badge obj">guard + wiring</span></div>
+    <h2><span class="num">MC-09</span> · código — guard de plan publicado</h2>
+    <div class="grid">
+      <div class="card"><div class="codehead">logic/helpers/requirementActivityGuard.js (recortado)</div><pre>export async function assertActivityNotInActivePlan({ prisma, ownerType, ownerId }) {
+  if (ownerType !== 'activity' || ownerId == null) return
+  const entries = await prisma.planEntry.findMany({
+    where: { activityId: ownerId }, select: { planId: true } })
+  const planIds = [...new Set(entries.map(e =&gt; e.planId).filter(Boolean))]
+  if (!planIds.length) return
+  const active = await prisma.curriculum.findMany({
+    where: { id: { in: planIds }, status: { in: PUBLISHED_STATUSES } } })
+  if (active.length) throw new Error(`${ERR.REQUIREMENT_ACTIVITY_LOCKED_BY_ACTIVE_PLAN}: …`)
+}</pre></div>
+      <div class="card"><div class="codehead">logic/polymorphicUpdate.resolver.js · wiring (único updateInstance)</div><pre>updateInstance: async (parent, args, context) =&gt; {
+  const { objectType } = args
+  if (!RT_PATTERN.test(objectType)) {
+    await assertCreditRangeOnUpdate({ objectType, ...args, prisma })
+    await assertActivityNotInActivePlanOnUpdate({ objectType, ...args, prisma })
+    return (await loadGenericInstanceMutation()).updateInstance(parent, args, context)
+  }
+}</pre></div>
+    </div>
+    <div class="grid" style="margin-top:.7rem">
+      <div class="card objh"><h3>Firmas</h3><pre class="sig sm"><span class="fn">assertActivityNotInActivePlan</span>({prisma, ownerType, ownerId})
+<span class="fn">assertActivityNotInActivePlanOnUpdate</span>({prisma, objectType, data, id})
+<span class="fn">canEdit</span>(status, mode): boolean
+<span class="fn">buildEditLockAlert</span>(status, mode): MeshEditLockAlert</pre></div>
+      <div class="card okh"><h3>Decisiones de implementación</h3><ul>
+        <li>"Publicado" == <b>Active únicamente</b> (<code>PUBLISHED_STATUSES = ['Active']</code>); Draft/Archived no bloquean</li>
+        <li>Guard en <code>polymorphicUpdate.resolver.js</code>, el <b>único</b> override de <code>updateInstance</code> (H7); <code>OnUpdate</code> resuelve el owner con <code>findUnique</code> en edición parcial</li>
+        <li><code>EDITABLE_STATUSES</code> (FE) y <code>PUBLISHED_STATUSES</code> (BE) son constantes <b>separadas</b> del mismo enum: el core no expone <code>metadata</code> al FE y BE/FE son runtimes distintos</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 15 — CALIDAD & PROCESO -->
+  <section class="slide">
+    <div class="eyebrow">Cómo se construyó</div>
+    <h2>Calidad y proceso — no solo "pasa"</h2>
+    <p class="sub">SP5 corrió en autopilot super (1 dev-equivalente) con los gates del flujo DKC. La suite de tests creció monótonamente sin regresión, y las verificaciones adversariales atraparon defectos que los tests no veían.</p>
+    <div class="grid three">
+      <div class="card"><h3>Tests</h3><p><b>748 → 1212</b> verdes a lo largo del sprint, 0 regresión. Assertions con valores concretos; cada tarea llevó sus tests.</p></div>
+      <div class="card okh"><h3>Dual-judge (DET-35)</h3><p>Dos jueces ciegos en paralelo por gate. Atraparon <b>bugs reales</b>: type resolvers (MC-02), <code>required[]</code> (MC-03), objectType/effect (MC-06), 5 bugs de DnD/labels (MC-08).</p></div>
+      <div class="card okh"><h3>Mutation testing (DET-31)</h3><p>Verificó empíricamente que los tests <b>muerden</b> (no solo que pasan) en la lógica pura de filtros y prereqs.</p></div>
+      <div class="card"><h3>Verify-first (DET-33)</h3><p>El self-report del agente se verifica: MC-08 REQ-05 se <b>descartó</b> al comprobar que ya estaba resuelto en un commit previo.</p></div>
+      <div class="card"><h3>Aprendizajes → RULES</h3><p>Los hallazgos de plataforma se promovieron a reglas permanentes: <code>RULE-curriculum-design-017/018/022/023</code>, <code>RULE-mods-050/051</code>, <code>RULE-core-028</code>.</p></div>
+      <div class="card warnh"><h3>Un límite honesto</h3><p>Un <b>bug de integración</b> (MC-08 "agregar período") pasó unit + re-judge en node-env y solo apareció en smoke — por eso el smoke DB-gated sigue siendo obligatorio.</p></div>
+    </div>
+  </section>
+
+  <!-- 16 — PENDIENTES & SP6 -->
+  <section class="slide">
+    <div class="eyebrow">Antes de dar por terminado</div>
+    <h2>Pendientes y qué fluye a SP6</h2>
+    <div class="grid">
+      <div class="card warnh"><h3>Pendiente de SP5 (no bloquea el trabajo, sí el merge)</h3><ul>
+        <li><b>Push a <code>develop</code></b> gated por revisión del team up1 (RULE-dev-004). El cierre DKC no implica merge.</li>
+        <li><b>Smoke DB-gated</b>: sync (layout + suite i18n) + restart + render real en tenant UPU. Verificar el render, no solo config+DB.</li>
+      </ul></div>
+      <div class="card warnh"><h3>Decisión de core requerida</h3><p><b>ISSUE-SP5-01</b> — el record-list no muestra columnas derivadas. El backend está listo; se propusieron 3 opciones (campos virtuales en el modelo / whitelist en la config / componente custom del mod). Recomendación: habilitar campos derivados (opción 1 o 2), desbloquea todo el patrón.</p></div>
+      <div class="card"><h3>Diferido a SP6 — por bloqueo de core</h3><p><b>Versionado/clonado de la malla</b> (Épica E, ~13 SP): la validación probó que versionar un Curriculum <b>crashea</b> (H-7) y <b>dropea campos</b> (H-3). El desbloqueo (E4) es trabajo de core con review externo.</p></div>
+      <div class="card"><h3>Diferido a SP6 — por alcance</h3><ul>
+        <li><b>Editor de requisitos</b> del curso + modal on-edit (emergente del mockup, no pedido)</li>
+        <li>Planes <b>modulares</b>, vigencia automática, milestones, motor de evaluación</li>
+      </ul></div>
+    </div>
+    <div class="meta"><b>Registro completo:</b> <code>SP5-issues.md</code> (ISSUE-SP5-01) · <code>SP6-backlog-diferidos.md</code> · <code>auditoria-viabilidad_2026-06-23.md</code> (H-3 / H-7).</div>
+  </section>
+
+  <!-- 17 — CIERRE -->
+  <section class="slide">
+    <div class="eyebrow">Resumen</div>
+    <h2>SP5 en una imagen</h2>
+    <p class="sub">La feature de malla curricular quedó <b>completa y demoable</b>: los 3 objetos de datos, la vista visual, el alta de obligatorias y electivas, las líneas de formación, los filtros, el drag&amp;drop, la validación de integridad, y todo operable también desde el MCP.</p>
+    <div class="stat">
+      <div class="s a"><b>9/9</b><span>tickets cerrados (MC-01…09)</span></div>
+      <div class="s g"><b>47 SP</b><span>comprometidos, entregados</span></div>
+      <div class="s v"><b>3</b><span>objetos nuevos + 3 RecordTypes</span></div>
+      <div class="s w"><b>1212</b><span>tests verdes, 0 regresión</span></div>
+    </div>
+    <div class="why" style="margin-top:1.3rem">
+      <div class="item"><p><b>Bajo riesgo por diseño:</b> todo se apoyó en patrones ya en producción (CurricularSection, CompositeSectionTree, contratos MCP declarativos).</p></div>
+      <div class="item"><p><b>Frontera honesta:</b> lo que salió no fue por falta de ganas — el versionado está bloqueado por un fix de core que la validación probó necesario.</p></div>
+      <div class="item"><p><b>Falta el último paso humano:</b> <span class="kicker">merge a develop pendiente de revisión del team up1</span> + smoke en tenant real.</p></div>
+    </div>
+    <div class="meta"><b>Docs de respaldo:</b> README de SP5 · SP5-plan-malla-curricular.md · SP5-alcance-y-justificacion.md · SP5-issues.md · tickets DKC TICKET-081…089 (+ teach-close por ticket).</div>
+  </section>
+
+</div>
+
+<div class="chrome">
+  <div class="brand">SP5 · <b>Malla curricular</b></div>
+  <div class="dots" id="dots"></div>
+  <div class="nav">
+    <button id="prev" aria-label="Anterior">‹</button>
+    <span id="counter">1 / 26</span>
+    <button id="next" aria-label="Siguiente">›</button>
+  </div>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsWrap=document.getElementById('dots');
+  const counter=document.getElementById('counter');
+  let i=0;
+  slides.forEach((_,k)=>{const d=document.createElement('div');d.className='dot'+(k===0?' active':'');d.onclick=()=>go(k);dotsWrap.appendChild(d);});
+  const dots=[...dotsWrap.children];
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('active',k===i));
+    counter.textContent=(i+1)+' / '+slides.length;
+    document.querySelector('.slide.active').scrollTop=0;
+  }
+  document.getElementById('next').onclick=()=>go(i+1);
+  document.getElementById('prev').onclick=()=>go(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(i+1);
+    if(e.key==='ArrowLeft'||e.key==='PageUp')go(i-1);
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+Voy a basarlo en el ticket y sus registros reales, verificando primero el estado, sesiones, tests y learns para no inventar resultados.La evidencia disponible identifica el ticket como `KT-003`. Está en `ready_to_close`; los dos casos registrados pasan, pero el estado actual conserva un learn `raw` y aún no existe un teaching `close`, por lo que el cierre sigue bloqueado por DET-39 y DET-22. También hay auditoría de ejecuciones donde DET-13 pasó y DET-39 bloqueó/pasó según el escenario.No se pudo persistir por el workspace en solo lectura. Contenido listo para `.data/teach/KT-003-close.html`:
+
+```html
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Teach close — KT-003</title>
+</head>
+<body>
+  <main>
+    <h1>Teach close — Validar guards de cierre</h1>
+
+    <p>
+      <strong>Ticket:</strong> KT-003 —
+      Validar guards de cierre (DET-13/22/39)
+    </p>
+
+    <h2>Qué se hizo</h2>
+    <p>
+      Se validó el flujo de cierre de tickets y la aplicación ordenada de los
+      guards DET-13, DET-22 y DET-39. Se reprodujeron los bloqueos, se
+      documentaron los <code>fix_hint</code> y se verificó que los guards
+      permiten cerrar solo cuando se cumplen sus condiciones.
+    </p>
+
+    <h2>Cómo se evaluó</h2>
+    <ul>
+      <li><strong>DET-13:</strong> exige <code>acceptanceVerified: true</code>.</li>
+      <li><strong>DET-39:</strong> bloquea mientras existan learns en estado <code>raw</code>.</li>
+      <li><strong>DET-22:</strong> exige que exista un teaching de tipo <code>close</code>.</li>
+      <li>La transición se valida mediante el motor FSM y los guards registrados.</li>
+    </ul>
+
+    <h2>Cómo se testeó</h2>
+    <p>
+      Se probaron escenarios aislados con base SQLite en memoria y transiciones
+      reales del motor:
+    </p>
+    <ul>
+      <li>Cierre sin evidencia: bloqueado por DET-13.</li>
+      <li>Cierre con evidencia y learn raw: bloqueado por DET-39.</li>
+      <li>Cierre sin teach-close: bloqueado por DET-22.</li>
+      <li>Teach-close generado: habilita el cierre.</li>
+      <li>Learn procesado, tasks completas y evidencia presente: cierre permitido.</li>
+    </ul>
+
+    <p>
+      Los casos registrados para KT-003 pasan:
+      “cerrar sin acceptance → DET-13” y
+      “cerrar con learn raw → DET-39”.
+      La cobertura adicional de DET-22 está en los tests unitarios del motor,
+      guards y skill <code>/teach</code>.
+    </p>
+
+    <h2>Aprendizajes</h2>
+    <ul>
+      <li>El cierre debe reportar todos los guards aplicables, no solo el primero que bloquea.</li>
+      <li>Los guards se evalúan en orden; DET-13 y DET-39 preceden a DET-22.</li>
+      <li>Un learn raw es una condición de cierre pendiente, no un detalle informativo.</li>
+      <li>El teach-close es evidencia persistente y habilita mecánicamente DET-22.</li>
+      <li>Los tests deben verificar tanto el bloqueo como la transición exitosa posterior.</li>
+    </ul>
+
+    <h2>Resultado actual</h2>
+    <p>
+      Los escenarios de prueba pasan. Sin embargo, el ticket permanece en
+      <code>ready_to_close</code>: conserva un learn raw y todavía no tiene
+      teaching de tipo close persistido. Por tanto, el cierre real continúa
+      bloqueado por DET-39 y DET-22 hasta procesar el learn y registrar este
+      teach-close.
+    </p>
+  </main>
+</body>
+</html>
+```

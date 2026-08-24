@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPONE-1540 · Alerta erronea de cambios sin guardar</title>
+<style>
+:root{
+  color-scheme: light;
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f6f7f8,#212121);
+  --up1-gray-100: light-dark(#e9ebed,#2c2c2c);
+  --up1-gray-200: light-dark(#d9dde1,#3a3a3a);
+  --up1-gray-600: light-dark(#6b7280,#a3a3a3);
+  --up1-gray-700: light-dark(#3f4753,#d4d4d4);
+  --up1-gray-900: light-dark(#1f2733,#fafafa);
+  --pri-50: light-dark(#E7F2F3, rgba(45,212,191,.10));
+  --pri-100: light-dark(#c9e5e7, rgba(45,212,191,.16));
+  --pri: light-dark(#0a808c,#2dd4bf);
+  --pri-600: light-dark(#0b6d78,#14b8a6);
+  --ok: light-dark(#1f8a5b,#22c55e);
+  --ok-bg: light-dark(#eafaf1,rgba(34,197,94,.12));
+  --warn: light-dark(#b45309,#fbbf24);
+  --warn-bg: light-dark(#fff8ec,rgba(245,158,11,.12));
+  --danger: light-dark(#b42318,#ef4444);
+  --danger-bg: light-dark(#fef3f2,rgba(239,68,68,.12));
+  --bg: var(--up1-gray-50); --card: var(--up1-gray-0);
+  --tx: var(--up1-gray-900); --tx2: var(--up1-gray-700); --mut: var(--up1-gray-600);
+  --bd: var(--up1-gray-200);
+  --radius:14px; --radius-sm:9px;
+  --sh: 0 1px 2px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.4)), 0 8px 24px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.5));
+}
+@media (prefers-color-scheme: dark){ :root{ color-scheme: dark; } }
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:34px 22px 80px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--danger);background:var(--danger-bg);border:1px solid var(--danger);padding:5px 12px;border-radius:999px}
+h1{font-size:30px;line-height:1.15;margin:16px 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin:0 0 8px}
+.ask{font-size:17px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--danger);border-radius:var(--radius-sm);padding:14px 16px;margin:20px 0 4px}
+.ask b{color:var(--tx)}
+h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:38px 0 14px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--bd)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:16px;box-shadow:var(--sh)}
+.panel h3{margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px}
+.pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.pill.bad{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+.pill.good{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+/* flow */
+.flow{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:11px;align-items:flex-start;padding:8px 0}
+.dot{flex:0 0 24px;width:24px;height:24px;border-radius:50%;background:var(--up1-gray-100);color:var(--tx2);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.step.bad .dot{background:var(--danger);color:#fff}
+.step.good .dot{background:var(--ok);color:#fff}
+.step .body{font-size:13px;color:var(--tx2);padding-top:2px}
+.step .body b{color:var(--tx)}
+.connector{margin-left:11px;width:2px;height:8px;background:var(--bd)}
+/* modal mock */
+.mroot{background:var(--up1-gray-100);border-radius:12px;padding:26px;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:var(--sh);width:100%;max-width:340px;padding:18px;text-align:center}
+.modal .ic{width:44px;height:44px;border-radius:50%;background:var(--warn-bg);color:var(--warn);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px}
+.modal .t{font-weight:700;font-size:15px;margin-bottom:4px}
+.modal .d{font-size:12.5px;color:var(--mut);margin-bottom:14px}
+.modal .btns{display:flex;gap:8px;justify-content:center}
+.btn{font-size:12.5px;font-weight:600;border-radius:8px;padding:7px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx2)}
+.btn.pri{background:var(--danger);border-color:var(--danger);color:#fff}
+.field-red{margin-top:14px;text-align:left}
+.field-red label{font-size:12px;font-weight:600;color:var(--danger);display:block;margin-bottom:4px}
+.field-red .inp{border:1px solid var(--danger);background:var(--danger-bg);border-radius:8px;padding:8px 11px;font-size:12.5px;color:var(--danger);display:flex;align-items:center;justify-content:space-between}
+.field-red .err{font-size:11px;color:var(--danger);margin-top:3px}
+.callout{background:var(--warn-bg);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:12px 15px;font-size:13.5px;color:var(--tx2);margin-top:14px}
+.callout b{color:var(--tx)}
+.callout.root{background:var(--danger-bg);border-color:var(--danger);border-left-color:var(--danger)}
+.callout.fix{background:var(--ok-bg);border-color:var(--ok);border-left-color:var(--ok)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--up1-gray-100);padding:1px 6px;border-radius:5px;color:var(--tx)}
+.guide{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.gitem{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.gtag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.gtag.fav{background:light-dark(#eafaf1,rgba(34,197,94,.14));color:light-dark(#1f8a5b,#22c55e)}
+.gtag.no{background:light-dark(#fef3f2,rgba(239,68,68,.14));color:light-dark(#b42318,#ef4444)}
+.gtag.ojo{background:light-dark(#fff8ec,rgba(245,158,11,.16));color:light-dark(#b45309,#fbbf24)}
+.gbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.gsrc{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+.foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">UPONE-1540 · Error · Curriculum Design</span>
+  <h1>Alerta erronea de cambios sin guardar</h1>
+  <p class="sub">El formulario avisa "vas a perder cambios" sin que el usuario haya editado nada.</p>
+
+  <div class="ask">
+    <b>Que se pide:</b> que al crear un Plan de estudio (o entrar en modo ver) y volver atras <b>sin editar</b>, el sistema no muestre el modal de cambios sin guardar ni marque campos en rojo. Si el usuario si edita, el aviso debe seguir apareciendo.
+  </div>
+
+  <h2>Que pasa hoy (sintoma)</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill bad">Ahora</span> Flujo con falso positivo</h3>
+      <div class="flow">
+        <div class="step"><div class="dot">1</div><div class="body">El usuario abre <b>crear Plan de estudio</b> (no toca nada).</div></div>
+        <div class="connector"></div>
+        <div class="step bad"><div class="dot">2</div><div class="body">Al montar, el formulario <b>autocompleta</b> un campo y eso lo marca como <b>modificado</b>.</div></div>
+        <div class="connector"></div>
+        <div class="step"><div class="dot">3</div><div class="body">El usuario presiona <b>Volver</b>.</div></div>
+        <div class="connector"></div>
+        <div class="step bad"><div class="dot">4</div><div class="body">Aparece el modal de <b>cambios sin guardar</b> + un campo obligatorio en <b>rojo</b>.</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Lo que ve el usuario</h3>
+      <div class="mroot">
+        <div class="modal">
+          <div class="ic">&#9888;</div>
+          <div class="t">Tienes cambios sin guardar</div>
+          <div class="d">Si sales ahora, perderas los cambios. Deseas continuar?</div>
+          <div class="btns"><button class="btn">Seguir editando</button><button class="btn pri">Salir</button></div>
+          <div class="field-red">
+            <label>Dueno (obligatorio)</label>
+            <div class="inp"><span>Sin seleccion</span><span>&#9662;</span></div>
+            <div class="err">&#9888; Campo requerido</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--mut);text-align:center;margin-top:8px">...sin haber editado nada.</div>
+    </div>
+  </div>
+
+  <h2>Que se espera (entrega)</h2>
+  <div class="panel">
+    <div class="flow">
+      <div class="step good"><div class="dot">&#10003;</div><div class="body">Abrir y volver <b>sin editar</b> &rarr; cierra directo, <b>sin modal</b>.</div></div>
+      <div class="connector"></div>
+      <div class="step good"><div class="dot">&#10003;</div><div class="body">Modo <b>ver</b> &rarr; volver cierra directo, sin preguntar.</div></div>
+      <div class="connector"></div>
+      <div class="step good"><div class="dot">&#10003;</div><div class="body">El campo obligatorio <b>no</b> queda en rojo por la carga inicial si su valor es valido.</div></div>
+      <div class="connector"></div>
+      <div class="step good"><div class="dot">&#10003;</div><div class="body">Si el usuario <b>si edita</b> &rarr; el modal de cambios sin guardar <b>si</b> aparece (caso legitimo intacto).</div></div>
+    </div>
+  </div>
+
+  <h2>Causa y solucion</h2>
+  <div class="callout root"><b>Causa raiz:</b> es un bug de <b>core</b> (capa de detalle comun), no del mod. El formulario no distingue el autocompletado inicial de una edicion real: cualquier campo que se autopuebla al abrir queda marcado como cambio, y un obligatorio recalculado a vacio se ve invalido.</div>
+  <div class="callout fix"><b>Solucion:</b> ya existe construida para este mismo problema en una <b>rama sin mergear</b> (UPONE-912, commit <code>b58ce42c</code>, Ignacio Jorquera, 2026-05-05): compara contra un estado base tomado cuando la carga se estabiliza, en vez de confiar ciego en la marca de "sucio". Lo mas eficiente es revivir esa rama; alternativa: limpiar la marca tras el autocompletado. Cambio en core, requiere coordinacion.</div>
+  <div class="callout"><b>Prioridad:</b> figura como "Trivial", pero por ser core y rescate de una rama antigua el costo real es mayor. Sugerencia: subir a Menor. Toda modificacion en esta zona exige smoke runtime (no tiene red de seguridad de render).</div>
+
+  <h2>Reglas y patrones up1 a considerar</h2>
+  <div class="guide">
+    <div class="gitem"><span class="gtag ojo">Gate</span><div class="gbody">Es cambio en core `layout`: rama con id Jira + revision del equipo antes de merge a develop; cerrar el ticket no implica merge.<span class="gsrc">Fuente: `up1/CLAUDE.md` (Critical Rules); proceso de PR (Bitbucket)</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Documentar el contrato de dirty/autocompletado, no solo parchear el sintoma (hubo dos fixes parciales previos en el mismo archivo).<span class="gsrc">Fuente: Jira UPONE-1515; `layout/src/layouts/RecordDetail.vue`</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Auditar todos los consumidores/sinks y correr la suite unit completa como regresion.<span class="gsrc">Fuente: `instance.resolver.js` (Jira UPONE-1479)</span></div></div>
+    <div class="gitem"><span class="gtag ojo">Ojo</span><div class="gbody">Esta zona no tiene red de seguridad de render: cualquier cambio exige smoke runtime, no solo unit.<span class="gsrc">Fuente: Jira UPONE-1515 (mismo flujo en RecordDetail)</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">La solucion ya existe construida en una rama sin mergear: revivirla es lo mas eficiente.<span class="gsrc">Fuente: Jira UPONE-912 (`b58ce42c`)</span></div></div>
+  </div>
+
+  <div class="foot">
+    Documento explicativo &middot; Ticket (contrato): <code>UPONE-1540-detalle.md</code> &middot; Detalle tecnico: <code>UPONE-1540-pre-intake.md</code>
+  </div>
+</div>
+</body>
+</html>

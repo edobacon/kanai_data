@@ -1,0 +1,556 @@
+<title>Roles de core y Learning Assurance</title>
+<style>
+  :root{
+    --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EFF1F4;
+    --ink:#151A21; --muted:#5C6673; --line:#DDE1E7; --line-2:#C4CBD4;
+    --accent:#4B3FA6; --accent-soft:#EDEBF9; --accent-line:#C9C2F0;
+    --ok:#1F7A4D; --ok-soft:#E4F1EA;
+    --warn:#A2681A; --warn-soft:#F7EEDF;
+    --stop:#A8324A; --stop-soft:#F8E7EB;
+    --serif:ui-serif,Georgia,'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#12151A; --surface:#191D24; --surface-2:#212630;
+      --ink:#E7EAEF; --muted:#98A2B0; --line:#2A303A; --line-2:#3A424E;
+      --accent:#A79CF0; --accent-soft:#20203A; --accent-line:#3B3768;
+      --ok:#5FBE8B; --ok-soft:#14291F;
+      --warn:#D2A053; --warn-soft:#2C2314;
+      --stop:#E0879B; --stop-soft:#2E1A20;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#12151A; --surface:#191D24; --surface-2:#212630;
+    --ink:#E7EAEF; --muted:#98A2B0; --line:#2A303A; --line-2:#3A424E;
+    --accent:#A79CF0; --accent-soft:#20203A; --accent-line:#3B3768;
+    --ok:#5FBE8B; --ok-soft:#14291F;
+    --warn:#D2A053; --warn-soft:#2C2314;
+    --stop:#E0879B; --stop-soft:#2E1A20;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .shell{max-width:1200px; margin:0 auto; padding:0 20px; display:grid; grid-template-columns:220px minmax(0,1fr); gap:44px}
+  nav.toc{position:sticky; top:0; align-self:start; max-height:100vh; overflow-y:auto; padding:38px 16px 38px 0; border-right:1px solid var(--line); font-size:13.5px}
+  nav.toc .grp{font-family:var(--mono); font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--muted); margin:20px 0 7px}
+  nav.toc .grp:first-child{margin-top:0}
+  nav.toc a{display:block; color:var(--muted); text-decoration:none; padding:3px 0; line-height:1.35}
+  nav.toc a:hover{color:var(--accent)}
+  nav.toc a.key{color:var(--ink); font-weight:600}
+
+  main{padding:38px 0 80px; min-width:0}
+  header.top{border-bottom:2px solid var(--accent); padding-bottom:24px; margin-bottom:32px}
+  .eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 12px}
+  h1{font-family:var(--serif); font-size:38px; line-height:1.14; font-weight:600; margin:0 0 14px; letter-spacing:-.015em; text-wrap:balance}
+  .lede{font-size:17.5px; color:var(--muted); margin:0; max-width:64ch}
+
+  .status{display:flex; flex-wrap:wrap; gap:10px; margin-top:24px}
+  .stat{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:11px 15px; min-width:130px}
+  .stat b{display:block; font-family:var(--mono); font-size:22px; line-height:1.1; font-variant-numeric:tabular-nums}
+  .stat span{font-size:12px; color:var(--muted)}
+  .stat.go b{color:var(--ok)} .stat.dec b{color:var(--accent)} .stat.hold b{color:var(--warn)}
+
+  h2{font-family:var(--serif); font-size:26px; line-height:1.2; font-weight:600; margin:52px 0 6px; letter-spacing:-.01em; text-wrap:balance; scroll-margin-top:20px}
+  h2 .num{font-family:var(--mono); font-size:13px; color:var(--accent); font-weight:400; margin-right:9px; letter-spacing:.04em}
+  h3{font-family:var(--sans); font-size:16.5px; font-weight:650; margin:30px 0 6px; letter-spacing:-.005em; scroll-margin-top:20px}
+  h4{font-family:var(--mono); font-size:11px; letter-spacing:.11em; text-transform:uppercase; color:var(--muted); font-weight:600; margin:24px 0 8px}
+  p{margin:0 0 14px; max-width:68ch}
+  ul,ol{margin:0 0 14px; padding-left:22px; max-width:68ch} li{margin:5px 0}
+  strong{font-weight:650}
+  code{font-family:var(--mono); font-size:.87em; background:var(--surface-2); border:1px solid var(--line); border-radius:4px; padding:1px 5px}
+  a{color:var(--accent)}
+
+  .kind{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; display:inline-block; padding:2px 8px; border-radius:4px; margin-bottom:10px}
+  .kind.ctx{background:var(--surface-2); color:var(--muted)}
+  .kind.find{background:var(--stop-soft); color:var(--stop)}
+  .kind.dcn{background:var(--accent-soft); color:var(--accent)}
+
+  .tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+  table{width:100%; border-collapse:collapse; font-size:14px; min-width:440px}
+  th,td{text-align:left; padding:10px 13px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{font-family:var(--mono); font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:600; background:var(--surface-2)}
+  tbody tr:last-child td{border-bottom:0}
+  td.n{font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+  td.zero{color:var(--muted)}
+  .big{font-family:var(--mono); font-weight:600; color:var(--stop)}
+  caption{caption-side:top; text-align:left; padding:11px 13px 0; font-size:13px; color:var(--muted)}
+
+  .call{border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--surface); border-radius:0 10px 10px 0; padding:15px 18px; margin:0 0 18px}
+  .call.warn{border-left-color:var(--warn); background:var(--warn-soft)}
+  .call.stop{border-left-color:var(--stop); background:var(--stop-soft)}
+  .call.ok{border-left-color:var(--ok); background:var(--ok-soft)}
+  .call p:last-child{margin-bottom:0}
+  .call .lbl{font-family:var(--mono); font-size:10px; letter-spacing:.11em; text-transform:uppercase; display:block; margin-bottom:6px; color:var(--accent)}
+  .call.warn .lbl{color:var(--warn)} .call.stop .lbl{color:var(--stop)} .call.ok .lbl{color:var(--ok)}
+
+  .pill{font-family:var(--mono); font-size:10.5px; padding:2px 7px; border-radius:20px; white-space:nowrap; display:inline-block}
+  .pill.si{background:var(--accent-soft); color:var(--accent)}
+  .pill.cover{background:var(--ok-soft); color:var(--ok)}
+  .pill.gap{background:var(--stop-soft); color:var(--stop)}
+  .pill.part{background:var(--warn-soft); color:var(--warn)}
+  .pill.none{background:var(--surface-2); color:var(--muted)}
+
+  .ask{display:grid; gap:13px; margin:0 0 20px}
+  .ask .q{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:15px 18px}
+  .ask .q .qn{font-family:var(--mono); font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:7px}
+  .ask .q b{font-family:var(--serif); font-size:19.5px; font-weight:600; display:block; margin-bottom:7px; line-height:1.25}
+  .ask .q p{margin:0; font-size:14.5px; color:var(--muted); max-width:62ch}
+
+  .sheet{background:var(--surface); border:2px solid var(--accent); border-radius:12px; overflow:hidden; margin-bottom:18px}
+  .sheet .hd{background:var(--accent-soft); padding:14px 18px; border-bottom:1px solid var(--accent-line)}
+  .sheet .hd b{font-family:var(--serif); font-size:18px}
+  .sheet .hd span{display:block; font-size:13px; color:var(--muted); margin-top:2px}
+  .sheet table{min-width:620px}
+  .sheet td.fill{background:var(--surface-2); border-left:1px dashed var(--line-2); min-width:130px; color:var(--muted); font-size:13px}
+  .sheet tbody tr.la td{background:var(--accent-soft)}
+  .sheet tbody tr.la td.fill{background:var(--accent-soft); color:var(--accent)}
+
+  .note{font-size:13px; color:var(--muted); max-width:70ch; margin:0 0 16px}
+
+  details.anx{background:var(--surface); border:1px solid var(--line); border-radius:10px; margin-bottom:11px}
+  details.anx>summary{cursor:pointer; padding:13px 17px; font-weight:600; list-style:none; display:flex; gap:10px; align-items:baseline}
+  details.anx>summary::-webkit-details-marker{display:none}
+  details.anx>summary::before{content:"+"; font-family:var(--mono); color:var(--accent); font-weight:600}
+  details.anx[open]>summary::before{content:"−"}
+  details.anx>summary span{font-size:13px; color:var(--muted); font-weight:400}
+  details.anx .body{padding:2px 17px 17px; border-top:1px solid var(--line)}
+  details.anx .body>*:first-child{margin-top:14px}
+
+  footer{margin-top:60px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--muted)}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:3px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* Overrides de viewport angosto. Van al final a proposito: mismas propiedades que las
+     reglas base, asi ganan por orden de cascada y no hace falta !important. */
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr; gap:0}
+    /* el indice pasa de columna lateral a tira horizontal: navegable sin ocupar la primera pantalla */
+    nav.toc{
+      position:sticky; top:0; z-index:10;
+      display:flex; gap:7px; align-items:center;
+      max-height:none; overflow-x:auto; overflow-y:hidden;
+      padding:9px 0; border-right:0; border-bottom:1px solid var(--line);
+      background:var(--ground); scrollbar-width:thin;
+    }
+    nav.toc .grp{display:none}
+    nav.toc a{
+      flex:0 0 auto; padding:4px 11px; border:1px solid var(--line); border-radius:20px;
+      background:var(--surface); font-size:12.5px; white-space:nowrap; line-height:1.5;
+    }
+    nav.toc a.key{color:var(--accent); border-color:var(--accent-line)}
+    main{padding-top:22px}
+    h1{font-size:29px}
+    .lede{font-size:16.5px}
+    .eyebrow{font-size:9.5px; letter-spacing:.11em}
+    h2{font-size:23px; margin-top:42px; scroll-margin-top:64px}
+    h3{scroll-margin-top:64px}
+    .ask .q b{font-size:18px}
+    .stat{min-width:calc(50% - 5px); flex:1 1 calc(50% - 5px)}
+  }
+</style>
+
+<div class="shell">
+<nav class="toc">
+  <div class="grp">Lo que se pide</div>
+  <a href="#pide" class="key">Las dos preguntas</a>
+  <a href="#como">Cómo funciona</a>
+  <a href="#reglas" class="key">Reglas que condicionan</a>
+  <div class="grp">Core</div>
+  <a href="#core" class="key">Los 5 roles del core</a>
+  <div class="grp">Learning Assurance</div>
+  <a href="#la" class="key">Los 4 roles</a>
+  <a href="#cd">En Diseño Curricular</a>
+  <a href="#cm">En Mapeo Curricular</a>
+  <a href="#cadena">La cadena editorial</a>
+  <div class="grp">El análisis</div>
+  <a href="#suf" class="key">¿Alcanzan los de core?</a>
+  <a href="#futuro">Perfiles por venir</a>
+  <div class="grp">Para completar</div>
+  <a href="#hoja1" class="key">Hoja 1 · la relación</a>
+  <a href="#hoja2" class="key">Hoja 2 · suficiencia</a>
+  <div class="grp">Bordes</div>
+  <a href="#resto">El resto del ambiente</a>
+  <a href="#cerrado">Lo que no se reabre</a>
+  <a href="#anexos">Anexos</a>
+</nav>
+
+<main>
+<header class="top">
+  <p class="eyebrow">Learning Assurance · Diseño Curricular y Mapeo Curricular · UPONE-1615</p>
+  <h1>Los roles del core y los de Learning Assurance</h1>
+  <p class="lede">Documento de trabajo sobre dos catálogos de roles: los <strong>5 que trae el core</strong> y los <strong>4 que declara Learning Assurance</strong> para sus dos módulos, Diseño Curricular y Mapeo Curricular. Con eso hay que decidir cómo se relacionan, y si el catálogo del core alcanza para los perfiles que Learning Assurance tiene y va a necesitar.</p>
+  <div class="status">
+    <div class="stat"><b>5</b><span>roles del core en juego</span></div>
+    <div class="stat dec"><b>4</b><span>roles de Learning Assurance</span></div>
+    <div class="stat"><b>2</b><span>módulos hoy: cd y cm</span></div>
+    <div class="stat go"><b>2</b><span>decisiones que salen de acá</span></div>
+  </div>
+</header>
+
+<div class="call"><span class="lbl">Alcance de este documento</span><p>Se concentra en los <strong>roles del core</strong> y en los de <strong>Learning Assurance</strong>, que son los módulos <strong>Diseño Curricular</strong> (cd) y <strong>Mapeo Curricular</strong> (cm), hermanos que comparten el mismo juego de roles y a los que se sumará un tercero. Los roles de otros productos aparecen solo en la sección de bordes, porque hay tres que ya escriben contenido curricular y eso condiciona la decisión, pero no forman parte de ella.</p>
+<p><strong>De dónde salen los números:</strong> leídos del ambiente de referencia <strong>UPU</strong> el 17 de agosto de 2026. UPU es de prueba, así que las cantidades de personas muestran <strong>qué roles están poblados</strong>, no cuánta gente real los usa en una institución. Los permisos sí son los que recibiría un cliente, porque los declara el código.</p></div>
+
+<h2 id="pide">Las dos preguntas</h2>
+<span class="kind dcn">Lo que se pide decidir</span>
+<div class="ask">
+  <div class="q">
+    <span class="qn">Pregunta 1 · la relación</span>
+    <b>¿Qué alcance curricular le corresponde a cada rol del core?</b>
+    <p>Los cuatro roles de Learning Assurance ya están resueltos: cada uno recibe en cada módulo el conjunto de permisos de su nombre. Lo que falta es el otro lado: <code>Admin</code>, <code>Consultor</code>, <code>Colaborador</code>, <code>Coordinador</code> y <code>Estudiante</code>. Cada uno necesita una respuesta, aunque sea "ninguno".</p>
+  </div>
+  <div class="q">
+    <span class="qn">Pregunta 2 · la suficiencia</span>
+    <b>¿Alcanza el catálogo del core para los perfiles de Learning Assurance?</b>
+    <p>Learning Assurance declara cuatro roles propios. ¿Es necesario, o alguno de esos perfiles ya está cubierto por un rol del core? ¿Y alcanzan los cuatro para lo que viene, con un tercer módulo por sumarse a la familia?</p>
+  </div>
+</div>
+<p class="note">Están conectadas: si un perfil de Learning Assurance resulta cubierto por un rol del core, ese rol del core necesita alcance curricular, que es la pregunta 1. Si no lo está, Learning Assurance conserva su rol propio.</p>
+
+<h2 id="como">Cómo funciona, en lo mínimo necesario</h2>
+<span class="kind ctx">Contexto</span>
+<p>Tres piezas, y conviene no confundirlas porque las preguntas son sobre la relación entre ellas.</p>
+<div class="tw"><table>
+<thead><tr><th></th><th>Qué es</th><th>Quién lo define</th></tr></thead>
+<tbody>
+<tr><td><strong>El rol</strong></td><td>La identidad que se le asigna a una <strong>persona</strong>. Una sola lista por institución, en el vocabulario del cliente</td><td>El core trae unos; cada producto puede sumar los suyos</td></tr>
+<tr><td><strong>El conjunto de permisos</strong></td><td>Lo que un <strong>módulo</strong> habilita: la lista de qué se puede hacer sobre qué. <strong>No se le asigna a nadie:</strong> es un conjunto al que un rol apunta</td><td>Cada módulo, para sí mismo, <strong>en código</strong></td></tr>
+<tr><td><strong>El vínculo</strong></td><td>Qué rol usa qué conjunto, <strong>en cada módulo</strong></td><td><strong>Es lo que hay que decidir acá</strong>, y se configura sin desarrollo</td></tr>
+</tbody></table></div>
+<h3>Cómo nace un conjunto</h3>
+<p>Es la parte que conviene tener clara antes de responder, porque <strong>separa lo que se decide acá de lo que necesita desarrollo</strong>.</p>
+<ol class="steps">
+<li><b>El módulo lo declara</b><span class="eff">Un conjunto es una declaración del módulo: un nombre, una descripción, qué acciones permite sobre qué objetos, y opcionalmente de qué otro conjunto hereda. Vive junto al código del módulo, no en la base de datos.</span></li>
+<li><b>El despliegue lo crea</b><span class="eff">Al desplegar, la plataforma materializa esa declaración como un conjunto real, identificado por módulo y nombre. Si la declaración cambia, el siguiente despliegue actualiza el conjunto.</span></li>
+<li><b>uP1 Manager solo lo muestra</b><span class="eff">La administración de la plataforma es la app <strong>uP1 Manager</strong>, y ahí los conjuntos <strong>se ven, no se crean ni se editan</strong>. Cambiar qué permisos trae un conjunto es cambio de código y despliegue.</span></li>
+<li><b>El vínculo sí se configura, también en uP1 Manager</b><span class="eff">Ahí se elige <strong>qué conjunto usa un rol en un módulo</strong>, con pantallas de alta y edición. Eso es dato, no código: se puede cambiar sin desarrollo, y es exactamente la decisión de este documento.<br><br><strong>Quién puede hacerlo:</strong> uP1 Manager está restringida a <code>Admin</code>, <code>Coordinador</code>, <code>Consultor</code> y <code>Colaborador</code>, así que quien aplique estas decisiones necesita uno de esos cuatro roles.</span></li>
+</ol>
+<div class="call"><span class="lbl">La consecuencia para las dos preguntas</span><p>La <strong>pregunta 1</strong> (qué conjunto recibe cada rol del core) se responde y se aplica sin tocar código. La <strong>pregunta 2</strong>, si al responderla aparece un perfil nuevo que hoy no existe, sí implica declarar un conjunto nuevo, y eso es desarrollo. Vale saber de qué lado cae cada respuesta.</p></div>
+<div class="call"><span class="lbl">La analogía</span><p>El rol es el <strong>cargo</strong> que la institución le da a una persona. El conjunto de permisos es el <strong>juego de llaves que un edificio le entrega a ese cargo</strong>. La persona lleva el cargo consigo; cada edificio decide qué llaves le corresponden dentro de sus paredes. El mismo cargo puede abrir cosas distintas en dos edificios, y nadie "es" un juego de llaves.</p></div>
+
+<h2 id="reglas">Cinco reglas que condicionan la respuesta</h2>
+<span class="kind find">Restricciones</span>
+<p>No son preferencias: es cómo se comporta la plataforma. Cada una descarta una salida que de otro modo parecería razonable.</p>
+<div class="tw"><table>
+<thead><tr><th>Regla</th><th>Qué descarta</th></tr></thead>
+<tbody>
+<tr><td><strong>1. Una persona opera siempre con un rol activo, y solo cuentan los permisos de ese rol</strong><br><span class="pill none">puede cambiarse de rol</span></td><td>Los permisos de sus otros roles <strong>no se suman</strong>. Si nunca eligió un rol, la plataforma elige uno por ella y deja esa elección guardada: <strong>no existe el estado "sin rol activo"</strong>.<br><br>Pero <strong>sí puede cambiarse de rol</strong> cuando necesita otro alcance: es una acción explícita, el servidor la confirma y la pantalla se recarga con el alcance nuevo. Un caso mixto se resuelve <strong>cambiando de rol entre una tarea y otra</strong>.<br><br><strong>Qué descarta:</strong> que <strong>una sola acción</strong> combine permisos de dos roles. Si una acción necesita dos cosas, el rol activo tiene que traer las dos.<br><br><em>Excepción:</em> las cuentas de servicio (integraciones) no tienen rol activo y quedan fuera de este acotamiento</td></tr>
+<tr><td><strong>2. Un rol y un módulo tienen una sola fila de vínculo, y esa fila apunta a un solo conjunto</strong></td><td>Descarta apilar dos conjuntos sobre el mismo rol en el mismo módulo. "Lectura más algo específico" se resuelve <strong>dentro</strong> del conjunto de ese módulo, no sumando otro</td></tr>
+<tr><td><strong>3. Un conjunto solo puede conceder, nunca negar</strong></td><td>El conjunto suma permisos; no puede restar los que el rol ya trae por su cuenta. Y si el rol ya tiene un permiso, lo que diga el rol manda: el conjunto no lo pisa.<br><br><strong>Qué descarta:</strong> usar un conjunto para <strong>acotar</strong> un rol que hoy tiene demasiado. Esos permisos cuelgan del rol, así que quitarlos es una tarea del lado del rol y no se resuelve desde el módulo</td></tr>
+<tr><td><strong>4. Asignar el primer rol a un módulo cierra su visibilidad</strong></td><td>Hoy Diseño Curricular y Mapeo Curricular <strong>no tienen ningún rol asignado</strong>, y la plataforma interpreta un módulo sin roles asignados como <strong>visible para todos</strong>. Por eso hoy cualquier persona los ve en su menú, sin que nadie lo haya decidido.<br><br>Al asignar el primer rol eso cambia: el módulo pasa a mostrarse <strong>solo</strong> a los roles que tengan vínculo. Esa es la lista, las filas de vínculo del módulo.<br><br><strong>Qué descarta:</strong> dejar la lista a medias. Hay que completarla a propósito, porque <strong>quien hoy entra y no quede en ella pierde el acceso al módulo</strong>.<br><br><em>Detalle:</em> las cuentas de servicio se saltan este filtro, así que las integraciones no se ven afectadas</td></tr>
+<tr><td><strong>5. Un permiso sobre un objeto compartido entre productos aplica en los dos</strong></td><td>El sílabo y las ofertas de servicio de Engagement son <strong>el mismo objeto de la plataforma</strong> con dos usos distintos. El permiso se otorga sobre el objeto y no distingue para qué se está usando cada registro.<br><br><strong>Qué descarta:</strong> acotar por módulo ese permiso. Quien pueda escribir sílabos puede escribir ofertas de servicio, y al revés</td></tr>
+</tbody></table></div>
+
+<h2 id="core"><span class="num">1</span>Los cinco roles del core</h2>
+<span class="kind ctx">Catálogo 1 de 2</span>
+<p>Son los que trae la plataforma, independientes de cualquier producto. La columna curricular cuenta lo que el rol puede hacer <strong>sobre los objetos de cd y cm</strong>, incluidos los permisos del módulo mismo.</p>
+<div class="tw"><table>
+<thead><tr><th>Rol</th><th>Cómo se describe a sí mismo</th><th>Personas</th><th>Curricular</th><th>Total</th></tr></thead>
+<tbody>
+<tr><td><strong>Admin</strong></td><td>Acceso total al sistema</td><td class="n">51</td><td class="n">186</td><td class="n">776</td></tr>
+<tr><td><strong>Consultor</strong></td><td><strong>"Miembro de uPlanner con acceso básico a la plataforma"</strong></td><td class="n">91</td><td class="n"><span class="big">186</span></td><td class="n">769</td></tr>
+<tr><td><strong>Coordinador</strong></td><td>Coordinador de campus y servicios <strong>"con acceso total como Admin"</strong></td><td class="n">4</td><td class="n">4</td><td class="n">46</td></tr>
+<tr><td>Estudiante</td><td>Ver servicios, eventos, instituciones e infraestructura; crear inscripciones</td><td class="n">11</td><td class="n">1</td><td class="n">7</td></tr>
+<tr><td>Colaborador</td><td>Creado automáticamente desde la configuración de una app</td><td class="n zero">0</td><td class="n zero">0</td><td class="n zero">0</td></tr>
+</tbody></table></div>
+<h3>Tres cosas que hay que saber de este catálogo</h3>
+<ol>
+<li><strong><code>Admin</code>, <code>Consultor</code> y <code>Colaborador</code> reciben cada permiso nuevo de la plataforma automáticamente.</strong> No hay que pedirlo y no hay condición que lo evite: cada vez que se crean permisos nuevos, se les conceden a los tres. Es la razón por la que dos de ellos acumularon acceso curricular total sin que nadie lo decidiera, y por la que ese acceso <strong>crece solo</strong>: cada objeto nuevo que declare cualquier módulo les cae encima.
+      <div class="call warn" style="margin:10px 0 4px"><span class="lbl">Este comportamiento tiene fecha de salida</span><p><strong>Core ya lo tiene identificado como algo que debe eliminarse.</strong> Conviene no planificar sobre el supuesto de que va a seguir existiendo: lo que se decida acá debería sostenerse igual cuando deje de aplicar. Mientras siga vigente, es la causa de los 186 permisos curriculares de <code>Consultor</code> y de que ese número siga subiendo.</p></div></li>
+<li><strong><code>Coordinador</code> lo comparten cuatro módulos</strong> (Academic Scheduling, Engagement, uP1 Manager y la plantilla de ejemplo). Es el rol más compartido de la plataforma: lo que se le dé o se le quite se siente en varios productos. Sus 4 permisos curriculares son sobre el sílabo, que es el objeto compartido con las ofertas de servicio.</li>
+<li><strong><code>Colaborador</code> no tiene a nadie asignado ni ningún permiso, pero no es un rol inerte.</strong> Lo declara únicamente uP1 Manager en su lista de roles, y la plataforma lo creó sola al leerla. Está vacío por un accidente de orden: nació <strong>unos segundos después</strong> de que se generaran todos los permisos del ambiente, y la asignación automática solo alcanza a los permisos nuevos de cada corrida, así que no le tocó ninguno.
+      <div class="call warn" style="margin:10px 0 4px"><span class="lbl">Lo que va a pasar si nadie lo toca</span><p>Está en la lista de los tres roles que reciben cada permiso nuevo, así que <strong>en el próximo despliegue que agregue objetos va a empezar a acumular permisos por su cuenta</strong>, incluidos los curriculares. Y ya tiene la puerta de uP1 Manager abierta: hoy entra a una app vacía, porque la navegación oculta todo objeto sobre el que no tenga permiso de ver, pero eso deja de ser cierto en cuanto reciba el primero.</p>
+      <p>Darle alcance curricular a propósito sería darle un propósito que nadie definió. <strong>No dárselo no alcanza:</strong> conviene decidir qué se hace con este rol, porque la plataforma va a decidir por nosotros.</p></div></li>
+</ol>
+<div class="call stop"><span class="lbl">El caso que más conviene mirar</span>
+<p><code>Consultor</code> es el rol del <strong>personal de uPlanner</strong>: así se describe él mismo, "acceso básico a la plataforma". Pero sobre el contenido curricular puede <strong>ver, crear, modificar, eliminar, publicar, aprobar, revertir, deprecar, archivar, versionar y clonar</strong>. Los mismos 186 permisos que <code>Admin</code>, y <strong>más del triple que Autoridad Curricular</strong>, que es el rol que existe para gobernar el ciclo de vida.</p>
+<p>El nombre y la descripción dicen "básico"; los permisos dicen "total". La pregunta no es técnica: <strong>¿corresponde que el personal de uPlanner pueda publicar y eliminar el currículo de una institución?</strong></p>
+<p>Dato para dimensionarlo, con su límite: en el ambiente de referencia tiene <strong>91 personas asignadas</strong>, así que no es un rol vacío que se pueda acotar sin consecuencias. Pero ese ambiente es de prueba, y una asignación no prueba que esas personas trabajen en cd o cm. <strong>Confirmarlo es parte de la decisión.</strong></p>
+<p><strong>Y por la regla 3, la corrección no puede venir de nuestro lado:</strong> un conjunto del módulo solo concede. Esos 186 permisos cuelgan del rol <code>Consultor</code> mismo, así que quitarlos es una tarea del lado del rol, no del módulo.</p>
+<p><strong>Con un detalle que conviene saber antes de decidir:</strong> la asignación automática solo alcanza a los permisos <em>nuevos</em>. Lo que se le quite hoy se queda quitado, pero <strong>cada objeto nuevo que declare cualquier módulo se le vuelve a conceder</strong>. Acotarlo, mientras ese comportamiento siga vigente, no es una acción de una vez: hay que repetirla tras cada despliegue que agregue objetos. Es un argumento fuerte para tratarlo junto con el retiro que core ya tiene identificado, y no como un ajuste aislado.</p></div>
+
+<h2 id="la"><span class="num">2</span>Los cuatro roles de Learning Assurance</h2>
+<span class="kind ctx">Catálogo 2 de 2</span>
+<p>Los declaran los dos módulos de la familia. Son <strong>compartidos entre módulos a propósito</strong>: la misma persona con el mismo rol trabaja en Diseño Curricular y en Mapeo Curricular, y cada módulo le da el alcance que le corresponde ahí.</p>
+<div class="tw"><table>
+<caption>El total del rol suma dos permisos transversales de plataforma (ver el historial de cambios y ver el nombre de un usuario) que no son curriculares.</caption>
+<thead><tr><th>Rol</th><th>Qué hace</th><th>Personas</th><th>En cd</th><th>En cm</th><th>Total del rol</th></tr></thead>
+<tbody>
+<tr><td><strong>Consultor Curricular</strong></td><td>Solo lectura y auditoría</td><td class="n">30</td><td class="n">14</td><td class="n">4</td><td class="n">20</td></tr>
+<tr><td><strong>Revisor Curricular</strong></td><td>Aprueba lo enviado a revisión. Su único poder de escritura es mover estados</td><td class="n">30</td><td class="n">19</td><td class="n">6</td><td class="n">27</td></tr>
+<tr><td><strong>Diseñador Curricular</strong></td><td>Crea y edita contenido, versiona, clona y envía a revisión</td><td class="n">30</td><td class="n">41</td><td class="n">12</td><td class="n">55</td></tr>
+<tr><td><strong>Autoridad Curricular</strong></td><td>Publica, revierte, deprecia, archiva y elimina. Gobierna el ciclo de vida</td><td class="n">30</td><td class="n">42</td><td class="n">12</td><td class="n">56</td></tr>
+</tbody></table></div>
+<div class="call"><span class="lbl">El reparto entre cd y cm no es parejo, y no debería serlo</span><p>Diseño Curricular es donde vive el grueso del trabajo: carreras, planes de estudio, asignaturas, sílabos, requisitos, bibliografía. Mapeo Curricular es más chico y muy enfocado: <strong>la matriz de competencias y sus dos catálogos</strong>. El mismo rol hace tres veces más cosas en cd que en cm, y eso está bien: cada módulo dimensiona lo suyo.</p></div>
+
+<h3 id="cd">En Diseño Curricular</h3>
+<p>Sobre qué trabaja cada rol. Vacío significa que no tiene ningún permiso sobre eso.</p>
+<div class="tw"><table>
+<thead><tr><th>Sobre qué</th><th>Consultor C.</th><th>Revisor C.</th><th>Diseñador C.</th><th>Autoridad C.</th></tr></thead>
+<tbody>
+<tr><td><strong>Programa académico</strong><br><span class="pill none">la carrera</span></td><td>ver</td><td>ver</td><td>ver, crear, modificar, clonar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Plan de estudio</strong></td><td>ver</td><td>ver, aprobar, mover estado</td><td>ver, crear, modificar, clonar, versionar</td><td>ver, aprobar, publicar, revertir, deprecar, archivar, eliminar, mover estado</td></tr>
+<tr><td><strong>Programa de asignatura</strong></td><td>ver, auditar</td><td>ver, auditar, aprobar, mover estado</td><td>ver, auditar, crear, modificar, versionar</td><td>ver, auditar, aprobar, publicar, revertir, deprecar, archivar, eliminar, mover estado</td></tr>
+<tr><td><strong>Sílabo</strong><br><span class="pill part">compartido con Engagement</span></td><td>ver</td><td>ver</td><td>ver, crear, modificar</td><td>ver, publicar, revertir, archivar, eliminar, mover estado</td></tr>
+<tr><td><strong>Secciones del sílabo</strong></td><td>ver, auditar</td><td>ver, auditar</td><td>ver, auditar, crear, modificar, clonar</td><td>ver, auditar, eliminar</td></tr>
+<tr><td><strong>Entradas de la malla</strong></td><td>ver</td><td>ver</td><td>ver, crear, modificar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Requisitos</strong></td><td>ver</td><td>ver</td><td>ver, crear, modificar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Categorías de requisitos</strong><br><span class="pill none">catálogo</span></td><td>ver</td><td>ver</td><td>ver, crear, modificar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Referencias bibliográficas</strong></td><td>ver</td><td>ver</td><td>ver, crear, modificar, clonar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Vínculos curriculares</strong></td><td>ver, auditar</td><td>ver, auditar</td><td>ver, auditar, crear, modificar</td><td>ver, auditar, eliminar</td></tr>
+<tr><td><strong>Permisos del módulo</strong><br><span class="pill none">no son de un objeto</span></td><td>entrar</td><td>entrar, aprobar transiciones</td><td>entrar, editar contenido</td><td>entrar, aprobar transiciones, publicar</td></tr>
+<tr><td><strong>Instituciones</strong></td><td><span class="pill gap">ninguno</span></td><td><span class="pill gap">ninguno</span></td><td><span class="pill gap">ninguno</span></td><td><span class="pill gap">ninguno</span></td></tr>
+</tbody></table></div>
+<div class="call"><span class="lbl">Sobre la última fila</span><p>Esos cuatro no son permisos sobre un registro, son <strong>permisos del módulo entero</strong>: dan acceso al módulo y habilitan flujos completos. "Aprobar transiciones" y "publicar" están separados a propósito, porque publicar un programa de asignatura descontinúa la versión anterior y esa acción se consideró de riesgo institucional. Por eso aparecen acá y no en la fila de un objeto.</p></div>
+<div class="call warn"><span class="lbl">Un permiso que falta, ya resuelto en el plan</span><p>Ninguno de los cuatro puede <strong>ver instituciones</strong>, y eso rompe la creación de planes de estudio, porque el formulario pide elegir la institución dueña. Se agrega como parte del trabajo, así que no es una decisión pendiente. Se muestra en la tabla para que se entienda por qué hoy hay que usar un rol administrador.</p></div>
+
+<h3 id="cm">En Mapeo Curricular</h3>
+<p>Mucho más acotado: <strong>la matriz de competencias y los dos catálogos que la sostienen.</strong> Nada más.</p>
+<div class="tw"><table>
+<thead><tr><th>Sobre qué</th><th>Consultor C.</th><th>Revisor C.</th><th>Diseñador C.</th><th>Autoridad C.</th></tr></thead>
+<tbody>
+<tr><td><strong>Matriz de competencias</strong></td><td>ver</td><td>ver, aprobar, mover estado</td><td>ver, crear, modificar</td><td>ver, aprobar, publicar, revertir, deprecar, archivar, mover estado</td></tr>
+<tr><td><strong>Esquema de niveles</strong><br><span class="pill none">catálogo</span></td><td>ver</td><td>ver</td><td>ver, crear, modificar, versionar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Escala de cobertura</strong><br><span class="pill none">catálogo</span></td><td>ver</td><td>ver</td><td>ver, crear, modificar</td><td>ver, eliminar</td></tr>
+<tr><td><strong>Permisos del módulo</strong><br><span class="pill none">no son de un objeto</span></td><td>entrar</td><td>entrar</td><td>entrar, editar contenido</td><td>entrar</td></tr>
+</tbody></table></div>
+<p>La cadena se repite igual que en cd: uno consulta, uno redacta, uno aprueba y uno gobierna. <strong>Es la razón por la que los dos módulos comparten los roles</strong>: el flujo de trabajo es el mismo, cambia el objeto sobre el que se aplica.</p>
+<div class="call"><span class="lbl">Un detalle que sirve para la pregunta 2</span><p>En cm, <strong>quien crea los nodos de competencia es el mismo que crea los catálogos de niveles y cobertura</strong>: el Diseñador. Si el marco de competencias es política institucional que se define una vez de forma central, y aplicarlo es trabajo de cada carrera, hoy las dos cosas caen en la misma persona. Está anotado como perfil a contrastar.</p></div>
+
+<h3 id="cadena">Los cuatro son una cadena editorial, no una escala de jerarquía</h3>
+<p>Es lo que más importa para juzgar la suficiencia. No son cuatro niveles de "más o menos permisos": son <strong>cuatro momentos de un mismo flujo</strong>, y por eso ninguno se reemplaza por "un rol con más acceso".</p>
+<ol class="steps">
+<li><b>Consultar</b><span class="eff">Ver el currículo sin poder alterarlo: auditoría, acreditación, consulta interna.</span></li>
+<li><b>Diseñar</b><span class="eff">Redactar y modificar el contenido, y enviarlo a revisión. Crea y versiona, pero <strong>no elimina ni publica</strong>.</span></li>
+<li><b>Revisar</b><span class="eff">Aprobar lo que redactó otro. Es el más acotado de los cuatro justamente porque su valor está en <strong>no poder editar lo que aprueba</strong>.</span></li>
+<li><b>Gobernar</b><span class="eff">Dejar el contenido vigente, revertirlo, retirarlo de uso o eliminarlo. Casi no crea: <strong>Diseñador y Autoridad no son un rol mayor y otro menor, son dos ejes distintos</strong>.</span></li>
+</ol>
+<div class="call"><span class="lbl">Por qué esto define la pregunta 2</span><p>La separación entre quien redacta y quien aprueba <strong>es el punto de la cadena</strong>: si una sola persona pudiera hacer las dos cosas, la revisión no significaría nada. Cualquier respuesta que junte dos de estos momentos en un mismo rol le quita sentido al flujo, no solo permisos.</p></div>
+
+<h2 id="suf"><span class="num">3</span>¿Alcanzan los roles del core?</h2>
+<span class="kind dcn">Análisis para la pregunta 2</span>
+<p>Perfil por perfil, contra el catálogo del core. La columna de lectura es nuestra, no la decisión.</p>
+<div class="tw"><table>
+<thead><tr><th>Perfil de Learning Assurance</th><th>Candidato más cercano en el core</th><th>Por qué no encaja</th><th>Lectura</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Consultar</strong><br><span class="pill none">ver y auditar</span></td>
+  <td><code>Consultor</code>, por el nombre</td>
+  <td>Hace exactamente lo contrario de lo que su nombre dice: escribe todo. Y es el rol del personal de uPlanner, no un perfil del cliente</td>
+  <td><span class="pill part">parcial</span> el nombre existe, el comportamiento no</td>
+</tr>
+<tr>
+  <td><strong>Diseñar</strong><br><span class="pill none">crear y editar contenido</span></td>
+  <td>Ninguno</td>
+  <td>El core no tiene ningún rol de autoría de contenido. Sus roles administran el sistema, coordinan servicios o consumen información</td>
+  <td><span class="pill gap">no está</span></td>
+</tr>
+<tr>
+  <td><strong>Revisar</strong><br><span class="pill none">aprobar</span></td>
+  <td>Ninguno</td>
+  <td>Ningún rol del core aprueba nada. El concepto de "enviado a revisión" no existe fuera de los módulos que lo implementan</td>
+  <td><span class="pill gap">no está</span></td>
+</tr>
+<tr>
+  <td><strong>Gobernar</strong><br><span class="pill none">publicar y retirar</span></td>
+  <td><code>Admin</code></td>
+  <td>Administra la plataforma completa. Usarlo para gobernar contenido le daría a esa persona todo lo demás: usuarios, configuración, los otros productos</td>
+  <td><span class="pill gap">no está</span></td>
+</tr>
+</tbody></table></div>
+<div class="call"><span class="lbl">Nuestra lectura, en una línea</span><p>El catálogo del core cubre <strong>administración de plataforma, coordinación de servicios y consumo de información</strong>. No cubre <strong>flujo editorial</strong>: no tiene autor, no tiene revisor y no tiene gobierno de ciclo de vida de contenido. Los cuatro roles de Learning Assurance no duplican nada del core: llenan una categoría que el core no tiene.</p></div>
+<h3>La consecuencia práctica, si se está de acuerdo</h3>
+<p>Learning Assurance conserva sus cuatro roles, y la pregunta 1 se reduce a decidir, para cada rol del core, si <strong>además</strong> necesita alcance curricular. Son tres casos distintos y conviene separarlos:</p>
+<ul>
+<li><strong><code>Admin</code>:</strong> ¿conserva su acceso total, o pasa a tener un alcance curricular declarado como los demás?</li>
+<li><strong><code>Consultor</code>:</strong> ¿se corrige ahora o se deja y se trata aparte? Recordar la regla 3: la corrección no se hace desde el módulo.</li>
+<li><strong><code>Coordinador</code>, <code>Estudiante</code>, <code>Colaborador</code>:</strong> presumiblemente ninguno, y ahí la pregunta se vuelve la regla 4, visibilidad. Si alguno hoy entra a cd o cm y debe seguir entrando, hay que decirlo antes de armar la lista.</li>
+</ul>
+
+<h2 id="futuro"><span class="num">4</span>Perfiles por contrastar para lo que viene</h2>
+<span class="kind dcn">Análisis para la pregunta 2</span>
+<p>La familia va a sumar un tercer módulo, y el modelo está preparado para eso <strong>sin decisiones nuevas de rol</strong>: el módulo nuevo declara sus propios conjuntos para los mismos cuatro roles. Pero eso solo funciona si los cuatro perfiles alcanzan. Estos cinco son los candidatos a quedar afuera, cada uno con lo que hoy se puede verificar.</p>
+<div class="tw"><table>
+<thead><tr><th>Perfil</th><th>Dónde</th><th>La situación hoy</th><th>La pregunta</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Quien escribe un sílabo y nada más</strong></td>
+  <td><span class="pill none">cd</span></td>
+  <td>Para escribir un sílabo hace falta <code>Diseñador Curricular</code>, que <strong>también crea carreras y planes de estudio</strong>: 41 permisos en cd</td>
+  <td>¿Un docente que redacta su propio sílabo necesita poder crear carreras? Si no, falta un perfil de autoría acotada</td>
+</tr>
+<tr>
+  <td><strong>Quien mantiene los catálogos</strong></td>
+  <td><span class="pill none">cd + cm</span></td>
+  <td>Categorías de requisitos en cd, esquemas de niveles y escalas de cobertura en cm: los crea el Diseñador y los elimina la Autoridad</td>
+  <td>¿La institución quiere que los catálogos los mantenga alguien que no redacta contenido? Hoy no hay forma de expresarlo</td>
+</tr>
+<tr>
+  <td><strong>Quien define el marco de competencias</strong></td>
+  <td><span class="pill none">cm</span></td>
+  <td>El Diseñador crea los nodos de competencia y la Autoridad los publica: el mismo par que para el contenido de cada carrera</td>
+  <td>Si el marco es política institucional central y aplicarlo es trabajo de cada carrera, <strong>hoy son la misma persona</strong>. ¿Deben serlo?</td>
+</tr>
+<tr>
+  <td><strong>Quien solo consulta reportes</strong></td>
+  <td><span class="pill none">fuera de cd y cm</span></td>
+  <td><code>Consultor Curricular</code> lee los datos, pero la construcción de reportes vive en otra herramienta con sus propios permisos</td>
+  <td>¿El perfil de reportería es de Learning Assurance, o se apoya en el rol de analítica que la institución ya tiene?</td>
+</tr>
+<tr>
+  <td><strong>El estudiante</strong></td>
+  <td><span class="pill none">el tercer módulo</span></td>
+  <td><code>Estudiante</code> tiene un solo permiso curricular, y es sobre el objeto compartido</td>
+  <td>¿El tercer módulo le muestra algo al estudiante, por ejemplo su avance de competencias? Si sí, es un perfil nuevo y cambia la respuesta de visibilidad</td>
+</tr>
+</tbody></table></div>
+<div class="call"><span class="lbl">Cómo usar esta tabla</span><p>No hace falta resolver los cinco. Alcanza con marcar <strong>cuáles aplican al tercer módulo</strong>: los que apliquen hay que definirlos antes de que ese módulo declare sus permisos, no después. Los que no apliquen quedan descartados con constancia, que es igual de útil.</p></div>
+
+<h2 id="hoja1"><span class="num">5</span>Hoja 1 · La relación rol por rol</h2>
+<span class="kind dcn">Para completar</span>
+<p>Los cuatro de Learning Assurance vienen resueltos y se muestran destacados, como referencia de la forma de la respuesta. Las cinco filas del core están en blanco. <strong>Cada fila necesita una respuesta, aunque sea "ninguno":</strong> por la regla 4, un rol sin respuesta es un rol que pierde el acceso al módulo.</p>
+<div class="sheet">
+  <div class="hd"><b>Qué alcance curricular le corresponde a cada rol</b><span>Escribe el conjunto que le corresponde, o "ninguno". Si un rol debe seguir viendo el módulo sin poder escribir, es "solo lectura", no "ninguno".</span></div>
+  <div class="tw" style="border:0;border-radius:0"><table>
+  <thead><tr><th>Rol</th><th>Qué es</th><th>Curricular hoy</th><th class="fill">En cd</th><th class="fill">En cm</th></tr></thead>
+  <tbody>
+  <tr class="la"><td><strong>Consultor Curricular</strong></td><td>Learning Assurance</td><td class="n">18</td><td class="fill">Consulta</td><td class="fill">Consulta</td></tr>
+  <tr class="la"><td><strong>Revisor Curricular</strong></td><td>Learning Assurance</td><td class="n">25</td><td class="fill">Revisión</td><td class="fill">Revisión</td></tr>
+  <tr class="la"><td><strong>Diseñador Curricular</strong></td><td>Learning Assurance</td><td class="n">53</td><td class="fill">Diseño</td><td class="fill">Diseño</td></tr>
+  <tr class="la"><td><strong>Autoridad Curricular</strong></td><td>Learning Assurance</td><td class="n">54</td><td class="fill">Gobierno</td><td class="fill">Gobierno</td></tr>
+  <tr><td><strong>Admin</strong></td><td>Core · administra la plataforma</td><td class="n">186</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Consultor</strong></td><td>Core · personal de uPlanner</td><td class="n">186</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Coordinador</strong></td><td>Core · compartido por 4 módulos</td><td class="n">4</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td>Estudiante</td><td>Core · compartido</td><td class="n">1</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td>Colaborador</td><td>Core · sin nadie asignado y sin permisos</td><td class="n zero">0</td><td class="fill"></td><td class="fill"></td></tr>
+  </tbody></table></div>
+</div>
+<p class="note">"Curricular hoy" cuenta los permisos sobre objetos de cd y cm, incluido el sílabo compartido. Sirve para ver de dónde parte cada rol: un rol con muchos permisos y respuesta "ninguno" es una pérdida de acceso que hay que querer, no un descuido. Los 16 roles de otros productos no están en esta hoja a propósito: ver la sección de bordes.</p>
+
+<h2 id="hoja2"><span class="num">6</span>Hoja 2 · Suficiencia de los roles</h2>
+<span class="kind dcn">Para completar</span>
+<div class="sheet">
+  <div class="hd"><b>¿Learning Assurance conserva sus roles propios?</b><span>Una fila por perfil de la cadena editorial.</span></div>
+  <div class="tw" style="border:0;border-radius:0"><table>
+  <thead><tr><th>Perfil</th><th>Nuestra lectura</th><th class="fill">¿Lo cubre un rol del core?</th><th class="fill">¿Cuál?</th></tr></thead>
+  <tbody>
+  <tr><td><strong>Consultar</strong></td><td><span class="pill part">parcial</span> el nombre existe, el comportamiento no</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Diseñar</strong></td><td><span class="pill gap">no está</span></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Revisar</strong></td><td><span class="pill gap">no está</span></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td><strong>Gobernar</strong></td><td><span class="pill gap">no está</span></td><td class="fill"></td><td class="fill"></td></tr>
+  </tbody></table></div>
+</div>
+<div class="sheet">
+  <div class="hd"><b>Los perfiles del tercer módulo</b><span>Marca cuáles aplican. Los que apliquen se definen antes de que el módulo declare sus permisos.</span></div>
+  <div class="tw" style="border:0;border-radius:0"><table>
+  <thead><tr><th>Perfil candidato</th><th>Hoy lo hace</th><th class="fill">¿Aplica?</th><th class="fill">Observación</th></tr></thead>
+  <tbody>
+  <tr><td>Quien escribe un sílabo y nada más</td><td>Diseñador Curricular, con 41 permisos en cd</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td>Quien mantiene los catálogos</td><td>Diseñador y Autoridad, en los dos módulos</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td>Quien define el marco de competencias</td><td>Diseñador y Autoridad, en cm</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td>Quien solo consulta reportes</td><td>Fuera de estos cuatro roles</td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td>El estudiante</td><td>Nadie, en la práctica</td><td class="fill"></td><td class="fill"></td></tr>
+  </tbody></table></div>
+</div>
+<div class="sheet">
+  <div class="hd"><b>Los dos casos que hay que confirmar aparte</b><span>No son de diseño de roles, pero condicionan las dos hojas.</span></div>
+  <div class="tw" style="border:0;border-radius:0"><table>
+  <thead><tr><th>Qué confirmar</th><th>Por qué importa</th><th class="fill">Respuesta</th></tr></thead>
+  <tbody>
+  <tr><td><strong>¿Hay personal de uPlanner trabajando en cd o cm con el rol <code>Consultor</code>?</strong></td><td>Si no hay, se puede alinear el rol con su nombre. Si hay, se conserva su alcance y la corrección va aparte</td><td class="fill"></td></tr>
+  <tr><td><strong>¿Corresponde que Retención y Engagement puedan crear y eliminar contenido curricular?</strong></td><td>Hoy pueden, y no lo declaramos nosotros. Cambiarlo exige hablar con esos equipos</td><td class="fill"></td></tr>
+  </tbody></table></div>
+</div>
+
+<h2 id="resto"><span class="num">7</span>Los bordes: el resto del ambiente</h2>
+<span class="kind find">Contexto necesario, fuera de la decisión</span>
+<p>El ambiente tiene <strong>21 roles</strong> en total: los 9 de las dos secciones anteriores (5 del core y 4 de Learning Assurance) y <strong>12 más</strong>, que son 6 de Engagement y retención y 6 sin dueño declarado. Esos 12 no son parte de la decisión, pero <strong>tres de ellos ya escriben contenido curricular</strong>, y eso conviene saberlo antes de responder.</p>
+<div class="tw"><table>
+<thead><tr><th>Rol</th><th>De quién es</th><th>Qué puede hacer con contenido curricular</th></tr></thead>
+<tbody>
+<tr><td><strong>admin-ret</strong></td><td>Retención</td><td><strong>Crear, modificar y eliminar programas académicos</strong>, más inscripciones a carrera</td></tr>
+<tr><td><strong>admin-general-eng</strong></td><td>Engagement</td><td><strong>Crear, modificar y eliminar programas de asignatura</strong></td></tr>
+<tr><td>gestor-ret</td><td>Retención</td><td>Ver programas académicos e inscripciones</td></tr>
+<tr><td>admin-centro-eng, responsable-eng, estudiante-eng</td><td>Engagement</td><td>Escribir o ver el <strong>sílabo</strong>, que en la plataforma es el mismo objeto que sus ofertas de servicio</td></tr>
+<tr><td>Gestor, Facilitador, Viewer, Limited Editor, Docente</td><td>Sin dueño declarado</td><td>Nada. Cuatro no tienen a nadie asignado; dos son pruebas de permisos de campo</td></tr>
+</tbody></table></div>
+<div class="call stop"><span class="lbl">Por qué pasa, y por qué corta para los dos lados</span>
+<p>Los permisos se otorgan <strong>sobre el objeto</strong>, y el objeto no distingue de qué producto es cada registro. Cuando dos productos comparten un objeto, un permiso pensado para uno alcanza al otro. <strong>Los módulos curriculares no declaran esos permisos:</strong> vienen del otro producto.</p>
+<p>Y es simétrico, no una intromisión ajena: <strong>nuestro <code>Diseñador Curricular</code> puede crear y modificar ofertas de servicio de Engagement</strong>, por exactamente el mismo motivo. Es un tema conocido, en coordinación con ese equipo.</p>
+<p><strong>Lo que esto significa para la decisión:</strong> "qué rol ve cd o cm" no es lo mismo que "qué rol puede tocar el contenido". La lista de roles de cada módulo controla lo primero. Lo segundo se controla en los permisos, y hay permisos que no son nuestros.</p></div>
+<p class="note">Sobre <code>Docente</code>: existe en el core con cero permisos y nadie asignado, generado por una configuración de vista de Engagement. Se menciona porque el nombre coincide con uno de los perfiles a contrastar, no porque sirva hoy para algo.</p>
+
+<h2 id="cerrado">Lo que ya está decidido y no se reabre acá</h2>
+<span class="kind ctx">Contexto</span>
+<p>Para que la revisión no vuelva sobre lo cerrado. Nada de esto depende de las dos preguntas.</p>
+<div class="tw"><table>
+<thead><tr><th>Qué</th><th>Cómo quedó</th></tr></thead>
+<tbody>
+<tr><td>Que los permisos se declaren por módulo</td><td><strong>Aprobado.</strong> Cada módulo gobierna su alcance</td></tr>
+<tr><td>Los nombres de los roles</td><td><code>Learning Assurance - &lt;Rol&gt;</code>, con el nombre del rol en español. El prefijo nombra a la <strong>familia</strong>, no al módulo, porque el juego de roles es compartido</td></tr>
+<tr><td>Los nombres de los conjuntos de permisos</td><td><code>Curriculum Design - &lt;Rol&gt;</code> y <code>Curriculum Mapping - &lt;Rol&gt;</code>, con el módulo en inglés</td></tr>
+<tr><td>Cómo se reparte el alcance entre cd y cm</td><td>Cada conjunto se dimensiona a su módulo. El de Consulta es la base y los otros tres la extienden</td></tr>
+<tr><td>El rol sobrante y los conjuntos de prueba</td><td>Se retiran. La causa que los generaba ya está corregida</td></tr>
+<tr><td>El permiso de ver instituciones</td><td>Se agrega, con lo que los cuatro roles pueden crear planes de estudio</td></tr>
+</tbody></table></div>
+
+<h2 id="anexos"><span class="num">8</span>Anexos</h2>
+<span class="kind ctx">Datos</span>
+<p>Leídos del ambiente de referencia UPU el 17 de agosto de 2026.</p>
+
+<details class="anx"><summary>A. Los 9 roles en juego, ordenados por alcance curricular</summary>
+<div class="body">
+<div class="tw"><table>
+<thead><tr><th>Rol</th><th>Catálogo</th><th>Curricular</th><th>Total del rol</th><th>Personas</th></tr></thead>
+<tbody>
+<tr><td>Admin</td><td>Core</td><td class="n">186</td><td class="n">776</td><td class="n">51</td></tr>
+<tr><td><strong>Consultor</strong></td><td>Core</td><td class="n"><span class="big">186</span></td><td class="n">769</td><td class="n">91</td></tr>
+<tr><td>Autoridad Curricular</td><td>Learning Assurance</td><td class="n">54</td><td class="n">56</td><td class="n">30</td></tr>
+<tr><td>Diseñador Curricular</td><td>Learning Assurance</td><td class="n">53</td><td class="n">55</td><td class="n">30</td></tr>
+<tr><td>Revisor Curricular</td><td>Learning Assurance</td><td class="n">25</td><td class="n">27</td><td class="n">30</td></tr>
+<tr><td>Consultor Curricular</td><td>Learning Assurance</td><td class="n">18</td><td class="n">20</td><td class="n">30</td></tr>
+<tr><td>Coordinador</td><td>Core</td><td class="n">4</td><td class="n">46</td><td class="n">4</td></tr>
+<tr><td>Estudiante</td><td>Core</td><td class="n">1</td><td class="n">7</td><td class="n">11</td></tr>
+<tr><td>Colaborador</td><td>Core</td><td class="n zero">0</td><td class="n zero">0</td><td class="n zero">0</td></tr>
+</tbody></table></div>
+<h4>Criterio del conteo</h4>
+<p>"Curricular" cuenta los permisos sobre los objetos de cd y cm, incluidos los permisos del módulo mismo y el sílabo compartido con Engagement, y contando los permisos a nivel de campo donde existen (solo Revisor y Autoridad tienen dos cada uno). Un documento anterior del equipo reportó 166 para Admin y Consultor: ese conteo usaba una lista más corta de objetos, sin inscripciones ni los permisos de acceso a los módulos, y sin el sílabo.</p>
+</div></details>
+
+<details class="anx"><summary>B. Cómo están asignados los roles hoy <span>· y por qué importa</span></summary>
+<div class="body">
+<p>En el ambiente de referencia casi nadie tiene un solo rol: 69 personas tienen 11 roles, 17 tienen 17, y dos tienen 22.</p>
+<div class="call stop"><span class="lbl">El dato que más cambia la lectura</span><p><strong>Las 30 personas que tienen un rol curricular tienen además <code>Consultor</code> o <code>Admin</code>.</strong> Hoy los roles de Learning Assurance están puestos <strong>encima</strong> de personas que ya tienen acceso total.</p>
+<p>Combinado con la regla 1, eso significa que <strong>el alcance acotado del rol curricular solo se nota cuando ese es el rol activo de la persona</strong>. Si su rol activo es <code>Consultor</code> o <code>Admin</code>, tiene todo; para trabajar acotada tiene que cambiarse al rol curricular a propósito. Y como la plataforma elige el rol activo por quien nunca eligió, <strong>ese acotamiento no está garantizado por defecto</strong>.</p>
+<p>Y en la otra dirección: para esas 30 personas la migración <strong>no puede quitarles nada</strong>, porque su acceso amplio no viene del rol curricular. Eso hace que la pregunta sobre <code>Consultor</code> sea la que de verdad mueve la aguja.</p></div>
+<p class="note">Este reparto es de un ambiente de prueba y no representa cómo aprovisiona una institución. Sirve para entender la forma del problema, no para dimensionar el impacto en un cliente.</p>
+</div></details>
+
+<details class="anx"><summary>C. Glosario de acciones</summary>
+<div class="body">
+<div class="tw"><table>
+<thead><tr><th>Acción</th><th>Qué significa</th></tr></thead>
+<tbody>
+<tr><td>ver</td><td>Listar y abrir el detalle</td></tr>
+<tr><td>crear / modificar</td><td>Alta y edición de contenido</td></tr>
+<tr><td>eliminar</td><td>Borrado</td></tr>
+<tr><td>clonar</td><td>Copiar un registro existente como punto de partida</td></tr>
+<tr><td>versionar</td><td>Crear una versión nueva conservando la anterior</td></tr>
+<tr><td>aprobar</td><td>Aprobar contenido enviado a revisión</td></tr>
+<tr><td>publicar</td><td>Dejar el contenido vigente</td></tr>
+<tr><td>revertir</td><td>Volver a un estado anterior</td></tr>
+<tr><td>deprecar / archivar</td><td>Retirar de uso sin eliminar</td></tr>
+<tr><td>mover estado</td><td>Cambiar el registro de etapa en su ciclo de vida</td></tr>
+<tr><td>auditar</td><td>Ver el historial de cambios de ese objeto</td></tr>
+</tbody></table></div>
+</div></details>
+
+<footer>
+Documento de trabajo de UPONE-1615, sprint SP9. Datos leídos del ambiente de referencia UPU el 17 de agosto de 2026. El modelo ya aprobado, con el detalle de nombres y conjuntos de permisos, está en el documento de decisiones del equipo.
+</footer>
+</main>
+</div>

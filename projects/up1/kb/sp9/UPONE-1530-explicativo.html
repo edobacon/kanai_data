@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPONE-1530 · Curriculum Mapping · MCP sync</title>
+<style>
+:root{
+  color-scheme: light;
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f6f7f8,#212121);
+  --up1-gray-100: light-dark(#e9ebed,#2c2c2c);
+  --up1-gray-200: light-dark(#d9dde1,#3a3a3a);
+  --up1-gray-300: light-dark(#c5c5c5,#525252);
+  --up1-gray-600: light-dark(#6b7280,#a3a3a3);
+  --up1-gray-700: light-dark(#3f4753,#d4d4d4);
+  --up1-gray-900: light-dark(#1f2733,#fafafa);
+  --pri-50: light-dark(#E7F2F3, rgba(45,212,191,.10));
+  --pri-100: light-dark(#c9e5e7, rgba(45,212,191,.16));
+  --pri: light-dark(#0a808c,#2dd4bf);
+  --pri-600: light-dark(#0b6d78,#14b8a6);
+  --ok: light-dark(#1f8a5b,#22c55e);
+  --ok-bg: light-dark(#eafaf1,rgba(34,197,94,.12));
+  --warn: light-dark(#b45309,#fbbf24);
+  --warn-bg: light-dark(#fff8ec,rgba(245,158,11,.12));
+  --danger: light-dark(#b42318,#ef4444);
+  --danger-bg: light-dark(#fef3f2,rgba(239,68,68,.12));
+  --mut-bg: light-dark(#f1f3f5,rgba(255,255,255,.05));
+  --purple: light-dark(#7c3aed,#a78bfa);
+  --purple-bg: light-dark(#f0e6f7,rgba(167,139,250,.14));
+  --bg: var(--up1-gray-50); --card: var(--up1-gray-0);
+  --tx: var(--up1-gray-900); --tx2: var(--up1-gray-700); --mut: var(--up1-gray-600);
+  --bd: var(--up1-gray-200);
+  --radius:14px; --radius-sm:9px;
+  --sh: 0 1px 2px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.4)), 0 8px 24px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.5));
+}
+@media (prefers-color-scheme: dark){ :root{ color-scheme: dark; } }
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:34px 22px 80px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);background:var(--pri-50);border:1px solid var(--pri-100);padding:5px 12px;border-radius:999px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:5px 11px;border-radius:999px;margin-left:8px}
+.badge.cond{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+h1{font-size:28px;line-height:1.18;margin:16px 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin:0 0 4px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.mchip{font-size:11.5px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:3px 10px}
+.ask{font-size:16.5px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--pri);border-radius:var(--radius-sm);padding:14px 16px;margin:18px 0 4px}
+.ask b{color:var(--tx)}
+h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:40px 0 14px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--bd)}
+h3.sh{font-size:13px;font-weight:700;color:var(--tx);margin:22px 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:16px;box-shadow:var(--sh)}
+.panel h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:8px}
+.pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.pill.now{background:var(--up1-gray-100);color:var(--tx2)}
+.pill.tgt{background:var(--pri-50);color:var(--pri);border:1px solid var(--pri-100)}
+.pill.cond{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn)}
+/* evidencia */
+.evbox{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.evitem{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.etag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.etag.ver{background:var(--ok-bg);color:var(--ok)}
+.etag.pend{background:var(--warn-bg);color:var(--warn)}
+.etag.contra{background:var(--danger-bg);color:var(--danger)}
+.ebody{font-size:13px;color:var(--tx2);line-height:1.5}
+.esrc{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);margin:8px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* bars */
+.bars{display:flex;align-items:flex-end;gap:26px;height:150px;margin:14px 0 6px;padding:0 4px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bar .fill{width:100%;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center}
+.bar.design .fill{height:130px;background:var(--pri)}
+.bar.engagement .fill{height:82px;background:var(--pri-600)}
+.bar.mapping .fill{height:130px;border:2px dashed var(--danger);background:transparent}
+.bar .fillnum{font-weight:800;font-size:22px;color:#fff}
+.bar.mapping .fillnum{color:var(--danger)}
+.bar .lbl{font-size:11.5px;color:var(--mut);margin-top:8px;text-align:center;line-height:1.3}
+.bars2 .fill{background:var(--pri-100)!important;border:none!important}
+.bars2 .bar.design .fill{height:130px}
+.bars2 .bar.engagement .fill{height:82px}
+.bars2 .bar.mapping .fill{height:30px;background:var(--warn-bg)!important;border:2px dashed var(--warn)!important}
+.bars2 .bar.mapping .fillnum{color:var(--warn);font-size:15px}
+.bars2 .fillnum{color:var(--tx2)}
+/* fases */
+.phases{display:flex;align-items:stretch;gap:12px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px}
+.phase{flex:1;min-width:180px;border:1px solid var(--bd);border-radius:12px;padding:13px;background:var(--card);position:relative}
+.phase.done{border-color:var(--ok);background:var(--ok-bg)}
+.phase.partial{border-color:var(--warn);background:var(--warn-bg)}
+.phase.pending{border-style:dashed;background:var(--mut-bg)}
+.phase .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+.phase.done .dot{background:var(--ok)}
+.phase.partial .dot{background:var(--warn)}
+.phase.pending .dot{background:var(--mut)}
+.phase .n{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.phase .tt{font-weight:700;font-size:14px;margin:4px 0 5px}
+.phase .dd{font-size:12.5px;color:var(--tx2)}
+.phase .jira{display:inline-block;font-size:10px;font-weight:700;background:var(--up1-gray-100);color:var(--tx2);padding:1px 7px;border-radius:999px;margin:6px 4px 0 0}
+.blocked{border:1px dashed var(--mut);border-radius:var(--radius-sm);padding:12px 15px;background:var(--mut-bg);font-size:13px;color:var(--tx2);margin-top:6px}
+.blocked b{color:var(--tx)}
+/* tickets relacionados */
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);overflow:hidden;min-width:600px}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}
+th{background:var(--up1-gray-50);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);font-weight:700}
+tr:last-child td{border-bottom:0}
+tr.risk{background:var(--danger-bg)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--up1-gray-100);padding:1px 6px;border-radius:5px;color:var(--tx)}
+.st{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.st.fin{background:var(--ok-bg);color:var(--ok)}
+.st.back{background:var(--up1-gray-100);color:var(--tx2)}
+/* callouts */
+.callout{background:var(--warn-bg);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:12px 15px;font-size:13.5px;color:var(--tx2);margin-top:14px}
+.callout b{color:var(--tx)}
+.callout.info{background:var(--pri-50);border-color:var(--pri-100);border-left-color:var(--pri)}
+.callout.danger{background:var(--danger-bg);border-color:var(--danger);border-left-color:var(--danger)}
+.callout .tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--danger);margin-bottom:5px}
+/* guide chips */
+.guide{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.gitem{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.gtag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.gtag.fav{background:var(--ok-bg);color:var(--ok)}
+.gtag.no{background:var(--danger-bg);color:var(--danger)}
+.gtag.ojo{background:var(--warn-bg);color:var(--warn)}
+.gtag.gate{background:var(--pri-50);color:var(--pri);border:1px solid var(--pri-100)}
+.gbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.gsrc{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+/* frontera */
+.frontpanel{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:16px;box-shadow:var(--sh)}
+.napill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--mut);background:var(--up1-gray-100);border-radius:999px;padding:5px 13px;margin-bottom:10px}
+.frontpanel ul{margin:10px 0 0;padding-left:18px;font-size:13px;color:var(--tx2)}
+.frontpanel li{margin:6px 0}
+.foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">UPONE-1530 · Tarea · Epic UPONE-1452 Curriculum Mapping · Eduardo Bacon</span>
+  <span class="badge cond">Carga condicional</span>
+  <h1>Curriculum Mapping | MCP sync</h1>
+  <p class="sub">Sprint Migracion uAssessment SP9 (arrastre de SP8). Prioridad Trivial. Story Points en Jira: sin asignar.</p>
+  <div class="meta">
+    <span class="mchip">Estimacion propia: 3 SP (subconjunto estable) a 5 SP si se suma la matriz en escritura</span>
+    <span class="mchip">Sin descripcion en Jira: el titulo es el unico enunciado del PO</span>
+    <span class="mchip">El PO evalua el lunes si hay espacio despues de la carga grande del sprint</span>
+  </div>
+
+  <div class="ask">
+    <b>Que se pide:</b> exponer el dominio de curriculum mapping en el servidor MCP con el mismo estandar que ya tiene curriculum design: operaciones consultables y gobernadas, con los permisos del usuario real como frontera, cubiertas por pruebas y siguiendo los protocolos propios del MCP (vista previa antes de confirmar, resolucion semantica de referencias y enums, higiene de la salida).
+  </div>
+
+  <h2>Evidencia del caso</h2>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--ok)"></span> verificado</span>
+    <span><span class="sw" style="background:var(--warn)"></span> pendiente de confirmar</span>
+    <span><span class="sw" style="background:var(--danger)"></span> contradiccion detectada</span>
+  </div>
+  <div class="evbox">
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">El servidor MCP expone <b>38 operaciones</b> de curriculum design y <b>24</b> de engagement, mas las genericas de consulta, vistas, meta, autenticacion, contexto e historial.<span class="esrc">Fuente: `src/mods/curriculum-design/index.ts:74-93`; `src/mods/uengagement/index.ts:32-42`; registro de paquetes `src/mods/index.ts:17`.</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">Curriculum mapping no tiene <b>ninguna</b> operacion, y sus objetos <b>no estan en la lista de tipos permitidos</b>: ni el CRUD generico de consulta puede tocarlos hoy.<span class="esrc">Fuente: `src/mods/index.ts:35-39` (lista derivada de los objetos de los paquetes registrados).</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">El patron de alta esta documentado con tres recetas (declarar tipo y contrato sin codigo de operacion; sumar una operacion de dominio a un paquete existente; crear un paquete nuevo) y un checklist de cierre.<span class="esrc">Fuente: `docs/EXTENDING.md:38-67, 114-137, 332-342`.</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">Hay un molde completo de punta a punta que ya resuelve autenticacion, permisos como frontera, esquema de entrada y vista previa antes de confirmar.<span class="esrc">Fuente: `src/mods/curriculum-design/graduation-profile.ts` (157 lineas; autenticacion :32-37, permisos :80,113, esquemas :73-75,102-108, vista previa :130-131,147-148), registrado en `src/mods/curriculum-design/index.ts:87,147`.</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">Las pruebas del MCP cubren logica pura importando las funciones de la operacion e inyectando dobles de las escrituras. No hay integracion automatizada contra una instancia real de up1.<span class="esrc">Fuente: `test/requirement-tree-ops.test.ts:1-30`; hoja de ruta del MCP (integracion extremo a extremo declarada pendiente).</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">El backend de curriculum-mapping esta en fase de diseno: esquema de niveles y escala de cobertura implementados (F1), matriz de competencia con nodo de competencias parcial y arbol/asociacion a planes diferidos (F2), tributacion no implementada (F3).<span class="esrc">Fuente: documentacion de fases del mod `curriculum-mapping`.</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">Tres objetos del dominio (alineacion de competencias y dos piezas de rubrica) tienen esquema pero <b>no</b> resolver de escritura gobernada propio; dependen del CRUD generico, hoy inhabilitado para ellos.<span class="esrc">Fuente: documentacion de fases del mod `curriculum-mapping`.</span></div></div>
+    <div class="evitem"><span class="etag contra">Contradiccion</span><div class="ebody">La documentacion interna del mod se contradice consigo misma: el contexto para agentes dice que el nodo de competencias no esta implementado, mientras la documentacion de fases y el catalogo de capabilities (tocados despues) dicen que si. Gana el codigo, no la doc.<span class="esrc">Fuente: documentacion de fases vs contexto para agentes del mod `curriculum-mapping`.</span></div></div>
+    <div class="evitem"><span class="etag ver">Verificado</span><div class="ebody">UPONE-1633, en el mismo sprint y de otro desarrollador, construye precisamente las partes de la matriz que quedaron diferidas.<span class="esrc">Fuente: tabla de tickets relacionados de este ticket; planificacion de SP9.</span></div></div>
+    <div class="evitem"><span class="etag pend">Pendiente</span><div class="ebody">Si UPONE-1633 cambia la forma de los objetos que este ticket expondria. Se resuelve preguntando a su dueno antes de elegir el subconjunto a sincronizar.<span class="esrc">Fuente: hipotesis de la guia de implementacion, a confirmar.</span></div></div>
+    <div class="evitem"><span class="etag pend">Pendiente</span><div class="ebody">Que subconjunto del dominio se expone (hay tres opciones abiertas) y si el ticket se ejecuta en SP9 o se mueve, dado su caracter condicional.<span class="esrc">Fuente: decisiones abiertas del ticket.</span></div></div>
+  </div>
+
+  <h2>Estado inicial vs estado esperado</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill now">Ahora</span> Curriculum mapping fuera del MCP</h3>
+      <div class="bars">
+        <div class="bar design"><div class="fill"><span class="fillnum">38</span></div><div class="lbl">Curriculum<br>design</div></div>
+        <div class="bar engagement"><div class="fill"><span class="fillnum">24</span></div><div class="lbl">Engagement</div></div>
+        <div class="bar mapping"><div class="fill"><span class="fillnum">0</span></div><div class="lbl">Curriculum<br>mapping</div></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--mut);margin:2px 0 0">Operaciones por dominio registradas en el servidor MCP. El bloque de mapping esta vacio: sus objetos no estan ni en la lista de tipos permitidos, asi que ni las operaciones genericas de consulta lo alcanzan.</p>
+    </div>
+    <div class="panel">
+      <h3><span class="pill cond">Entrega esperada</span> Subconjunto estable habilitado</h3>
+      <div class="bars bars2">
+        <div class="bar design"><div class="fill"><span class="fillnum">38</span></div><div class="lbl">Curriculum<br>design</div></div>
+        <div class="bar engagement"><div class="fill"><span class="fillnum">24</span></div><div class="lbl">Engagement</div></div>
+        <div class="bar mapping"><div class="fill"><span class="fillnum">?</span></div><div class="lbl">Curriculum<br>mapping</div></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--tx2);margin:2px 0 8px">Opcion recomendada por la guia de implementacion: habilitar esquema de niveles, escala de cobertura y la matriz en <b>lectura</b>. Numero exacto de operaciones sin cerrar: depende de la decision de alcance todavia abierta.</p>
+      <p style="font-size:12.5px;color:var(--mut);margin:0">Mismos protocolos que curriculum design: permisos del usuario real como frontera, vista previa en toda escritura que se agregue, referencias y enums resueltos por nombre, catalogo y documentacion actualizados.</p>
+    </div>
+  </div>
+
+  <h2>Estados relacionados</h2>
+  <div class="callout danger">
+    <span class="tag">Riesgo de secuencia</span>
+    UPONE-1633 esta en el mismo sprint, es de otro desarrollador y construye ahora mismo las partes de la matriz que hoy estan diferidas (arbol de competencias y asociacion a planes). Sincronizar este ticket antes o en paralelo significa apuntar a un blanco en movimiento: parte del trabajo se haria contra un modelo que cambia dentro del mismo sprint.
+  </div>
+  <p style="font-size:13.5px;color:var(--tx2);margin-top:14px">El terreno con el que este ticket convive:</p>
+  <ul style="font-size:13.5px;color:var(--tx2)">
+    <li><b>UPONE-1454</b> y <b>UPONE-1455</b> (Finalizadas): esquema de niveles y escala de cobertura ya viven en el mod, cada uno con su resolver de alta gobernada. Es el terreno estable de este ticket.</li>
+    <li><b>UPONE-1537</b> (Finalizada): construyo la matriz de competencia con sus datos generales y el nodo de competencias con resolvers gobernados de creacion y actualizacion. La matriz en lectura de este ticket se apoya en ese trabajo.</li>
+    <li><b>UPONE-1633</b> (Backlog, mismo sprint): retoma justo donde UPONE-1537 dejo diferido. Ver riesgo de secuencia arriba.</li>
+    <li><b>UPONE-1619</b> (Backlog, hermano SP9): comparte el acuerdo de que la sincronizacion con el MCP es parte de cada historia que toca core, y compite por la misma capacidad del sprint.</li>
+  </ul>
+  <div class="callout">
+    <b>Coordinacion verificada (2026-08-17):</b> UPONE-1615 esta en <b>este mismo sprint</b>, con prioridad
+    <b>Critica</b>, en Backlog y <b>sin asignar</b>, y su alcance incluye migrar los roles curriculares y
+    completar sus capabilities. Como el MCP usa los permisos del usuario real como frontera, <b>lo que el
+    MCP puede hacer cambia con ese ticket</b>. Afecta sobre todo a la verificacion de este ticket (el
+    criterio de "usuario sin la capability es rechazado" se prueba contra el modelo de roles vigente en ese
+    momento): coordinar el orden de la verificacion, no el del desarrollo.
+  </div>
+
+  <h2>Tickets relacionados directos</h2>
+  <div class="twrap">
+  <table>
+    <thead><tr><th>Ticket</th><th>Que es</th><th>Relacion</th><th>Estado Jira</th></tr></thead>
+    <tbody>
+      <tr><td><code>UPONE-1452</code></td><td>Epic Curriculum Mapping</td><td>contenedor</td><td><span class="st back">Backlog</span></td></tr>
+      <tr><td><code>UPONE-1454</code></td><td>Esquema de niveles</td><td>terreno estable a exponer</td><td><span class="st fin">Finalizada</span></td></tr>
+      <tr><td><code>UPONE-1455</code></td><td>Escalas de cobertura</td><td>terreno estable a exponer</td><td><span class="st fin">Finalizada</span></td></tr>
+      <tr><td><code>UPONE-1537</code></td><td>Matriz de competencia: datos generales</td><td>objeto a exponer; deja partes diferidas que se construyen en este sprint</td><td><span class="st fin">Finalizada</span></td></tr>
+      <tr class="risk"><td><code>UPONE-1633</code></td><td>Matriz de competencia: adopcion y competencias</td><td><b>coordinar:</b> construye en SP9 las partes diferidas de la matriz; define si conviene esperarlo</td><td><span class="st back">Backlog</span></td></tr>
+      <tr><td><code>UPONE-1619</code></td><td>Implementacion de InstructionalComponent</td><td>hermano SP9; comparte el acuerdo de sincronizacion con el MCP y compite por la capacidad del sprint</td><td><span class="st back">Backlog</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Modelo: fases del backend a exponer</h2>
+  <div class="phases">
+    <div class="phase done">
+      <span class="jira">UPONE-1454</span><span class="jira">UPONE-1455</span>
+      <div class="n"><span class="dot"></span>F1 · Implementado</div>
+      <div class="tt">Esquema de niveles y escala de cobertura</div>
+      <div class="dd">Cada uno con su resolver de alta gobernada. Terreno estable, no cambia este sprint.</div>
+    </div>
+    <div class="phase partial">
+      <span class="jira">UPONE-1537</span>
+      <div class="n"><span class="dot"></span>F2 · Parcial</div>
+      <div class="tt">Matriz de competencia</div>
+      <div class="dd">Nodo de competencias con resolvers de creacion/actualizacion ya construidos. <b>Diferido:</b> arbol de competencias y asociacion a planes (los construye UPONE-1633 en este mismo sprint).</div>
+    </div>
+    <div class="phase pending">
+      <div class="n"><span class="dot"></span>F3 · No implementado</div>
+      <div class="tt">Tributacion</div>
+      <div class="dd">La tributacion real del dominio todavia no existe en el backend.</div>
+    </div>
+  </div>
+  <div class="blocked">
+    <b>Sin resolver de escritura propio:</b> la alineacion de competencias y las dos piezas de rubrica tienen esquema pero dependen del CRUD generico, hoy inhabilitado para ellas por no estar en la lista de tipos permitidos. Exponerlas para escritura sin ese resolver convertiria al MCP en una puerta que evade las validaciones de negocio del dominio.
+  </div>
+
+  <h2>Frontera core/mod (Aduana)</h2>
+  <div class="frontpanel">
+    <span class="napill">N/A para la frontera core/mod de up1</span>
+    <p style="font-size:13.5px;color:var(--tx2);margin:0">Los artefactos de este ticket viven en el repositorio del servidor MCP, un producto aparte de la plataforma up1. No se crea ni se modifica codigo de un mod ni de sus workspaces core, asi que la pregunta de genericidad core/mod no aplica a lo que este ticket construye.</p>
+    <ul>
+      <li><b>El veredicto cambia si el alcance obliga a tocar el mod.</b> Si se decide exponer para escritura los tres objetos sin resolver propio, esas operaciones habria que crearlas dentro del mod curriculum-mapping, y eso si exige su propia pasada de frontera antes de ejecutar.</li>
+      <li><b>La higiene del limite corre igual.</b> El MCP no debe convertirse en una puerta que evada las reglas de la plataforma: los permisos del usuario real, el registro de auditoria y las validaciones de negocio tienen que seguir aplicando por el camino del MCP igual que por la interfaz.</li>
+    </ul>
+  </div>
+
+  <h2>Reglas y patrones up1 a considerar</h2>
+  <div class="guide">
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Habilitar el objeto en la lista de tipos permitidos es condicion previa: sin eso, ni las operaciones genericas de consulta pueden tocarlo.<span class="gsrc">Fuente: `src/mods/index.ts:35-39`.</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Empezar por el camino mas barato de la guia de extension: declarar el tipo y su contrato cubre la consulta sin escribir codigo de operacion.<span class="gsrc">Fuente: `docs/EXTENDING.md:38-67` (receta 1).</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Tomar como molde una operacion existente completa de curriculum design, que ya trae autenticacion, verificacion de permisos, esquema de entrada y vista previa antes de confirmar.<span class="gsrc">Fuente: `src/mods/curriculum-design/graduation-profile.ts`.</span></div></div>
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Toda escritura devuelve vista previa si no viene confirmada. Es protocolo del MCP, no opcional.<span class="gsrc">Fuente: `docs/EXTENDING.md:142`; `src/tools/preview.ts`.</span></div></div>
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Los permisos del usuario real se verifican antes de mutar: el MCP no ejecuta lo que el usuario no puede hacer en la plataforma.<span class="gsrc">Fuente: `src/auth/permissions.ts:1-5`, resolucion en `:34-44`; molde en `graduation-profile.ts:80,113`.</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Presentar referencias y enums como opciones reales resueltas por nombre, para que el usuario elija con informacion y se envie el identificador correcto.<span class="gsrc">Fuente: `docs/CONVENTIONS.md`.</span></div></div>
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">Las pruebas del MCP cubren logica pura con dobles: un verde ahi no prueba que la operacion funcione contra la plataforma real. Cerrar con verificacion real.<span class="gsrc">Fuente: hoja de ruta del MCP, integracion extremo a extremo declarada como pendiente.</span></div></div>
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">El backend de este dominio esta en fase de diseno y con piezas diferidas. Confirmar contra el codigo que existe la operacion antes de exponerla, no contra la propuesta del dominio ni contra la doc interna del mod, que esta desincronizada.<span class="gsrc">Fuente: documentacion de fases del mod `curriculum-mapping` vs su contexto para agentes.</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">No exponer un objeto para escritura si su unica via es el camino generico y el dominio exige validacion de negocio: eso convierte al MCP en una puerta lateral que evade reglas.<span class="gsrc">Fuente: analisis de riesgo de este ticket.</span></div></div>
+  </div>
+
+  <div class="foot">
+    Documento explicativo · Ticket (contrato): <code>UPONE-1530-detalle.md</code> · Guia de implementacion: <code>UPONE-1530-pre-intake.md</code>
+  </div>
+</div>
+</body>
+</html>

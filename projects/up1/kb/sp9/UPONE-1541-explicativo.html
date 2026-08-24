@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPONE-1541 · Seed de requisitos vs capacidad real del editor</title>
+<style>
+:root{
+  color-scheme: light;
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f6f7f8,#212121);
+  --up1-gray-100: light-dark(#e9ebed,#2c2c2c);
+  --up1-gray-200: light-dark(#d9dde1,#3a3a3a);
+  --up1-gray-300: light-dark(#c5c5c5,#525252);
+  --up1-gray-600: light-dark(#6b7280,#a3a3a3);
+  --up1-gray-700: light-dark(#3f4753,#d4d4d4);
+  --up1-gray-900: light-dark(#1f2733,#fafafa);
+  --pri-50: light-dark(#E7F2F3, rgba(45,212,191,.10));
+  --pri-100: light-dark(#c9e5e7, rgba(45,212,191,.16));
+  --pri: light-dark(#0a808c,#2dd4bf);
+  --pri-600: light-dark(#0b6d78,#14b8a6);
+  --or-50: light-dark(#f0e6f7, rgba(124,58,237,.12));
+  --or-100: light-dark(#ddc7ec, rgba(124,58,237,.20));
+  --or: light-dark(#7c3aed,#a78bfa);
+  --ok: light-dark(#1f8a5b,#22c55e);
+  --ok-bg: light-dark(#eafaf1,rgba(34,197,94,.12));
+  --warn: light-dark(#b45309,#fbbf24);
+  --warn-bg: light-dark(#fff8ec,rgba(245,158,11,.12));
+  --danger: light-dark(#b42318,#ef4444);
+  --danger-bg: light-dark(#fef3f2,rgba(239,68,68,.12));
+  --bg: var(--up1-gray-50); --card: var(--up1-gray-0);
+  --tx: var(--up1-gray-900); --tx2: var(--up1-gray-700); --mut: var(--up1-gray-600);
+  --bd: var(--up1-gray-200);
+  --radius:14px; --radius-sm:9px;
+  --sh: 0 1px 2px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.4)), 0 8px 24px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.5));
+}
+@media (prefers-color-scheme: dark){ :root{ color-scheme: dark; } }
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:34px 22px 80px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);background:var(--pri-50);border:1px solid var(--pri-100);padding:5px 12px;border-radius:999px}
+h1{font-size:29px;line-height:1.18;margin:16px 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin:0 0 8px}
+.tagteam{font-size:12px;color:var(--mut)}
+.ask{font-size:16.5px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--pri);border-radius:var(--radius-sm);padding:14px 16px;margin:20px 0 4px}
+.ask b{color:var(--tx)}
+.ask .note{display:block;font-size:12px;color:var(--mut);margin-top:8px;font-weight:400}
+h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:38px 0 14px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--bd)}
+h2 .cnt{font-size:11px;font-weight:700;color:var(--pri);background:var(--pri-50);border:1px solid var(--pri-100);border-radius:999px;padding:1px 9px;text-transform:none;letter-spacing:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:16px;box-shadow:var(--sh)}
+.panel h3{margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.pill.now{background:var(--up1-gray-100);color:var(--tx2)}
+.pill.tgt{background:var(--pri-50);color:var(--pri);border:1px solid var(--pri-100)}
+.pill.mini{font-size:10px;padding:1px 7px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--up1-gray-100);padding:1px 6px;border-radius:5px;color:var(--tx)}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);overflow:hidden}
+.tbl-wrap{width:100%;overflow-x:auto}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}
+th{background:var(--up1-gray-50);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);font-weight:700}
+tr:last-child td{border-bottom:0}
+.dot-ok{color:var(--ok);font-weight:700} .dot-open{color:var(--mut)}
+.callout{background:var(--warn-bg);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:12px 15px;font-size:13.5px;color:var(--tx2);margin-top:14px}
+.callout b{color:var(--tx)}
+.callout.info{background:var(--pri-50);border-color:var(--pri-100);border-left-color:var(--pri)}
+.callout.root{background:var(--danger-bg);border-color:var(--danger);border-left-color:var(--danger)}
+.callout.fix{background:var(--ok-bg);border-color:var(--ok);border-left-color:var(--ok)}
+.verdict{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok);border-radius:999px;padding:6px 14px}
+/* evidencia + reglas: tarjetas compartidas */
+.guide{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.gitem{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.gitem.contra{background:var(--danger-bg);border-color:var(--danger)}
+.gitem.pend{background:var(--warn-bg);border-color:var(--warn)}
+.gtag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.gtag.fav{background:light-dark(#eafaf1,rgba(34,197,94,.14));color:light-dark(#1f8a5b,#22c55e)}
+.gtag.no{background:light-dark(#fef3f2,rgba(239,68,68,.14));color:light-dark(#b42318,#ef4444)}
+.gtag.ojo{background:light-dark(#fff8ec,rgba(245,158,11,.16));color:light-dark(#b45309,#fbbf24)}
+.gtag.gate{background:var(--up1-gray-100);color:var(--tx2)}
+.gtag.ok{background:var(--ok-bg);color:var(--ok)}
+.gtag.contra{background:var(--danger);color:#fff}
+.gtag.pend{background:var(--warn);color:#fff}
+.gbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.gsrc{display:block;font-size:11px;color:var(--mut);margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:8px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+/* arbol de requisitos (comparacion) */
+.tree{font-size:12.5px}
+.tnode{position:relative;padding:8px 10px;margin:0 0 6px;border:1px solid var(--bd);border-radius:8px;background:var(--card)}
+.tnode.rt{border-left:3px solid var(--pri)}
+.tnode.gr{border-left:3px solid var(--or)}
+.tnode.leaf{background:var(--up1-gray-50)}
+.tnode.leaf.miss{border-style:dashed;border-color:var(--danger)}
+.tnode.glob{background:var(--up1-gray-50);border-left:3px solid var(--mut)}
+.tchildren{margin:6px 0 0 16px;padding-left:14px;border-left:2px dashed var(--bd);display:flex;flex-direction:column;gap:6px}
+.tcombi{display:inline-block;font-size:10px;font-weight:800;padding:1px 7px;border-radius:6px;margin-right:6px}
+.tcombi.and{background:var(--pri-50);color:var(--pri)}
+.tcombi.or{background:var(--or-50);color:var(--or)}
+.tlabel{font-weight:600;color:var(--tx)}
+.tsrc{font-size:10.5px;color:var(--mut);margin-left:6px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.tbadges{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.tbadge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px}
+.tbadge.ok{background:var(--ok-bg);color:var(--ok)}
+.tbadge.miss{background:var(--danger-bg);color:var(--danger);border:1px dashed var(--danger)}
+.tbadge.warn{background:var(--warn-bg);color:var(--warn)}
+.tnote{font-size:11.5px;color:var(--mut);margin-top:4px}
+/* contexto / estados relacionados */
+.ctxcard{background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:11px 13px}
+.ctxcard h4{margin:0 0 5px;font-size:13px;display:flex;align-items:center;gap:7px}
+.ctxcard p{margin:0;font-size:12.5px;color:var(--tx2)}
+.foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mut)}
+svg text{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.svgwrap{width:100%;overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="eyebrow">UPONE-1541 · Tarea · Curriculum Design · Epic UPONE-1267</span>
+  <h1>Ajustar el seed de requisitos para consistencia con la capacidad actual del sistema</h1>
+  <p class="sub">Programa de asignatura · asignado a Eduardo Bacon.</p>
+  <p class="tagteam">Sprint: Migracion uAssessment SP9 (arrastre de SP8) · Story Points en Jira: sin asignar, estimacion interna 3 SP.</p>
+
+  <div class="ask">
+    <b>Que se pide:</b> que el arbol de requisitos que siembra el seed sea uno que el usuario pueda construir y mantener desde el editor. Hoy el ejemplo se lee bien, pero propone una forma que el alta no puede crear: eso lo convierte en una promesa que el sistema no cumple.
+    <span class="note">Jira no tiene descripcion para este ticket: el titulo es el unico enunciado del PO. El resto de este documento reconstruye el alcance a partir del codigo y de un analisis interno previo. Revisado el 2026-08-17: el limite esta en el alta y en la edicion, no en la lectura.</span>
+  </div>
+
+  <h2>Evidencia del caso <span class="cnt">15 hechos verificados</span></h2>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--ok)"></span> verificado contra codigo</span>
+    <span><span class="sw" style="background:var(--danger)"></span> correccion de una lectura previa</span>
+  </div>
+  <div class="guide" style="margin-top:12px">
+    <div class="gitem contra">
+      <span class="gtag contra">Contradiccion</span>
+      <div class="gbody">El analisis interno del 2026-08-04 concluyo que el flujo de creacion de la UI <b>no podia reproducir</b> la forma anidada que siembra el seed, y esa conclusion <b>se sostiene</b>. Lo que hay que distinguir es la capa: el editor <b>lee y extiende</b> arboles anidados sin problema, porque busca el contenedor de vias a cualquier profundidad, pero <b>no puede crear</b> esa forma desde cero. La primera revision de este documento tomo lo segundo por lo primero y declaro la premisa refutada; queda corregido.
+        <span class="gsrc">Fuente: requirementCreate.logic.ts:57-83 (el contenedor se crea siempre en la raiz y reparenta hacia abajo)</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">El seed siembra <code>Group[AND]</code> raiz "Requisitos EST200" + <code>Group[OR]</code> "Via de ingreso" anidado + <code>Group[AND]</code> "Calculo + Algebra" bajo el OR + una condicion global de creditos colgando de la raiz.
+        <span class="gsrc">Fuente: mods/curriculum-design/seed/_data-requirement.js:97-130</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">El alta <b>convive</b> con ese patron pero no lo produce: <code>ensureOrContainer</code> usa <code>findViaContainer</code> para reusar el <code>Group[OR]</code> donde sea que este, y cuando no existe ninguno lo crea <b>en la raiz</b> y reparenta los nodos existentes <b>debajo</b> de el. No hay camino que cree un grupo por encima del contenedor, que es exactamente lo que el seed siembra.
+        <span class="gsrc">Fuente: requirementCreate.logic.ts:57-83</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">El docstring del propio archivo nombra el patron del seed como caso soportado, y hay tests dedicados. Leido con cuidado, lo que cubren es <b>extender</b> un arbol que ya tiene esa forma, no crearla: los tests parten de un fixture que ya la trae.
+        <span class="gsrc">Fuente: requirementCreate.logic.ts:5-9 y requirementCreate.logic.spec.ts:95-121</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">La capacidad de <b>extender</b> arboles anidados entro el 2026-07-29 con UPONE-1378 (Finalizada), y los archivos involucrados no tienen commits desde el 2026-08-04: el codigo de hoy es identico al de la fecha del analisis. Eso explica por que el editor convive con la forma del seed, y no cambia el hecho de que el usuario no la pueda construir.
+        <span class="gsrc">Fuente: UPONE-1378 (Finalizada); historial de commits de los cuatro archivos</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">De las 5 hojas <code>RecordState</code> del seed, 4 traen solo <code>mustBe: 'Approved'</code> sin <code>timing</code>. Como hoja de via eso es inalcanzable, porque el selector de condicion setea estado y momento juntos. Si es lo que produce el alta para las hojas de un <b>pool electivo</b>, que usan los presets de curso y no pasan por el selector.
+        <span class="gsrc">Fuente: _data-requirement.js:113-125 vs. requirementFamilies.logic.ts:75-79 y RequirementEditorElement.vue:832-843</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">La quinta hoja (advisory) si declara <code>timing: 'Either'</code> de forma deliberada, con un comentario propio que lo explica.
+        <span class="gsrc">Fuente: _data-requirement.js:136-143</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">Ninguna hoja del seed puebla <code>thresholdMinGrade</code>, y eso <b>no</b> es un problema de reproducibilidad: la UI lo ofrece como campo opcional, asi que dejarlo vacio es exactamente lo que hace un usuario que no exige nota minima.
+        <span class="gsrc">Fuente: rt__RecordState__requirement.json:31-37 y requirementFamilies.logic.ts:111</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">La UI, en cambio, deriva <code>timing</code> del selector de condicion en todos los casos. Esta asimetria de campos es la causa de que el arbol sembrado y uno creado a mano muestren distinto nivel de detalle.
+        <span class="gsrc">Fuente: requirementFamilies.logic.ts:74-79</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">El seed nombra sus contenedores a mano ("Via de ingreso", "Calculo + Algebra"); la UI usa sus defaults de contenedor cuando crea uno nuevo.
+        <span class="gsrc">Fuente: _data-requirement.js:97-110 vs. requirementCreate.logic.ts:108-138</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">Ningun test corre el loader real del seed y verifica la forma estructural que produce. El test de conteos existente invoca el loader real, pero solo valida que los objetivos resuelvan a asignaturas reales, sin mirar combinador ni jerarquia.
+        <span class="gsrc">Fuente: tests/integration/seed-counts.test.ts:471-508</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">Las condiciones globales (hojas hermanas del <code>Group[OR]</code>, colgando del <code>Group[AND]</code> raiz) <b>no son creables</b> desde la UI: toda hoja que crea el alta cuelga de un grupo de via o de un pool. El editor si las lee, las preserva y les da menu de acciones desde la vista arbol, armando la fila sintetica cuando el nodo no esta en el listado plano.
+        <span class="gsrc">Fuente: requirementCreate.logic.ts:108-138 (alta) y RequirementEditorElement.vue:941-959 (menu por nodo)</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">La edicion es <b>parcial</b>: "Editar" sobre una hoja cambia solo la exigencia (Obligatorio / Recomendado). No se puede cambiar el curso objetivo, la condicion, la nota minima ni el valor de la metrica. Es simetrico: tampoco se puede editar lo que el propio usuario creo, asi que no se resuelve ajustando el seed.
+        <span class="gsrc">Fuente: RequirementEditorElement.vue:917-935</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">Parte de los nombres los deriva el render y el label guardado nunca se ve: un grupo de via se rinde como "Via N" ignorando su label, y el verbo de la hoja ("Aprobar" / "Cursar") se prefija al mostrar. El label persistido si se muestra en el contenedor de vias, en el pool electivo y en las hojas.
+        <span class="gsrc">Fuente: RequirementTreeNode.ts:263,268 y :270-272</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ok">Verificado</span>
+      <div class="gbody">El bloque electivo que el seed siembra sobre un Plan no es reproducible ni visible: usa un efecto y unos creditos requeridos que ninguna pantalla captura, la escritura del editor esta acotada a asignatura, y ningun layout monta la vista del arbol para un Plan.
+        <span class="gsrc">Fuente: _data-requirement.js:184-196; requirementCreate.logic.ts:69,94; config/layouts (sin referencias a la vista)</span>
+      </div>
+    </div>
+    <div class="gitem">
+      <span class="gtag ojo">Advertencia</span>
+      <div class="gbody">Retirar ese bloque <b>no termina en el archivo de datos</b>: el loader devuelve la clave del bloque electivo en su resultado, y esa clave tiene <b>dos consumidores</b>, la linea de log del orquestador del seed y el mock de un test de entrada. Sin ajustarlos, el seed reporta un paso que ya no existe y el test afirma un contrato muerto. Se tocan en el mismo cambio.
+        <span class="gsrc">Fuente: _data-requirement.js:43,201; seed/seed.js:171; tests/integration/seed-entry.test.ts:121 (verificado 2026-08-17)</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Estado inicial vs. estado esperado</h2>
+  <p style="font-size:12.5px;color:var(--mut);margin:-4px 0 12px">El arbol cambia de forma: se aplana a lo que el alta produce. Los nodos en rojo son los que el usuario no tiene forma de crear.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill now">Ahora (seed)</span></h3>
+      <div class="tree">
+        <div class="tnode rt" style="border-left-color:var(--danger)">
+          <span class="tcombi and">AND</span><span class="tlabel">Requisitos EST200</span><span class="tsrc">:97-100</span>
+          <span class="tbadge miss" style="margin-left:6px">raiz no creable</span>
+          <div class="tchildren">
+            <div class="tnode gr">
+              <span class="tcombi or">OR</span><span class="tlabel">Via de ingreso</span><span class="tsrc">:102-105</span>
+              <span class="tbadge miss" style="margin-left:6px">no creable en esta posicion</span>
+              <div class="tchildren">
+                <div class="tnode gr">
+                  <span class="tcombi and">AND</span><span class="tlabel">Calculo + Algebra</span><span class="tsrc">:107-110</span>
+                  <span class="tbadge warn" style="margin-left:6px">label autorado</span>
+                  <div class="tchildren">
+                    <div class="tnode leaf miss">
+                      <span class="tlabel">2 hojas: Calculo I, Algebra</span><span class="tsrc">:113-120</span>
+                      <div class="tbadges"><span class="tbadge ok">Estado: Aprobado</span><span class="tbadge miss">Momento: sin declarar</span><span class="tbadge warn">label "Aprobar X"</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tnode leaf miss">
+                  <span class="tlabel">Calculo II (hoja suelta bajo el OR)</span><span class="tsrc">:122-125</span>
+                  <div class="tbadges"><span class="tbadge miss">no creable: toda hoja va bajo un grupo de via</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="tnode glob" style="border-left-color:var(--danger)">
+              <span class="tlabel">Umbral de creditos (global)</span><span class="tsrc">:127-130</span>
+              <div class="tbadges"><span class="tbadge miss">no creable: ninguna hoja se crea fuera de una via</span></div>
+            </div>
+            <div class="tnode glob" style="border-left-color:var(--danger)">
+              <span class="tlabel">Hoja recomendada (global)</span><span class="tsrc">:140-143</span>
+              <div class="tbadges"><span class="tbadge miss">no creable como global</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:12px">Aparte, sobre un <b>Plan</b> se siembra el bloque "Electivo de Especializacion" (<code>:184-196</code>), que no es reproducible ni visible en ninguna pantalla.</div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="pill tgt">Esperado (lo que el alta produce)</span></h3>
+      <div class="tree">
+        <div class="tnode gr">
+          <span class="tcombi or">OR</span><span class="tlabel">Cualquiera de las vias</span>
+          <span class="tbadge ok" style="margin-left:6px">default del alta</span>
+          <div class="tchildren">
+            <div class="tnode rt">
+              <span class="tcombi and">AND</span><span class="tlabel">Todos de la via</span>
+              <span class="tbadge ok" style="margin-left:6px">se rinde "Via 1"</span>
+              <div class="tchildren">
+                <div class="tnode leaf">
+                  <span class="tlabel">Calculo I · Algebra Lineal</span>
+                  <div class="tbadges"><span class="tbadge ok">Aprobado + antes</span><span class="tbadge ok">label "{nombre} ({codigo})"</span></div>
+                </div>
+                <div class="tnode leaf">
+                  <span class="tlabel">Umbral de creditos</span>
+                  <div class="tbadges"><span class="tbadge ok">duplicado en la via</span></div>
+                </div>
+                <div class="tnode leaf">
+                  <span class="tlabel">Hoja recomendada</span>
+                  <div class="tbadges"><span class="tbadge ok">Cursado + cualquiera</span><span class="tbadge ok">duplicada en la via</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="tnode rt">
+              <span class="tcombi and">AND</span><span class="tlabel">Todos de la via</span>
+              <span class="tbadge ok" style="margin-left:6px">se rinde "Via 2"</span>
+              <div class="tchildren">
+                <div class="tnode leaf">
+                  <span class="tlabel">Calculo II</span>
+                  <div class="tbadges"><span class="tbadge ok">Aprobado + antes</span></div>
+                </div>
+                <div class="tnode leaf">
+                  <span class="tlabel">Umbral de creditos · Hoja recomendada</span>
+                  <div class="tbadges"><span class="tbadge ok">duplicadas en la via</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="callout fix" style="margin-top:12px">Profundidad 3, dentro del techo del alta. Las dos condiciones hoy globales se <b>duplican</b> en cada via: bajo un OR, una condicion que vive en una sola via dejaria de exigirse cuando se cumple la otra. El bloque electivo del Plan se retira, y el caso K-de-N se preserva sembrando un electivo alcanzable dentro de una via.</div>
+    </div>
+  </div>
+
+  <h2>Labels: ninguno autorado</h2>
+  <p style="font-size:12.5px;color:var(--mut);margin:-4px 0 12px">Textos como "Requisitos EST200" no existen en la UI: el alta aplica un default <b>segun el rol del nodo</b>, no segun su combinador. La prueba es que el pool electivo tambien es un <code>Group[OR]</code> y no lleva el label del contenedor de vias.</p>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Label actual del seed</th><th>Pasa a</th><th>Quien lo define</th></tr></thead>
+    <tbody>
+      <tr><td>"Requisitos EST200" (raiz AND)</td><td>el nodo desaparece</td><td>la raiz pasa a ser el contenedor de vias</td></tr>
+      <tr><td>"Via de ingreso" (OR)</td><td>"Cualquiera de las vias"</td><td>default del contenedor de vias</td></tr>
+      <tr><td>"Calculo + Algebra" (AND)</td><td>"Todos de la via"</td><td>default del grupo de via, y ademas <b>nunca se muestra</b>: el render pone "Via N"</td></tr>
+      <tr><td>"Aprobar {nombre}" (x4)</td><td>"{nombre} ({codigo})"</td><td>label derivado de la asignatura; el render prefija el verbo</td></tr>
+      <tr><td>"≥ 60 creditos"</td><td>el literal que deriva la UI para la metrica</td><td>derivado de operador y valor</td></tr>
+      <tr><td>"Cursar {nombre}"</td><td>"{nombre} ({codigo})"</td><td>idem hojas</td></tr>
+      <tr><td>"Electivo de Especializacion"</td><td>el nodo se retira</td><td>bloque del Plan fuera del seed</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout">
+    <b>Consecuencia directa:</b> sin labels autorados el seed pierde su ancla por label, y el guard de idempotencia tiene que pasar a ser por owner (tipo de owner, id y padre nulo). Si se deja como esta, busca una raiz que ya nadie siembra y replanta el arbol en cada corrida.
+    <span style="display:block;font-size:11px;color:var(--mut);margin-top:4px;font-family:ui-monospace,Menlo,monospace">Fuente: _data-requirement.js:59-61</span>
+  </div>
+
+  <h2>Estados relacionados</h2>
+  <p style="font-size:13px;color:var(--tx2);margin:-4px 0 14px">Con que convive este ticket antes de tocar nada.</p>
+  <div class="grid3">
+    <div class="ctxcard">
+      <h4>UPONE-1378 <span class="pill mini" style="background:var(--ok-bg);color:var(--ok)">Finalizada</span></h4>
+      <p>Construyo el editor visual de requisitos Y/O y el alta con vias anidadas. El codigo que resuelve el contenedor a cualquier profundidad es justamente esa entrega, sin cambios desde entonces.</p>
+    </div>
+    <div class="ctxcard">
+      <h4>UPONE-1619 <span class="pill mini" style="background:var(--up1-gray-100);color:var(--tx2)">Backlog</span></h4>
+      <p>Tambien ajusta el seed de curriculum-design y sus conteos. Ejecutar ambos en paralelo sobre los mismos archivos de test de conteo genera pisadas: conviene acordar el orden antes de empezar.</p>
+    </div>
+    <div class="ctxcard">
+      <h4>Analisis de origen <span class="pill mini" style="background:var(--ok-bg);color:var(--ok)">2026-08-04</span></h4>
+      <p>Origino este ticket, y su conclusion se sostiene: la UI no puede reproducir la forma del seed. El matiz que hay que agregar es que el limite esta en el alta y en la edicion, no en la lectura.</p>
+    </div>
+  </div>
+
+  <h2>Tickets relacionados directos</h2>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Ticket</th><th>Que es</th><th>Relacion</th><th>Estado en Jira</th></tr></thead>
+    <tbody>
+      <tr><td><code>UPONE-1267</code></td><td>Epic Curriculum Design</td><td>Contenedor del ticket</td><td class="dot-open">Backlog</td></tr>
+      <tr><td><code>UPONE-1378</code></td><td>Requisitos de asignatura: editor visual Y/O + alerta de impacto</td><td>Antecedente: define el techo de forma que este ticket toma como referencia</td><td class="dot-ok">Finalizada</td></tr>
+      <tr><td><code>UPONE-1619</code></td><td>Implementacion de InstructionalComponent</td><td>Hermano de SP9: archivo de datos del seed <b>distinto</b>, asi que pueden avanzar en paralelo; lo compartido son los tests y la doc de conteos y la corrida del seed, coordinar ahi</td><td class="dot-open">Backlog</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Modelo: como el alta encuentra el contenedor</h2>
+  <p style="font-size:12.5px;color:var(--mut);margin:-4px 0 12px">La busqueda del contenedor de vias no se detiene en la raiz, y por eso el editor extiende el arbol del seed sin romperlo. Lo que el diagrama no muestra, porque no existe, es un camino que cree la raiz que esta arriba del contenedor.</p>
+  <div class="panel">
+    <div class="svgwrap">
+      <svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" style="min-width:640px">
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" style="fill:var(--danger)"/>
+          </marker>
+        </defs>
+
+        <rect x="290" y="16" width="220" height="46" rx="10" style="fill:var(--pri-50);stroke:var(--pri)"/>
+        <text x="400" y="36" text-anchor="middle" style="fill:var(--pri);font-weight:700;font-size:12px">Group[AND] "Requisitos EST200"</text>
+        <text x="400" y="52" text-anchor="middle" style="fill:var(--mut);font-size:10px">_data-requirement.js:97-100 (raiz)</text>
+
+        <path d="M355 62 L250 100" style="stroke:var(--bd);stroke-width:2;fill:none"/>
+        <path d="M445 62 L570 100" style="stroke:var(--bd);stroke-width:2;fill:none"/>
+
+        <rect x="130" y="100" width="240" height="46" rx="10" style="fill:var(--or-50);stroke:var(--or)"/>
+        <text x="250" y="120" text-anchor="middle" style="fill:var(--or);font-weight:700;font-size:12px">Group[OR] "Via de ingreso"</text>
+        <text x="250" y="136" text-anchor="middle" style="fill:var(--mut);font-size:10px">:102-105, anidado (profundidad 1)</text>
+
+        <rect x="470" y="100" width="230" height="46" rx="10" style="fill:var(--warn-bg);stroke:var(--warn)"/>
+        <text x="585" y="120" text-anchor="middle" style="fill:var(--warn);font-weight:700;font-size:12px">Condicion global (creditos)</text>
+        <text x="585" y="136" text-anchor="middle" style="fill:var(--mut);font-size:10px">:127-130, hoja hermana del OR</text>
+
+        <path d="M250 146 L250 184" style="stroke:var(--bd);stroke-width:2;fill:none"/>
+        <rect x="130" y="184" width="240" height="46" rx="10" style="fill:var(--pri-50);stroke:var(--pri)"/>
+        <text x="250" y="204" text-anchor="middle" style="fill:var(--pri);font-weight:700;font-size:12px">Group[AND] "Calculo + Algebra"</text>
+        <text x="250" y="220" text-anchor="middle" style="fill:var(--mut);font-size:10px">:107-110, profundidad 2</text>
+
+        <path d="M250 230 L250 268" style="stroke:var(--bd);stroke-width:2;fill:none"/>
+        <rect x="100" y="268" width="300" height="52" rx="10" style="fill:var(--up1-gray-50);stroke:var(--bd)"/>
+        <text x="250" y="288" text-anchor="middle" style="fill:var(--tx);font-weight:700;font-size:12px">5 hojas RecordState</text>
+        <text x="250" y="304" text-anchor="middle" style="fill:var(--mut);font-size:10px">4 sin timing :113-125 + 1 advisory con timing :136-143</text>
+
+        <path d="M395 44 C 330 68, 280 84, 253 100" style="stroke:var(--danger);stroke-width:2;stroke-dasharray:4 3;fill:none" marker-end="url(#arrowhead)"/>
+        <text x="330" y="76" style="fill:var(--danger);font-size:10.5px;font-weight:700">findViaContainer recorre por anchura, cualquier profundidad :69-77</text>
+
+        <rect x="560" y="184" width="185" height="52" rx="10" style="fill:var(--danger-bg);stroke:var(--danger);stroke-dasharray:3 3"/>
+        <text x="652" y="204" text-anchor="middle" style="fill:var(--danger);font-size:11px;font-weight:700">Crear OR nuevo en la raiz</text>
+        <text x="652" y="219" text-anchor="middle" style="fill:var(--mut);font-size:9.5px">solo si no existe ninguno :68-76</text>
+        <line x1="575" y1="196" x2="730" y2="224" style="stroke:var(--danger);stroke-width:2"/>
+        <line x1="730" y1="196" x2="575" y2="224" style="stroke:var(--danger);stroke-width:2"/>
+
+        <text x="380" y="352" text-anchor="middle" style="fill:var(--tx2);font-size:11.5px">Sobre el arbol sembrado: ensureOrContainer reusa el Group[OR] de profundidad 1 y no duplica el contenedor. :57-83</text>
+        <text x="380" y="372" text-anchor="middle" style="fill:var(--danger);font-size:11.5px;font-weight:700">Sobre un arbol vacio: crea el OR en la RAIZ y reparenta hacia abajo. Nunca un AND por encima, o sea la raiz del seed es inalcanzable.</text>
+      </svg>
+    </div>
+    <div class="callout root" style="margin-top:4px">El diagrama explica por que el editor <b>convive</b> con la forma del seed, y a la vez por que el usuario no la puede <b>construir</b>: el unico camino que crea el contenedor lo pone en la raiz. Las dos lecturas salen del mismo archivo, y confundirlas fue el error de la revision anterior de este documento.</div>
+    <p style="margin-top:14px"><span class="verdict">&#10003; Aduana: todo-mod-only. Ajuste de datos + prueba, sin coordinacion con core.</span></p>
+  </div>
+
+  <h2>Que se corrige respecto de la primera revision de este documento</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Decia la revision anterior</h3>
+      <p style="font-size:13px;color:var(--tx2);margin:0">Que la premisa del ticket estaba refutada, porque el alta busca el contenedor de vias a cualquier profundidad y por lo tanto "si soporta" la forma del seed. De ahi recomendaba <b>no</b> aplanar y acotar el ticket a poblar campos opcionales.</p>
+    </div>
+    <div class="panel">
+      <h3>Verificado el 2026-08-17</h3>
+      <p style="font-size:13px;color:var(--tx2);margin:0">Soportar al leer y al extender no es lo mismo que poder crear. El contenedor se crea siempre en la raiz y reparenta hacia abajo, ninguna hoja se crea fuera de una via o de un pool, y la edicion solo cambia la exigencia. La premisa del ticket <b>se sostiene</b>.</p>
+    </div>
+  </div>
+  <div class="callout info">
+    <b>Leccion que deja:</b> verificar la capacidad correcta. La pregunta del ticket era si el usuario puede construir lo que ve, y la verificacion previa midio si el sistema tolera lo que ya esta sembrado. Las dos usan los mismos archivos y dan respuestas opuestas.
+  </div>
+  <div class="callout">
+    <b>Efecto en el alcance:</b> el arbol sembrado se aplana a la forma que produce el alta, con las condiciones globales duplicadas por via para no perder su semantica, los labels alineados a los literales de la UI, el bloque electivo del Plan retirado y una prueba que asegure la forma. Habilitar la creacion de condiciones globales y completar la edicion de una hoja quedan como limites del editor, registrados y fuera de este ticket.
+  </div>
+
+  <h2>Reglas y patrones up1 a considerar</h2>
+  <div class="guide">
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">Al verificar una premisa, verificar la capacidad que el ticket pregunta. "El sistema tolera esta forma" y "el usuario puede crear esta forma" se leen en los mismos archivos y dan respuestas opuestas.<span class="gsrc">Fuente: este ticket, revisiones del 2026-08-14 y del 2026-08-17</span></div></div>
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">El guard de idempotencia del seed busca por el label de la raiz. Si se renombra la raiz sin tocarlo en el mismo paso, el re-seed duplica el arbol.<span class="gsrc">Fuente: _data-requirement.js:59-61</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Cambio de datos del seed, no de esquema: <code>requirement</code> y sus RecordTypes ya declaran todos los campos en juego, incluido el de nota minima.<span class="gsrc">Fuente: objects/RecordTypes/rt__RecordState__requirement.json:31-44</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Seed idempotente con guard explicito antes de sembrar, para que re-correrlo no duplique el arbol.<span class="gsrc">Fuente: _data-requirement.js:59-63</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Cuando un campo se deja intencionalmente vacio en el seed, dejarlo comentado en el propio seed: ya hay precedente en la regla advisory.<span class="gsrc">Fuente: _data-requirement.js:136-139</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">No confiar en que un fixture de test cubre el seed: cuatro specs replican la forma del seed como fixture, pero ninguna corre el loader real y verifica el contrato estructural.<span class="gsrc">Fuente: tests/integration/seed-counts.test.ts:471-508</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">No tocar la logica de busqueda del contenedor de vias ni la derivacion: es la capacidad entregada por UPONE-1378 y ya tiene cobertura propia.<span class="gsrc">Fuente: requirementEditor.logic.ts:69-116</span></div></div>
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Tenant isolation en toda query, correr sync, no editar archivos sincronizados a mano ni commitear artefactos de sync/seed, y usar solo el id de Jira en codigo, commits y PR.<span class="gsrc">Fuente: up1/CLAUDE.md (Multi-Tenant, Critical Rules, Sync, Commit)</span></div></div>
+  </div>
+
+  <div class="foot">
+    Documento explicativo, revision del 2026-08-17 &middot; Ticket (contrato): <code>UPONE-1541-detalle.md</code> &middot; Guia de implementacion: <code>UPONE-1541-pre-intake.md</code><br>
+    Limites de escritura verificados y retiros: <code>UPONE-1541-limites-de-escritura-y-retiros.md</code> &middot; Label como key traducible (fuera de alcance): <code>ANALISIS-requirement-label-i18n-key-vs-texto.md</code>
+  </div>
+</div>
+</body>
+</html>

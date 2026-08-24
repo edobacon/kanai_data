@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reunión Esteban · Curriculum Design — Decisiones</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f8fa;
+    --bg3: #eef0f4;
+    --border: #dde1e6;
+    --teal: #0a808c;
+    --blue: #1d6fa4;
+    --green: #1a7a3a;
+    --orange: #c08a1e;
+    --purple: #6e40c9;
+    --red: #d32f2f;
+    --text: #1a1a2e;
+    --text-muted: #4a5568;
+    --text-dim: #8896a6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; overflow: hidden; user-select: none;
+  }
+  .deck { width: 100%; height: 100vh; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 50px 70px;
+    opacity: 0; transform: translateX(60px);
+    transition: opacity .4s, transform .4s;
+    pointer-events: none; overflow-y: auto;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .slide.exit { opacity: 0; transform: translateX(-60px); transition: opacity .3s, transform .3s; }
+
+  .progress { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 100; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all .2s; }
+  .dot.active { background: var(--teal); transform: scale(1.5); }
+  .nav-hint { position: fixed; bottom: 22px; right: 30px; font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; z-index: 100; }
+  .key { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 10px; color: var(--text-muted); }
+  .slide-num { position: fixed; bottom: 22px; left: 30px; font-size: 11px; color: var(--text-dim); z-index: 100; }
+  .brand-logo { position: fixed; top: 22px; left: 30px; z-index: 200; font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .brand-logo .accent { color: var(--teal); }
+
+  .tag { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; }
+  h1 { font-size: 48px; font-weight: 700; line-height: 1.1; margin-bottom: 18px; }
+  h2 { font-size: 28px; font-weight: 700; line-height: 1.2; margin-bottom: 14px; }
+  h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .subtitle { font-size: 18px; color: var(--text-muted); line-height: 1.5; }
+  p { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+  .accent { color: var(--teal); }
+  .muted { color: var(--text-dim); }
+
+  .card-grid { display: grid; gap: 10px; width: 100%; }
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .card.teal { border-left: 4px solid var(--teal); }
+  .card.blue { border-left: 4px solid var(--blue); }
+  .card.green { border-left: 4px solid var(--green); }
+  .card.orange { border-left: 4px solid var(--orange); }
+  .card.purple { border-left: 4px solid var(--purple); }
+  .card.red { border-left: 4px solid var(--red); }
+  .card h3 { font-size: 13px; }
+  .card p { font-size: 12px; }
+
+  /* Slide de pregunta agrupada */
+  .pq-header {
+    display: flex; align-items: center; gap: 16px;
+    width: 100%; margin-bottom: 14px; padding-bottom: 14px;
+    border-bottom: 3px solid var(--teal);
+  }
+  .pq-num {
+    background: var(--teal); color: white;
+    width: 60px; height: 60px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; flex-shrink: 0;
+  }
+  .pq-title { flex: 1; }
+  .pq-title .scope { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); font-weight: 600; }
+  .pq-title h2 { font-size: 24px; margin: 4px 0; }
+  .pq-title .refs { font-size: 11px; color: var(--text-dim); }
+  .pq-title .refs code { background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 10px; }
+
+  /* Sub-bloques dentro de pregunta agrupada */
+  .sub-block {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-left: 4px solid var(--teal);
+    border-radius: 6px; padding: 10px 14px;
+    margin-bottom: 10px;
+  }
+  .sub-block .sub-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--teal); margin-bottom: 4px;
+  }
+  .sub-block h3 { font-size: 14px; margin-bottom: 6px; }
+  .sub-block .data {
+    display: grid; grid-template-columns: 80px 1fr;
+    gap: 8px; font-size: 11.5px; padding: 3px 0;
+    border-bottom: 1px dotted var(--border);
+  }
+  .sub-block .data:last-child { border-bottom: none; }
+  .sub-block .data .src {
+    font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em;
+    color: var(--text-dim);
+    padding-top: 1px;
+  }
+  .sub-block .data.confluence .src { color: var(--blue); }
+  .sub-block .data.legacy .src { color: var(--orange); }
+  .sub-block .data.code .src { color: var(--purple); }
+  .sub-block .data .text { color: var(--text); line-height: 1.45; }
+
+  .proposal-block {
+    background: linear-gradient(135deg, rgba(10,128,140,.08), rgba(29,111,164,.04));
+    border: 2px solid var(--teal);
+    border-radius: 8px; padding: 12px 16px;
+    margin: 10px 0;
+  }
+  .proposal-block h3 {
+    font-size: 11px; color: var(--teal);
+    text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 6px;
+  }
+  .proposal-block p { color: var(--text); font-size: 13px; line-height: 1.5; }
+  .proposal-block .why { margin-top: 5px; font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+  .questions-block {
+    background: linear-gradient(135deg, rgba(245,197,66,.18), rgba(192,138,30,.08));
+    border: 2px solid var(--orange);
+    border-radius: 10px; padding: 14px 18px;
+    width: 100%;
+  }
+  .questions-block .q-tag {
+    font-size: 11px; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--orange); margin-bottom: 8px;
+  }
+  .questions-block .q-list {
+    list-style: none; margin: 0; padding: 0;
+  }
+  .questions-block .q-list li {
+    font-size: 13px; color: var(--text); padding: 5px 0; line-height: 1.5;
+    border-bottom: 1px dotted rgba(192,138,30,.3);
+  }
+  .questions-block .q-list li:last-child { border-bottom: none; }
+  .questions-block .q-list li::before {
+    content: "❓ "; color: var(--orange); margin-right: 4px; font-weight: 700;
+  }
+  .questions-block .q-list li .options {
+    display: block; margin-top: 4px; padding-left: 18px;
+    font-size: 11px; color: var(--text-muted); font-weight: 400;
+  }
+
+  /* Modelo mini */
+  .agg-mini {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; width: 100%; margin: 10px 0;
+  }
+  .agg-node-mini {
+    background: var(--bg2); border: 2px solid var(--teal);
+    border-radius: 8px; padding: 6px 12px;
+    font-weight: 700; font-size: 12px; color: var(--teal);
+    text-align: center;
+  }
+  .agg-node-mini.has-q { border-color: var(--orange); color: var(--orange); }
+  .agg-node-mini .sub { font-size: 9.5px; font-weight: 400; color: var(--text-muted); }
+  .arrow-mini { font-size: 13px; color: var(--text-dim); }
+
+  /* Tabla de respuestas */
+  .answer-table {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+  }
+  .answer-row {
+    display: grid; grid-template-columns: 90px 1fr 100px;
+    gap: 10px; padding: 8px 10px;
+    border-bottom: 1px dashed var(--border);
+    font-size: 12.5px; align-items: center;
+  }
+  .answer-row:last-child { border-bottom: none; }
+  .answer-row.header {
+    font-weight: 700; background: var(--bg3); border-radius: 4px;
+    border-bottom: 2px solid var(--border); font-size: 10px;
+    text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);
+  }
+  .answer-row .pq-id {
+    font-weight: 700; color: var(--teal);
+    font-size: 11px;
+  }
+  .answer-row .blank {
+    background: var(--bg3); border-radius: 4px;
+    text-align: center; color: var(--text-dim);
+    padding: 4px;
+    font-size: 10px;
+  }
+
+  .code-snippet {
+    background: #1e293b; border-radius: 6px;
+    padding: 8px 12px; color: #e2e8f0;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 11px; line-height: 1.5;
+  }
+  .code-snippet .str { color: #fde68a; }
+  .code-snippet .kw { color: #f472b6; }
+  .code-snippet .comment { color: #64748b; }
+
+  /* Banner "Estamos modelando X" */
+  .affects-banner {
+    background: linear-gradient(90deg, rgba(10,128,140,.08), rgba(10,128,140,.02));
+    border-left: 4px solid var(--teal);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .affects-banner.purple { border-left-color: var(--purple); background: linear-gradient(90deg, rgba(110,64,201,.08), rgba(110,64,201,.02)); }
+  .affects-banner.orange { border-left-color: var(--orange); background: linear-gradient(90deg, rgba(192,138,30,.08), rgba(192,138,30,.02)); }
+  .affects-banner .banner-tag {
+    font-size: 10px; font-weight: 800; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--teal); margin-right: 8px;
+  }
+  .affects-banner.purple .banner-tag { color: var(--purple); }
+  .affects-banner.orange .banner-tag { color: var(--orange); }
+  .affects-banner .field-tag {
+    display: inline-block;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 7px;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 11px; color: var(--text);
+    margin: 0 3px;
+  }
+
+  /* Narrativa "Lo que tenemos / Lo que falta" */
+  .narrative {
+    margin-bottom: 10px; font-size: 13px;
+    line-height: 1.55; color: var(--text);
+  }
+  .narrative .label {
+    display: inline-block; font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+  .narrative.have .label { color: var(--blue); }
+  .narrative.missing .label { color: var(--red); }
+  .narrative p { font-size: 13px; line-height: 1.55; color: var(--text); }
+  .narrative p strong { color: var(--text); }
+  .narrative code { background: var(--bg3); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="brand-logo">UP1 · Curriculum Design · <span class="accent">Decisiones con Esteban</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 — PORTADA -->
+  <div class="slide active" id="s1">
+    <div style="text-align:center; max-width:980px;">
+      <div class="tag">Reunión · 25–30 min</div>
+      <h1>Resolver <span class="accent">5 preguntas</span><br>para arrancar el desarrollo</h1>
+      <p class="subtitle" style="margin-top:14px;">Eduardo Bacon · Tickets UPONE-1033 / 1034 / 1035</p>
+
+      <p style="margin-top:18px; font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; font-weight:700;">3 críticas para el modelo</p>
+      <div class="card-grid cols-3" style="margin-top:8px;">
+        <div class="card teal" style="text-align:left;">
+          <h3>P1 · Enums del módulo</h3>
+          <p>Casing + valor <code>"Active"</code> del legacy</p>
+          <p style="margin-top:4px; font-size:10px; color:var(--text-dim);">Engloba Q10 + Q2</p>
+        </div>
+        <div class="card purple" style="text-align:left;">
+          <h3>P2 · Scope de RecordTypes</h3>
+          <p>Cuántos RTs + dónde viven + escenario "ambos tenants completos"</p>
+          <p style="margin-top:4px; font-size:10px; color:var(--text-dim);">Q11 + T3 + T2 (2 slides)</p>
+        </div>
+        <div class="card orange" style="text-align:left;">
+          <h3>P3 · Secciones especiales</h3>
+          <p>CustomSection (1 vs N) + Habilitación Univalle</p>
+          <p style="margin-top:4px; font-size:10px; color:var(--text-dim);">Engloba Q3 + Q5 (Habilitación)</p>
+        </div>
+      </div>
+
+      <p style="margin-top:18px; font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; font-weight:700;">2 puntuales — confirmables rápido</p>
+      <div class="card-grid cols-2" style="margin-top:8px;">
+        <div class="card blue" style="text-align:left;">
+          <h3>P4 · Identificador externo</h3>
+          <p><code>externalId</code> 1 campo o 2 separados</p>
+          <p style="margin-top:4px; font-size:10px; color:var(--text-dim);">Resuelve Q1 — decisión menor</p>
+        </div>
+        <div class="card orange" style="text-align:left;">
+          <h3>P5 · RTs adicionales</h3>
+          <p><code>GeneralData</code>, <code>GraduationProfile</code>, <code>EntryProfile</code> — ¿se modelan?</p>
+          <p style="margin-top:4px; font-size:10px; color:var(--text-dim);">Resto de Q5 — sin campos en doc</p>
+        </div>
+      </div>
+
+      <p style="margin-top:20px; font-size:11px; color:var(--text-dim);">Cada pregunta = contexto · datos legacy · propuesta + por qué · sub-preguntas concretas</p>
+    </div>
+  </div>
+
+  <!-- 2 — CONTEXTO -->
+  <div class="slide" id="s2">
+    <div style="max-width:920px; width:100%;">
+      <div class="tag">Contexto en 30 segundos</div>
+      <h2>Estado del modelado</h2>
+
+      <div class="card-grid cols-2" style="margin-top:8px;">
+        <div class="card green">
+          <h3>✅ Resuelto / decidido</h3>
+          <p>
+            • Mod único <code>curriculum-design</code> (DECISION-001)<br>
+            • Tenants <code>UNIVALLE</code> + <code>AIEP</code> (DECISION-003)<br>
+            • Strict scope: TICKET-006 = 4 objetos base, TICKET-009 = RTs + layouts<br>
+            • <code>executionUnitId → OrgUnit</code> postergado (DECISION-002)
+          </p>
+        </div>
+        <div class="card teal">
+          <h3>📚 Insumos cruzados</h3>
+          <p>
+            • Modelo Confluence Learning Assurance (tu doc, id <code>2038366242</code>)<br>
+            • Legacy v2.2 con casos reales Univalle + AIEP<br>
+            • AGENTS.md (formato up1)<br>
+            • 21 Bases del core verificados
+          </p>
+        </div>
+      </div>
+
+      <div class="card orange" style="margin-top:10px;">
+        <h3>❓ Por resolver — solo lo crítico para arrancar</h3>
+        <p>
+          De 19 preguntas documentadas, <strong>3 agrupan los 6 temas críticos</strong> que afectan el modelo en este sprint. El resto (13 preguntas) van por email o iteración posterior.
+        </p>
+      </div>
+
+      <div class="proposal-block" style="margin-top:14px;">
+        <h3>🎯 Objetivo de esta reunión</h3>
+        <p>Salir con respuestas (o caminos definidos) para las 3 preguntas. Sin ellas, hay riesgo de modelar mal y refactorear después.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 — DE DONDE VIENEN LOS DATOS + MODELO -->
+  <div class="slide" id="s3">
+    <div style="max-width:1000px; width:100%;">
+      <div class="tag">Origen de los datos</div>
+      <h2>Las 3 fuentes que cruzamos</h2>
+      <p style="margin-top:6px; margin-bottom:12px;">Las preguntas surgen donde las 3 <strong>no coinciden</strong>. Cuando coinciden → modelamos. Cuando difieren → te traemos la pregunta.</p>
+
+      <div class="card-grid cols-3" style="margin-bottom:14px;">
+        <div class="card blue">
+          <h3>📘 Confluence LA</h3>
+          <p>"Modelo de objetos de negocio Learning Assurance" (tu doc). Define qué entidades existen + semántica.</p>
+        </div>
+        <div class="card orange">
+          <h3>📊 Legacy v2.2</h3>
+          <p><code>ejemplos-cursos-legacy-univalle-aiep_v2.md</code>. Datos reales: Univalle simple + AIEP complejo (13 modalidades, 40 RAs).</p>
+        </div>
+        <div class="card purple">
+          <h3>🛠️ Código up1</h3>
+          <p>21 Bases del core + AGENTS.md. Define cómo se codifica (formato, naming).</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px; margin-top:8px; margin-bottom:8px;">El agregado en una vista — campos con ❓ tienen pregunta abierta</h3>
+
+      <div class="agg-mini">
+        <div class="agg-node-mini has-q">AcademicActivity (raíz)<br><span class="sub">❓ workflowState · ❓ programLevel · ❓ externalId</span></div>
+        <div class="arrow-mini">↓ 1:N polimórfica</div>
+        <div class="agg-node-mini has-q">CurricularSection (polimórfica)<br><span class="sub">❓ recordType · ❓ ownerType · ❓ sectionType · 7 RTs en TICKET-009</span></div>
+        <div style="display:flex; gap:14px;"><div class="arrow-mini">↙</div><div class="arrow-mini">↘</div></div>
+        <div style="display:flex; gap:16px;">
+          <div class="agg-node-mini has-q">CurricularLink<br><span class="sub">❓ linkType</span></div>
+          <div class="agg-node-mini has-q">BibliographyReference<br><span class="sub">❓ referenceFormat</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 — PREGUNTA 1: ENUMS DEL MÓDULO -->
+  <div class="slide" id="s4">
+    <div style="max-width:1000px; width:100%;">
+      <div class="pq-header">
+        <div class="pq-num">P1</div>
+        <div class="pq-title">
+          <div class="scope">Pregunta agrupada · Convención de enums</div>
+          <h2>Para cerrar el JSON Schema de los enums, nos faltan 2 piezas</h2>
+          <div class="refs">Resuelve <code>Q10</code> (casing) + <code>Q2</code> (valor "Active" en workflowState)</div>
+        </div>
+      </div>
+
+      <div class="affects-banner">
+        <span class="banner-tag">Estamos modelando</span>
+        El campo <span class="field-tag">AcademicActivity.workflowState</span> y, transversalmente, <strong>todos los campos enum del agregado</strong>:
+        <span class="field-tag">programLevel</span>
+        <span class="field-tag">recordType</span>
+        <span class="field-tag">linkType</span>
+        <span class="field-tag">referenceFormat</span>
+        <span class="field-tag">ownerType</span>
+        <span class="field-tag">sectionType</span>
+        <span class="field-tag">deliveryMode</span> · etc.
+      </div>
+
+      <div class="narrative have">
+        <div class="label">📥 Lo que tenemos para responder</div>
+        <p>Tu doc de Confluence describe los valores de cada enum en <strong>PascalCase</strong> (<code>Draft</code>, <code>Approved</code>, <code>Theoretical</code>) — funciona como notación legible para humanos. El legacy de Univalle y AIEP también usa PascalCase (<code>Active</code>, <code>Course</code>, <code>Mandatory</code>). Pero el código real de up1 — los 5 Bases del core que verifiqué (<code>csenrollment</code>, <code>hwfactor</code>, <code>hwintervention</code>, etc.) — usa <strong>UPPER_SNAKE_CASE</strong> sin excepción para todos los enums (<code>ENROLLED</code>, <code>ACADEMIC_ADVISING</code>, <code>IN_PROGRESS</code>). Y AGENTS.md confirma que esa es la convención del core.</p>
+        <p style="margin-top:6px;">Para <code>workflowState</code> en particular, tu modelo conceptual define 6 valores oficiales: <code>Draft / Review / Approved / Published / OpenForEdit / Deprecated</code>. Pero en los datos legacy de <strong>ambos tenants</strong> aparece <code>"Active"</code> — un valor que no está en esos 6.</p>
+      </div>
+
+      <div class="narrative missing">
+        <div class="label">❌ Lo que NO podemos cerrar sin tu input</div>
+        <p>Si seguimos UPPER_SNAKE (lo que dicta el código), <strong>nadie nos confirmó que esa sea la decisión correcta</strong> para este módulo — podríamos estar contradiciendo la intención del modelo conceptual. Si seguimos PascalCase (lo que muestran tu doc y los datos), salimos de la convención del core sin precedente.</p>
+        <p style="margin-top:6px;">Y sobre <code>"Active"</code>: <strong>nadie más que vos sabe</strong> qué significa en términos del modelo Confluence. ¿Es el mismo concepto que <code>Published</code>? ¿Es <code>Approved</code>? ¿Es un séptimo valor que faltó documentar? Sin tu palabra, modelarlo es inventar.</p>
+      </div>
+
+      <div class="proposal-block">
+        <h3>💡 Lo que proponemos como camino</h3>
+        <p><strong>UPPER_SNAKE_CASE en todos los enums del módulo</strong>. <code>workflowState</code> queda con 6 valores en mayúsculas: <code>DRAFT</code>, <code>REVIEW</code>, <code>APPROVED</code>, <code>PUBLISHED</code>, <code>OPEN_FOR_EDIT</code>, <code>DEPRECATED</code>.</p>
+        <div class="why">El código de up1 lo respalda. AGENTS.md tiene una regla meta — "si la guía contradice un Base del core, gana el Base" — y los 5 Bases verificados usan UPPER_SNAKE. Convertir el legacy es un script idempotente, costo bajo. Pero el mapping de <code>"Active"</code> sigue abierto, así que lo dejamos como pregunta para vos.</div>
+      </div>
+
+      <div class="card-grid cols-2" style="margin-bottom:10px;">
+        <div class="card orange" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--orange);">📊 Cómo viene en el legacy v2.2 (ambos tenants)</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="comment">// Univalle (aa-uv-1124)</span>
+{ <span class="kw">"workflowState"</span>: <span class="str">"Active"</span>,
+  <span class="kw">"programLevel"</span>: <span class="str">"Undergraduate"</span>,
+  <span class="kw">"recordType"</span>: <span class="str">"Course"</span> }
+
+<span class="comment">// AIEP (aa-aiep-14757)</span>
+{ <span class="kw">"workflowState"</span>: <span class="str">"Active"</span>,
+  <span class="kw">"programLevel"</span>: <span class="str">"TechnicalProfessional"</span>,
+  <span class="kw">"recordType"</span>: <span class="str">"Course"</span> }</div>
+        </div>
+        <div class="card teal" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--teal);">💡 Cómo quedaría con la propuesta</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="comment">// Univalle (después de migración)</span>
+{ <span class="kw">"workflowState"</span>: <span class="str">"PUBLISHED"</span>?,
+  <span class="kw">"programLevel"</span>: <span class="str">"UNDERGRADUATE"</span>,
+  <span class="kw">"recordType"</span>: <span class="str">"COURSE"</span> }
+
+<span class="comment">// AIEP (después de migración)</span>
+{ <span class="kw">"workflowState"</span>: <span class="str">"PUBLISHED"</span>?,
+  <span class="kw">"programLevel"</span>: <span class="str">"TECHNICAL_PROFESSIONAL"</span>,
+  <span class="kw">"recordType"</span>: <span class="str">"COURSE"</span> }</div>
+          <p style="font-size:10px; color:var(--text-muted); margin-top:4px;">El <code>?</code> marca lo que necesitamos confirmar (mapping de "Active").</p>
+        </div>
+      </div>
+
+      <div class="questions-block">
+        <div class="q-tag">Lo que necesitamos de ti</div>
+        <ul class="q-list">
+          <li>¿Confirmás <strong>UPPER_SNAKE_CASE</strong> como casing oficial de los enums de este módulo? Si confirmás, convertimos el seed legacy mecánicamente. Si no, contanos qué casing prefieres y por qué.</li>
+          <li>El valor <code>"Active"</code> que viene en ambos tenants legacy — <strong>¿a cuál de los 6 valores oficiales corresponde?</strong> Posibilidades que vimos: equivale a <code>PUBLISHED</code> (vigente, en uso), o a <code>APPROVED</code> (aprobado pero no publicado), o es un valor adicional que falta en el doc, o se elimina porque solo existió en el sistema legacy.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 — PREGUNTA 2: SCOPE DE RECORDTYPES -->
+  <div class="slide" id="s5">
+    <div style="max-width:1000px; width:100%;">
+      <div class="pq-header">
+        <div class="pq-num" style="background:var(--purple);">P2</div>
+        <div class="pq-title">
+          <div class="scope">Pregunta agrupada · RecordTypes en TICKET-009</div>
+          <h2>Para definir el scope de TICKET-009, falta priorizar qué tenant cubrimos</h2>
+          <div class="refs">Resuelve <code>Q11</code> (subset RTs) + <code>T3</code> (cobertura por tenant) + <code>T2</code> (globales o per-tenant)</div>
+        </div>
+      </div>
+
+      <div class="affects-banner purple">
+        <span class="banner-tag">Estamos modelando</span>
+        Los archivos <span class="field-tag">rt__&lt;RT&gt;__curricularsection.json</span> que viven en TICKET-009 (UPONE-1035). Cada uno define un sub-tipo de <span class="field-tag">CurricularSection</span> con sus campos específicos (<code>Modality</code> tiene horas, <code>LearningOutcome</code> tiene nivel Bloom, etc.). El subset que modelemos es lo que se ve en el detail del programa.
+      </div>
+
+      <div class="narrative have">
+        <div class="label">📥 Lo que tenemos para responder</div>
+        <p>Los datos legacy v2.2 nos muestran <strong>7 RecordTypes</strong> que las instituciones realmente usan. Pero los usan <strong>desigualmente</strong>:</p>
+        <table style="width:100%; border-collapse:collapse; font-size:11px; margin-top:8px;">
+          <thead><tr style="background:var(--bg3);"><th style="text-align:left; padding:5px 8px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">RT</th><th style="text-align:left; padding:5px 8px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Univalle</th><th style="text-align:left; padding:5px 8px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">AIEP</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:3px 8px;"><code>Modality</code></td><td style="padding:3px 8px;">✅ 1</td><td style="padding:3px 8px;">✅ 13</td></tr>
+            <tr><td style="padding:3px 8px;"><code>LearningOutcome</code></td><td style="padding:3px 8px;">✅ 3</td><td style="padding:3px 8px;">✅ 40</td></tr>
+            <tr><td style="padding:3px 8px;"><code>EvaluationComponent</code></td><td style="padding:3px 8px;">✅ 8 Composite</td><td style="padding:3px 8px;">✅ 1</td></tr>
+            <tr><td style="padding:3px 8px;"><code>Content</code></td><td style="padding:3px 8px;">❌</td><td style="padding:3px 8px;">✅ 3</td></tr>
+            <tr style="background:rgba(192,138,30,.08);"><td style="padding:3px 8px;"><code>Session</code></td><td style="padding:3px 8px;"><strong>✅ 18</strong></td><td style="padding:3px 8px;">❌</td></tr>
+            <tr style="background:rgba(192,138,30,.08);"><td style="padding:3px 8px;"><code>Bibliography</code></td><td style="padding:3px 8px;"><strong>✅ 9</strong></td><td style="padding:3px 8px;">❌</td></tr>
+            <tr style="background:rgba(192,138,30,.08);"><td style="padding:3px 8px;"><code>CustomSection</code></td><td style="padding:3px 8px;"><strong>✅ 2</strong></td><td style="padding:3px 8px;">❌</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px;">Sobre <strong>dónde viven los archivos</strong>: el código de up1 ya soporta dos patrones — globales en <code>business/RecordTypes/</code> o per-tenant en <code>tenants/&lt;ID&gt;/RecordTypes/</code>. El tenant <code>UPU</code> ya tiene un RT propio (<code>rt__Investigador__core_user.json</code>), así que ambos patrones están vivos.</p>
+      </div>
+
+      <div class="narrative missing">
+        <div class="label">❌ Lo que NO podemos cerrar sin tu input</div>
+        <p>La <strong>priorización es decisión de negocio</strong>, no técnica: si modelamos los 4 RTs comunes (Modality, LearningOutcome, Content, EvaluationComponent), <strong>AIEP queda completo</strong> pero <strong>Univalle se ve incompleto</strong> en demos — pierde 18 sesiones, 9 referencias bibliográficas y 2 secciones libres. Si modelamos los 6 RTs de Univalle, hay 3 archivos más de trabajo en TICKET-009.</p>
+        <p style="margin-top:6px;">Y para la ubicación: no sabemos si en algún momento Univalle o AIEP requerirán RTs propios que el otro no necesite. Sin esa señal, modelar todo per-tenant sería sobre-ingeniería.</p>
+      </div>
+
+      <div class="proposal-block">
+        <h3>💡 Lo que proponemos como camino</h3>
+        <p><strong>4 RTs mínimos globales</strong>: Modality + LearningOutcome + Content + EvaluationComponent. Todos en <code>business/RecordTypes/</code>, compartidos entre Univalle y AIEP.</p>
+        <div class="why">Cumple lo que pide el ticket UPONE-1035 — "probar distintas configuraciones de secciones" — sin sobre-modelar. AIEP queda con detail completo. Univalle queda incompleto pero los 3 RTs faltantes (Session, Bibliography, CustomSection) son archivos chicos que se agregan en sprint futuro sin migración. La decisión real es: <strong>¿estamos cómodos con que Univalle se vea incompleto en demos por unas semanas?</strong></div>
+      </div>
+
+      <div class="questions-block">
+        <div class="q-tag">Lo que necesitamos de ti</div>
+        <ul class="q-list">
+          <li>¿Aceptable que <strong>Univalle se vea incompleto en demos</strong> de este sprint (sin sus 18 sesiones, 9 referencias y 2 secciones libres)? Si sí, vamos con 4 RTs mínimos. Si no, modelamos los 6 RTs de Univalle (3 archivos extra de trabajo en TICKET-009).</li>
+          <li>¿Existe algún RecordType del agregado que <strong>solo aplique a un tenant</strong> y no al otro? Por ejemplo: ¿AIEP tiene algún tipo de sección que Univalle nunca usaría? Si la respuesta es no, todos van globales.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5b — PREGUNTA 2.b: SI NECESITAMOS AMBOS TENANTS COMPLETOS -->
+  <div class="slide" id="s5b">
+    <div style="max-width:1000px; width:100%;">
+      <div class="pq-header">
+        <div class="pq-num" style="background:var(--purple);">P2<span style="font-size:10px;">.b</span></div>
+        <div class="pq-title">
+          <div class="scope">Pregunta agrupada · Escenario "ambos tenants completos"</div>
+          <h2>Si necesitamos Univalle Y AIEP funcionando 100%, ¿qué hacemos?</h2>
+          <div class="refs">Profundiza la decisión de P2 con el caso "completo siempre"</div>
+        </div>
+      </div>
+
+      <div class="affects-banner purple">
+        <span class="banner-tag">Estamos modelando</span>
+        Cómo cubrir el seed completo del legacy para los <strong>dos</strong> tenants. AIEP usa 4 RTs (Modality, LearningOutcome, Content, EvaluationComponent). Univalle usa 6 (los anteriores menos Content + Session, Bibliography, CustomSection). Si los queremos completos: <strong>7 RTs en juego</strong>.
+      </div>
+
+      <div class="narrative have">
+        <div class="label">📥 Lo que tenemos para responder</div>
+        <p>up1 ofrece <strong>3 mecanismos técnicos</strong> distintos para acomodar diversidad entre tenants — pero NO todos resuelven el problema de tener "más RTs":</p>
+
+        <table style="width:100%; border-collapse:collapse; font-size:11.5px; margin-top:8px;">
+          <thead><tr style="background:var(--bg3);">
+            <th style="text-align:left; padding:6px 8px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Opción</th>
+            <th style="text-align:left; padding:6px 8px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">Ubicación</th>
+            <th style="text-align:left; padding:6px 8px; font-size:9.5px; text-transform:uppercase; color:var(--text-muted);">¿Resuelve "ambos completos"?</th>
+          </tr></thead>
+          <tbody>
+            <tr style="background:rgba(26,122,58,.06);">
+              <td style="padding:6px 8px;"><strong>A.</strong> 7 RTs todos globales</td>
+              <td style="padding:6px 8px;"><code>business/RecordTypes/</code></td>
+              <td style="padding:6px 8px; color:var(--green);">✅ Sí — limpio. Ambos ven los 7. AIEP simplemente no usa Session/Bibliography/CustomSection.</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 8px;"><strong>B.</strong> 4 globales + 3 per-tenant Univalle</td>
+              <td style="padding:6px 8px;"><code>business/</code> + <code>tenants/UNIVALLE/RecordTypes/</code></td>
+              <td style="padding:6px 8px; color:var(--orange);">⚠️ Sí pero divide el modelo. AIEP solo ve los 4 globales. Si AIEP en el futuro quiere Bibliography, hay que mover.</td>
+            </tr>
+            <tr style="background:rgba(211,47,47,.04);">
+              <td style="padding:6px 8px;"><strong>C.</strong> Extensions de RT</td>
+              <td style="padding:6px 8px;"><code>ext__univalle__rt__...</code></td>
+              <td style="padding:6px 8px; color:var(--red);">❌ NO viable. AGENTS.md documenta Extensions de <strong>Bases</strong>, no de RecordTypes. Sin precedente en código.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top:8px;"><strong>Aclaración importante</strong>: las Extensions (<code>ext__&lt;cliente&gt;__&lt;base&gt;.json</code>) sirven para <strong>agregar campos custom a un Base</strong>, no para crear RecordTypes nuevos. Para "más RTs" usamos los patrones A o B. Las Extensions vendrían recién si Univalle o AIEP necesitaran un campo extra que el modelo base no contempla (ej: <code>consejoAprobacionResolucion</code>) — y eso es otra decisión, futura.</p>
+      </div>
+
+      <div class="narrative missing">
+        <div class="label">❌ Lo que NO podemos cerrar sin tu input</div>
+        <p>La pregunta es de <strong>requerimiento</strong>, no técnica. ¿El sprint pide los 2 tenants completos en demo, o aceptamos cobertura parcial al inicio?</p>
+        <p style="margin-top:6px;">Sin esa señal del negocio, vamos con la opción mínima (P2 propuesta = 4 RTs). Pero si la demanda es "completo siempre", la elección entre A y B depende de algo que no sabemos: <strong>¿hay alguna razón por la que AIEP NO debería ver los RTs de Session, Bibliography y CustomSection?</strong> Si la respuesta es "ninguna razón, AIEP simplemente no los usa", la opción A es claramente mejor.</p>
+      </div>
+
+      <div class="proposal-block">
+        <h3>💡 Lo que proponemos como camino — si decides "ambos completos"</h3>
+        <p><strong>Opción A — Modelar los 7 RTs todos globales</strong> en <code>business/RecordTypes/</code>. Ambos tenants los ven, cada uno usa los que necesita. Trade-off: <strong>3 archivos + 3 layouts extra</strong> en TICKET-009 (~30-40% más esfuerzo) vs la propuesta P2 de 4 RTs.</p>
+        <div class="why">Por qué A y no B: B obliga a tomar una decisión "esto es exclusivo de Univalle", lo cual no está justificado por los datos — AIEP simplemente no documentó bibliografía ni sesiones, no significa que nunca las quiera. A es reversible (mover archivo entre carpetas si más adelante hace falta), B requiere migrar registros si cambia. El costo extra del esfuerzo en TICKET-009 paga la cobertura completa de demos sin deuda técnica.</div>
+      </div>
+
+      <div class="questions-block">
+        <div class="q-tag">Lo que necesitamos de ti</div>
+        <ul class="q-list">
+          <li>¿El requerimiento del sprint es <strong>tener los 2 tenants funcionando completos</strong> al cierre de TICKET-009? Si sí → 7 RTs globales (opción A). Si no → 4 RTs mínimos (postura P2 original) y los 3 faltantes quedan para sprint siguiente.</li>
+          <li>Si vamos con 7 RTs: ¿hay alguna <strong>razón funcional</strong> por la que AIEP NO debería tener disponibles los RTs de Session, Bibliography o CustomSection? Si no la hay (caso esperado): los modelamos globales y AIEP simplemente no los usa.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 — PREGUNTA 3: SECCIONES ESPECIALES -->
+  <div class="slide" id="s6">
+    <div style="max-width:1000px; width:100%;">
+      <div class="pq-header">
+        <div class="pq-num" style="background:var(--orange);">P3</div>
+        <div class="pq-title">
+          <div class="scope">Pregunta agrupada · Modelado de secciones especiales</div>
+          <h2>Para cerrar el seed de Univalle, hay 2 casos del legacy que no calzan</h2>
+          <div class="refs">Resuelve <code>Q3</code> (CustomSection 1 vs N) + <code>Q5</code> (Habilitación: Session o ApprovalCondition)</div>
+        </div>
+      </div>
+
+      <div class="affects-banner orange">
+        <span class="banner-tag">Estamos modelando</span>
+        El RT <span class="field-tag">CustomSection</span> y la decisión de cargar la SEM 18 de Univalle como <span class="field-tag">Session</span> o <span class="field-tag">ApprovalCondition</span>. Ambos son instancias del agregado de <strong>Univalle</strong> que el seed debe traer.
+      </div>
+
+      <div class="narrative have">
+        <div class="label">📥 Lo que tenemos para responder</div>
+        <p><strong>Caso A — CustomSection</strong>: el legacy de Univalle trae <strong>2 secciones libres</strong> ("Descripción extendida del curso" y "Temario detallado"), modeladas como UN solo RT genérico llamado <code>CustomSection</code>. Las distingue solo el campo <code>name</code>. Pero tu doc Confluence dice "secciones complementarias <strong>custom</strong>" en plural — eso sugiere que cada institución podría querer N RTs distintos (uno por tipo: Methodology, Policies, etc.), no un genérico.</p>
+        <p style="margin-top:6px;"><strong>Caso B — Habilitación de Univalle (SEM 18)</strong>: el legacy trae la "Habilitación" como <strong>Session</strong> normal, semana 18, con descripción "Habilitación.". Pero conceptualmente — y según tu modelo Confluence — <code>ApprovalCondition</code> es un RT propio para "condiciones de aprobación" (asistencia mínima, nota mínima, etc.). La Habilitación encaja semánticamente más con eso que con una sesión más.</p>
+      </div>
+
+      <div class="narrative missing">
+        <div class="label">❌ Lo que NO podemos cerrar sin tu input</div>
+        <p>Ambos casos son <strong>ambigüedades del modelo conceptual</strong>. El legacy nos dice "así está hoy", pero solo vos sabés si esa fue la decisión correcta o si el sistema viejo simplificó por limitaciones técnicas.</p>
+        <p style="margin-top:6px;">Sobre CustomSection: si hubiera sido N RTs específicos, tendríamos que modelar dinámicamente (mecanismo que <strong>up1 no tiene todavía</strong>). Sobre la Habilitación: si es ApprovalCondition, hay que modelar ese RT en TICKET-009 (no estaba previsto) y migrar el registro de Univalle. Sin tu palabra, ambos cambios son inferencia.</p>
+      </div>
+
+      <div class="proposal-block">
+        <h3>💡 Lo que proponemos como camino</h3>
+        <p><strong>Cargar literal lo que dice el legacy</strong>: (A) 1 RT genérico <code>CustomSection</code> con campos <code>name</code>, <code>contentType</code>, <code>content</code>, <code>maxLength</code> — las 2 secciones de Univalle se diferencian por <code>name</code>. (B) La Habilitación queda como <code>Session</code> con <code>activityDescription="Habilitación"</code>, sin modelar <code>ApprovalCondition</code> en este sprint.</p>
+        <div class="why">Respeta los datos reales sin inventar. Mínimo viable. Si decidís N RTs custom o ApprovalCondition más adelante, las migraciones son chicas: 2 registros de Univalle a recategorizar, no más.</div>
+      </div>
+
+      <div class="card-grid cols-2" style="margin-bottom:10px;">
+        <div class="card orange" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--orange);">📊 Cómo viene en el legacy Univalle (caso CustomSection)</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="comment">// 2 secciones, MISMO recordType</span>
+{ <span class="kw">"recordType"</span>: <span class="str">"CustomSection"</span>,
+  <span class="kw">"name"</span>: <span class="str">"Descripción extendida"</span>,
+  <span class="kw">"contentType"</span>: <span class="str">"richText"</span>,
+  <span class="kw">"content"</span>: <span class="str">"&lt;p&gt;Curso fund...&lt;/p&gt;"</span> }
+
+{ <span class="kw">"recordType"</span>: <span class="str">"CustomSection"</span>,
+  <span class="kw">"name"</span>: <span class="str">"Temario detallado"</span>,
+  <span class="kw">"contentType"</span>: <span class="str">"richText"</span>,
+  <span class="kw">"content"</span>: <span class="str">"1. EDOs..."</span> }</div>
+        </div>
+        <div class="card blue" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--blue);">📘 Cómo quedaría si fuera N RTs (interpretación Confluence)</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="comment">// 2 secciones, RT distinto cada una</span>
+{ <span class="kw">"recordType"</span>: <span class="str">"DescripcionExtendida"</span>,
+  <span class="kw">"content"</span>: <span class="str">"&lt;p&gt;...&lt;/p&gt;"</span> }
+
+{ <span class="kw">"recordType"</span>: <span class="str">"Temario"</span>,
+  <span class="kw">"content"</span>: <span class="str">"1. EDOs..."</span> }
+
+<span class="comment">// + 2 archivos rt__... nuevos por inst.</span>
+<span class="comment">// + UI Super Admin para crearlos</span></div>
+        </div>
+      </div>
+
+      <div class="card-grid cols-2" style="margin-bottom:10px;">
+        <div class="card orange" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--orange);">📊 SEM 18 Univalle como viene (Session)</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;">{ <span class="kw">"recordType"</span>: <span class="str">"Session"</span>,
+  <span class="kw">"name"</span>: <span class="str">"SEM 18"</span>,
+  <span class="kw">"week"</span>: 18,
+  <span class="kw">"activityDescription"</span>:
+    <span class="str">"Habilitación."</span>,
+  <span class="kw">"isRequired"</span>: <span class="kw">false</span> }</div>
+        </div>
+        <div class="card blue" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--blue);">📘 Cómo quedaría si fuera ApprovalCondition</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;">{ <span class="kw">"recordType"</span>: <span class="str">"ApprovalCondition"</span>,
+  <span class="kw">"name"</span>: <span class="str">"Habilitación"</span>,
+  <span class="kw">"conditionType"</span>: <span class="str">"CUSTOM"</span>,
+  <span class="kw">"threshold"</span>: <span class="kw">null</span>,
+  <span class="kw">"unit"</span>: <span class="kw">null</span>,
+  <span class="kw">"isRequired"</span>: <span class="kw">false</span> }
+<span class="comment">// + crear rt__ApprovalCondition...</span></div>
+        </div>
+      </div>
+
+      <div class="questions-block">
+        <div class="q-tag">Lo que necesitamos de ti</div>
+        <ul class="q-list">
+          <li>Sobre <strong>CustomSection</strong>: ¿queremos UN solo RT genérico (parametrizado por nombre, como hace Univalle), o N RTs específicos donde cada institución define sus propios tipos de sección? Si es N, ¿quién declara los archivos — devs en código, o el Super Admin desde la UI? (la opción runtime <strong>no existe en up1 hoy</strong>).</li>
+          <li>La <strong>"Habilitación" de Univalle (SEM 18)</strong>: ¿es realmente una <code>Session</code> (sesión final del semestre) o conceptualmente debería ser <code>ApprovalCondition</code>? Si lo segundo, ¿cómo se distingue de una sesión normal — por contenido, por posición en el calendario, por flag explícito?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6b — PREGUNTA 4: IDENTIFICADOR EXTERNO -->
+  <div class="slide" id="s6b">
+    <div style="max-width:1000px; width:100%;">
+      <div class="pq-header">
+        <div class="pq-num">P4</div>
+        <div class="pq-title">
+          <div class="scope">Pregunta puntual · Identificador externo</div>
+          <h2>¿Modelamos <code>externalId</code> como 1 campo o 2 separados?</h2>
+          <div class="refs">Resuelve <code>Q1</code> · Decisión menor — confirmable rápido</div>
+        </div>
+      </div>
+
+      <div class="affects-banner">
+        <span class="banner-tag">Estamos modelando</span>
+        El campo <span class="field-tag">AcademicActivity.externalId</span> — el identificador que traza el origen del programa cuando se importa de un sistema externo (Banner, Anthology, SIS local).
+      </div>
+
+      <div class="narrative have">
+        <div class="label">📥 Lo que tenemos para responder</div>
+        <p>Tu doc Confluence (BR-INT-001) dice textualmente que el identificador "<strong>puede ser compuesto</strong>" — da como ejemplo "código de programa + código de período para Banner". No especifica si eso significa <strong>1 campo</strong> con valor compuesto en string o <strong>2 campos separados</strong>.</p>
+        <p style="margin-top:6px;">El legacy v2.2 entrega valores simples: Univalle = <code>"1124"</code>, AIEP = <code>"TIR101"</code>. Y verifiqué que en el código de up1 el patrón <code>externalId</code> <strong>no existe en ningún Base actual</strong> — sería el primer campo de su tipo en el core.</p>
+      </div>
+
+      <div class="narrative missing">
+        <div class="label">❌ Lo que NO podemos cerrar sin tu input</div>
+        <p>Confluence permite ambas formas y el código no aporta convención. La decisión depende de cómo se planee el flujo de import desde SIS:</p>
+        <p style="margin-top:6px;">Si va a integrar con <strong>un solo sistema</strong> (ej: solo Banner), 1 campo basta. Si va a recibir desde <strong>varios SIS distintos</strong> (Banner + Anthology + interno), 2 campos separados ayudan a filtrar/auditar por sistema. <strong>Esa decisión es de arquitectura de integración</strong>, no se infiere del modelo.</p>
+      </div>
+
+      <div class="card-grid cols-2" style="margin-bottom:10px;">
+        <div class="card teal" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--teal);">💡 Opción A — 1 campo (propuesta)</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="kw">"externalId"</span>: {
+  <span class="kw">"type"</span>: <span class="str">"string"</span>,
+  <span class="kw">"not_null"</span>: <span class="kw">false</span>
+}
+<span class="comment">// Univalle:  externalId: "1124"</span>
+<span class="comment">// AIEP:      externalId: "TIR101"</span>
+<span class="comment">// Compuesto: externalId: "BANNER:MAT101-2024-S1"</span></div>
+        </div>
+        <div class="card blue" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--blue);">📘 Opción B — 2 campos separados</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="kw">"externalSystemId"</span>: {
+  <span class="kw">"type"</span>: <span class="str">"string"</span>,
+  <span class="kw">"transformations"</span>: [{<span class="kw">"type"</span>:<span class="str">"uppercase"</span>}]
+},
+<span class="kw">"externalRecordId"</span>: {
+  <span class="kw">"type"</span>: <span class="str">"string"</span>
+}
+<span class="comment">// Banner: externalSystemId="BANNER",</span>
+<span class="comment">//         externalRecordId="MAT101-2024-S1"</span></div>
+        </div>
+      </div>
+
+      <div class="proposal-block">
+        <h3>💡 Lo que proponemos como camino</h3>
+        <p><strong>1 campo <code>externalId</code> string nullable</strong>, alineado con el legacy. Si más adelante se integra con varios SIS, la migración es <strong>idempotente</strong>: <code>SPLIT_PART(external_id, ':', 1) → external_system_id</code> + el resto a <code>external_record_id</code>.</p>
+        <div class="why">El legacy v2.2 lo respalda. Confluence permite ambas formas. Riesgo bajo de retrabajo si se decide cambiar.</div>
+      </div>
+
+      <div class="questions-block">
+        <div class="q-tag">Lo que necesitamos de ti</div>
+        <ul class="q-list">
+          <li>¿Modelamos <strong>1 campo <code>externalId</code></strong> (alineado con legacy) o preferís <strong>2 campos separados</strong> <code>externalSystemId</code> + <code>externalRecordId</code>?</li>
+          <li>¿Hay un <strong>plan de integración con múltiples SIS</strong> a corto plazo que justifique 2 campos desde el inicio? (Si solo es 1 sistema, 1 campo basta y la migración futura es trivial)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6c — PREGUNTA 5: RECORDTYPES ADICIONALES SIN CAMPOS -->
+  <div class="slide" id="s6c">
+    <div style="max-width:1000px; width:100%;">
+      <div class="pq-header">
+        <div class="pq-num" style="background:var(--orange);">P5</div>
+        <div class="pq-title">
+          <div class="scope">Pregunta puntual · RecordTypes mencionados sin campos</div>
+          <h2>¿Modelamos los 3 RTs que tu doc lista pero no especifica?</h2>
+          <div class="refs">Resuelve resto de <code>Q5</code> · ApprovalCondition ya cubierto en P3</div>
+        </div>
+      </div>
+
+      <div class="affects-banner orange">
+        <span class="banner-tag">Estamos modelando</span>
+        Decisión sobre 3 RecordTypes que tu doc Confluence menciona pero <strong>sin especificar campos</strong>:
+        <span class="field-tag">GeneralData</span>
+        <span class="field-tag">GraduationProfile</span>
+        <span class="field-tag">EntryProfile</span>
+      </div>
+
+      <div class="narrative have">
+        <div class="label">📥 Lo que tenemos para responder</div>
+        <p>Tu doc Confluence los lista como RecordTypes válidos para <code>CurricularSection</code>:</p>
+        <ul style="margin:6px 0 6px 18px; font-size:13px; color:var(--text);">
+          <li><code>GeneralData</code> — categoría: estructural. <strong>Sin campos especificados</strong>.</li>
+          <li><code>GraduationProfile</code> — categoría: complementaria institucional. <strong>Sin campos</strong>.</li>
+          <li><code>EntryProfile</code> — categoría: complementaria institucional. <strong>Sin campos</strong>.</li>
+        </ul>
+        <p style="margin-top:6px;">Pero el <strong>legacy v2.2 no los usa en ninguno de los 2 tenants</strong>. Univalle no los menciona, AIEP tampoco. Y los 21 Bases del core de up1 no tienen precedente — son todos conceptos nuevos para la plataforma.</p>
+      </div>
+
+      <div class="narrative missing">
+        <div class="label">❌ Lo que NO podemos cerrar sin tu input</div>
+        <p>Modelarlos sin campos = <strong>archivos vacíos sin propósito claro</strong>. Modelarlos con campos inferidos = <strong>estamos inventando</strong> el modelo. Y omitirlos asume que no aplican.</p>
+        <p style="margin-top:6px;">Hay además una sospecha conceptual sobre los dos últimos: <code>GraduationProfile</code> y <code>EntryProfile</code> suenan a <strong>"perfil de egreso/ingreso de la carrera"</strong> — eso típicamente vive a nivel de <strong>plan de estudios</strong>, no de programa de asignatura individual. ¿Es error del doc Confluence o realmente aplican al programa?</p>
+      </div>
+
+      <div class="card-grid cols-3" style="margin-bottom:10px;">
+        <div class="card orange" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--orange);">📊 Cómo está hoy en el legacy</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="comment">// Univalle (41 secciones)</span>
+recordTypes: [
+  <span class="str">"Modality"</span>, <span class="str">"LearningOutcome"</span>,
+  <span class="str">"Session"</span>, <span class="str">"EvaluationComponent"</span>,
+  <span class="str">"Bibliography"</span>, <span class="str">"CustomSection"</span>
+]
+<span class="comment">// → 0 instancias de los 3 RTs</span>
+
+<span class="comment">// AIEP (56 secciones)</span>
+recordTypes: [
+  <span class="str">"Modality"</span>, <span class="str">"LearningOutcome"</span>,
+  <span class="str">"Content"</span>, <span class="str">"EvaluationComponent"</span>
+]
+<span class="comment">// → 0 instancias de los 3 RTs</span></div>
+        </div>
+        <div class="card blue" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--blue);">📘 Lo que dice Confluence</h3>
+          <div class="code-snippet" style="font-size:10px; margin-top:6px;"><span class="comment">// GeneralData — Structural</span>
+{
+  <span class="kw">"recordType"</span>: <span class="str">"GeneralData"</span>,
+  <span class="comment">// ¿campos? — sin especificar</span>
+}
+
+<span class="comment">// GraduationProfile — Complementaria</span>
+{
+  <span class="kw">"recordType"</span>: <span class="str">"GraduationProfile"</span>,
+  <span class="comment">// ¿campos?</span>
+}</div>
+        </div>
+        <div class="card teal" style="padding:10px 12px;">
+          <h3 style="font-size:11px; color:var(--teal);">💡 Postura propuesta</h3>
+          <p style="font-size:11px; margin-top:6px;"><strong>NO modelar en este sprint</strong>. Cada RT es archivo separado — agregarlos después no rompe nada.</p>
+          <p style="margin-top:6px; font-size:11px;">Si en el futuro algún cliente los pide:<br>1. Confirmar campos con vos<br>2. Crear <code>rt__&lt;RT&gt;__curricularsection.json</code><br>3. Cero migración (no hay datos previos)</p>
+        </div>
+      </div>
+
+      <div class="proposal-block">
+        <h3>💡 Lo que proponemos como camino</h3>
+        <p><strong>NO modelar los 3 RTs en este sprint</strong>. La postura "esperar caso real" es defensible: ningún tenant los usa hoy y modelar sin campos es inventar.</p>
+        <div class="why">Diferimos sin costo: cuando llegue requerimiento concreto, tu input define los campos exactos y creamos los archivos. Riesgo: que alguien asuma que sí están modelados — mitigado documentando explícitamente en programa-de-asignatura.md que están fuera de scope.</div>
+      </div>
+
+      <div class="questions-block">
+        <div class="q-tag">Lo que necesitamos de ti</div>
+        <ul class="q-list">
+          <li>¿Estos 3 RTs <strong>realmente aplican al Programa de asignatura</strong>, o pertenecen a otro nivel del modelo (plan de estudios, perfil institucional)? Tu doc los lista bajo <code>CurricularSection</code> pero ningún ejemplo legacy los usa.</li>
+          <li>Si aplican al programa: <strong>¿cuáles son sus campos específicos?</strong> Para <code>GeneralData</code>: ¿es metadata libre tipo <code>{ key, value }</code> o tiene campos fijos? Para <code>GraduationProfile</code> y <code>EntryProfile</code>: ¿qué los diferencia?</li>
+          <li>¿Hay <strong>algún cliente actual</strong> que los esté pidiendo, o son aspiracionales para el modelo? Si nadie los pide, los diferimos sin costo.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 — RECOLECCION DE RESPUESTAS -->
+  <div class="slide" id="s7">
+    <div style="max-width:920px; width:100%;">
+      <div class="tag">Llenar durante la reunión</div>
+      <h2>Respuestas obtenidas</h2>
+      <p style="margin-top:6px; margin-bottom:14px;">Espacio para anotar las decisiones del equipo. Cada pregunta agrupada tiene 2 sub-preguntas a responder.</p>
+
+      <div class="answer-table">
+        <div class="answer-row header">
+          <span>Pregunta</span>
+          <span>Sub-pregunta</span>
+          <span style="text-align:center;">Respuesta</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P1 · Enums</span>
+          <span>(a) Casing UPPER_SNAKE_CASE confirmado</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P1 · Enums</span>
+          <span>(b) <code>"Active"</code> mapea a</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P2 · RTs</span>
+          <span>(a) Subset RTs en TICKET-009 (4 mín / 6 Univalle / 7)</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P2 · RTs</span>
+          <span>(b) RTs globales o algún RT per-tenant</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P2.b · Completo</span>
+          <span>¿Sprint requiere los 2 tenants funcionando completos?</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P3 · Secciones</span>
+          <span>(a) CustomSection: 1 genérico o N específicos</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P3 · Secciones</span>
+          <span>(b) "Habilitación" Univalle: Session o ApprovalCondition</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P4 · externalId</span>
+          <span>1 campo string o 2 campos separados</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P5 · RTs adic.</span>
+          <span>GeneralData / GraduationProfile / EntryProfile — ¿modelar o diferir?</span>
+          <span class="blank">_____</span>
+        </div>
+        <div class="answer-row">
+          <span class="pq-id">P5 · RTs adic.</span>
+          <span>Si modelar: ¿qué campos tienen?</span>
+          <span class="blank">_____</span>
+        </div>
+      </div>
+
+      <p style="margin-top:14px; font-size:11px; color:var(--text-dim); text-align:center;">Si una respuesta no se cierra hoy: anotar quién decide y plazo. Las 11 preguntas no urgentes restantes pueden ir por email.</p>
+    </div>
+  </div>
+
+  <!-- 8 — PROXIMOS PASOS + CIERRE -->
+  <div class="slide" id="s8">
+    <div style="max-width:920px; width:100%;">
+      <div class="tag">Después de la reunión</div>
+      <h2>Próximos pasos según respuestas</h2>
+
+      <div class="card-grid cols-2" style="margin-top:8px;">
+        <div class="card teal">
+          <h3>🚀 Si cerramos las 5 preguntas</h3>
+          <p>
+            • Formalizar como <code>DECISION-004..009</code><br>
+            • Cerrar 8 open questions (Q1, Q2, Q3, Q5, Q10, Q11, T2, T3)<br>
+            • Eduardo arranca <strong>TICKET-006 esta semana</strong><br>
+            • Pre-requisito: <code>npm run tenant:create UNIVALLE</code> + <code>AIEP</code>
+          </p>
+        </div>
+        <div class="card orange">
+          <h3>⏳ Si queda alguna sin responder</h3>
+          <p>
+            • <strong>P1</strong> (enums): bloquea modelado → escalar urgente<br>
+            • <strong>P2 / P2.b</strong> (RTs): ajustar scope de TICKET-009<br>
+            • <strong>P3</strong> (secciones) o <strong>P4</strong> (externalId): arrancar con propuesta legacy literal<br>
+            • <strong>P5</strong> (RTs adic.): postura "no modelar" defensible — diferir<br>
+            • Las 11 no urgentes restantes pueden ir por email
+          </p>
+        </div>
+      </div>
+
+      <div class="proposal-block" style="margin-top:14px;">
+        <h3>📋 Material de referencia</h3>
+        <p style="font-size:13px;">El detalle completo de las 19 preguntas (Q1..Q14 + T1..T5) está en <code>specs/curriculum-design/open-questions.md</code> con citas verbatim, alternativas, costos de migración y cobertura por sprint. La presentación extendida (32 slides) está en <code>open-questions-presentation.html</code>.</p>
+      </div>
+
+      <div style="margin-top:18px; text-align:center;">
+        <p style="font-size:14px; color:var(--text); font-weight:600;">Gracias por el tiempo 🙏</p>
+        <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">Eduardo Bacon · Curriculum Design · Sprint Migración uAssessment</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="progress" id="progress"></div><div class="slide-num" id="slideNum">1 / 11</div>
+<div class="nav-hint">
+  <span class="key">←</span><span class="key">→</span> · <span class="key">Space</span>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const progress = document.getElementById('progress');
+  const slideNum = document.getElementById('slideNum');
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    progress.appendChild(dot);
+  });
+
+  function goTo(n) {
+    if (n < 0 || n >= slides.length) return;
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('exit');
+    setTimeout(() => slides[prev].classList.remove('exit'), 400);
+    current = n;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    slideNum.textContent = `${current + 1} / ${slides.length}`;
+  }
+
+  function next() { if (current < slides.length - 1) goTo(current + 1); }
+  function prev() { if (current > 0) goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    if (e.key === ' ') { e.preventDefault(); next(); }
+  });
+
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+  });
+</script>
+</body>
+</html>

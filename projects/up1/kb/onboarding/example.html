@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flujo PM + IA — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f8fa;
+    --bg3: #eef0f4;
+    --border: #dde1e6;
+    --teal: #0a808c;
+    --teal-light: #0a808c;
+    --blue: #1d6fa4;
+    --blue-light: #1d6fa4;
+    --green: #1a7a3a;
+    --green-light: #1a7a3a;
+    --orange: #c08a1e;
+    --purple: #6e40c9;
+    --purple-light: #6e40c9;
+    --red: #d32f2f;
+    --text: #1a1a2e;
+    --text-muted: #4a5568;
+    --text-dim: #8896a6;
+    --yellow-accent: #f5c542;
+    --teal-gradient-1: #2dd4bf;
+    --teal-gradient-2: #0a808c;
+    --teal-gradient-3: #086a74;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* DECK */
+  .deck { width: 100%; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity .4s ease, transform .4s ease;
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity .3s ease, transform .3s ease;
+  }
+
+  /* PROGRESS */
+  .progress {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background .2s, transform .2s;
+  }
+  .dot.active { background: var(--teal); transform: scale(1.4); }
+
+  /* NAV HINTS */
+  .nav-hint {
+    position: fixed;
+    bottom: 28px;
+    right: 40px;
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .key {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* SLIDE NUMBER */
+  .slide-num {
+    position: fixed;
+    bottom: 28px;
+    left: 40px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* TYPOGRAPHY */
+  .tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 56px; font-weight: 700; line-height: 1.1; margin-bottom: 20px; }
+  h2 { font-size: 40px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+  h3 { font-size: 22px; font-weight: 600; margin-bottom: 12px; }
+  .subtitle { font-size: 22px; color: var(--text-muted); line-height: 1.5; }
+  p { font-size: 18px; color: var(--text-muted); line-height: 1.6; }
+  .accent { color: var(--teal-light); }
+  .muted { color: var(--text-dim); }
+
+  /* CARDS */
+  .card-grid { display: grid; gap: 16px; width: 100%; }
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+  }
+  .card.teal { border-color: var(--teal); }
+  .card.blue { border-color: var(--blue); }
+  .card.purple { border-color: var(--purple); }
+  .card.green { border-color: var(--green); }
+  .card.orange { border-color: var(--orange); }
+
+  .card-icon { font-size: 28px; margin-bottom: 12px; }
+  .card h3 { font-size: 18px; margin-bottom: 6px; }
+  .card p { font-size: 14px; color: var(--text-muted); }
+
+  /* CODE */
+  .code-block {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    width: 100%;
+    white-space: pre;
+    overflow-x: auto;
+    color: #e2e8f0;
+  }
+  .cmd { color: #2dd4bf; }
+  .arg { color: #7dd3fc; }
+  .comment { color: #64748b; }
+  .output-line { color: #86efac; }
+  .warn { color: #fbbf24; }
+  .path { color: #c4b5fd; }
+
+  /* HIGHLIGHT BOX */
+  .highlight {
+    background: linear-gradient(135deg, rgba(10,128,140,.08), rgba(29,111,164,.05));
+    border: 1px solid rgba(10,128,140,.25);
+    border-radius: 12px;
+    padding: 24px 32px;
+    width: 100%;
+  }
+  .highlight.big { padding: 32px 40px; }
+
+  /* FLOW */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-step {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+  }
+  .flow-step .icon { font-size: 24px; margin-bottom: 6px; }
+  .flow-step .label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .flow-step .sub { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+  .flow-arrow { color: var(--text-dim); font-size: 20px; flex-shrink: 0; }
+
+  /* LIST */
+  .check-list { list-style: none; width: 100%; }
+  .check-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+    color: var(--text-muted);
+  }
+  .check-list li:last-child { border-bottom: none; }
+  .check-list .icon { flex-shrink: 0; margin-top: 2px; }
+
+  /* PILL */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pill.teal { border-color: var(--teal); color: var(--teal-light); }
+  .pill.blue { border-color: var(--blue); color: var(--blue-light); }
+  .pill.green { border-color: var(--green); color: var(--green-light); }
+  .pill.purple { border-color: var(--purple); color: var(--purple-light); }
+  .pill.orange { border-color: var(--orange); color: var(--orange); }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+  /* TWO-COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; align-items: start; }
+
+  /* QUOTE */
+  .quote {
+    font-size: 28px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.5;
+    text-align: center;
+    position: relative;
+    padding: 0 40px;
+  }
+  .quote::before { content: '"'; font-size: 80px; color: var(--teal); opacity: .3; position: absolute; top: -20px; left: 0; font-style: normal; line-height: 1; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    background: rgba(10,128,140,.2);
+    color: var(--teal-light);
+    border: 1px solid rgba(10,128,140,.4);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .badge.blue {
+    background: rgba(29,111,164,.2);
+    color: var(--blue-light);
+    border-color: rgba(29,111,164,.4);
+  }
+  .badge.purple {
+    background: rgba(110,64,201,.2);
+    color: var(--purple-light);
+    border-color: rgba(110,64,201,.4);
+  }
+  .badge.green {
+    background: rgba(35,134,54,.2);
+    color: var(--green-light);
+    border-color: rgba(35,134,54,.4);
+  }
+  .badge.orange {
+    background: rgba(210,153,34,.2);
+    color: var(--orange);
+    border-color: rgba(210,153,34,.4);
+  }
+
+  /* CMD TABLE */
+  .cmd-table { width: 100%; border-collapse: collapse; }
+  .cmd-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0 12px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmd-table td {
+    padding: 10px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--bg3);
+    vertical-align: top;
+  }
+  .cmd-table td:first-child { font-family: monospace; color: var(--teal-light); white-space: nowrap; }
+  .cmd-table td:last-child { color: var(--text-muted); }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); width: 100%; margin: 20px 0; }
+
+  /* BRAND ELEMENTS */
+  .brand-logo {
+    position: fixed;
+    top: 28px;
+    left: 40px;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-logo svg { width: 36px; height: 36px; }
+  .brand-logo .brand-text { font-size: 20px; font-weight: 700; color: var(--text); }
+  .brand-logo .brand-sub { font-size: 10px; color: var(--text-muted); display: block; margin-top: -2px; letter-spacing: 0.02em; }
+
+  .brand-blob-tr {
+    position: fixed;
+    top: -120px;
+    right: -80px;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal-gradient-1), var(--teal-gradient-2));
+    opacity: 0.25;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .brand-blob-br {
+    position: fixed;
+    bottom: -160px;
+    right: 60px;
+    width: 440px;
+    height: 440px;
+    border-radius: 50%;
+    background: var(--teal-gradient-3);
+    opacity: 0.18;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .brand-dot-yellow {
+    position: fixed;
+    bottom: 160px;
+    right: 240px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--yellow-accent);
+    opacity: 0.5;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .brand-line {
+    position: fixed;
+    bottom: 36px;
+    left: 40px;
+    width: 80px;
+    height: 3px;
+    background: var(--text);
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* TITLE SLIDE */
+  .slide-title { background: transparent; }
+
+  /* PROBLEM SLIDE */
+  .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; }
+  .problem-card {
+    background: rgba(211,47,47,.06);
+    border: 1px solid rgba(211,47,47,.25);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .problem-card .title { font-size: 15px; font-weight: 600; color: #d32f2f; margin-bottom: 6px; }
+  .problem-card .desc { font-size: 13px; color: var(--text-muted); }
+
+  /* FOLDER BLOCKS */
+  .folder-block {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }
+  .folder-block .folder-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .folder-block .folder-name {
+    font-family: monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--blue-light);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .folder-block .folder-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* TREE (task anatomy) */
+  .task-tree {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 2;
+    color: #e2e8f0;
+  }
+  .task-tree .t-root { color: #2dd4bf; font-weight: 700; }
+  .task-tree .t-branch { color: #64748b; }
+  .task-tree .t-dir { color: #7dd3fc; }
+  .task-tree .t-file { color: #e2e8f0; }
+  .task-tree .t-hl { color: #2dd4bf; font-weight: 600; }
+  .task-tree .t-note { color: #64748b; font-size: 11px; }
+  .task-tree div { white-space: nowrap; }
+
+  /* SUPPORT FLOW STEPS */
+  .support-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .support-step .s-icon { font-size: 22px; flex-shrink: 0; }
+  .support-step .s-content { flex: 1; }
+  .support-step .s-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .support-step .s-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .support-step .s-value { font-size: 11px; font-weight: 600; margin-top: 4px; display: inline-block; border-radius: 4px; padding: 2px 8px; }
+  .v-mcp { background: rgba(29,111,164,.2); color: var(--blue-light); }
+  .v-know { background: rgba(10,128,140,.2); color: var(--teal-light); }
+  .v-ai { background: rgba(110,64,201,.2); color: var(--purple-light); }
+  .v-doc { background: rgba(35,134,54,.2); color: var(--green-light); }
+  .v-loop { background: rgba(210,153,34,.2); color: var(--orange); }
+
+  /* CAPABILITY CARDS */
+  .cap-card {
+    border-radius: 12px;
+    padding: 22px 24px;
+    border: 1px solid var(--border);
+  }
+  .cap-card .cap-tag {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .cap-card .cap-what {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+    margin-top: 10px;
+  }
+  .cap-card .cap-def {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    font-style: italic;
+    border-left: 2px solid var(--border);
+    padding-left: 10px;
+    margin-bottom: 10px;
+  }
+  .cap-card .cap-how {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+  }
+  .cap-card .cap-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .cap-card.teal { background: rgba(10,128,140,.06); border-color: var(--teal); }
+  .cap-card.teal .cap-tag { color: var(--teal); }
+  .cap-card.blue { background: rgba(29,111,164,.06); border-color: var(--blue); }
+  .cap-card.blue .cap-tag { color: var(--blue); }
+  .cap-card.purple { background: rgba(110,64,201,.06); border-color: var(--purple); }
+  .cap-card.purple .cap-tag { color: var(--purple); }
+  .cap-card.green { background: rgba(26,122,58,.06); border-color: var(--green); }
+  .cap-card.green .cap-tag { color: var(--green); }
+
+  .obj-card {
+    border-radius: 14px;
+    padding: 28px 32px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .obj-card .obj-icon { font-size: 40px; margin-bottom: 14px; }
+  .obj-card .obj-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .obj-card .obj-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+  .obj-card.teal { background: rgba(10,128,140,.06); border-color: var(--teal); }
+  .obj-card.teal .obj-title { color: var(--teal); }
+  .obj-card.blue { background: rgba(29,111,164,.06); border-color: var(--blue); }
+  .obj-card.blue .obj-title { color: var(--blue); }
+  .obj-card.purple { background: rgba(110,64,201,.06); border-color: var(--purple); }
+  .obj-card.purple .obj-title { color: var(--purple); }
+
+</style>
+</head>
+<body>
+
+<!-- BRAND ELEMENTS -->
+<div class="brand-logo">
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 8c0-2 1.5-4 4-4s4 2 4 4-1.5 4-4 4-4-2-4-4z" fill="#1a1a2e" opacity="0.7" transform="rotate(-30 12 8)"/>
+    <path d="M12 14c0-2 1.5-4 4-4s4 2 4 4-1.5 4-4 4-4-2-4-4z" fill="#0a808c" transform="rotate(-30 16 14)"/>
+    <path d="M8 20c0-2 1.5-4 4-4s4 2 4 4-1.5 4-4 4-4-2-4-4z" fill="#2dd4bf" transform="rotate(-30 12 20)"/>
+  </svg>
+  <div>
+    <span class="brand-text">uPlanner</span>
+    <span class="brand-sub">Optimización que transforma</span>
+  </div>
+</div>
+<div class="brand-blob-tr"></div>
+<div class="brand-blob-br"></div>
+<div class="brand-dot-yellow"></div>
+<div class="brand-line"></div>
+
+<div class="deck" id="deck">
+
+  <!-- ── SLIDE 1: TÍTULO ── -->
+  <div class="slide slide-title active" id="s1">
+    <div style="text-align:center; max-width:820px;">
+      <div class="tag">Product Management × IA</div>
+      <h1>Mi flujo PM<br><span class="accent">potenciado con IA</span></h1>
+      <p class="subtitle" style="margin-top:16px;">Cómo trabajo todos los días con Claude: más rápido, con trazabilidad completa<br>y un sistema que aprende con cada sesión.</p>
+      <div class="pills" style="justify-content:center; margin-top:32px;">
+        <span class="pill teal">⚡ Optimizar tiempos</span>
+        <span class="pill blue">📝 Documentar todo</span>
+        <span class="pill purple">🧠 Conocimiento integrado</span>
+        <span class="pill green">🔗 Interconexión de sistemas</span>
+        <span class="pill orange">💻 Todo desde el IDE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2: EL PROBLEMA ── -->
+  <div class="slide" id="s2">
+    <div style="max-width:860px; width:100%;">
+      <div class="tag">El problema que quería resolver</div>
+      <h2>El tiempo se iba en<br><span class="accent">todo menos en el producto</span></h2>
+      <div class="problem-grid" style="margin-top:28px;">
+        <div class="problem-card">
+          <div class="title">⏱️ Fricción operativa</div>
+          <div class="desc">Re-hacer análisis, explicar flujos sin tiempo para documentar, dificultad de unificar distintas fuentes de datos con agilidad.</div>
+        </div>
+        <div class="problem-card">
+          <div class="title">😵 "¿Dónde estaba?"</div>
+          <div class="desc">Cada vez que retomaba una tarea tenía que re-explicar el contexto: el cliente, el problema, lo que ya avanzamos.</div>
+        </div>
+        <div class="problem-card">
+          <div class="title">📁 Outputs dispersos</div>
+          <div class="desc">El requerimiento en una carpeta, el mockup en otra, los inputs en otra distinta. Sin trazabilidad de qué versión era la final.</div>
+        </div>
+        <div class="problem-card">
+          <div class="title">🧠 Contexto que no escala</div>
+          <div class="desc">Cada sesión empezaba desde cero. El conocimiento del dominio, los clientes y la BD vivía solo en mi cabeza.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: LOS OBJETIVOS ── -->
+  <div class="slide" id="s3">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Tres objetivos concretos</div>
+      <h2>Lo que quería lograr<br><span class="accent">con este sistema</span></h2>
+      <div class="card-grid cols-3" style="margin-top:28px;">
+        <div class="obj-card teal">
+          <div class="obj-icon">⚡</div>
+          <div class="obj-title">Optimizar tiempos</div>
+          <div class="obj-desc">De horas a minutos. Un comando genera lo que antes tomaba una tarde. La fricción operativa desaparece.</div>
+        </div>
+        <div class="obj-card blue">
+          <div class="obj-icon">📝</div>
+          <div class="obj-title">Documentar todo</div>
+          <div class="obj-desc">Cada tarea con su historial, artefactos y notas de sesión. Trazabilidad automática sin esfuerzo adicional.</div>
+        </div>
+        <div class="obj-card purple">
+          <div class="obj-icon">🧠</div>
+          <div class="obj-title">Conocimiento integrado</div>
+          <div class="obj-desc">Investigar, validar y construir bases de conocimiento que el agente usa automáticamente en cada acción.</div>
+        </div>
+      </div>
+      <div class="highlight" style="margin-top:20px; padding:16px 24px; text-align:center;">
+        <p style="font-size:15px; color:var(--text);">El resultado: <strong style="color:var(--teal-light)">más tiempo para pensar el producto</strong>, con toda la información disponible en el momento que se necesita.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4: LA FILOSOFÍA ── -->
+  <div class="slide" id="s4">
+    <div style="max-width:780px; width:100%; text-align:center;">
+      <div class="tag">La filosofía central</div>
+      <div class="quote" style="margin: 20px 0 32px;">
+        Una tarea = una carpeta.<br>Todo lo relacionado, junto.
+      </div>
+      <div class="two-col" style="margin-top:8px; gap:24px;">
+        <div class="card teal">
+          <div class="card-icon">🗂️</div>
+          <h3>Centralización</h3>
+          <p>Inputs, outputs, notas y contexto en un lugar. Retomar el trabajo es abrir un archivo.</p>
+        </div>
+        <div class="card blue">
+          <div class="card-icon">🧠</div>
+          <h3>Continuidad</h3>
+          <p>El README de cada tarea es la memoria operacional. El agente lo lee al iniciar y lo actualiza al terminar — sin intervención manual.</p>
+        </div>
+        <div class="card purple">
+          <div class="card-icon">📈</div>
+          <h3>Conocimiento acumulado</h3>
+          <p>Cada sesión enriquece la base de conocimiento. Investigaciones validadas que potencian cada acción futura.</p>
+        </div>
+        <div class="card green">
+          <div class="card-icon">📋</div>
+          <h3>Trazabilidad automática</h3>
+          <p>Cada artefacto generado queda registrado con su versión, fecha y contexto. El historial se escribe solo.</p>
+        </div>
+        <div class="card orange" style="grid-column: 1 / -1;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="card-icon" style="margin-bottom:0; font-size:32px;">💻</div>
+            <div>
+              <h3 style="margin-bottom:4px;">Todo desde el IDE — sin cambiar de ventana</h3>
+              <p style="font-size:14px;">El agente corre dentro de VS Code vía <strong style="color:var(--orange)">Claude Code</strong> — con skills, commands y MCP integrados. Tareas, queries, maquetas, Jira, Confluence, BD: todo desde el mismo lugar.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5: LA ESTRUCTURA ── -->
+  <div class="slide" id="s5">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Estructura del workspace</div>
+      <h2>Todo tiene su lugar <span class="accent">predecible</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:36px; align-items:start;">
+        <div>
+          <div class="folder-block" style="border-color: rgba(88,166,255,.4);">
+            <div class="folder-icon">⚙️</div>
+            <div>
+              <span class="folder-name">.claude/commands/ + skills/</span>
+              <span class="folder-desc">16 slash commands: 9 manuales + 7 skills con auto-trigger</span>
+            </div>
+          </div>
+          <div class="folder-block" style="border-color: rgba(45,212,191,.4);">
+            <div class="folder-icon">🧠</div>
+            <div>
+              <span class="folder-name">knowledge/</span>
+              <span class="folder-desc">Base de conocimiento acumulada: Suite DB (679 tablas), educación superior (14 módulos), clientes, APIs</span>
+            </div>
+          </div>
+          <div class="folder-block" style="border-color: rgba(167,113,247,.4);">
+            <div class="folder-icon">📋</div>
+            <div>
+              <span class="folder-name">tasks/</span>
+              <span class="folder-desc">Trazabilidad PM: una carpeta por tarea con README vivo, artefactos y notas de sesión</span>
+            </div>
+          </div>
+          <div class="folder-block" style="border-color: rgba(63,185,80,.4);">
+            <div class="folder-icon">🐍</div>
+            <div>
+              <span class="folder-name">scripts/</span>
+              <span class="folder-desc">Python + conexión directa a 170+ bases de datos de clientes vía SSH tunneling</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p style="margin-bottom:12px; font-size:14px; color:var(--text-muted);">Cada tarea activa tiene su carpeta:</p>
+          <div class="task-tree">
+            <div><span class="t-root">008-tributacion-masiva/</span></div>
+            <div><span class="t-branch">├── </span><span class="t-hl">README.md</span>  <span class="t-note">← índice + notas de sesión</span></div>
+            <div><span class="t-branch">├── </span><span class="t-file">brief.md</span>  <span class="t-note">← contexto + fuentes usadas</span></div>
+            <div><span class="t-branch">├── </span><span class="t-dir">inputs/</span>  <span class="t-note">← specs, PDFs, screenshots</span></div>
+            <div><span class="t-branch">├── </span><span class="t-file">requerimiento_v3.docx</span></div>
+            <div><span class="t-branch">├── </span><span class="t-file">flujo_v1.md</span></div>
+            <div><span class="t-branch">└── </span><span class="t-file">mockup_v3.html</span></div>
+          </div>
+          <div class="highlight" style="margin-top:14px; padding:14px 18px;">
+            <p style="font-size:13px; color:var(--text);">El README es la <strong style="color:var(--teal-light)">memoria viva</strong> de la tarea. Se actualiza automáticamente cada vez que el agente genera un artefacto.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: SISTEMA DE TAREAS ── -->
+  <div class="slide" id="s6">
+    <div style="max-width:860px; width:100%;">
+      <div class="tag">Sistema de trazabilidad</div>
+      <h2>El radar que nunca<br><span class="accent">pierde una tarea</span></h2>
+      <div class="two-col" style="margin-top:28px; gap:32px;">
+        <div>
+          <div class="code-block"><span class="comment"># Empezar el día</span>
+<span class="cmd">/task briefing</span>
+
+<span class="output-line">🌅 BRIEFING — 2026-03-26
+
+⚠️ SOPORTE — ACCIÓN INMEDIATA
+  USUITE-12610 · urgente · Anáhuac
+  → revisar diagnóstico pendiente
+
+🤝 COMPROMISOS EN RIESGO
+  #002 · IBERO · vence mañana
+  → sin actividad hace 3 días
+
+📋 ACCIONES COMPROMETIDAS
+  #018 · EAFIT · elaborar plan hoy</span></div>
+        </div>
+        <div>
+          <p style="margin-bottom:16px;">Lo que el sistema trackea en tiempo real:</p>
+          <ul class="check-list">
+            <li><span class="icon">🟡</span> Tareas en curso con fecha límite</li>
+            <li><span class="icon">🔴</span> Bloqueos con razón documentada</li>
+            <li><span class="icon">🤝</span> Compromisos en riesgo de vencer</li>
+            <li><span class="icon">🏁</span> Hitos de onboarding próximos</li>
+            <li><span class="icon">⚠️</span> Soporte urgente sin resolver</li>
+            <li><span class="icon">📦</span> Candidatos a backlog</li>
+          </ul>
+          <div class="highlight" style="margin-top:16px; padding:12px 18px;">
+            <p style="font-size:13px; color:var(--text);">Todo queda documentado. El historial de cada tarea es la bitácora del PM.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7: CAPACIDADES DE CLAUDE ── -->
+  <div class="slide" id="s7">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Cómo está construido</div>
+      <h2>Las capacidades de Claude<br><span class="accent">que hacen posible esto</span></h2>
+      <div class="card-grid cols-2" style="margin-top:24px; gap:16px;">
+        <div class="cap-card teal">
+          <div class="cap-tag">/commands</div>
+          <div class="cap-what">¿Qué es?</div>
+          <div class="cap-def">Archivos <code style="font-size:11px;">.md</code> en <code style="font-size:11px;">.claude/commands/</code>. Al invocar <code style="font-size:11px;">/comando</code>, Claude lee el archivo y ejecuta el proceso completo.</div>
+          <div class="cap-how">Cómo lo uso</div>
+          <div class="cap-desc">9 commands auto-contenidos: leer contexto, generar borrador en chat, iterar con feedback, guardar al confirmar.</div>
+          <div class="pills" style="margin-top:10px;">
+            <span class="pill teal" style="font-size:11px;">/req-doc</span>
+            <span class="pill teal" style="font-size:11px;">/mockup</span>
+            <span class="pill teal" style="font-size:11px;">/support</span>
+          </div>
+        </div>
+        <div class="cap-card blue">
+          <div class="cap-tag">skills</div>
+          <div class="cap-what">¿Qué es?</div>
+          <div class="cap-def">Módulos en <code style="font-size:11px;">.claude/skills/</code> con descripción semántica. Claude los activa automáticamente cuando detecta que la conversación entra en su dominio.</div>
+          <div class="cap-how">Cómo lo uso</div>
+          <div class="cap-desc">7 skills: <code style="font-size:11px;">/task</code>, <code style="font-size:11px;">/support</code>, <code style="font-size:11px;">/db-context</code>, <code style="font-size:11px;">/sql-query</code>, <code style="font-size:11px;">/db-support</code>, <code style="font-size:11px;">/research</code>, <code style="font-size:11px;">/notebook</code>. Se disparan solos por contexto.</div>
+          <div class="pills" style="margin-top:10px;">
+            <span class="pill blue" style="font-size:11px;">db-context</span>
+            <span class="pill blue" style="font-size:11px;">sql-query</span>
+            <span class="pill blue" style="font-size:11px;">+ extensible</span>
+          </div>
+        </div>
+        <div class="cap-card purple">
+          <div class="cap-tag">MCP</div>
+          <div class="cap-what">¿Qué es?</div>
+          <div class="cap-def">Model Context Protocol — estándar abierto que permite a Claude conectarse con herramientas externas en tiempo real. El agente puede leer, escribir y actuar en esas herramientas directamente.</div>
+          <div class="cap-how">Cómo lo uso</div>
+          <div class="cap-desc">Lee tickets Jira, publica en Confluence, consulta Gmail y Calendar — sin salir del IDE, sin copy-paste, sin cambiar de contexto.</div>
+          <div class="pills" style="margin-top:10px;">
+            <span class="pill purple" style="font-size:11px;">Jira</span>
+            <span class="pill purple" style="font-size:11px;">Confluence</span>
+            <span class="pill purple" style="font-size:11px;">Gmail</span>
+            <span class="pill purple" style="font-size:11px;">Calendar</span>
+          </div>
+        </div>
+        <div class="cap-card green">
+          <div class="cap-tag">memory + context</div>
+          <div class="cap-what">¿Qué es?</div>
+          <div class="cap-def"><code style="font-size:11px;">CLAUDE.md</code> se carga al inicio + bases de conocimiento en <code style="font-size:11px;">knowledge/</code>. El agente "recuerda" entre conversaciones lo que se le ha enseñado.</div>
+          <div class="cap-how">Cómo lo uso</div>
+          <div class="cap-desc">Base de conocimiento acumulada que crece con cada sesión: tablas de BD, dominio educativo, perfiles de clientes. Disponible en la próxima sesión sin recargar.</div>
+          <div class="pills" style="margin-top:10px;">
+            <span class="pill green" style="font-size:11px;">679 tablas BD</span>
+            <span class="pill green" style="font-size:11px;">14 módulos IES</span>
+            <span class="pill green" style="font-size:11px;">perfiles clientes</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px; background:rgba(210,153,34,.06); border:1px solid rgba(210,153,34,.25); border-radius:10px; padding:14px 20px; display:flex; align-items:center; gap:16px;">
+        <span style="font-size:26px; flex-shrink:0;">💻</span>
+        <div>
+          <span style="font-size:14px; font-weight:700; color:var(--orange);">Corre dentro del IDE — via Claude Code</span>
+          <p style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+            <code style="color:var(--orange); font-size:12px;">CLAUDE.md</code> + <code style="color:var(--orange); font-size:12px;">.claude/skills/</code> + <code style="color:var(--orange); font-size:12px;">.claude/commands/</code> definen reglas, contexto y comportamiento. Todo el sistema opera sin salir del editor.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8: LOS COMANDOS ── -->
+  <div class="slide" id="s8">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Slash commands</div>
+      <h2>Un comando,<br><span class="accent">un entregable profesional</span></h2>
+      <div style="margin-top:24px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+        <table class="cmd-table">
+          <thead><tr><th>Comando</th><th>Qué genera</th><th>Contexto que carga automáticamente</th></tr></thead>
+          <tbody>
+            <tr><td>/req-doc</td><td>Documento de requerimientos .docx corporativo</td><td>Estándar uPlanner + template con portada</td></tr>
+            <tr><td>/mockup suite|up1</td><td>Maqueta HTML interactiva con design system real</td><td>Design system Suite o uP1 completo</td></tr>
+            <tr><td>/flow</td><td>Diagrama Mermaid con casos borde</td><td>Bases de conocimiento educativo</td></tr>
+            <tr><td>/data-model</td><td>JSON estándar + Prisma Schema + checklist</td><td>Estándar uPlanner + patrones DDD</td></tr>
+            <tr><td>/sql-query</td><td>Query SQL optimizada para Suite</td><td>679 tablas + relaciones + preferencias</td></tr>
+            <tr><td>/research</td><td>Base de conocimiento validada en knowledge/</td><td>Módulos existentes + web + Confluence</td></tr>
+            <tr><td>/support</td><td>Diagnóstico completo de ticket Jira + queries</td><td>Schema BD + ticket Jira + historial</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="highlight" style="margin-top:16px; padding:14px 20px;">
+        <p style="font-size:14px; color:var(--text);">Cada comando lee automáticamente el contexto necesario y guarda el output en la carpeta de la tarea activa — sin intervención manual.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 9: FLUJO DE UN DÍA ── -->
+  <div class="slide" id="s9">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Un día típico</div>
+      <h2>Del briefing al entregable<br><span class="accent">en una sesión</span></h2>
+      <div style="margin-top:28px;">
+        <div class="flow">
+          <div class="flow-step" style="border-color:var(--teal)">
+            <div class="icon">🌅</div>
+            <div class="label">/task briefing</div>
+            <div class="sub">¿Qué urge hoy?</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--blue)">
+            <div class="icon">📂</div>
+            <div class="label">/task open #008</div>
+            <div class="sub">Abro la tarea</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--purple)">
+            <div class="icon">📄</div>
+            <div class="label">/req-doc</div>
+            <div class="sub">Genero el doc</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--green)">
+            <div class="icon">✅</div>
+            <div class="label">README actualizado</div>
+            <div class="sub">Automático</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step" style="border-color:var(--orange)">
+            <div class="icon">🔗</div>
+            <div class="label">/publish</div>
+            <div class="sub">A Confluence</div>
+          </div>
+        </div>
+      </div>
+      <div class="two-col" style="margin-top:28px; gap:20px;">
+        <div class="code-block" style="font-size:13px;"><span class="comment"># Retomar al día siguiente
+# Leo el README — contexto completo:</span>
+
+<span class="output-line">## Notas de sesión
+
+[2026-03-24] Refinamiento completo.
+  Flujo stepper 5 pasos diseñado.
+  Tabla destino: imp_course_competencies.
+
+[2026-03-25] Req-doc v3 generado.
+  Pendiente: validación con dev.</span>
+
+<span class="comment"># Contexto completo en 10 segundos ✓</span></div>
+        <div>
+          <p style="margin-bottom:16px; font-size:15px; color:var(--text);">El README hace el trabajo de recordar:</p>
+          <ul class="check-list" style="font-size:14px;">
+            <li><span class="icon">📋</span> Artefactos generados con sus versiones</li>
+            <li><span class="icon">🗒️</span> Notas de sesión con fechas (append-only)</li>
+            <li><span class="icon">🎯</span> Objetivo y estado actual</li>
+            <li><span class="icon">🔗</span> Links a Jira, Confluence, reuniones</li>
+          </ul>
+          <div class="highlight" style="margin-top:16px; padding:14px 20px;">
+            <p style="font-size:13px;">Retomar una tarea es:<br><strong style="color:var(--teal-light)">abrir el README → continuar</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 10: SOPORTE — FLUJO PUNTA A PUNTA ── -->
+  <div class="slide" id="s10">
+    <div style="max-width:960px; width:100%;">
+      <div class="tag">Ejemplo: flujo punta a punta</div>
+      <h2>Un ticket de soporte<br><span class="accent">resuelto con un comando</span></h2>
+      <div class="two-col" style="margin-top:20px; gap:28px; align-items:start;">
+        <div>
+          <div class="code-block" style="font-size:12.5px;"><span class="cmd">/support</span> <span class="arg">USUITE-12610</span>
+
+<span class="output-line">Leyendo ticket en Jira [MCP]...
+Identificando cliente: Anáhuac
+Cargando módulos BD relevantes...
+
+📋 DIAGNÓSTICO
+Cliente: planes-magisteriales
+Impacto: 3,322 sesiones con
+  cadenas rotas en cls_subjects
+
+🔍 Hipótesis principal:
+  KTR de clonado no mantuvo
+  integridad referencial en
+  nm_subject_topic_id
+
+📊 Queries de validación generadas:
+</span><span class="warn">  → query_validacion_p3.sql
+  → query_conteo_afectados.sql
+
+</span><span class="output-line">📁 Carpeta creada:
+  tasks/soporte/USUITE-12610/
+
+🔄 Actualizando estado en Jira...
+  → En progreso · worklog registrado</span></div>
+        </div>
+        <div>
+          <div class="support-step">
+            <div class="s-icon">📖</div>
+            <div class="s-content">
+              <div class="s-title">Lee el ticket en Jira</div>
+              <div class="s-detail">Sin copy-paste. Descripción, estado, cliente y comentarios directos.</div>
+              <span class="s-value v-mcp">MCP — integración nativa</span>
+            </div>
+          </div>
+          <div class="support-step">
+            <div class="s-icon">🗄️</div>
+            <div class="s-content">
+              <div class="s-title">Carga contexto de BD</div>
+              <div class="s-detail">Identifica las tablas involucradas y carga solo los módulos relevantes de 679.</div>
+              <span class="s-value v-know">knowledge — base acumulada</span>
+            </div>
+          </div>
+          <div class="support-step">
+            <div class="s-icon">🔍</div>
+            <div class="s-content">
+              <div class="s-title">Diagnostica y genera queries</div>
+              <div class="s-detail">Hipótesis fundamentadas en el dominio, queries de validación y corrección.</div>
+              <span class="s-value v-ai">Claude — razonamiento sobre el dominio</span>
+            </div>
+          </div>
+          <div class="support-step">
+            <div class="s-icon">📁</div>
+            <div class="s-content">
+              <div class="s-title">Crea carpeta del ticket</div>
+              <div class="s-detail">Todo centralizado en tasks/soporte/ — trazabilidad automática del caso.</div>
+              <span class="s-value v-doc">documentación automática</span>
+            </div>
+          </div>
+          <div class="support-step">
+            <div class="s-icon">🔄</div>
+            <div class="s-content">
+              <div class="s-title">Actualiza Jira</div>
+              <div class="s-detail">Transiciona estado, agrega worklog y comentario de diagnóstico.</div>
+              <span class="s-value v-loop">MCP — cierra el loop</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 11: BD DIRECTA ── -->
+  <div class="slide" id="s11">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Para el equipo de datos</div>
+      <h2>Consultas SQL directo<br><span class="accent">a producción</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:32px;">
+        <div>
+          <div class="code-block"><span class="comment"># El agente conoce 679 tablas</span>
+<span class="cmd">/sql-query</span> <span class="arg">¿cuántos docentes
+tienen secciones sin asistencia
+registrada en UPC este periodo?</span>
+
+<span class="output-line">Consultando suite-db/_index.md...
+Identificando tablas: cls_sections,
+cls_teachers_schedule,
+cls_students_attendance...
+
+Generando query optimizada:</span>
+
+<span class="warn">SET @periodo = 'UG-202601';
+SET @cliente = 'upc-e2g-post';</span>
+
+<span class="comment">-- Ejecutar directamente:</span>
+<span class="cmd">/sql-query --run --client upc</span></div>
+        </div>
+        <div>
+          <p style="margin-bottom:16px; color:var(--text);">La base de conocimiento de BD incluye:</p>
+          <ul class="check-list" style="font-size:14px;">
+            <li><span class="icon">🗄️</span> <strong style="color:var(--text)">679 tablas</strong> de la BD Suite documentadas con relaciones</li>
+            <li><span class="icon">📊</span> <strong style="color:var(--text)">266 tablas Staging</strong> (importación/ETL)</li>
+            <li><span class="icon">⚡</span> Ejecución directa en <strong style="color:var(--text)">170+ ambientes</strong> de clientes</li>
+            <li><span class="icon">📚</span> Queries estándar reutilizables (SQ-001, SQ-002...)</li>
+            <li><span class="icon">🔍</span> Preferencias de optimización aplicadas automáticamente</li>
+          </ul>
+          <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+            <span class="pill teal">Suite DB</span>
+            <span class="pill blue">Staging DB</span>
+            <span class="pill purple">MariaDB directo</span>
+            <span class="pill green">170+ clientes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 12: BASE DE CONOCIMIENTO ── -->
+  <div class="slide" id="s12">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Conocimiento que crece</div>
+      <h2>Investigar, validar<br><span class="accent">y que quede para siempre</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:28px; align-items:start;">
+        <div>
+          <div class="code-block" style="font-size:13px;"><span class="comment"># Construir una base de conocimiento</span>
+<span class="cmd">/research</span> <span class="arg">modelos de tributación
+  curricular en educación superior</span>
+
+<span class="output-line">Cargando contexto existente...
+Buscando en Confluence...
+Consultando fuentes externas...
+Validando con knowledge/IES...
+
+📄 Base de conocimiento generada:
+  knowledge/educacion-superior/
+  tributacion-curricular.md
+
+✅ Disponible para próximas sesiones
+  → /req-doc la usará automáticamente
+  → /flow tendrá contexto del dominio</span></div>
+          <div class="highlight" style="margin-top:14px; padding:12px 18px;">
+            <p style="font-size:13px; color:var(--text);">Una investigación se hace una vez.<br><strong style="color:var(--teal-light)">El conocimiento potencia todas las acciones futuras.</strong></p>
+          </div>
+        </div>
+        <div>
+          <div class="card-grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="card teal" style="padding:16px 18px;">
+              <div class="card-icon" style="font-size:22px;">🏫</div>
+              <h3 style="font-size:15px;">Educación Superior</h3>
+              <p style="font-size:12px;">14 módulos: estructura académica, matrícula, evaluación, currículum...</p>
+            </div>
+            <div class="card blue" style="padding:16px 18px;">
+              <div class="card-icon" style="font-size:22px;">🗄️</div>
+              <h3 style="font-size:15px;">Suite DB</h3>
+              <p style="font-size:12px;">679 tablas con relaciones, módulos SQL y queries estándar.</p>
+            </div>
+            <div class="card purple" style="padding:16px 18px;">
+              <div class="card-icon" style="font-size:22px;">🏛️</div>
+              <h3 style="font-size:15px;">Clientes</h3>
+              <p style="font-size:12px;">Perfiles por institución: configuración, particularidades, historial.</p>
+            </div>
+            <div class="card green" style="padding:16px 18px;">
+              <div class="card-icon" style="font-size:22px;">🔗</div>
+              <h3 style="font-size:15px;">APIs</h3>
+              <p style="font-size:12px;">Suite API, User API, SSO/SAML — endpoints y patrones de integración.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 13: INTEGRATIONS ── -->
+  <div class="slide" id="s13">
+    <div style="max-width:860px; width:100%; text-align:center;">
+      <div class="tag">Integraciones nativas via MCP</div>
+      <h2>Conectado a las herramientas<br><span class="accent">que ya usas</span></h2>
+      <div class="card-grid cols-2" style="margin-top:28px; text-align:left;">
+        <div class="card blue">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <span style="font-size:28px;">🔷</span>
+            <h3 style="margin:0;">Jira</h3>
+            <span class="badge blue">MCP</span>
+          </div>
+          <p>Lee tickets, transiciona estados, agrega comentarios y worklogs. El flujo de soporte sincroniza automáticamente.</p>
+          <div class="pills" style="margin-top:12px;">
+            <span class="pill blue" style="font-size:11px;">leer</span>
+            <span class="pill blue" style="font-size:11px;">transicionar</span>
+            <span class="pill blue" style="font-size:11px;">comentar</span>
+          </div>
+        </div>
+        <div class="card teal">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <span style="font-size:28px;">📘</span>
+            <h3 style="margin:0;">Confluence</h3>
+            <span class="badge">MCP</span>
+          </div>
+          <p>Publica documentos Markdown directamente con /publish. Lee y explora páginas como contexto via MCP nativo.</p>
+          <div class="pills" style="margin-top:12px;">
+            <span class="pill teal" style="font-size:11px;">/publish</span>
+            <span class="pill teal" style="font-size:11px;">leer via MCP</span>
+          </div>
+        </div>
+        <div class="card purple">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <span style="font-size:28px;">🗄️</span>
+            <h3 style="margin:0;">Base de datos</h3>
+          </div>
+          <p>SSH tunneling a MariaDB de 170+ ambientes. Queries ejecutadas en tiempo real contra producción.</p>
+          <div class="pills" style="margin-top:12px;">
+            <span class="pill purple" style="font-size:11px;">Prod</span>
+            <span class="pill purple" style="font-size:11px;">QA</span>
+            <span class="pill purple" style="font-size:11px;">Test</span>
+          </div>
+        </div>
+        <div class="card green">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <span style="font-size:28px;">📧</span>
+            <h3 style="margin:0;">Gmail + Calendar</h3>
+            <span class="badge green">MCP</span>
+          </div>
+          <p>Consulta emails y calendario para contexto de reuniones, compromisos y seguimiento de comunicaciones con clientes.</p>
+          <div class="pills" style="margin-top:12px;">
+            <span class="pill green" style="font-size:11px;">leer</span>
+            <span class="pill green" style="font-size:11px;">borradores</span>
+            <span class="pill green" style="font-size:11px;">agenda</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 14: TRANSICIÓN A ACTIVIDAD ── -->
+  <div class="slide" id="s14">
+    <div style="max-width:820px; width:100%; text-align:center;">
+      <div class="tag">Manos a la obra</div>
+      <h2>Ahora lo hacemos<br><span class="accent">juntos</span></h2>
+      <p class="subtitle" style="margin-top:16px;">3 actividades prácticas — 20 minutos</p>
+      <div class="card-grid cols-3" style="margin-top:32px;">
+        <div class="obj-card teal">
+          <div class="obj-icon">🔌</div>
+          <div class="obj-title">1. Conectar Jira</div>
+          <div class="obj-desc">Instalar MCP de Atlassian y verificar que Claude puede leer un ticket.</div>
+        </div>
+        <div class="obj-card blue">
+          <div class="obj-icon">📝</div>
+          <div class="obj-title">2. Tu CLAUDE.md</div>
+          <div class="obj-desc">Crear tu primer archivo de contexto persistente. Claude te "conoce".</div>
+        </div>
+        <div class="obj-card purple">
+          <div class="obj-icon">⚡</div>
+          <div class="obj-title">3. Tu primera Skill</div>
+          <div class="obj-desc">Crear una skill que resuma tickets de Jira automáticamente. Sin código.</div>
+        </div>
+      </div>
+      <div class="highlight" style="margin-top:24px; padding:16px 24px;">
+        <p style="font-size:15px; color:var(--text);"><strong>Prerrequisito:</strong> Claude Code instalado en VS Code. Extensión: <span style="color:var(--teal); font-weight:600;">claude-code</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 15: ACTIVIDAD 1 — MCP ATLASSIAN ── -->
+  <div class="slide" id="s15">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Actividad 1 — 5 minutos</div>
+      <h2>Conectar Claude<br><span class="accent">con Jira</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:32px; align-items:start;">
+        <div>
+          <div class="support-step" style="border-color:var(--teal);">
+            <div class="s-icon">1️⃣</div>
+            <div class="s-content">
+              <div class="s-title">Abrir Claude Code en VS Code</div>
+              <div class="s-detail">Panel lateral o <code style="font-size:12px;">Ctrl+Shift+P</code> → "Claude Code: Open"</div>
+            </div>
+          </div>
+          <div class="support-step" style="border-color:var(--blue);">
+            <div class="s-icon">2️⃣</div>
+            <div class="s-content">
+              <div class="s-title">Instalar MCP de Atlassian</div>
+              <div class="s-detail">Escribir en Claude:</div>
+            </div>
+          </div>
+          <div class="code-block" style="font-size:13px; margin-bottom:8px; margin-left:36px;"><span class="cmd">Install the Atlassian MCP server</span></div>
+          <div class="support-step" style="border-color:var(--purple);">
+            <div class="s-icon">3️⃣</div>
+            <div class="s-content">
+              <div class="s-title">Autorizar en el browser</div>
+              <div class="s-detail">Se abrirá una ventana de Atlassian → Permitir acceso → Volver a VS Code</div>
+            </div>
+          </div>
+          <div class="support-step" style="border-color:var(--green);">
+            <div class="s-icon">4️⃣</div>
+            <div class="s-content">
+              <div class="s-title">Verificar conexión</div>
+              <div class="s-detail">Escribir en Claude:</div>
+            </div>
+          </div>
+          <div class="code-block" style="font-size:13px; margin-left:36px;"><span class="cmd">Lee el ticket USUITE-13429</span></div>
+        </div>
+        <div>
+          <div class="highlight big" style="text-align:center;">
+            <p style="font-size:18px; color:var(--text); margin-bottom:12px;">✅ Si Claude muestra el título, estado y descripción del ticket...</p>
+            <p style="font-size:22px; font-weight:700; color:var(--teal);">¡Conexión exitosa!</p>
+            <p style="font-size:14px; color:var(--text-muted); margin-top:16px;">Claude ahora puede leer y actuar sobre cualquier ticket de Jira, buscar issues por JQL, ver estados y transiciones — todo desde el IDE.</p>
+          </div>
+          <div style="margin-top:16px; background:rgba(211,47,47,.06); border:1px solid rgba(211,47,47,.2); border-radius:10px; padding:14px 18px;">
+            <p style="font-size:13px; color:var(--text-muted);"><strong style="color:var(--red);">¿No funciona?</strong> Verifica que tienes acceso al proyecto USUITE en Jira. Si el OAuth falla, intenta cerrar y abrir VS Code.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 16: ACTIVIDAD 2 — CLAUDE.MD ── -->
+  <div class="slide" id="s16">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Actividad 2 — 5 minutos</div>
+      <h2>Tu primer<br><span class="accent">CLAUDE.md</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:32px; align-items:start;">
+        <div>
+          <p style="margin-bottom:16px;">Abrir <code style="font-size:13px; color:var(--teal);">demo/CLAUDE.md</code> y completar:</p>
+          <div class="code-block" style="font-size:14px;"><span class="comment"># Mi contexto</span>
+
+<span class="output-line">- **Rol:** </span><span class="arg">[tu rol en uPlanner]</span>
+<span class="output-line">- **Proyecto:** </span><span class="arg">[en qué trabajas]</span>
+<span class="output-line">- **Regla:** </span><span class="arg">Responde siempre en
+  español y sé conciso.</span></div>
+          <p style="margin-top:16px; margin-bottom:12px;">Guardar el archivo. Luego preguntarle a Claude:</p>
+          <div class="code-block" style="font-size:14px;"><span class="cmd">¿Qué sabes sobre mí?</span></div>
+        </div>
+        <div>
+          <div class="highlight big" style="text-align:center;">
+            <p style="font-size:18px; color:var(--text); margin-bottom:12px;">Claude usará tu contexto<br>para responder</p>
+            <p style="font-size:15px; color:var(--text-muted); margin-top:8px;">Este archivo se carga <strong style="color:var(--teal);">automáticamente</strong> al inicio de cada sesión de Claude Code.</p>
+          </div>
+          <div style="margin-top:16px;">
+            <p style="font-size:14px; color:var(--text); margin-bottom:12px;">¿Qué puedes poner en un CLAUDE.md?</p>
+            <ul class="check-list" style="font-size:14px;">
+              <li><span class="icon">👤</span> Tu rol y responsabilidades</li>
+              <li><span class="icon">📐</span> Estándares y convenciones de tu equipo</li>
+              <li><span class="icon">🚫</span> Cosas que Claude NO debe hacer</li>
+              <li><span class="icon">📂</span> Estructura de tu proyecto</li>
+              <li><span class="icon">🔗</span> Referencias a documentación interna</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 17: ACTIVIDAD 3 — SKILL ── -->
+  <div class="slide" id="s17">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Actividad 3 — 10 minutos</div>
+      <h2>Tu primera<br><span class="accent">Skill</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:28px; align-items:start;">
+        <div>
+          <p style="margin-bottom:12px;">Abrir <code style="font-size:13px; color:var(--teal);">demo/.claude/skills/ticket/SKILL.md</code></p>
+          <p style="margin-bottom:12px; font-size:14px; color:var(--text-muted);">El archivo ya tiene el contenido. Revisemos qué hace:</p>
+          <div class="code-block" style="font-size:12px;"><span class="comment">---
+name: ticket
+description: ></span>
+  <span class="arg">Lee un ticket de Jira y genera
+  un resumen estructurado.
+  TRIGGER when: el usuario menciona
+  un código de ticket como
+  USUITE-1234 o PROJ-567.</span>
+<span class="comment">---</span>
+
+<span class="output-line"># Resumen de ticket Jira</span>
+
+<span class="cmd">Cuando detectes un código de ticket:</span>
+<span class="warn">1.</span> Leer ticket con MCP (getJiraIssue)
+<span class="warn">2.</span> Mostrar resumen estructurado:
+   <span class="output-line">## [CÓDIGO] — [título]
+   - Estado, Prioridad, Reporter
+   - Cliente, Módulo
+   ### Descripción (3-4 líneas)
+   ### Siguiente paso sugerido</span></div>
+        </div>
+        <div>
+          <p style="font-size:14px; color:var(--text); margin-bottom:16px;">Anatomía de una Skill:</p>
+          <div class="card teal" style="margin-bottom:12px;">
+            <div class="card-icon" style="font-size:20px;">📛</div>
+            <h3 style="font-size:15px;">name + description</h3>
+            <p style="font-size:13px;">El nombre es como se invoca. La descripción le dice a Claude <strong>cuándo activarla automáticamente</strong>.</p>
+          </div>
+          <div class="card blue" style="margin-bottom:12px;">
+            <div class="card-icon" style="font-size:20px;">🎯</div>
+            <h3 style="font-size:15px;">TRIGGER when</h3>
+            <p style="font-size:13px;">Claude lee esta sección y decide solo cuándo la skill aplica. No necesitas invocarla manualmente.</p>
+          </div>
+          <div class="card purple">
+            <div class="card-icon" style="font-size:20px;">📋</div>
+            <h3 style="font-size:15px;">Instrucciones</h3>
+            <p style="font-size:13px;">Lenguaje natural. Le dices qué hacer, en qué orden, y qué formato usar. Sin código.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 18: ACTIVIDAD 3 — PROBAR ── -->
+  <div class="slide" id="s18">
+    <div style="max-width:900px; width:100%;">
+      <div class="tag">Actividad 3 — Probar la skill</div>
+      <h2>Momento de la verdad<br><span class="accent">USUITE-13429</span></h2>
+      <div class="two-col" style="margin-top:24px; gap:32px; align-items:start;">
+        <div>
+          <p style="margin-bottom:16px;">Escribir en Claude (solo el código del ticket):</p>
+          <div class="code-block" style="font-size:18px; text-align:center; padding:28px;"><span class="cmd">USUITE-13429</span></div>
+          <p style="margin-top:20px; margin-bottom:12px; font-size:14px; color:var(--text-muted);">Claude debería:</p>
+          <ul class="check-list" style="font-size:14px;">
+            <li><span class="icon">🔍</span> Detectar que es un código de ticket (auto-trigger)</li>
+            <li><span class="icon">📖</span> Leer el ticket de Jira via MCP</li>
+            <li><span class="icon">📋</span> Generar el resumen estructurado</li>
+            <li><span class="icon">💡</span> Sugerir siguiente paso</li>
+          </ul>
+        </div>
+        <div>
+          <div class="highlight big" style="text-align:center; margin-bottom:16px;">
+            <p style="font-size:16px; color:var(--text); margin-bottom:8px;">Acabas de crear una <strong style="color:var(--teal);">automatización</strong></p>
+            <p style="font-size:28px; margin:12px 0;">🎉</p>
+            <p style="font-size:14px; color:var(--text-muted);">Sin código. Sin API keys manuales.<br>Solo un archivo <code style="font-size:12px;">.md</code> con instrucciones en lenguaje natural.</p>
+          </div>
+          <div class="card green">
+            <div class="card-icon" style="font-size:20px;">🚀</div>
+            <h3 style="font-size:15px;">¿Qué más podrías hacer?</h3>
+            <p style="font-size:13px;">Cambiar la descripción y las instrucciones para que la skill haga lo que <strong>tú</strong> necesitas: generar reportes, crear documentos, diagnosticar problemas, resumir reuniones...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 19: CIERRE ── -->
+  <div class="slide" id="s19">
+    <div style="max-width:820px; width:100%; text-align:center;">
+      <div class="tag">Takeaways</div>
+      <h2>Lo que cambió<br><span class="accent">en mi trabajo diario</span></h2>
+      <div class="card-grid cols-2" style="margin-top:28px; text-align:left;">
+        <div class="highlight" style="padding:20px 24px;">
+          <p style="font-size:14px; margin-bottom:8px;"><strong style="color:var(--text); font-size:16px;">Antes</strong></p>
+          <ul style="list-style:none; padding:0;">
+            <li style="padding:6px 0; font-size:14px; color:var(--text-muted);">❌ Re-explicar contexto en cada sesión</li>
+            <li style="padding:6px 0; font-size:14px; color:var(--text-muted);">❌ Horas en gestión operativa</li>
+            <li style="padding:6px 0; font-size:14px; color:var(--text-muted);">❌ Outputs sin trazabilidad</li>
+            <li style="padding:6px 0; font-size:14px; color:var(--text-muted);">❌ Conocimiento que no escala</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <p style="font-size:14px; margin-bottom:8px;"><strong style="color:var(--text); font-size:16px;">Ahora</strong></p>
+          <ul style="list-style:none; padding:0;">
+            <li style="padding:6px 0; font-size:14px; color:var(--text);">✅ README = retomar en segundos</li>
+            <li style="padding:6px 0; font-size:14px; color:var(--text);">✅ De horas a minutos con un comando</li>
+            <li style="padding:6px 0; font-size:14px; color:var(--text);">✅ Documentación automática de todo</li>
+            <li style="padding:6px 0; font-size:14px; color:var(--text);">✅ Base de conocimiento que crece sola</li>
+          </ul>
+        </div>
+      </div>
+      <div class="highlight big" style="margin-top:20px;">
+        <p style="font-size:17px; color:var(--text); line-height:1.7;">El sistema libera tiempo y elimina fricción.<br>El conocimiento se acumula en vez de perderse.<br><strong style="color:var(--teal-light); font-size:19px;">El foco volvió a donde debe estar: el producto.</strong></p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PROGRESS DOTS -->
+<div class="progress" id="progress"></div>
+
+<!-- SLIDE NUMBER -->
+<div class="slide-num" id="slideNum">1 / 19</div>
+
+<!-- NAV HINT -->
+<div class="nav-hint">
+  <span class="key">←</span><span class="key">→</span> navegar
+  <span class="key">Space</span> siguiente
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const progress = document.getElementById('progress');
+  const slideNum = document.getElementById('slideNum');
+  let current = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    progress.appendChild(dot);
+  });
+
+  function goTo(n) {
+    if (n < 0 || n >= slides.length) return;
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('exit');
+    setTimeout(() => slides[prev].classList.remove('exit'), 400);
+    current = n;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    slideNum.textContent = `${current + 1} / ${slides.length}`;
+  }
+
+  function next() { if (current < slides.length - 1) goTo(current + 1); }
+  function prev() { if (current > 0) goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') prev();
+  });
+
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+  });
+</script>
+</body>
+</html>

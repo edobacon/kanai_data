@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SP8 - Modality como contenedor de actividades (ejemplo)</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f0f2f5;
+    --text: #1a1d24; --text-soft: #4a4f5a; --text-mute: #6b7280;
+    --border: #e2e5ea; --border-strong: #cbd0d8;
+    --accent: #3056d3; --accent-soft: #eaeeff;
+    --ok: #1a7f4b; --ok-bg: #e6f5ec;
+    --warn: #b26a00; --warn-bg: #fdf0dd;
+    --err: #c0392b; --err-bg: #fbe8e6;
+    --purple: #6d3bd1; --purple-bg: #efe8fc;
+    --neutral: #556; --neutral-bg: #eceef1;
+    --code-bg: #f2f3f6; --code-text: #22303c;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --surface: #1c1f26; --surface-2: #232732;
+      --text: #e8eaed; --text-soft: #b6bcc6; --text-mute: #8a909c;
+      --border: #2c313b; --border-strong: #3a4150;
+      --accent: #7d97f4; --accent-soft: #232b45;
+      --ok: #5fd39a; --ok-bg: #16301f;
+      --warn: #e5ab52; --warn-bg: #33260f;
+      --err: #f0857a; --err-bg: #3a1714;
+      --purple: #b79cf0; --purple-bg: #241a3d;
+      --neutral: #9aa2b0; --neutral-bg: #262a33;
+      --code-bg: #232732; --code-text: #cfd6e0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161a; --surface: #1c1f26; --surface-2: #232732;
+    --text: #e8eaed; --text-soft: #b6bcc6; --text-mute: #8a909c;
+    --border: #2c313b; --border-strong: #3a4150;
+    --accent: #7d97f4; --accent-soft: #232b45;
+    --ok: #5fd39a; --ok-bg: #16301f; --warn: #e5ab52; --warn-bg: #33260f;
+    --err: #f0857a; --err-bg: #3a1714; --purple: #b79cf0; --purple-bg: #241a3d;
+    --neutral: #9aa2b0; --neutral-bg: #262a33; --code-bg: #232732; --code-text: #cfd6e0;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fa; --surface: #ffffff; --surface-2: #f0f2f5;
+    --text: #1a1d24; --text-soft: #4a4f5a; --text-mute: #6b7280;
+    --border: #e2e5ea; --border-strong: #cbd0d8;
+    --accent: #3056d3; --accent-soft: #eaeeff;
+    --ok: #1a7f4b; --ok-bg: #e6f5ec; --warn: #b26a00; --warn-bg: #fdf0dd;
+    --err: #c0392b; --err-bg: #fbe8e6; --purple: #6d3bd1; --purple-bg: #efe8fc;
+    --neutral: #556; --neutral-bg: #eceef1; --code-bg: #f2f3f6; --code-text: #22303c;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; font-size: 16px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.doc { border-bottom: 2px solid var(--border-strong); padding-bottom: 24px; margin-bottom: 32px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0 0 8px; }
+  h1 { font-size: 29px; line-height: 1.2; margin: 0 0 12px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 44px 0 14px; letter-spacing: -0.01em; }
+  h3 { font-size: 17px; margin: 24px 0 8px; }
+  p { margin: 0 0 14px; color: var(--text-soft); }
+  code { font-family: var(--mono); font-size: .88em; background: var(--code-bg); color: var(--code-text); padding: 1px 6px; border-radius: 5px; }
+  pre { background: var(--code-bg); color: var(--code-text); padding: 16px 18px; border-radius: 10px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; border: 1px solid var(--border); }
+  .lede { font-size: 18px; color: var(--text); background: var(--surface-2); border-radius: 12px; padding: 18px 22px; margin: 0 0 8px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin: 18px 0; }
+  .card.ok { border-left: 4px solid var(--ok); } .card.warn { border-left: 4px solid var(--warn); } .card.accent { border-left: 4px solid var(--accent); }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  .scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  .scroll table { margin: 0; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-soft); }
+  tbody tr:last-child td { border-bottom: none; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; color: var(--text-soft); } li { margin: 4px 0; }
+  .pill { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.03em; padding:3px 9px; border-radius:999px; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.warn { background: var(--warn-bg); color: var(--warn); }
+  .pill.accent { background: var(--accent-soft); color: var(--accent); } .pill.purple { background: var(--purple-bg); color: var(--purple); }
+  .pill.neutral { background: var(--neutral-bg); color: var(--neutral); }
+  .pill.err { background: var(--err-bg); color: var(--err); }
+  .src { font-family: var(--mono); font-size: 12px; color: var(--text-mute); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .foot { font-size: 13px; color: var(--text-mute); margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* mockup UP1 */
+  .mock { border: 1px solid var(--border-strong); border-radius: 14px; overflow: hidden; margin: 16px 0; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .mock-top { background: var(--surface-2); padding: 12px 18px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .mock-top .crumb { font-size: 13px; color: var(--text-mute); } .mock-top .crumb b { color: var(--text); }
+  .mock-tabs { display:flex; gap:4px; padding: 8px 14px 0; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap:wrap; }
+  .mock-tab { font-size: 13px; padding: 8px 14px; border-radius: 8px 8px 0 0; color: var(--text-mute); border: 1px solid transparent; border-bottom: none; cursor: default; }
+  .mock-tab.on { color: var(--accent); background: var(--accent-soft); font-weight: 600; border-color: var(--border); }
+  .mock-body { padding: 18px; }
+  .mod-card { border: 1px solid var(--border); border-radius: 12px; margin: 12px 0; overflow: hidden; }
+  .mod-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding: 12px 16px; background: var(--surface-2); flex-wrap:wrap; }
+  .mod-head .name { font-weight: 700; font-size: 15px; }
+  .mod-meta { font-size: 12px; color: var(--text-mute); }
+  .comp-table { width:100%; font-size: 13px; border-collapse: collapse; }
+  .comp-table th { background: transparent; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text-mute); font-weight: 600; }
+  .comp-table th, .comp-table td { padding: 9px 16px; border-bottom: 1px solid var(--border); }
+  .comp-table tr:last-child td { border-bottom: none; }
+  .chip { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:6px; background: var(--surface-2); color: var(--text-soft); border:1px solid var(--border); }
+  .chip.res { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+  .chip.sync { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .chip.new { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px; font-size:13px; margin: 8px 0; }
+  .arrow-note { text-align:center; color: var(--text-mute); font-size: 13px; margin: 6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <p class="eyebrow">SP8 · Ejemplo de modelado</p>
+  <h1>Modality como contenedor de actividades</h1>
+  <p>Ejemplo concreto de como <b>Curriculum Design mantiene su estructura actual</b> y la <code>Modality</code> que ya cuelga de <code>Activity</code> gana el detalle que <b>Academic Scheduling</b> necesita para planificar, sin crear objetos nuevos ni reabrir la brecha entre mods. Incluye estructura de objetos, vista en CD, consumo desde AS, y por que cubre los casos de AS y de Engagement.</p>
+</header>
+
+<p class="lede">Idea en una linea: la <code>Modality</code> deja de ser un <b>descriptor plano de horas</b> y pasa a ser un <b>contenedor</b> cuyos hijos son las actividades del curso (teoria, practica, laboratorio), cada una con su tipo de entrega, horas, tipo de sala y numero de docentes. Todo se apoya en la jerarquia <code>parentId</code> que <code>CurricularSection</code> ya tiene.</p>
+
+<h2>0. El planteamiento de Academic Scheduling, resuelto punto por punto</h2>
+<p>Esta propuesta responde directamente al comentario que origino el analisis. Extracto:</p>
+<div class="card" style="border-left:4px solid var(--text-mute);font-style:italic;color:var(--text-soft)">
+  "Inicialmente nuestra creacion de Secciones Propuestas, que se aloja en Section, toma los registros de Activity para crear secciones. Sin embargo, ese registro no tiene toda la informacion que necesitamos para planificar. [...] encontramos algunas opciones: el objeto ActivityLine, y el objeto Modality. No es opcion crear un objeto aparte, principalmente porque volvemos a crear la brecha entre mods. Curriculum Design deberia ser quien disene, y Academic Scheduling quien lo planifique. [...] Necesitamos conocer cual sera el repositorio de los distintos modos de dictar un curso (Virtual, presencial, semi-presencial, sabatino, o la version del campus A que puede ser diferente que la del campus B), y para cada una que implica."
+</div>
+<div class="scroll"><table>
+  <thead><tr><th>Lo que plantea AS</th><th>Como lo resuelve esta propuesta</th><th>Donde</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>"Section toma registros de Activity, pero Activity no tiene toda la info para planificar"</td>
+      <td>Se agrega <code>Section.instructionalComponentId &#8594; CurricularSection[Modality]</code>. AS deja de depender solo de <code>Activity</code>: lee la modalidad y sus <code>InstructionalComponent</code> (sala, horas, docentes). La info que faltaba ya vive en el diseno y Section la alcanza por FK.</td>
+      <td>secc. 2.1 y 4</td>
+    </tr>
+    <tr>
+      <td>"Opciones barajadas: ActivityLine y Modality"</td>
+      <td>Se elige <b>Modality</b> (es informacion de diseno, vive en CD). <b>ActivityLine se descarta</b>: es ejecucion (Activity x OrgUnit), no diseno.</td>
+      <td>secc. 6 · contra-analisis</td>
+    </tr>
+    <tr>
+      <td>"No crear objeto aparte / no reabrir la brecha entre mods / CD disena, AS planifica"</td>
+      <td>Cero objeto nuevo: se reusa <code>CurricularSection</code> + su jerarquia, sumando 1 RecordType (<code>InstructionalComponent</code>). CD queda dueno del diseno; AS solo lo consume por FK. Dependencia unidireccional <code>as &#8594; cd</code>.</td>
+      <td>secc. 7 y 8</td>
+    </tr>
+    <tr>
+      <td>"Repositorio de los distintos modos de dictar (Virtual, presencial, semipresencial, <b>sabatino</b>)"</td>
+      <td>Cada modo es un <code>CurricularSection[Modality]</code> del curso; un curso tiene varios (ya soportado). "Sabatino" es simplemente otra Modality mas.</td>
+      <td>secc. 2 y 3</td>
+    </tr>
+    <tr>
+      <td>"...o la version del <b>Campus A</b> que puede diferir de la del <b>Campus B</b>"</td>
+      <td>El diseno queda agnostico de campus; el campus se resuelve en ejecucion via <code>ActivityLine</code> (Activity x OrgUnit/Campus). Como <code>requiredResourceType</code> es un tipo, cada campus lo resuelve a su propia sala.</td>
+      <td>secc. 6</td>
+    </tr>
+    <tr>
+      <td>"...y para cada una, que implica" (los 3 ejemplos: virtual sync/async; semipresencial teoria online + lab en taller 2h; presencial aula 6h + lab con 2 docentes 1h)</td>
+      <td>Cada actividad es un <code>InstructionalComponent</code> con su <code>deliveryType</code>, <code>hoursPerWeek</code>, <code>requiredResourceType</code> y <code>requiredInstructorCount</code>. Los tres ejemplos se expresan sin nada fuera del modelo.</td>
+      <td>secc. 5</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<h3>Los datos que CD ya tiene hoy (y que AS aun no consume)</h3>
+<p>Esto es lo que ya existe en el codigo actual. El punto de AS ("Activity no tiene toda la info para planificar") es preciso: hoy <code>Section</code> solo alcanza <code>Activity</code>, no la Modality ni sus horas, que ya viven en CD pero no estan enlazadas a Section.</p>
+<div class="scroll"><table>
+  <thead><tr><th>Objeto (hoy)</th><th>Datos que ya tiene</th><th>¿Lo consume AS hoy?</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Activity</b><br><span class="src">objects/activity.json</span></td>
+      <td><code>code</code>, <code>name</code>, <code>recordType {Course,Service}</code>, <code>version</code>, <code>language</code>, <code>credits</code>, <code>programLevel</code>, <code>executionUnitId</code>, <code>status</code>, <code>purpose</code>, <code>isCurrent</code></td>
+      <td>Si, parcial: <code>Section.activityId</code> lee <code>code</code> y <code>name</code> para armar <code>Section.code = {activityCode}-{seq}</code> (<span class="src">section-create.resolver.js</span>). Nada mas.</td>
+    </tr>
+    <tr>
+      <td><b>CurricularSection[Modality]</b><br><span class="src">rt__Modality__curricularsection.json</span></td>
+      <td><code>code</code>, <code>deliveryMode {InPerson,Virtual,Hybrid,Synchronous,Asynchronous}</code>, <code>isDefault</code>, <code>theoryHours</code>, <code>practiceHours</code>, <code>labHours</code>, <code>autonomousHours</code></td>
+      <td><b>No.</b> La modalidad y sus horas ya existen en CD, pero <code>Section</code> no las lee: <b>no hay FK</b> que las conecte. Esa es la brecha.</td>
+    </tr>
+    <tr>
+      <td><b>CurricularSection</b> (base)<br><span class="src">CurricularSection.json</span></td>
+      <td><code>ownerType</code>, <code>ownerId</code>, <code>parentId</code>, <code>recordType</code>, <code>sectionType</code>, <code>name</code>, <code>position</code>, jerarquia por <code>parentId</code></td>
+      <td>No. Se reusa como base del nivel 3 (InstructionalComponent).</td>
+    </tr>
+  </tbody>
+</table></div>
+<p>Lo que <b>no</b> tiene ningun objeto de CD hoy: el <b>tipo de sala requerido</b> y el <b>numero de docentes</b> por actividad. Es exactamente la info que AS necesita para planificar y la unica que agrega esta propuesta.</p>
+
+<h2>1. Que cambia y que no</h2>
+<div class="scroll"><table>
+  <thead><tr><th>Pieza</th><th>Hoy</th><th>Con la propuesta</th></tr></thead>
+  <tbody>
+    <tr><td><code>Activity</code> (Curso)</td><td>ficha del programa (name, code, recordType Course)</td><td><b>Sin cambios</b></td></tr>
+    <tr><td><code>CurricularSection</code></td><td>objeto polimorfico y jerarquico (parentId)</td><td><b>Sin cambios de estructura</b> (ya soporta hijos)</td></tr>
+    <tr><td><code>CurricularSection[Modality]</code></td><td>horas agregadas (theoryHours, practiceHours, labHours) + deliveryMode</td><td>pasa a ser el <b>nodo modalidad</b>; el detalle baja a sus hijos</td></tr>
+    <tr><td>Nivel 3: la Actividad</td><td>no existe</td><td><span class="chip new">nuevo</span> <code>CurricularSection[InstructionalComponent]</code>: 1 RecordType chico</td></tr>
+  </tbody>
+</table></div>
+<p>El RecordType nuevo (<code>rt__InstructionalComponent__curricularsection.json</code>) es aditivo y usa la jerarquia existente. En cambio, volver contenedor a Modality (sus escalares pasan a derivados, segun la propuesta) si es un cambio breaking (ver blast radius).</p>
+
+<h2>2. Estructura de objetos (ejemplo: FIS101 - Fisica General)</h2>
+<p>Un mismo curso con tres modalidades. Cada modalidad es un <code>CurricularSection[Modality]</code> colgando de la <code>Activity</code>; sus actividades son <code>CurricularSection[InstructionalComponent]</code> colgando de la modalidad via <code>parentId</code>.</p>
+
+<pre>Activity  { id: "act-fis101", recordType: "Course", code: "FIS101", name: "Fisica General" }
+
+├─ CurricularSection { recordType: "Modality", ownerType: "Activity", ownerId: "act-fis101",
+│    name: "Presencial", deliveryMode: "InPerson", isDefault: true, id: "mod-pres" }
+│    ├─ CurricularSection { recordType: "InstructionalComponent", parentId: "mod-pres", name: "Teoria",
+│    │    componentType: "Theory",   deliveryType: "InPerson",
+│    │    hoursPerWeek: 6, requiredResourceType: "Classroom", requiredInstructorCount: 1 }
+│    └─ CurricularSection { recordType: "InstructionalComponent", parentId: "mod-pres", name: "Practica",
+│         componentType: "Practice", deliveryType: "InPerson",
+│         hoursPerWeek: 1, requiredResourceType: "Laboratory", requiredInstructorCount: 2 }
+│
+├─ CurricularSection { recordType: "Modality", ownerId: "act-fis101",
+│    name: "Semipresencial", deliveryMode: "Hybrid", id: "mod-semi" }
+│    ├─ CurricularSection { recordType: "InstructionalComponent", parentId: "mod-semi", name: "Teoria online",
+│    │    componentType: "Theory",   deliveryType: "Synchronous",
+│    │    hoursPerWeek: 4, requiredResourceType: "None",     requiredInstructorCount: 1 }
+│    └─ CurricularSection { recordType: "InstructionalComponent", parentId: "mod-semi", name: "Laboratorio",
+│         componentType: "Laboratory", deliveryType: "InPerson",
+│         hoursPerWeek: 2, requiredResourceType: "Workshop", requiredInstructorCount: 1 }
+│
+└─ CurricularSection { recordType: "Modality", ownerId: "act-fis101",
+     name: "Virtual", deliveryMode: "Virtual", id: "mod-virt" }
+     ├─ CurricularSection { recordType: "InstructionalComponent", parentId: "mod-virt", name: "Teoria sincrona",
+     │    componentType: "Theory",   deliveryType: "Synchronous",  hoursPerWeek: 3, requiredResourceType: "None" }
+     └─ CurricularSection { recordType: "InstructionalComponent", parentId: "mod-virt", name: "Trabajo asincrono",
+          componentType: "Practice", deliveryType: "Asynchronous", hoursPerWeek: 2, requiredResourceType: "None" }</pre>
+
+<h3>El RecordType nuevo: <code>InstructionalComponent</code></h3>
+<p>Hereda los campos comunes de <code>CurricularSection</code> (<code>ownerType</code>, <code>ownerId</code>, <code>parentId</code>, <code>name</code>, <code>position</code>). Suma solo lo que falta:</p>
+<div class="scroll"><table>
+  <thead><tr><th>Campo (propio del RT)</th><th>Tipo</th><th>Para que</th></tr></thead>
+  <tbody>
+    <tr><td><code>componentType</code></td><td>enum <code>Theory / Practice / Laboratory</code></td><td>que tipo de actividad es</td></tr>
+    <tr><td><code>deliveryType</code></td><td>enum <code>Synchronous / Asynchronous / InPerson</code></td><td>sincrono / asincrono / presencial <b>por actividad</b></td></tr>
+    <tr><td><code>hoursPerWeek</code></td><td>number</td><td>horas de dedicacion semanal</td></tr>
+    <tr><td><code>requiredResourceType</code></td><td><b>enum/string</b> <code>Classroom / Laboratory / Workshop / None</code></td><td>tipo de sala requerido. <b>Enum, NO FK a ResourceTypes</b> (clave del bajo costo, ver seccion 6)</td></tr>
+    <tr><td><code>requiredInstructorCount</code></td><td>number</td><td>numero de docentes que exige la actividad</td></tr>
+  </tbody>
+</table></div>
+
+<h2>2.1 Diagrama de tablas y relaciones (como queda y como lo consume cada mod)</h2>
+<p>Las tablas resultantes y sus FKs. Colores por mod dueno: <b style="color:var(--accent)">curriculum-design</b> (diseno), <b style="color:var(--ok)">academic-scheduling</b> (planificacion), <b style="color:var(--warn)">uengagement-up1</b> (ejecucion). Lineas <b>punteadas rojas</b> = FKs nuevas del cambio. Cada mod consume el modelo por las relaciones que apuntan a el.</p>
+
+<div class="scroll">
+<svg viewBox="0 0 1120 820" style="min-width:940px;width:100%;height:auto;font-family:var(--sans)" role="img" aria-label="Diagrama ER de tablas">
+  <defs>
+    <marker id="mB" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--accent)"/></marker>
+    <marker id="mG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--ok)"/></marker>
+    <marker id="mA" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--warn)"/></marker>
+    <marker id="mR" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" style="fill:var(--err)"/></marker>
+  </defs>
+  <style>
+    .tname{font-size:12px;font-weight:700;fill:var(--text)}
+    .col{font-size:10px;fill:var(--text-soft);font-family:var(--mono)}
+    .pk{fill:var(--text);font-weight:700}
+    .fk{fill:var(--accent)}
+    .newcol{fill:var(--err);font-weight:700}
+    .flab{font-size:10.5px;fill:var(--text-mute)}
+  </style>
+
+  <!-- ===== Activity (cd) ===== -->
+  <rect x="60" y="60" width="250" height="104" rx="8" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/>
+  <rect x="60" y="60" width="250" height="26" rx="8" style="fill:var(--accent-soft)"/>
+  <text x="72" y="78" class="tname">Activity <tspan style="font-size:10px;fill:var(--accent)">· cd · [Course]</tspan></text>
+  <text x="72" y="104" class="col"><tspan class="pk">id</tspan>  (PK)</text>
+  <text x="72" y="122" class="col">code · name</text>
+  <text x="72" y="140" class="col">recordType {Course, Service}</text>
+  <text x="72" y="158" class="col">version · status</text>
+
+  <!-- ===== CurricularSection (cd) ===== -->
+  <rect x="60" y="250" width="290" height="146" rx="8" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/>
+  <rect x="60" y="250" width="290" height="26" rx="8" style="fill:var(--accent-soft)"/>
+  <text x="72" y="268" class="tname">CurricularSection <tspan style="font-size:10px;fill:var(--accent)">· cd</tspan></text>
+  <text x="72" y="294" class="col"><tspan class="pk">id</tspan>  (PK)</text>
+  <text x="72" y="312" class="col">ownerType {Activity|Offering|Curriculum}</text>
+  <text x="72" y="330" class="col"><tspan class="fk">ownerId</tspan> &#8594; Activity</text>
+  <text x="72" y="348" class="col"><tspan class="fk">parentId</tspan> &#8594; CurricularSection</text>
+  <text x="72" y="366" class="col">recordType (string libre)</text>
+  <text x="72" y="384" class="col">name</text>
+
+  <!-- ===== rt__Modality (cd) ===== -->
+  <rect x="60" y="470" width="290" height="104" rx="8" style="fill:var(--surface);stroke:var(--accent);stroke-width:2"/>
+  <rect x="60" y="470" width="290" height="26" rx="8" style="fill:var(--accent-soft)"/>
+  <text x="72" y="488" class="tname">rt__Modality__curricularsection <tspan style="font-size:10px;fill:var(--accent)">· cd</tspan></text>
+  <text x="72" y="514" class="col"><tspan class="fk">curricularsectionId</tspan> (PK) &#8594; CS</text>
+  <text x="72" y="532" class="col">deliveryMode · isDefault</text>
+  <text x="72" y="550" class="col">theoryHours / practiceHours / labHours</text>
+  <text x="72" y="568" class="col" style="fill:var(--text-mute)">(horas: se derivan de InstructionalComponent)</text>
+
+  <!-- ===== rt__InstructionalComponent (cd) NEW ===== -->
+  <rect x="60" y="644" width="390" height="150" rx="8" style="fill:var(--surface);stroke:var(--err);stroke-width:2;stroke-dasharray:4 3"/>
+  <rect x="60" y="644" width="390" height="26" rx="8" style="fill:var(--err-bg)"/>
+  <text x="72" y="662" class="tname">rt__InstructionalComponent__curricularsection <tspan style="font-size:10px;fill:var(--err)">· cd · NUEVO</tspan></text>
+  <text x="72" y="688" class="col"><tspan class="fk">curricularsectionId</tspan> (PK) &#8594; CS</text>
+  <text x="72" y="706" class="col">componentType {Theory|Practice|Lab}</text>
+  <text x="72" y="724" class="col">deliveryType {Sync|Async|InPerson}</text>
+  <text x="72" y="742" class="col">hoursPerWeek</text>
+  <text x="72" y="760" class="col"><tspan class="newcol">requiredResourceType</tspan> (enum)</text>
+  <text x="72" y="778" class="col"><tspan class="newcol">requiredInstructorCount</tspan></text>
+
+  <!-- ===== Section (as) ===== -->
+  <rect x="740" y="60" width="320" height="146" rx="8" style="fill:var(--surface);stroke:var(--ok);stroke-width:2"/>
+  <rect x="740" y="60" width="320" height="26" rx="8" style="fill:var(--ok-bg)"/>
+  <text x="752" y="78" class="tname">Section <tspan style="font-size:10px;fill:var(--ok)">· academic-scheduling</tspan></text>
+  <text x="752" y="104" class="col"><tspan class="pk">id</tspan>  (PK)</text>
+  <text x="752" y="122" class="col"><tspan class="fk" style="fill:var(--ok)">activityId</tspan> &#8594; Activity</text>
+  <text x="752" y="140" class="col"><tspan class="newcol">instructionalComponentId</tspan> &#8594; CurricularSection</text>
+  <text x="752" y="158" class="col"><tspan class="newcol">requiredResourceTypeId</tspan> &#8594; ResourceTypes</text>
+  <text x="752" y="176" class="col">code · termId · capacity</text>
+  <text x="752" y="197" class="flab" style="fill:var(--text-mute)">lee los InstructionalComponent hijos de la Modality elegida</text>
+
+  <!-- ===== ResourceTypes (as) ===== -->
+  <rect x="800" y="290" width="230" height="66" rx="8" style="fill:var(--surface);stroke:var(--ok);stroke-width:2"/>
+  <rect x="800" y="290" width="230" height="26" rx="8" style="fill:var(--ok-bg)"/>
+  <text x="812" y="308" class="tname">ResourceTypes <tspan style="font-size:10px;fill:var(--ok)">· as</tspan></text>
+  <text x="812" y="334" class="col"><tspan class="pk">id</tspan> (PK) · name</text>
+
+  <!-- ===== ActivityLine (eng) ===== -->
+  <rect x="740" y="470" width="290" height="104" rx="8" style="fill:var(--surface);stroke:var(--warn);stroke-width:2"/>
+  <rect x="740" y="470" width="290" height="26" rx="8" style="fill:var(--warn-bg)"/>
+  <text x="752" y="488" class="tname">ActivityLine <tspan style="font-size:10px;fill:var(--warn)">· uengagement-up1</tspan></text>
+  <text x="752" y="514" class="col"><tspan class="pk">id</tspan>  (PK)</text>
+  <text x="752" y="532" class="col"><tspan class="fk" style="fill:var(--warn)">activityId</tspan> &#8594; Activity</text>
+  <text x="752" y="550" class="col"><tspan class="fk" style="fill:var(--warn)">orgUnitId</tspan> &#8594; OrgUnit (Campus)</text>
+  <text x="752" y="568" class="col">code · status</text>
+
+  <!-- ===== Offering (eng) ===== -->
+  <rect x="800" y="650" width="250" height="86" rx="8" style="fill:var(--surface);stroke:var(--warn);stroke-width:2"/>
+  <rect x="800" y="650" width="250" height="26" rx="8" style="fill:var(--warn-bg)"/>
+  <text x="812" y="668" class="tname">Offering <tspan style="font-size:10px;fill:var(--warn)">· eng</tspan></text>
+  <text x="812" y="694" class="col"><tspan class="pk">id</tspan>  (PK)</text>
+  <text x="812" y="712" class="col"><tspan class="fk" style="fill:var(--warn)">activityLineId</tspan> &#8594; ActivityLine</text>
+
+  <!-- ===== relaciones ===== -->
+  <!-- CS.ownerId -> Activity -->
+  <line x1="150" y1="250" x2="150" y2="164" style="stroke:var(--accent);stroke-width:1.7" marker-end="url(#mB)"/>
+  <text x="156" y="210" class="flab">ownerId</text>
+  <!-- CS.parentId self loop -->
+  <path d="M60,320 C30,320 30,360 60,360" style="fill:none;stroke:var(--accent);stroke-width:1.5" marker-end="url(#mB)"/>
+  <text x="8" y="343" class="flab">parentId</text>
+  <!-- Modality -> CS -->
+  <line x1="150" y1="470" x2="150" y2="396" style="stroke:var(--accent);stroke-width:1.7" marker-end="url(#mB)"/>
+  <text x="156" y="440" class="flab">1:1</text>
+  <!-- InstructionalComponent -> CS -->
+  <path d="M300,644 C300,470 300,430 350,398" style="fill:none;stroke:var(--accent);stroke-width:1.7" marker-end="url(#mB)"/>
+  <text x="306" y="612" class="flab">1:1 (hijo de Modality via parentId)</text>
+  <!-- Section.activityId -> Activity (existente) -->
+  <line x1="740" y1="118" x2="312" y2="118" style="stroke:var(--ok);stroke-width:1.8" marker-end="url(#mG)"/>
+  <text x="430" y="110" class="flab" style="fill:var(--ok)">activityId (existente)</text>
+  <!-- Section.instructionalComponentId -> CS (NUEVO) -->
+  <path d="M740,140 C520,150 470,300 352,330" style="fill:none;stroke:var(--err);stroke-width:1.8;stroke-dasharray:5 3" marker-end="url(#mR)"/>
+  <text x="470" y="250" class="flab" style="fill:var(--err);font-weight:700">instructionalComponentId (NUEVO · cross-mod)</text>
+  <!-- Section.requiredResourceTypeId -> ResourceTypes (NUEVO) -->
+  <line x1="900" y1="206" x2="900" y2="290" style="stroke:var(--err);stroke-width:1.8;stroke-dasharray:5 3" marker-end="url(#mR)"/>
+  <text x="906" y="252" class="flab" style="fill:var(--err);font-weight:700">requiredResourceTypeId (NUEVO)</text>
+  <!-- ActivityLine.activityId -> Activity -->
+  <path d="M740,512 C500,512 360,300 312,150" style="fill:none;stroke:var(--warn);stroke-width:1.7" marker-end="url(#mA)"/>
+  <text x="430" y="440" class="flab" style="fill:var(--warn)">activityId</text>
+  <!-- Offering.activityLineId -> ActivityLine -->
+  <line x1="900" y1="650" x2="900" y2="574" style="stroke:var(--warn);stroke-width:1.7" marker-end="url(#mA)"/>
+  <text x="906" y="616" class="flab" style="fill:var(--warn)">activityLineId</text>
+</svg>
+</div>
+
+<p><b>Como lo consume cada mod, por sus relaciones:</b></p>
+<div class="scroll"><table>
+  <thead><tr><th>FK</th><th>De &#8594; A</th><th>Naturaleza</th><th>Quien la usa / que significa</th></tr></thead>
+  <tbody>
+    <tr><td><code>ownerId</code></td><td>CurricularSection &#8594; Activity</td><td>existente · intra cd</td><td>CD: la modalidad (y sus componentes) pertenecen al curso</td></tr>
+    <tr><td><code>parentId</code></td><td>CurricularSection &#8594; CurricularSection</td><td>existente · self</td><td>CD: arma la jerarquia Modality &#8594; InstructionalComponent</td></tr>
+    <tr><td><code>curricularsectionId</code></td><td>rt__Modality / rt__InstructionalComponent &#8594; CurricularSection</td><td>existente (Modality) · <b>NUEVO</b> (InstructionalComponent)</td><td>CD: tabla 1:1 del RecordType (codegen)</td></tr>
+    <tr><td><code>activityId</code></td><td>Section &#8594; Activity</td><td>existente · cross-mod (as&#8594;cd)</td><td>AS: la seccion planifica un curso. <b>Ya existe hoy</b></td></tr>
+    <tr><td><code>instructionalComponentId</code></td><td>Section &#8594; CurricularSection</td><td><b>NUEVO</b> · cross-mod (as&#8594;cd)</td><td>AS: la seccion apunta a la Modality de diseno; lee sus InstructionalComponent para sala/horas/docentes</td></tr>
+    <tr><td><code>requiredResourceTypeId</code></td><td>Section &#8594; ResourceTypes</td><td><b>NUEVO</b> · intra as</td><td>AS: resuelve el tipo de sala del diseno a un recurso concreto</td></tr>
+    <tr><td><code>activityId</code></td><td>ActivityLine &#8594; Activity</td><td>existente · eng</td><td>ENG: ejecucion del curso por una OrgUnit / Campus</td></tr>
+    <tr><td><code>activityLineId</code></td><td>Offering &#8594; ActivityLine</td><td>existente · eng</td><td>ENG: oferta programable colgando de la linea de ejecucion</td></tr>
+  </tbody>
+</table></div>
+<p>En una linea por mod: <b style="color:var(--accent)">CD</b> es dueno de <code>Activity</code>, <code>CurricularSection</code> y sus RecordTypes (incluido el nuevo <code>InstructionalComponent</code>). <b style="color:var(--ok)">AS</b> lee ese diseno via <code>Section.activityId</code> (ya) y <code>Section.instructionalComponentId</code> (nuevo), y resuelve el tipo de sala con <code>requiredResourceTypeId</code>. <b style="color:var(--warn)">ENG</b> no cambia: consume <code>Activity</code> via <code>ActivityLine</code> para la ejecucion por campus. Las unicas aristas nuevas (rojas) salen desde <code>Section</code>.</p>
+
+<h2>3. Como se veria en Curriculum Design</h2>
+<p>La ficha de la <code>Activity</code> mantiene sus pestanas actuales; la de <b>Modalidades</b> ahora muestra cada modalidad como una tarjeta con la tabla de sus actividades. Esto reusa el patron de lista embebida que <code>CurricularSection</code> ya soporta (<code>directChildren: "children"</code>).</p>
+
+<p><b>Paso 1.</b> En la ficha de <code>Activity</code>, la pestana <b>Modalidades</b> es un RecordList de las modalidades del curso (nativo, config).</p>
+<div class="mock" aria-label="Mockup CD - lista de modalidades">
+  <div class="mock-top">
+    <span class="crumb">Curriculum Design / Programas de asignatura / <b>FIS101 - Fisica General</b></span>
+    <span class="pill accent" style="margin-left:auto">recordType: Course</span>
+  </div>
+  <div class="mock-tabs">
+    <div class="mock-tab">General</div>
+    <div class="mock-tab">Resultados de aprendizaje</div>
+    <div class="mock-tab on">Modalidades</div>
+    <div class="mock-tab">Evaluacion</div>
+    <div class="mock-tab">Bibliografia</div>
+  </div>
+  <div class="mock-body">
+    <table class="comp-table">
+      <thead><tr><th>Modalidad</th><th>Modo entrega</th><th>Actividades</th><th>Horas/sem</th><th>Principal</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><b>Presencial</b></td><td><span class="chip">InPerson</span></td><td>2</td><td>7</td><td>Si</td><td><span class="chip sync">Ver &rsaquo;</span></td></tr>
+        <tr><td>Semipresencial</td><td><span class="chip">Hybrid</span></td><td>2</td><td>6</td><td>-</td><td><span class="chip">Ver &rsaquo;</span></td></tr>
+        <tr><td>Virtual</td><td><span class="chip">Virtual</span></td><td>2</td><td>5</td><td>-</td><td><span class="chip">Ver &rsaquo;</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p class="arrow-note">&darr; abrir la modalidad "Presencial" (row action &rarr; RecordDetail de <code>rt__Modality__curricularsection</code>)</p>
+
+<p><b>Paso 2.</b> Al abrir una modalidad, su ficha embebe un RecordList de <b>sus actividades</b> (InstructionalComponent), filtrado por <code>parentId = {{parentId}}</code>. Aqui viven el tipo de sala y el numero de docentes.</p>
+<div class="mock" aria-label="Mockup CD - detalle de modalidad con sus actividades">
+  <div class="mock-top">
+    <span class="crumb">... / FIS101 / Modalidad: <b>Presencial</b></span>
+    <span class="pill purple" style="margin-left:auto">recordType: Modality</span>
+  </div>
+  <div class="mock-tabs">
+    <div class="mock-tab">General</div>
+    <div class="mock-tab on">Actividades</div>
+  </div>
+  <div class="mock-body">
+    <p style="margin:0 0 12px;font-size:13px;color:var(--text-mute)">Modo de entrega: <b style="color:var(--text)">InPerson</b> &nbsp;·&nbsp; Principal: <b style="color:var(--text)">Si</b> &nbsp;·&nbsp; Codigo: <b style="color:var(--text)">PRES</b></p>
+    <table class="comp-table">
+      <thead><tr><th>Actividad</th><th>Tipo</th><th>Entrega</th><th>Horas/sem</th><th>Sala requerida</th><th>Docentes</th></tr></thead>
+      <tbody>
+        <tr><td>Teoria</td><td>Theory</td><td><span class="chip">InPerson</span></td><td>6</td><td><span class="chip res">Classroom</span></td><td>1</td></tr>
+        <tr><td>Practica</td><td>Practice</td><td><span class="chip">InPerson</span></td><td>1</td><td><span class="chip res">Laboratory</span></td><td>2</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="src">Este es el <b>drill-in</b> (opcion (a) de la seccion 3.1): configuracion pura, sin componentes nuevos. Las columnas "Sala requerida" y "Docentes" son las unicas dos que hoy no existen; el resto ya sale de Modality/CurricularSection. Para "Semipresencial" y "Virtual" el paso 2 se ve igual, con sus propias actividades (teoria online sincrona, laboratorio en taller, trabajo asincrono, etc.).</p>
+
+<h3>3.1 ¿Es viable esa vista con lo que up1 tiene? Si, es configuracion</h3>
+<p>Verificado en el layout real <span class="src">curriculum-design/config/layouts/default_Activity_view.json</span>. La ficha de <code>Activity</code> es un <code>RecordDetail</code> tabulado, y la pestana <b>Modalidades</b> ya es un <code>record-list</code> nativo sobre <code>CurricularSection</code> filtrado por contexto de padre (<code>{{parentId}}</code>) + <code>recordType</code>. Ese mismo mecanismo es el que reusa el drill-in.</p>
+<p>Fragmento real del panel de Modalidades (abreviado):</p>
+<pre>"modalitiesList": {
+  "type": "record-list", "objectName": "CurricularSection",
+  "layoutConfig": {
+    "relations": ["rt__Modality__curricularsection"],
+    "columns": [ { "key": "name" }, { "key": "rt__Modality__curricularsection.deliveryMode" }, ... ],
+    "filters": [ { "field": "ownerId",   "operator": "EQUALS", "value": "{{parentId}}" },
+                 { "field": "recordType", "operator": "EQUALS", "value": "Modality" } ]
+  }
+}</pre>
+<p>Para el nivel 3, la ficha de la Modality (<span class="src">default_rt__Modality__curricularsection_view.json</span>) embebe un <code>record-list</code> de sus <code>InstructionalComponent</code> filtrado por <code>parentId = {{parentId}}</code>. Es el mismo mecanismo que ya se usa, solo cambia el campo de filtro (<code>parentId</code> en vez de <code>ownerId</code>).</p>
+<div class="card ok">
+  <p><b>Esfuerzo de la vista:</b> <span class="pill ok">Bajo · solo JSON</span> El drill-in es configuracion pura sobre tipos de panel (<code>record-list</code>) que up1 ya tiene y ya usa en esta misma ficha. Sin componentes nuevos.</p>
+</div>
+
+<h2>4. Como lo consumiria Academic Scheduling</h2>
+<p>Al crear una <b>Seccion Propuesta</b>, AS ya no lee solo la <code>Activity</code>: el usuario elige una <b>modalidad</b> del curso (que viene del diseno de CD), y AS deriva de sus <code>InstructionalComponent</code> hijos los requerimientos concretos de planificacion. <code>Section.instructionalComponentId</code> apunta a la <code>Modality</code> elegida; los requerimientos por actividad salen de sus hijos.</p>
+
+<div class="mock" aria-label="Mockup de Academic Scheduling">
+  <div class="mock-top">
+    <span class="crumb">Academic Scheduling / Secciones Propuestas / <b>Nueva seccion - FIS101</b></span>
+    <span class="pill ok" style="margin-left:auto">recordType: Course</span>
+  </div>
+  <div class="mock-body">
+    <p style="margin:0 0 10px"><b>Modalidad</b> (desde el diseno de Curriculum Design):
+      &nbsp;<span class="chip sync">Presencial ✓</span> <span class="chip">Semipresencial</span> <span class="chip">Virtual</span></p>
+    <p class="arrow-note">Section.instructionalComponentId &rarr; CurricularSection[Modality "Presencial"]</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Actividad (de la modalidad)</th><th>Horas/sem</th><th>Tipo de sala</th><th>Docentes</th><th>AS resuelve</th></tr></thead>
+      <tbody>
+        <tr><td>Teoria</td><td>6</td><td>Classroom</td><td>1</td><td>Aula 204 · Prof. Rojas · Lun 8-11, Mie 8-11</td></tr>
+        <tr><td>Practica</td><td>1</td><td>Laboratory</td><td>2</td><td>Lab 302 · Prof. Diaz + Prof. Soto · Vie 10-11</td></tr>
+      </tbody>
+    </table></div>
+    <p class="src" style="margin-top:10px">AS mapea el enum <code>requiredResourceType</code> ("Classroom", "Laboratory") a una sala real de su catalogo <code>ResourceTypes</code>, y asigna docentes/horario. El diseno describe "necesita un laboratorio"; AS decide "es el Lab 302".</p>
+  </div>
+</div>
+
+<div class="card accent">
+  <p><b>Que hace el resolver de AS</b> (<code>section-create</code>): al elegir la modalidad, lee los <code>InstructionalComponent</code> hijos y por cada uno genera un requerimiento de agenda (recurso + horas + docentes). Hoy ese resolver solo toma campos de <code>Activity</code>; con esto toma la estructura de la modalidad. <code>requiredResourceTypeId</code> de <code>Section</code> se usa para fijar la resolucion concreta del tipo de sala.</p>
+</div>
+
+<h2>5. Por que cubre los casos que plantea AS</h2>
+<p>Los tres ejemplos del requerimiento se expresan sin nada fuera de este modelo, porque cada actividad lleva su propio tipo de entrega, horas, sala y docentes:</p>
+<div class="scroll"><table>
+  <thead><tr><th>Caso planteado por AS</th><th>Como se modela</th></tr></thead>
+  <tbody>
+    <tr><td>Virtual con actividades sincronas o asincronas, con horas semanales</td><td><code>Modality[Virtual]</code> con <code>InstructionalComponent[deliveryType=Synchronous]</code> y <code>InstructionalComponent[deliveryType=Asynchronous]</code>, cada uno con <code>hoursPerWeek</code></td></tr>
+    <tr><td>Semipresencial: teoria online sincrona + laboratorio presencial en taller, 2h/sem</td><td><code>Modality[Hybrid]</code> con <code>InstructionalComponent[Theory, Synchronous]</code> y <code>InstructionalComponent[Laboratory, InPerson, requiredResourceType=Workshop, hoursPerWeek=2]</code></td></tr>
+    <tr><td>Presencial: teoria requiere aula 6h; practica requiere laboratorio + 2 docentes, 1h</td><td><code>Modality[InPerson]</code> con <code>InstructionalComponent[Theory, requiredResourceType=Classroom, hoursPerWeek=6]</code> y <code>InstructionalComponent[Practice, requiredResourceType=Laboratory, requiredInstructorCount=2, hoursPerWeek=1]</code></td></tr>
+  </tbody>
+</table></div>
+
+<h2>6. Por que sirve tambien al caso de Engagement</h2>
+<p>El caso que Engagement toca es el <b>"version del Campus A que puede diferir de la del Campus B"</b>. Este modelo lo sirve justamente porque el diseno queda <b>agnostico de campus</b> y el campus se resuelve en la ejecucion, que es de Engagement:</p>
+<ul>
+  <li>El diseno (Modality + InstructionalComponent) describe <b>que</b> requiere el curso: "la practica necesita un laboratorio y 2 docentes". No dice <b>cual</b> laboratorio ni <b>de que campus</b>.</li>
+  <li><code>ActivityLine</code> (Engagement) vincula la <code>Activity</code> con la <code>OrgUnit</code> ejecutora, y <code>OrgUnit</code> incluye el <b>Campus</b> (<code>rt__Campus__OrgUnit</code>). El Campus A y el Campus B son dos <code>ActivityLine</code> distintas sobre el mismo diseno.</li>
+  <li>Como <code>requiredResourceType</code> es un <b>tipo</b> ("Laboratory"), cada campus lo resuelve a <b>su</b> laboratorio real. El mismo diseno sirve para los dos campus sin duplicarlo.</li>
+</ul>
+<p>Es decir: la misma <code>Modality</code> de CD alimenta el diseno; Engagement decide quien y donde lo ejecuta; Academic Scheduling decide la sala y el horario concretos. Cada mod aporta su capa sin pisar la del otro.</p>
+
+<h2>7. Blast radius de esta solucion</h2>
+<p>Radio de impacto de implementar la propuesta, verificado en codigo. Veredicto por item: <b>ROMPE</b> algo existente / <b>REQUIERE AJUSTE</b> (hay que tocarlo para que funcione) / <b>ADITIVO</b> (suma sin tocar lo existente) / <b>SOLO LECTURA</b> (no se afecta).</p>
+<div class="scroll"><table>
+  <thead><tr><th>Item</th><th>Veredicto</th><th>Evidencia y detalle</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Nuevo RT <code>InstructionalComponent</code> en codegen/sync</b></td>
+      <td><span class="pill ok">ADITIVO</span></td>
+      <td>Un RecordType se materializa como <b>tabla 1:1 nueva</b> <code>rt__InstructionalComponent__curricularsection</code> (<span class="src">generatePrismaSchema.js:743-812</span>); la base solo suma una back-ref virtual (no columna). Propagacion: regen + <code>db push</code> por tenant = <code>CREATE TABLE</code> no destructivo. No toca tablas existentes.</td>
+    </tr>
+    <tr>
+      <td><b>Modality: escalares a derivados</b> (segun propuesta)</td>
+      <td><span class="pill err">ROMPE</span></td>
+      <td>Hoy <code>theoryHours/practiceHours/labHours/deliveryMode</code> son <b>digitados</b> (layouts create/edit) y ademas se muestran en varios view. Volverlos derivados de los componentes es <b>breaking</b>: toca layouts create/edit/view, seeds y tests de <code>polymorphicUpdate</code>. La derivacion en si puede seguir el patron <code>effectiveCredits.js</code>.</td>
+    </tr>
+    <tr>
+      <td><b>Switching por recordType</b></td>
+      <td><span class="pill ok">SOLO LECTURA</span></td>
+      <td>Los validadores de <span class="src">logic/</span> estan <b>guardados por su <code>objectType</code></b> y hacen no-op fuera de scope (<span class="src">polymorphicUpdate.resolver.js:326,348</span>); el split base/RT es generico por alias. <code>CompositeSectionTree</code> es parametrizado (recordType/relationName props). Un <code>InstructionalComponent</code> fluye out-of-the-box; una regla propia seria un validador nuevo, aditivo.</td>
+    </tr>
+    <tr>
+      <td><b><code>Section.instructionalComponentId</code> (FK cross-mod) + <code>requiredResourceTypeId</code></b></td>
+      <td><span class="pill warn">REQUIERE AJUSTE</span></td>
+      <td>El resolver usa <b>lista blanca</b> de campos (<span class="src">section-create.resolver.js:92-101</span>) y args explicitos (<span class="src">section-create.schema.graphql:10-17</span>): hay que agregar los dos campos en schema + resolver + <code>data{}</code>. La FK cross-mod <b>ya tiene precedente en produccion</b>: <code>Section.activityId &rarr; Activity</code> ya apunta a un objeto de curriculum-design. <code>requiredResourceTypeId &rarr; ResourceTypes</code> es intra-mod (trivial).</td>
+    </tr>
+    <tr>
+      <td><b>i18n del RT nuevo</b></td>
+      <td><span class="pill warn">REQUIERE AJUSTE</span></td>
+      <td>Crear <code>rt__InstructionalComponent__curricularsection.i18n.json</code> siguiendo el patron de los RT existentes (leccion del Cambio 2: el archivo debe llamarse con el RT completo para que la cascada lo matchee).</td>
+    </tr>
+    <tr>
+      <td><b>Capabilities / RBAC</b></td>
+      <td><span class="pill ok">SOLO LECTURA</span></td>
+      <td>El RBAC es <b>a nivel objeto</b>: <code>curricularsection:view/modify/audit</code> aplica a todos los subtipos (<span class="src">capabilities.json</span>). El InstructionalComponent las hereda; no se declara capability nueva (solo actualizar las descripciones por prolijidad).</td>
+    </tr>
+    <tr>
+      <td><b>Vista en CD (layout)</b></td>
+      <td><span class="pill warn">AJUSTE (solo JSON)</span></td>
+      <td>Drill-in: RecordList de InstructionalComponent embebido en la ficha de la Modality, filtrado por <code>parentId={{parentId}}</code>. Configuracion pura sobre <code>record-list</code>, sin componentes nuevos. Ver seccion 3.1.</td>
+    </tr>
+    <tr>
+      <td><b>Tests</b></td>
+      <td><span class="pill err">ROMPE 1 test</span></td>
+      <td><span class="src">tests/integration/recordtypes-declared.test.ts:59-68</span> asserta el <b>set exacto</b> de RTs declarados; hay que agregar <code>'InstructionalComponent'</code> a la lista esperada. <span class="src">seed-counts.test.ts</span> solo rompe si ademas se siembra el InstructionalComponent. <code>CurricularLink</code> no rompe (FK por id, agnostico al recordType). No hay enum de recordType que tocar.</td>
+    </tr>
+    <tr>
+      <td><b>uengagement-up1</b></td>
+      <td><span class="pill ok">SOLO LECTURA</span></td>
+      <td>Nada de modelo ni de logica. Sigue consumiendo el mismo <code>Activity</code>.</td>
+    </tr>
+  </tbody>
+</table></div>
+<p><b>Neto:</b> los cambios <b>obligatorios</b> son pocos y acotados: en CD, el nuevo RT + su i18n + arreglar 1 test + 1 panel de layout; en AS, los 2 campos en <code>Section</code> + <code>section-create.schema.graphql</code> + el <code>data{}</code> del resolver. La derivacion de horas (S2) es opcional y de bajo impacto. Todo lo demas (codegen, RBAC, switching, CurricularLink) es aditivo o indiferente, y <b>ENG no se toca</b>. No hay un solo <span class="pill err" style="font-size:10px">ROMPE</span> de runtime: el unico ROMPE es un test que espera un set cerrado de RTs.</p>
+
+<div class="card warn">
+  <p><b>El unico riesgo estructural</b> es el mismo que ya identificamos: <code>Section.instructionalComponentId &rarr; CurricularSection</code> agrega un <b>consumidor cross-mod nuevo</b> de un objeto de CD (aunque con precedente en <code>Section &rarr; Activity</code>). Se contiene manteniendo <code>requiredResourceType</code> como <b>enum en diseno</b> (no FK a <code>ResourceTypes</code> de AS), para que la dependencia sea unidireccional <code>as &rarr; cd</code> y no un ciclo.</p>
+</div>
+
+<h2>8. Impacto en los tres mods</h2>
+<div class="scroll"><table>
+  <thead><tr><th>Mod</th><th>Que agrega</th><th>Que NO cambia</th><th>Costo</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>curriculum-design</b><br><span class="src">(nosotros, diseno)</span></td>
+      <td>1 RecordType <code>rt__InstructionalComponent__curricularsection.json</code> + i18n + un layout embebido de la Modality que lista sus InstructionalComponents</td>
+      <td><code>Activity</code>, <code>CurricularSection</code> y <code>Modality</code> intactos. Nada se rompe.</td>
+      <td><span class="pill ok">Bajo</span></td>
+    </tr>
+    <tr>
+      <td><b>academic-scheduling</b><br><span class="src">(planificacion)</span></td>
+      <td><code>Section.instructionalComponentId &rarr; CurricularSection[Modality]</code> + <code>requiredResourceTypeId</code>; el resolver <code>section-create</code> lee los InstructionalComponent hijos; mapea enum a <code>ResourceTypes</code></td>
+      <td>Consume el diseno, no lo redefine. Sus 4 layouts y su i18n se ajustan, no se reescriben.</td>
+      <td><span class="pill warn">Bajo-medio</span></td>
+    </tr>
+    <tr>
+      <td><b>uengagement-up1</b><br><span class="src">(ejecucion)</span></td>
+      <td>Nada de modelo. <code>ActivityLine</code> sigue siendo el binding Activity x Campus.</td>
+      <td>Todo. Consume el mismo <code>Activity</code>; la variante por campus se resuelve en ejecucion.</td>
+      <td><span class="pill ok">Cero</span></td>
+    </tr>
+  </tbody>
+</table></div>
+
+<div class="card ok">
+  <p><b>Por que es de bajo costo y no reabre la brecha entre mods:</b></p>
+  <ul style="margin-bottom:0">
+    <li>Reusa objeto (<code>CurricularSection</code>), jerarquia (<code>parentId</code>) y nivel 2 (<code>Modality</code>) que ya existen. Lo unico nuevo es 1 RecordType chico.</li>
+    <li><b>Dependencia en una sola direccion:</b> <code>requiredResourceType</code> es un enum en el diseno, no una FK al <code>ResourceTypes</code> de academic-scheduling. Asi AS depende de CD (lee el diseno), pero CD no depende de AS. No hay ciclo.</li>
+    <li>Respeta la division acordada: <b>CD disena, AS planifica, Engagement ejecuta</b>.</li>
+  </ul>
+</div>
+
+<h2>9. Decisiones abiertas antes de ejecutar</h2>
+<ol>
+  <li><b>Reusar <code>Content</code> vs crear <code>InstructionalComponent</code>:</b> <code>Content</code> ya tiene <code>contentType (Theoretical/Practical/Laboratory)</code> + <code>hours</code>; podria extenderse en lugar de crear un RT nuevo. A decidir por CD.</li>
+  <li><b>Como derivar las horas de Modality</b> (<code>theoryHours/practiceHours/labHours</code>): la propuesta las define derivadas de los InstructionalComponent; decidir el <code>como</code> (read-enrichment vs materializado).</li>
+  <li><b>Variante por campus:</b> confirmar que se resuelve en ejecucion (ActivityLine), no duplicando modalidades por campus en diseno, salvo que el diseño pedagogico difiera de verdad entre campus.</li>
+  <li><b>Propiedad de <code>Activity</code></b> a la luz de UPONE-1283 (Engagement como spine canonico) frente a "los campos del curso van en CD".</li>
+</ol>
+
+<p class="foot">Ejemplo ilustrativo de la propuesta (SP8). El modelo se apoya en objetos verificados en codigo: <code>curriculum-design/objects/activity.json</code>, <code>CurricularSection.json</code>, <code>RecordTypes/rt__Modality__curricularsection.json</code>. Datos (FIS101, salas, docentes) son ficticios. Complementa a <code>contra-analisis-3-cambios-verificacion.html</code> y <code>origen-curso-modalidad-actividad-conciliacion-cd.md</code>.</p>
+
+</div>
+</body>
+</html>

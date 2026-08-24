@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curriculum Design — Open Questions · Presentación</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f8fa;
+    --bg3: #eef0f4;
+    --border: #dde1e6;
+    --teal: #0a808c;
+    --blue: #1d6fa4;
+    --green: #1a7a3a;
+    --orange: #c08a1e;
+    --purple: #6e40c9;
+    --red: #d32f2f;
+    --text: #1a1a2e;
+    --text-muted: #4a5568;
+    --text-dim: #8896a6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; overflow: hidden; user-select: none;
+  }
+  .deck { width: 100%; height: 100vh; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 40px 60px;
+    opacity: 0; transform: translateX(60px);
+    transition: opacity .4s, transform .4s;
+    pointer-events: none; overflow-y: auto;
+  }
+  .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .slide.exit { opacity: 0; transform: translateX(-60px); transition: opacity .3s, transform .3s; }
+
+  .progress {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 5px; z-index: 100; max-width: 80%; flex-wrap: wrap; justify-content: center;
+  }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all .2s; }
+  .dot.active { background: var(--teal); transform: scale(1.5); }
+  .nav-hint { position: fixed; bottom: 18px; right: 30px; font-size: 10px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; z-index: 100; }
+  .key { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 9px; color: var(--text-muted); }
+  .slide-num { position: fixed; bottom: 18px; left: 30px; font-size: 10px; color: var(--text-dim); z-index: 100; }
+  .brand-logo { position: fixed; top: 18px; left: 30px; z-index: 200; font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .brand-logo .accent { color: var(--teal); }
+
+  .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--teal); margin-bottom: 10px;
+  }
+  h1 { font-size: 42px; font-weight: 700; line-height: 1.1; margin-bottom: 14px; }
+  h2 { font-size: 26px; font-weight: 700; line-height: 1.2; margin-bottom: 10px; }
+  h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); margin-bottom: 5px; }
+  .subtitle { font-size: 16px; color: var(--text-muted); line-height: 1.5; }
+  p { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+  .accent { color: var(--teal); }
+  .muted { color: var(--text-dim); }
+
+  .card-grid { display: grid; gap: 10px; width: 100%; }
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+  }
+  .card.teal { border-left: 4px solid var(--teal); }
+  .card.blue { border-left: 4px solid var(--blue); }
+  .card.green { border-left: 4px solid var(--green); }
+  .card.orange { border-left: 4px solid var(--orange); }
+  .card.purple { border-left: 4px solid var(--purple); }
+  .card.red { border-left: 4px solid var(--red); }
+  .card h3 { font-size: 13px; margin-bottom: 5px; }
+  .card p { font-size: 11px; }
+  .card .icon { font-size: 18px; margin-bottom: 4px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 14px; padding: 2px 9px;
+    font-size: 10px; font-weight: 600; color: var(--text);
+  }
+  .pill.teal { border-color: var(--teal); color: var(--teal); }
+  .pill.blue { border-color: var(--blue); color: var(--blue); }
+  .pill.green { border-color: var(--green); color: var(--green); }
+  .pill.orange { border-color: var(--orange); color: var(--orange); }
+  .pill.purple { border-color: var(--purple); color: var(--purple); }
+  .pill.red { border-color: var(--red); color: var(--red); }
+  .pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .highlight {
+    background: linear-gradient(135deg, rgba(10,128,140,.06), rgba(29,111,164,.03));
+    border: 1px solid rgba(10,128,140,.25);
+    border-radius: 8px; padding: 10px 14px; width: 100%;
+  }
+  .highlight.green { background: linear-gradient(135deg, rgba(26,122,58,.06), rgba(26,122,58,.02)); border-color: rgba(26,122,58,.3); }
+  .highlight.red { background: linear-gradient(135deg, rgba(211,47,47,.05), rgba(211,47,47,.02)); border-color: rgba(211,47,47,.25); }
+  .highlight.orange { background: linear-gradient(135deg, rgba(192,138,30,.06), rgba(192,138,30,.02)); border-color: rgba(192,138,30,.3); }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .data-table th {
+    text-align: left; font-size: 9px; font-weight: 700;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--text-dim);
+    padding: 6px 8px; border-bottom: 2px solid var(--border);
+  }
+  .data-table td {
+    padding: 6px 8px; border-bottom: 1px solid var(--bg3);
+    vertical-align: top; color: var(--text-muted); font-size: 11px;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .code-block {
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 6px; padding: 8px 12px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 10.5px; line-height: 1.6; color: #e2e8f0;
+    width: 100%; white-space: pre; overflow-x: auto;
+  }
+  .str { color: #fde68a; }
+  .kw { color: #f472b6; }
+  .comment { color: #64748b; }
+  .num { color: #93c5fd; }
+
+  /* Tres lentes — comparativa visual */
+  .three-lens {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px; width: 100%; align-items: stretch;
+  }
+  .lens {
+    border-radius: 8px; padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex; flex-direction: column;
+  }
+  .lens.confluence { border-top: 4px solid var(--blue); }
+  .lens.format { border-top: 4px solid var(--purple); }
+  .lens.legacy { border-top: 4px solid var(--orange); }
+  .lens .lens-title {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .lens .lens-name {
+    font-size: 9px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .lens.confluence .lens-name { color: var(--blue); }
+  .lens.format .lens-name { color: var(--purple); }
+  .lens.legacy .lens-name { color: var(--orange); }
+  .lens .badge {
+    font-size: 9px; font-weight: 600;
+    padding: 1px 6px; border-radius: 8px;
+  }
+  .lens.confluence .badge { background: rgba(29,111,164,.1); color: var(--blue); }
+  .lens.format .badge { background: rgba(110,64,201,.1); color: var(--purple); }
+  .lens.legacy .badge { background: rgba(192,138,30,.1); color: var(--orange); }
+
+  .question-box {
+    background: linear-gradient(135deg, rgba(245,197,66,.15), rgba(192,138,30,.05));
+    border: 1px solid rgba(192,138,30,.4);
+    border-radius: 8px; padding: 10px 14px; width: 100%;
+  }
+  .question-box .q-tag {
+    font-size: 9px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--orange); margin-bottom: 4px;
+  }
+  .question-box .q-list {
+    list-style: none; margin: 0; padding: 0;
+  }
+  .question-box .q-list li {
+    font-size: 12px; color: var(--text); padding: 3px 0; line-height: 1.45;
+  }
+  .question-box .q-list li::before {
+    content: "❓ "; color: var(--orange); margin-right: 4px;
+  }
+
+  .via-box {
+    background: linear-gradient(135deg, rgba(110,64,201,.08), rgba(110,64,201,.02));
+    border: 1px solid rgba(110,64,201,.3);
+    border-radius: 8px; padding: 8px 14px; width: 100%;
+    font-size: 12px; color: var(--text);
+  }
+  .via-box strong { color: var(--purple); }
+
+  .impact-bar {
+    display: grid; grid-template-columns: 70px 1fr 1fr;
+    gap: 8px; width: 100%;
+  }
+  .impact-bar .label {
+    background: var(--bg3); border-radius: 6px;
+    padding: 8px 6px; text-align: center;
+    font-weight: 700; font-size: 11px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .impact-bar .sp1 {
+    background: rgba(26,122,58,.06); border: 1px solid rgba(26,122,58,.3);
+    border-radius: 6px; padding: 8px 10px; font-size: 11px;
+  }
+  .impact-bar .sprint-future {
+    background: rgba(192,138,30,.06); border: 1px solid rgba(192,138,30,.3);
+    border-radius: 6px; padding: 8px 10px; font-size: 11px;
+  }
+  .impact-bar h4 { font-size: 9px; }
+
+  .q-header {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; margin-bottom: 10px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+  .q-num {
+    background: var(--teal); color: white;
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; flex-shrink: 0;
+  }
+  .q-title { flex: 1; }
+  .q-title h2 { font-size: 20px; margin-bottom: 2px; }
+  .q-title .topic { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-dim); font-weight: 600; }
+
+  .blocked-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: rgba(211,47,47,.1); color: var(--red);
+    border: 1px solid rgba(211,47,47,.3);
+    border-radius: 10px; padding: 1px 7px; font-size: 9px; font-weight: 700;
+  }
+  .ok-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: rgba(26,122,58,.1); color: var(--green);
+    border: 1px solid rgba(26,122,58,.3);
+    border-radius: 10px; padding: 1px 7px; font-size: 9px; font-weight: 700;
+  }
+
+  .slide h2 .small { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+</style>
+</head>
+<body>
+
+<div class="brand-logo">UP1 · <span class="accent">Curriculum Design</span> · Open Questions</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 — PORTADA -->
+  <div class="slide active" id="s1">
+    <div style="text-align:center; max-width:880px;">
+      <div class="tag">10 preguntas abiertas · prisma 4 lentes</div>
+      <h1>Las preguntas que necesitamos<br><span class="accent">resolver con el equipo</span></h1>
+      <p class="subtitle" style="margin-top:14px;">Bajo 4 lentes de validación: <strong>Confluence Learning Assurance</strong> (verdad estructural) ·<br><strong>Formato up1 + código</strong> (cómo se codifica) · <strong>Legacy v2.2</strong> (qué tenemos) · <strong>este sprint / sprint futuro</strong> (cobertura).</p>
+      <div class="pills" style="justify-content:center; margin-top:24px;">
+        <span class="pill blue">📘 Confluence LA</span>
+        <span class="pill purple">🛠️ Formato + código</span>
+        <span class="pill orange">📊 Legacy v2.2</span>
+        <span class="pill green">🚦 Este sprint / Future</span>
+      </div>
+      <p style="margin-top:20px; font-size:11px; color:var(--text-dim);">Si hay pregunta sin respuesta del equipo funcional, <strong>NO se toma decisión</strong>.<br>Vías técnicas respaldadas por código se registran como <em>propuestas a confirmar</em>.</p>
+    </div>
+  </div>
+
+  <!-- 2 — PRISMA DE 4 LENTES -->
+  <div class="slide" id="s2">
+    <div style="max-width:920px; width:100%;">
+      <div class="tag">Marco de revisión</div>
+      <h2>Cómo evaluamos cada pregunta</h2>
+      <p style="margin-top:6px; margin-bottom:14px;">Cada pregunta se cruza con 4 lentes. Si las 3 fuentes coinciden → se modela. Si no → pregunta abierta documentada para resolver con el equipo.</p>
+
+      <div class="card-grid cols-2">
+        <div class="card blue">
+          <div class="icon">📘</div>
+          <h3>1. Confluence Learning Assurance</h3>
+          <p style="margin-top:4px;"><strong>Verdad estructural</strong>: qué entidades existen, qué semántica tienen. Documento mantenido por Esteban Cortés.</p>
+        </div>
+        <div class="card purple">
+          <div class="icon">🛠️</div>
+          <h3>2. Formato up1 + código real</h3>
+          <p style="margin-top:4px;"><strong>Cómo se codifica</strong>: convenciones JSON Schema (casing, FKs, enums). Validado contra Bases reales del core.</p>
+        </div>
+        <div class="card orange">
+          <div class="icon">📊</div>
+          <h3>3. Discrepancias del legacy</h3>
+          <p style="margin-top:4px;"><strong>Qué tenemos / falta / difiere / cómo se convierte</strong>. Datos reales Univalle + AIEP v2.2.</p>
+        </div>
+        <div class="card green">
+          <div class="icon">🚦</div>
+          <h3>4. Cobertura este sprint vs sprint futuro</h3>
+          <p style="margin-top:4px;"><strong>Qué se hace ahora sin decisión</strong>. Repercusiones cuando se confirme. Alternativas con costo estimado.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 — HALLAZGOS DEL CODIGO -->
+  <div class="slide" id="s3">
+    <div style="max-width:920px; width:100%;">
+      <div class="tag">Validación contra el código</div>
+      <h2>Hallazgos críticos en los Bases del core</h2>
+      <p style="margin-top:6px; margin-bottom:14px;">Antes de mirar las preguntas, qué nos dice <strong>el código real de up1</strong> (objetos en <code>up1/object-manager/objects/business/Base/</code>).</p>
+
+      <div class="highlight" style="margin-bottom:10px;">
+        <h3 style="color:var(--teal);">✅ Hallazgo 1 — Casing de enums: UPPER_SNAKE_CASE</h3>
+        <p style="margin-top:6px; color:var(--text);">5 Bases verificados, <strong>cero excepciones</strong>:</p>
+        <div class="code-block" style="margin-top:6px;"><span class="comment">// csenrollment.json</span>
+<span class="kw">"enum"</span>: [<span class="str">"ENROLLED"</span>, <span class="str">"COMPLETED"</span>, <span class="str">"DROPPED"</span>]
+<span class="comment">// hwfactor.json</span>
+<span class="kw">"enum"</span>: [<span class="str">"ACADEMIC"</span>, <span class="str">"ATTENDANCE"</span>, <span class="str">"ENGAGEMENT"</span>]
+<span class="comment">// hwintervention.json</span>
+<span class="kw">"enum"</span>: [<span class="str">"ACADEMIC_ADVISING"</span>, <span class="str">"TUTORING"</span>, <span class="str">"COUNSELING"</span>]</div>
+        <p style="margin-top:6px; font-size:11px; color:var(--text-muted);">→ Confirma <strong>UPPER_SNAKE_CASE</strong> como convención. Legacy y Confluence usan PascalCase como notación humana, pero la codificación real es UPPER_SNAKE.</p>
+      </div>
+
+      <div class="card-grid cols-2" style="margin-top:10px;">
+        <div class="card red">
+          <h3>❌ Sin precedente: <code>externalId</code></h3>
+          <p style="margin-top:4px;">No existe en ningún Base. Q1 sin precedente que validar.</p>
+        </div>
+        <div class="card red">
+          <h3>❌ Sin precedente: FK polimórfica</h3>
+          <p style="margin-top:4px;">Ningún Base usa <code>ownerType</code>/<code>ownerId</code>. CurricularSection sería el primer caso real.</p>
+        </div>
+        <div class="card red">
+          <h3>❌ Sin precedente: RTs custom dinámicos</h3>
+          <p style="margin-top:4px;">Solo existe <code>rt__Student__core_user.json</code>. Sin precedente para Q3/Q5.</p>
+        </div>
+        <div class="card teal">
+          <h3>✅ Implicación clara: Q10</h3>
+          <p style="margin-top:4px;">Casing UPPER_SNAKE respaldado. Las demás preguntas tienen menos respaldo del código.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.5 — PRIORIZACION ESTE SPRINT vs SPRINT FUTURO -->
+  <div class="slide" id="s3b">
+    <div style="max-width:1100px; width:100%;">
+      <div class="tag">Priorización este sprint vs sprint futuro</div>
+      <h2>¿Cuáles preguntas <span class="accent">resolver primero</span>?</h2>
+      <p style="margin-top:6px; margin-bottom:12px;">No todas las preguntas tienen el mismo peso. Algunas afectan este sprint directamente; otras solo aparecen en sprint futuro. La urgencia se mide por <strong>qué rompe / qué bloquea</strong> en cada sprint.</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead>
+          <tr><th>Q</th><th>Tema</th><th>Este sprint</th><th>Sprint futuro</th><th>Por qué</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Q1</strong></td><td>externalId 1 vs 2 campos</td><td><span class="pill green">Baja</span></td><td><span class="pill green">Baja</span></td><td>Solo importa cuando se haga import SIS (post-sprint-futuro).</td></tr>
+          <tr style="background:rgba(211,47,47,.04);"><td><strong>Q2</strong></td><td>workflowState valores y casing</td><td><span class="pill red">🔴 Alta</span></td><td><span class="pill red">⚠️ Crítica</span></td><td><strong>Este sprint</strong>: filtro Estado del UPONE-1034 muestra <code>"Active"</code> ambiguo. <strong>Sprint futuro</strong>: bloquea CAP-CUR-019 (workflow).</td></tr>
+          <tr><td><strong>Q3</strong></td><td>CustomSection 1 vs N</td><td><span class="pill green">Baja</span></td><td><span class="pill red">⚠️ Crítica</span></td><td>1 RT genérico funciona en este sprint. <strong>Bloquea CAP-CUR-013</strong> en sprint futuro.</td></tr>
+          <tr><td><strong>Q4</strong></td><td>referenceFormat enum</td><td><span class="pill green">Baja</span></td><td><span class="pill green">Baja</span></td><td>Solo afecta filtros y reportes futuros.</td></tr>
+          <tr style="background:rgba(192,138,30,.04);"><td><strong>Q5</strong></td><td>4 RTs no validados</td><td><span class="pill orange">🟡 Media</span></td><td><span class="pill red">🔴 Alta</span></td><td><strong>Este sprint</strong>: Habilitación Univalle = ¿Session o ApprovalCondition? Afecta seed. <strong>Sprint futuro</strong>: cada RT requiere UI.</td></tr>
+          <tr><td><strong>Q6</strong></td><td>LOs derivados AIEP</td><td><span class="pill" style="background:#eef0f4; color:var(--text-dim);">⚪ Nula</span></td><td><span class="pill red">🔴 Alta</span></td><td>Migración fuera de este sprint. Bloquea ETL legacy AIEP.</td></tr>
+          <tr><td><strong>Q7</strong></td><td>workflow sub-objetos</td><td><span class="pill" style="background:#eef0f4; color:var(--text-dim);">⚪ Nula</span></td><td><span class="pill green">Baja</span></td><td>3 fuentes alineadas. Retrocompatible.</td></tr>
+          <tr><td><strong>Q8</strong></td><td>Bibliography AIEP</td><td><span class="pill" style="background:#eef0f4; color:var(--text-dim);">⚪ Nula</span></td><td><span class="pill green">Baja</span></td><td>Modelo soporta cero o N.</td></tr>
+          <tr><td><strong>Q9</strong></td><td>Modality &gt;= 1</td><td><span class="pill green">Baja</span></td><td><span class="pill red">🔴 Alta</span></td><td>Seed cumple. Validación crítica para workflow (depende Q2).</td></tr>
+          <tr style="background:rgba(211,47,47,.04);"><td><strong>Q10</strong></td><td>Casing enums</td><td><span class="pill red">🔴 Alta</span></td><td><span class="pill red">⚠️ Crítica</span></td><td><strong>Transversal — afecta TODOS los enums</strong>. Si decide cambiar después: migración masiva.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card-grid cols-2" style="margin-top:8px;">
+        <div class="card red">
+          <div class="icon">🚨</div>
+          <h3>Resolver YA — afectan este sprint directamente</h3>
+          <p style="margin-top:4px;"><strong>Q2</strong> (workflowState) · <strong>Q5</strong> (Habilitación Univalle) · <strong>Q10</strong> (casing transversal)</p>
+        </div>
+        <div class="card orange">
+          <div class="icon">⏳</div>
+          <h3>Resolver antes del sprint futuro — bloquean capabilities</h3>
+          <p style="margin-top:4px;"><strong>Q2 + Q9 + Q10</strong> → CAP-CUR-019 · <strong>Q3</strong> → CAP-CUR-013 · <strong>Q6 + Q8</strong> → ETL AIEP</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.6 — ORDEN DE PREGUNTAS -->
+  <div class="slide" id="s3c">
+    <div style="max-width:880px; width:100%;">
+      <div class="tag">Recomendación · Orden para preguntar al equipo</div>
+      <h2>Si tenés <span class="accent">10 minutos con Esteban</span>, preguntá en este orden</h2>
+      <p style="margin-top:6px; margin-bottom:12px;">No todas tienen el mismo peso. Estas son las 3 que más cambian si las resolvés antes vs después de cerrar el modelo.</p>
+
+      <div class="card-grid cols-3">
+        <div class="card red">
+          <div style="font-size:32px; font-weight:800; color:var(--red);">1.</div>
+          <h3>Q10 — Casing enums</h3>
+          <p style="margin-top:6px;"><strong>¿UPPER_SNAKE_CASE?</strong> 5 Bases del core lo confirman. Si decimos sí, modelamos todos los enums coherentes desde el principio.</p>
+          <div class="pills" style="margin-top:8px;"><span class="pill red">Transversal</span></div>
+        </div>
+        <div class="card red">
+          <div style="font-size:32px; font-weight:800; color:var(--red);">2.</div>
+          <h3>Q2 — workflowState "Active"</h3>
+          <p style="margin-top:6px;"><strong>¿Qué valor del enum es "Active"?</strong> Define el seed visible en el listado UPONE-1034.</p>
+          <div class="pills" style="margin-top:8px;"><span class="pill red">Visible en UI</span></div>
+        </div>
+        <div class="card orange">
+          <div style="font-size:32px; font-weight:800; color:var(--orange);">3.</div>
+          <h3>Q5 — Habilitación Univalle</h3>
+          <p style="margin-top:6px;"><strong>¿Es Session o ApprovalCondition?</strong> Define cómo modelamos SEM 18 en el seed.</p>
+          <div class="pills" style="margin-top:8px;"><span class="pill orange">Caso edge seed</span></div>
+        </div>
+      </div>
+
+      <div class="highlight" style="margin-top:14px;">
+        <p style="font-size:12px;"><strong>Resto pueden esperar:</strong> Q1, Q4, Q7, Q8 (no urgentes) · Q3, Q6, Q9 (importantes solo cuando se priorice la capability futura asociada).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.7 — STRICT SCOPE POR TICKET -->
+  <div class="slide" id="s3d">
+    <div style="max-width:1000px; width:100%;">
+      <div class="tag">Strict scope · Que hace cada ticket</div>
+      <h2>Los 3 tickets <span class="accent">no cubren todo el agregado</span></h2>
+      <p style="margin-top:6px; margin-bottom:12px;">El ticket UPONE-1033 textualmente pide <strong>solo los 4 objetos base</strong>. Los RecordTypes (LearningOutcome, Modality, etc.) son una capa adicional que va en UPONE-1035 cuando se construyen los layouts del detail.</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead>
+          <tr><th>Ticket</th><th>Modela</th><th>NO modela</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>UPONE-1033</strong><br><span style="font-size:9px; color:var(--text-dim);">TICKET-006</span></td>
+            <td>4 objetos base:<br>· <code>AcademicActivity</code><br>· <code>CurricularSection</code> (campos comunes)<br>· <code>CurricularLink</code><br>· <code>BibliographyReference</code></td>
+            <td>❌ RecordTypes (Modality, LO, etc.)<br>❌ Seed completo legacy<br>❌ Layouts</td>
+          </tr>
+          <tr>
+            <td><strong>UPONE-1034</strong><br><span style="font-size:9px; color:var(--text-dim);">TICKET-007</span></td>
+            <td>Layout listado de <code>AcademicActivity</code><br>Filtros (UO stub, estado, código, nombre)</td>
+            <td>❌ Detail<br>❌ RecordTypes</td>
+          </tr>
+          <tr style="background:rgba(110,64,201,.04);">
+            <td><strong>UPONE-1035</strong><br><span style="font-size:9px; color:var(--text-dim);">TICKET-009</span></td>
+            <td>✅ <strong>Crea los RecordTypes</strong> (subset minimo: Modality + LO + Content)<br>✅ Carga seed completo Univalle/AIEP<br>✅ Layout detail principal + por RT</td>
+            <td>(scope ampliado: incluye RTs)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="highlight orange" style="margin-bottom:8px;">
+        <h3 style="color:var(--orange);">⚠️ Cambio respecto a versiones previas</h3>
+        <p style="margin-top:4px; font-size:12px;">Anteriormente habíamos asumido que los 7 RecordTypes (Modality, LearningOutcome, Session, EvaluationComponent, Content, Bibliography, CustomSection) entraban en UPONE-1033. <strong>Eso fue inferencia mía sin justificación documentada</strong>. El ticket textual pide solo los 4 objetos base. La cobertura correcta es: RTs van en UPONE-1035.</p>
+      </div>
+
+      <div class="card-grid cols-2">
+        <div class="card teal">
+          <h3>4 nuevas preguntas (Q11–Q14)</h3>
+          <p style="margin-top:4px;"><strong>Q11</strong>: ¿qué subset de RTs entra en UPONE-1035? (3 mínimos vs 6 Univalle completo)<br><strong>Q12</strong>: ¿cuándo carga el seed completo? (TICKET-009)<br><strong>Q13</strong>: <code>recordType</code> ¿enum cerrado o string libre?<br><strong>Q14</strong>: ¿qué pasa con los RTs que no entran en UPONE-1035?</p>
+        </div>
+        <div class="card green">
+          <h3>Beneficio del strict scope</h3>
+          <p style="margin-top:4px;">UPONE-1033 termina más rápido (4 objetos planos vs 4+7 archivos). UPONE-1035 absorbe el modelado de RTs como parte natural de "probar distintas configuraciones" — coherente con su request textual.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.8 — PROPUESTA DEL MODELO (parte 1: AcademicActivity + iconos) -->
+  <div class="slide" id="s3e">
+    <div style="max-width:1100px; width:100%;">
+      <div class="tag">Propuesta preliminar del modelo · iconos</div>
+      <h2><span class="accent">AcademicActivity</span> — Programa de asignatura (raíz)</h2>
+      <p style="margin-top:6px; margin-bottom:8px;">Modelo BORRADOR sujeto a las open questions. <strong>Cada campo con icono</strong> tiene pregunta abierta o decisión a confirmar. Las decisiones se citan con sus fuentes.</p>
+
+      <div class="card-grid cols-3" style="margin-bottom:8px; font-size:11px;">
+        <div class="card" style="padding:8px 10px;"><strong>📘 Confluence LA</strong><br><span style="color:var(--text-dim); font-size:10px;">Verdad estructural — id 2038366242</span></div>
+        <div class="card" style="padding:8px 10px;"><strong>📊 Legacy v2.2</strong><br><span style="color:var(--text-dim); font-size:10px;">Datos reales Univalle/AIEP</span></div>
+        <div class="card" style="padding:8px 10px;"><strong>🛠️ Código real</strong><br><span style="color:var(--text-dim); font-size:10px;">Bases del core + AGENTS.md</span></div>
+      </div>
+
+      <div class="code-block" style="font-size:10px; line-height:1.55;"><span class="kw">"properties"</span>: {
+  <span class="kw">"name"</span>:              { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"not_null"</span>: <span class="num">true</span>, ... },              <span class="comment">// 📊</span>
+  <span class="kw">"code"</span>:              { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"transformations"</span>: [{<span class="kw">"type"</span>:<span class="str">"trim"</span>}] },  <span class="comment">// 📊💡</span>
+  <span class="kw">"version"</span>:           { <span class="kw">"type"</span>: <span class="str">"string"</span>, ... },                                <span class="comment">// 📊📘</span>
+  <span class="kw">"previousVersionId"</span>: { <span class="kw">"isForeignKey"</span>: <span class="num">true</span>, <span class="kw">"references"</span>: <span class="str">"AcademicActivity"</span> },     <span class="comment">// 📘 (BR-VER-001)</span>
+  <span class="kw">"recordType"</span>:        { <span class="kw">"static_default"</span>: <span class="str">"Course"</span> },                       <span class="comment">// 📘📊</span>
+  <span class="kw">"description"</span>:       { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"not_null"</span>: <span class="num">false</span> },                     <span class="comment">// 📊</span>
+  <span class="kw">"credits"</span>:           { <span class="kw">"type"</span>: <span class="str">"number"</span> },                                  <span class="comment">// 📊</span>
+  <span class="kw">"programLevel"</span>:      { <span class="kw">"type"</span>: <span class="str">"string"</span> },                                  <span class="comment">// ⚠️ Q10: casing</span>
+  <span class="kw">"workflowState"</span>:     { <span class="kw">"type"</span>: <span class="str">"string"</span> },                                  <span class="comment">// ❓⚠️ Q2: enum + casing + "Active"</span>
+  <span class="kw">"language"</span>:          { <span class="kw">"static_default"</span>: <span class="str">"es"</span> },                          <span class="comment">// 📊</span>
+  <span class="kw">"executionUnitId"</span>:   { <span class="kw">"type"</span>: <span class="str">"string"</span> },                                  <span class="comment">// 🔒 DECISION-002 OrgUnit postergada</span>
+  <span class="kw">"externalId"</span>:        { <span class="kw">"type"</span>: <span class="str">"string"</span> }                                   <span class="comment">// ❓ Q1: 1 vs 2 campos</span>
+}</div>
+
+      <div class="card-grid cols-2" style="margin-top:10px; font-size:10px;">
+        <div class="card teal" style="padding:8px 12px;">
+          <h3 style="font-size:12px;">Decisiones tomadas (con fuente)</h3>
+          <p style="margin-top:4px; font-size:10px;">
+            • <strong>📊 name, code, version, description, credits, language</strong>: verbatim del legacy Univalle/AIEP<br>
+            • <strong>📘 previousVersionId self-FK</strong>: BR-VER-001 "cadena de versiones encadenadas"<br>
+            • <strong>🛠️ no declarar id/createdAt/updatedAt</strong>: AGENTS.md regla no negociable (los inyecta common.json)
+          </p>
+        </div>
+        <div class="card orange" style="padding:8px 12px;">
+          <h3 style="font-size:12px;">Campos con preguntas abiertas (4)</h3>
+          <p style="margin-top:4px; font-size:10px;">
+            • ⚠️ <strong>programLevel</strong> — Q10 casing<br>
+            • ❓⚠️ <strong>workflowState</strong> — Q2 enum + casing + valor "Active"<br>
+            • 🔒 <strong>executionUnitId</strong> — DECISION-002 (OrgUnit no existe)<br>
+            • ❓ <strong>externalId</strong> — Q1 ¿1 o 2 campos?
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.9 — PROPUESTA DEL MODELO (parte 2: CurricularSection + iconos) -->
+  <div class="slide" id="s3f">
+    <div style="max-width:1100px; width:100%;">
+      <div class="tag">Propuesta del modelo · iconos</div>
+      <h2><span class="accent">CurricularSection</span> — Polimórfica (objeto base)</h2>
+      <p style="margin-top:6px; margin-bottom:8px;">Sólo el objeto base con campos comunes. Los RecordTypes (`rt__Modality__...`, `rt__LearningOutcome__...`, etc.) NO se declaran en TICKET-006 — viven en TICKET-009.</p>
+
+      <div class="code-block" style="font-size:10px; line-height:1.55;"><span class="kw">"properties"</span>: {
+  <span class="kw">"ownerType"</span>:        { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"not_null"</span>: <span class="num">true</span> },             <span class="comment">// ⚠️ Q10: enum + casing</span>
+  <span class="kw">"ownerId"</span>:          { <span class="kw">"type"</span>: <span class="str">"string"</span> },                                 <span class="comment">// 🛠️ FK polimórfica SIN isForeignKey (AGENTS.md)</span>
+  <span class="kw">"recordType"</span>:        { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"not_null"</span>: <span class="num">true</span> },             <span class="comment">// ❓ Q13: enum cerrado o libre</span>
+  <span class="kw">"sectionType"</span>:       { <span class="kw">"type"</span>: <span class="str">"string"</span> },                                 <span class="comment">// ⚠️ Q10: casing (Structural/Complementary)</span>
+  <span class="kw">"name"</span>:             { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"not_null"</span>: <span class="num">true</span> },             <span class="comment">// 📊</span>
+  <span class="kw">"position"</span>:         { <span class="kw">"type"</span>: <span class="str">"integer"</span> },                                <span class="comment">// 📊</span>
+  <span class="kw">"isVisible"</span>:        { <span class="kw">"type"</span>: <span class="str">"boolean"</span>, <span class="kw">"static_default"</span>: <span class="str">"true"</span> },     <span class="comment">// 📊🛠️</span>
+  <span class="kw">"isRequired"</span>:       { <span class="kw">"type"</span>: <span class="str">"boolean"</span>, <span class="kw">"static_default"</span>: <span class="str">"false"</span> },    <span class="comment">// 📊🛠️</span>
+  <span class="kw">"isSynchronizable"</span>: { <span class="kw">"type"</span>: <span class="str">"boolean"</span>, <span class="kw">"static_default"</span>: <span class="str">"true"</span> },     <span class="comment">// 📊🛠️ (BR-MIG-001)</span>
+  <span class="kw">"sourceId"</span>:         { <span class="kw">"type"</span>: <span class="str">"string"</span>, <span class="kw">"not_null"</span>: <span class="num">false</span> }              <span class="comment">// 📘 trazabilidad MADS</span>
+}</div>
+
+      <div class="card-grid cols-2" style="margin-top:10px; font-size:10px;">
+        <div class="card teal" style="padding:8px 12px;">
+          <h3 style="font-size:12px;">⭐ Caso pionero up1</h3>
+          <p style="margin-top:4px; font-size:10px;"><strong>FK polimórfica</strong> (<code>ownerType</code> + <code>ownerId</code> sin <code>isForeignKey</code>) es <strong>el primer caso real en up1</strong>. AGENTS.md describe el patrón pero ningún Base del core lo usa todavía.</p>
+        </div>
+        <div class="card orange" style="padding:8px 12px;">
+          <h3 style="font-size:12px;">Campos con preguntas abiertas (3)</h3>
+          <p style="margin-top:4px; font-size:10px;">
+            • ⚠️ <strong>ownerType</strong> — Q10 enum + casing<br>
+            • ❓ <strong>recordType</strong> — Q13 enum cerrado o string libre<br>
+            • ⚠️ <strong>sectionType</strong> — Q10 casing
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.10 — PROPUESTA DEL MODELO (parte 3: CurricularLink + BibliographyReference) -->
+  <div class="slide" id="s3g">
+    <div style="max-width:1100px; width:100%;">
+      <div class="tag">Propuesta del modelo · iconos</div>
+      <h2><span class="accent">CurricularLink</span> y <span class="accent">BibliographyReference</span></h2>
+
+      <div class="card-grid cols-2" style="font-size:10px;">
+        <div>
+          <h3 style="font-size:13px; margin-bottom:6px;">CurricularLink — Vínculos pedagógicos</h3>
+          <div class="code-block" style="font-size:9.5px; line-height:1.5;"><span class="kw">"properties"</span>: {
+  <span class="kw">"sourceSectionId"</span>: {
+    <span class="kw">"isForeignKey"</span>: <span class="num">true</span>,
+    <span class="kw">"references"</span>: <span class="str">"CurricularSection"</span>     <span class="comment">// 🛠️📘</span>
+  },
+  <span class="kw">"targetSectionId"</span>: {
+    <span class="kw">"isForeignKey"</span>: <span class="num">true</span>,
+    <span class="kw">"references"</span>: <span class="str">"CurricularSection"</span>     <span class="comment">// 🛠️📘</span>
+  },
+  <span class="kw">"linkType"</span>:        { <span class="kw">"type"</span>: <span class="str">"string"</span> }, <span class="comment">// ⚠️ Q10</span>
+  <span class="kw">"notes"</span>:           { <span class="kw">"type"</span>: <span class="str">"string"</span> }, <span class="comment">// 📊</span>
+  <span class="kw">"position"</span>:        { <span class="kw">"type"</span>: <span class="str">"integer"</span> } <span class="comment">// 📊</span>
+}</div>
+          <p style="margin-top:6px; font-size:10px; color:var(--text-muted);">Valores legacy de <code>linkType</code>: <code>"Develops"</code>, <code>"Evaluates"</code>, <code>"Covers"</code>, <code>"Uses"</code>, <code>"Custom"</code></p>
+        </div>
+
+        <div>
+          <h3 style="font-size:13px; margin-bottom:6px;">BibliographyReference — Catálogo institucional</h3>
+          <div class="code-block" style="font-size:9.5px; line-height:1.5;"><span class="kw">"properties"</span>: {
+  <span class="kw">"institutionId"</span>: {
+    <span class="kw">"isForeignKey"</span>: <span class="num">true</span>,
+    <span class="kw">"references"</span>: <span class="str">"Institution"</span>            <span class="comment">// 🛠️ verificado</span>
+  },
+  <span class="kw">"rawCitation"</span>:      <span class="comment">// 📘📊 fallback universal</span>
+    { <span class="kw">"not_null"</span>: <span class="num">true</span> },
+  <span class="kw">"title"</span>, <span class="kw">"author"</span>, <span class="kw">"year"</span>,
+  <span class="kw">"publisher"</span>, <span class="kw">"publicationPlace"</span>,
+  <span class="kw">"edition"</span>, <span class="kw">"isbn"</span>, <span class="kw">"doi"</span>, <span class="kw">"url"</span>,        <span class="comment">// 📊</span>
+  <span class="kw">"referenceFormat"</span>: { <span class="kw">"type"</span>: <span class="str">"string"</span> }, <span class="comment">// ❓⚠️ Q4 + Q10</span>
+  <span class="kw">"metadata"</span>: {
+    <span class="kw">"type"</span>: <span class="str">"object"</span>,
+    <span class="kw">"static_default"</span>: <span class="str">"{}"</span>                <span class="comment">// 🛠️ AGENTS.md</span>
+  }
+}</div>
+          <p style="margin-top:6px; font-size:10px; color:var(--text-muted);">9 referencias Univalle confirmadas. AIEP no aporta referencias.</p>
+        </div>
+      </div>
+
+      <div class="highlight" style="margin-top:10px; padding:10px 14px;">
+        <h3 style="font-size:12px;">Resumen — Campos con preguntas abiertas (9 en total)</h3>
+        <p style="margin-top:4px; font-size:11px;">
+          <strong>AcademicActivity</strong>: ⚠️ programLevel · ❓⚠️ workflowState · 🔒 executionUnitId · ❓ externalId<br>
+          <strong>CurricularSection</strong>: ⚠️ ownerType · ❓ recordType · ⚠️ sectionType<br>
+          <strong>CurricularLink</strong>: ⚠️ linkType<br>
+          <strong>BibliographyReference</strong>: ❓⚠️ referenceFormat<br>
+          <strong>Q10</strong> es <span style="color:var(--red);">transversal</span> a 7 de los 9 campos (todos los enums).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.11 — MULTI-TENANCY (Univalle + AIEP) -->
+  <div class="slide" id="s3h">
+    <div style="max-width:1100px; width:100%;">
+      <div class="tag">Multi-tenancy · DECISION-003</div>
+      <h2><span class="accent">UNIVALLE</span> y <span class="accent">AIEP</span> son tenants distintos</h2>
+      <p style="margin-top:6px; margin-bottom:10px;">El sprint debe considerar ambos tenants — datos aislados pero modelo compartido. Los tenants se registran a nivel <strong>plataforma</strong>, NO dentro del mod.</p>
+
+      <div class="card-grid cols-2" style="margin-bottom:10px;">
+        <div class="card teal">
+          <div class="icon">🏢</div>
+          <h3>Pre-requisito ANTES de TICKET-006</h3>
+          <div class="code-block" style="font-size:10px; margin-top:4px;"><span class="cmd">cd</span> up1
+<span class="cmd">npm run tenant:create</span> <span class="arg">UNIVALLE</span>
+<span class="cmd">npm run tenant:create</span> <span class="arg">AIEP</span></div>
+          <p style="margin-top:6px; font-size:10px;">Crea <code>objects/tenants/{UNIVALLE,AIEP}/{Base,Extended,RecordTypes}/</code> + schemas Prisma per-tenant.</p>
+        </div>
+        <div class="card blue">
+          <div class="icon">⚙️</div>
+          <h3>Activación del mod en ambos tenants</h3>
+          <div class="code-block" style="font-size:10px; margin-top:4px;"><span class="comment">// mods/curriculum-design/config/app.json</span>
+{
+  <span class="kw">"tenants"</span>: [<span class="str">"UNIVALLE"</span>, <span class="str">"AIEP"</span>],
+  <span class="kw">"defaultObjects"</span>: [<span class="str">"AcademicActivity"</span>, ...]
+}</div>
+          <p style="margin-top:6px; font-size:10px;">Sin <code>tenants[]</code> el mod NO aparece en sidebar (rule-mods-007).</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:13px; margin-top:8px; margin-bottom:6px;">Qué es global vs per-tenant en este mod</h3>
+      <table class="data-table" style="margin-bottom:8px;">
+        <thead><tr><th>Capa</th><th>Granularidad</th><th>Detalle</th></tr></thead>
+        <tbody>
+          <tr><td>Schema de los 4 objetos base</td><td>🌐 Global</td><td>UN archivo sirve a ambos tenants</td></tr>
+          <tr><td>RecordTypes (TICKET-009)</td><td>🌐 Global</td><td>UN archivo <code>rt__&lt;RT&gt;__...</code> por RT, ambos tenants lo usan (T2)</td></tr>
+          <tr><td>Datos (instancias)</td><td>🏢 Per-tenant</td><td>Univalle: 1 programa. AIEP: 1 programa. Filtrado automático por <code>tenantId</code></td></tr>
+          <tr><td>Layouts</td><td>🌐 Global por defecto</td><td>Si se requiere per-tenant: <code>tenants[]</code> en JSON del layout</td></tr>
+          <tr><td>Extensions futuras</td><td>🏢 Per-tenant</td><td><code>ext__univalle__&lt;base&gt;.json</code> agrega campos solo para Univalle (T5)</td></tr>
+          <tr><td>i18n / CSS / theming</td><td>🏢 Per-tenant</td><td><code>lang/es/co/univalle/</code>, <code>themes/UNIVALLE/</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight" style="margin-top:6px;">
+        <p style="font-size:11px;"><strong>Implicación en cada ticket</strong>: TICKET-006 carga seed dividido por tenant · TICKET-007 valida filtrado por <code>X-Tenant-ID</code> · TICKET-009 prueba variabilidad (Univalle 1 Modality vs AIEP 13 Modalities). <strong>Las 5 Tenant Questions (T1..T5)</strong> agrupan las preguntas con sabor multi-tenant — separadas de Q1..Q14 que son de schema.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- LAS 14 PREGUNTAS                              -->
+  <!-- ============================================ -->
+
+  <!-- 4 — Q1 -->
+  <div class="slide" id="s4">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q1</div>
+        <div class="q-title">
+          <div class="topic">Modelo · Identificador externo</div>
+          <h2>¿Un solo <code>externalId</code> o dos campos? <span class="small">— sin precedente en código</span></h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>AcademicActivity</code>: <code>externalId</code></div>
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> los programas se importan desde Banner/Anthology. El identificador permite sincronización idempotente. Mal modelado = duplicados o syncs rotos.</p>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span><span class="badge">ambiguo</span></div>
+          <p>"El formato del identificador <strong>puede ser compuesto</strong>". No especifica si son 1 o 2 columnas.</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;"><span class="comment">// dos lecturas posibles</span>
+<span class="kw">"externalId"</span>: { <span class="kw">"type"</span>: <span class="str">"string"</span> }
+<span class="comment">// o</span>
+<span class="kw">"externalSystemId"</span>: ...,
+<span class="kw">"externalRecordId"</span>: ...</div>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Formato (código)</span><span class="badge">sin precedente</span></div>
+          <p><strong>Ningún Base actual</strong> tiene <code>externalId</code> ni variantes. Patrón nuevo. Sin convención establecida.</p>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span><span class="badge">1 campo</span></div>
+          <p>Un solo campo <code>externalId</code> string. Univalle = <code>"1124"</code>, AIEP = <code>"TIR101"</code>.</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">{ <span class="kw">"externalId"</span>: <span class="str">"1124"</span> }</div>
+        </div>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿El modelo final usa 1 campo <code>externalId</code> o 2 campos <code>externalSystemId</code> + <code>externalRecordId</code>?</li>
+          <li>Si "compuesto en string": ¿separador convencional (<code>:</code>, <code>|</code>, etc.)?</li>
+        </ul>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint (sin decisión)</h4>1 campo string nullable siguiendo legacy. Seed: <code>"1124"</code> / <code>"TIR101"</code>.</div>
+        <div class="sprint-future"><h4>Sprint futuro si decide 2 campos</h4>Migration <code>SPLIT_PART</code>. Idempotente. Costo bajo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 — Q2 -->
+  <div class="slide" id="s5">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q2</div>
+        <div class="q-title">
+          <div class="topic">Workflow · Estado del programa</div>
+          <h2><code>workflowState</code>: valores y casing <span class="small">— bloquea capability futura de workflow</span></h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>AcademicActivity</code>: <code>workflowState</code></div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> controla todo el ciclo de vida del programa. Sin enum cerrado no se pueden implementar transiciones. <span class="blocked-badge">🔒 Bloquea CAP-CUR-019</span></p>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span><span class="badge">6 valores</span></div>
+          <p>Enum 6 valores PascalCase:</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">[<span class="str">"Draft"</span>, <span class="str">"Review"</span>,
+ <span class="str">"Approved"</span>, <span class="str">"Published"</span>,
+ <span class="str">"OpenForEdit"</span>, <span class="str">"Deprecated"</span>]</div>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Formato (código)</span><span class="badge">UPPER_SNAKE</span></div>
+          <p>5 Bases verificados → propuesta a confirmar:</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">[<span class="str">"DRAFT"</span>, <span class="str">"REVIEW"</span>,
+ <span class="str">"APPROVED"</span>, <span class="str">"PUBLISHED"</span>,
+ <span class="str">"OPEN_FOR_EDIT"</span>, <span class="str">"DEPRECATED"</span>]</div>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span><span class="badge">"Active" 🚨</span></div>
+          <p><strong>"Active" no está en el enum oficial</strong>:</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">{ <span class="kw">"workflowState"</span>: <span class="str">"Active"</span> }
+<span class="comment">// PascalCase + valor extra</span></div>
+        </div>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿<code>"Active"</code> mapea a cuál de los 6 valores oficiales? ¿O es un séptimo?</li>
+          <li>Posibilidades: (a) <code>"Active"</code> → <code>"PUBLISHED"</code> · (b) → <code>"APPROVED"</code> · (c) ampliar enum a 7 · (d) eliminarlo en migración</li>
+          <li>¿Confirmamos <code>UPPER_SNAKE_CASE</code> como casing del enum?</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada (a confirmar):</strong> UPPER_SNAKE_CASE — respaldado por 5 Bases del core + AGENTS.md. <strong>El mapping de "Active" queda como pregunta abierta.</strong>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint (sin decisión)</h4>String SIN enum. Seed: <code>"Active"</code> textual del legacy. NO transiciones.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4><span class="blocked-badge">🔒</span> Bloquea workflow del programa. Migration mecánica si UPPER_SNAKE.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 — Q3 -->
+  <div class="slide" id="s6">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q3</div>
+        <div class="q-title">
+          <div class="topic">RecordTypes · Secciones custom</div>
+          <h2><code>CustomSection</code>: ¿1 RT genérico o N RTs dinámicos?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>CurricularSection</code> (objeto base) + futuro RT <code>CustomSection</code></div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> define cuán configurable es el sistema y cuánta complejidad metés. <span class="blocked-badge">🔒 Bloquea CAP-CUR-013</span></p>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span><span class="badge">N sugerido</span></div>
+          <p>"Secciones complementarias <strong>custom</strong>" (plural). Super Admin define cuáles existen.</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">RecordTypes/
+├── rt__Methodology__...
+├── rt__Policies__...
+└── rt__Custom1__... (...N)</div>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Formato (código)</span><span class="badge">solo 1 RT</span></div>
+          <p><strong>Solo existe</strong> <code>rt__Student__core_user.json</code>. Sin precedente para RTs dinámicos por institución.</p>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span><span class="badge">1 genérico</span></div>
+          <p>Univalle: 2 secciones, mismo RT, distinguidas por <code>name</code>.</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">{ <span class="kw">"recordType"</span>: <span class="str">"CustomSection"</span>,
+  <span class="kw">"name"</span>: <span class="str">"Descripción extendida"</span> }
+{ <span class="kw">"recordType"</span>: <span class="str">"CustomSection"</span>,
+  <span class="kw">"name"</span>: <span class="str">"Temario detallado"</span> }</div>
+        </div>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿1 RT genérico (parametrizable por <code>name</code>) o N RTs dinámicos?</li>
+          <li>Si N: ¿file-based (Super Admin commitea) o runtime (UI los crea)?</li>
+          <li><code>contentType: "richText"</code> del legacy → ¿se convierte a <code>"RICH_TEXT"</code>? (es camelCase atípico)</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada:</strong> 1 RT genérico para este sprint — respaldado por legacy + ausencia de precedente para RTs dinámicos en código.
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>1 archivo <code>rt__CustomSection__curricularsection.json</code>. Seed Univalle: 2 instancias por <code>name</code>.</div>
+        <div class="sprint-future"><h4>Sprint futuro si N RTs</h4>Migración media: 1 RT por <code>name</code> existente + UI Super Admin (CAP-CUR-013).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 — Q4 -->
+  <div class="slide" id="s7">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q4</div>
+        <div class="q-title">
+          <div class="topic">Bibliografía · Formato</div>
+          <h2><code>referenceFormat</code>: ¿enum o "free-text"?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>BibliographyReference</code> (catálogo): <code>referenceFormat</code></div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> define si podés filtrar y reportar por tipo de referencia.</p>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span><span class="badge">7 valores</span></div>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">[<span class="str">"Book"</span>, <span class="str">"Article"</span>,
+ <span class="str">"Website"</span>, <span class="str">"Thesis"</span>,
+ <span class="str">"Chapter"</span>,
+ <span class="str">"ConferencePaper"</span>,
+ <span class="str">"Other"</span>]</div>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Formato (código)</span><span class="badge">UPPER_SNAKE</span></div>
+          <p>Propuesta a confirmar:</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">[<span class="str">"BOOK"</span>, <span class="str">"ARTICLE"</span>,
+ <span class="str">"WEBSITE"</span>, <span class="str">"THESIS"</span>,
+ <span class="str">"CHAPTER"</span>,
+ <span class="str">"CONFERENCE_PAPER"</span>,
+ <span class="str">"OTHER"</span>]</div>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span><span class="badge">"free-text" 🚨</span></div>
+          <p>9 de 9 referencias Univalle:</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">{ <span class="kw">"referenceFormat"</span>: <span class="str">"free-text"</span>,
+  <span class="kw">"rawCitation"</span>: <span class="str">"G. Calderón..."</span> }</div>
+          <p style="margin-top:4px; font-size:10px;"><strong>"free-text" no está en el enum.</strong></p>
+        </div>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿<code>"free-text"</code> es valor adicional (8vo) que indica "fuente cruda sin clasificar"?</li>
+          <li>(a) Eliminar y reclasificar las 9 al cargar · (b) mantener como <code>"FREE_TEXT"</code> · (c) campo libre sin enum</li>
+          <li>¿UPPER_SNAKE confirmado? ¿<code>ConferencePaper</code> → <code>"CONFERENCE_PAPER"</code>?</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada:</strong> UPPER_SNAKE para los 7 valores oficiales. <strong>Destino de "free-text" abierto.</strong>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>String SIN enum. Acepta <code>"free-text"</code>. Seed Univalle: 9 con <code>"free-text"</code>.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Si enum estricto: clasificar 9 referencias. Si extendido con FREE_TEXT: cero migración.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 — Q5 -->
+  <div class="slide" id="s8">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q5</div>
+        <div class="q-title">
+          <div class="topic">RecordTypes · Sin datos reales</div>
+          <h2>4 RecordTypes mencionados en Confluence pero NO en legacy</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> 4 RTs futuros (<code>ApprovalCondition</code>, <code>GeneralData</code>, <code>GraduationProfile</code>, <code>EntryProfile</code>) + caso "Habilitación" Univalle (Session vs ApprovalCondition)</div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> Confluence los lista pero <strong>3 de 4 sin campos especificados</strong>. Modelar lo que no se usa es inferencia pura. Riesgo de modelar mal.</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>RecordType</th><th>Confluence dice</th><th>Legacy</th><th>Observación</th></tr></thead>
+        <tbody>
+          <tr><td><code>ApprovalCondition</code></td><td>Campos definidos: <code>conditionType</code>, <code>threshold</code>, <code>unit</code></td><td>—</td><td>Univalle modela "Habilitación" (SEM 18) como Session. ¿Distinción?</td></tr>
+          <tr><td><code>GeneralData</code></td><td><strong>Sin campos</strong></td><td>—</td><td>¿Contenedor de metadata o RT con campos fijos?</td></tr>
+          <tr><td><code>GraduationProfile</code></td><td><strong>Sin campos</strong></td><td>—</td><td>¿Aplica al programa o solo a planes de estudio?</td></tr>
+          <tr><td><code>EntryProfile</code></td><td><strong>Sin campos</strong></td><td>—</td><td>Mismo dilema que GraduationProfile.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">Caso ejemplificado: <code>ApprovalCondition</code></h3>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span></div>
+          <div class="code-block" style="margin-top:4px; font-size:9.5px;"><span class="kw">"conditionType"</span>: { <span class="kw">"enum"</span>:
+  [<span class="str">"MinAttendance"</span>,
+   <span class="str">"MinGrade"</span>, <span class="str">"Custom"</span>] },
+<span class="kw">"threshold"</span>: { <span class="kw">"type"</span>: <span class="str">"number"</span> },
+<span class="kw">"unit"</span>: { <span class="kw">"type"</span>: <span class="str">"string"</span> }</div>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Formato up1</span></div>
+          <div class="code-block" style="margin-top:4px; font-size:9.5px;"><span class="kw">"conditionType"</span>: { <span class="kw">"enum"</span>:
+  [<span class="str">"MIN_ATTENDANCE"</span>,
+   <span class="str">"MIN_GRADE"</span>, <span class="str">"CUSTOM"</span>] },
+<span class="kw">"threshold"</span>: { <span class="kw">"type"</span>: <span class="str">"number"</span> },
+<span class="kw">"unit"</span>: { <span class="kw">"type"</span>: <span class="str">"string"</span> }</div>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span></div>
+          <p>NO aparece. La "Habilitación" de Univalle viene como Session:</p>
+          <div class="code-block" style="margin-top:4px; font-size:9.5px;">{ <span class="kw">"recordType"</span>: <span class="str">"Session"</span>,
+  <span class="kw">"name"</span>: <span class="str">"SEM 18"</span>,
+  <span class="kw">"activityDescription"</span>:
+    <span class="str">"Habilitación."</span> }</div>
+        </div>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿Modelar <code>ApprovalCondition</code> en este sprint? Tiene campos definidos pero sin caso real.</li>
+          <li>"Habilitación" Univalle: ¿es realmente Session o debió ser ApprovalCondition?</li>
+          <li><code>GeneralData</code>, <code>GraduationProfile</code>, <code>EntryProfile</code>: ¿cuáles son sus campos?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 — Q6 -->
+  <div class="slide" id="s9">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q6</div>
+        <div class="q-title">
+          <div class="topic">Migración · AIEP legacy</div>
+          <h2>LearningOutcomes derivados de competencias en migración AIEP</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>CurricularSection</code> (RT <code>LearningOutcome</code>) + <code>CurricularLink</code>. Tema de migración (ETL externo).</div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> AIEP tiene 9 CurricularLinks que apuntan a LOs <strong>no declarados</strong> en la lista de 40. Vienen de otra tabla (<code>imp_competencies</code>). La migración debe generarlos.</p>
+
+      <div class="code-block" style="margin-bottom:8px; font-size:10px;"><span class="comment">// Cita textual del legacy v2.2:</span>
+"Una entrada por cada <span class="kw">imp_courseunit_expectedlearning</span> del legacy AIEP — vinculan unidades temáticas
+(Content) con sus aprendizajes esperados granulares (LearningOutcome derivados de competencias atómicas).
+Los IDs <span class="str">cs-aiep-14757-lo-uXaXX</span> referencian LO adicionales que se crearían a partir de las
+competencias <span class="kw">imp_competencies</span> (<span class="str">CEI-00620-C01-TIR101-UnAm</span>)."</div>
+
+      <h4>ETL propuesto (a confirmar)</h4>
+      <div class="code-block" style="font-size:10px;"><span class="kw">for</span> (<span class="kw">const</span> competency <span class="kw">of</span> imp_competencies) {
+  <span class="comment">// 1. Crear LearningOutcome derivado</span>
+  curricularSections.push({
+    <span class="kw">id</span>: <span class="str">`cs-aiep-14757-lo-${competency.code}`</span>,
+    <span class="kw">recordType</span>: <span class="str">"LearningOutcome"</span>,
+    <span class="kw">name</span>: competency.descripcion,
+    <span class="kw">sourceCompetencyId</span>: competency.competencyId  <span class="comment">// trazabilidad</span>
+  });
+  <span class="comment">// 2. Crear CurricularLink Develops desde Content</span>
+  curricularLinks.push({ ..., <span class="kw">linkType</span>: <span class="str">"Develops"</span> });
+}</div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿La migración es ETL externo al mod o el mod expone API para crear LOs en lote?</li>
+          <li>¿Los LOs derivados necesitan campo <code>sourceCompetencyId</code> para trazabilidad?</li>
+          <li>¿Otras instituciones AIEP siguen el mismo patrón legacy?</li>
+        </ul>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Modelar <code>LearningOutcome</code> bien. NO incluir 9 LOs derivados ni sus links en seed AIEP.</div>
+        <div class="sprint-future"><h4>Sprint futuro — ETL AIEP</h4>Diseñar ETL que lea las 2 tablas legacy y genere LOs + Develops. Modelo ya listo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 — Q7 -->
+  <div class="slide" id="s10">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q7</div>
+        <div class="q-title">
+          <div class="topic">Workflow · Sub-objetos</div>
+          <h2><code>workflowState</code> en <code>CurricularSection</code> y <code>BibliographyReference</code></h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>CurricularSection</code> + <code>BibliographyReference</code>: posible campo <code>workflowState</code> nullable</div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> ¿una <code>LearningOutcome</code> puede ser "aprobada" independientemente del programa? <span class="ok-badge">✅ Las 3 fuentes alineadas</span></p>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span><span class="badge">solo en padre</span></div>
+          <p>Workflow declarado solo en <code>AcademicActivity</code>. Sub-objetos solo tienen <code>isVisible</code>, <code>isRequired</code>, <code>isSynchronizable</code>.</p>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Formato (código)</span><span class="badge">sin precedente</span></div>
+          <p>No hay precedente en código (módulo nuevo).</p>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span><span class="badge">alineado</span></div>
+          <p>NO incluye <code>workflowState</code> en CurricularSection ni BibliographyReference.</p>
+          <div class="code-block" style="margin-top:6px; font-size:9.5px;">{ <span class="kw">"recordType"</span>: <span class="str">"LearningOutcome"</span>,
+  <span class="kw">"isVisible"</span>: <span class="num">true</span>,
+  <span class="kw">"isRequired"</span>: <span class="num">true</span>,
+  <span class="kw">"isSynchronizable"</span>: <span class="num">true</span>
+  <span class="comment">// (sin workflowState)</span> }</div>
+        </div>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo (no urgente)</div>
+        <ul class="q-list">
+          <li>¿Algún caso requiere workflow propio por sección (ej: LO aprobada antes que el programa)?</li>
+          <li>¿Algún cliente solicitó esta granularidad?</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada:</strong> NO modelar — alineado con Confluence + legacy. Es lo mínimo viable. Agregar después no rompe nada.
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 — Q8 -->
+  <div class="slide" id="s11">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q8</div>
+        <div class="q-title">
+          <div class="topic">Bibliografía · Cardinalidad</div>
+          <h2><code>BibliographyReference</code> para AIEP — ¿no usa o no documentado?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>BibliographyReference</code> (catálogo) + RT <code>Bibliography</code> futuro</div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> Univalle tiene 9 referencias, AIEP tiene 0. Tres interpretaciones posibles.</p>
+
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Interpretación</th><th>Razonamiento</th></tr></thead>
+        <tbody>
+          <tr><td>(a)</td><td>AIEP <strong>no usa</strong> bibliografía</td><td>Institución CFT que no documenta bibliografía en su programa legacy.</td></tr>
+          <tr><td>(b)</td><td>AIEP usa pero <strong>no se incluyó en ejemplo</strong></td><td>El doc es muestra, no export completo.</td></tr>
+          <tr><td>(c)</td><td>AIEP tiene bibliografía <strong>en otra tabla legacy</strong></td><td>La migración debe mapearla.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿AIEP realmente no documenta bibliografía o está ausente del ejemplo?</li>
+          <li>Si está en otra tabla: ¿cuál? ¿el ETL la mapea?</li>
+          <li>¿Existe institución que requiera Bibliography mínimo &gt;= 1?</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada:</strong> Modelo soporta cero o N. Sin restricción. Univalle 9, AIEP 0 — ambos válidos.
+      </div>
+    </div>
+  </div>
+
+  <!-- 12 — Q9 -->
+  <div class="slide" id="s12">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q9</div>
+        <div class="q-title">
+          <div class="topic">Validación · Modalidades obligatorias</div>
+          <h2>Cardinalidad mínima: <code>Modality &gt;= 1</code> — ¿dónde se valida?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <code>AcademicActivity</code> (validación en handler) + RT <code>Modality</code> futuro (cardinalidad &gt;= 1)</div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> Confluence lo afirma como invariante. ¿Cómo se valida? <span class="blocked-badge">🔒 Depende de Q2</span></p>
+
+      <p style="font-size:11px; color:var(--text);"><strong>Confluence LA dice:</strong> "Una asignatura debe tener &gt;=1 sección Modality. Solo una puede tener <code>isDefault: true</code>."</p>
+
+      <h4 style="margin-top:10px;">Validación según convención up1 (handler de transición)</h4>
+      <div class="code-block" style="font-size:10.5px;"><span class="kw">async function</span> transitionDraftToReview(programId) {
+  <span class="kw">const</span> modalityCount = <span class="kw">await</span> prisma.curricularSection.count({
+    <span class="kw">where</span>: {
+      <span class="kw">ownerType</span>: <span class="str">'ACADEMIC_ACTIVITY'</span>,  <span class="comment">// depende de Q10</span>
+      <span class="kw">ownerId</span>: programId,
+      <span class="kw">recordType</span>: <span class="str">'MODALITY'</span>             <span class="comment">// depende de Q10</span>
+    }
+  });
+  <span class="kw">if</span> (modalityCount &lt; <span class="num">1</span>) {
+    <span class="kw">throw new Error</span>(<span class="str">'Programa requiere al menos una Modality'</span>);
+  }
+}</div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿Validación bloqueante (workflow) o solo informativa (warning UI)?</li>
+          <li>Si bloqueante: ¿en qué transición? (<code>Draft → Review</code>, <code>Review → Approved</code>, ...)</li>
+          <li>¿Otras invariantes parecidas? (>= 1 LearningOutcome, >= 1 Content, etc.)</li>
+        </ul>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>NO implementar. Seed cumple naturalmente (Univalle 1, AIEP 13). UI no rompe.</div>
+        <div class="sprint-future"><h4>Sprint futuro — workflow</h4>Validación en handler. Sin refactor de schema. Depende de Q2.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13 — Q10 -->
+  <div class="slide" id="s13">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q10</div>
+        <div class="q-title">
+          <div class="topic">Convención · Casing de enums (TRANSVERSAL)</div>
+          <h2><code>UPPER_SNAKE_CASE</code> vs <code>PascalCase</code> en TODOS los enums</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;"><strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong> <strong>TRANSVERSAL</strong>: TODOS los enums del agregado (<code>AcademicActivity</code>, <code>CurricularSection</code> + RTs, <code>CurricularLink</code>, <code>BibliographyReference</code>)</div>
+      <p style="margin-bottom:8px;"><strong>Por qué importa:</strong> es transversal — afecta TODOS los enums del módulo. <strong>Si te equivocás, todos los seeds, layouts y APIs hay que migrarlos</strong>.</p>
+
+      <div class="three-lens">
+        <div class="lens confluence">
+          <div class="lens-title"><span class="lens-name">📘 Confluence LA</span><span class="badge">PascalCase</span></div>
+          <p>Notación humano-legible:</p>
+          <div class="code-block" style="margin-top:4px; font-size:9.5px;"><span class="str">"Draft"</span>, <span class="str">"Approved"</span>,
+<span class="str">"Theoretical"</span>, <span class="str">"Hybrid"</span>,
+<span class="str">"Develops"</span>, <span class="str">"Mandatory"</span></div>
+        </div>
+        <div class="lens format">
+          <div class="lens-title"><span class="lens-name">🛠️ Código (5 Bases)</span><span class="badge">UPPER_SNAKE ✅</span></div>
+          <p>5 Bases verificados, <strong>cero excepciones</strong>:</p>
+          <div class="code-block" style="margin-top:4px; font-size:9.5px;"><span class="str">"ENROLLED"</span>, <span class="str">"COMPLETED"</span>,
+<span class="str">"ACADEMIC_ADVISING"</span>,
+<span class="str">"IN_PROGRESS"</span>, <span class="str">"LOW"</span></div>
+        </div>
+        <div class="lens legacy">
+          <div class="lens-title"><span class="lens-name">📊 Legacy v2.2</span><span class="badge">PascalCase + 🚨</span></div>
+          <p>PascalCase + caso atípico <code>"richText"</code>:</p>
+          <div class="code-block" style="margin-top:4px; font-size:9.5px;"><span class="str">"Active"</span>, <span class="str">"Course"</span>,
+<span class="str">"LearningOutcome"</span>,
+<span class="str">"richText"</span>  <span class="comment">// camelCase!</span></div>
+        </div>
+      </div>
+
+      <h4 style="margin-top:10px;">Conversiones necesarias si se confirma UPPER_SNAKE (12 enums afectados)</h4>
+      <div class="code-block" style="font-size:9.5px;"><span class="kw">recordType</span>:    <span class="str">"Course"</span> → <span class="str">"COURSE"</span>,           <span class="str">"LearningOutcome"</span> → <span class="str">"LEARNING_OUTCOME"</span>
+<span class="kw">programLevel</span>:  <span class="str">"Undergraduate"</span> → <span class="str">"UNDERGRADUATE"</span>,    <span class="str">"TechnicalProfessional"</span> → <span class="str">"TECHNICAL_PROFESSIONAL"</span>
+<span class="kw">deliveryMode</span>:  <span class="str">"Presencial"</span> → <span class="str">"PRESENCIAL"</span>,         <span class="str">"Hybrid"</span> → <span class="str">"HYBRID"</span>
+<span class="kw">linkType</span>:      <span class="str">"Develops"</span> → <span class="str">"DEVELOPS"</span>,             <span class="str">"Evaluates"</span> → <span class="str">"EVALUATES"</span>
+<span class="kw">referenceType</span>: <span class="str">"Mandatory"</span> → <span class="str">"MANDATORY"</span>,           <span class="str">"Complementary"</span> → <span class="str">"COMPLEMENTARY"</span>
+<span class="kw">contentType</span>:   <span class="str">"Theoretical"</span> → <span class="str">"THEORETICAL"</span>,        <span class="str">"richText"</span> → <span class="str">"RICH_TEXT"</span> ⚠️
+<span class="kw">ownerType</span>:     <span class="str">"AcademicActivity"</span> → <span class="str">"ACADEMIC_ACTIVITY"</span></div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿Confirmamos <code>UPPER_SNAKE_CASE</code> como casing oficial del módulo?</li>
+          <li>¿Aceptamos que el legacy se convierte mecánicamente al cargar?</li>
+          <li>El caso especial: ¿<code>"richText"</code> → <code>"RICH_TEXT"</code>?</li>
+          <li>¿La convención debe oficializarse a nivel <strong>plataforma up1</strong> (cross-equipo)?</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada (alta confianza):</strong> UPPER_SNAKE_CASE — respaldado por <strong>5 Bases del core</strong> + AGENTS.md. Legacy y Confluence usan PascalCase como notación humana, pero la codificación real del módulo debería seguir la convención del código. <strong>Pendiente confirmación del equipo</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Q11..Q14 — STRICT SCOPE                       -->
+  <!-- ============================================ -->
+
+  <!-- 14a — Q11 -->
+  <div class="slide" id="s14a">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q11</div>
+        <div class="q-title">
+          <div class="topic">Strict scope · Subset de RecordTypes</div>
+          <h2>¿Qué subset de RTs entra en TICKET-009 (UPONE-1035)?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        <code>CurricularSection</code> (objeto base) · archivos <code>rt__&lt;RT&gt;__curricularsection.json</code> a crear en TICKET-009
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> el ticket UPONE-1033 NO incluye RTs (strict scope). Los RTs van en UPONE-1035 cuando se construyen los layouts del detail. Pero <strong>cuáles</strong> y <strong>cuántos</strong> es decisión abierta.</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>Opción</th><th>RTs en TICKET-009</th><th>Pros</th><th>Contras</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A.</strong> Subset mínimo viable (3 RTs)</td><td>Modality + LearningOutcome + Content</td><td class="pro">Suficiente para "probar distintas configuraciones" del ticket UPONE-1035</td><td class="con">Seed Univalle no carga: faltan Session, EvalComp, Bibliography, CustomSection</td></tr>
+          <tr><td><strong>B.</strong> Caso Univalle completo (6 RTs)</td><td>+ Session + EvaluationComponent + Bibliography + CustomSection</td><td class="pro">Seed Univalle end-to-end. Demo realista</td><td class="con">Más esfuerzo en TICKET-009</td></tr>
+          <tr><td><strong>C.</strong> Todos los validados (7 RTs)</td><td>+ todos</td><td class="pro">Univalle + AIEP completos</td><td class="con">Esfuerzo grande para "este sprint"</td></tr>
+        </tbody>
+      </table>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿Cuántos y cuáles RTs entran en UPONE-1035?</li>
+          <li>¿AIEP entra en este sprint o solo Univalle?</li>
+          <li>"Probar distintas configuraciones" del ticket — ¿cuántas configuraciones se considera "suficiente"?</li>
+        </ul>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Sin claridad: sobre/sub-modelar. Por defecto, postura A (3 RTs mínimos).</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Si entran menos RTs ahora, agregar uno más es archivo nuevo + layout. Cero migración.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14b — Q12 -->
+  <div class="slide" id="s14b">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q12</div>
+        <div class="q-title">
+          <div class="topic">Implementación · Carga del seed</div>
+          <h2>¿Cuándo se carga el seed completo del legacy?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        Ninguno — es decisión de <strong>implementación</strong> (orden de carga), no de modelo
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> el seed Univalle/AIEP completo (50+ secciones con campos por RT) requiere los RTs declarados. Sin RTs no carga campos como <code>bloomLevel</code>, <code>weight</code>, <code>theoryHours</code>. La pregunta es: ¿en qué ticket carga el seed completo?</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>Opción</th><th>Cuándo carga el seed completo</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A.</strong> TICKET-009 (UPONE-1035) cuando ya están los RTs</td><td>Strict — el seed sigue al modelo de RTs</td></tr>
+          <tr><td><strong>B.</strong> TICKET-006 carga campos comunes; TICKET-009 completa los específicos</td><td>Híbrido — datos en ambos pero "sin alma" en TICKET-006</td></tr>
+          <tr style="background:rgba(26,122,58,.04);"><td><strong>C.</strong> TICKET-006 carga seed mínimo de prueba; TICKET-009 carga Univalle/AIEP completo</td><td><strong>Postura propuesta este sprint</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada:</strong> Opción C — el seed mínimo de TICKET-006 (1-2 programas con secciones genéricas) valida el sync/codegen. El seed Univalle/AIEP completo se carga en TICKET-009 cuando los RTs existen.
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Decisión de implementación, sin impacto funcional.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Sin retrabajo independientemente de la decisión.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14c — Q13 -->
+  <div class="slide" id="s14c">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q13</div>
+        <div class="q-title">
+          <div class="topic">Validación · CurricularSection.recordType</div>
+          <h2><code>recordType</code> ¿enum cerrado o string libre?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        <code>CurricularSection</code>: campo <code>recordType</code> — discriminador del subtipo
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> en UPONE-1033 modelamos <code>CurricularSection</code> con campo <code>recordType</code>. Si es string libre, cualquier valor pasa. Si es enum cerrado, hay que listar TODOS los RTs (incluso los de Q5 sin datos).</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>Opción</th><th>Implicación</th></tr></thead>
+        <tbody>
+          <tr style="background:rgba(26,122,58,.04);"><td><strong>A.</strong> String libre este sprint</td><td>Acepta cualquier valor. La validación semántica es la presencia del archivo <code>rt__&lt;value&gt;__curricularsection.json</code>. <strong>Postura propuesta</strong>.</td></tr>
+          <tr><td><strong>B.</strong> Enum cerrado con todos los RTs conocidos</td><td>Lista los 7 del legacy + los 4 de Confluence (11 valores). Pero no todos se modelan como RT.</td></tr>
+          <tr><td><strong>C.</strong> Enum cerrado con solo los RTs declarados</td><td>El enum crece con cada RT nuevo. Migración cada vez.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿La plataforma up1 valida <code>recordType</code> contra archivos RT existentes en runtime?</li>
+          <li>Si sí: ¿qué pasa si un seed declara <code>recordType: "Foo"</code> y no existe <code>rt__Foo__...</code>?</li>
+          <li>¿El enum se valida en codegen (build-time) o solo en runtime?</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Vía respaldada:</strong> A (string libre). El validador es la plataforma — los RTs file-based actúan como "schema válido". <strong>Pendiente verificar código de plataforma</strong>.
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>String libre. Validar comportamiento de plataforma con un POC.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Cambio a enum cerrado: solo agregar <code>enum</code> al schema. Cero migración.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14d — Q14 -->
+  <div class="slide" id="s14d">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num">Q14</div>
+        <div class="q-title">
+          <div class="topic">Strict scope · Cobertura UI</div>
+          <h2>RTs no cubiertos en UPONE-1035 — ¿qué pasa con el seed Univalle?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        Si Q11 elige opción A (3 RTs): los RTs <code>Session</code>, <code>EvaluationComponent</code>, <code>Bibliography</code> y <code>CustomSection</code> quedan sin modelar
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> si Q11 deja afuera RTs presentes en el legacy Univalle, esas secciones <strong>no se renderizan</strong> en el detail. Stakeholders pueden percibir el detail "incompleto".</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>RT no modelado</th><th>Aparece en</th><th>Si no se modela: qué pasa</th></tr></thead>
+        <tbody>
+          <tr><td><code>Session</code></td><td>Univalle (18 sesiones)</td><td>UI no muestra sesiones del programa Univalle</td></tr>
+          <tr><td><code>EvaluationComponent</code></td><td>Univalle (8 con Composite) + AIEP (1 root)</td><td>UI no muestra estructura de evaluación</td></tr>
+          <tr><td><code>Bibliography</code> (RT)</td><td>Univalle (9 secciones)</td><td>UI no muestra referencias en el programa (catálogo <code>BibliographyReference</code> SÍ existe)</td></tr>
+          <tr><td><code>CustomSection</code></td><td>Univalle (2 secciones)</td><td>UI no muestra "Descripción extendida" ni "Temario"</td></tr>
+        </tbody>
+      </table>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>Opción</th><th>Justificación</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A.</strong> Modelar todos los RTs del legacy en UPONE-1035 (Q11 = opción B)</td><td>Caso Univalle end-to-end completo. Más esfuerzo.</td></tr>
+          <tr><td><strong>B.</strong> Modelar solo subset mínimo (Q11 = A) + dejar los demás como RTs futuros</td><td>Strict — solo lo necesario para "probar distintas configuraciones".</td></tr>
+          <tr><td><strong>C.</strong> Modelar TODOS los RTs como archivos pero formularios solo para 3</td><td>Híbrido — el seed carga, los formularios incompletos.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Define la experiencia visible del detail Univalle. Si solo 3 RTs: detail "incompleto".</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Agregar RTs faltantes es archivo nuevo + layout. Cero migración.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- TENANT QUESTIONS (T1..T5)                     -->
+  <!-- ============================================ -->
+
+  <!-- 14e — T1 Confirmacion -->
+  <div class="slide" id="s14e">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num" style="background:var(--purple);">T1</div>
+        <div class="q-title">
+          <div class="topic">Tenant Question · Confirmación de IDs</div>
+          <h2><code>UNIVALLE</code> y <code>AIEP</code> como TENANT_IDs</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(26,122,58,.06); border:1px solid rgba(26,122,58,.4); border-radius:6px; padding:12px 16px; margin-bottom:12px;">
+        <h3 style="color:var(--green); font-size:14px;">✅ CONFIRMADO — DECISION-003 (2026-04-27)</h3>
+        <p style="margin-top:6px; font-size:12px;">Tenant IDs adoptados: <code>UNIVALLE</code> (Universidad del Valle, Colombia) + <code>AIEP</code> (Chile). Convención uppercase de up1 (verificado en TEST/UPU). Coincide con prefijo legacy AIEP.</p>
+      </div>
+
+      <h3 style="font-size:13px;">Comando de registro (pre-requisito ANTES de TICKET-006)</h3>
+      <div class="code-block" style="font-size:11px; margin-bottom:10px;"><span class="cmd">cd</span> up1
+<span class="cmd">npm run tenant:create</span> <span class="arg">UNIVALLE</span> <span class="arg">--workspace=@uplanner/object-management-backend</span>
+<span class="cmd">npm run tenant:create</span> <span class="arg">AIEP</span> <span class="arg">--workspace=@uplanner/object-management-backend</span></div>
+
+      <h3 style="font-size:13px; margin-top:8px;">Estructura generada</h3>
+      <div class="code-block" style="font-size:10.5px;">up1/object-manager/
+├── objects/tenants/
+│   ├── UNIVALLE/{Base,Extended,RecordTypes}/
+│   └── AIEP/{Base,Extended,RecordTypes}/
+└── prisma/
+    ├── UNIVALLE/schema.prisma
+    └── AIEP/schema.prisma</div>
+
+      <div class="card-grid cols-2" style="margin-top:10px;">
+        <div class="card teal">
+          <h3>Alternativas evaluadas</h3>
+          <p style="margin-top:4px; font-size:10px;">UV+AIEP (UV ambiguo) · UNIVALLE_CO+AIEP_CL (sufijo país innecesario) · univalle+aiep (rompe convención up1).</p>
+        </div>
+        <div class="card blue">
+          <h3>Activación en mod</h3>
+          <div class="code-block" style="font-size:9.5px; margin-top:4px;">{
+  <span class="kw">"tenants"</span>: [<span class="str">"UNIVALLE"</span>, <span class="str">"AIEP"</span>]
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14f — T2 RTs globales vs per-tenant -->
+  <div class="slide" id="s14f">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num" style="background:var(--purple);">T2</div>
+        <div class="q-title">
+          <div class="topic">Tenant Question · RTs globales vs per-tenant</div>
+          <h2>¿Los RecordTypes son globales o per-tenant?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        Archivos <code>rt__&lt;RT&gt;__curricularsection.json</code> — ¿en <code>business/RecordTypes/</code> (global) o <code>tenants/&lt;ID&gt;/RecordTypes/</code> (per-tenant)?
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> hallazgo del código — el tenant <code>UPU</code> tiene su propio RT custom (<code>tenants/UPU/RecordTypes/rt__Investigador__core_user.json</code>). <strong>RTs per-tenant SÍ son posibles</strong>. Pero ¿es el patrón correcto para curriculum-design?</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>Opción</th><th>Estructura</th><th>Pros</th><th>Contras</th></tr></thead>
+        <tbody>
+          <tr style="background:rgba(26,122,58,.04);"><td><strong>A.</strong> RTs globales</td><td><code>business/RecordTypes/rt__Modality__...</code></td><td class="pro">UN modelo, ambos tenants</td><td class="con">No permite RTs propios por tenant</td></tr>
+          <tr><td><strong>B.</strong> RTs per-tenant</td><td><code>tenants/UNIVALLE/RecordTypes/...</code><br><code>tenants/AIEP/RecordTypes/...</code></td><td class="pro">Cada tenant decide</td><td class="con">Más archivos, divergencia entre tenants</td></tr>
+          <tr><td><strong>C.</strong> Híbrido (patrón UPU)</td><td>Comunes globales + custom per-tenant</td><td class="pro">Lo mejor de ambos</td><td class="con">Mayor complejidad de organización</td></tr>
+        </tbody>
+      </table>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Postura este sprint:</strong> A (RTs globales). Univalle y AIEP usan los mismos <code>Modality</code>, <code>LearningOutcome</code>, etc. Los datos legacy v2.2 no requieren divergencia.
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>RTs globales en <code>business/RecordTypes/</code>. Si llega caso de RT per-tenant, mover a <code>tenants/</code>.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Mover archivo entre carpetas si se necesita. Sin migración de datos.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14g — T3 Subset RTs cubriendo Univalle/AIEP -->
+  <div class="slide" id="s14g">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num" style="background:var(--purple);">T3</div>
+        <div class="q-title">
+          <div class="topic">Tenant Question · Subset RTs por tenant</div>
+          <h2>El subset Q11 — ¿prioriza Univalle o AIEP?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        archivos <code>rt__&lt;RT&gt;__curricularsection.json</code> en TICKET-009 — el subset cubre desigualmente a Univalle y AIEP
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> los datos legacy de Univalle y AIEP usan RTs distintos. Si el subset Q11 elige solo "Modality + LearningOutcome + Content", la cobertura visual de cada tenant es muy diferente.</p>
+
+      <table class="data-table" style="margin-bottom:10px;">
+        <thead><tr><th>RecordType</th><th>Univalle</th><th>AIEP</th><th>Si NO se modela en Q11</th></tr></thead>
+        <tbody>
+          <tr><td>Modality</td><td>✅ 1</td><td>✅ 13</td><td>(no aplica — entra)</td></tr>
+          <tr><td>LearningOutcome</td><td>✅ 3</td><td>✅ 40</td><td>(no aplica — entra)</td></tr>
+          <tr><td>Content</td><td>❌</td><td>✅ 3</td><td>(no aplica — entra)</td></tr>
+          <tr style="background:rgba(192,138,30,.04);"><td>Session</td><td>✅ <strong>18</strong></td><td>❌</td><td>Univalle pierde 18 sesiones del detail</td></tr>
+          <tr style="background:rgba(192,138,30,.04);"><td>EvaluationComponent</td><td>✅ 8 (Composite)</td><td>✅ 1</td><td>Pierden estructura de evaluación ambos</td></tr>
+          <tr style="background:rgba(192,138,30,.04);"><td>Bibliography</td><td>✅ 9</td><td>❌</td><td>Univalle pierde bibliografía del programa</td></tr>
+          <tr style="background:rgba(192,138,30,.04);"><td>CustomSection</td><td>✅ 2</td><td>❌</td><td>Univalle pierde "Descripción" y "Temario"</td></tr>
+        </tbody>
+      </table>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿El subset mínimo prioriza cobertura de <strong>Univalle</strong> (más completo) o <strong>AIEP</strong> (más simple)?</li>
+          <li>Si solo se modelan 3 RTs, ¿se acepta que el detail Univalle se vea incompleto en demos?</li>
+          <li>¿Aceptable demo: Univalle con 3 RTs visibles + 4 invisibles, o se modela todo (6 RTs Univalle)?</li>
+        </ul>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Determina experiencia visible en demos. Sin definición → 3 RTs mínimos por defecto (Univalle queda incompleto).</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Agregar RT faltante = archivo nuevo + layout. Cero migración.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14h — T4 Estructura del seed por tenant -->
+  <div class="slide" id="s14h">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num" style="background:var(--purple);">T4</div>
+        <div class="q-title">
+          <div class="topic">Tenant Question · Estructura del seed</div>
+          <h2>¿Cómo se divide el seed por tenant?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        Ninguno — es decisión de <strong>organización</strong> de seed (decisión de implementación)
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> los datos legacy v2.2 incluyen 2 instancias (una por tenant). El seed debe dividirse para que cada tenant cargue solo sus datos.</p>
+
+      <div class="card-grid cols-3" style="margin-bottom:10px;">
+        <div class="card green">
+          <h3>A. Carpetas por tenant</h3>
+          <div class="code-block" style="font-size:9.5px; margin-top:4px;">seed/
+├── UNIVALLE/
+│   ├── academic_activity.json
+│   └── ...
+└── AIEP/
+    ├── academic_activity.json
+    └── ...</div>
+          <p style="margin-top:6px; font-size:10px;"><strong>✅ Postura este sprint</strong>. Explícito + alineado con <code>prisma/&lt;TENANT_ID&gt;/seed.js</code> de plataforma.</p>
+        </div>
+        <div class="card orange">
+          <h3>B. Un archivo con tenantId</h3>
+          <div class="code-block" style="font-size:9.5px; margin-top:4px;">seed/academic_activity.json
+[
+  { "tenantId": "UNIVALLE", ... },
+  { "tenantId": "AIEP", ... }
+]</div>
+          <p style="margin-top:6px; font-size:10px;">Menos archivos. Pero el <code>tenantId</code> normalmente lo provee el contexto, no se setea explícito.</p>
+        </div>
+        <div class="card purple">
+          <h3>C. Seed global + script</h3>
+          <p style="margin-top:6px; font-size:10px;">Un seed neutro y script que copia/asigna a cada tenant.</p>
+          <p style="margin-top:4px; font-size:10px; color:var(--text-dim);">Más complejo. Reusable.</p>
+        </div>
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Decisión de implementación. Sin impacto funcional. Postura A por defecto.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Sin retrabajo independientemente de la decisión.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14i — T5 Extensions Univalle/AIEP -->
+  <div class="slide" id="s14i">
+    <div style="max-width:1000px; width:100%;">
+      <div class="q-header">
+        <div class="q-num" style="background:var(--purple);">T5</div>
+        <div class="q-title">
+          <div class="topic">Tenant Question · Extensions concretas</div>
+          <h2>¿Univalle / AIEP requieren campos custom (Extensions)?</h2>
+        </div>
+      </div>
+
+      <div style="background:rgba(110,64,201,.06); border-left:3px solid var(--purple); border-radius:4px; padding:6px 10px; margin-bottom:8px; font-size:11px;">
+        <strong style="color:var(--purple); font-size:9px; text-transform:uppercase; letter-spacing:.05em;">Modelos afectados:</strong>
+        Archivos potenciales <code>ext__univalle__&lt;base&gt;.json</code> y <code>ext__aiep__&lt;base&gt;.json</code> — agregan campos a Bases sin tocar el core
+      </div>
+
+      <p style="margin-bottom:10px;"><strong>Por qué importa:</strong> AGENTS.md documenta el mecanismo de Extensions per-tenant. Es el camino oficial para diversidad institucional. Pero ¿lo necesitamos?</p>
+
+      <h3 style="font-size:13px; margin-bottom:6px;">Casos hipotéticos (NO confirmados por el equipo)</h3>
+      <table class="data-table" style="margin-bottom:8px;">
+        <thead><tr><th>Cliente</th><th>Posible Extension</th><th>Campos hipotéticos</th></tr></thead>
+        <tbody>
+          <tr><td>Univalle</td><td><code>ext__univalle__academicactivity.json</code></td><td><code>consejoAprobacionResolucion</code>, <code>consejoAprobacionFecha</code>, <code>departamentoAcademicoId</code></td></tr>
+          <tr><td>AIEP</td><td><code>ext__aiep__academicactivity.json</code></td><td><code>siesCarreraCode</code>, <code>perfilEgresoOficialId</code></td></tr>
+          <tr style="background:rgba(245,197,66,.04);"><td>AIEP</td><td><code>ext__aiep__rt__learningoutcome__...</code> ⚠️</td><td><code>sourceCompetencyId</code> para trazabilidad legacy (Q6)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight orange" style="margin-bottom:8px;">
+        <p style="font-size:11px;"><strong>⚠️ Limitación conocida</strong>: AGENTS.md documenta Extensions de <strong>Bases</strong>, NO de RecordTypes. La tercera fila (Extension de un RT) no tiene precedente documentado en up1.</p>
+      </div>
+
+      <div class="question-box" style="margin-top:10px;">
+        <div class="q-tag">Preguntas a resolver con el equipo</div>
+        <ul class="q-list">
+          <li>¿Univalle requiere algún campo custom no contemplado en el modelo base? (resolución de consejo, departamento académico, etc.)</li>
+          <li>¿AIEP requiere algún campo custom? (código SIES, perfil de egreso oficial)</li>
+          <li>Si AIEP necesita campo extra en RT <code>LearningOutcome</code> (<code>sourceCompetencyId</code>): ¿cómo se modela? AGENTS.md no documenta Extensions de RTs.</li>
+        </ul>
+      </div>
+
+      <div class="via-box" style="margin-top:8px;">
+        <strong>Postura este sprint:</strong> NO modelar Extensions. Los datos legacy v2.2 caben en el modelo base. Inferir Extensions sin info del equipo es inventar.
+      </div>
+
+      <div class="impact-bar" style="margin-top:8px;">
+        <div class="label">Cobertura</div>
+        <div class="sp1"><h4>Este sprint</h4>Sin info del equipo, no se modelan Extensions.</div>
+        <div class="sprint-future"><h4>Sprint futuro</h4>Si llega requerimiento, crear archivo <code>ext__&lt;cliente&gt;__&lt;base&gt;.json</code> es trivial. Sin migración (campos nuevos nullables).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 14 — RESUMEN EJECUTIVO -->
+  <div class="slide" id="s14">
+    <div style="max-width:1100px; width:100%;">
+      <div class="tag">Resumen ejecutivo</div>
+      <h2>Las 19 preguntas — postura este sprint + pregunta principal</h2>
+
+      <table class="data-table" style="margin-top:8px;">
+        <thead>
+          <tr><th>Q</th><th>Tema</th><th>Postura este sprint (provisoria)</th><th>Pregunta principal</th><th>Vía respaldada</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Q1</strong></td><td>externalId</td><td>1 campo string</td><td>¿1 o 2 campos?</td><td>Sin via dominante</td></tr>
+          <tr><td><strong>Q2</strong></td><td>workflowState</td><td>String SIN enum</td><td>¿Qué valor es "Active"? + casing</td><td>UPPER_SNAKE (5 Bases)</td></tr>
+          <tr><td><strong>Q3</strong></td><td>CustomSection</td><td>1 RT genérico</td><td>¿1 o N RTs dinámicos?</td><td>1 RT (sin precedente dinámico)</td></tr>
+          <tr><td><strong>Q4</strong></td><td>referenceFormat</td><td>String SIN enum</td><td>¿"free-text" se mantiene o elimina?</td><td>UPPER_SNAKE para 7 oficiales</td></tr>
+          <tr><td><strong>Q5</strong></td><td>4 RTs no validados</td><td>NO crear los 4</td><td>¿ApprovalCondition en este sprint? + campos de los otros 3</td><td>Sin via clara</td></tr>
+          <tr><td><strong>Q6</strong></td><td>LOs derivados AIEP</td><td>Migración fuera de este sprint</td><td>¿ETL externo o API del mod?</td><td>ETL externo (BR-INT)</td></tr>
+          <tr><td><strong>Q7</strong></td><td>workflow sub-objetos</td><td>NO modelar</td><td>¿Hay caso real?</td><td>NO modelar (alineado)</td></tr>
+          <tr><td><strong>Q8</strong></td><td>Bibliography AIEP</td><td>Sin restricción</td><td>¿AIEP no usa o no documentado?</td><td>Modelo soporta</td></tr>
+          <tr><td><strong>Q9</strong></td><td>Modality &gt;= 1</td><td>Sin validación bloqueante</td><td>¿Bloqueante o soft?</td><td>Handler de workflow (depende Q2)</td></tr>
+          <tr><td><strong>Q10</strong></td><td>Casing enums</td><td>UPPER_SNAKE en propuestas</td><td>¿UPPER_SNAKE o PascalCase?</td><td><strong>UPPER_SNAKE (alta confianza)</strong></td></tr>
+          <tr style="background:rgba(245,197,66,.04);"><td colspan="5" style="font-size:10px; color:var(--text-dim); padding:8px 10px;"><strong>Q11–Q14 — Strict scope (RecordTypes)</strong></td></tr>
+          <tr><td><strong>Q11</strong></td><td>Subset RTs en TICKET-009</td><td>A definir con equipo</td><td>¿3 mínimos o 6 Univalle completo?</td><td>Cumple "probar configuraciones" del ticket</td></tr>
+          <tr><td><strong>Q12</strong></td><td>Cuándo carga seed completo</td><td>Seed completo en TICKET-009</td><td>(decisión de implementación)</td><td>—</td></tr>
+          <tr><td><strong>Q13</strong></td><td><code>recordType</code> enum o libre</td><td>String libre</td><td>¿Plataforma valida vs archivos RT?</td><td>Pendiente verificar código</td></tr>
+          <tr><td><strong>Q14</strong></td><td>RTs no cubiertos en UPONE-1035</td><td>Depende Q11</td><td>¿Session/EvalComp/Bibliography/CustomSection?</td><td>—</td></tr>
+          <tr style="background:rgba(110,64,201,.05);"><td colspan="5" style="font-size:10px; color:var(--purple); padding:8px 10px; font-weight:700;"><strong>T1–T5 — Tenant Questions (multi-tenancy)</strong></td></tr>
+          <tr><td><strong>T1</strong></td><td>TENANT_IDs UNIVALLE+AIEP</td><td><span class="ok-badge">✅ Confirmado</span> DECISION-003</td><td>(resuelta)</td><td>Convención up1 + legacy</td></tr>
+          <tr><td><strong>T2</strong></td><td>RTs globales vs per-tenant</td><td>Globales</td><td>¿Algún RT debe ser per-tenant?</td><td>UPU tiene RTs propios — patrón híbrido posible</td></tr>
+          <tr><td><strong>T3</strong></td><td>Subset RTs Univalle/AIEP</td><td>Define experiencia visible</td><td>¿Priorizar Univalle (6 RTs) o AIEP (3-4 RTs)?</td><td>Univalle más completo</td></tr>
+          <tr><td><strong>T4</strong></td><td>Estructura del seed</td><td>Carpetas por tenant</td><td>(decisión de implementación)</td><td>Alineado con prisma/&lt;TENANT_ID&gt;/seed.js</td></tr>
+          <tr><td><strong>T5</strong></td><td>Extensions concretas</td><td>NO modelar (sin info)</td><td>¿Univalle/AIEP requieren campos custom?</td><td>—</td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight green" style="margin-top:10px;">
+        <p style="font-size:11px; color:var(--text);"><strong>Ninguna pregunta bloquea este sprint.</strong> Todas son provisorias. Las decisiones formales se toman cuando el equipo funcional confirme.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15 — BLOQUEOS Y TICKETS -->
+  <div class="slide" id="s15">
+    <div style="max-width:1000px; width:100%;">
+      <div class="tag">Bloqueos identificados y plan sprint futuro+</div>
+      <h2>Capabilities bloqueadas y tickets futuros sugeridos</h2>
+
+      <div class="card-grid cols-2" style="margin-top:8px;">
+        <div class="card red">
+          <div class="icon">🔒</div>
+          <h3>Bloqueado: Workflow del programa (CAP-CUR-019)</h3>
+          <p style="margin-top:4px;">Bloqueado por <strong>Q2 + Q9 + Q10</strong>. Sin enum cerrado de <code>workflowState</code> no hay transiciones.</p>
+        </div>
+        <div class="card red">
+          <div class="icon">🔒</div>
+          <h3>Bloqueado: Config estructura institucional (CAP-CUR-013)</h3>
+          <p style="margin-top:4px;">Bloqueado por <strong>Q3</strong>. Sin saber si N RTs custom o 1 genérico, no hay UI.</p>
+        </div>
+        <div class="card orange">
+          <div class="icon">⚙️</div>
+          <h3>Dependencia: Migración legacy AIEP</h3>
+          <p style="margin-top:4px;">Depende de <strong>Q6 + Q8</strong>. Modelo de este sprint ya está listo. ETL se construye en sprint futuro.</p>
+        </div>
+        <div class="card orange">
+          <div class="icon">📐</div>
+          <h3>Dependencia: Convención up1 enum casing</h3>
+          <p style="margin-top:4px;">Depende de <strong>Q10</strong>. Decisión cross-equipo (plataforma + funcional). Afecta TODOS los mods nuevos.</p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:14px;">5 tickets sugeridos para sprint futuro</h3>
+      <table class="data-table" style="margin-top:6px;">
+        <thead><tr><th>#</th><th>Ticket sugerido</th><th>Depende de</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Migración de schema post-resolución</td><td>Q1, Q2, Q4, Q10</td><td><span class="pill blue">refactor</span></td></tr>
+          <tr><td>2</td><td>Implementación CAP-CUR-019 (workflow)</td><td>Q2, Q9, Q10</td><td><span class="pill green">feature</span></td></tr>
+          <tr><td>3</td><td>Implementación CAP-CUR-013 (config institucional)</td><td>Q3</td><td><span class="pill green">feature</span></td></tr>
+          <tr><td>4</td><td>ETL migración AIEP legacy</td><td>Q6, Q8</td><td><span class="pill orange">migración</span></td></tr>
+          <tr><td>5</td><td>Definir convención enum casing oficial up1</td><td>Q10</td><td><span class="pill purple">cross-equipo</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 16 — CIERRE -->
+  <div class="slide" id="s16">
+    <div style="text-align:center; max-width:820px;">
+      <div class="tag">Cierre · Listos para preguntar y avanzar</div>
+      <h1>19 preguntas <span class="accent">documentadas</span><br>0 bloqueos para este sprint</h1>
+      <p class="subtitle" style="margin-top:14px;">Cada pregunta tiene contexto, fuentes contrastadas, ejemplos JSON,<br>vías respaldadas y plan este sprint / sprint futuro con repercusiones.</p>
+
+      <div class="card-grid cols-3" style="margin-top:24px;">
+        <div class="card teal"><div class="icon">📐</div><h3>Para preguntar</h3><p>Cada Q tiene <strong>preguntas concretas</strong> a hacer al equipo funcional.</p></div>
+        <div class="card blue"><div class="icon">💻</div><h3>Para implementar este sprint</h3><p>Cada Q tiene <strong>postura provisoria</strong> que NO bloquea — fácil de revertir.</p></div>
+        <div class="card purple"><div class="icon">🔮</div><h3>Para sprint futuro+</h3><p>Cada Q tiene <strong>plan de refactor</strong> con costo estimado por alternativa.</p></div>
+      </div>
+
+      <div class="highlight" style="margin-top:24px; padding:14px 22px;">
+        <p style="font-size:12px; color:var(--text);"><strong>Recordatorio:</strong> Si hay pregunta sin respuesta, NO se toma decisión. Las vías técnicas respaldadas por código (UPPER_SNAKE) se registran como <em>propuestas a confirmar</em>, no como decisiones.</p>
+      </div>
+
+      <p style="margin-top:18px; font-size:11px; color:var(--text-dim);">Detalle completo: <code>specs/curriculum-design/open-questions.md</code></p>
+    </div>
+  </div>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="slide-num" id="slideNum">1 / 32</div>
+<div class="nav-hint">
+  <span class="key">←</span><span class="key">→</span> navegar · <span class="key">Space</span> siguiente
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const progress = document.getElementById('progress');
+  const slideNum = document.getElementById('slideNum');
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    progress.appendChild(dot);
+  });
+
+  function goTo(n) {
+    if (n < 0 || n >= slides.length) return;
+    const prev = current;
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add('exit');
+    setTimeout(() => slides[prev].classList.remove('exit'), 400);
+    current = n;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    slideNum.textContent = `${current + 1} / ${slides.length}`;
+  }
+
+  function next() { if (current < slides.length - 1) goTo(current + 1); }
+  function prev() { if (current > 0) goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    if (e.key === ' ') { e.preventDefault(); next(); }
+  });
+
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+  });
+</script>
+</body>
+</html>

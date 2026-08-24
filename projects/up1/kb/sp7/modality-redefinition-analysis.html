@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redefinir Modality: de descriptor documental a ancla de agendamiento</title>
+<style>
+  :root {
+    --paper: #f5f3ee; --paper-raised: #ffffff; --ink: #1c2024; --ink-soft: #4a5157;
+    --label: #8b9199; --rule: #dcd8cf;
+    --accent: #93435c; --accent-soft: #f0dbe1; --accent-ink: #6b2d40;
+    --calm: #3d6b64; --calm-soft: #dbe6e3; --calm-ink: #23443f;
+    --amber: #a8672a; --amber-soft: #f0e0cc; --amber-ink: #6b4218;
+    --danger: #a83232; --danger-soft: #f2d9d6; --danger-ink: #7a2420;
+    --code-bg: #eae7de; --shadow: rgba(28,32,36,0.08);
+  }
+  :root[data-theme="dark"] {
+    --paper: #14171a; --paper-raised: #1b1f22; --ink: #e8e6df; --ink-soft: #a9aeb3;
+    --label: #7d848a; --rule: #2b2f33;
+    --accent: #d98aa0; --accent-soft: #3a232a; --accent-ink: #eab4c2;
+    --calm: #6fa89f; --calm-soft: #1c2b29; --calm-ink: #a9d6cd;
+    --amber: #d99a54; --amber-soft: #362a1a; --amber-ink: #eabd85;
+    --danger: #e0736b; --danger-soft: #3a201e; --danger-ink: #f0a9a2;
+    --code-bg: #202428; --shadow: rgba(0,0,0,0.35);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #14171a; --paper-raised: #1b1f22; --ink: #e8e6df; --ink-soft: #a9aeb3;
+      --label: #7d848a; --rule: #2b2f33;
+      --accent: #d98aa0; --accent-soft: #3a232a; --accent-ink: #eab4c2;
+      --calm: #6fa89f; --calm-soft: #1c2b29; --calm-ink: #a9d6cd;
+      --amber: #d99a54; --amber-soft: #362a1a; --amber-ink: #eabd85;
+      --danger: #e0736b; --danger-soft: #3a201e; --danger-ink: #f0a9a2;
+      --code-bg: #202428; --shadow: rgba(0,0,0,0.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    font-size: 16.5px; line-height: 1.6; margin: 0; padding: 0 20px 96px;
+  }
+  h1,h2,h3,h4 { font-family: "Iowan Old Style", Charter, "Georgia", serif; text-wrap: balance; color: var(--ink); font-weight: 600; }
+  code, .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace; font-size: 0.9em; }
+  code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+
+  header.doc-head { max-width: 1040px; margin: 0 auto; padding: 60px 0 36px; position: relative; }
+  header.doc-head::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 210px;
+    background-image:
+      repeating-linear-gradient(90deg, var(--rule) 0, var(--rule) 1px, transparent 1px, transparent 88px),
+      repeating-linear-gradient(0deg, var(--rule) 0, var(--rule) 1px, transparent 1px, transparent 44px);
+    opacity: 0.35; mask-image: linear-gradient(to bottom, black, transparent); pointer-events: none; z-index: 0;
+  }
+  .eyebrow {
+    position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px;
+    font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--accent-ink); background: var(--accent-soft); padding: 5px 12px 5px 10px; border-radius: 3px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1.doc-title { position: relative; z-index: 1; font-size: clamp(26px,3.6vw,38px); line-height: 1.18; margin: 20px 0 12px; max-width: 30ch; }
+  .doc-sub { position: relative; z-index: 1; color: var(--ink-soft); font-size: 17px; max-width: 70ch; margin: 0 0 20px; }
+  .doc-meta { position: relative; z-index: 1; display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--label); border-top: 1px solid var(--rule); padding-top: 16px; }
+  .doc-meta strong { color: var(--ink-soft); font-weight: 600; }
+  .toc { max-width: 1040px; margin: 24px auto 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .toc a { font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink-soft); text-decoration: none; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; }
+  .toc a:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+  section { max-width: 800px; margin: 0 auto; padding: 42px 0; scroll-margin-top: 20px; }
+  section.wide { max-width: 1040px; }
+  section + section { border-top: 1px solid var(--rule); }
+  .section-label { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--label); margin: 0 0 10px; }
+  h2 { font-size: 25px; margin: 0 0 16px; }
+  h3 { font-size: 18px; margin: 26px 0 10px; }
+  p { margin: 0 0 14px; color: var(--ink); max-width: 70ch; }
+  p.tight { max-width: none; }
+  ul, ol { margin: 0 0 16px; padding-left: 22px; max-width: 70ch; }
+  li { margin-bottom: 6px; }
+
+  .callout { background: var(--paper-raised); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 4px; padding: 16px 20px; margin: 18px 0; box-shadow: 0 1px 2px var(--shadow); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .callout-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-ink); font-weight: 600; margin-bottom: 6px; }
+  .callout.warn { border-left-color: var(--danger); }
+  .callout.warn .callout-label { color: var(--danger-ink); }
+  .callout.calm { border-left-color: var(--calm); }
+  .callout.calm .callout-label { color: var(--calm-ink); }
+
+  /* ownership map */
+  .map { display: flex; flex-direction: column; align-items: center; gap: 0; margin: 26px 0 8px; }
+  .map-owners { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .owner-chip { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 16px; font-family: ui-monospace, monospace; font-size: 13px; font-weight: 600; box-shadow: 0 1px 2px var(--shadow); }
+  .map-down { color: var(--label); font-size: 22px; line-height: 1; margin: 6px 0; }
+  .map-tree { background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 3px var(--shadow); width: 100%; max-width: 760px; }
+  .map-tree .tree-title { font-family: ui-monospace, monospace; font-size: 12px; color: var(--label); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; text-align: center; }
+  .rt-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .rt-pill { font-family: ui-monospace, monospace; font-size: 12px; padding: 4px 10px; border-radius: 4px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink-soft); }
+  .rt-pill.self { background: var(--accent-soft); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+
+  /* transform: today -> redefined */
+  .xform { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: stretch; margin: 22px 0; }
+  .xform-col { border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; background: var(--paper-raised); box-shadow: 0 1px 3px var(--shadow); }
+  .xform-col.today { border-top: 3px solid var(--calm); }
+  .xform-col.after { border-top: 3px solid var(--accent); }
+  .xform-col h4 { margin: 0 0 4px; font-size: 16px; }
+  .xform-col .xf-tag { font-family: ui-monospace, monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .xform-col.today .xf-tag { color: var(--calm-ink); }
+  .xform-col.after .xf-tag { color: var(--accent-ink); }
+  .xform-col ul { margin: 12px 0 0; padding-left: 18px; font-size: 13px; }
+  .xform-arrow { display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 26px; }
+  @media (max-width: 720px) { .xform { grid-template-columns: 1fr; } .xform-arrow { transform: rotate(90deg); } }
+
+  /* mutation cards */
+  .mut { border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 6px; padding: 16px 20px; margin: 14px 0; background: var(--paper-raised); }
+  .mut h4 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: baseline; gap: 10px; }
+  .mut .mut-n { font-family: ui-monospace, monospace; font-size: 12px; color: var(--accent); font-weight: 700; }
+  .mut p { margin: 0; font-size: 13.5px; color: var(--ink-soft); max-width: none; }
+  .mut .arrows { font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); background: var(--code-bg); padding: 6px 10px; border-radius: 4px; margin: 8px 0 6px; display: inline-block; }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+  table.grid { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 680px; font-size: 14px; }
+  table.grid th, table.grid td { padding: 11px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+  table.grid thead th { font-family: "Iowan Old Style", Charter, serif; font-size: 14.5px; border-bottom: 2px solid var(--ink); }
+  table.grid thead th.today { color: var(--calm-ink); }
+  table.grid thead th.after { color: var(--accent-ink); }
+  table.grid td:first-child { color: var(--ink); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+  table.grid td { color: var(--ink-soft); }
+  table.grid tr:last-child td { border-bottom: none; }
+  table.grid code { font-size: 0.85em; }
+
+  .fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  .fieldset .fs-card { border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; background: var(--paper-raised); }
+  .fieldset .fs-card.has { border-left: 3px solid var(--calm); }
+  .fieldset .fs-card.lacks { border-left: 3px solid var(--danger); }
+  .fieldset h4 { margin: 0 0 8px; font-size: 15px; }
+  .fieldset ul { margin: 0; padding-left: 18px; font-size: 13px; }
+  .fieldset .fs-card.has h4 { color: var(--calm-ink); }
+  .fieldset .fs-card.lacks h4 { color: var(--danger-ink); }
+  @media (max-width: 640px) { .fieldset { grid-template-columns: 1fr; } }
+
+  footer.doc-foot { max-width: 800px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid var(--rule); color: var(--label); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header class="doc-head">
+  <span class="eyebrow"><span class="dot"></span>UP1 · curriculum-design · análisis de redefinición</span>
+  <h1 class="doc-title">Redefinir Modality: de descriptor documental a ancla de agendamiento</h1>
+  <p class="doc-sub">
+    Modality es el objeto que curriculum-design diseñó para el eje de modalidad: modela el modo de
+    impartición y el desglose de horas de un programa, verificado en su definición y en su uso. Los
+    requisitos de academic-scheduling harían mutar ese objeto de un descriptor documental a una unidad
+    operativa. Este documento determina qué significa esa redefinición y cómo cambiaría su uso y su
+    conversación con los demás objetos de cd, contrastado contra el código.
+  </p>
+  <div class="doc-meta">
+    <span><strong>Objeto</strong> · <code>rt__Modality__curricularsection</code></span>
+    <span><strong>Base</strong> · verificado contra el código de curriculum-design</span>
+    <span><strong>Sprint</strong> · sp7 · 27 de julio de 2026</span>
+  </div>
+  <nav class="toc">
+    <a href="#s01">01 Qué es hoy</a>
+    <a href="#s02">02 Con quién conversa</a>
+    <a href="#s03">03 Por qué es el objeto correcto</a>
+    <a href="#s04">04 Lo que le falta</a>
+    <a href="#s05">05 La mutación</a>
+    <a href="#s06">06 Uso: hoy vs redefinido</a>
+    <a href="#s07">07 Qué se rompe del diseño</a>
+    <a href="#s08">08 Síntesis</a>
+  </nav>
+</header>
+
+<section id="s01">
+  <p class="section-label">01 · Qué es Modality hoy</p>
+  <h2>Un descriptor documental, hijo del programa</h2>
+  <p>
+    Modality no es un objeto suelto: es <strong>uno de ocho RecordTypes</strong> del objeto
+    <code>CurricularSection</code>, que es el árbol de contenido de un programa, sílabo o currículo.
+    El objeto base admite tres tipos de dueño (Activity, Offering, Curriculum). Modality está
+    <strong>modelado como hijo de Activity y de Offering por igual</strong> (misma declaración
+    <code>polymorphicChildren</code>, misma UI de sílabo, misma validación I2); hoy el seed solo puebla
+    la de Activity y no hay sincronía entre ambas, y Curriculum no la usa. En los dos casos es el mismo
+    concepto: el descriptor de modalidad, como template en el programa (Activity) y como instancia en el
+    sílabo del período (Offering). Guarda el desglose de horas (<code>theoryHours</code>, <code>practiceHours</code>,
+    <code>labHours</code>, <code>autonomousHours</code>), el modo de entrega (<code>deliveryMode</code>:
+    presencial, virtual, híbrido, síncrono, asíncrono) y un flag <code>isDefault</code> que marca la
+    modalidad principal cuando hay varias.
+  </p>
+  <div class="callout">
+    <div class="callout-label">Un detalle que define su naturaleza</div>
+    <p>
+      Las horas de Modality son <strong>descriptivas, no operativas</strong>: se almacenan y se
+      muestran en la UI (el árbol de secciones), pero <strong>ningún resolver las calcula, suma ni
+      propaga</strong>. No alimentan la malla, ni un calendario, ni una validación de carga. Modality
+      documenta cómo se dicta el programa; no programa nada.
+    </p>
+  </div>
+  <p>
+    Su única regla de dominio es <strong>I2</strong>: solo una Modality por dueño puede tener
+    <code>isDefault=true</code>, validada en el resolver de creación y en el de update
+    (<code>assertSingleDefaultModality</code>). Fuera de eso, es un registro que se llena, se versiona
+    con el sílabo y se muestra.
+  </p>
+</section>
+
+<section id="s02" class="wide">
+  <p class="section-label">02 · Con quién conversa hoy</p>
+  <h2>Hijo de tres dueños, hermano de siete secciones</h2>
+  <p>
+    La dirección de sus relaciones es clave para lo que viene: hoy Modality <strong>cuelga</strong> de
+    su dueño (dirección padre → hijo). No hay ningún objeto que apunte hacia Modality (cero FK
+    entrantes). Es una hoja del árbol.
+  </p>
+  <div class="map">
+    <div class="map-owners">
+      <span class="owner-chip">Activity</span>
+      <span class="owner-chip">Offering (Syllabus)</span>
+      <span class="owner-chip">Curriculum</span>
+    </div>
+    <div class="map-down">↓ &nbsp; 1 : N &nbsp; (polymorphicChildren "sections", via ownerType/ownerId)</div>
+    <div class="map-tree">
+      <div class="tree-title">CurricularSection · árbol documental (recursivo por parentId)</div>
+      <div class="rt-row">
+        <span class="rt-pill self">Modality</span>
+        <span class="rt-pill">LearningOutcome</span>
+        <span class="rt-pill">Session</span>
+        <span class="rt-pill">EvaluationComponent</span>
+        <span class="rt-pill">Content</span>
+        <span class="rt-pill">Bibliography</span>
+        <span class="rt-pill">CustomSection</span>
+        <span class="rt-pill">GraduationProfile</span>
+      </div>
+    </div>
+  </div>
+  <p class="tight" style="font-size:13px; color:var(--ink-soft); text-align:center; max-width:none;">
+    Los ocho RecordTypes comparten la misma tabla y el mismo mecanismo polimórfico (base / rt__ / ext).
+  </p>
+  <div class="callout calm">
+    <div class="callout-label">Lo que esto significa</div>
+    <p>
+      Modality vive dentro del mismo aparato que los Resultados de Aprendizaje, las Sesiones, los
+      Componentes de Evaluación y la Bibliografía. Todos se crean, actualizan y validan con el mismo
+      resolver polimórfico (<code>polymorphicUpdate.resolver.js</code>), que hace un split del payload
+      en base / rt__ / ext y cuatro escrituras. Tocar la naturaleza de Modality toca una pieza de ese
+      conjunto compartido, no un objeto aislado.
+    </p>
+  </div>
+</section>
+
+<section id="s03">
+  <p class="section-label">03 · Por qué es el objeto correcto</p>
+  <h2>Ya modela el eje de modalidad, y el código lo confirma</h2>
+  <p>
+    De los tres ejes que el caso pide (tipo de actividad, tipo de sala, modalidad de impartición),
+    Modality <strong>ya cubre el tercero</strong> con propiedad. La evidencia es concreta:
+  </p>
+  <ul>
+    <li>Tiene <code>deliveryMode</code> con el enum completo (presencial, virtual, híbrido, síncrono, asíncrono): es exactamente el eje 3.</li>
+    <li>Es <strong>polimórfico y múltiple</strong>: un programa puede tener varias modalidades, con una marcada como principal. Eso calza con "un curso con varias variantes".</li>
+    <li>Tiene el desglose de horas por tipo de docencia (teoría, práctica, laboratorio), que cubre parcialmente el eje 1 (tipo de actividad).</li>
+    <li>Al colgar del árbol de secciones, <strong>se clona solo al versionar</strong> el curso (el deep-clone incluye las <code>sections</code>). El problema de linaje que afecta a otras opciones aquí no existe.</li>
+  </ul>
+  <p>
+    Es decir: para el eje de modalidad, Modality no solo sirve, es lo que cd diseñó para eso. El
+    problema no es lo que Modality es, sino lo que academic-scheduling necesita que además sea.
+  </p>
+</section>
+
+<section id="s04" class="wide">
+  <p class="section-label">04 · Lo que le falta para agendar</p>
+  <h2>Cubre un eje y describe; agendar pide tres ejes y opera</h2>
+  <p>
+    Un ancla de agendamiento (aquello a lo que <code>Section</code> apunta para abrir grupos) necesita
+    datos operativos que Modality no tiene y que no encajan en su naturaleza documental.
+  </p>
+  <div class="fieldset">
+    <div class="fs-card has">
+      <h4>Lo que Modality sí tiene</h4>
+      <ul>
+        <li><code>deliveryMode</code> (eje 3, completo)</li>
+        <li>Desglose de horas (descriptivo)</li>
+        <li><code>isDefault</code> (marca la principal)</li>
+        <li><code>code</code> (identificador)</li>
+      </ul>
+    </div>
+    <div class="fs-card lacks">
+      <h4>Lo que un ancla operativa necesita y no tiene</h4>
+      <ul>
+        <li>Cupo / capacidad (validar matrícula)</li>
+        <li>Tipo de sala o entrega (eje 2, distinto de deliveryMode)</li>
+        <li>Alcance: campus, jornada (<code>Shift</code>), docente (<code>Instructor</code>)</li>
+        <li>Ninguna FK entrante: hoy nada apunta a Modality</li>
+      </ul>
+    </div>
+  </div>
+  <p>
+    Nota que <code>deliveryMode</code> (eje 3) no es lo mismo que "tipo de sala o entrega" (eje 2): una
+    práctica presencial puede dictarse en aula regular o en laboratorio. Modality resuelve el eje 3,
+    pero el caso pide los tres. Y sobre todo: agendar requiere que algo <strong>apunte</strong> a la
+    unidad, y hoy Modality es un extremo, no un ancla.
+  </p>
+</section>
+
+<section id="s05" class="wide">
+  <p class="section-label">05 · La mutación</p>
+  <h2>Qué significa, en concreto, redefinir Modality</h2>
+  <p>
+    Redefinir Modality para que sirva a academic-scheduling no es agregarle campos: son cinco cambios
+    de fondo, y varios contradicen el diseño con el que convive hoy.
+  </p>
+
+  <div class="mut">
+    <h4><span class="mut-n">01</span> Inversión de dirección</h4>
+    <div class="arrows">hijo de Activity/Offering &nbsp;→&nbsp; ancla que Section apunta</div>
+    <p>Hoy Modality cuelga de su dueño y nada le apunta. Como ancla, <code>Section</code> (academic-scheduling) tendría una FK entrante hacia Modality. El objeto pasa de hoja a hub. Eso rompe la relación limpia <code>Activity.sections</code>: una de las secciones del árbol pasaría a tener vida operativa propia fuera del árbol.</p>
+  </div>
+  <div class="mut">
+    <h4><span class="mut-n">02</span> Cambio de naturaleza: documental → operativo</h4>
+    <div class="arrows">horas que se describen &nbsp;→&nbsp; datos que gobiernan un calendario</div>
+    <p>Hoy las horas se almacenan y se muestran, nunca se calculan. Como unidad de agendamiento, las horas, el cupo y el alcance pasan a ser datos que validan matrícula, alimentan cobertura y restringen horarios. El objeto deja de "decir cómo se dicta" y pasa a "definir qué se programa".</p>
+  </div>
+  <div class="mut">
+    <h4><span class="mut-n">03</span> Salida (o contaminación) del árbol compartido</h4>
+    <div class="arrows">1 de 8 RecordTypes documentales &nbsp;→&nbsp; outlier operativo en tabla documental</div>
+    <p>Modality comparte tabla y mecanismo polimórfico con siete hermanos documentales (RA, Sesión, Evaluación, Contenido, Bibliografía, etc.). Meterle cupo, sala, alcance y una FK entrante la convierte en un caso especial dentro de un aparato pensado para secciones de documento. O sale a su propia tabla (y deja de ser un RecordType de CurricularSection), o se queda y contamina el mecanismo común con lógica operativa.</p>
+  </div>
+  <div class="mut">
+    <h4><span class="mut-n">04</span> Ambigüedad del dueño</h4>
+    <div class="arrows">owner = Activity | Offering | Curriculum &nbsp;→&nbsp; ¿cuál ancla la programación?</div>
+    <p>Hoy una Modality puede pertenecer a un programa (Activity), a un sílabo (Offering) o a un currículo (Curriculum), y en cada caso significa algo distinto. Como ancla de <code>Section</code> hay que decidir cuál de esos dueños es el que se programa. Una "modalidad de currículo" no es una unidad agendable; una "de sílabo" sí podría anclar programación. El polimorfismo, cómodo para documentar, obliga a definir cuál dueño se programa antes de agendar.</p>
+  </div>
+  <div class="mut">
+    <h4><span class="mut-n">05</span> <code>isDefault</code> cambia de significado</h4>
+    <div class="arrows">"cuál modalidad mostrar primero" &nbsp;→&nbsp; "cuál variante se programa por defecto"</div>
+    <p>La regla I2 (una default por dueño) es una convención de presentación documental. Si Modality agenda, "default" tendría que significar la variante operativa por defecto, un concepto distinto que reusaría el mismo flag para otra cosa.</p>
+  </div>
+</section>
+
+<section id="s06" class="wide">
+  <p class="section-label">06 · Uso esperado: hoy vs. redefinido</p>
+  <h2>Cómo conversaría con los objetos de cd, antes y después</h2>
+  <p>
+    Lado a lado, el mismo objeto en sus dos vidas. La columna de la izquierda es lo verificado en
+    código; la de la derecha, lo que la redefinición implicaría.
+  </p>
+  <div class="table-wrap">
+    <table class="grid">
+      <thead><tr><th>Dimensión</th><th class="today">Modality hoy (documental)</th><th class="after">Modality redefinido (operativo)</th></tr></thead>
+      <tbody>
+        <tr><td>Rol</td><td>Descriptor de modalidad y horas de un programa</td><td>Unidad agendable a la que se ligan grupos</td></tr>
+        <tr><td>Dirección</td><td>Hijo: cuelga de Activity/Offering/Curriculum</td><td>Ancla: Section apunta hacia él (FK entrante)</td></tr>
+        <tr><td>Relación con Activity</td><td>Una de las N secciones del programa</td><td>Sale del conjunto de secciones; vida propia</td></tr>
+        <tr><td>Relación con Offering (sílabo)</td><td>Sección documental del sílabo, se versiona con él</td><td>Debería servir dos amos: documentar el sílabo y anclar la programación</td></tr>
+        <tr><td>Relación con Section (scheduling)</td><td>Ninguna (Section ni lo conoce)</td><td>Section deja de anclar en Activity y ancla aquí</td></tr>
+        <tr><td>Relación con los 7 hermanos</td><td>Comparte tabla y mecanismo polimórfico</td><td>Outlier operativo en una tabla documental, o se separa</td></tr>
+        <tr><td>Horas</td><td>Se describen y se muestran</td><td>Pasan a ser dato operativo (o conviven confusas con el cupo)</td></tr>
+        <tr><td>isDefault</td><td>Cuál modalidad mostrar primero</td><td>Cuál variante programar por defecto (otro concepto)</td></tr>
+        <tr><td>Consumidores</td><td>2 resolvers (validación), 3 layouts, seed, i18n; 0 malla, 0 otros mods</td><td>Suma a academic-scheduling: Section, cobertura, eligibilidad</td></tr>
+        <tr><td>Versionamiento</td><td>Se clona solo con el sílabo (es una sección)</td><td>Versionar el curso clonaría también las unidades agendables</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s07">
+  <p class="section-label">07 · Qué se rompe del diseño de cd</p>
+  <h2>La separación que hoy sostiene el modelo</h2>
+  <p>
+    El diseño de cd descansa en una separación limpia: <code>CurricularSection</code> y sus ocho
+    RecordTypes son la capa <strong>documental</strong> (qué dice el programa), y la programación real
+    vive en otro lado (Section, Scenario, en academic-scheduling). Redefinir Modality como ancla borra
+    esa frontera:
+  </p>
+  <ul>
+    <li><strong>El mecanismo polimórfico compartido</strong> pasa a cargar un RecordType que ya no es una sección de documento, sino una unidad operativa con FK entrante. El aparato que hoy trata igual a RA, Sesión y Bibliografía tendría una excepción con reglas propias.</li>
+    <li><strong>El árbol documental</strong> deja de ser homogéneo: siete secciones describen, una agenda.</li>
+    <li><strong>El versionamiento</strong> del sílabo, que hoy clona secciones documentales sin efectos colaterales, empezaría a clonar unidades agendables, con el riesgo de duplicar programación al versionar.</li>
+    <li><strong>La regla I2</strong> y las demás validaciones documentales conviven con una semántica operativa que no fue pensada para ese flag.</li>
+  </ul>
+  <div class="callout warn">
+    <div class="callout-label">El costo real de la redefinición</div>
+    <p>
+      No es de tamaño (Modality tiene huella chica) ni de campos (agregar cupo y alcance es barato). Es
+      que <strong>disuelve la separación documental/operativo</strong> sobre la que está construido todo
+      el modelo de secciones de cd. Ese es el trabajo previo que se replantea: no el de Modality, sino
+      el del conjunto <code>CurricularSection</code>.
+    </p>
+  </div>
+</section>
+
+<section id="s08">
+  <p class="section-label">08 · Síntesis</p>
+  <h2>Fuente sí, ancla no</h2>
+  <p>
+    El hallazgo es preciso: Modality <strong>es</strong> lo que cd diseñó para la modalidad. Cubre el
+    eje 3 con propiedad y ya vive en el ciclo documental correcto. Pero cubre un solo eje de tres y es
+    un <strong>descriptor</strong>, no una unidad operativa. Hacerlo ancla de <code>Section</code>
+    exige invertir su dirección, cambiar su naturaleza, sacarlo de su árbol y reinterpretar sus reglas:
+    eso ya no es "usar Modality", es construir otro objeto que hereda su nombre.
+  </p>
+  <div class="callout calm">
+    <div class="callout-label">La forma en que Modality sí aporta</div>
+    <p>
+      Como <strong>fuente</strong>, no como ancla. La portadora de la variante (donde sea que viva) puede
+      consultar a Modality las horas y el <code>deliveryMode</code> en vez de duplicarlos, dejando a
+      Modality en su rol documental intacto. Así se aprovecha lo que cd ya diagramó para la modalidad,
+      sin disolver la separación documental/operativo que sostiene el resto del modelo de secciones.
+    </p>
+  </div>
+  <p>
+    Dicho de otro modo: la redefinición es posible y barata en código, pero cara en concepto. Lo que
+    hace mutar a Modality no son los campos nuevos, sino el pedido de que un objeto de documentación
+    pase a gobernar la programación. Esa es la decisión de fondo que conviene poner sobre la mesa antes
+    de tomar el camino D.
+  </p>
+</section>
+
+<footer class="doc-foot">
+  Análisis preparado a partir del código real de curriculum-design: definición de
+  <code>CurricularSection</code> y sus ocho RecordTypes, declaraciones polymorphicChildren de Activity,
+  Offering y Curriculum, resolvers <code>polymorphicUpdate</code> y <code>sectionValidation</code>, y la
+  documentación de arquitectura (polymorphic-recordtypes, server-side-integrity). Complementa el
+  análisis general de modelado de la actividad de curso (sp7).
+</footer>
+
+</body>
+</html>

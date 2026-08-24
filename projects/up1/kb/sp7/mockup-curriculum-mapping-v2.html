@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>uPlanner One — Curriculum Mapping · Matrices de competencia (v2)</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<style>
+/* ===== Tokens REALES de uP1 (theme-tokens.css) — light-dark() + color-scheme ===== */
+:root{
+  color-scheme: light;
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f0f0f0,#212121);
+  --up1-gray-100: light-dark(#e1e1e1,#2c2c2c);
+  --up1-gray-200: light-dark(#d3d3d3,#3a3a3a);
+  --up1-gray-300: light-dark(#c5c5c5,#525252);
+  --up1-gray-400: light-dark(#b6b6b6,#737373);
+  --up1-gray-500: light-dark(#a9a9a9,#a3a3a3);
+  --up1-gray-600: light-dark(#9b9b9b,#d4d4d4);
+  --up1-gray-700: light-dark(#525252,#e5e5e5);
+  --up1-gray-900: light-dark(#262626,#fafafa);
+
+  --up1-color-primary-50: light-dark(#E7F2F3, rgba(45,212,191,.1));
+  --up1-color-primary-100: light-dark(#B6D9DC, rgba(45,212,191,.15));
+  --up1-color-primary-500: light-dark(#0a808c,#2dd4bf);
+  --up1-color-primary-600: light-dark(#12717b,#14b8a6);
+  --up1-color-primary: var(--up1-color-primary-500);
+  --up1-color-primary-hover: var(--up1-color-primary-600);
+  --up1-color-primary-light: var(--up1-color-primary-50);
+
+  --up1-color-success-500: light-dark(#22946e,#22c55e);
+  --up1-color-danger-500: light-dark(#9c2121,#ef4444);
+  --up1-color-danger-50: light-dark(#fef2f2, rgba(239,68,68,.1));
+  --up1-color-warning-500: light-dark(#f59e0b,#f59e0b);
+  --up1-color-warning-50: light-dark(#fffbeb, rgba(245,158,11,.1));
+  --up1-color-warning-700: light-dark(#b45309,#fbbf24);
+  --up1-color-info-500: light-dark(#21498a,#38bdf8);
+
+  --up1-text-primary: var(--up1-gray-900);
+  --up1-text-secondary: var(--up1-gray-700);
+  --up1-text-muted: var(--up1-gray-600);
+  --up1-text-inverse: light-dark(#ffffff,#1a1a1a);
+  --up1-bg-body: var(--up1-gray-50);
+  --up1-bg-primary: var(--up1-gray-0);
+  --up1-bg-secondary: var(--up1-gray-100);
+  --up1-bg-tertiary: var(--up1-gray-200);
+  --up1-border-color: var(--up1-gray-200);
+  --up1-shadow-sm: 0 2px 4px light-dark(rgba(0,0,0,.075),rgba(0,0,0,.4));
+  --up1-shadow-lg: 0 8px 16px light-dark(rgba(0,0,0,.12),rgba(0,0,0,.6));
+  --up1-radius: .375rem; --up1-radius-md:.5rem; --up1-radius-lg:.75rem;
+
+  --up1-recordlist-cell-bg: light-dark(var(--up1-bg-primary),#0f172a);
+  --up1-recordlist-container-bg: light-dark(var(--up1-bg-primary),#0f172a);
+  --up1-recordlist-header-bg: var(--up1-bg-secondary);
+  --up1-recordlist-header-text: var(--up1-text-secondary);
+  --up1-recordlist-header-sorted-bg: light-dark(var(--up1-color-primary-100), rgba(45,212,191,.15));
+  --up1-recordlist-row-hover-bg: var(--up1-bg-secondary);
+
+  --bs-primary: var(--up1-color-primary);
+  --bs-primary-rgb: 10,128,140;
+  --bs-body-font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+html[data-bs-theme="dark"]{ --bs-primary-rgb:45,212,191; }
+body{ font-family:var(--bs-body-font-family); background:var(--up1-bg-body); color:var(--up1-text-primary); font-size:.875rem; }
+[v-cloak]{ display:none; }
+
+.btn{ font-weight:500; transition:all .15s ease-in-out; }
+.btn-primary{ --bs-btn-bg:var(--up1-color-primary); --bs-btn-border-color:var(--up1-color-primary);
+  --bs-btn-hover-bg:var(--up1-color-primary-hover); --bs-btn-hover-border-color:var(--up1-color-primary-hover);
+  --bs-btn-color:var(--up1-text-inverse); --bs-btn-hover-color:var(--up1-text-inverse); }
+.btn-icon-minimal{ color:var(--up1-text-secondary); background:transparent; border:1px solid var(--up1-border-color); }
+.btn-icon-minimal:hover{ color:var(--up1-text-primary); background:var(--up1-bg-secondary); }
+.btn-icon-minimal.active{ color:var(--up1-text-inverse); background:var(--up1-color-primary); border-color:var(--up1-color-primary); }
+
+.badge.bg-secondary{ background-color:var(--up1-text-primary)!important; color:var(--up1-bg-primary); }
+.badge.bg-info{ background-color:var(--up1-color-info-500)!important; color:#fff; }
+.badge.bg-success{ background-color:var(--up1-color-success-500)!important; color:#fff; }
+.badge.bg-danger{ background-color:var(--up1-color-danger-500)!important; color:#fff; }
+.badge.bg-warning{ background-color:var(--up1-color-warning-500)!important; color:#1a1a1a; }
+.badge.bg-dark{ background-color:var(--up1-text-primary)!important; color:var(--up1-bg-primary); }
+.badge.kind-cual{ background:var(--up1-color-info-500)!important; color:#fff; }
+.badge.kind-cuant{ background:var(--up1-color-warning-500)!important; color:#1a1a1a; }
+.badge.kind-mixta{ background:var(--up1-color-primary)!important; color:var(--up1-text-inverse); }
+
+.app-rail{ width:88px; background:var(--up1-bg-primary); border-right:1px solid var(--up1-border-color); }
+.rail-item{ border:1px solid transparent; border-radius:var(--up1-radius-md); color:var(--up1-text-muted); background:transparent; }
+.rail-item:hover{ background:var(--up1-bg-secondary); }
+.rail-item.active{ background:var(--up1-color-primary-50); border-color:var(--up1-color-primary-100); color:var(--up1-color-primary); }
+.app-header{ height:56px; background:var(--up1-bg-primary); border-bottom:1px solid var(--up1-border-color); }
+.app-tabs{ height:44px; background:var(--up1-bg-primary); border-bottom:1px solid var(--up1-border-color); overflow-x:auto; }
+.obj-tab2{ height:100%; background:none; border:0; outline:none; padding:0; color:var(--up1-text-muted); font-weight:500; font-size:.9rem; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0; }
+.obj-tab2:hover{ color:var(--up1-text-primary); }
+.obj-tab2.active{ color:var(--up1-color-primary); font-weight:600; border-bottom-color:var(--up1-color-primary); }
+.content-area{ background:var(--up1-bg-body); }
+
+/* RecordList */
+.record-list-title{ font-size:1.875rem; font-weight:700; color:var(--up1-text-primary); }
+.rl-info{ color:var(--up1-text-muted); font-size:.875rem; }
+.rl-search{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); color:var(--up1-text-primary); border-radius:var(--up1-radius); }
+.rl-search::placeholder{ color:var(--up1-text-muted); }
+.rl-card{ background:var(--up1-recordlist-container-bg); border:1px solid var(--up1-border-color); border-radius:.5rem; overflow-x:auto; }
+.rl-table{ width:100%; border-collapse:collapse; }
+.rl-table thead th{ background:var(--up1-recordlist-header-bg); color:var(--up1-recordlist-header-text); font-weight:700; font-size:.8125rem; padding:.85rem 1rem; border-bottom:1px solid var(--up1-border-color); white-space:nowrap; }
+.rl-table thead th.sorted{ background:var(--up1-recordlist-header-sorted-bg); color:var(--up1-color-primary); }
+.rl-table tbody td{ padding:.85rem 1rem; font-size:.875rem; color:var(--up1-text-primary); background:var(--up1-recordlist-cell-bg); border-bottom:1px solid var(--up1-border-color); }
+.rl-table tbody tr:hover td{ background:var(--up1-recordlist-row-hover-bg); }
+.rl-table tbody tr{ cursor:pointer; }
+.rl-link{ color:var(--up1-color-primary); text-decoration:none; font-weight:500; }
+.rl-link:hover{ text-decoration:underline; }
+.rl-chk{ width:40px; }
+.rl-caret{ font-size:.6rem; opacity:.6; margin-left:.25rem; }
+.rl-pagebtn{ width:34px; height:34px; border:1px solid var(--up1-border-color); background:var(--up1-bg-primary); color:var(--up1-text-secondary); border-radius:var(--up1-radius); display:inline-flex; align-items:center; justify-content:center; }
+.rl-pagebtn.active{ border-color:var(--up1-color-primary); color:var(--up1-color-primary); }
+.rl-perpage{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); color:var(--up1-text-primary); border-radius:var(--up1-radius); }
+.rl-menu-bd{position:fixed;inset:0;z-index:1040;}
+.rl-menu{position:fixed;z-index:1041;transform:translateX(-90%);background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);box-shadow:var(--up1-shadow-lg);min-width:150px;padding:4px;}
+.rl-menu-item{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:var(--up1-text-primary);font-size:.82rem;padding:8px 12px;border-radius:var(--up1-radius);cursor:pointer;text-align:left;}
+.rl-menu-item:hover{background:var(--up1-bg-secondary);color:var(--up1-color-primary);}
+
+/* Detail */
+.lo-tab{ padding:.6rem 1rem; border:none; background:none; border-bottom:2px solid transparent; color:var(--up1-text-secondary); font-weight:500; white-space:nowrap; font-size:.875rem; }
+.lo-tab:hover{ color:var(--up1-text-primary); }
+.lo-tab.is-active{ border-bottom-color:var(--up1-color-primary); color:var(--up1-color-primary); font-weight:600; }
+.field-label{ font-size:.875rem; font-weight:500; color:var(--up1-text-primary); margin-bottom:.3rem; line-height:1.3; }
+.field-label .req-mark{ color:var(--up1-color-danger-500,#9c2121); margin-left:2px; }
+.field-value{ background:var(--up1-gray-50); border:1px solid var(--up1-gray-100); color:var(--up1-text-secondary); border-radius:var(--up1-radius); padding:.5rem .75rem; font-size:.875rem; min-height:2.5rem; display:flex; align-items:center; }
+.vf-field{ margin-bottom:.85rem; }
+.vf-help{ font-size:.75rem; color:var(--up1-text-muted); margin-top:.25rem; display:block; }
+.form-control:focus,.form-select:focus{ border-color:var(--up1-color-primary)!important; box-shadow:0 0 0 .2rem rgba(10,128,140,.25)!important; outline:0; }
+.recorddetail.mode-view .form-control,.recorddetail.mode-view .form-select{ background:var(--up1-gray-50)!important; border-color:var(--up1-gray-100)!important; color:var(--up1-text-secondary)!important; box-shadow:none!important; }
+.rd-chip{ display:inline-flex; align-items:center; gap:5px; font-size:.66rem; font-weight:600; color:var(--up1-color-primary); background:var(--up1-color-primary-50,rgba(10,128,140,.1)); border:1px solid var(--up1-color-primary-100,rgba(10,128,140,.28)); border-radius:999px; padding:2px 9px; }
+.up1-card{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-lg); }
+.ai-chip{ background:var(--up1-color-primary-50); color:var(--up1-color-primary); }
+
+/* ===== Escala strip (visualización de niveles ordenados) ===== */
+.ls-strip{ display:flex; gap:6px; flex-wrap:wrap; }
+.ls-seg{ flex:1 1 120px; min-width:120px; border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-md); padding:10px 12px; background:var(--up1-bg-primary); border-top:4px solid var(--up1-gray-300); position:relative; }
+.ls-seg.achieved{ border-top-color:var(--up1-color-success-500); }
+.ls-seg.notach{ border-top-color:var(--up1-gray-400); opacity:.9; }
+.ls-seg .ls-pos{ font-size:.62rem; font-weight:700; color:var(--up1-text-muted); text-transform:uppercase; letter-spacing:.03em; }
+.ls-seg .ls-name{ font-size:.9rem; font-weight:700; color:var(--up1-text-primary); line-height:1.2; margin:2px 0 4px; }
+.ls-seg .ls-range{ font-size:.72rem; color:var(--up1-text-secondary); font-variant-numeric:tabular-nums; }
+.ls-seg .ls-desc{ font-size:.7rem; color:var(--up1-text-muted); margin-top:5px; line-height:1.35; }
+.ls-seg .ls-ach-badge{ position:absolute; top:8px; right:8px; font-size:.6rem; font-weight:700; }
+.ls-achtag{ color:var(--up1-color-success-500); } .ls-noachtag{ color:var(--up1-text-muted); }
+
+/* ===== Editor de niveles (modal) ===== */
+.ls-edit-head,.ls-edit-row{ display:grid; grid-template-columns:26px 1.4fr .8fr .7fr .9fr .9fr 70px 34px; gap:8px; align-items:center; }
+.ls-edit-head{ font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--up1-text-muted); padding:0 2px 6px; }
+.ls-edit-row{ padding:6px 2px; border-top:1px dashed var(--up1-border-color); }
+.ls-edit-row .drag{ color:var(--up1-text-muted); cursor:grab; text-align:center; }
+.ls-edit-row.qual .thr{ opacity:.35; pointer-events:none; }
+.ls-mini-toggle{ transform:scale(.9); }
+.ls-add{ width:100%; border:1.5px dashed var(--up1-gray-300); background:transparent; color:var(--up1-text-muted); border-radius:var(--up1-radius-md); padding:8px; font-size:.78rem; font-weight:600; cursor:pointer; transition:all .12s; }
+.ls-add:hover{ border-color:var(--up1-color-primary); color:var(--up1-color-primary); background:var(--up1-color-primary-50); }
+.ls-valid-ok{ background:var(--up1-color-primary-50); border:1px solid var(--up1-color-primary-100); color:var(--up1-color-primary); }
+.ls-valid-warn{ background:var(--up1-color-warning-50); border:1px solid var(--up1-color-warning-500); border-left:4px solid var(--up1-color-warning-700); color:var(--up1-color-warning-700); }
+
+/* ===== Editor de valores (alignmentScale) ===== */
+.sc-edit-head,.sc-edit-row{ display:grid; grid-template-columns:26px 1.4fr .8fr 2fr 34px; gap:8px; align-items:center; }
+.sc-edit-head{ font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--up1-text-muted); padding:0 2px 6px; }
+.sc-edit-row{ padding:6px 2px; border-top:1px dashed var(--up1-border-color); }
+.sc-edit-row .drag{ color:var(--up1-text-muted); cursor:grab; text-align:center; }
+.sc-chip{ display:inline-flex; align-items:center; gap:8px; border:1px solid var(--up1-border-color); border-left:4px solid var(--up1-color-primary); border-radius:var(--up1-radius-md); padding:8px 12px; background:var(--up1-bg-primary); }
+.sc-chip .sc-code{ font-size:.7rem; font-weight:700; color:var(--up1-color-primary); background:var(--up1-color-primary-50); border-radius:var(--up1-radius); padding:1px 7px; }
+.sc-chip .sc-nm{ font-size:.85rem; font-weight:600; }
+.sc-arrow{ color:var(--up1-text-muted); }
+
+/* ===== Matrices: KPIs, filtros, árbol de competencias, grid de rúbrica ===== */
+.mx-kpi{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-lg); padding:12px 18px; min-width:150px; flex:0 0 auto; }
+.mx-kpi .v{ font-size:1.9rem; font-weight:700; line-height:1; }
+.mx-kpi .l{ font-size:.78rem; color:var(--up1-text-muted); margin-top:3px; }
+.rl-filter-chip{ display:inline-flex; align-items:center; gap:6px; font-size:.75rem; background:var(--up1-bg-secondary); border:1px solid var(--up1-border-color); color:var(--up1-text-secondary); border-radius:999px; padding:4px 10px; }
+.rl-filter-chip i{ cursor:pointer; opacity:.7; }
+.rl-filter-chip i:hover{ opacity:1; }
+.status-badge{ font-size:.72rem; font-weight:600; }
+.cmp-card{ background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-left:4px solid var(--up1-color-primary); border-radius:var(--up1-radius-md); margin-bottom:10px; }
+.cmp-card.sub{ border-left-color:var(--up1-gray-400); }
+.cmp-head{ display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; }
+.cmp-head:hover{ background:var(--up1-bg-secondary); }
+.cmp-code{ font-size:.72rem; font-weight:700; color:var(--up1-color-primary); background:var(--up1-color-primary-50); border-radius:var(--up1-radius); padding:2px 8px; white-space:nowrap; }
+.cmp-name{ flex:1; font-size:.88rem; font-weight:600; min-width:0; }
+.cmp-badge{ font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; border-radius:999px; background:var(--up1-bg-secondary); color:var(--up1-text-secondary); white-space:nowrap; }
+.cmp-body{ padding:2px 12px 12px 34px; }
+.cmp-children{ margin:6px 0 2px 34px; }
+.rub-grid{ width:100%; border-collapse:collapse; font-size:.8rem; }
+.rub-grid th,.rub-grid td{ border:1px solid var(--up1-border-color); padding:6px 8px; vertical-align:top; }
+.rub-grid thead th{ background:var(--up1-bg-secondary); font-weight:700; font-size:.72rem; text-align:center; }
+.rub-grid td.dim{ background:var(--up1-bg-secondary); font-weight:600; min-width:140px; font-size:.76rem; }
+.rub-grid textarea{ width:100%; border:1px solid var(--up1-border-color); border-radius:var(--up1-radius); font-size:.76rem; padding:4px 6px; resize:vertical; min-height:52px; background:var(--up1-bg-primary); color:var(--up1-text-primary); }
+.rub-cell-view{ font-size:.76rem; color:var(--up1-text-secondary); white-space:pre-wrap; }
+.mx-comments{ position:fixed; top:0; right:0; height:100vh; width:360px; background:var(--up1-bg-primary); border-left:1px solid var(--up1-border-color); box-shadow:var(--up1-shadow-lg); z-index:1090; display:flex; flex-direction:column; }
+.mx-comment{ background:var(--up1-bg-secondary); border-radius:var(--up1-radius-md); padding:8px 10px; margin-bottom:8px; }
+.mx-comment .who{ font-size:.72rem; font-weight:700; }
+.mx-comment .when{ font-size:.66rem; color:var(--up1-text-muted); }
+.mx-comment .txt{ font-size:.8rem; color:var(--up1-text-secondary); margin-top:3px; }
+
+/* ===== Yupi ===== */
+.yupi-panel{ width:360px; background:var(--up1-bg-primary); border-left:1px solid var(--up1-border-color); }
+.yupi-float{ position:fixed; bottom:90px; right:24px; width:360px; height:460px; background:var(--up1-bg-primary); border:1px solid var(--up1-border-color); border-radius:var(--up1-radius-lg); box-shadow:var(--up1-shadow-lg); z-index:1050; overflow:hidden; }
+.yupi-suggest{ background:var(--up1-bg-secondary); border:1px solid transparent; border-radius:var(--up1-radius-md); text-align:left; color:var(--up1-text-secondary); font-size:.78rem; width:100%; }
+.yupi-suggest:hover{ border-color:var(--up1-border-color); }
+.yupi-bubble-user{ background:var(--up1-bg-secondary); color:var(--up1-text-primary); border-radius:14px 14px 2px 14px; }
+.yupi-input{ background:transparent; border:0; color:var(--up1-text-primary); }
+.yupi-input::placeholder{ color:var(--up1-text-muted); }
+.chat-actions{ opacity:0; transition:opacity .15s; }
+.chat-msg-bot:hover .chat-actions{ opacity:1; }
+.chat-act-btn{ background:none; border:0; color:var(--up1-text-muted); padding:2px; font-size:.72rem; }
+.chat-act-btn:hover{ color:var(--up1-color-primary); }
+.yupi-fab{ position:fixed; bottom:24px; right:24px; width:56px; height:56px; z-index:1060; }
+.yupi-fab .ping{ position:absolute; inset:0; border-radius:50%; background:var(--up1-color-primary); opacity:.25; animation:ping 1.8s cubic-bezier(0,0,.2,1) infinite; }
+@keyframes ping{ 75%,100%{ transform:scale(1.6); opacity:0; } }
+.cursor-pointer{ cursor:pointer; }
+@keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+.animate-fade-in{ animation:fadeIn .35s ease-out forwards; }
+.toast-wrap{ border-left:4px solid var(--up1-color-primary); background:var(--up1-bg-primary); }
+
+/* ===== Modal ===== */
+.m-modal-bd{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1100;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow:auto;}
+.m-modal{background:var(--up1-bg-primary);border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);box-shadow:var(--up1-shadow-lg);max-width:820px;width:100%;padding:18px 22px;}
+</style>
+</head>
+<body>
+<div id="app" v-cloak class="d-flex" style="height:100vh;overflow:hidden;">
+
+  <!-- RAIL -->
+  <aside class="app-rail d-flex flex-column align-items-center py-3 flex-shrink-0">
+    <div class="text-uppercase fw-bold mb-3" style="font-size:10px;letter-spacing:.08em;color:var(--up1-text-muted);">Apps</div>
+    <div class="d-flex flex-column gap-1 w-100 px-2">
+      <button v-for="a in apps" :key="a.id" @click="a.id==='mapping' && setObj('matrices')"
+        class="rail-item d-flex flex-column align-items-center justify-content-center py-2 px-1" :class="{active:a.id==='mapping'}">
+        <i :class="['bi',a.icon]" style="font-size:1.25rem;"></i>
+        <span class="text-center mt-1" style="font-size:9px;font-weight:500;line-height:1.1;">{{ a.name }}</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="flex-grow-1 d-flex flex-column" style="min-width:0;">
+    <!-- HEADER -->
+    <header class="app-header d-flex align-items-center justify-content-between px-4 flex-shrink-0">
+      <span class="fs-5 fw-bold" style="color:var(--up1-text-primary);">uPlanner</span>
+      <div class="d-flex align-items-center gap-3" style="color:var(--up1-text-secondary);">
+        <span class="d-flex align-items-center gap-1 cursor-pointer" style="font-size:.8rem;"><i class="bi bi-translate"></i> ES <i class="bi bi-caret-down-fill" style="font-size:.55rem;"></i></span>
+        <i class="bi bi-sun cursor-pointer fs-6"></i>
+        <span class="position-relative cursor-pointer"><i class="bi bi-bell fs-6"></i></span>
+        <div class="d-flex align-items-center gap-1 border rounded px-2 py-1" style="border-color:var(--up1-border-color)!important;">
+          <i class="bi bi-person-badge"></i>
+          <div class="d-flex flex-column lh-1"><span class="text-uppercase fw-bold" style="font-size:9px;color:var(--up1-text-muted);">Rol</span><span class="fw-semibold" style="font-size:.75rem;color:var(--up1-text-primary);">{{ role }}</span></div>
+          <i class="bi bi-caret-down-fill" style="font-size:.55rem;"></i>
+        </div>
+        <div class="text-end lh-sm d-none d-lg-block"><div class="fw-semibold" style="font-size:.75rem;color:var(--up1-text-primary);">esteban.cortes@uplanner.com</div><div style="font-size:.7rem;color:var(--up1-text-muted);">{{ role }}</div></div>
+        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:34px;height:34px;background:var(--up1-color-primary);color:var(--up1-text-inverse);">?</div>
+      </div>
+    </header>
+
+    <!-- OBJECT TABS -->
+    <div class="app-tabs d-flex align-items-center px-4 gap-4 flex-shrink-0">
+      <button v-for="o in objTabs" :key="o.key" @click="setObj(o.key)" class="obj-tab2 d-flex align-items-center gap-1" :class="{active: objKey===o.key}">{{ o.title }} <i class="bi bi-caret-down-fill" style="font-size:.55rem;"></i></button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="d-flex flex-grow-1" style="overflow:hidden;">
+      <main class="flex-grow-1 content-area overflow-auto p-4">
+
+        <!-- ================= LIST ================= -->
+        <div v-if="view==='list'" class="container-fluid animate-fade-in">
+          <h2 class="record-list-title mb-3">{{ currentObj.title }} <i class="bi bi-caret-down" style="font-size:1rem;color:var(--up1-text-muted);"></i></h2>
+
+          <!-- KPIs + filtros (solo matrices) -->
+          <div v-if="objKey==='matrices'" class="d-flex gap-3 mb-3 flex-wrap">
+            <div v-for="k in matrixKpis" :key="k.label" class="mx-kpi">
+              <div class="v" :style="{color:k.color}">{{ k.value }}</div><div class="l">{{ k.label }}</div>
+            </div>
+          </div>
+          <div v-if="objKey==='matrices'" class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <button class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1"><i class="bi bi-funnel"></i> Agregar filtro</button>
+            <span class="rl-filter-chip">Tipo: Todos <i class="bi bi-x-lg"></i></span>
+            <span class="rl-filter-chip">Estado: Todos <i class="bi bi-x-lg"></i></span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+            <small class="rl-info">{{ currentObj.rows.length }} elementos. Ordenado por código. sin filtros. Actualizado hace unos segundos.</small>
+            <div class="d-flex align-items-center gap-2">
+              <button v-if="isInteractive" class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="openCreate()"><i class="bi bi-plus-lg"></i> {{ createLabel }}</button>
+              <button v-else class="btn btn-primary btn-sm d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Crear registro</button>
+              <div class="position-relative">
+                <i class="bi bi-search position-absolute" style="left:.6rem;top:50%;transform:translateY(-50%);color:var(--up1-text-muted);font-size:.8rem;"></i>
+                <input class="rl-search py-1 ps-4 pe-2" style="width:240px;font-size:.8rem;height:34px;" placeholder="Buscar en esta lista...">
+              </div>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-funnel-fill"></i></button>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-gear"></i></button>
+              <button class="btn btn-icon-minimal btn-sm active" style="height:34px;"><i class="bi bi-list-ul"></i></button>
+              <button class="btn btn-icon-minimal btn-sm" style="height:34px;"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+          </div>
+          <div class="rl-card">
+            <table class="rl-table">
+              <thead><tr>
+                <th class="rl-chk text-center"><input type="checkbox" class="form-check-input"></th>
+                <th v-for="(col,ci) in currentObj.cols" :key="col.key" :class="ci===0 ? 'sorted' : ''">{{ col.label }} <i class="rl-caret" :class="ci===0 ? 'bi bi-caret-up-fill' : 'bi bi-caret-up'"></i></th>
+                <th class="text-end">Acciones</th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="(row,ri) in currentObj.rows" :key="ri" @click="isInteractive && openView(row)">
+                  <td class="rl-chk text-center" @click.stop><input type="checkbox" class="form-check-input"></td>
+                  <td v-for="col in currentObj.cols" :key="col.key">
+                    <a v-if="col.type==='link'" class="rl-link">{{ row[col.key] }}</a>
+                    <span v-else-if="col.type==='kind'" class="badge" :class="kindClass(row.kind)">{{ row.kind }}</span>
+                    <span v-else-if="col.type==='count'">{{ row[col.key].length }}</span>
+                    <template v-else-if="col.type==='bool'">
+                      <i v-if="row[col.key]" class="bi bi-check-circle-fill" style="color:var(--up1-color-success-500);"></i>
+                      <i v-else class="bi bi-dash" style="color:var(--up1-text-muted);"></i>
+                    </template>
+                    <span v-else-if="col.type==='badge'"><span v-if="row[col.key]" class="badge bg-info">{{ row[col.key] }}</span><span v-else class="text-muted">—</span></span>
+                    <span v-else-if="col.type==='status'" class="badge status-badge" :class="statusClass(row.status)">{{ row.status }}</span>
+                    <span v-else>{{ row[col.key] }}</span>
+                  </td>
+                  <td class="text-end" @click.stop>
+                    <button v-if="isInteractive" class="rl-pagebtn" :class="{active: rowMenu && rowMenu.ri===ri}" @click="openRowMenu($event, ri)" aria-label="Acciones" aria-haspopup="true"><i class="bi bi-caret-down-fill" style="font-size:.7rem;"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Menú de acciones de fila -->
+          <div v-if="rowMenu" class="rl-menu-bd" @click="rowMenu=null"></div>
+          <div v-if="rowMenu" class="rl-menu" :style="{left:rowMenu.x+'px', top:(rowMenu.y+8)+'px'}">
+            <button class="rl-menu-item" @click="openView(currentObj.rows[rowMenu.ri]); rowMenu=null"><i class="bi bi-eye"></i> Ver</button>
+            <button v-if="objKey==='matrices'" class="rl-menu-item" @click="openMatrixEdit(currentObj.rows[rowMenu.ri]); rowMenu=null"><i class="bi bi-pencil"></i> Editar</button>
+            <button v-else class="rl-menu-item" @click="openEditModal(currentObj.rows[rowMenu.ri]); rowMenu=null"><i class="bi bi-pencil"></i> Editar</button>
+            <button v-if="objKey==='matrices'" class="rl-menu-item" @click="openStatusModal(currentObj.rows[rowMenu.ri]); rowMenu=null"><i class="bi bi-arrow-repeat"></i> Cambio de estado</button>
+            <button class="rl-menu-item" @click="openClone(currentObj.rows[rowMenu.ri]); rowMenu=null"><i class="bi bi-files"></i> Clonar</button>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+            <small class="rl-info">1-{{ currentObj.rows.length }} de {{ currentObj.rows.length }}</small>
+            <div class="d-flex align-items-center gap-1">
+              <span class="rl-pagebtn"><i class="bi bi-chevron-double-left" style="font-size:.7rem;"></i></span>
+              <span class="rl-pagebtn"><i class="bi bi-chevron-left" style="font-size:.7rem;"></i></span>
+              <span class="rl-pagebtn active">1</span>
+              <span class="rl-pagebtn"><i class="bi bi-chevron-right" style="font-size:.7rem;"></i></span>
+              <span class="rl-pagebtn"><i class="bi bi-chevron-double-right" style="font-size:.7rem;"></i></span>
+            </div>
+            <div class="d-flex align-items-center gap-2 rl-info"><span>Mostrar</span><select class="rl-perpage py-1 px-2" style="font-size:.8rem;"><option>10</option><option>25</option></select><span>por página</span></div>
+          </div>
+        </div>
+
+        <!-- ================= MATRIX DETAIL ================= -->
+        <div v-else-if="detailKind==='matrix'" class="container-fluid animate-fade-in" :class="mMatrixEdit ? 'recorddetail mode-edit' : 'recorddetail mode-view'">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <button @click="mMatrixEdit ? cancelMatrixEdit() : (view='list')" class="btn btn-link text-decoration-none px-0 d-inline-flex align-items-center gap-2" style="color:var(--up1-text-secondary);"><i class="bi bi-arrow-left"></i> Volver</button>
+            <div class="d-flex gap-2">
+              <template v-if="mMatrixEdit">
+                <button class="btn btn-outline-secondary btn-sm" @click="cancelMatrixEdit()">Cancelar</button>
+                <button class="btn btn-primary btn-sm d-flex align-items-center gap-1" @click="saveMatrix()"><i class="bi bi-check-lg"></i> Guardar</button>
+              </template>
+              <button v-else class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1" @click="commentsOpen=true"><i class="bi bi-chat-left-text"></i> Comentarios <span class="badge bg-secondary">{{ current.comments.length }}</span></button>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+            <h2 class="record-list-title mb-0">{{ current.name }}</h2>
+            <span class="badge status-badge" :class="statusClass(current.status)">{{ current.status }}</span>
+          </div>
+
+          <div class="d-flex border-bottom mb-4" style="overflow-x:auto;border-color:var(--up1-border-color)!important;">
+            <button v-for="t in detailTabs" :key="t.key" @click="tab=t.key" class="lo-tab d-flex align-items-center gap-1" :class="{'is-active':tab===t.key}">{{ t.label }}</button>
+          </div>
+
+          <!-- GENERAL -->
+          <div v-if="tab==='general'" class="animate-fade-in">
+            <template v-if="!mMatrixEdit">
+              <div class="row g-3 mb-3">
+                <div class="col-md-3"><div class="field-label">Código</div><div class="field-value">{{ current.code || '—' }}</div></div>
+                <div class="col-md-9"><div class="field-label">Nombre</div><div class="field-value">{{ current.name }}</div></div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Tipo de matriz</div><div class="field-value">{{ current.type }}</div></div>
+                <div class="col-md-4"><div class="field-label">Facultad / Escuela</div><div class="field-value">{{ current.owner || '—' }}</div></div>
+                <div class="col-md-4"><div class="field-label">Esquema de nivel</div><div class="field-value">{{ current.scheme }}</div></div>
+              </div>
+              <div class="mb-3"><div class="field-label">Descripción</div><div class="field-value">{{ current.description || '—' }}</div></div>
+            </template>
+            <template v-else>
+              <div class="row g-2 mb-2">
+                <div class="col-md-3"><label class="field-label">Código<span class="req-mark">*</span></label><input v-model="current.code" class="form-control form-control-sm" placeholder="MC-XXX"></div>
+                <div class="col-md-9"><label class="field-label">Nombre<span class="req-mark">*</span></label><input v-model="current.name" class="form-control form-control-sm"></div>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-md-4"><label class="field-label">Tipo de matriz</label><select v-model="current.type" class="form-select form-select-sm"><option>Genéricas</option><option>Transversales</option><option>Específicas</option><option>Profesionales</option></select></div>
+                <div class="col-md-4"><label class="field-label">Facultad / Escuela</label><input v-model="current.owner" class="form-control form-control-sm"></div>
+                <div class="col-md-4"><label class="field-label">Esquema de nivel</label><select v-model="current.scheme" @change="onMatrixSchemeChange" class="form-select form-select-sm"><option v-for="s in schemes" :key="s.code" :value="s.name">{{ s.name }}</option></select></div>
+              </div>
+              <div class="mb-2"><label class="field-label">Descripción</label><input v-model="current.description" class="form-control form-control-sm"></div>
+            </template>
+
+            <h6 class="fw-bold mt-4 mb-2" style="font-size:.9rem;">Planes de estudio asociados <span class="rl-info" style="font-weight:400;">({{ current.plans.length }})</span></h6>
+            <div v-if="current.plans.length" class="rl-card">
+              <table class="rl-table">
+                <thead><tr><th class="sorted">Código <i class="rl-caret bi bi-caret-up-fill"></i></th><th>Plan de estudio</th><th>Carrera</th><th>Facultad</th></tr></thead>
+                <tbody>
+                  <tr v-for="p in current.plans" :key="p.code" style="cursor:default;">
+                    <td>{{ p.code }}</td><td><a class="rl-link">{{ p.plan }}</a></td><td>{{ p.carrera }}</td><td>{{ p.fac }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="up1-card p-4 text-center rl-info"><i class="bi bi-inbox fs-4 d-block mb-2"></i>Sin planes de estudio asociados.</div>
+          </div>
+
+          <!-- COMPETENCIAS -->
+          <div v-else class="animate-fade-in">
+            <div class="mb-4">
+              <div class="field-label mb-1">Esquema de niveles: <strong>{{ current.scheme }}</strong></div>
+              <div class="ls-strip">
+                <div v-for="(ln,li) in current.schemeLevels" :key="li" class="ls-seg" style="flex:1 1 110px;min-width:110px;border-top-color:var(--up1-color-primary);">
+                  <div class="ls-pos">Nivel {{ li+1 }}</div><div class="ls-name">{{ ln }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0" style="font-size:.95rem;">Competencias <span class="rl-info" style="font-weight:400;">({{ current.competencies.length }})</span></h6>
+              <button v-if="mMatrixEdit" class="btn btn-icon-minimal btn-sm d-flex align-items-center gap-1" @click="addCompetency(current.competencies)"><i class="bi bi-plus-lg"></i> Agregar competencia</button>
+            </div>
+
+            <competency-node v-for="(c,ci) in current.competencies" :key="ci" :node="c" :levels="current.schemeLevels" :edit="mMatrixEdit" :on-remove="()=>removeCompetency(current.competencies, ci)"></competency-node>
+            <div v-if="!current.competencies.length" class="up1-card p-4 text-center rl-info"><i class="bi bi-diagram-3 fs-4 d-block mb-2"></i>Aún no hay competencias. {{ mMatrixEdit ? 'Agrega la primera con el botón de arriba.' : '' }}</div>
+          </div>
+
+          <!-- panel de comentarios -->
+          <div v-if="commentsOpen" class="malla-backdrop" @click="commentsOpen=false"></div>
+          <div v-if="commentsOpen" class="mx-comments">
+            <div class="d-flex justify-content-between align-items-center px-3 py-3 border-bottom" style="border-color:var(--up1-border-color)!important;">
+              <span class="fw-bold">Comentarios de revisión</span>
+              <button class="btn btn-icon-minimal btn-sm" @click="commentsOpen=false"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="flex-grow-1 overflow-auto p-3">
+              <div v-for="(cm,i) in current.comments" :key="i" class="mx-comment">
+                <div class="d-flex justify-content-between"><span class="who">{{ cm.author }}</span><span class="when">{{ cm.date }}</span></div>
+                <div class="txt">{{ cm.text }}</div>
+              </div>
+              <div v-if="!current.comments.length" class="rl-info text-center py-4">Sin comentarios.</div>
+            </div>
+            <div class="p-3 border-top" style="border-color:var(--up1-border-color)!important;">
+              <div class="d-flex gap-2">
+                <input v-model="commentDraft" @keyup.enter="addComment()" class="form-control form-control-sm" placeholder="Escribe un comentario...">
+                <button class="btn btn-primary btn-sm" @click="addComment()"><i class="bi bi-send-fill"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= DETAIL (esquema / escala) ================= -->
+        <div v-else class="container-fluid animate-fade-in recorddetail mode-view">
+          <button @click="view='list'" class="btn btn-link text-decoration-none px-0 mb-2 d-inline-flex align-items-center gap-2" style="color:var(--up1-text-secondary);"><i class="bi bi-arrow-left"></i> Volver</button>
+
+          <h2 class="record-list-title mb-4">{{ current.name }}</h2>
+
+          <div class="d-flex border-bottom mb-4" style="overflow-x:auto;border-color:var(--up1-border-color)!important;">
+            <button v-for="t in detailTabs" :key="t.key" @click="tab=t.key" class="lo-tab d-flex align-items-center gap-1" :class="{'is-active':tab===t.key}">{{ t.label }}</button>
+          </div>
+
+          <!-- General -->
+          <div v-if="tab==='general'" class="animate-fade-in">
+            <div class="row g-3 mb-3">
+              <div class="col-md-3"><div class="field-label">Código</div><div class="field-value">{{ current.code }}</div></div>
+              <div class="col-md-9"><div class="field-label">Nombre</div><div class="field-value">{{ current.name }}</div></div>
+            </div>
+            <div class="mb-3"><div class="field-label">Descripción</div><div class="field-value">{{ current.description || '—' }}</div></div>
+
+            <!-- scheme -->
+            <template v-if="detailKind==='scheme'">
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">Tipo de escala</div><div class="field-value"><span class="badge" :class="kindClass(current.kind)">{{ current.kind }}</span></div></div>
+                <div class="col-md-4"><div class="field-label">N° de niveles</div><div class="field-value">{{ current.levels.length }}</div></div>
+                <div class="col-md-4"><div class="field-label">Default de plataforma</div><div class="field-value">{{ current.isPlatformDefault ? 'Sí (no editable)' : 'No' }}</div></div>
+              </div>
+            </template>
+
+            <!-- scale -->
+            <template v-else>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4"><div class="field-label">N° de valores</div><div class="field-value">{{ current.values.length }}</div></div>
+                <div class="col-md-4"><div class="field-label">Default de plataforma</div><div class="field-value">{{ current.isPlatformDefault ? 'Sí (no editable)' : 'No' }}</div></div>
+                <div class="col-md-4"><div class="field-label">En uso</div><div class="field-value">{{ current.inUse ? 'Sí' : 'No' }}</div></div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Niveles -->
+          <div v-else-if="tab==='levels'" class="animate-fade-in">
+            <!-- Tira visual de la escala -->
+            <div class="ls-strip mb-4">
+              <div v-for="lv in current.levels" :key="lv.code" class="ls-seg" :class="lv.isAchieved ? 'achieved' : 'notach'">
+                <span class="ls-ach-badge" :class="lv.isAchieved ? 'ls-achtag' : 'ls-noachtag'"><i :class="lv.isAchieved ? 'bi bi-check-circle-fill' : 'bi bi-circle'"></i></span>
+                <div class="ls-pos">Nivel {{ lv.position }}</div>
+                <div class="ls-name">{{ lv.name }}</div>
+                <div v-if="current.kind!=='Cualitativa'" class="ls-range">{{ fmt(lv.min) }} – {{ fmt(lv.max) }}</div>
+                <div v-else class="ls-range">—</div>
+                <div v-if="lv.descriptor" class="ls-desc">{{ lv.descriptor }}</div>
+              </div>
+            </div>
+
+            <!-- Tabla de niveles -->
+            <div class="rl-card">
+              <table class="rl-table">
+                <thead><tr>
+                  <th class="sorted">Posición <i class="rl-caret bi bi-caret-up-fill"></i></th>
+                  <th>Nombre</th><th>Código</th><th>Peso</th>
+                  <th v-if="current.kind!=='Cualitativa'">Valor mínimo</th>
+                  <th v-if="current.kind!=='Cualitativa'">Valor máximo</th>
+                  <th>Logrado</th><th>Descriptor</th>
+                </tr></thead>
+                <tbody>
+                  <tr v-for="lv in current.levels" :key="lv.code" style="cursor:default;">
+                    <td>{{ lv.position }}</td>
+                    <td style="font-weight:600;">{{ lv.name }}</td>
+                    <td>{{ lv.code }}</td>
+                    <td>{{ lv.weight }}</td>
+                    <td v-if="current.kind!=='Cualitativa'">{{ fmt(lv.min) }}</td>
+                    <td v-if="current.kind!=='Cualitativa'">{{ fmt(lv.max) }}</td>
+                    <td><span class="badge" :class="lv.isAchieved ? 'bg-success' : 'bg-dark'">{{ lv.isAchieved ? 'Sí' : 'No' }}</span></td>
+                    <td style="white-space:normal;min-width:220px;color:var(--up1-text-secondary);">{{ lv.descriptor || '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Valores (alignmentScale) -->
+          <div v-else-if="tab==='values'" class="animate-fade-in">
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-4">
+              <template v-for="(vv,vi) in current.values" :key="vv.code">
+                <span class="sc-chip"><span class="sc-code">{{ vv.code }}</span><span class="sc-nm">{{ vv.name }}</span></span>
+                <i v-if="vi < current.values.length-1" class="bi bi-arrow-right sc-arrow"></i>
+              </template>
+            </div>
+            <div class="rl-card">
+              <table class="rl-table">
+                <thead><tr><th class="sorted">Posición <i class="rl-caret bi bi-caret-up-fill"></i></th><th>Código</th><th>Nombre</th><th>Descripción</th></tr></thead>
+                <tbody>
+                  <tr v-for="vv in current.values" :key="vv.code" style="cursor:default;">
+                    <td>{{ vv.position }}</td><td style="font-weight:600;">{{ vv.code }}</td><td>{{ vv.name }}</td>
+                    <td style="white-space:normal;min-width:240px;color:var(--up1-text-secondary);">{{ vv.description || '—' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Uso -->
+          <div v-else-if="tab==='usage'" class="animate-fade-in">
+            <div v-if="current.usedBy.length" class="rl-card">
+              <table class="rl-table">
+                <thead><tr><th class="sorted">{{ detailKind==='scheme' ? 'Matriz' : 'Plan' }} <i class="rl-caret bi bi-caret-up-fill"></i></th><th>Tipo</th><th>Estado</th></tr></thead>
+                <tbody>
+                  <tr v-for="m in current.usedBy" :key="m.name" style="cursor:default;">
+                    <td><a class="rl-link">{{ m.name }}</a></td><td>{{ m.type }}</td>
+                    <td><span class="badge bg-success">{{ m.status }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="up1-card p-4 text-center rl-info"><i class="bi bi-inbox fs-4 d-block mb-2"></i>{{ detailKind==='scheme' ? 'Este esquema aún no está referenciado por ninguna matriz.' : 'Esta escala aún no está referenciada por ninguna tributación.' }}</div>
+          </div>
+
+          <!-- Historial -->
+          <div v-else-if="tab==='historial'" class="animate-fade-in">
+            <div class="rl-card">
+              <table class="rl-table">
+                <thead><tr><th class="sorted">Fecha <i class="rl-caret bi bi-caret-up-fill"></i></th><th>Usuario</th><th>Acción</th><th>Detalle</th></tr></thead>
+                <tbody>
+                  <tr v-for="(h,i) in current.history" :key="i" style="cursor:default;">
+                    <td>{{ h.date }}</td><td>{{ h.user }}</td><td>{{ h.action }}</td>
+                    <td style="white-space:normal;min-width:240px;color:var(--up1-text-secondary);">{{ h.detail }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- ===== YUPI DOCKEADO ===== -->
+      <aside v-if="chatOpen && chatDocked" class="yupi-panel d-flex flex-column flex-shrink-0">
+        <div class="d-flex justify-content-between align-items-center px-4 pt-4 pb-2">
+          <div class="d-flex align-items-center gap-2 fw-bold"><span class="d-inline-flex align-items-center justify-content-center rounded-2" style="width:24px;height:24px;background:var(--up1-color-primary-50);color:var(--up1-color-primary);"><i class="bi bi-stars" style="font-size:.8rem;"></i></span> Yupi</div>
+          <div class="d-flex gap-1">
+            <button @click="chatDocked=false" class="btn btn-icon-minimal btn-sm" title="Desacoplar"><i class="bi bi-box-arrow-up-right"></i></button>
+            <button @click="chatOpen=false" class="btn btn-icon-minimal btn-sm" title="Cerrar"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+        <div class="flex-grow-1 overflow-auto px-4 py-2 yupi-scroll">
+          <div v-if="msgs.length===0" class="h-100 d-flex flex-column align-items-center justify-content-center text-center gap-4">
+            <div><div class="fw-bold" style="color:var(--up1-color-primary);">Hola, Esteban</div><div style="color:var(--up1-text-muted);">¿Qué hacemos hoy con los esquemas de nivel?</div></div>
+            <div class="d-flex flex-column gap-2 w-100"><button v-for="s in suggestions" :key="s.text" @click="send(s.text)" class="yupi-suggest px-3 py-2 d-flex align-items-center justify-content-between"><span>{{ s.text }}</span><i :class="['bi',s.icon]" style="color:var(--up1-color-primary);font-size:.75rem;"></i></button></div>
+          </div>
+          <div v-for="(m,i) in msgs" :key="i" class="mb-3">
+            <div v-if="m.role==='user'" class="d-flex justify-content-end"><div class="yupi-bubble-user px-3 py-2" style="font-size:.78rem;max-width:90%;">{{ m.text }}</div></div>
+            <div v-else class="chat-msg-bot d-flex gap-2"><span class="flex-shrink-0 d-inline-flex align-items-center justify-content-center rounded-circle" style="width:24px;height:24px;background:var(--up1-color-primary-50);color:var(--up1-color-primary);"><i class="bi bi-stars" style="font-size:.7rem;"></i></span><div class="flex-grow-1"><div style="font-size:.78rem;color:var(--up1-text-secondary);line-height:1.55;" v-html="m.text"></div><div class="chat-actions d-flex gap-1 mt-1"><button class="chat-act-btn" title="Copiar"><i class="bi bi-clipboard"></i></button><button class="chat-act-btn" title="Útil"><i class="bi bi-hand-thumbs-up"></i></button><button class="chat-act-btn" title="No útil"><i class="bi bi-hand-thumbs-down"></i></button></div></div></div>
+          </div>
+        </div>
+        <div class="px-4 pb-4 pt-2">
+          <div class="d-flex align-items-center border rounded-3 px-2" style="border-color:var(--up1-border-color)!important;">
+            <input v-model="input" @keyup.enter="send(input)" type="text" class="yupi-input flex-grow-1 px-2 py-2" style="font-size:.8rem;outline:none;" placeholder="Escribe un mensaje...">
+            <button @click="send(input)" class="btn btn-primary btn-sm d-flex align-items-center" style="padding:.25rem .5rem;"><i class="bi bi-send-fill" style="font-size:.7rem;"></i></button>
+          </div>
+          <div class="text-center mt-2" style="font-size:9px;color:var(--up1-text-muted);">Yupi puede cometer errores, revisa tu respuesta.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ===== YUPI FLOTANTE ===== -->
+  <div v-if="chatOpen && !chatDocked" class="yupi-float d-flex flex-column">
+    <div class="d-flex justify-content-between align-items-center px-3 pt-3 pb-2 border-bottom" style="border-color:var(--up1-border-color)!important;">
+      <div class="d-flex align-items-center gap-2 fw-bold"><i class="bi bi-stars" style="color:var(--up1-color-primary);"></i> Yupi</div>
+      <div class="d-flex gap-1">
+        <button @click="chatDocked=true" class="btn btn-icon-minimal btn-sm" title="Acoplar"><i class="bi bi-layout-sidebar-inset-reverse"></i></button>
+        <button @click="chatOpen=false" class="btn btn-icon-minimal btn-sm" title="Cerrar"><i class="bi bi-x-lg"></i></button>
+      </div>
+    </div>
+    <div class="flex-grow-1 overflow-auto px-3 py-2 yupi-scroll">
+      <div v-if="msgs.length===0" class="h-100 d-flex flex-column align-items-center justify-content-center text-center gap-3">
+        <div><div class="fw-bold" style="color:var(--up1-color-primary);">Hola, Esteban</div><div style="color:var(--up1-text-muted);font-size:.85rem;">¿Qué hacemos hoy con los esquemas de nivel?</div></div>
+        <div class="d-flex flex-column gap-2 w-100"><button v-for="s in suggestions" :key="s.text" @click="send(s.text)" class="yupi-suggest px-3 py-2 d-flex align-items-center justify-content-between"><span>{{ s.text }}</span><i :class="['bi',s.icon]" style="color:var(--up1-color-primary);font-size:.75rem;"></i></button></div>
+      </div>
+      <div v-for="(m,i) in msgs" :key="i" class="mb-3">
+        <div v-if="m.role==='user'" class="d-flex justify-content-end"><div class="yupi-bubble-user px-3 py-2" style="font-size:.78rem;max-width:90%;">{{ m.text }}</div></div>
+        <div v-else class="chat-msg-bot d-flex gap-2"><span class="flex-shrink-0 d-inline-flex align-items-center justify-content-center rounded-circle" style="width:22px;height:22px;background:var(--up1-color-primary-50);color:var(--up1-color-primary);"><i class="bi bi-stars" style="font-size:.65rem;"></i></span><div class="flex-grow-1"><div style="font-size:.78rem;color:var(--up1-text-secondary);line-height:1.55;" v-html="m.text"></div><div class="chat-actions d-flex gap-1 mt-1"><button class="chat-act-btn" title="Copiar"><i class="bi bi-clipboard"></i></button><button class="chat-act-btn" title="Útil"><i class="bi bi-hand-thumbs-up"></i></button><button class="chat-act-btn" title="No útil"><i class="bi bi-hand-thumbs-down"></i></button></div></div></div>
+      </div>
+    </div>
+    <div class="px-3 pb-3 pt-2">
+      <div class="d-flex align-items-center rounded-pill px-2" style="background:var(--up1-bg-secondary);">
+        <input v-model="input" @keyup.enter="send(input)" type="text" class="yupi-input flex-grow-1 px-2 py-2" style="font-size:.8rem;outline:none;background:transparent;" placeholder="Escribe un mensaje...">
+        <button @click="send(input)" class="btn btn-primary btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width:30px;height:30px;padding:0;"><i class="bi bi-send-fill" style="font-size:.7rem;"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FAB ===== -->
+  <button v-if="!chatDocked || !chatOpen" @click="chatOpen=!chatOpen" class="yupi-fab btn btn-primary rounded-circle d-flex align-items-center justify-content-center" :title="chatOpen ? 'Cerrar Yupi' : 'Abrir Yupi'">
+    <span v-if="!chatOpen" class="ping"></span>
+    <i class="position-relative" :class="chatOpen ? 'bi bi-x-lg fs-5' : 'bi bi-stars fs-4'"></i>
+  </button>
+
+  <!-- ================= MODAL CREAR / EDITAR ================= -->
+  <div v-if="editOpen && editModel" class="m-modal-bd" @click.self="editOpen=false">
+    <div class="m-modal recorddetail mode-edit" role="dialog" aria-modal="true" :aria-label="editKind==='scheme' ? 'Esquema de nivel' : 'Escala de cobertura'">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1.05rem;">
+          <i class="bi" :class="editKind==='scheme' ? 'bi-bar-chart-steps' : 'bi-signpost-split'" style="color:var(--up1-color-primary);"></i>
+          {{ editIsNew ? (editKind==='scheme' ? 'Nuevo esquema de nivel' : 'Nueva escala de cobertura') : (editKind==='scheme' ? 'Editar esquema de nivel' : 'Editar escala de cobertura') }}
+        </h5>
+        <button class="btn btn-icon-minimal btn-sm" @click="editOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <!-- Cabecera común -->
+      <div class="row g-2 mb-2">
+        <div class="col-md-3"><label class="field-label">Código<span class="req-mark">*</span></label><input v-model="editModel.code" class="form-control form-control-sm" :placeholder="editKind==='scheme' ? 'ESC-4N' : 'COB-IRM'"></div>
+        <div class="col-md-9"><label class="field-label">Nombre<span class="req-mark">*</span></label><input v-model="editModel.name" class="form-control form-control-sm" :placeholder="editKind==='scheme' ? 'Ej. Escala 4 niveles' : 'Ej. Cobertura curricular'"></div>
+      </div>
+      <div class="mb-2"><label class="field-label">Descripción</label><input v-model="editModel.description" class="form-control form-control-sm" placeholder="Uso previsto"></div>
+      <div v-if="editKind==='scheme'" class="mb-3">
+        <label class="field-label">Tipo de escala<span class="req-mark">*</span></label>
+        <select v-model="editModel.kind" class="form-select form-select-sm" style="max-width:260px;">
+          <option>Cualitativa</option><option>Cuantitativa</option><option>Mixta</option>
+        </select>
+        <span class="vf-help">{{ kindHelp(editModel.kind) }}</span>
+      </div>
+
+      <!-- ===== SCHEME: editor único de niveles ===== -->
+      <template v-if="editKind==='scheme'">
+        <h6 class="fw-bold d-flex align-items-center gap-2 mb-2" style="font-size:.9rem;"><i class="bi bi-list-ol" style="color:var(--up1-color-primary);"></i> Niveles <span class="rl-info" style="font-weight:400;">(orden de logro creciente)</span></h6>
+        <div class="ls-edit-head">
+          <span></span><span>Nombre *</span><span>Código *</span><span>Peso</span>
+          <span class="thr">Mín.</span><span class="thr">Máx.</span><span>Logrado</span><span></span>
+        </div>
+        <div v-for="(lv,i) in editModel.levels" :key="i" class="ls-edit-row" :class="{qual: editModel.kind==='Cualitativa'}">
+          <span class="drag" @click="moveLevel(i,-1)" :style="{visibility: i===0 ? 'hidden':'visible'}" title="Subir"><i class="bi bi-chevron-up"></i></span>
+          <input v-model="lv.name" class="form-control form-control-sm" placeholder="Ej. Competente">
+          <input v-model="lv.code" class="form-control form-control-sm" placeholder="L2">
+          <input v-model.number="lv.weight" type="number" step="0.1" class="form-control form-control-sm">
+          <input v-model.number="lv.min" type="number" step="0.1" class="form-control form-control-sm thr" :disabled="i>0" :title="i>0 ? 'Se hereda del valor máximo del nivel anterior' : 'Valor mínimo del primer nivel'">
+          <input v-model.number="lv.max" @input="syncMins" type="number" step="0.1" class="form-control form-control-sm thr">
+          <div class="form-check form-switch d-flex justify-content-center mb-0"><input class="form-check-input ls-mini-toggle" type="checkbox" v-model="lv.isAchieved"></div>
+          <button class="btn btn-icon-minimal btn-sm" @click="removeLevel(i)" title="Eliminar nivel"><i class="bi bi-trash"></i></button>
+        </div>
+        <button class="ls-add mt-2" @click="addLevel()"><i class="bi bi-plus-lg"></i> Agregar nivel</button>
+
+        <div class="rounded p-2 mt-3 d-flex align-items-start gap-2" :class="validation.ok ? 'ls-valid-ok' : 'ls-valid-warn'" style="font-size:.78rem;">
+          <i :class="validation.ok ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill'" class="mt-1"></i>
+          <div>
+            <div class="fw-bold">{{ validation.ok ? 'Escala válida' : 'Revisa la escala' }}</div>
+            <div v-if="editModel.kind==='Cualitativa'">Escala cualitativa: sin umbrales numéricos; el nivel se asigna por evidencia. Los rangos quedan deshabilitados.</div>
+            <ul v-else-if="!validation.ok" class="mb-0 ps-3">
+              <li v-for="(msg,mi) in validation.messages" :key="mi">{{ msg }}</li>
+            </ul>
+            <div v-else>Los rangos son consecutivos, sin solapes ni huecos. Al menos un nivel marcado como logrado.</div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ===== SCALE: editor de valores ===== -->
+      <template v-else>
+        <h6 class="fw-bold d-flex align-items-center gap-2 mb-2" style="font-size:.9rem;"><i class="bi bi-signpost-split" style="color:var(--up1-color-primary);"></i> Valores <span class="rl-info" style="font-weight:400;">(orden de progresión de cobertura)</span></h6>
+        <div class="sc-edit-head">
+          <span></span><span>Nombre *</span><span>Código *</span><span>Descripción</span><span></span>
+        </div>
+        <div v-for="(vv,i) in editModel.values" :key="i" class="sc-edit-row">
+          <span class="drag" @click="moveValue(i,-1)" :style="{visibility: i===0 ? 'hidden':'visible'}" title="Subir"><i class="bi bi-chevron-up"></i></span>
+          <input v-model="vv.name" class="form-control form-control-sm" placeholder="Ej. Introduce">
+          <input v-model="vv.code" class="form-control form-control-sm" placeholder="I">
+          <input v-model="vv.description" class="form-control form-control-sm" placeholder="Qué representa este valor (opcional)">
+          <button class="btn btn-icon-minimal btn-sm" @click="removeValue(i)" title="Eliminar valor"><i class="bi bi-trash"></i></button>
+        </div>
+        <button class="ls-add mt-2" @click="addValue()"><i class="bi bi-plus-lg"></i> Agregar valor</button>
+
+        <div class="rounded p-2 mt-3 d-flex align-items-start gap-2" :class="validation.ok ? 'ls-valid-ok' : 'ls-valid-warn'" style="font-size:.78rem;">
+          <i :class="validation.ok ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill'" class="mt-1"></i>
+          <div>
+            <div class="fw-bold">{{ validation.ok ? 'Escala válida' : 'Revisa la escala' }}</div>
+            <ul v-if="!validation.ok" class="mb-0 ps-3"><li v-for="(msg,mi) in validation.messages" :key="mi">{{ msg }}</li></ul>
+            <div v-else>Al menos 2 valores, todos con nombre y código.</div>
+          </div>
+        </div>
+      </template>
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button class="btn btn-sm btn-outline-secondary" @click="editOpen=false">Cancelar</button>
+        <button class="btn btn-primary btn-sm" :disabled="!validation.ok || !editModel.code || !editModel.name" @click="save()">Guardar {{ editKind==='scheme' ? 'esquema' : 'escala' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL CAMBIO DE ESTADO ================= -->
+  <div v-if="stOpen && stMatrix" class="m-modal-bd" @click.self="stOpen=false">
+    <div class="m-modal" style="max-width:460px;">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0 d-flex align-items-center gap-2" style="font-size:1.05rem;"><i class="bi bi-arrow-repeat" style="color:var(--up1-color-primary);"></i> Cambio de estado</h5>
+        <button class="btn btn-icon-minimal btn-sm" @click="stOpen=false" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="mb-3 rl-info">Matriz <strong>{{ stMatrix.name }}</strong> — estado actual: <span class="badge status-badge" :class="statusClass(stMatrix.status)">{{ stMatrix.status }}</span></div>
+      <div v-if="stOptions.length" class="mb-2">
+        <label class="field-label">Nuevo estado<span class="req-mark">*</span></label>
+        <select v-model="stTarget" class="form-select form-select-sm">
+          <option value="" disabled>Selecciona…</option>
+          <option v-for="o in stOptions" :key="o.to" :value="o.to">{{ o.to }}</option>
+        </select>
+      </div>
+      <div v-else class="ls-valid-warn rounded p-2 mb-2" style="font-size:.8rem;">No hay transiciones disponibles desde este estado.</div>
+      <div v-if="stTarget" class="mb-2">
+        <label class="field-label">Comentario <span v-if="stNeedsComment" class="req-mark">*</span></label>
+        <textarea v-model="stComment" class="form-control form-control-sm" rows="2" :placeholder="stNeedsComment ? 'Requerido para esta transición' : 'Opcional'"></textarea>
+      </div>
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button class="btn btn-sm btn-outline-secondary" @click="stOpen=false">Cancelar</button>
+        <button class="btn btn-primary btn-sm" :disabled="!stTarget || (stNeedsComment && !stComment.trim())" @click="confirmStatus()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOASTS ================= -->
+  <div class="position-fixed d-flex flex-column gap-2" style="bottom:24px;left:24px;z-index:1200;">
+    <div v-for="t in toasts" :key="t.id" class="toast-wrap shadow rounded-end p-3 d-flex gap-3 animate-fade-in" style="width:340px;">
+      <i class="bi bi-check-circle-fill fs-5" style="color:var(--up1-color-primary);"></i>
+      <div><div class="fw-bold" style="font-size:.85rem;">{{ t.title }}</div><div class="rl-info" style="font-size:.75rem;">{{ t.message }}</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp, ref, computed, nextTick } = Vue;
+
+/* ===== Componente recursivo: nodo de competencia + rúbrica (grid dimensión × nivel) ===== */
+const CompetencyNode = {
+  name:'competency-node',
+  props:{ node:{type:Object,required:true}, levels:{type:Array,default:()=>[]}, edit:{type:Boolean,default:false}, sub:{type:Boolean,default:false}, onRemove:{type:Function,default:null} },
+  methods:{
+    toggle(){ this.node._open = !this.node._open; },
+    isBranch(n){ return !n.isHolistic && n.children && n.children.length>0; },
+    modelLabel(m){ return m==='Criterion' ? 'Por criterios' : m==='LearningOutcome' ? 'Por RA' : 'Holística'; },
+    addDim(){ if(!this.node.dimensions) this.node.dimensions=[]; const n=this.node.dimensions.length+1; this.node.dimensions.push({code:'D'+n, name:'', weight:1, descriptors:{}}); },
+    removeDim(i){ this.node.dimensions.splice(i,1); },
+    addChild(){ if(!this.node.children) this.node.children=[]; const n=this.node.children.length+1; this.node.children.push({code:this.node.code+'.'+n, name:'', recordType:'SubCompetency', isHolistic:false, rubricModel:'Holistic', _open:true, dimensions:[{code:'H',name:'Desempeño global',weight:1,descriptors:{}}], children:[]}); },
+    removeChild(i){ this.node.children.splice(i,1); },
+  },
+  template:`
+  <div class="cmp-card" :class="{sub: sub}">
+    <div class="cmp-head" @click="toggle">
+      <i class="bi" :class="node._open ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+      <span class="cmp-code">{{ node.code }}</span>
+      <span class="cmp-name">{{ node.name || '(sin nombre)' }}</span>
+      <span v-if="node.isHolistic" class="cmp-badge" title="No tiene subcompetencias">Sin subcompetencias</span>
+      <span v-if="isBranch(node)" class="cmp-badge" title="Se agrega desde sus subcompetencias">Por subcompetencias</span>
+      <span v-else class="cmp-badge" title="Modelo de rúbrica">{{ modelLabel(node.rubricModel) }}</span>
+      <button v-if="edit && onRemove" class="btn btn-icon-minimal btn-sm" @click.stop="onRemove()" title="Eliminar"><i class="bi bi-trash"></i></button>
+    </div>
+    <div v-if="node._open" class="cmp-body">
+      <div v-if="edit" class="row g-2 mb-2">
+        <div :class="isBranch(node) ? 'col-4' : 'col-3'"><label class="field-label">Código</label><input v-model="node.code" class="form-control form-control-sm"></div>
+        <div :class="isBranch(node) ? 'col-8' : 'col-6'"><label class="field-label">Nombre</label><input v-model="node.name" class="form-control form-control-sm"></div>
+        <div v-if="!isBranch(node)" class="col-3"><label class="field-label">Modelo de rúbrica</label><select v-model="node.rubricModel" class="form-select form-select-sm"><option value="Holistic">Holística</option><option value="Criterion">Por criterios</option><option value="LearningOutcome">Por RA</option></select></div>
+      </div>
+      <div v-if="edit" class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" v-model="node.isHolistic" :id="'hol_'+node.code"><label class="form-check-label field-label" :for="'hol_'+node.code" style="margin-bottom:0;">Competencia holística (sin subcompetencias)</label></div>
+
+      <div v-if="isBranch(node)" class="up1-card p-3 mb-2" style="font-size:.8rem;color:var(--up1-text-secondary);"><i class="bi bi-diagram-2" style="color:var(--up1-color-primary);"></i> El nivel de <strong>{{ node.code }}</strong> se calcula por <strong>agregación</strong> de sus {{ node.children.length }} subcompetencia(s); no tiene rúbrica propia.</div>
+      <div v-if="!isBranch(node)" class="mb-2" style="overflow-x:auto;">
+        <table class="rub-grid">
+          <thead><tr>
+            <th style="text-align:left;">{{ node.rubricModel==='Criterion' ? 'Criterio' : node.rubricModel==='LearningOutcome' ? 'Resultado de aprendizaje' : 'Dimensión' }}</th>
+            <th v-for="(lvl,li) in levels" :key="li">{{ lvl }}</th>
+            <th v-if="edit" style="width:34px;"></th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="(dim,di) in node.dimensions" :key="di">
+              <td class="dim">
+                <template v-if="edit">
+                  <input v-model="dim.name" class="form-control form-control-sm mb-1" placeholder="Nombre">
+                  <div v-if="node.rubricModel!=='Holistic'" class="d-flex gap-2">
+                    <div><div class="vf-help" style="margin:0 0 1px;">Código</div><input v-model="dim.code" class="form-control form-control-sm" style="font-size:.72rem;width:70px;"></div>
+                    <div><div class="vf-help" style="margin:0 0 1px;">Peso</div><input v-model.number="dim.weight" type="number" step="0.1" class="form-control form-control-sm" style="font-size:.72rem;width:70px;"></div>
+                  </div>
+                </template>
+                <template v-else>
+                  <div v-if="node.rubricModel!=='Holistic'" class="rl-info" style="font-size:.66rem;font-weight:600;">{{ dim.code }} · peso {{ dim.weight }}</div>
+                  <div style="font-weight:600;">{{ dim.name }}</div>
+                </template>
+              </td>
+              <td v-for="(lvl,li) in levels" :key="li">
+                <textarea v-if="edit" v-model="dim.descriptors[lvl]" placeholder="Descriptor..."></textarea>
+                <div v-else class="rub-cell-view">{{ dim.descriptors[lvl] || '—' }}</div>
+              </td>
+              <td v-if="edit"><button class="btn btn-icon-minimal btn-sm" @click="removeDim(di)" title="Eliminar fila"><i class="bi bi-trash"></i></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button v-if="edit && !isBranch(node) && node.rubricModel!=='Holistic'" class="ls-add mb-2" @click="addDim"><i class="bi bi-plus-lg"></i> Agregar {{ node.rubricModel==='LearningOutcome' ? 'resultado de aprendizaje' : 'criterio' }}</button>
+
+      <div v-if="!node.isHolistic && ((node.children && node.children.length) || edit)" class="cmp-children">
+        <competency-node v-for="(ch,ci) in node.children" :key="ci" :node="ch" :levels="levels" :edit="edit" :sub="true" :on-remove="()=>removeChild(ci)"></competency-node>
+        <button v-if="edit" class="ls-add" @click="addChild"><i class="bi bi-plus-lg"></i> Agregar subcompetencia</button>
+      </div>
+    </div>
+  </div>`
+};
+
+createApp({
+  components:{ 'competency-node': CompetencyNode },
+  setup(){
+    /* ---------- shell ---------- */
+    const apps = [
+      { id:'design',     name:'Curriculum Design',    icon:'bi-mortarboard-fill' },
+      { id:'mapping',    name:'Curriculum Mapping',   icon:'bi-diagram-3' },
+      { id:'assessment', name:'Learning Assessment',  icon:'bi-clipboard-check' },
+      { id:'retention',  name:'Retention & Wellbeing',icon:'bi-heart-pulse' },
+    ];
+    const role = ref('Administrador académico');
+    const view = ref('list');
+    const objKey = ref('matrices');
+    const tab = ref('general');
+
+    /* ---------- datos: esquemas de nivel ---------- */
+    const schemes = ref([
+      {
+        code:'ESC-4N', name:'Escala 4 niveles', kind:'Mixta', isPlatformDefault:false, inUse:true,
+        description:'Escala institucional de 4 niveles usada por matrices de especialidad y sellos.',
+        levels:[
+          {position:1,name:'Insuficiente',  code:'L1',weight:1,isAchieved:false,min:0.0,max:2.0,descriptor:'No evidencia el desempeño mínimo esperado.'},
+          {position:2,name:'Competente',    code:'L2',weight:2,isAchieved:true, min:2.0,max:3.0,descriptor:'Cumple el desempeño esperado en situaciones habituales.'},
+          {position:3,name:'Destacado',     code:'L3',weight:3,isAchieved:true, min:3.0,max:3.5,descriptor:'Supera lo esperado y fundamenta sus decisiones.'},
+          {position:4,name:'Sobresaliente', code:'L4',weight:4,isAchieved:true, min:3.5,max:4.0,descriptor:'Desempeño ejemplar; promueve la mejora en su entorno.'},
+        ],
+        usedBy:[
+          {name:'Especialidad Enfermería', type:'Specific', status:'Vigente'},
+          {name:'Sello valórico institucional', type:'Transversal', status:'Vigente'},
+        ],
+        history:[
+          {date:'2026-05-12',user:'esteban.cortes',action:'Edición',detail:'Ajuste de umbral de Destacado (3.0–3.4).'},
+          {date:'2026-02-03',user:'esteban.cortes',action:'Creación',detail:'Alta del esquema con 4 niveles.'},
+        ],
+      },
+      {
+        code:'ESC-100', name:'Escala 100', kind:'Cuantitativa', isPlatformDefault:false, inUse:true,
+        description:'Escala numérica 0–100 sin rúbrica cualitativa (logro por umbral).',
+        levels:[
+          {position:1,name:'Inicial',   code:'N1',weight:1,isAchieved:false,min:0, max:60, descriptor:''},
+          {position:2,name:'Suficiente',code:'N2',weight:2,isAchieved:true, min:60,max:80, descriptor:''},
+          {position:3,name:'Avanzado',  code:'N3',weight:3,isAchieved:true, min:80,max:100,descriptor:''},
+        ],
+        usedBy:[{name:'Competencias genéricas 2026', type:'Generic', status:'Vigente'}],
+        history:[{date:'2026-04-20',user:'esteban.cortes',action:'Creación',detail:'Alta de escala cuantitativa 0–100.'}],
+      },
+      {
+        code:'SELLO-V', name:'Sello valórico', kind:'Cualitativa', isPlatformDefault:false, inUse:true,
+        description:'Escala cualitativa por evidencia, sin nota numérica. Para competencias holísticas.',
+        levels:[
+          {position:1,name:'Insuficiente',  code:'V1',weight:1,isAchieved:false,min:null,max:null,descriptor:'Incumple normas éticas básicas.'},
+          {position:2,name:'Competente',    code:'V2',weight:2,isAchieved:true, min:null,max:null,descriptor:'Actúa con integridad en situaciones habituales.'},
+          {position:3,name:'Destacado',     code:'V3',weight:3,isAchieved:true, min:null,max:null,descriptor:'Anticipa dilemas éticos y fundamenta decisiones.'},
+          {position:4,name:'Sobresaliente', code:'V4',weight:4,isAchieved:true, min:null,max:null,descriptor:'Promueve la cultura ética en su entorno.'},
+        ],
+        usedBy:[{name:'Sello valórico institucional', type:'Transversal', status:'Vigente'}],
+        history:[{date:'2026-03-10',user:'esteban.cortes',action:'Creación',detail:'Alta de escala cualitativa por evidencia.'}],
+      },
+      {
+        code:'01', name:'Pregrado (migrado de legacy)', kind:'Mixta', isPlatformDefault:false, inUse:false,
+        description:'Migración del esquema legacy "01 Pregrado": los 5 niveles de desempeño quedan como lista plana de niveles.',
+        levels:[
+          {position:1,name:'Deficiente', code:'P1',weight:1,isAchieved:false,min:0.0,max:3.0,descriptor:'Migrado desde nivel de desempeño legacy.'},
+          {position:2,name:'Insuficiente',code:'P2',weight:2,isAchieved:false,min:3.0,max:4.0,descriptor:'Migrado desde nivel de desempeño legacy.'},
+          {position:3,name:'Aceptable',  code:'P3',weight:3,isAchieved:true, min:4.0,max:5.0,descriptor:'Migrado desde nivel de desempeño legacy.'},
+          {position:4,name:'Bueno',      code:'P4',weight:4,isAchieved:true, min:5.0,max:6.0,descriptor:'Migrado desde nivel de desempeño legacy.'},
+          {position:5,name:'Excelente',  code:'P5',weight:5,isAchieved:true, min:6.0,max:7.0,descriptor:'Migrado desde nivel de desempeño legacy.'},
+        ],
+        usedBy:[],
+        history:[{date:'2026-07-17',user:'esteban.cortes',action:'Migración',detail:'Importado desde mantenedor legacy level-scheme-v2 (01 Pregrado).'}],
+      },
+      {
+        code:'PLAT-3N', name:'3 niveles (base plataforma)', kind:'Cualitativa', isPlatformDefault:true, inUse:true,
+        description:'Esquema base provisto por la plataforma (CAP-MAP-008 R1). No editable por la institución.',
+        levels:[
+          {position:1,name:'Introductorio',code:'B1',weight:1,isAchieved:false,min:null,max:null,descriptor:'Aproximación inicial a la competencia.'},
+          {position:2,name:'En Desarrollo',code:'B2',weight:2,isAchieved:true, min:null,max:null,descriptor:'Desempeño en progreso hacia el estándar.'},
+          {position:3,name:'Dominio',      code:'B3',weight:3,isAchieved:true, min:null,max:null,descriptor:'Desempeño consolidado en el estándar.'},
+        ],
+        usedBy:[{name:'Matriz base demo', type:'Generic', status:'Vigente'}],
+        history:[{date:'2026-01-01',user:'plataforma',action:'Provisión',detail:'Esquema base de plataforma (3 niveles).'}],
+      },
+    ]);
+
+    /* ---------- datos de contexto (list-only) ---------- */
+    const matrices = ref([
+      { code:'MC-ENF', name:'Especialidad Enfermería', type:'Específicas', scheme:'Escala 4 niveles',
+        schemeLevels:['Insuficiente','Competente','Destacado','Sobresaliente'],
+        status:'Activa', owner:'Facultad de Salud', createdBy:'esteban.cortes',
+        description:'Matriz de competencias específicas de la especialidad de Enfermería.',
+        plans:[
+          {code:'697', plan:'Enfermería 2026', carrera:'ENFERMERÍA', fac:'Salud'},
+          {code:'701', plan:'Enfermería 2022', carrera:'ENFERMERÍA', fac:'Salud'},
+        ],
+        competencies:[
+          { code:'CE1', name:'Aplica el proceso de atención de enfermería', recordType:'Competency', isHolistic:false, rubricModel:'Criterion', _open:true,
+            dimensions:[
+              {code:'CR1', name:'Valora al paciente según patrones funcionales', weight:0.4, descriptors:{'Insuficiente':'No identifica patrones funcionales.','Competente':'Valora los patrones prioritarios con apoyo docente.','Destacado':'Valora los 11 patrones de forma autónoma.','Sobresaliente':'Valora integralmente justificando con evidencia.'}},
+              {code:'CR2', name:'Formula diagnósticos NANDA', weight:0.3, descriptors:{'Insuficiente':'No formula diagnósticos.','Competente':'Formula diagnósticos básicos.','Destacado':'Formula diagnósticos priorizados.','Sobresaliente':'Formula y prioriza con juicio clínico.'}},
+              {code:'CR3', name:'Ejecuta intervenciones seguras', weight:0.3, descriptors:{'Insuficiente':'Requiere supervisión total.','Competente':'Ejecuta con supervisión.','Destacado':'Ejecuta de forma autónoma.','Sobresaliente':'Ejecuta y evalúa resultados.'}},
+            ], children:[] },
+          { code:'CE2', name:'Actúa con ética profesional', recordType:'Competency', isHolistic:true, rubricModel:'Holistic', _open:false,
+            dimensions:[ {code:'H', name:'Desempeño ético global', weight:1, descriptors:{'Insuficiente':'Incumple normas éticas básicas.','Competente':'Actúa con integridad en situaciones habituales.','Destacado':'Anticipa dilemas éticos.','Sobresaliente':'Promueve la cultura ética en su entorno.'}} ], children:[] },
+        ],
+        comments:[
+          {author:'María Pérez · Comité', date:'2026-05-10', text:'Revisar la ponderación de CR1, parece alta.'},
+          {author:'esteban.cortes · PM', date:'2026-05-11', text:'Ajustado a 0.4 según acta.'},
+        ] },
+      { code:'MC-GEN', name:'Competencias genéricas 2026', type:'Genéricas', scheme:'Escala 100',
+        schemeLevels:['Inicial','Suficiente','Avanzado'],
+        status:'En revisión', owner:'Vicerrectoría Académica', createdBy:'esteban.cortes',
+        description:'Matriz institucional de competencias genéricas.',
+        plans:[{code:'160', plan:'Plan común 2026', carrera:'TRANSVERSAL', fac:'Institucional'}],
+        competencies:[
+          { code:'CG1', name:'Comunicación efectiva', recordType:'Competency', isHolistic:false, rubricModel:'LearningOutcome', _open:true,
+            dimensions:[
+              {code:'RA1', name:'Redacta informes técnicos', weight:0.5, descriptors:{'Inicial':'Redacta con errores.','Suficiente':'Redacta informes claros.','Avanzado':'Redacta con rigor y evidencia.'}},
+              {code:'RA2', name:'Expone oralmente con evidencia', weight:0.5, descriptors:{'Inicial':'Expone con dificultad.','Suficiente':'Expone de forma estructurada.','Avanzado':'Expone y argumenta con solvencia.'}},
+            ], children:[] },
+          { code:'CG2', name:'Pensamiento crítico', recordType:'Competency', isHolistic:true, rubricModel:'Holistic', _open:false,
+            dimensions:[ {code:'H', name:'Pensamiento crítico global', weight:1, descriptors:{'Inicial':'Describe sin analizar.','Suficiente':'Analiza con apoyo.','Avanzado':'Evalúa y fundamenta.'}} ], children:[] },
+        ],
+        comments:[{author:'Comité curricular', date:'2026-06-01', text:'Pendiente validar CG2 antes de aprobar.'}] },
+      { code:'MC-SELLO', name:'Sello valórico institucional', type:'Transversales', scheme:'Sello valórico',
+        schemeLevels:['Insuficiente','Competente','Destacado','Sobresaliente'],
+        status:'Activa', owner:'Vicerrectoría Académica', createdBy:'esteban.cortes',
+        description:'Matriz transversal del sello valórico, compartida por todas las carreras.',
+        plans:[],
+        competencies:[
+          { code:'SV1', name:'Compromiso ético', recordType:'Competency', isHolistic:true, rubricModel:'Holistic', _open:true,
+            dimensions:[ {code:'H', name:'Compromiso ético (global)', weight:1, descriptors:{'Insuficiente':'Incumple normas éticas básicas.','Competente':'Actúa con integridad en situaciones habituales.','Destacado':'Anticipa dilemas éticos y fundamenta decisiones.','Sobresaliente':'Promueve la cultura ética en su entorno.'}} ], children:[] },
+        ],
+        comments:[] },
+      { code:'MC-ING', name:'Ingeniería Civil Industrial 2026', type:'Específicas', scheme:'Escala 4 niveles',
+        schemeLevels:['Insuficiente','Competente','Destacado','Sobresaliente'],
+        status:'Borrador', owner:'Facultad de Ingeniería', createdBy:'esteban.cortes',
+        description:'',
+        plans:[],
+        competencies:[
+          { code:'CEI1', name:'Diseña soluciones de ingeniería', recordType:'Competency', isHolistic:false, rubricModel:'Criterion', _open:true,
+            dimensions:[ {code:'CR1', name:'Modela el problema', weight:0.5, descriptors:{}}, {code:'CR2', name:'Evalúa alternativas', weight:0.5, descriptors:{}} ],
+            children:[
+              { code:'CEI1.1', name:'Modela con apoyo (nivel intermedio)', recordType:'SubCompetency', isHolistic:false, rubricModel:'Criterion', _open:false, dimensions:[{code:'CR1',name:'Modela con guía',weight:1,descriptors:{}}], children:[] },
+            ] },
+        ],
+        comments:[] },
+    ]);
+    const profiles = ref([
+      {code:'PE-ENF', name:'Perfil de egreso - Enfermería', plan:'Enfermería 2026', matrix:'Especialidad Enfermería', competencias:8, status:'Vigente'},
+      {code:'PE-ICI', name:'Perfil de egreso - Ing. Civil Industrial', plan:'ICI 2025', matrix:'Competencias genéricas 2026', competencias:6, status:'Borrador'},
+    ]);
+    const tributacion = ref([
+      {course:'Enfermería del adulto', competency:'CE1 - Proceso de atención', level:'Competente', intensity:'Master', type:'Desarrolla y evalúa'},
+      {course:'Ética profesional', competency:'Compromiso ético', level:'Destacado', intensity:'Reinforce', type:'Desarrolla'},
+      {course:'Metodología de la investigación', competency:'CE3 - Comunicación técnica', level:'Suficiente', intensity:'Introduce', type:'Evalúa'},
+    ]);
+
+    /* ---------- datos: escalas de cobertura (alignmentScale) ---------- */
+    const scales = ref([
+      {
+        code:'COB-IRM', name:'Cobertura curricular (base plataforma)', isPlatformDefault:true, inUse:true,
+        description:'Escala base de plataforma I/R/M (Introduce / Reinforce / Master), convención estándar de acreditación. No editable por la institución.',
+        values:[
+          {position:1,code:'I',name:'Introduce', description:'El curso presenta la competencia por primera vez.'},
+          {position:2,code:'R',name:'Reinforce', description:'El curso refuerza y profundiza la competencia.'},
+          {position:3,code:'M',name:'Master',    description:'El curso consolida el dominio de la competencia.'},
+        ],
+        usedBy:[{name:'Plan Enfermería 2026', type:'planEntry', status:'Vigente'}],
+        history:[{date:'2026-01-01',user:'plataforma',action:'Provisión',detail:'Escala base de plataforma I/R/M.'}],
+      },
+      {
+        code:'INT-4', name:'Intensidad de alineamiento (4 niveles)', isPlatformDefault:false, inUse:true,
+        description:'Escala institucional de intensidad de alineamiento curso → competencia (ninguno / bajo / medio / alto).',
+        values:[
+          {position:1,code:'NONE',name:'Ninguno', description:'Sin contribución a la competencia.'},
+          {position:2,code:'LOW', name:'Bajo',    description:'Contribución marginal.'},
+          {position:3,code:'MED', name:'Medio',   description:'Contribución relevante.'},
+          {position:4,code:'HIGH',name:'Alto',    description:'Contribución central del curso.'},
+        ],
+        usedBy:[{name:'Plan ICI 2025', type:'planEntry', status:'Borrador'}],
+        history:[{date:'2026-04-18',user:'esteban.cortes',action:'Creación',detail:'Alta de escala de 4 niveles de intensidad.'}],
+      },
+      {
+        code:'ABET', name:'Cobertura ABET', isPlatformDefault:false, inUse:false,
+        description:'Escala de cobertura alineada a la convención ABET.',
+        values:[
+          {position:1,code:'I',name:'Introduced', description:''},
+          {position:2,code:'E',name:'Emphasized', description:''},
+          {position:3,code:'U',name:'Utilized',   description:''},
+        ],
+        usedBy:[],
+        history:[{date:'2026-05-02',user:'esteban.cortes',action:'Creación',detail:'Alta de escala ABET.'}],
+      },
+    ]);
+
+    const objTabs = [
+      { key:'scales', title:'Escalas de cobertura', subtitle:'Curriculum Mapping · alignmentScale. Escala configurable con que un curso tributa a una competencia; reemplaza el enum fijo intensity (default plataforma I/R/M).',
+        cols:[
+          {key:'code',label:'Código'},
+          {key:'name',label:'Nombre',type:'link'},
+          {key:'values',label:'N° valores',type:'count'},
+          {key:'isPlatformDefault',label:'Default plataforma',type:'bool'},
+          {key:'inUse',label:'En uso',type:'bool'},
+        ], rows:scales.value },
+      { key:'schemes', title:'Esquemas de nivel', subtitle:'Curriculum Mapping · 2.2 — levelScheme. Escalas de logro reusables entre matrices de competencia (CAP-MAP-008 a 011).',
+        cols:[
+          {key:'code',label:'Código'},
+          {key:'name',label:'Nombre',type:'link'},
+          {key:'kind',label:'Tipo de escala',type:'kind'},
+          {key:'levels',label:'N° niveles',type:'count'},
+          {key:'isPlatformDefault',label:'Default plataforma',type:'bool'},
+          {key:'inUse',label:'En uso',type:'bool'},
+        ], rows:schemes.value },
+      { key:'matrices', title:'Matrices de competencia',
+        cols:[
+          {key:'code',label:'Código'},
+          {key:'name',label:'Nombre',type:'link'},
+          {key:'type',label:'Tipo de matriz'},
+          {key:'scheme',label:'Esquema de nivel',type:'badge'},
+          {key:'status',label:'Estado',type:'status'},
+          {key:'createdBy',label:'Creado por'},
+        ], rows:matrices.value },
+      { key:'tributacion', title:'Tributación', subtitle:'Curriculum Mapping · 2.4 — competencyAlignment. Mapeo curso → competencia (nivel, cobertura, tipo).',
+        cols:[
+          {key:'course',label:'Curso',type:'link'},
+          {key:'competency',label:'Competencia'},
+          {key:'level',label:'Nivel'},
+          {key:'intensity',label:'Cobertura',type:'badge'},
+          {key:'type',label:'Tipo de contribución'},
+        ], rows:tributacion.value },
+      { key:'profiles', title:'Perfil de egreso', subtitle:'Curriculum Mapping · 2.3 — graduationProfile. Competencias y nivel esperado al egreso.',
+        cols:[
+          {key:'code',label:'Código'},
+          {key:'name',label:'Nombre',type:'link'},
+          {key:'plan',label:'Plan de estudios'},
+          {key:'matrix',label:'Matriz',type:'badge'},
+          {key:'competencias',label:'Competencias'},
+          {key:'status',label:'Estado'},
+        ], rows:profiles.value },
+    ];
+
+    const currentObj = computed(()=> objTabs.find(o=>o.key===objKey.value));
+    const current = ref(schemes.value[0]);
+    const detailKind = ref('scheme');   // 'scheme' | 'scale' | 'matrix'
+    const isCatalog = computed(()=> objKey.value==='schemes' || objKey.value==='scales');
+    const isInteractive = computed(()=> objKey.value==='schemes' || objKey.value==='scales' || objKey.value==='matrices');
+    const createLabel = computed(()=> objKey.value==='schemes' ? 'Crear esquema' : objKey.value==='scales' ? 'Crear escala' : objKey.value==='matrices' ? 'Crear matriz' : 'Crear registro');
+
+    const schemeTabs = [
+      {key:'general',label:'General'},{key:'levels',label:'Niveles'},{key:'usage',label:'Uso'},{key:'historial',label:'Historial'},
+    ];
+    const scaleTabs = [
+      {key:'general',label:'General'},{key:'values',label:'Valores'},{key:'usage',label:'Uso'},{key:'historial',label:'Historial'},
+    ];
+    const matrixTabs = [
+      {key:'general',label:'Información general'},{key:'competencias',label:'Competencias'},
+    ];
+    const detailTabs = computed(()=> detailKind.value==='matrix' ? matrixTabs : detailKind.value==='scale' ? scaleTabs : schemeTabs);
+
+    /* ---------- navegación ---------- */
+    const rowMenu = ref(null);
+    const mMatrixEdit = ref(false);
+    const commentsOpen = ref(false);
+    const setObj = (k)=>{ objKey.value=k; view.value='list'; rowMenu.value=null; };
+    const openView = (row)=>{
+      current.value=row;
+      detailKind.value = objKey.value==='scales' ? 'scale' : objKey.value==='matrices' ? 'matrix' : 'scheme';
+      mMatrixEdit.value=false; commentsOpen.value=false;
+      tab.value='general'; view.value='detail';
+    };
+    const openRowMenu = (e,ri)=>{ rowMenu.value = (rowMenu.value && rowMenu.value.ri===ri) ? null : {ri, x:e.clientX, y:e.clientY}; };
+
+    /* ---------- helpers de presentación ---------- */
+    const kindClass = (k)=> k==='Cualitativa' ? 'kind-cual' : (k==='Cuantitativa' ? 'kind-cuant' : 'kind-mixta');
+    const kindHelp = (k)=>{
+      if(k==='Cualitativa') return 'El nivel se asigna por evidencia, sin nota numérica.';
+      if(k==='Cuantitativa') return 'El score cae en un rango numérico que resuelve el nivel; descriptores opcionales.';
+      return 'Combina rango numérico y descriptor cualitativo por nivel.';
+    };
+    const fmt = (v)=> (v===null || v===undefined || v==='') ? '—' : v;
+
+    /* ---------- modal crear / editar ---------- */
+    const editOpen = ref(false);
+    const editModel = ref(null);
+    const editIsNew = ref(false);
+    const editTarget = ref(null);
+    const editKind = ref('scheme');   // 'scheme' | 'scale'
+
+    const kindForContext = ()=> (view.value==='detail') ? detailKind.value : (objKey.value==='scales' ? 'scale' : 'scheme');
+    const clone = (o)=> JSON.parse(JSON.stringify(o));
+    const blankScheme = ()=> ({ code:'', name:'', description:'', kind:'Mixta', isPlatformDefault:false,
+      levels:[ {position:1,name:'',code:'',weight:1,isAchieved:false,min:0,max:0,descriptor:''} ] });
+    const blankScale = ()=> ({ code:'', name:'', description:'', isPlatformDefault:false,
+      values:[ {position:1,code:'',name:'',description:''},{position:2,code:'',name:'',description:''} ] });
+
+    const openCreate = ()=>{
+      if(objKey.value==='matrices'){ openMatrixCreate(); return; }
+      editIsNew.value=true; editTarget.value=null; editKind.value=kindForContext();
+      editModel.value = editKind.value==='scale' ? blankScale() : blankScheme();
+      if(editKind.value==='scheme') syncMins();
+      editOpen.value=true; rowMenu.value=null;
+    };
+    const openEditModal = (row)=>{
+      if(row.isPlatformDefault){ toast('Registro inmutable','El registro base de plataforma no se edita. Puedes duplicarlo para crear el tuyo.'); return; }
+      editKind.value=kindForContext();
+      editIsNew.value=false; editTarget.value=row; editModel.value=clone(row);
+      if(editKind.value==='scheme') syncMins();
+      editOpen.value=true; rowMenu.value=null;
+    };
+    const openClone = (row)=>{
+      editKind.value=kindForContext();
+      editIsNew.value=true; editTarget.value=null;
+      const c=clone(row); c.code=row.code+'-CLON'; c.name=row.name+' (clon)';
+      c.isPlatformDefault=false; c.inUse=false; c.usedBy=[]; c.history=[];
+      editModel.value=c;
+      if(editKind.value==='scheme') syncMins();
+      editOpen.value=true; rowMenu.value=null;
+    };
+
+    /* niveles (scheme) */
+    // el mínimo de cada nivel (salvo el primero) se hereda del máximo del nivel anterior → rangos contiguos
+    const syncMins = ()=>{
+      const m=editModel.value; if(!m || !m.levels) return;
+      for(let i=1;i<m.levels.length;i++){ m.levels[i].min = m.levels[i-1].max; }
+    };
+    const addLevel = ()=>{
+      const a=editModel.value.levels; const prevMax = a.length ? a[a.length-1].max : 0;
+      a.push({position:a.length+1,name:'',code:'',weight:a.length+1,isAchieved:true,min:prevMax,max:prevMax,descriptor:''});
+      syncMins();
+    };
+    const removeLevel = (i)=>{ editModel.value.levels.splice(i,1); renumber(); syncMins(); };
+    const moveLevel = (i,dir)=>{
+      const j=i+dir; const a=editModel.value.levels; if(j<0||j>=a.length) return;
+      [a[i],a[j]]=[a[j],a[i]]; renumber(); syncMins();
+    };
+    const renumber = ()=>{ editModel.value.levels.forEach((lv,idx)=> lv.position=idx+1); };
+
+    /* valores (scale) */
+    const addValue = ()=>{ const n=editModel.value.values.length; editModel.value.values.push({position:n+1,code:'',name:'',description:''}); };
+    const removeValue = (i)=>{ editModel.value.values.splice(i,1); renumberValues(); };
+    const moveValue = (i,dir)=>{ const j=i+dir; const a=editModel.value.values; if(j<0||j>=a.length) return; [a[i],a[j]]=[a[j],a[i]]; renumberValues(); };
+    const renumberValues = ()=>{ editModel.value.values.forEach((vv,idx)=> vv.position=idx+1); };
+
+    const validation = computed(()=>{
+      const m=editModel.value; if(!m) return {ok:true,messages:[]};
+      const msgs=[];
+      if(editKind.value==='scale'){
+        if(!m.values || m.values.length<2) msgs.push('Agrega al menos 2 valores.');
+        if(m.values && m.values.some(v=>!v.name || !v.code)) msgs.push('Cada valor requiere nombre y código.');
+        return { ok: msgs.length===0, messages: msgs };
+      }
+      if(!m.levels.length) msgs.push('Agrega al menos un nivel.');
+      if(m.levels.length && !m.levels.some(l=>l.isAchieved)) msgs.push('Marca al menos un nivel como "logrado".');
+      if(m.kind!=='Cualitativa'){
+        // los mínimos se heredan (rangos contiguos por construcción); solo hay que validar que el máximo no quede por debajo del mínimo
+        const a=m.levels;
+        for(let i=0;i<a.length;i++){
+          if(a[i].min==null||a[i].min===''||a[i].max==null||a[i].max==='') continue;
+          if(Number(a[i].max) < Number(a[i].min)) msgs.push('Nivel "'+(a[i].name||i+1)+'": el valor máximo no puede ser menor que el mínimo'+(i>0?' (heredado del nivel anterior)':'')+'.');
+        }
+      }
+      return { ok: msgs.length===0, messages: msgs };
+    });
+
+    const save = ()=>{
+      const m=editModel.value;
+      if(editKind.value==='scale'){
+        renumberValues();
+        if(editIsNew.value){
+          if(m.inUse===undefined) m.inUse=false; if(!m.usedBy) m.usedBy=[]; if(!m.history) m.history=[];
+          m.history.unshift({date:'2026-07-20',user:'esteban.cortes',action:'Creación',detail:'Alta de la escala con '+m.values.length+' valores.'});
+          scales.value.unshift(m);
+          toast('Escala creada', m.name+' · '+m.values.length+' valores');
+        } else {
+          const idx=scales.value.indexOf(editTarget.value); m.inUse=editTarget.value.inUse;
+          m.history=[{date:'2026-07-20',user:'esteban.cortes',action:'Edición',detail:'Actualización de valores / metadatos.'}].concat(editTarget.value.history||[]);
+          if(idx>-1) scales.value.splice(idx,1,m);
+          if(current.value===editTarget.value) current.value=m;
+          toast('Escala actualizada', m.name+' · '+m.values.length+' valores');
+        }
+      } else {
+        renumber();
+        if(editIsNew.value){
+          if(m.inUse===undefined) m.inUse=false; if(!m.usedBy) m.usedBy=[]; if(!m.history) m.history=[];
+          m.history.unshift({date:'2026-07-20',user:'esteban.cortes',action:'Creación',detail:'Alta del esquema con '+m.levels.length+' niveles.'});
+          schemes.value.unshift(m);
+          toast('Esquema creado', m.name+' · '+m.kind+' · '+m.levels.length+' niveles');
+        } else {
+          const idx=schemes.value.indexOf(editTarget.value); m.inUse=editTarget.value.inUse;
+          m.history=[{date:'2026-07-20',user:'esteban.cortes',action:'Edición',detail:'Actualización de niveles / metadatos.'}].concat(editTarget.value.history||[]);
+          if(idx>-1) schemes.value.splice(idx,1,m);
+          if(current.value===editTarget.value) current.value=m;
+          toast('Esquema actualizado', m.name+' · '+m.levels.length+' niveles');
+        }
+      }
+      editOpen.value=false;
+    };
+
+    /* ---------- matrices ---------- */
+    const mMatrixIsNew = ref(false);
+    const mMatrixTarget = ref(null);
+    const commentDraft = ref('');
+
+    const statusClass = (s)=> s==='Borrador' ? 'bg-dark' : s==='En revisión' ? 'bg-warning' : s==='Aprobada' ? 'bg-info' : s==='Activa' ? 'bg-success' : 'bg-secondary';
+    const matrixKpis = computed(()=>{
+      const rows=matrices.value; const by=(s)=>rows.filter(m=>m.status===s).length;
+      return [
+        {label:'Todas las matrices', value:rows.length, color:'var(--up1-text-primary)'},
+        {label:'Borrador', value:by('Borrador'), color:'var(--up1-text-secondary)'},
+        {label:'En revisión', value:by('En revisión'), color:'var(--up1-color-warning-700)'},
+        {label:'Activas', value:by('Activa'), color:'var(--up1-color-success-500)'},
+      ];
+    });
+    const cloneMatrix = (m)=> JSON.parse(JSON.stringify(m));
+    const blankMatrix = ()=>{ const s=schemes.value[0]; return { code:'', name:'Nueva matriz', type:'Genéricas', scheme:s.name, schemeLevels:s.levels.map(l=>l.name), status:'Borrador', owner:'', createdBy:'esteban.cortes', description:'', plans:[], competencies:[], comments:[] }; };
+    const onMatrixSchemeChange = ()=>{ const s=schemes.value.find(x=>x.name===current.value.scheme); if(s) current.value.schemeLevels=s.levels.map(l=>l.name); };
+
+    const openMatrixCreate = ()=>{ current.value=blankMatrix(); detailKind.value='matrix'; mMatrixIsNew.value=true; mMatrixEdit.value=true; commentsOpen.value=false; tab.value='general'; view.value='detail'; rowMenu.value=null; };
+    const openMatrixEdit = (row)=>{ mMatrixTarget.value=row; current.value=cloneMatrix(row); detailKind.value='matrix'; mMatrixIsNew.value=false; mMatrixEdit.value=true; commentsOpen.value=false; tab.value='general'; view.value='detail'; rowMenu.value=null; };
+    const saveMatrix = ()=>{
+      const m=current.value;
+      if(mMatrixIsNew.value){ matrices.value.unshift(m); toast('Matriz creada', m.name+' · '+m.type); }
+      else { const idx=matrices.value.indexOf(mMatrixTarget.value); if(idx>-1) matrices.value.splice(idx,1,m); toast('Matriz actualizada', m.name); }
+      mMatrixEdit.value=false; mMatrixIsNew.value=false;
+    };
+    const cancelMatrixEdit = ()=>{ if(mMatrixIsNew.value){ view.value='list'; } else { current.value=mMatrixTarget.value; } mMatrixEdit.value=false; mMatrixIsNew.value=false; };
+    const addComment = ()=>{ if(!commentDraft.value.trim())return; current.value.comments.push({author:'esteban.cortes · PM', date:'2026-07-20', text:commentDraft.value}); commentDraft.value=''; };
+    const addCompetency = (arr)=>{ const n=arr.length+1; arr.push({code:'C'+n, name:'', recordType:'Competency', isHolistic:false, rubricModel:'Holistic', _open:true, dimensions:[{code:'H',name:'Desempeño global',weight:1,descriptors:{}}], children:[]}); };
+    const removeCompetency = (arr,i)=>{ arr.splice(i,1); };
+
+    /* cambio de estado (máquina de transiciones UPONE-1381) */
+    const statusFlow = {
+      'Borrador':    [{to:'En revisión'}],
+      'En revisión': [{to:'Aprobada'},{to:'Borrador', requiresComment:true}],
+      'Aprobada':    [{to:'Activa'},{to:'Borrador'}],
+      'Activa':      [{to:'Obsoleta', requiresComment:true},{to:'Borrador', requiresComment:true}],
+      'Obsoleta':    [{to:'Archivada'}],
+      'Archivada':   [],
+    };
+    const stOpen = ref(false); const stMatrix = ref(null); const stTarget = ref(''); const stComment = ref('');
+    const openStatusModal = (row)=>{ stMatrix.value=row; stTarget.value=''; stComment.value=''; stOpen.value=true; rowMenu.value=null; };
+    const stOptions = computed(()=> stMatrix.value ? (statusFlow[stMatrix.value.status]||[]) : []);
+    const stNeedsComment = computed(()=>{ const o=stOptions.value.find(x=>x.to===stTarget.value); return !!(o&&o.requiresComment); });
+    const confirmStatus = ()=>{ const m=stMatrix.value; const prev=m.status; m.status=stTarget.value; if(stComment.value.trim()) m.comments.push({author:'esteban.cortes · PM', date:'2026-07-20', text:'['+prev+' → '+stTarget.value+'] '+stComment.value}); toast('Estado actualizado', m.name+': '+prev+' → '+stTarget.value); stOpen.value=false; };
+
+    /* ---------- toasts ---------- */
+    const toasts = ref([]);
+    let tid=0;
+    const toast = (title,message)=>{ const id=++tid; toasts.value.push({id,title,message}); setTimeout(()=>{ toasts.value=toasts.value.filter(t=>t.id!==id); },5000); };
+
+    /* ---------- Yupi ---------- */
+    const chatOpen = ref(true); const chatDocked = ref(true);
+    const input = ref(''); const msgs = ref([]);
+    const suggestions = [
+      {text:'Crea una matriz de competencias', icon:'bi-grid-3x3'},
+      {text:'Crea un esquema mixto de 4 niveles', icon:'bi-plus-circle'},
+      {text:'Crea una escala de cobertura I/R/M', icon:'bi-signpost-split'},
+      {text:'¿En qué se diferencia del mantenedor actual?', icon:'bi-question-circle'},
+    ];
+    const scroll = async ()=>{ await nextTick(); document.querySelectorAll('.yupi-scroll').forEach(c=>c.scrollTop=c.scrollHeight); };
+    const yupi = (html,d=700)=>{ setTimeout(()=>{ msgs.value.push({role:'bot',text:html}); scroll(); },d); };
+    const send = (text)=>{
+      if(!text||!text.trim()) return;
+      msgs.value.push({role:'user',text}); input.value=''; scroll();
+      const t=text.toLowerCase();
+      if(/(matriz|matrices)/.test(t)){
+        setObj('matrices'); openMatrixCreate();
+        yupi('Creé una <strong>matriz en Borrador</strong> y abrí su edición. Define tipo y esquema de nivel en <em>Información general</em>, y en <em>Competencias</em> arma el árbol con su rúbrica (grid dimensión × nivel, modelos Holística / Por criterios / Por RA). Al terminar, envíala a revisión con <em>Cambio de estado</em>.');
+        return;
+      }
+      if(/(escala de cobertura|alignmentscale|i\/r\/m|irm|cobertura|tributaci)/.test(t)){
+        setObj('scales'); openCreate();
+        editModel.value.name='Cobertura curricular'; editModel.value.code='COB-IRM';
+        editModel.value.values=[
+          {position:1,code:'I',name:'Introduce',description:''},
+          {position:2,code:'R',name:'Reinforce',description:''},
+          {position:3,code:'M',name:'Master',description:''},
+        ];
+        yupi('Abrí el editor de <strong>escala de cobertura</strong> (<code>alignmentScale</code>) con la convención estándar <strong>I / R / M</strong> (Introduce · Reinforce · Master). Esta escala reemplaza el enum fijo <code>intensity</code> de la tributación; es un catálogo configurable por institución.');
+        return;
+      }
+      if(/(crea|nuevo|mixt|4 nivel|esquema)/.test(t)){
+        setObj('schemes'); openCreate();
+        editModel.value.kind='Mixta'; editModel.value.name='Escala 4 niveles'; editModel.value.code='ESC-4N-NEW';
+        editModel.value.levels=[
+          {position:1,name:'Insuficiente',code:'L1',weight:1,isAchieved:false,min:0.0,max:2.0,descriptor:''},
+          {position:2,name:'Competente',code:'L2',weight:2,isAchieved:true,min:2.0,max:3.0,descriptor:''},
+          {position:3,name:'Destacado',code:'L3',weight:3,isAchieved:true,min:3.0,max:3.5,descriptor:''},
+          {position:4,name:'Sobresaliente',code:'L4',weight:4,isAchieved:true,min:3.5,max:4.0,descriptor:''},
+        ];
+        syncMins();
+        yupi('Abrí el editor con un <strong>esquema mixto de 4 niveles</strong> precargado (Insuficiente → Sobresaliente). Solo defines el mínimo del primer nivel y los máximos; cada mínimo siguiente se hereda del máximo anterior, así los rangos quedan contiguos.');
+        return;
+      }
+      if(/(migra|legacy|pregrado)/.test(t)){
+        yupi('En legacy, <strong>01 Pregrado</strong> tenía 5 <em>niveles de desempeño</em> anidados dentro de <em>niveles de desarrollo</em>. En el nuevo modelo se aplanan a <strong>5 niveles</strong> de un solo esquema. Puedes verlo en el registro <strong>"Pregrado (migrado de legacy)"</strong> de la lista.');
+        return;
+      }
+      if(/(diferenci|mantenedor actual|legacy|antes)/.test(t)){
+        yupi('El mantenedor actual tiene <strong>dos ejes</strong> (niveles de desempeño × niveles de desarrollo, cada uno con su matriz de umbrales). Aquí hay <strong>un solo eje</strong>: una lista plana de niveles con <code>peso</code>, <code>logrado</code> y rango <code>mín/máx</code>. La escala se declara con <strong>Tipo de escala</strong> (Cualitativa/Cuantitativa/Mixta) en vez de "Rango de notas / Puntaje".');
+        return;
+      }
+      if(/(criterio|aprobaci|rúbrica|rubrica|porcentaje)/.test(t)){
+        yupi('Salen del esquema: los <strong>criterios y descriptores</strong> viven en la rúbrica de cada competencia (<code>rubricDimension</code> + <code>rubricDescriptor</code>), y el <strong>% de aprobación</strong> pasa al motor de agregación / perfil de egreso. El esquema solo define la <em>escala</em>.');
+        return;
+      }
+      yupi('Entendido. Estoy trabajando sobre <strong>Esquemas de nivel</strong> ("'+text+'").',900);
+    };
+
+    return {
+      apps, role, view, objKey, tab, objTabs, currentObj, current, detailTabs, detailKind, isCatalog, isInteractive, createLabel, schemes,
+      rowMenu, setObj, openView, openRowMenu,
+      kindClass, kindHelp, fmt,
+      editOpen, editModel, editIsNew, editKind, openCreate, openEditModal, openClone,
+      addLevel, removeLevel, moveLevel, syncMins, addValue, removeValue, moveValue, validation, save,
+      matrixKpis, statusClass, mMatrixEdit, commentsOpen, commentDraft,
+      openMatrixCreate, openMatrixEdit, saveMatrix, cancelMatrixEdit, addComment, addCompetency, removeCompetency, onMatrixSchemeChange,
+      stOpen, stMatrix, stTarget, stComment, openStatusModal, stOptions, stNeedsComment, confirmStatus,
+      toasts,
+      chatOpen, chatDocked, input, msgs, suggestions, send,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

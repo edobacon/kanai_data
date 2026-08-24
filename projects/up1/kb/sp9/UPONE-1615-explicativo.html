@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPONE-1615 · Implementar logica de Roles internos</title>
+<style>
+:root{
+  color-scheme: light;
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f6f7f8,#212121);
+  --up1-gray-100: light-dark(#e9ebed,#2c2c2c);
+  --up1-gray-200: light-dark(#d9dde1,#3a3a3a);
+  --up1-gray-300: light-dark(#c5c5c5,#525252);
+  --up1-gray-600: light-dark(#6b7280,#a3a3a3);
+  --up1-gray-700: light-dark(#3f4753,#d4d4d4);
+  --up1-gray-900: light-dark(#1f2733,#fafafa);
+  --pri-50: light-dark(#E7F2F3, rgba(45,212,191,.10));
+  --pri-100: light-dark(#c9e5e7, rgba(45,212,191,.16));
+  --pri: light-dark(#0a808c,#2dd4bf);
+  --pri-600: light-dark(#0b6d78,#14b8a6);
+  --ok: light-dark(#1f8a5b,#22c55e);
+  --ok-bg: light-dark(#eafaf1,rgba(34,197,94,.12));
+  --warn: light-dark(#b45309,#fbbf24);
+  --warn-bg: light-dark(#fff8ec,rgba(245,158,11,.12));
+  --danger: light-dark(#b42318,#ef4444);
+  --danger-bg: light-dark(#fef3f2,rgba(239,68,68,.12));
+  --scope: light-dark(#7c3aed,#a78bfa);
+  --scope-bg: light-dark(#f3ecfb,rgba(124,58,237,.14));
+  --bg: var(--up1-gray-50); --card: var(--up1-gray-0);
+  --tx: var(--up1-gray-900); --tx2: var(--up1-gray-700); --mut: var(--up1-gray-600);
+  --bd: var(--up1-gray-200);
+  --radius:14px; --radius-sm:9px;
+  --sh: 0 1px 2px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.4)), 0 8px 24px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.5));
+}
+@media (prefers-color-scheme: dark){ :root{ color-scheme: dark; } }
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:34px 22px 80px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn);padding:5px 12px;border-radius:999px}
+.pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;display:inline-flex;align-items:center}
+.pill.crit{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+.pill.unassigned{background:var(--up1-gray-100);color:var(--tx2);border:1px solid var(--bd)}
+.pill.scope{background:var(--scope-bg);color:var(--scope);border:1px solid var(--scope)}
+.pill.now{background:var(--up1-gray-100);color:var(--tx2)}
+.pill.tgt{background:var(--pri-50);color:var(--pri);border:1px solid var(--pri-100)}
+.pillrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px}
+h1{font-size:29px;line-height:1.18;margin:14px 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin:0 0 10px}
+.ask{font-size:16.5px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:14px 16px;margin:18px 0 12px}
+.ask b{color:var(--tx)}
+.callout{background:var(--warn-bg);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:13px 16px;font-size:13.5px;color:var(--tx2);margin-top:14px}
+.callout b{color:var(--tx)}
+.callout.info{background:var(--pri-50);border-color:var(--pri-100);border-left-color:var(--pri)}
+.callout.root{background:var(--danger-bg);border-color:var(--danger);border-left-color:var(--danger)}
+.callout.fix{background:var(--ok-bg);border-color:var(--ok);border-left-color:var(--ok)}
+.callout.scope{background:var(--scope-bg);border-color:var(--scope);border-left-color:var(--scope);font-size:14.5px}
+h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:38px 0 14px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--bd)}
+h3.grouptitle{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:18px 0 9px}
+h3.grouptitle:first-child{margin-top:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:16px 16px 18px;box-shadow:var(--sh)}
+.panel h3{margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* evidence cards */
+.evid{display:flex;gap:11px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:11px 13px;margin-bottom:8px}
+.estat{flex:0 0 auto;margin-top:1px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.estat.ok{background:var(--ok-bg);color:var(--ok)}
+.estat.warn{background:var(--warn-bg);color:var(--warn)}
+.estat.bad{background:var(--scope-bg);color:var(--scope)}
+.ebody{font-size:13px;color:var(--tx2);line-height:1.55}
+.ebody b{color:var(--tx)}
+.esrc{display:block;font-size:11px;color:var(--mut);margin-top:4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:0 0 14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+/* mock form */
+.form{display:flex;flex-direction:column;gap:11px}
+.f label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px;color:var(--tx)}
+.f .inp{background:var(--up1-gray-50);border:1px solid var(--up1-gray-100);border-radius:8px;padding:8px 11px;font-size:13px;color:var(--tx2);min-height:38px;display:flex;align-items:center;justify-content:space-between}
+.f .inp.sel::after{content:"\25BE";color:var(--mut);font-size:10px}
+.f.hl label{color:var(--pri)}
+.f.hl .inp{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-50)}
+.f.gone{opacity:.55}
+.f.gone .inp{border-style:dashed;background:transparent;color:var(--mut)}
+.f.red label{color:var(--danger)}
+.f.red .inp{border:1px solid var(--danger);background:var(--danger-bg);color:var(--danger)}
+.tagline{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;align-items:center;gap:5px}
+.err{font-size:11px;color:var(--danger);margin-top:3px}
+/* flow chain */
+.flow{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:11px;align-items:flex-start;padding:8px 0}
+.dot{flex:0 0 24px;width:24px;height:24px;border-radius:50%;background:var(--up1-gray-100);color:var(--tx2);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.step.bad .dot{background:var(--danger);color:#fff}
+.step.good .dot{background:var(--ok);color:#fff}
+.step .body{font-size:13px;color:var(--tx2);padding-top:2px}
+.step .body b{color:var(--tx)}
+.step .body .src{display:block;font-size:11px;color:var(--mut);margin-top:2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.connector{margin-left:11px;width:2px;height:8px;background:var(--bd)}
+/* tables */
+.tablewrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);min-width:640px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}
+th{background:var(--up1-gray-50);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);font-weight:700}
+tr:last-child td{border-bottom:0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--up1-gray-100);padding:1px 6px;border-radius:5px;color:var(--tx)}
+.badge-status{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.badge-status.fin{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok)}
+.badge-status.back{background:var(--up1-gray-100);color:var(--tx2);border:1px solid var(--bd)}
+/* diagram */
+.diagram{overflow-x:auto;background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:14px;box-shadow:var(--sh)}
+.diagram svg{display:block;min-width:900px;width:100%;height:auto}
+.diagfoot{font-size:11px;color:var(--mut);margin-top:9px;line-height:1.6}
+.diagfoot b{color:var(--tx2)}
+/* rules chips */
+.guide{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.gitem{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.gtag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.gtag.fav{background:var(--ok-bg);color:var(--ok)}
+.gtag.no{background:var(--danger-bg);color:var(--danger)}
+.gtag.ojo{background:var(--warn-bg);color:var(--warn)}
+.gtag.gate{background:var(--pri-50);color:var(--pri)}
+.gbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.gsrc{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+.foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pillrow">
+    <span class="eyebrow">UPONE-1615 · Tarea · Epic UPONE-1267 Curriculum Design</span>
+    <span class="pill crit">Critica</span>
+    <span class="pill unassigned">Sin asignar en Jira</span>
+  </div>
+  <h1>Implementar logica de Roles internos</h1>
+  <p class="sub">Cruza dos mods: curriculum-design y curriculum-mapping. Sprint: Migracion uAssessment SP9.</p>
+
+  <div class="ask">
+    <b>Que se pide:</b> migrar la logica de los cuatro roles curriculares (Consultor, Disenador, Revisor y Autoridad Curricular) hacia la nueva logica de "Roles internos", definiendo en sprint o refinamiento el mapeo hacia los roles institucionales generales. Ademas, validar y completar donde falte que cada rol tenga las capabilities para ejecutar las acciones que declara: el ejemplo del PO es que crear un plan de estudio requiere permisos sobre instituciones.
+  </div>
+
+  <div class="callout scope">
+    <span class="pill scope" style="margin-right:8px">Re-encuadre</span>
+    <b>El angulo de este caso:</b> el titulo pide "implementar" un mecanismo que ya esta construido, integro, en el core. Entro con UPONE-1353 y UPONE-1354, ambas Finalizadas. El analisis de frontera core/mod concluye <b>mal-encuadrado</b>: ningun artefacto requiere tocar el core. El encuadre real es una <b>migracion mod-only</b> de cuatro roles hacia un sistema ya operativo, mas un hueco de capability puntual sobre instituciones.
+  </div>
+
+  <h2>Evidencia del caso</h2>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--ok)"></span> verificado en codigo</span>
+    <span><span class="sw" style="background:var(--warn)"></span> pendiente de confirmar</span>
+    <span><span class="sw" style="background:var(--scope)"></span> contradiccion / re-encuadre</span>
+  </div>
+
+  <h3 class="grouptitle">Lo que ya existe (verificado)</h3>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">El mecanismo de rol interno esta completo en el core: modelo por aplicacion con herencia, tabla de capabilities, campo de mapeo institucional a interno por app, sync que materializa las declaraciones del mod, y enriquecimiento de permisos en runtime.
+      <span class="esrc">object-manager/objects/core/core_ModRole.json · object-manager/objects/core/core_ModRoleCapability.json · object-manager/objects/up1/suite/up1_suite_app_role.json:34-43 · object-manager/scripts/sync/dbSync.js:1245 · object-manager/src/services/auth/modRoleCapabilities.js:58-118 (guard de ciclo :31-40)</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">Los cuatro roles curriculares reales viven hoy como roles <b>institucionales</b>, sembrados en codigo por el mod, con su mapa de capabilities en el mismo archivo.
+      <span class="esrc">mods/curriculum-design/seed/_data-rbac.js:36-57 (definiciones: Consultor :38, Disenador :43, Revisor :48, Autoridad :53) · :70-87 (lectura compartida) · :89-168 (mapa rol-capabilities) · :175-180 (escritura con omision de duplicados)</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">curriculum-mapping <b>copia literalmente</b> esas mismas definiciones y tiene un test de paridad que falla si los dos archivos divergen.
+      <span class="esrc">mods/curriculum-mapping/seed/_data-rbac.js:47-68</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">En curriculum-design solo existen dos declaraciones de rol interno, y ambas se autodescriben como fixture de la prueba del mecanismo (RBAC-01). curriculum-mapping no tiene ni el directorio <code>roles/</code>.
+      <span class="esrc">mods/curriculum-design/roles/GestorCurricular.json · mods/curriculum-design/roles/LectorCurricular.json</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">Cadena completa del hueco de permisos del caso del PO: la institucion es FK requerida en el plan de estudio y en el programa academico, el formulario la pide como select obligatorio, poblar ese select exige la capability de lectura del objeto, esa capability se auto-genera pero no se asigno a los roles curriculares.
+      <span class="esrc">mods/curriculum-design/objects/Curriculum.json:103,160 · mods/curriculum-design/objects/AcademicProgram.json:61-69,89 · mods/curriculum-design/config/layouts/default_AcademicProgram_create.json:49-53 · object-manager/src/graphql/resolvers/instance.resolver.js:1539 · object-manager/src/services/auth/generateCapabilities.js:117-119,331-358 · mods/curriculum-design/seed/_data-rbac.js:92-123</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">Operando con un rol activo seleccionado, los permisos <b>no se acumulan</b> con los de otros roles del usuario: la capability tiene que vivir en el rol curricular mismo, no puede resolverse por herencia de otro rol.
+      <span class="esrc">object-manager/src/services/auth/authChecker.js:115-121</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat ok">Verificado</span>
+    <div class="ebody">El "seguro" por orden de corrida que motivo el comentario del equipo existe porque los dos mods siembran hoy el mismo rol institucional por nombre global; al migrar a rol interno, unico por aplicacion, ese conflicto desaparece por diseno.
+      <span class="esrc">mods/curriculum-mapping/seed/_data-rbac.js:11-17</span>
+    </div>
+  </div>
+
+  <h3 class="grouptitle">Lo que falta decidir (pendiente de confirmar)</h3>
+
+  <div class="evid">
+    <span class="estat warn">Pendiente</span>
+    <div class="ebody"><b>Resuelto el 2026-08-17 para los cuatro roles curriculares:</b> pasan a llamarse <code>Learning Assurance - &lt;Rol&gt;</code> y cada uno apunta al set homonimo de cada modulo (<code>Curriculum Design - &lt;Rol&gt;</code>, <code>Curriculum Mapping - &lt;Rol&gt;</code>), con la composicion dimensionada por modulo. <b>Sigue pendiente</b> el mapeo de los roles que posee el core (<code>Admin</code>, <code>Consultor</code>, <code>Coordinador</code> y el resto), que arrastra el caso de <code>Consultor</code> y la visibilidad de los dos modulos.
+      <span class="esrc">Fuente canonica del PO, criterios de aceptacion · decisiones en sp9/UPONE-1615-registro-de-decisiones.md</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat warn">Pendiente</span>
+    <div class="ebody">El ticket quedo <b>sin asignar</b> en Jira tras el refinamiento, con prioridad <b>Critica</b>. La migracion y la validacion de capabilities quedaron a nombre del PO, y el fix del rol de disenador curricular a nombre del dev, sin definir el dueno del ticket completo.
+      <span class="esrc">Jira UPONE-1615</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat warn">Pendiente</span>
+    <div class="ebody">Los <b>nombres</b> de los roles internos: conviene que sean <b>distintos</b> de los institucionales. El guard de colision de nombres del core tiene un <b>punto ciego verificado</b>: arma su lista de nombres institucionales solo desde los declarados en los <code>app.json</code>, y no mira los creados por seed ni por configuracion de layout. Los cuatro roles curriculares entran por seed, asi que reusar sus nombres <b>no seria detectado</b>. Es un hallazgo de plataforma, no de estos mods: decidir tambien si se reporta a core.
+      <span class="esrc">Fuente: guard de colision en el sync de roles del core; caso real en el tenant</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat warn">Pendiente</span>
+    <div class="ebody">Que hacer con el rol institucional <b>huerfano</b> <code>GestorCurricular</code>: existe en el tenant sin capabilities ni layouts, auto-creado por el sync desde un layout de fixture, y no lo consume nadie. Es dato, no codigo. Se retira en este ticket o como limpieza aparte.
+      <span class="esrc">Fuente: inventario de roles del tenant</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat bad">Deuda que crece sola</span>
+    <div class="ebody">El acceso en bloque de <code>Consultor</code>: hoy tiene <b>166 capabilities curriculares, las mismas que <code>Admin</code></b>, incluidas crear, eliminar, publicar, aprobar y revertir, o sea mas amplio que <code>Autoridad Curricular</code> (54). Y <b>crece solo</b>: el core asigna <b>toda capability nueva</b> a <code>Admin</code>, <code>Consultor</code> y <code>Colaborador</code>. Dentro de este mismo sprint, UPONE-1619 y UPONE-1633 agregan objetos nuevos, asi que la deuda engorda mientras el ticket se decide. <b>Antes de recortar, averiguar si hay personas operando con ese rol.</b>
+      <span class="esrc">Fuente: asignacion automatica de capabilities nuevas a los roles por defecto del core</span>
+    </div>
+  </div>
+
+  <div class="evid">
+    <span class="estat bad">Efecto colateral a decidir</span>
+    <div class="ebody">Hoy las dos apps curriculares son <b>visibles para cualquier rol</b>, porque el resolver trata una app sin roles asignados como publica. Al crear las filas de vinculo <b>dejan de serlo</b>: hay que decidir a proposito que roles ven cada modulo, porque cualquier perfil que hoy entra y quede fuera de la lista <b>pierde el acceso</b>. Afecta ademas a UPONE-1616, que cierra con evidencia runtime del menu de estas mismas apps.
+      <span class="esrc">Fuente: estado de vinculos rol-app verificado en el tenant</span>
+    </div>
+  </div>
+
+  <h3 class="grouptitle">Contradiccion detectada</h3>
+
+  <div class="evid">
+    <span class="estat bad">Re-encuadre</span>
+    <div class="ebody">El titulo pide "implementar" un mecanismo que ya esta construido integro en el core. El analisis de frontera core/mod, corroborado de forma independiente por una segunda verificacion de codigo sin conocer el veredicto previo, llega a la misma conclusion: es una <b>migracion mod-only</b>, no una implementacion.
+      <span class="esrc">Dependencias satisfechas: UPONE-1353 y UPONE-1354 (Finalizadas)</span>
+    </div>
+  </div>
+
+  <h2>Estado inicial vs. estado esperado</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill now">Ahora</span> Disenador Curricular crea un plan de estudio</h3>
+      <div class="form">
+        <div class="f"><label>Nombre del plan</label><div class="inp">Ingenieria en Informatica</div></div>
+        <div class="f red"><label>Institucion duena *</label><div class="inp sel">Sin opciones disponibles</div><div class="err">Sin capability de lectura sobre Institution: el listado no carga</div></div>
+        <div class="f gone"><label>Carrera</label><div class="inp">bloqueado sin institucion</div><div class="tagline">no se puede avanzar</div></div>
+      </div>
+      <div class="callout root">El rol Disenador Curricular no tiene ninguna capability de institucion en su bloque ni en el conjunto de lectura compartido. El flujo del PO no se completa. Workaround vigente hoy: usar un rol administrador.</div>
+    </div>
+
+    <div class="panel">
+      <h3><span class="pill tgt">Esperado</span> Mismo flujo, con la capability cableada</h3>
+      <div class="form">
+        <div class="f"><label>Nombre del plan</label><div class="inp">Ingenieria en Informatica</div></div>
+        <div class="f hl"><label>Institucion duena *</label><div class="inp sel">Universidad Metropolitana</div><div class="tagline">select poblado con las instituciones visibles para el usuario</div></div>
+        <div class="f"><label>Carrera</label><div class="inp sel">Ingenieria en Informatica</div></div>
+      </div>
+      <div class="callout info">Criterio de aceptacion: un Disenador Curricular completa la creacion del plan de estudio de punta a punta, incluida la seleccion de su institucion duena.</div>
+    </div>
+  </div>
+
+  <h2>Estados relacionados</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Conviven dos motores de permisos en runtime</h3>
+      <div class="flow">
+        <div class="step"><div class="dot">1</div><div class="body"><b>Institucional (activo hoy):</b> resuelve las capabilities de rol institucional, con el filtro de rol activo que no acumula entre roles.<span class="src">object-manager/src/services/auth/authChecker.js:55, :115-121</span></div></div>
+        <div class="connector"></div>
+        <div class="step"><div class="dot">2</div><div class="body"><b>Interno (construido, sin datos para estos roles):</b> ya enriquece permisos por rol interno en runtime, pero no hay mapeo cargado para los cuatro roles curriculares reales.<span class="src">object-manager/src/services/auth/modRoleCapabilities.js:58-118</span></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Convive con tickets que ya tocaron lo mismo</h3>
+      <div class="flow">
+        <div class="step"><div class="dot">A</div><div class="body"><b>UPONE-1393</b> (Finalizada) definio los cuatro roles institucionales y su cableado de capabilities. El hueco de la capability de institucion nace ahi.</div></div>
+        <div class="connector"></div>
+        <div class="step"><div class="dot">B</div><div class="body"><b>UPONE-1538</b> (Finalizada) destapo el hueco de permisos sobre institucion en su propio smoke. La decision de agregarlo quedo respaldada y diferida de SP8.</div></div>
+        <div class="connector"></div>
+        <div class="step"><div class="dot">C</div><div class="body"><b>UPONE-1633</b> (Backlog, hermano de sprint) agrega objetos nuevos en curriculum-mapping que necesitaran capabilities cableadas a estos mismos roles: conviene coordinar antes de cerrar el bundle final.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Tickets relacionados directos</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Ticket</th><th>Que es</th><th>Relacion</th><th>Estado Jira</th></tr></thead>
+    <tbody>
+      <tr><td><code>UPONE-1267</code></td><td>Epic Curriculum Design</td><td>contenedor</td><td><span class="badge-status back">Backlog</span></td></tr>
+      <tr><td><code>UPONE-1353</code></td><td>RBAC-01: un rol institucional puede tener un rol interno distinto en cada mod</td><td>dependencia satisfecha: construyo el mecanismo que este ticket adopta</td><td><span class="badge-status fin">Finalizada</span></td></tr>
+      <tr><td><code>UPONE-1354</code></td><td>RBAC-02: los layouts de un mod se resuelven por el rol interno del usuario</td><td>dependencia satisfecha: completa el mecanismo del lado de layouts</td><td><span class="badge-status fin">Finalizada</span></td></tr>
+      <tr><td><code>UPONE-1393</code></td><td>Curriculum Design: roles estandar del mod + wiring de capabilities</td><td>antecedente: aqui se origina el hueco de la capability de institucion</td><td><span class="badge-status fin">Finalizada</span></td></tr>
+      <tr><td><code>UPONE-1538</code></td><td>Configuracion de plan de estudio modular</td><td>donde se destapo el hueco de permisos sobre institucion durante su smoke</td><td><span class="badge-status fin">Finalizada</span></td></tr>
+      <tr><td><code>UPONE-1633</code></td><td>Matriz de competencia: adopcion y competencias</td><td>hermano SP9 en curriculum-mapping; sus objetos nuevos necesitaran capabilities cableadas a estos mismos roles</td><td><span class="badge-status back">Backlog</span></td></tr>
+      <tr><td><code>UPONE-1619</code></td><td>Implementacion de InstructionalComponent</td><td><b>coordinar</b>: hermano SP9 en el mismo mod. Declara las capabilities de sus dos objetos nuevos en el mismo archivo de RBAC que este ticket migra, y su cierre las cablea a estos mismos roles. No ejecutar los dos en paralelo sobre ese archivo</td><td><span class="badge-status back">Backlog</span></td></tr>
+      <tr><td><code>UPONE-1616</code></td><td>Ajustar orden de los menus</td><td><b>coordinar</b>: al asignar roles a las apps curriculares estas dejan de ser publicas, y ese ticket cierra con evidencia runtime del menu de esas apps</td><td><span class="badge-status back">Backlog</span></td></tr>
+      <tr><td><code>UPONE-1530</code></td><td>Curriculum Mapping MCP sync</td><td><b>coordinar la verificacion</b>: el MCP usa los permisos del usuario real como frontera, asi que lo que el MCP puede hacer cambia con este ticket</td><td><span class="badge-status back">Backlog</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Modelo y diagramas</h2>
+
+  <div class="diagram">
+    <svg viewBox="0 0 1000 450" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowMut" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" style="fill:var(--mut)"/>
+        </marker>
+        <marker id="arrowWarn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" style="fill:var(--warn)"/>
+        </marker>
+      </defs>
+      <style>
+        text{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+        .box{fill:var(--card);stroke:var(--bd);stroke-width:1.3}
+        .boxWarn{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1.4;stroke-dasharray:5 3}
+        .boxDanger{stroke:var(--danger);stroke-width:1.4}
+        .arrow{fill:none;stroke:var(--mut);stroke-width:1.4}
+        .arrowWarn{fill:none;stroke:var(--warn);stroke-width:1.4;stroke-dasharray:5 3}
+        .ttl{font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:11px;fill:var(--tx2)}
+        .b{font-weight:800;font-size:11px;fill:var(--tx)}
+        .bd{font-weight:800;font-size:11px;fill:var(--danger)}
+        .bw{font-weight:800;font-size:10.5px;fill:var(--warn)}
+        .m{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8.7px;fill:var(--tx2)}
+        .mu{font-size:9px;fill:var(--mut)}
+        .n{font-size:9.5px;fill:var(--tx2)}
+        .lbl{font-size:8.5px;fill:var(--warn)}
+      </style>
+
+      <text x="180" y="20" text-anchor="middle" class="ttl">Sistema institucional, en uso hoy</text>
+      <text x="820" y="20" text-anchor="middle" class="ttl" style="fill:var(--pri)">Rol interno, construido sin adoptar</text>
+
+      <!-- L1 -->
+      <rect class="box" x="20" y="38" width="150" height="64" rx="10"/>
+      <text x="95" y="58" text-anchor="middle" class="b">curriculum-design</text>
+      <text x="95" y="74" text-anchor="middle" class="m">_data-rbac.js:36-57</text>
+      <text x="95" y="90" text-anchor="middle" class="mu">4 roles definidos en codigo</text>
+
+      <!-- L2 -->
+      <rect class="box" x="190" y="38" width="150" height="64" rx="10"/>
+      <text x="265" y="58" text-anchor="middle" class="b">curriculum-mapping</text>
+      <text x="265" y="74" text-anchor="middle" class="m">_data-rbac.js:47-68</text>
+      <text x="265" y="90" text-anchor="middle" class="mu">copia literal (mismo shape)</text>
+
+      <path d="M170,70 L190,70" class="arrow"/>
+      <text x="180" y="53" text-anchor="middle" class="lbl">test de paridad</text>
+
+      <!-- L3 merge -->
+      <rect class="box" x="20" y="170" width="320" height="80" rx="10"/>
+      <text x="180" y="196" text-anchor="middle" class="b">4 roles institucionales reales</text>
+      <text x="180" y="214" text-anchor="middle" class="n">Consultor Curricular · Disenador Curricular</text>
+      <text x="180" y="230" text-anchor="middle" class="n">Revisor Curricular · Autoridad Curricular</text>
+      <text x="180" y="246" text-anchor="middle" class="m">resueltos hoy: authChecker.js:55</text>
+
+      <path d="M95,102 L95,170" class="arrow" marker-end="url(#arrowMut)"/>
+      <path d="M265,102 L265,170" class="arrow" marker-end="url(#arrowMut)"/>
+
+      <!-- R1 -->
+      <rect class="box" x="660" y="38" width="320" height="64" rx="10"/>
+      <text x="820" y="58" text-anchor="middle" class="b">core (object-manager)</text>
+      <text x="820" y="74" text-anchor="middle" class="m">core_ModRole + core_ModRoleCapability</text>
+      <text x="820" y="90" text-anchor="middle" class="mu">unico por aplicacion, con herencia</text>
+
+      <!-- R2 -->
+      <rect class="box" x="660" y="170" width="150" height="70" rx="10"/>
+      <text x="735" y="192" text-anchor="middle" class="b">curriculum-design/roles/</text>
+      <text x="735" y="209" text-anchor="middle" class="mu">2 fixtures (prueba RBAC-01)</text>
+      <text x="735" y="224" text-anchor="middle" class="mu">no son roles reales</text>
+
+      <!-- R3 -->
+      <rect class="box boxDanger" x="830" y="170" width="150" height="70" rx="10"/>
+      <text x="905" y="192" text-anchor="middle" class="bd">curriculum-mapping/roles/</text>
+      <text x="905" y="209" text-anchor="middle" class="mu">no existe el directorio</text>
+      <text x="905" y="224" text-anchor="middle" class="mu">sin declaraciones de rol interno</text>
+
+      <path d="M735,102 L735,170" class="arrow" marker-end="url(#arrowMut)"/>
+      <path d="M905,102 L905,170" class="arrow" marker-end="url(#arrowMut)"/>
+
+      <text x="820" y="256" text-anchor="middle" class="m">sync materializa: dbSync.js:1245</text>
+
+      <!-- middle pending mapping -->
+      <rect class="boxWarn" x="340" y="300" width="320" height="90" rx="10"/>
+      <text x="500" y="326" text-anchor="middle" class="bw">PENDIENTE: mapeo institucional a interno</text>
+      <text x="500" y="344" text-anchor="middle" class="m">up1_suite_app_role.json:34-43</text>
+      <text x="500" y="362" text-anchor="middle" class="mu">sin cargar para los 4 roles reales</text>
+
+      <path d="M340,210 L358,210 L358,345 L340,345" class="arrowWarn" marker-end="url(#arrowWarn)"/>
+      <path d="M660,345 L642,345 L642,205 L660,205" class="arrowWarn" marker-end="url(#arrowWarn)"/>
+
+      <text x="500" y="420" text-anchor="middle" class="mu">Hoy resuelve permisos: authChecker.js:55 (institucional, activo). Listo pero sin datos: modRoleCapabilities.js:58-118 (interno)</text>
+    </svg>
+    <div class="diagfoot">
+      <b>Fuentes del diagrama:</b> object-manager/objects/core/core_ModRole.json · object-manager/objects/core/core_ModRoleCapability.json · object-manager/objects/up1/suite/up1_suite_app_role.json:34-43 · object-manager/scripts/sync/dbSync.js:1245 · object-manager/src/services/auth/authChecker.js:55,115-121 · object-manager/src/services/auth/modRoleCapabilities.js:58-118 · mods/curriculum-design/seed/_data-rbac.js:36-57 · mods/curriculum-mapping/seed/_data-rbac.js:47-68,11-17 · mods/curriculum-design/roles/GestorCurricular.json, LectorCurricular.json.
+    </div>
+  </div>
+
+  <h2 style="margin-top:32px">Cadena verificada del hueco de permisos</h2>
+  <div class="panel">
+    <div class="flow">
+      <div class="step"><div class="dot">1</div><div class="body">El plan de estudio y el programa academico declaran la institucion como <b>FK requerida</b>.<span class="src">mods/curriculum-design/objects/Curriculum.json:103,160 · mods/curriculum-design/objects/AcademicProgram.json:61-69,89</span></div></div>
+      <div class="connector"></div>
+      <div class="step"><div class="dot">2</div><div class="body">El formulario de creacion la pide como <b>select obligatorio</b>.<span class="src">mods/curriculum-design/config/layouts/default_AcademicProgram_create.json:49-53</span></div></div>
+      <div class="connector"></div>
+      <div class="step"><div class="dot">3</div><div class="body">Poblar ese select <b>lista instancias de Institution</b>, objeto Base del core.</div></div>
+      <div class="connector"></div>
+      <div class="step"><div class="dot">4</div><div class="body">Ese listado esta gateado por la <b>capability de lectura</b> del objeto.<span class="src">object-manager/src/graphql/resolvers/instance.resolver.js:1539</span></div></div>
+      <div class="connector"></div>
+      <div class="step"><div class="dot">5</div><div class="body">Esa capability <b>se auto-genera</b> por objeto y accion, y se asigna por defecto a los roles base de la plataforma, no a los curriculares.<span class="src">object-manager/src/services/auth/generateCapabilities.js:117-119,331-358</span></div></div>
+      <div class="connector"></div>
+      <div class="step bad"><div class="dot">6</div><div class="body"><b>BLOQUEADO:</b> el rol Disenador Curricular no tiene esa capability en su bloque ni en el conjunto de lectura compartido. El select no se puebla y el plan no se puede crear.<span class="src">mods/curriculum-design/seed/_data-rbac.js:92-123, 70-87</span></div></div>
+    </div>
+    <div class="callout fix"><b>Fix puntual, no depende del mapeo de roles internos:</b> agregar la capability de lectura de Institucion al conjunto de lectura compartido desbloquea el flujo para los cuatro roles con lectura, incluido Disenador Curricular. Puede avanzar antes de decidir el mapeo institucional a interno.</div>
+  </div>
+
+  <h2>Reglas y patrones up1 a considerar</h2>
+  <div class="guide">
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">Verificar el enunciado contra el estado real antes de ejecutar: el mecanismo que el titulo pide implementar ya existe.<span class="gsrc">Fuente: UPONE-1353 y UPONE-1354 (Finalizadas)</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Los roles internos se declaran como archivos del mod y el sync los materializa; son unicos por aplicacion, lo que permite que cada mod defina su propio bundle.<span class="gsrc">Fuente: object-manager/scripts/sync/dbSync.js:1245 · mods/curriculum-design/roles/</span></div></div>
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">Con un rol activo seleccionado los permisos no se acumulan con los de otros roles del usuario: la capability debe vivir en el rol con el que se opera.<span class="gsrc">Fuente: object-manager/src/services/auth/authChecker.js:115-121</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Las capabilities de objeto se auto-generan por objeto y accion; para un objeto Base del core no hay que crear capability nueva, solo referenciarla en el cableado del mod.<span class="gsrc">Fuente: object-manager/src/services/auth/generateCapabilities.js:117-119</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">No crear roles nuevos para resolver un hueco de permisos: cablear las capabilities a los roles curriculares existentes.<span class="gsrc">Fuente: mods/curriculum-design/seed/_data-rbac.js</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">No negar la lectura de institucion para limitar visibilidad: rompe la creacion de planes. El alcance se controla por el nodo donde se asigna el rol, no por la capability de lectura.<span class="gsrc">Fuente: object-manager/src/graphql/resolvers/instance.resolver.js:1539</span></div></div>
+    <div class="gitem"><span class="gtag ojo">Advertencia</span><div class="gbody">Los dos mods siembran hoy los mismos roles por nombre global y hay un test de paridad que falla si las definiciones divergen: cualquier cambio en uno obliga al otro mientras dure la convivencia.<span class="gsrc">Fuente: mods/curriculum-mapping/seed/_data-rbac.js:11-19 y su test de paridad</span></div></div>
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Los permisos se cierran con evidencia runtime, no con la capability en base: entrar con el rol y ejecutar la accion.<span class="gsrc">Fuente: estandar DoD del equipo</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Tenant isolation en toda query, correr sync, no editar archivos sincronizados a mano ni commitear artefactos de sync o seed, y usar solo el id de Jira en commits y PR.<span class="gsrc">Fuente: up1/CLAUDE.md</span></div></div>
+  </div>
+
+  <div class="foot">
+    Documento explicativo · Ticket (contrato): <code>UPONE-1615-detalle.md</code> · Guia de implementacion: <code>UPONE-1615-pre-intake.md</code>
+  </div>
+</div>
+</body>
+</html>
