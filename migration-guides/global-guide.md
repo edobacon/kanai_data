@@ -1,6 +1,8 @@
 # Guía global de migración DKC → Kanai
  
 > Plan operativo para convertir los artefactos históricos de DKC de `up1`, `kanai_self`, `kanai_test` y `kn_bench` al formato tipado de Kanai. Esta guía es fuente de procedimiento; no ejecuta limpieza ni borrado.
+
+> **Alcance corregido:** esta guía documenta el snapshot ya presente en Kanai. La fuente DKC completa y sus 523 tickets canónicos están inventariados en [dkc-source-inventory-2026-08-24.md](dkc-source-inventory-2026-08-24.md), con una matriz por proyecto `dkc-*-tickets.md`. Para migraciones nuevas, la guía DKC es la fuente de verdad.
  
 ## 1. Snapshot y alcance
  
