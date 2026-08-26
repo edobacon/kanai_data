@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Malla — Agregar y editar asignaturas (obligatorias + electivas) · TICKET-086</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .badge { display:inline-block; padding:0.1rem 0.5rem; border-radius:9999px; font-size:0.7rem; font-weight:700; }
+  .badge-green { background:rgba(52,211,153,0.15); color:#6ee7b7; border:1px solid rgba(52,211,153,0.35); }
+  .badge-red { background:rgba(248,113,113,0.15); color:#fca5a5; border:1px solid rgba(248,113,113,0.35); }
+  .badge-amber { background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.35); }
+  .badge-blue { background:rgba(129,140,248,0.15); color:#a5b4fc; border:1px solid rgba(129,140,248,0.35); }
+  .hyp-row td { padding: 0.5rem 0.75rem; font-size:0.82rem; vertical-align:top; }
+  .hyp-row td:first-child { font-weight:600; color: var(--amber); white-space:nowrap; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-086</span> · Malla — Agregar y editar asignaturas (obligatorias + electivas)</span>
+      <span>up1 · 2026-06-30</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Malla — Agregar y editar asignaturas (obligatorias + electivas)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      MC-06 fue el feature frontend más grande del Sprint 6: modales de alta y edición sobre la malla curricular,
+      con dos flujos diferenciados (obligatoria y electiva) y un sistema de tagging de bloques requirement-Group.
+      Este documento cuenta qué se hizo en cada session, cómo evolucionaron las hipótesis abiertas del intake,
+      qué decisiones se tomaron en ejecución y qué aprendieron el equipo y el proceso automático.
+    </p>
+
+    <!-- tldr -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        5 sessions, 23 archivos, +4 639 líneas, 1 040 tests verdes, 15 commits locales.
+        El flujo Must (obligatorias) quedó completo en S2; las electivas y la edición en S3-S5.
+        El dual-judge (DET-35) capturó dos bugs críticos que los tests unitarios no veían:
+        <code class="inline">objectType</code> incorrecto al crear un bloque (S4) y 5 errores de tipo en el modal de edición (S5).
+        Tres ítems de backlog quedan abiertos (B1/B2/B3, todos Should/Could).
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">Timeline S1-S5</a>
+      <a href="#hypotheses" class="navlink rounded border border-stone-700 px-2 py-1">Evolucion hipotesis</a>
+      <a href="#decisions" class="navlink rounded border border-stone-700 px-2 py-1">Decisiones cerradas</a>
+      <a href="#case" class="navlink rounded border border-stone-700 px-2 py-1">Que se logro</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Lessons learned</a>
+      <a href="#backlog" class="navlink rounded border border-stone-700 px-2 py-1">Pendiente</a>
+    </nav>
+
+    <!-- ======================================================
+         BLOQUE: timeline — las 5 sessions
+    ======================================================= -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Timeline de ejecucion (S1-S5)</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 — Modal de alta 2 pasos (shell + paso 1)</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T2. Se creo el atomo <code class="inline">AddEntryModal.vue</code> con stepper de 2 pasos usando el <code class="inline">Modal</code> casero
+            (patron <code class="inline">CompositeSectionTree</code>). Paso 1 = tipo (Obligatoria/Electiva) + linea de formacion en masa.
+            Se habilito el boton de alta del componente base (<code class="inline">CurriculumMeshElement.vue</code>).
+            Logica pura extraida a <code class="inline">addEntryModal.logic.ts</code> + 8 tests.
+            Gate: <span class="badge badge-green">approve</span> (desviacion <em>should</em> de test de interaccion aceptada por dev — gap de infra preexistente).
+            <br class="mt-1"><span class="text-stone-500">Archivos nuevos:</span> AddEntryModal.vue, addEntryModal.logic.ts, addEntryModal.logic.spec.ts, lang/* (6 nuevos/mod). Suite: 933/933.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 — Picker de Activity + alta obligatoria end-to-end</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T3, dual-judge. Grupo paralelo S2.T1 + S2.T3 (archivos disjuntos).
+            Se construyo <code class="inline">useActivityPicker.ts</code> (listInstances Activity con filtros executionUnitId/isCurrent),
+            <code class="inline">ActivityPicker.vue</code> con filtro por departamento + multiseleccion + exclusion de cursos ya colocados,
+            y la logica de alta obligatoria (buildObligatoriaPlanEntryPayloads/nextPosition).
+            El dual-judge detecto dead code (SFC no usaba la logica pura) + falta de error handling: ambos resueltos por fix-agent.
+            Gate: <span class="badge badge-green">approve (post-fix)</span>. Suite: 967/967.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S3 — Select-suggest de bloque electivo + SPIKE create:true</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T3, dual-judge. Grupo paralelo S3.T1 (spike) + S3.T2 (useBlockOptions).
+            El spike confirmo que <code class="inline">create:true</code> de Vueform es self-contained (no toca ModalStackManager): riesgo H1.2 cerrado sin fallback.
+            Se construyo <code class="inline">useBlockOptions.ts</code> (listInstances requirement, recordType=Group/ownerType=curriculum) y se integro el select-suggest en la rama electiva del modal.
+            Fix-agent: <code class="inline">blockOptionsLoading</code> conectado al <code class="inline">disabled</code> del select + copys actualizados.
+            Gate: <span class="badge badge-green">approve (post-fix)</span>. Suite: 984/984.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S4 — Tagging electivo end-to-end (crear/crecer bloque + minToSatisfy auto)</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T3, dual-judge con tie-break del orquestador.
+            Logica pura: buildBlockPayload + deriveMinToSatisfy + buildElectivaPlanEntryPayloads.
+            Wiring en Element: createInstance del bloque nuevo + tag de planEntries.
+            <strong class="text-red-400">Bug critico detectado por dual-judge</strong>: F1 objectType = <code class="inline">'requirement'</code> en vez de <code class="inline">'rt__Group__requirement'</code>;
+            F2 campo <code class="inline">effect</code> ausente (requerido, valor <code class="inline">'ProgressGate'</code> — precedente en seed MC-03).
+            Los 999 tests verdes no lo veian (solo testean builders puros).
+            Fix-agent + re-verificacion independiente. REQ-07 precarga visual → backlog B1. Bloque huerfano → backlog B2.
+            Gate: <span class="badge badge-green">approve (post-fix)</span>. Suite: 999/999.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S5 — Modal editar/quitar planEntry</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T3, dual-judge. Logica pura: applyRoleChange (Electiva→setea blockId / Obligatoria→null),
+            buildUpdateEntryPayload, isElective. <code class="inline">EditEntryModal.vue</code> cableado desde la tarjeta del Element
+            (updateInstance/deleteInstance con objectType <code class="inline">'planEntry'</code> — leccion de S4 aplicada).
+            <strong class="text-red-400">Verificacion DET-33 atrapo 5 errores de tipo</strong> con vue-tsc que los 1038 tests verdes ocultaban (esbuild no typechequea).
+            Fix de raiz: OriginalEntryFields (Pick tipado), sin <code class="inline">any</code>.
+            Cleanup: dead ref editMutationError + keys i18n huerfanas + guard negativos en parseCreditsRaw.
+            Gate: <span class="badge badge-green">approve (post-fix)</span>. Suite: 1040/1040. vue-tsc: 0 errores.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="mt-4 rounded-lg border border-stone-700 bg-stone-900/50 p-4 text-xs text-stone-400 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div><div class="text-amber-400 font-semibold text-base">23</div><div>archivos creados/modificados</div></div>
+        <div><div class="text-amber-400 font-semibold text-base">+4 639</div><div>lineas netas</div></div>
+        <div><div class="text-amber-400 font-semibold text-base">1 040</div><div>tests en verde</div></div>
+        <div><div class="text-amber-400 font-semibold text-base">15</div><div>commits locales</div></div>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: flow — evolucion de hipotesis
+    ======================================================= -->
+    <section id="hypotheses" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Evolucion de hipotesis</h2>
+      <p class="text-xs text-stone-500 mb-4">Las 4 hipotesis del intake: estado de entrada vs. estado de cierre.</p>
+
+      <div class="pre-mermaid mb-6">
+        <pre class="mermaid">
+flowchart LR
+  H1_ini["H1: select-suggest en modal casero\n(estado: por verificar)"]
+  H1_fin["H1: CONFIRMADA\nVueform renderiza en Modal casero\n(Teleport to body — sin ModalStackManager)"]
+  H1_ini -->|"evidencia S1:\ncompilacion + stories"| H1_fin
+
+  H11_ini["H1.1: reusar useOwnerIdOptions\npara bloques requirement"]
+  H11_fin["H1.1: REFUTADA\nusada solo para AcademicProgram/Institution\n→ se creo useBlockOptions"]
+  H11_ini -->|"inspect S0: codigo hardcodeado"| H11_fin
+
+  H12_ini["H1.2: Vueform create:true\nfunciona en modal casero\n(riesgo: BUG-platform-011)"]
+  H12_spike["S3 SPIKE bloqueante:\nverificacion en source Vueform"]
+  H12_fin["H1.2: CONFIRMADA (spike S3.T1)\ncreatedOption = computed local\nNO toca ModalStackManager\n→ sin fallback necesario"]
+  H12_ini --> H12_spike --> H12_fin
+
+  H2_ini["H2: picker de Activity\nreusa composable existente"]
+  H2_fin["H2: REFUTADA\nno existia useActivityPicker\n→ build sobre listInstances(Activity)"]
+  H2_ini -->|"explore S0: no existe"| H2_fin
+        </pre>
+      </div>
+
+      <div class="callout callout-success">
+        <strong>Lo mas relevante del spike de S3</strong>: la decision de la dev de usar <code class="inline">create:true</code> (sobre la recomendacion del LLM de input de texto) fue la correcta.
+        El spike demostro empiricamente que <code class="inline">create:true</code> es self-contained: el source de Vueform muestra que <code class="inline">createdOption</code> es un <code class="inline">computed</code> local del multiselect y <code class="inline">handleTag</code> solo dispara el event bus interno — nunca llama al ModalStackManager que BUG-platform-011 declara ausente. Riesgo cerrado sin fallback.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: comparison-table — decisiones cerradas
+    ======================================================= -->
+    <section id="decisions" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Decisiones cerradas y su resultado</h2>
+
+      <div class="overflow-x-auto rounded-lg border border-stone-700">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-900 text-stone-400 text-xs uppercase">
+            <tr>
+              <th class="text-left p-3">Decision</th>
+              <th class="text-left p-3">Alternativa descartada</th>
+              <th class="text-left p-3">Resultado</th>
+              <th class="p-3 text-center">Veredicto</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-800 text-xs">
+            <tr class="bg-amber-500/5">
+              <td class="p-3 text-amber-300 font-medium">Modales caseros (atomo <code class="inline">Modal</code>)</td>
+              <td class="p-3 text-stone-400">ModalStackManager de Vueform (BUG-platform-011)</td>
+              <td class="p-3 text-stone-300">Funciono perfectamente. Precedente CompositeSectionTree validado; Modal via Teleport no depende de ModalStackManager.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">exitosa</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">Vueform <code class="inline">create:true</code> para nombrar bloque nuevo</td>
+              <td class="p-3 text-stone-400">Input de texto libre (recomendacion del LLM)</td>
+              <td class="p-3 text-stone-300">Spike S3.T1 confirmo que create:true es self-contained. La eleccion de la dev fue correcta; el LLM propuso la opcion mas conservadora sin necesidad.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">exitosa</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">Crear <code class="inline">useBlockOptions</code> nuevo (no reusar useOwnerIdOptions)</td>
+              <td class="p-3 text-stone-400">Reusar useOwnerIdOptions segun RULE-cd-015</td>
+              <td class="p-3 text-stone-300">Correcto: useOwnerIdOptions esta hardcodeado a AcademicProgram/Institution. El nuevo composable sigue el mismo patron pero filtra por recordType=Group/ownerType=curriculum.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">justificada</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">Seam adapter/core (DEC-038 / RULE-mods-051)</td>
+              <td class="p-3 text-stone-400">Logica de mutaciones dentro de los modales</td>
+              <td class="p-3 text-stone-300">Sostenido durante las 5 sessions. Dual-judge verifico en cada gate que ningun modal contenia createInstance/updateInstance. El grep paso limpio en todas las sesiones.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">sostenido</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">effect del bloque = <code class="inline">ProgressGate</code></td>
+              <td class="p-3 text-stone-400">Valor asumido sin precedente (riesgo F2 S4)</td>
+              <td class="p-3 text-stone-300">El dual-judge S4 detecto que effect era requerido y estaba ausente. El orquestador confirmo ProgressGate en seed/_data-requirement.js:115 (bloque electivo de curriculum del seed MC-03). Correcto.</td>
+              <td class="p-3 text-center"><span class="badge badge-amber">corregida</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium"><code class="inline">objectType = 'rt__Group__requirement'</code> para crear bloque</td>
+              <td class="p-3 text-stone-400"><code class="inline">objectType = 'requirement'</code> (nombre base — incorrecto)</td>
+              <td class="p-3 text-stone-300">Bug critico F1 de S4: el create-new-block estaba roto porque usaba el nombre base. El dual-judge lo detecto; los tests verdes lo ocultaban. Asimetria create-vs-list documentada como L10.</td>
+              <td class="p-3 text-center"><span class="badge badge-amber">corregida</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: case — que se logro
+    ======================================================= -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Que se logro</h2>
+
+      <div class="grid grid-cols-1 gap-4">
+
+        <div class="rounded-lg border border-stone-700 overflow-hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+            <div class="p-4">
+              <div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div>
+              <p class="text-sm text-stone-300">El componente base de malla (MC-05) existia pero sin alta ni edicion. El boton de alta estaba deshabilitado.</p>
+            </div>
+            <div class="p-4">
+              <div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decision</div>
+              <p class="text-sm text-stone-300">Construir los modales caseros en 5 sessions: alta obligatoria primero (Must), luego electiva (Should), finalmente edicion y quita.</p>
+            </div>
+            <div class="p-4">
+              <div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div>
+              <p class="text-sm text-stone-300">Flujo completo: alta obligatoria y electiva end-to-end + edicion de creditos/linea/Rol + quita de la malla. Todos los REQ Must entregados; electivas (Should) tambien entregadas.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">
+          <div class="brick p-4 transition-colors">
+            <div class="text-amber-400 font-semibold text-sm mb-2">Must entregado (S1-S2)</div>
+            <ul class="text-xs text-stone-400 space-y-1 list-disc list-inside">
+              <li>Modal de alta 2 pasos (tipo + picker)</li>
+              <li>Picker con filtro por departamento + exclusion de cursos ya colocados + isCurrent</li>
+              <li>Alta masiva de obligatorias: N planEntry kind=Course, categoryId, creditos heredados</li>
+              <li>logica pura 100% testeada: 35 tests nuevos al cierre de S2</li>
+            </ul>
+          </div>
+          <div class="brick p-4 transition-colors">
+            <div class="text-amber-400 font-semibold text-sm mb-2">Should entregado (S3-S5)</div>
+            <ul class="text-xs text-stone-400 space-y-1 list-disc list-inside">
+              <li>Select-suggest de bloque (elegir existente o crear nuevo con create:true)</li>
+              <li>Tagging electivo: requirement Group creado automaticamente, blockId en planEntry</li>
+              <li>minToSatisfy auto-derivado del conteo de cursos agregados</li>
+              <li>Modal editar/quitar: Rol (Obligatoria ↔ Electiva), creditos override, linea, quitar</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: study-qa — lessons learned
+    ======================================================= -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Lessons learned</h2>
+      <p class="text-xs text-stone-500 mb-4">Lo mas valioso para el dev que trabaje sobre este modulo o el platform en el futuro.</p>
+
+      <details class="qa">
+        <summary>¿Por que <code class="inline">createInstance</code> de un RecordType necesita el objectType completo y no el nombre base?</summary>
+        <div class="ans">
+          <p>El platform usa el objectType para resolver el archivo de schema del RecordType (patron <code class="inline">rt__{RT}__{base}</code>, ej. <code class="inline">rt__Group__requirement</code>).
+          Con ese archivo crea la fila completa del RT incluyendo los campos especificos del subtipo (<code class="inline">combinator</code>, <code class="inline">minToSatisfy</code>).
+          Si pasas solo el nombre base (<code class="inline">'requirement'</code>), el platform resuelve el schema base y no sabe de esos campos especificos: el create falla silenciosamente o crea una fila incompleta.</p>
+          <p class="mt-2"><strong>Asimetria importante</strong>: <code class="inline">listInstances</code> si acepta el nombre base mas un filtro <code class="inline">recordType=Group</code>. Create y list usan convenciones distintas.</p>
+          <p class="mt-2"><strong>Donde lo atrapo DKC</strong>: S4, dual-judge. El Juez B reporto FAIL en F1; el Juez A reporto PASS. El orquestador resolvio el tie-break contrastando con el spec (Technical reference L474) y el schema real. Los 999 tests unitarios no lo veian porque solo testean los builders de payloads, no el createInstance real.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Por que los tests en verde no son suficiente para un gate de session que toca UI?</summary>
+        <div class="ans">
+          <p>Vitest corre con esbuild, que transpila TypeScript sin realizar typechecking. Eso significa que errores de tipo (tipo incorrecto en prop, Pick con campos inexistentes, size invalido) pasan sin error en tiempo de transpilacion y los tests siguen verdes.</p>
+          <p class="mt-2">En S5, el orquestador corrio <code class="inline">vue-tsc</code> como parte del DET-33 (verificacion del self-report) y encontro 5 errores que el dev no habia ejecutado:
+            <code class="inline">size='xs'</code> invalido en el Modal, y 4 mismatches de <code class="inline">Pick&lt;MeshEntry,...&gt;</code> con campos inexistentes.</p>
+          <p class="mt-2"><strong>Practica recomendada</strong>: ejecutar <code class="inline">vue-tsc --noEmit</code> (o equivalente del proyecto) en el gate de toda session que produzca componentes Vue, ademas del <code class="inline">vitest run</code> habitual.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Como extraer la logica de un SFC a un archivo <code class="inline">.ts</code> puro para poder testearla en env node?</summary>
+        <div class="ans">
+          <p>El vitest del mod <code class="inline">curriculum-design</code> corre en <code class="inline">environment: 'node'</code> sin <code class="inline">@vitejs/plugin-vue</code> (los SFC estan aliasados a stubs).
+          Eso significa que no puedes importar ni montar un <code class="inline">.vue</code> directamente en el test.</p>
+          <p class="mt-2">El patron del mod es: extraer toda la logica (calculos, validators, derivaciones) a un archivo <code class="inline">*.logic.ts</code> que solo importa tipos y utilidades (sin Vue). El SFC importa desde ese archivo y aplica la logica a sus refs.
+          Los tests (<code class="inline">*.logic.spec.ts</code>) importan directamente el <code class="inline">.ts</code> sin necesidad de montar el componente.</p>
+          <p class="mt-2"><strong>Cuidado</strong>: en S2 el SFC de AddEntryModal reimplemento la logica inline sin usar el <code class="inline">addEntryModal.logic.ts</code> recien creado. El dual-judge lo detecto como dead code. Siempre verificar que el SFC importa y usa el modulo <code class="inline">.ts</code> externo.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Por que <code class="inline">create:true</code> de Vueform es seguro dentro del modal casero?</summary>
+        <div class="ans">
+          <p>BUG-platform-011 indica que el ModalStackManager de Vueform no se expone al contexto de los mods. La preocupacion era que <code class="inline">create:true</code> invocara ese manager al crear una nueva opcion.</p>
+          <p class="mt-2">El spike de S3.T1 leyo el source de Vueform (<code class="inline">@vueform/multiselect/.../useOptions.js:110-111</code>) y verifico que <code class="inline">createdOption</code> es un <code class="inline">computed</code> local del multiselect y que <code class="inline">handleTag</code> solo dispara el event bus interno de Vueform. El ModalStackManager no esta involucrado.</p>
+          <p class="mt-2">La story <code class="inline">SpikeS3T1SelectSuggestElectiva</code> en <code class="inline">CurriculumMesh.stories.ts</code> sirve como evidencia reproducible de que el flujo create funciona en el modal casero.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Que campos son obligatorios al crear un bloque <code class="inline">requirement(Group)</code> para un curriculum?</summary>
+        <div class="ans">
+          <p>Segun el schema <code class="inline">dynamic.js:764-781</code> + <code class="inline">:2133-2152</code> y el precedente en <code class="inline">seed/_data-requirement.js:115</code>, los campos requeridos son:</p>
+          <ul class="list-disc list-inside mt-2 space-y-1">
+            <li><code class="inline">objectType: 'rt__Group__requirement'</code> (NO <code class="inline">'requirement'</code>)</li>
+            <li><code class="inline">ownerType: 'curriculum'</code></li>
+            <li><code class="inline">ownerId: planId</code></li>
+            <li><code class="inline">parentId: null</code></li>
+            <li><code class="inline">recordType: 'Group'</code></li>
+            <li><code class="inline">effect: 'ProgressGate'</code> (requerido, precedente en MC-03)</li>
+            <li><code class="inline">combinator: 'OR'</code></li>
+            <li><code class="inline">minToSatisfy</code> (auto-derivado del conteo de cursos)</li>
+            <li><code class="inline">isHardRule: false</code></li>
+            <li><code class="inline">label</code> (nombre del bloque electivo)</li>
+          </ul>
+          <p class="mt-2">Para listar bloques existentes se usa <code class="inline">listInstances(name:'requirement', filters:[{recordType EQUALS 'Group'}, {ownerType EQUALS 'curriculum'}, {ownerId EQUALS planId}])</code>. Notar que <code class="inline">combinator</code> y <code class="inline">minToSatisfy</code> no se usan como filtros EQUALS porque son campos del blob <code class="inline">data</code>, no del schema base.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Como maneja el seam la logica de Rol Obligatoria ↔ Electiva en la edicion?</summary>
+        <div class="ans">
+          <p>La regla central es: <code class="inline">isElective = blockId != null</code> (evaluado por el read enrichment del backend en <code class="inline">curriculum-read.resolver.js:185-225</code>). El modal de edicion no guarda un campo "tipo" separado: solo gestiona <code class="inline">blockId</code>.</p>
+          <p class="mt-2">La logica pura (<code class="inline">applyRoleChange</code> en <code class="inline">curriculumMesh.logic.ts</code>) implementa:</p>
+          <ul class="list-disc list-inside mt-2 space-y-1">
+            <li>Rol → Electiva: setea <code class="inline">blockId</code> al bloque seleccionado</li>
+            <li>Rol → Obligatoria: limpia <code class="inline">blockId</code> (null)</li>
+            <li>Cambiar categoria (<code class="inline">categoryId</code>): no toca <code class="inline">blockId</code> — electividad y categoria son ortogonales</li>
+          </ul>
+          <p class="mt-2">El adapter (<code class="inline">CurriculumMeshElement.vue</code>) ejecuta <code class="inline">updateInstance(objectType:'planEntry', id, data:payload)</code> — objectType base (sin <code class="inline">rt__</code>) porque planEntry no es un RecordType.</p>
+        </div>
+      </details>
+
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: callout — backlog pendiente
+    ======================================================= -->
+    <section id="backlog" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Pendiente (backlog abierto)</h2>
+      <div class="callout callout-warn">
+        <strong>B1 (Should) — Precarga visual de cursos del bloque existente</strong><br>
+        Al elegir un bloque existente, el picker deberia preseleccionar los cursos que ya contiene (REQ-07 parcial).
+        Requiere un query adicional de planEntries del bloque y una prop <code class="inline">preselectedIds</code> en <code class="inline">ActivityPicker</code>.
+        La exclusion de duplicados de S2 ya evita problemas de datos; es solo UX.
+      </div>
+      <div class="callout callout-info mt-2">
+        <strong>B3 (Should) — Fidelidad del campo creditos en edicion</strong><br>
+        El modal de edicion abre con el credito efectivo resuelto (nunca null) en vez del override crudo.
+        Un entry sin override muestra los creditos heredados como si fueran un override explicitamente seteado.
+        Sin corrupcion de datos (patch parcial correcto), solo UX confuso. Requiere plumbing de <code class="inline">planEntry.credits</code> raw hasta <code class="inline">MeshCard</code>.
+      </div>
+      <div class="callout callout-note mt-2">
+        <strong>B2 (Could) — Rollback de bloque huerfano en error parcial</strong><br>
+        Si se crea el requirement Group pero falla el tag de alguna planEntry, el bloque queda sin entries.
+        GraphQL del platform no provee transacciones cross-mutation; evaluar cleanup explicito o advertencia al usuario.
+      </div>
+    </section>
+
+    <!-- Invariante final -->
+    <section class="blk mt-12" data-dkc-block="invariant">
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">
+          <span class="text-amber-400">Tests verdes != integracion correcta.</span>
+          Vitest/esbuild no typechequea y los unit tests solo cubren los builders puros.
+        </div>
+        <div class="ilabel mt-2">
+          Corolario: en todo gate de session que toque UI o que llame a createInstance de un RecordType,
+          correr vue-tsc y contrastar el objectType con el schema real — el dual-judge DET-35 es el seguro de red, pero correr el typechecker al cierre de cada tarea es mas barato.
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · close · TICKET-086 (UPONE-1349) · MC-06 · up1 · 2026-06-30 · DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

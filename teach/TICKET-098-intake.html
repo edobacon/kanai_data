@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Crear bloque electivo desde edición + fix doble "+" · TICKET-098</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: {
+    darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4',
+    primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', tertiaryColor: '#1c1917',
+    mainBkg: '#1c1917', nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+    titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px' },
+    flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .blk { scroll-margin-top:5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-note { border-color:#38bdf8; background:rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  .tl { position:relative; padding-left:1.6rem; } .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; } .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background:linear-gradient(135deg,rgba(245,158,11,0.10),rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-098</span> · Bloque electivo en edición + doble "+"</span>
+      <span>up1 · 2026-07-01</span>
+    </div>
+  </header>
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Crear bloque electivo desde edición (paridad add↔edit) + fix doble "+"</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Follow-up de MC-06 (UPONE-1349). Dos detalles del componente <code class="inline">CurriculumMesh</code>: (1) al editar una asignatura
+      electiva, el selector de bloque solo dejaba elegir existentes — no crear uno nuevo, cosa que el modal de <strong>alta</strong> sí
+      permite; (2) el botón "+ Asignatura" muestra dos signos "+". Este documento orienta sobre las bases (cómo se crea un bloque hoy),
+      el entorno (dónde vive la asimetría) y el plan.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Fix de <strong>reuso</strong>: la capacidad "crear bloque" ya está extraída en
+        <code class="inline">blockSelect.logic</code> (<code class="inline">resolveBlockSelection</code> + <code class="inline">BLOCK_NEW_SENTINEL</code>)
+        y la mutación <code class="inline">CREATE_REQUIREMENT</code> (<code class="inline">rt__Group__requirement</code>) ya existe — solo el modal
+        de <strong>edición</strong> no las consumía. El doble "+" es porque el <code class="inline">Button</code> trae
+        <code class="inline">icon="bi bi-plus-lg"</code> y la etiqueta i18n además empieza con "+".
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">cómo se crea un bloque</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">la asimetría</a>
+      <a href="#plan" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+    </nav>
+
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Glosario</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">bloque electivo</div>
+          <p class="mt-1.5 text-xs text-stone-400">Un <code class="inline">requirement</code> de recordType <code class="inline">Group</code> (<code class="inline">rt__Group__requirement</code>) dueño del plan. Agrupa asignaturas electivas; el planEntry electivo apunta a él por <code class="inline">blockId</code>.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">blockSelect.logic</div>
+          <p class="mt-1.5 text-xs text-stone-400">Módulo puro: <code class="inline">resolveBlockSelection(selectValue, newName, options)</code> → interpreta '' / <code class="inline">__new__</code> / id existente. Ya usado por el alta; reusable.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">CREATE_REQUIREMENT</div>
+          <p class="mt-1.5 text-xs text-stone-400">Mutación <code class="inline">createInstance</code> con objectType <code class="inline">rt__Group__requirement</code> + <code class="inline">buildBlockPayload</code>. Crea el bloque; devuelve su id.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">seam modal ↔ Element</div>
+          <p class="mt-1.5 text-xs text-stone-400">El modal es presentacional (emite eventos, no muta); el Element ejecuta las mutaciones. El alta lo hace en <code class="inline">createElectivaEntries</code>.</p></div>
+      </div>
+    </section>
+
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Cómo crea un bloque el ALTA (lo que la edición no hacía)</h2>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TD
+  S[select bloque] -->|__new__ + nombre| R[resolveBlockSelection\nisNew:true]
+  S -->|id existente| E[isNew:false]
+  R --> C[Element createElectivaEntries\nCREATE_REQUIREMENT rt__Group__requirement]
+  C --> ID[nuevo blockId]
+  ID --> P[planEntry con blockId]
+  E --> P
+      </pre></div>
+      <p class="text-sm text-stone-400 mt-3">El modal de <strong>edición</strong> tenía un <code class="inline">&lt;select&gt;</code> plano (solo existentes) atado a <code class="inline">form.blockId</code>, sin la opción <code class="inline">__new__</code> ni el input — nunca importaba <code class="inline">blockSelect.logic</code>.</p>
+    </section>
+
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La asimetría y el entorno</h2>
+      <div class="callout callout-note"><strong>Reuso (DET-32)</strong> — La lógica de crear bloque ya existe; el fix es wiring en el modal de edición + un handler en el Element que espeja <code class="inline">createElectivaEntries</code>. No se construye lógica nueva.</div>
+      <div class="callout callout-warn mt-3"><strong>Bajo riesgo</strong> — Se mantiene el evento <code class="inline">save</code> existente intacto (bloque existente/obligatoria) y se agrega <code class="inline">saveNewBlock</code> solo para el caso nuevo. El path que ya funcionaba no se toca.</div>
+      <div class="callout callout-info mt-3"><strong>Doble "+" (Item 2)</strong> — <code class="inline">buttons.addSubject</code> = "+ Asignatura" y el <code class="inline">Button</code> ya pinta <code class="inline">bi-plus-lg</code>. Fix: quitar el "+ " de la etiqueta en 3 locales.</div>
+    </section>
+
+    <section id="plan" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Plan (1 sesión)</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Item 2 — doble "+"</div><p class="text-xs text-stone-400">Quitar "+ " de <code class="inline">buttons.addSubject</code> (es_CL/en_CL/pt_BR).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Item 1 — bloque en edición</div><p class="text-xs text-stone-400">UI (opción "crear nuevo" + input) reusando <code class="inline">resolveBlockSelection</code>; evento <code class="inline">saveNewBlock</code>; handler <code class="inline">onEditSaveNewBlock</code> (crea bloque + reusa <code class="inline">onEditSave</code>); i18n; tests component + logic.</p></div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · intake · TICKET-098 · up1 · 2026-07-01. Generado por DKC.</footer>
+  </main>
+</body>
+</html>

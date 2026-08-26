@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — HU-11 Versiones en RecordDetail · TICKET-045</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917', nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c', titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .blk { scroll-margin-top:5rem; }
+  .callout { border-left:4px solid; padding:.85rem 1.1rem; border-radius:0 .5rem .5rem 0; margin:.4rem 0; }
+  .callout-info{border-color:#818cf8;background:rgba(129,140,248,.10);} .callout-warn{border-color:#fbbf24;background:rgba(251,191,36,.10);}
+  .callout-success{border-color:#34d399;background:rgba(52,211,153,.10);} .callout-danger{border-color:#f87171;background:rgba(248,113,113,.10);}
+  code.inline{background:#292524;color:#fcd34d;padding:.06rem .38rem;border-radius:.25rem;font-size:.84em;border:1px solid var(--stone-border);}
+  .brick{background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%);border:1px solid var(--stone-border);border-radius:.6rem;} .brick:hover{border-color:var(--amber);}
+  details.qa{border:1px solid var(--stone-border);border-radius:.5rem;background:var(--stone-card);margin:.4rem 0;}
+  details.qa summary{cursor:pointer;padding:.7rem 1rem;font-weight:600;color:var(--txt);list-style:none;} details.qa summary::-webkit-details-marker{display:none;}
+  details.qa summary::before{content:"▸";color:var(--amber);margin-right:.5rem;} details.qa[open] summary::before{content:"▾";}
+  details.qa .ans{padding:0 1rem .85rem 2rem;color:var(--txt-muted);font-size:.9rem;}
+  .tl{position:relative;padding-left:1.6rem;} .tl::before{content:"";position:absolute;left:.35rem;top:.2rem;bottom:.2rem;width:2px;background:var(--stone-border);}
+  .tl-item{position:relative;padding-bottom:1rem;} .tl-item::before{content:"";position:absolute;left:-1.43rem;top:.25rem;width:.7rem;height:.7rem;border-radius:50%;background:var(--amber);border:2px solid var(--stone-bg);}
+  a.navlink{color:var(--txt-muted);} a.navlink:hover{color:var(--amber);}
+  .tldr{background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(245,158,11,.03));border:1px solid rgba(245,158,11,.30);border-radius:.7rem;padding:1.1rem 1.3rem;}
+  .invariant{background:#020617;border:1px solid var(--amber);border-radius:.7rem;padding:1.1rem 1.3rem;} .invariant .ilabel{color:var(--txt-dim);font-style:italic;font-size:.8rem;}
+  table.cmp{width:100%;font-size:.85rem;border-collapse:collapse;} table.cmp th{background:#1c1917;color:var(--txt-muted);text-transform:uppercase;font-size:.7rem;padding:.5rem .7rem;text-align:left;} table.cmp td{border-top:1px solid var(--stone-border);padding:.5rem .7rem;}
+  .pre-mermaid{background:var(--stone-card);border:1px solid var(--stone-border);border-radius:.6rem;padding:1rem;overflow-x:auto;}
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-045</span> · HU-11 Versiones en RecordDetail</span>
+      <span>up1 · 2026-06-04</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">HU-11 — cierre: qué se hizo, qué se decidió, qué aprendimos</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      HU-11 parecía un ticket de configuración pura (~0.5 SP): agregar una pestaña "Versiones" al detalle de un Programa de asignatura.
+      Terminó tocando <strong>layout core</strong> (rama UPONE-1206 + revisión team) porque la navegación entre versiones destapó dos bugs
+      del motor. Esta nota es para el dev que retoma: el resultado final, las decisiones de scope, y las dos trampas de core que ahora
+      están resueltas pero conviene conocer.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se entregó la pestaña <strong>Versiones</strong> en <code class="inline">default_Activity_view.json</code>:
+        lista la cadena completa de versiones (filtrada por <code class="inline">code</code>), con i18n es/en/pt y la rowAction "Crear nueva versión" (reuso de HU-10).
+        Clickear una versión <strong>navega a su ficha completa</strong>. Eso último requirió 2 fixes de layout core: (1)
+        <code class="inline">RecordListElement</code> ahora rutea la navegación de listas embebidas (antes el evento se tragaba), y (2) un
+        <code class="inline">:key</code> en la página de detalle Suite fuerza recarga al cambiar de registro. Validado en vivo con un programa de 3 versiones.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#hist" class="navlink rounded border border-stone-700 px-2 py-1">la historia</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">cómo evolucionó</a>
+      <a href="#dec" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#bugs" class="navlink rounded border border-stone-700 px-2 py-1">2 bugs de core</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- LA HISTORIA (case) -->
+    <section id="hist" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La historia del caso</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Punto de partida</div><p class="text-sm text-stone-300">S1 (discovery) eligió "Camino A-lite": reusar el primitivo <code class="inline">record-list</code> existente. Se asumía config-only en el mod, ~0.5 SP.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Lo que pasó</div><p class="text-sm text-stone-300">El dev pidió row actions (ver/editar/nueva versión) y full-page nav. La validación en vivo destapó que la nav route desde listas embebidas <strong>no funcionaba</strong> — 2 bugs de layout core.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Tab entregada (mod) + nav route entre versiones arreglada (core, UPONE-1206). "Editar inline" diferido (B-3). Validado con TIR101 (3 versiones).</p></div>
+      </div></div>
+    </section>
+
+    <!-- TIMELINE evolución -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Cómo evolucionó</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Config (mod)</div><p class="text-xs text-stone-400">Tab Versiones + <code class="inline">record-list</code> sobre Activity filtrado por <code class="inline">code</code> + rowAction nueva versión.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — i18n + smoke</div><p class="text-xs text-stone-400">es/en/pt; smoke mostró la tab OK pero la navegación no cambiaba de versión.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 — Fix core (UPONE-1206)</div><p class="text-xs text-stone-400">Dos bugs: nav embebida no propagaba + destino no recargaba. Arreglados y validados en vivo.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 — Cierre</div><p class="text-xs text-stone-400">Reviewer aislado, commits granulares por repo, teach-close.</p></div>
+      </div>
+    </section>
+
+    <!-- DECISIONES (comparison) -->
+    <section id="dec" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones de scope y por qué</h2>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="cmp">
+        <thead><tr><th>Decisión</th><th>Elegido</th><th>Por qué / alternativa descartada</th></tr></thead>
+        <tbody>
+          <tr><td>Clave de agrupación de versiones</td><td class="text-amber-300">filtro por <code class="inline">code</code></td><td>Estable entre versiones. <code class="inline">previousVersionId</code> es puntero linked-list → un EQUALS no da la cadena (descartado).</td></tr>
+          <tr><td>Estado / autor / badge</td><td class="text-amber-300">estado texto; sin autor</td><td>Activity no tiene campo autor; badge declarativo no existe en record-list (→ SP4, B-1/B-5).</td></tr>
+          <tr><td>Row actions</td><td class="text-amber-300">Ver + Nueva versión</td><td>Editar inline exige aflojar override read-only de listas embebidas (core, 17 listas/3 mods) → diferido B-3.</td></tr>
+          <tr><td>Navegación al click</td><td class="text-amber-300">full-page route + fix core</td><td>El dev pidió "vista completa como abrir el activity". Requirió arreglar la propagación del evento + recarga (vs modal, que funcionaba pero es overlay).</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- LOS 2 BUGS DE CORE (callouts + flow) -->
+    <section id="bugs" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Los 2 bugs de layout core (resueltos)</h2>
+      <div class="callout callout-danger"><strong>Bug 1 — la navegación no se disparaba.</strong> El <code class="inline">request-action: navigate-to-relation</code> de un record-list EMBEBIDO llegaba a <code class="inline">RecordListElement.handleAction</code> (puente Vueform) que solo hacía <code class="inline">element.fire('action')</code> — un evento Vueform que <strong>nadie ruteaba</strong>. Fix: <code class="inline">handleAction</code> ahora navega vía router en <code class="inline">navigate-to-relation</code> (gateado; solo aplica a <code class="inline">openMode:route</code>).</div>
+      <div class="callout callout-danger"><strong>Bug 2 — el destino no recargaba.</strong> Al navegar entre dos registros del mismo objeto/layout (cambia solo <code class="inline">instance_id</code>), Vue reusa el componente; <code class="inline">RecordDetail.vue:4567</code> solo refetchea <code class="inline">if (!schema.value)</code> — y como el schema ya existe, no recargaba (vista stale). Fix: <code class="inline">:key</code> en el <code class="inline">LayoutOrchestrator</code> de la página Suite de detalle → remount + fetch fresco.</div>
+      <div class="callout callout-info"><strong>Ambos componen:</strong> el click ahora dispara la navegación (Bug 1) y el destino recarga los datos de la versión elegida (Bug 2). Validado: estando en v3, clic en v1 → URL cambia + ficha muestra v1 (VERSION 1, v2022-actual, Publicado).</div>
+      <div class="pre-mermaid mt-4"><pre class="mermaid">
+flowchart LR
+  A[Click version v1] --> B[RecordList emite navigate-to-relation]
+  B --> C[RecordListElement.handleAction]
+  C -- FIX 1: router.push --> D[URL /Activity/idV1/RecordDetail]
+  D -- FIX 2: :key remonta --> E[Ficha de v1 con datos frescos]
+      </pre></div>
+    </section>
+
+    <!-- INVARIANTE -->
+    <section id="inv" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Invariante aprendido</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Las listas embebidas en RecordDetail soportan <span class="text-amber-400">modal nativamente</span>; <span class="text-amber-400">route requiere cableado de core</span>.</div>
+        <div class="ilabel mt-2">Corolario: si un mod pone <code class="inline">openMode:route</code> en una lista embebida, hoy funciona gracias al fix de <code class="inline">RecordListElement</code>; antes se tragaba silenciosamente. Para record-DETAIL embebidos el gap sigue (mismo patrón, ver RecordDetailElement.vue:69).</div>
+      </div>
+    </section>
+
+    <!-- LECCIONES (callout) -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones para el próximo</h2>
+      <div class="callout callout-warn"><strong>El discovery de S1 sobre-simplificó.</strong> "Filtrar por linkageField" era impreciso (es un puntero, no clave de grupo) y "autor/fecha" no eran satisfacibles config-only. Verificar a nivel campo/schema antes de prometer columnas.</div>
+      <div class="callout callout-warn"><strong>Un ticket "config-only" puede escalar a core.</strong> La UX de navegación destapó deuda del motor. Validar en vivo TEMPRANO (no solo por code-trace) cuando hay interacción de usuario.</div>
+      <div class="callout callout-success"><strong>Fix de bajo blast radius preferido.</strong> Se eligió `:key` en la página + gate en `handleAction` (aditivo, opt-in por openMode) sobre tocar el guard compartido de RecordDetail (app-wide). El reviewer aislado confirmó scope/rama.</div>
+    </section>
+
+    <!-- Q&A -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿Por qué la tab Versiones filtra por <code class="inline">code</code> y no por <code class="inline">previousVersionId</code>?</summary><div class="ans"><code class="inline">code</code> es estable entre versiones del mismo programa; un filtro EQUALS devuelve la cadena completa. <code class="inline">previousVersionId</code> es un FK reflexivo al anterior (linked-list) → un EQUALS solo daría el sucesor inmediato.</div></details>
+      <details class="qa"><summary>¿Qué pasaba al clickear una versión antes del fix?</summary><div class="ans">Nada visible: en route el evento se tragaba en el puente Vueform (Bug 1); aunque navegara, el destino no recargaba por el guard <code class="inline">!schema.value</code> (Bug 2). Por eso "no resultaba".</div></details>
+      <details class="qa"><summary>¿Por qué no se usó modal, que ya funcionaba?</summary><div class="ans">El dev pidió explícitamente la vista completa del activity (página), como abrirlo normalmente — no un overlay. Eso obligó a arreglar el route en core.</div></details>
+      <details class="qa"><summary>¿Qué quedó fuera (backlog)?</summary><div class="ans">B-1 badge/highlight; B-3 editar inline (override read-only embebido, core); B-5 columna Fecha (createdAt no expuesto como columna de lista); B-6 <code class="inline">onBeforeRouteLeave</code> (guard de ediciones sin guardar, gap pre-existente).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · TICKET-045 · close · up1 · generado por DKC.</footer>
+  </main>
+</body>
+</html>

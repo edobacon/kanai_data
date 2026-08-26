@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Paridad de la malla curricular desde el MCP · TICKET-099</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', mainBkg: '#1c1917', nodeBorder: '#f59e0b', textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524; --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; } .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; } .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-099</span> · Paridad de la malla curricular desde el MCP</span>
+      <span>up1 · 2026-07-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Lo que se construyó: la malla curricular operable desde el MCP</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El ticket cerró con 7 tools nuevas de malla en el adaptador MCP y la exposición de los guards de negocio en los
+      contratos — todo lo que la Fase A+B pedía. Este documento mira hacia atrás: qué se hizo en cada sesión, qué
+      decisiones se cerraron, y las lecciones que dejó el proceso (varias las descubrió el reviewer aislado, no el ejecutor).
+      Da por sabidas las bases del intake (qué es el MCP, los 3 objetos, el patrón preview→commit).
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se entregó paridad operable de la malla por MCP: <code class="inline">cd_get_mesh</code> (lectura agregada),
+        <code class="inline">cd_add/update/move/remove_plan_entry</code>, <code class="inline">cd_manage_formation_line</code>,
+        <code class="inline">cd_manage_requirement</code> y <code class="inline">cd_get_prereqs</code>, más los guards (MC-09, rango, borrado) y
+        <code class="inline">isEditable</code> en los contratos. Decisión central confirmada: la lógica del mod se <strong>portó</strong> (repo standalone).
+        121 tests verdes, 3 commits en <code class="inline">UPONE-1267-sp5</code>, sin push (queda para revisión del team).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#flujo" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#hipotesis" class="navlink rounded border border-stone-700 px-2 py-1">evolución de hipótesis</a>
+      <a href="#decision" class="navlink rounded border border-stone-700 px-2 py-1">decisión cerrada</a>
+      <a href="#lecciones" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- Qué se hizo, por sesión (flujo de acciones) -->
+    <section id="flujo" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Qué se hizo, sesión por sesión</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">El orden fue de fundacional a derivado; cada sesión cerró con un reviewer aislado que gatilló una iteración de fix.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Fase A: contratos + lectura</div><p class="text-xs text-stone-400">Se agregó el campo <code class="inline">guards[]</code> a <code class="inline">ObjectContract</code> y se pobló para los 3 objetos (MC-09, rango, borrado), surfaceándolo en <code class="inline">describe_object</code> y <code class="inline">get_create_guide</code>. Se derivó <code class="inline">isEditable</code> (EDITABLE_STATUSES=['Draft']) en <code class="inline">cd_get_curriculum</code>. Se implementó <code class="inline">cd_get_mesh</code> (agrupación por período + líneas + totalPeriods). El reviewer atrapó un guard de <code class="inline">planEntry</code> que afirmaba un bloqueo inexistente → corregido.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Fase B: escritura + port</div><p class="text-xs text-stone-400">Se portó la lógica pura del mod (<code class="inline">findMissingPrereqs</code>, <code class="inline">recalcPeriodPosition</code>, payload builders) y se implementaron <code class="inline">cd_add_plan_entry</code> (electiva con bloque nuevo atómico + rollback, pre-check de prereqs, aviso de períodos), <code class="inline">cd_update/move/remove_plan_entry</code> y <code class="inline">cd_manage_formation_line</code>. El reviewer atrapó que <code class="inline">deriveMinToSatisfy</code> era un parafraseo, no un port fiel → corregido con el algoritmo exacto.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — árbol de requisitos + transversal</div><p class="text-xs text-stone-400">Se implementó <code class="inline">cd_manage_requirement</code> (view/create resolviendo owner y target por código, enums por etiqueta) y <code class="inline">cd_get_prereqs</code>. El reviewer pidió anidar el árbol en la vista (no lista plana con parentId crudo) → se agregó <code class="inline">buildRequirementTree</code>. Se registraron las 7 tools en el pack y se actualizó su documentación.</p></div>
+      </div>
+    </section>
+
+    <!-- Evolución de hipótesis -->
+    <section id="hipotesis" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Evolución de hipótesis</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">Las 3 hipótesis del intake se sostuvieron en la implementación.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipótesis</th><th class="p-3">Intake</th><th class="p-3">Al cerrar</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H1 — guards ya corren, solo faltaba exponerlos</td><td class="p-3 text-center">confirmada</td><td class="p-3 text-center text-emerald-400">✓ confirmada (guards[] config-driven)</td></tr>
+          <tr><td class="p-3 text-stone-300">H2 — enrichment de lectura llega gratis</td><td class="p-3 text-center">confirmada</td><td class="p-3 text-center text-emerald-400">✓ reusado en cd_get_mesh (derivados + effectiveCredits)</td></tr>
+          <tr><td class="p-3 text-stone-300">H3 — tools = orquestación sobre mutaciones existentes</td><td class="p-3 text-center">inferida</td><td class="p-3 text-center text-emerald-400">✓ confirmada; el único matiz fue portar la lógica pura</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- Decisión cerrada -->
+    <section id="decision" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La decisión que definió el ticket: portar, no importar</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">REQ-07/08 pedían "reusar" <code class="inline">prereqCheck.logic.ts</code> y <code class="inline">recalcPeriodPosition.logic.ts</code> del mod up1.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decisión (DEC-LOCAL-01)</div><p class="text-sm text-stone-300">Portar el algoritmo puro al MCP (repo standalone, solo GraphQL, no puede importar el mod), con comentario de procedencia y tests que fijan la semántica.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Funcionó y es el patrón ya usado en <code class="inline">validations.ts</code>. El riesgo (divergencia) se materializó dos veces — ver lecciones — y los tests lo atajaron.</p></div>
+      </div></div>
+    </section>
+
+    <!-- Lecciones -->
+    <section id="lecciones" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones aprendidas</h2>
+      <div class="callout callout-warn">
+        <strong>⚠ Portar es copiar el algoritmo, no parafrasearlo</strong> — En S2, <code class="inline">deriveMinToSatisfy</code> se reescribió "de memoria" y divergió del mod (<code class="inline">deriveMinToSatisfy(0)</code> daba 1 vs 0). Peor: el test acompañante blindaba el bug. Lección: cuando el objetivo es paridad, el test del port debe compararse contra el <em>spec del mod</em>, no contra la intuición del que porta. El reviewer aislado lo atrapó porque leyó el archivo fuente real.
+      </div>
+      <div class="callout callout-danger">
+        <strong>✗ Un guard que informa de más es tan dañino como uno que falta</strong> — En S1, el guard de <code class="inline">planEntry</code> afirmaba que editar entradas se bloquea en planes Active. Falso: MC-09 solo bloquea los <em>requisitos de la asignatura</em> (<code class="inline">requirement</code> owner=activity), no la entrada. Exponer una regla inexistente vía <code class="inline">describe_object</code> contradice el propósito mismo de REQ-01 (guiar con verdad). Lección: verificar cada guard contra el resolver real antes de escribirlo.
+      </div>
+      <div class="callout callout-info">
+        <strong>ℹ El reviewer aislado paga su costo</strong> — Los 3 hallazgos que importaron (guard falso, port infiel, árbol plano) los encontró el juez en contexto limpio, no el ejecutor. El sesgo de "ya lo vi funcionando" es real; un revisor que solo tiene el spec + el diff descubre lo que el que escribió no ve.
+      </div>
+      <div class="callout callout-success">
+        <strong>✓ Legibilidad no es cosmética cuando es criterio de aceptación</strong> — REQ-11 pedía "nunca UUIDs como identificador principal". La vista del árbol de requisitos devolvía <code class="inline">parentId</code> crudo; anidarlo en <code class="inline">children[]</code> no fue un lujo sino cumplir el REQ. Cuando el REQ dice "legible", el output plano con ids opacos no alcanza.
+      </div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de cierre</h2>
+      <details class="qa"><summary>¿Qué quedó entregado y qué no?</summary><div class="ans">Entregado: Fase A (guards + isEditable en contratos) + Fase B (7 tools de malla: leer, agregar/editar/mover/quitar entradas, líneas de formación, árbol de requisitos, ver prereqs). Fuera de alcance (documentado): configurar el layout de la vista de malla por MCP (Fase C) y el motor de evaluación de requisitos (SP6). Pendiente en backlog `could`: smoke en vivo contra UPU (OTP) y documentar las tools en docs/TOOLS.md.</div></details>
+      <details class="qa"><summary>¿Cómo se validó sin sesión MCP en vivo?</summary><div class="ans">La lógica de cada REQ está cubierta por 121 tests unit/de contrato (vitest): guards en los contratos, groupByPeriod, findMissingPrereqs (con exclusión de MetricThreshold — H2), recalcPeriodPosition, payloads, deriveMinToSatisfy, resolución de enums por etiqueta y desambiguación por nombre, y el árbol anidado. La verificación smoke contra el tenant UPU requiere OTP y quedó como backlog `could` (B1) — sin claim falso de que se ejecutó.</div></details>
+      <details class="qa"><summary>Si retomo esto para la Fase C, ¿por dónde entro?</summary><div class="ans">La lógica pura de la malla vive en <code class="inline">src/mods/curriculum-design/mesh-logic.ts</code> (con procedencia al mod). Las tools de lectura en <code class="inline">mesh-read.ts</code>, escritura en <code class="inline">mesh-write.ts</code>, árbol de requisitos en <code class="inline">requirement-write.ts</code>, todas registradas en <code class="inline">index.ts</code>. La Fase C (layout por MCP) depende de que el MCP soporte configurar RecordDetail — hoy <code class="inline">view_*</code> solo cubre RecordList. El motor de evaluación es SP6.</div></details>
+      <details class="qa"><summary>¿Por qué no se hizo push?</summary><div class="ans">Política de super autopilot + core_work_policy: el trabajo layer:core/mod de la épica va en la rama <code class="inline">UPONE-1267-sp5</code> y se mezcla a develop/main solo tras revisión del team up1. Los 3 commits están locales; el push siempre requiere aprobación humana explícita (no lo hace el autopilot).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · teach-close de TICKET-099 (UPONE-1267) · generado por DKC · mira hacia atrás (post-ejecución): qué se hizo, decisiones, lecciones.
+    </footer>
+  </main>
+</body>
+</html>

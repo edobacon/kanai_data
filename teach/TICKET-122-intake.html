@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Bulk delete no debe contar la proyeccion RT propia · TICKET-122</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-122</span> · Bulk delete no debe contar la proyeccion RT propia</span>
+      <span>up1 · 2026-08-07</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">El borrado en bloque cuenta la proyeccion RT del propio objeto como referencia externa</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este es el frente <strong>backend</strong> del bug de hard-delete <strong>UPONE-1557</strong>, en el core <code class="inline">object-manager</code>. Al intentar borrar en bloque
+      (<code class="inline">deleteBulkInstances</code>) filas de un objeto base que tiene extensiones RecordType, la operacion se rechaza con
+      <code class="inline">CONSTRAINT_VIOLATION</code> aunque no exista ninguna referencia externa real. El motivo: la validacion previa de referencias cuenta las
+      tablas de proyeccion del propio objeto (<code class="inline">rt__&lt;Rt&gt;__&lt;base&gt;</code>, unidas por la FK <code class="inline">&lt;base&gt;Id</code>) como si
+      fueran referencias entrantes de otro objeto. El borrado individual (<code class="inline">deleteInstance</code>) ya lo resuelve bien; el objetivo de este
+      ticket es llevar el bulk a paridad con el singular, con una exclusion quirurgica y verificada contra base de datos real.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <code class="inline">validateBulkDelete</code> corre ANTES de la limpieza de proyecciones y trata la FK
+        <code class="inline">&lt;base&gt;Id</code> de las tablas <code class="inline">rt__*__&lt;base&gt;</code> del propio objeto como referencia externa, asi que el id
+        nunca llega al codigo que ya sabe borrar esas capas. El fix (Opcion A) agrega esas proyecciones propias a la lista de exclusion de
+        <code class="inline">discoverFKRelationshipsFromPrisma</code>, anclado en la introspeccion real de la FK (<code class="inline">resolveRtProjectionFks</code>),
+        no en un patron de string <code class="inline">rt__</code>. El caso es traicionero por un <strong>falso verde de tests</strong>: el unico test que cubre el
+        escenario esquiva el bug por casing de la FK. Por eso el orden es <strong>tests-first</strong> y la verificacion es <strong>integracion contra BD real</strong>.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo del borrado bulk</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">dos motores de deteccion</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el defecto en codigo</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">opcion A vs B</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">malla de seguridad</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas de estudio</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">alcance</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan de sessions</a>
+    </nav>
+
+    <!-- BASES: glosario del dominio -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos base</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-4">
+        Cinco piezas del motor de borrado de <code class="inline">object-manager</code> sostienen el caso. Sin ellas, el fix parece "agregar un if" cuando en
+        realidad toca la frontera entre dos motores de deteccion de referencias que hoy no coinciden.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Proyeccion RecordType (rt__)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Tabla <code class="inline">rt__&lt;Rt&gt;__&lt;base&gt;</code> que es una capa del MISMO registro logico que la fila base, no un objeto externo. Se une a la base por la FK de convencion <code class="inline">&lt;base&gt;Id</code> (ej. <code class="inline">availabilityId</code>). Ejemplos: <code class="inline">rt__InstructorAvailability__availability</code>, <code class="inline">rt__StudentAvailability__availability</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">validateBulkDelete</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Gate previo del borrado en bloque (<code class="inline">referenceValidationService.js</code>). Usa <code class="inline">discoverFKRelationshipsFromPrisma</code> con cache de FK para buscar quien referencia al objeto. Es rapido, pero su lista de exclusion no cubre las proyecciones <code class="inline">rt__</code> propias: ahi nace el bug.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">resolveRtProjectionFks</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Helper de <code class="inline">instance.resolver.js</code> que introspecta la FK real de cada proyeccion del objeto (por casing verdadero, no adivinando <code class="inline">${base}Id</code>). Ya se usa en el loop de borrado para limpiar las capas <code class="inline">rt__</code>. Es la fuente de verdad para la exclusion del fix.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">deleteImpactPreview (el motor)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El OTRO motor (<code class="inline">deleteImpactPlan.js</code>): construye el plan de impacto para el preview. Excluye BIEN las proyecciones propias (por eso el preview reporta <code class="inline">restrictions: []</code>). Tiene semantica completa pero sin cache. La divergencia preview↔ejecucion es el problema de fondo.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">CONSTRAINT_VIOLATION vs DELETE_RESTRICTED</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Dos codigos de bloqueo distintos: <code class="inline">CONSTRAINT_VIOLATION</code> lo emite <code class="inline">validateBulkDelete</code> (path generico, objetos sin hijos); <code class="inline">DELETE_RESTRICTED</code> lo emite el motor de cascada (objetos con hijos). Todos los tests de RESTRICT existentes usan el segundo camino, por eso el primero quedo sin cobertura.</p></div>
+      </div>
+    </section>
+
+    <!-- BASES + ENTORNO: como funciona hoy el borrado bulk -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Como recorre hoy un borrado bulk de un base con proyeccion RT</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        El diagrama sigue el camino de <code class="inline">deleteBulkInstances('Availability', ids)</code>. El punto critico es el rombo del centro
+        (<code class="inline">validateBulkDelete</code>): hoy encuentra la FK <code class="inline">availabilityId</code> de las tablas <code class="inline">rt__*__availability</code>
+        del propio objeto, las cuenta como referencia externa, y manda TODOS los ids a <code class="inline">blockedResults</code>. Por eso nunca llegan al ultimo
+        nodo, que es precisamente el que ya sabe limpiar esas capas (<code class="inline">resolveRtProjectionFks</code> + <code class="inline">deleteMany</code>).
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  A["deleteBulkInstances(base, ids)"] --> B["motor de cascada<br/>objectDeclaresChildren? NO -> applied:false"]
+  B --> C{"validateBulkDelete<br/>hay referencias entrantes?"}
+  C -- "hoy: cuenta rt__*__base propia" --> D["blockedResults<br/>CONSTRAINT_VIOLATION (todos los ids)"]
+  C -- "esperado: excluir proyeccion propia" --> E["deletableIds"]
+  E --> F["limpia proyecciones rt__ (resolveRtProjectionFks)<br/>+ borra base -> errors: []"]
+  D -. "el id nunca llega" .-> F
+      </pre></div>
+      <p class="text-sm text-stone-400 leading-relaxed mt-3">
+        Dos cosas se desprenden del mapa. Primero: la ironia es que el codigo que arreglaria el borrado (nodo <code class="inline">F</code>) YA existe y funciona en
+        el path singular; el bug es solo que el gate del nodo <code class="inline">C</code> corre antes y no deja pasar el id. Segundo: el fix NO agrega logica de
+        borrado nueva, solo corrige el criterio de exclusion del nodo <code class="inline">C</code> para que la proyeccion propia deje de contar como referencia.
+      </p>
+    </section>
+
+    <!-- BASES: la regla que se viola -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Invariante que el fix restaura</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Una proyeccion <span class="text-amber-400">rt__*__base</span> es una capa del mismo registro, <span class="text-amber-400">no</span> una referencia externa. El borrado bulk debe comportarse como el singular.</div>
+        <div class="ilabel mt-2">Corolario: la evidencia de correctitud no es teorica — <code class="inline">deleteInstance</code> (singular) ya borra estos objetos en produccion sin contar la proyeccion como referencia. El fix solo alinea dos caminos que deberian coincidir; no es un cambio especulativo.</div>
+      </div>
+    </section>
+
+    <!-- ENTORNO: los dos motores no coinciden -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Dos motores de deteccion de referencias que no coinciden</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        El sistema tiene DOS implementaciones de "quien referencia a este objeto", por diseno: el preview usa el motor completo (sin cache); la ejecucion bulk
+        usa <code class="inline">validateBulkDelete</code> (con cache de FK, para escalar en borrados masivos). Por eso el preview dice <code class="inline">cascade</code>
+        y el borrado real falla. La fila destacada es donde vive el defecto de este ticket.
+      </p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Capacidad de deteccion</th><th class="p-3">Motor / preview</th><th class="p-3">validateBulkDelete (ejecucion)</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">FK por convencion <code class="inline">&lt;base&gt;Id</code></td><td class="p-3 text-center">Si</td><td class="p-3 text-center">Si</td></tr>
+          <tr><td class="p-3 text-stone-300">Custom fields (reference)</td><td class="p-3 text-center">Si</td><td class="p-3 text-center">Si</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">Excluye proyeccion <code class="inline">rt__</code> propia</td><td class="p-3 text-center text-emerald-400">Si</td><td class="p-3 text-center text-rose-400">No ← el bug</td></tr>
+          <tr><td class="p-3 text-stone-300">Cache de relaciones FK (perf en bulk)</td><td class="p-3 text-center text-rose-400">No</td><td class="p-3 text-center text-emerald-400">Si</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- BASES: el defecto concreto en codigo -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El defecto, en codigo</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        En <code class="inline">discoverFKRelationshipsFromPrisma</code> (<code class="inline">referenceValidationService.js:75-89</code>) la lista de exclusion
+        cubre el propio objeto, las tablas <code class="inline">ext__</code> y las <code class="inline">core_</code>, pero NO las proyecciones <code class="inline">rt__</code>
+        del objeto que se borra. El fix (Opcion A) agrega esa exclusion, anclada en el set exacto que devuelve <code class="inline">resolveRtProjectionFks</code>.
+      </p>
+      <pre class="code"><span class="c">// referenceValidationService.js:75-89 (exclusion HOY — incompleta)</span>
+<span class="k">if</span> (modelName === selfModel) <span class="k">continue</span>;        <span class="c">// self</span>
+<span class="k">if</span> (modelName.startsWith(<span class="s">'ext__'</span>)) <span class="k">continue</span>;   <span class="c">// extensiones</span>
+<span class="k">if</span> (modelName.startsWith(<span class="s">'core_'</span>)) <span class="k">continue</span>;   <span class="c">// core</span>
+<span class="c">// FALTA: las proyecciones rt__*__base del propio objeto</span>
+
+<span class="c">// despues (Opcion A): excluir las proyecciones propias por introspeccion real</span>
+<span class="k">const</span> ownProjectionFks = <span class="f">resolveRtProjectionFks</span>(prisma, selfModel); <span class="c">// {model, fkColumn}[]</span>
+<span class="k">if</span> (ownProjectionFks.some(p =&gt; p.model === modelName)) <span class="k">continue</span>;</pre>
+    </section>
+
+    <!-- ENTORNO: por que A y no B -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Opcion A (elegida) frente a Opcion B (descartada)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        La decision critica del intake fue el enfoque del fix. "Mayor" no es "mejor": B parece mas consistente (una sola deteccion) pero pierde donde importa.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A — exclusion quirurgica (elegida)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Excluir las proyecciones RT propias en <code class="inline">validateBulkDelete</code>, por introspeccion de la FK real.</p><p><span class="text-emerald-400">+</span> Mantiene el cache FK (no degrada el bulk masivo)</p><p><span class="text-emerald-400">+</span> Blast radius minimo, reversible, casing-agnostico</p><p><span class="text-emerald-400">+</span> Solo lleva el bulk a paridad con el singular ya probado</p><p><span class="text-rose-400">−</span> No cierra la divergencia amplia preview↔ejecucion (queda como B' follow-up)</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">B — apuntar el bulk al motor del preview</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Reemplazar <code class="inline">validateBulkDelete</code> por el motor del preview en el path de ejecucion.</p><p><span class="text-rose-400">−</span> Regresion de performance en el caso que disparo el bug (bulk ~31k, sin cache)</p><p><span class="text-rose-400">−</span> Cambia la semantica de bloqueo para muchos objetos a la vez</p><p><span class="text-rose-400">−</span> Riesgoso (~3-5 dias); contradice la decision de diseno de <code class="inline">deleteImpactPlan.js:706-707</code></p></div></div>
+      </div>
+    </section>
+
+    <!-- ENTORNO / RESTRICCIONES: la malla de seguridad -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Malla de seguridad y restricciones</h2></div>
+      <div class="callout callout-danger">
+        <strong>✗ El falso verde de tests</strong> — Existe un test del caso "base sin hijos + proyeccion RT en bulk" (<code class="inline">OrgUnit</code>,
+        <code class="inline">hard-delete-cascade.integration.test.js:740</code>) y <em>pasa</em>. Pero pasa por coincidencia de casing: su FK <code class="inline">OrgUnitId</code>
+        (mayuscula) esquiva el scan que arma <code class="inline">orgUnitId</code> (minuscula) — Prisma lanza "unknown field", el <code class="inline">catch</code> lo traga y el
+        modelo se salta. El unico casing que rompe (minuscula, la convencion, como <code class="inline">availabilityId</code>) es el que ningun test ejercita.
+      </div>
+      <div class="callout callout-warn">
+        <strong>⚠ Que NO se puede romper con la Opcion A</strong> — La exclusion debe ser quirurgica: (1) una FK externa real debe seguir bloqueando; (2) un custom
+        field de tipo reference debe seguir bloqueando; (3) no sobre-excluir: solo la <code class="inline">rt__</code> del objeto que se borra, NO una <code class="inline">rt__</code>
+        de OTRO objeto que legitimamente lo referencia. De ahi la insistencia en anclar en <code class="inline">resolveRtProjectionFks</code> (introspeccion) y no en un
+        patron de string <code class="inline">rt__</code> suelto.
+      </div>
+      <div class="callout callout-info">
+        <strong>ℹ Verificacion contra BD real (no unit mockeado)</strong> — El defecto vive en la introspeccion de modelos Prisma reales + casing de columnas. Un unit
+        con Prisma mockeado puede volver a consagrar el bug (el mock no reproduce el casing ni el fallo silencioso del <code class="inline">select</code>). El guard
+        autoritativo es integracion contra el tenant real (UPU); el unit directo es complemento barato, no reemplazo. Reglas del ticket: <code class="inline">DET-7</code>
+        (regression obligatoria), <code class="inline">DET-13</code> (cierre por evidencia), <code class="inline">DET-33</code> (verificar el self-report), <code class="inline">DET-40</code>
+        (auditoria de reemplazo: enumerar 1:1 lo que hace el path viejo y que el nuevo lo replique).
+      </div>
+    </section>
+
+    <!-- Preguntas de estudio -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Preguntas de estudio</h2></div>
+      <details class="qa"><summary>Por que el preview dice "cascade / sin restricciones" y el borrado real falla?</summary><div class="ans">Porque son dos motores distintos. El preview corre el motor completo (<code class="inline">deleteImpactPlan.js</code>), que excluye bien las proyecciones propias. El borrado bulk usa <code class="inline">validateBulkDelete</code>, que no las excluye. La divergencia es por diseno (el bulk conserva un cache de FK para escalar), y el que esta mal es <code class="inline">validateBulkDelete</code>, no el preview.</div></details>
+      <details class="qa"><summary>Si el path generico ya sabe limpiar las capas rt__, por que el bulk falla?</summary><div class="ans">Porque <code class="inline">validateBulkDelete</code> corre ANTES de esa limpieza. Cuenta la FK de la proyeccion propia como referencia externa y manda el id a <code class="inline">blockedResults</code>, asi que el id nunca llega al loop de borrado (linea 6049) que ya sabe borrar la capa <code class="inline">rt__</code> y luego la base. El singular no tiene ese pre-gate, por eso funciona.</div></details>
+      <details class="qa"><summary>Por que anclar la exclusion en resolveRtProjectionFks y no en el prefijo "rt__"?</summary><div class="ans">Para no sobre-excluir. Una tabla <code class="inline">rt__</code> de OTRO objeto podria referenciar legitimamente al base que se borra, y ese bloqueo debe sobrevivir. <code class="inline">resolveRtProjectionFks</code> devuelve el set exacto de proyecciones del PROPIO objeto por introspeccion de la FK real, cubriendo ademas cualquier casing (minuscula o capitalizada). Un match por string <code class="inline">rt__</code> suelto excluiria de mas.</div></details>
+      <details class="qa"><summary>Por que el orden es tests-first y no "arreglar y despues testear"?</summary><div class="ans">Porque <code class="inline">validateBulkDelete</code> no tiene tests directos y protege bloqueos legitimos (FK externa real, custom fields) que deben sobrevivir. Primero se ponen en VERDE, sobre el codigo actual, los tests de la malla de seguridad (bloqueo por FK externa real, precision del match, single sin regresion); recien despues se escribe el test ROJO que reproduce el bug (FK de proyeccion minuscula). El fix se implementa sobre una malla ya verde, no a ciegas.</div></details>
+    </section>
+
+    <!-- ALCANCE -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Alcance del cambio</h2></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">object-manager/src/services/referenceValidationService.js</span>
+        <span class="tag tag-now">tests/integration (BD real UPU)</span>
+        <span class="tag tag-next">paridad con deleteInstance (singular)</span>
+        <span class="tag tag-future">B' — modulo unico de deteccion (deuda tecnica, fuera de alcance)</span>
+      </div>
+    </section>
+
+    <!-- HACIA ADELANTE: el plan -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Plan de sessions (orientacion)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        Las dos hipotesis del Triage quedaron confirmadas en el intake (H1: el gate no excluye la proyeccion propia; H2: el fix correcto es la Opcion A). No hay
+        hipotesis abiertas a verificar antes de ejecutar. El plan es un fix multi-fase corto (tier T2) con orden estricto tests-first, para no "arreglar" el
+        sintoma rompiendo un bloqueo legitimo sin enterarnos.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Red de seguridad primero (VERDE sobre codigo actual)</div><p class="text-xs text-stone-400">Tests de lo que debe sobrevivir: bloqueo por FK externa real en base sin hijos, precision del match (no sobre-excluir <code class="inline">rt__</code> ajenas), single sin regresion.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Test que falla (RED del bug)</div><p class="text-xs text-stone-400">Bulk de base sin hijos con proyeccion propia y FK minuscula (<code class="inline">availabilityId</code>), sin referencia externa: ROJO hoy.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Implementar Opcion A</div><p class="text-xs text-stone-400">Exclusion quirurgica en <code class="inline">discoverFKRelationshipsFromPrisma</code> anclada en <code class="inline">resolveRtProjectionFks</code>. El RED pasa a VERDE y la red sigue verde.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Gate — matriz de casing + suite completa</div><p class="text-xs text-stone-400">FK minuscula y capitalizada, suite de <code class="inline">hard-delete-cascade.integration.test.js</code> completa en verde. Sin artefactos de sync commiteados. Commits/PR con id <code class="inline">UPONE-1557</code>.</p></div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-122 · up1 / object-manager (UPONE-1557 backend). Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

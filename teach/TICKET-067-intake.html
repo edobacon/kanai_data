@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — fix payload createInstance · TICKET-067</title>
+<!-- metadata · ticket: TICKET-067 · kind: intake · project: up1 · generated: 2026-06-15 · external: UPONE-1271 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: {
+    darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4',
+    primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', tertiaryColor: '#1c1917',
+    mainBkg: '#1c1917', nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+    titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px' },
+    flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-067</span> · fix payload createInstance</span>
+      <span>up1 · 2026-06-15</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Fix core: handleSubmit manda campos virtuales al createInstance</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Bug del <strong>layout-engine</strong> (core, repo <code class="inline">layout/</code>) descubierto al guardar un clone de academicProgram: el payload de <code class="inline">createInstance</code> incluye campos que no son columnas (el nombre resuelto de la institución, etc.) y Prisma lo rechaza. Este teaching te deja el mapa antes de tocar un archivo que es el submit de <strong>todo</strong> create/edit de la plataforma — por eso el cuidado está en la regresión, no en el tamaño.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <strong>Qué hay:</strong> el clone (prefilledModal) prellena el form con la fila de origen, que trae campos virtuales de display (<code class="inline">institutionName</code>…); <code class="inline">RecordDetail.handleSubmit</code> los reenvía al backend.
+        <strong>Qué se hará:</strong> filtrar la inyección de <code class="inline">initialData</code> (L3633-3640) a campos reales del objeto + allowlist de owner polimórfico.
+        <strong>Por qué importa:</strong> sin esto ningún objeto con FK-display se puede clonar; con el fix se blinda todo el create/clone del engine.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">las piezas</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo del bug</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el bloque culpable</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">cuidados</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- BASES -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Las piezas — cómo se arma el payload hoy</h2></div>
+      <p class="text-stone-400 leading-relaxed mb-4">Tres piezas del submit. El bug vive en la tercera.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">field-loop</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">`handleSubmit` recorre los campos del <em>form</em> (`formData`) y los clasifica en base/custom/JSON. Acá llegan los campos reales (name, code, institutionId…). El junk NO pasa por acá (no son campos del form).</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">inyección de initialData (L3633-3640)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Bloque que mete <strong>todas</strong> las keys de <code class="inline">props.initialData</code> al payload. Existe para campos backend-required que el form no muestra (owner polimórfico <code class="inline">ownerType/ownerId</code>). <strong>Acá entra el junk.</strong></p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">createInstance → Prisma</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El backend pasa el `data` a Prisma; cualquier key que no sea columna → "Unknown field" → error de UI opaco ("información no válida").</p></div>
+      </div>
+    </section>
+
+    <!-- ENTORNO + FLOW -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El flujo del bug — de dónde sale el junk</h2></div>
+      <p class="text-stone-400 leading-relaxed mb-4">
+        La <strong>lista</strong> resuelve los FK por nombre (relationDisplayFields, lo que arregló 066) → cada fila trae siblings virtuales como <code class="inline">institutionName</code>. El <strong>prefilledModal</strong> del clone copia la fila a <code class="inline">initialData</code>. La inyección lo reenvía. Lo importante: el junk recorre <strong>lista → prefill → initialData → payload</strong>, nunca pasa por el form.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A[Fila de la lista<br/>institutionId + institutionName...] --> B[prefilledModal<br/>copia a initialData]
+  B --> C[handleSubmit<br/>inyeccion initialData L3633]
+  C --> D{ key es columna real? }
+  D -- hoy: no filtra --> E[payload con junk]
+  E --> F[Prisma: Unknown field ✗]
+  D -. fix: filtrar .-> G[payload limpio ✓]
+      </pre></div>
+    </section>
+
+    <!-- CODE: el bloque culpable -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El bloque culpable y la forma del fix</h2></div>
+      <pre class="code"><span class="c">// RecordDetail.vue L3633-3640 — HOY: inyecta TODA key de initialData</span>
+<span class="k">if</span> (props.initialData) {
+  <span class="k">for</span> (<span class="k">const</span> [fieldName, value] <span class="k">of</span> Object.entries(props.initialData)) {
+    <span class="k">if</span> (submitData[fieldName] != <span class="k">null</span>) <span class="k">continue</span>;
+    submitData[fieldName] = value;   <span class="c">// ← institutionName, governanceunit, extended... entran aca</span>
+  }
+}
+<span class="c">// FIX: inyectar solo si fieldName es columna real (baseFields∪customFields)</span>
+<span class="c">//      + allowlist owner polimorfico (ownerType/ownerId/recordType)</span></pre>
+    </section>
+
+    <!-- CAMINO + CUIDADOS -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Cuidados — es el submit de TODO create/edit</h2></div>
+      <div class="callout callout-warn"><strong>⚠ Preservar el owner polimórfico</strong> — el bloque existe para inyectar <code class="inline">ownerType/ownerId</code> (objetos como CurricularSection/modality que se clonan con <code class="inline">canCreateInitialData</code>). Esos son <strong>columnas reales</strong> → quedan en el filtro (están en baseFields, + allowlist como red). Si el filtro los dropea, rompe el clone de secciones.</div>
+      <div class="callout callout-info">ℹ <strong>Edit no se afecta</strong> — edit carga por <code class="inline">instanceId</code>, no setea <code class="inline">props.initialData</code>. El cambio solo toca el path de create/clone con prefill.</div>
+      <div class="callout callout-danger">✗ <strong>No tocar el field-loop</strong> (L3435) ni el `else` de L3521 — no son el culpable (el junk no es form-field). Tocarlos agrega riesgo sin resolver nada. El fix es un solo bloque.</div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Q&amp;A de estudio</h2></div>
+      <details class="qa"><summary>¿Por qué institutionName no pasa por el field-loop?</summary><div class="ans">Porque no es un campo del form: el schema del create define <code class="inline">institutionId</code> (FK), no <code class="inline">institutionName</code>. Vueform solo tiene en su `data` los campos del schema. `institutionName` solo existe en `props.initialData` (el prefill), y por eso entra únicamente por la inyección de L3633-3640.</div></details>
+      <details class="qa"><summary>¿Por qué no arreglarlo en el prefilledModal (no copiar los siblings)?</summary><div class="ans">Es la Opción B, más acotada: solo cubriría el clone. Filtrar la inyección en handleSubmit cubre cualquier create con `initialData` sobre-fetcheado, no solo el clone. Mismo esfuerzo, más cobertura.</div></details>
+      <details class="qa"><summary>¿Cómo sé que el filtro no rompe el owner polimórfico?</summary><div class="ans">`ownerType/ownerId` son columnas reales del objeto → están en `baseFields`. El filtro mantiene keys en baseFields∪customFields + una allowlist explícita (ownerType/ownerId/recordType) como red. Se valida en S1 con el clone de una sección (modality) además del de academicProgram.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · teach-intake · TICKET-067 (UPONE-1271) · generado por DKC · 2026-06-15
+    </footer>
+  </main>
+</body>
+</html>

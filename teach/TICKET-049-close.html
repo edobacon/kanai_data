@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Derived genérico en codegen (polymorphicChildrenDerived) · TICKET-049</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', mainBkg: '#1c1917', nodeBorder: '#f59e0b', textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-049</span> · Derived genérico en codegen</span>
+      <span>up1 · 2026-06-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Derived genérico en el motor — qué se hizo y qué aprendimos</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">Cierre de TICKET-049. El motor de versionado ahora remapea genéricamente las FK internas entre hijos clonados, vía un bloque declarativo <code class="inline">polymorphicChildrenDerived</code>. El hook + flow n8n por-módulo de curriculum-design se retiraron. Este documento mira hacia atrás: el camino, las decisiones que pesaron y las lecciones — no re-explica los conceptos (eso vive en el teach-intake).</p>
+
+    <div class="tldr mt-7 text-sm text-stone-200 leading-relaxed" data-dkc-block="tldr">
+      <strong class="text-amber-300">TL;DR</strong> — Se entregó la capacidad declarativa <code class="inline">polymorphicChildrenDerived</code> en 4 sessions: validator codegen + reader (S1), motor <code class="inline">applyDerivedRemap</code> + defensa (S2), wiring síncrono in-engine (S3), migración de Activity + retiro del hook/flow/typeDef (S4). Validado: codegen 90/90, resolvers 509/509, derived 9/9, e2e 7/7 contra DB real. Falta solo el <strong>push</strong> (UPONE-1206 + UPONE-1038) — pendiente de OK del dev.
+    </div>
+
+    <!-- TIMELINE: qué se hizo -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se hizo (por session)</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Bloque + validator + reader</div><p class="text-xs text-stone-400"><code class="inline">validate-polymorphic-children-derived.js</code> (shape + via=FK real + remapTo alias) cableado en el codegen; <code class="inline">readPolymorphicChildrenDerived</code> en el motor. 18 unit + 90/90 área codegen.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Motor <code class="inline">applyDerivedRemap</code></div><p class="text-xs text-stone-400">Remap genérico vía cloneMap + defensa skip cross-owner. <strong>Reviewer aislado → iterate</strong>: atrapó type-mismatch silencioso + divergencia nullable → fixes + 9 unit.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Wiring in-engine</div><p class="text-xs text-stone-400">Invocación en <code class="inline">finalizeCreate</code> reusando el cloneMap; e2e genérico. Síncrono, sin evento/n8n.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · Migración + cierre</div><p class="text-xs text-stone-400">Activity declara el bloque; retirados hook (×2) + schema.graphql + flow n8n + typeDef + test del mod. Regresión verde, schema ensambla.</p></div>
+      </div>
+    </section>
+
+    <!-- COMPARISON-TABLE: evolución final de hipótesis -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolución final de las hipótesis</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">Las 6 hipótesis del intake cerraron así. La más jugosa fue H4 (sync vs async), que el diseño resolvió apoyándose en una regla del proyecto.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipótesis</th><th class="p-3">Cierre</th><th class="text-left p-3">Por qué</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H1 motor no remapea FK entre hijos</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">era el gap exacto que el ticket cerró</td></tr>
+          <tr><td class="p-3 text-stone-300">H2 persistir en <code class="inline">versioningConfig</code></td><td class="p-3 text-center text-amber-300">refinada</td><td class="p-3 text-stone-400">RULE-core-019: se consume directo del JSON, sin sync al registry</td></tr>
+          <tr><td class="p-3 text-stone-300">H3 cloneMap/buildRemapAPI alcanzan</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">no hubo que ampliar la API del map</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">H4 sync in-engine vs async ✓</td><td class="p-3 text-center text-emerald-400">resuelta → sync</td><td class="p-3 text-stone-400">cloneMap ya en scope + RULE-core-019 → in-engine; se retiró el flow n8n</td></tr>
+          <tr><td class="p-3 text-stone-300">H5 hook+flow retirables</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">paridad demostrada; e2e verde con el hook fuera</td></tr>
+          <tr><td class="p-3 text-stone-300">H6 RULE-platform-007 (FK lowercase)</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">se opera sobre el campo escalar, no el accessor; sin impacto</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- CASE: la decisión que más enseñó -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conocimiento promovido (decisiones)</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">DEC-LOCAL-01</div><p class="text-sm text-stone-300">Consumir el bloque directo del JSON (RULE-core-019), sin sync al registry; fase síncrona in-engine → se retira el flow n8n.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">DEC-LOCAL-02</div><p class="text-sm text-stone-300"><code class="inline">applyDerivedRemap</code> como función dedicada en el helper del motor — testeable en aislamiento, recibe el cloneMap completo.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">DEC-LOCAL-03</div><p class="text-sm text-stone-300">FK nullable = relación opcional (pasa); type-check en el remap (no solo en el query). Salió del reviewer aislado.</p></div>
+      </div></div>
+    </section>
+
+    <!-- STUDY-QA: lessons learned -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones</h2>
+      <details class="qa"><summary>El reviewer aislado pagó su costo</summary><div class="ans">En S2 (gate ⚑ fuerte) el reviewer fresco atrapó un defecto real que la auto-revisión no vio: el filtro por type aplicaba solo al query, no al remap por-campo → un id de otro type en un cloneMap mixto se remapearía silenciosamente. La independencia frente al ejecutor vale en gates substantivos.</div></details>
+      <details class="qa"><summary>Una regla del proyecto puede reescribir el plan del intake</summary><div class="ans">El intake había recomendado persistir en <code class="inline">versioningConfig</code> (H2). Al diseñar, RULE-core-019 aplicó directo: consumir del JSON sin sync al registry. Eso además resolvió H4 (sync) y eliminó una session entera del esqueleto. Leer las rules del módulo antes de fijar el plan.</div></details>
+      <details class="qa"><summary>"DB no disponible" era un falso negativo</summary><div class="ans">Los e2e skipeaban por un bug de mi sonda (<code class="inline">linkType</code> enum), no por falta de DB. La DB estaba arriba. Verificar la causa del skip antes de declarar algo "DB-gated". Tras el fix, e2e 7/7 contra DB real.</div></details>
+      <details class="qa"><summary>El worktree aislado puede mentir sobre fallos preexistentes</summary><div class="ans">Comparar baseline en un worktree en <code class="inline">/tmp</code> daba 3 fallos (no 12) — artefacto de layout (sin el sibling <code class="inline">mods/</code>). La comparación válida fue in-place en el dir real: 9 fallos idénticos con/sin mi código → preexistentes (service-account ausente en el entorno local).</div></details>
+    </section>
+
+    <!-- CALLOUT: qué viene -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué viene</h2>
+      <div class="callout callout-warn"><strong>⚠ Push pendiente</strong> — los commits están locales en <code class="inline">UPONE-1206</code> (object-manager) y <code class="inline">UPONE-1038</code> (curriculum-design). El push requiere OK del dev (super nunca pushea solo).</div>
+      <div class="callout callout-info"><strong>ℹ Entorno local</strong> — 12 tests de validation-rules/rbac/SyncManager fallan por falta de identidad service-account en el entorno local; no es de este ticket (confirmado preexistente vs baseline).</div>
+      <div class="callout callout-success"><strong>✓ Habilitador</strong> — cualquier objeto futuro obtiene el remap de FK internas declarando el bloque, sin código por-mod.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · teach-close · TICKET-049 · up1 · generado por DKC (autopilot super).</footer>
+  </main>
+</body>
+</html>

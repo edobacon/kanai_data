@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — RBAC por capability para versionar y clonar · TICKET-050</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-050</span> · RBAC por capability para versionar y clonar</span>
+      <span>up1 · 2026-06-04</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Lo que se hizo: RBAC por capability para versionar y clonar</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El caso quedó cerrado: versionar una Activity y clonar una BibliographyReference o Modalidad ahora se
+      gobiernan por un <strong>permiso RBAC por objeto</strong>, declarado en el mod y enforced opt-in por el core.
+      Este documento mira <em>hacia atrás</em> — qué se ejecutó, cómo evolucionaron las hipótesis, qué se decidió
+      y qué se aprendió. (Las bases del problema y el plan están en el teach-intake; acá no se re-explican.)
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — En 2 sessions: el core (object-manager) ganó un mecanismo
+        <strong>opt-in declarativo</strong> que lee <code class="inline">requiredCapability</code> de la metadata del objeto y
+        enforce con <code class="inline">checkCapability</code> antes de cualquier write; el mod (curriculum-design) declaró 3 capabilities,
+        la metadata de 3 objetos y el gating UI en 4 row actions. <strong>87/87 unit tests</strong>, reviewer aislado
+        approve, y gating UI <strong>validado live con Playwright</strong> (con permiso muestra la acción, sin permiso la oculta).
+        Queda en backlog (should): codegen para el enforcement backend live + push.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipótesis</a>
+      <a href="#case" class="navlink rounded border border-stone-700 px-2 py-1">decisión</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">opt-in vs incondicional</a>
+      <a href="#know" class="navlink rounded border border-stone-700 px-2 py-1">conocimiento</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#next" class="navlink rounded border border-stone-700 px-2 py-1">qué viene</a>
+    </nav>
+
+    <!-- QUÉ SE HIZO (timeline por session) -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Qué se hizo — por session</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">Dos sessions, de lo más riesgoso (core) a lo declarativo (mod) + validación.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Core object-manager (UPONE-1206) — commits 9be6ebb, dbc6745</div><p class="text-xs text-stone-400">Import de <code class="inline">checkCapability</code>; check opt-in en path versionar (<code class="inline">versioningConfig.versioning.requiredCapability</code>) y clonar (surface desde <code class="inline">resolveEffectivePrefillFrom</code>); 4 unit tests. Reviewer aislado approve, 87/87 vitest.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Mod curriculum-design (UPONE-1038) — commits 961de30, cebd543</div><p class="text-xs text-stone-400">3 capabilities en <code class="inline">capabilities.json</code>, <code class="inline">requiredCapability</code> en metadata de Activity/BibRef/CurricularSection + en 4 row actions de los layouts.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Activación + validación UI (DB-gated)</div><p class="text-xs text-stone-400"><code class="inline">npm run sync</code> creó+asignó las caps en UPU; Playwright validó con/sin permiso (rol Admin/Consultor vs Consultor con cap removida) + regresión de estado. Backend live (codegen) → backlog B1.</p></div>
+      </div>
+    </section>
+
+    <!-- EVOLUCIÓN DE HIPÓTESIS -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Evolución final de las hipótesis</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">Las 4 del intake se confirmaron; una mejoró respecto a lo previsto.</p>
+      <div class="callout callout-success"><strong>✓ H1/H2 confirmadas</strong> — el frontend ya soportaba gating por <code class="inline">requiredCapability</code> (cero core) y las capabilities custom por mod son el patrón vivo. Validado live: la acción aparece/oculta según la capability del rol.</div>
+      <div class="callout callout-success"><strong>✓ H3 confirmada</strong> — el enforcement backend opt-in en <code class="inline">createInstance</code> funciona; sin declaración → permite (los ~14 call-sites scratch quedaron intactos, verificado por unit test).</div>
+      <div class="callout callout-note"><strong>↑ H4 mejoró (L2)</strong> — la cobertura dual (objeto base + RecordType/Modalidad) se temía que necesitara <em>dos</em> checks. Resultó que <strong>uno solo</strong> alcanza: ubicado tras <code class="inline">resolveEffectivePrefillFrom</code>, corre antes del RecordType early-return. El caveat de L1 era conservador; el flujo lo simplificó.</div>
+    </section>
+
+    <!-- DECISIÓN CERRADA (case) -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">La decisión que rigió el diseño</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">DEC-LOCAL-01 — cómo enforcear sin romper flujos ajenos.</p>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">Enforcear RBAC server-side sobre <code class="inline">createInstance</code>, resolver genérico compartido por ~14 call-sites de creación scratch.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decisión</div><p class="text-sm text-stone-300">Opt-in declarativo: el core lee <code class="inline">requiredCapability</code> de la metadata y enforce solo si está presente. Sin declaración → permite.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Cero impacto colateral (unit test scratch lo prueba) + soberanía del mod preservada. Promovido a RULE-core-020.</p></div>
+      </div></div>
+    </section>
+
+    <!-- COMPARATIVA opt-in vs incondicional -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Por qué opt-in y no incondicional</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">La alternativa descartada y por qué.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Modo</th><th class="p-3">Impacto colateral</th><th class="p-3">Soberanía del mod</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">Opt-in declarativo ✓</td><td class="p-3 text-center">cero (solo lo declarado)</td><td class="p-3 text-center">el mod decide proteger o no</td></tr>
+          <tr><td class="p-3 text-stone-300">Incondicional (descartado)</td><td class="p-3 text-center">rompe adoptantes futuros</td><td class="p-3 text-center">el core impone política</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- CONOCIMIENTO PROMOVIDO -->
+    <section id="know" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Conocimiento promovido</h2>
+      <div class="callout callout-info"><strong>RULE-core-020</strong> — patrón reusable: gating RBAC de acciones <code class="inline">createInstance</code> via <code class="inline">requiredCapability</code> en metadata (opt-in) + un solo check upstream del RecordType branch para cobertura dual. Lo verán futuros mods que quieran gatear otras acciones.</div>
+      <div class="callout callout-info"><strong>DEC-LOCAL-01 / DEC-LOCAL-02</strong> (en SPEC-019) — opt-in declarativo con soberanía del mod; <code class="inline">requiredCapability</code> en object metadata (backend) + layout (UI), misma string, dos capas.</div>
+      <div class="callout callout-note"><strong>Learns</strong> — L1 descartado (subsumido por DEC-LOCAL-01); L2 promovido a RULE-core-020.</div>
+    </section>
+
+    <!-- LECCIONES -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Lecciones aprendidas</h2>
+      <details class="qa"><summary>¿Por qué la cobertura dual salió más simple de lo previsto?</summary><div class="ans">Porque el clone de objeto base y el de RecordType/Modalidad consumen el mismo <code class="inline">prefillFrom</code> resuelto una sola vez (antes del RecordType early-return). Ubicar el check ahí cubre ambos con una línea. Lección: mapear el flujo real del resolver antes de asumir que dos paths necesitan dos checks — el caveat conservador del intake (L1) sobre-estimó la complejidad.</div></details>
+      <details class="qa"><summary>¿Qué confirmó que el opt-in no rompe nada?</summary><div class="ans">El unit test de scratch: un <code class="inline">createInstance</code> sin <code class="inline">asNewVersion</code>/<code class="inline">prefillFrom.source</code> nunca surface <code class="inline">requiredCapability</code> (el helper retorna temprano con <code class="inline">source==null</code>), así que <code class="inline">checkCapability</code> jamás se invoca. El test asserta <code class="inline">not.toHaveBeenCalled()</code> — falla si el enforcement se activa de más.</div></details>
+      <details class="qa"><summary>¿Cómo se demostró el gating sin dos usuarios distintos?</summary><div class="ans">Con el selector de rol de un mismo usuario (eduardo.bacon): rol Admin/Consultor (con la cap) muestra "Nueva versión"/"Clonar"; el mismo Consultor con la cap removida (toggle reversible en DB, restaurado) las oculta. <code class="inline">getMyPermissions</code> es scoped por <code class="inline">selectedRole</code>, así que el rol activo determina las caps efectivas. Coordinador no servía (sin acceso al mod).</div></details>
+      <details class="qa"><summary>¿Por qué el ticket cierra con trabajo en backlog?</summary><div class="ans">El entregable (gating RBAC) está implementado, commiteado y validado (UI live + backend unit-proven). Lo que queda — <code class="inline">npm run codegen</code> para propagar la metadata al registry (confirmación backend live) + push de las 3 ramas — es DB-gated/acción del dev y quedó como backlog B1 (should, no bloquea cierre por DET-17).</div></details>
+    </section>
+
+    <!-- QUÉ VIENE -->
+    <section id="next" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Qué viene (backlog B1, should)</h2>
+      <div class="callout callout-warn"><strong>Backend live + push</strong> — (1) <code class="inline">npm run codegen -- UPU</code> propaga <code class="inline">requiredCapability</code> al registry y habilita la confirmación live del rechazo backend (ya unit-proven); (2) push de object-manager (UPONE-1206), curriculum-design (UPONE-1038) y deckard — requiere OK del dev. Ningún push ejecutado por DKC.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · catálogo de bloques (RULE-workflow-teach-html-catalog). Generado por DKC · TICKET-050 · up1.
+    </footer>
+
+  </main>
+</body>
+</html>

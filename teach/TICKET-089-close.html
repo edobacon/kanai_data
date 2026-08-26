@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Validación restrictiva de requisitos en planes publicados · TICKET-089</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  table.cmp { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  table.cmp th, table.cmp td { border:1px solid var(--stone-border); padding:0.5rem 0.7rem; text-align:left; vertical-align:top; }
+  table.cmp th { background:#292524; color:#fafaf9; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-089</span> · Validación restrictiva de requisitos en planes publicados</span>
+      <span>up1 · 2026-07-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Cierre — Validación restrictiva de requisitos en planes publicados (MC-09)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Qué se implementó, qué se decidió y qué se aprendió. Para el contexto del dominio (qué es un requirement, cómo se detecta
+      "publicado", CONSTRAINT H7) ver el <em>teach-intake</em> — acá no se re-explica.
+    </p>
+
+    <!-- BLOQUE: tldr -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        Se entregó el guard BE restrictivo (bloquea create+update de <code class="inline">requirement(ownerType=activity)</code> en planes
+        <code class="inline">Active</code>, con mensaje que sugiere versionar) inyectado en los dos overrides singleton (H7), y la alerta
+        FE "malla no editable" con el criterio de editabilidad en constante compartida. El alcance se reconcilió con Jira (se sumó
+        REQ-04) y con el pre-spec. Un pedido del dev — que los estados <em>no</em> estuvieran hardcodeados — derivó en un refactor a
+        constante por capa (el core no expone <code class="inline">metadata</code> al FE). <strong>1134 tests verdes</strong>, lint + typecheck
+        limpios, 5 commits locales. Pendiente: smoke DB-gated y push.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#flujo" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo (por sesión)</a>
+      <a href="#dec" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#learns" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#handoff" class="navlink rounded border border-stone-700 px-2 py-1">pendiente / handoff</a>
+    </nav>
+
+    <!-- BLOQUE: timeline — qué se hizo por sesión (flujo de acciones) -->
+    <section id="flujo" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se hizo, en orden</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">Antes de codear — gate + grounding + reconciliación de alcance</div>
+          <p class="text-xs text-stone-400">
+            Se verificó el gate DET-30 (bloqueantes MC-02/03/05 cerrados) y la rama de ticket. El grounding del código reveló que
+            <code class="inline">requirement</code> no tiene resolver propio → el guard debía ir en los 2 overrides (H7). Se detectó que el
+            pre-spec (fuente de design) tenía un <strong>REQ-04</strong> que el ticket —scaffoldeado el 06-25— no reflejaba; el dev aprobó
+            ejecutar el pre-spec completo. Se escribió el SPEC formal y el plan de 2 sesiones.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 — BE: el guard</div>
+          <p class="text-xs text-stone-400">
+            Se creó el helper puro <code class="inline">requirementActivityGuard.js</code> (<code class="inline">assertActivityNotInActivePlan</code>
+            + variante <code class="inline">OnUpdate</code> que resuelve el owner del registro si el <code class="inline">data</code> no lo trae) y el
+            error <code class="inline">REQUIREMENT_ACTIVITY_LOCKED_BY_ACTIVE_PLAN</code>. Se cableó en <code class="inline">validateSectionCreate</code>
+            (create) y en el branch <code class="inline">!RT_PATTERN.test</code> de <code class="inline">polymorphicUpdate</code> (update). 14 tests
+            (TC-01/02/03 + edge). Se documentó el análisis de impacto colateral (REQ-03). Suite: 1127 verdes.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">Mid-flow — comparación contra el Jira (pedido del dev)</div>
+          <p class="text-xs text-stone-400">
+            El dev pidió contrastar con UPONE-1352. El AC "FE: modal de alerta de impacto" no tiene host en SP5 (sin editor de requisitos).
+            Se decidió (DEC-LOCAL-04): el banner REQ-04 se enriquece para informar que los requisitos de planes publicados no se editan y hay
+            que versionar; el modal on-edit completo se difiere a S7-01 (SP6).
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 — FE: fuente única + alerta</div>
+          <p class="text-xs text-stone-400">
+            Se agregó <code class="inline">buildEditLockAlert</code> y la alerta en <code class="inline">CurriculumMeshElement.vue</code> (reusando el
+            <code class="inline">Alert</code> atom), con texto en 3 locales. Se detectó y corrigió un error de typecheck propio (binding
+            <code class="inline">editLock</code> faltaba en el <code class="inline">return</code> del setup). 7 tests (TC-04/05/06). Suite: 1134 verdes.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">Post-smoke — validación de "no hardcodeado" (pedido del dev) → refactor</div>
+          <p class="text-xs text-stone-400">
+            El dev pidió validar que los estados editable/publicado se leyeran de config, no hardcodeados. La auditoría confirmó 2 hardcodes
+            (BE + FE) + el enum re-declarado en ~4 lugares, y que el core <strong>no</strong> expone <code class="inline">metadata</code> al FE.
+            Se refactorizó a constante por capa derivada del enum: FE <code class="inline">CURRICULUM_STATUSES</code> (única declaración) +
+            <code class="inline">EDITABLE_STATUSES</code>; BE <code class="inline">PUBLISHED_STATUSES</code>. 1134 verdes.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: comparison-table — decisiones cerradas -->
+    <section id="dec" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones que se tomaron</h2>
+      <div style="overflow-x:auto">
+      <table class="cmp">
+        <thead><tr><th>Decisión</th><th>Qué se eligió</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td>"Publicado"</td><td>= <code class="inline">Active</code> (Active-only)</td><td>audit C-2 + reunión; <code class="inline">Archived</code> es histórico (protegido por otra vía), <code class="inline">Draft</code> es construcción</td></tr>
+          <tr><td>Dónde vive el guard</td><td>en los 2 overrides singleton, sin resolver nuevo</td><td>CONSTRAINT H7: un override por campo; un <code class="inline">requirement.resolver.js</code> clobbearía create/update existentes</td></tr>
+          <tr><td>REQ-02 en SP5</td><td>mensaje accionable del error; modal on-edit → SP6</td><td>no hay editor de requisitos en SP5 donde alojar el modal</td></tr>
+          <tr><td>AC Jira "modal de impacto"</td><td>cubierto por el banner REQ-04 (con aviso de versionar) en SP5</td><td>el banner es la superficie FE disponible; el modal on-edit llega con el editor (SP6)</td></tr>
+          <tr><td>Estados editable/publicado</td><td>constante por capa derivada del enum</td><td>el core no expone <code class="inline">metadata</code> al FE y BE/FE son deploys separados; sin fuente única cross-capa sin tocar core</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- BLOQUE: study-qa — lecciones -->
+    <section id="learns" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones</h2>
+      <details class="qa"><summary>El ticket puede quedar rezagado respecto al pre-spec — reconciliar contra la fuente de design</summary>
+        <div class="ans">El pre-spec MC-09 ganó un REQ-04 (feedback de MC-06) posterior al scaffolding del ticket. Contrastar ticket ↔ pre-spec ↔ Jira al iniciar evitó entregar de menos. La comparación explícita contra el Jira (a pedido del dev) además reencuadró el AC "modal de impacto" a lo entregable en SP5.</div>
+      </details>
+      <details class="qa"><summary>"Fuente única" cross-capa es imposible sin tocar core: BE y FE son deploys separados</summary>
+        <div class="ans"><code class="inline">logic/</code> sincroniza a object-manager y <code class="inline">modsComponents/</code> a suite — no comparten runtime. El core no expone <code class="inline">metadata</code> del objeto al FE (<code class="inline">core_ObjectDefinition</code> es allowlist cerrado). Lo alcanzable sin core: una constante por capa derivada del enum. El follow-up de core quedó en backlog (B-1).</div>
+      </details>
+      <details class="qa"><summary>"Editable" y "publicado" son dos políticas distintas, no una lista duplicada</summary>
+        <div class="ans"><code class="inline">EDITABLE_STATUSES=['Draft']</code> (gate de malla) y <code class="inline">PUBLISHED_STATUSES=['Active']</code> (guard de requisitos) no son complementarias: <code class="inline">Archived</code> no es editable ni bloquea. Tratarlas como una sola lista habría sido un error de modelado.</div>
+      </details>
+      <details class="qa"><summary>Objeto sin resolver propio ⇒ inyectar en los overrides singleton (H7), no crear archivo nuevo</summary>
+        <div class="ans"><code class="inline">requirement</code> usa CRUD genérico. El patrón correcto fue extender <code class="inline">validateSectionCreate</code> y el branch genérico de <code class="inline">polymorphicUpdate</code>, reusando el patrón <code class="inline">categoryGuard</code>/<code class="inline">assertCreditRangeOnUpdate</code>. Un resolver nuevo con los mismos exports habría clobbeado silenciosamente.</div>
+      </details>
+    </section>
+
+    <!-- BLOQUE: callout — handoff -->
+    <section id="handoff" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Pendiente / handoff al dev</h2>
+      <div class="callout callout-success">
+        <strong>Smoke visual REQ-04 — verificado por el dev (2026-07-01)</strong> — Tras <code class="inline">sync</code> + restart, la alerta "malla no editable"
+        se ve correctamente en un plan <code class="inline">Active</code> ("se ve bien"). El refactor posterior de constantes es behavior-preserving
+        (misma lógica de <code class="inline">canEdit</code>/alerta), así que la verificación sigue válida.
+      </div>
+      <div class="callout callout-info mt-3">
+        <strong>Push</strong> — Los commits (<code class="inline">f18145d</code>, <code class="inline">1680dcb</code>, <code class="inline">8cc8d0b</code>,
+        <code class="inline">15b4a9a</code>, <code class="inline">3812b25</code>) están <strong>locales</strong> en <code class="inline">UPONE-1267-sp5</code>.
+        El merge a <code class="inline">develop</code> es tras revisión del team up1 (RULE-dev-004).
+      </div>
+      <div class="callout callout-warn mt-3">
+        <strong>Diferidos con razón</strong> —
+        <ul class="mt-1 ml-4 list-disc text-sm space-y-0.5">
+          <li><strong>SP6 (S7-01):</strong> editor de requisitos por UI + modal de alerta de impacto on-edit (REQ-02 FE completo).</li>
+          <li><strong>Backlog B-1 (core, local):</strong> exponer <code class="inline">metadata</code> de objeto al FE para derivar editable/publicado de <code class="inline">Curriculum.json</code> (fuente única real config-driven).</li>
+          <li><strong>Errores preexistentes de typecheck</strong> (módulos synced en <code class="inline">components/molecules/*</code>, <code class="inline">composables/*</code>, <code class="inline">weightedSum.parity.test.ts</code>) — ajenos al ticket, no corregidos.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · close · TICKET-089 · up1 · 2026-07-01. Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

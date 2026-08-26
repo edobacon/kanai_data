@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — InstructionalComponent · TICKET-134</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .card { background: var(--stone-card); border: 1px solid var(--stone-border); border-radius: 0.75rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.5rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  code, .mono { font-family: SFMono-Regular, Menlo, Consolas, monospace; }
+  code { background:#292524; padding:0.1rem 0.35rem; border-radius:0.3rem; font-size:0.85em; color:#fbbf24; }
+  h1,h2,h3 { color:#fafaf9; }
+  a { color:#fbbf24; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid var(--stone-border); padding: 0.5rem 0.7rem; text-align: left; vertical-align: top; font-size: 0.9rem; }
+  th { background:#292524; color:#fafaf9; }
+  .pill { display:inline-block; padding:0.1rem 0.5rem; border-radius:999px; font-size:0.72rem; font-weight:600; }
+  .pill-e1 { background: rgba(52,211,153,0.15); color:#34d399; }
+  .pill-e2 { background: rgba(129,140,248,0.15); color:#818cf8; }
+  .pill-e3 { background: rgba(248,113,113,0.15); color:#f87171; }
+</style>
+</head>
+<body class="max-w-4xl mx-auto px-5 py-10 leading-relaxed">
+
+<header class="mb-8">
+  <div class="text-xs uppercase tracking-widest" style="color:var(--txt-dim)">Teach close · Deckard Cain</div>
+  <h1 class="text-3xl font-bold mt-1">InstructionalComponent — piezas de dictado y carga horaria derivada</h1>
+  <div class="mt-2 text-sm" style="color:var(--txt-muted)">TICKET-134 · Jira <strong>UPONE-1619</strong> · mod <code>curriculum-design</code> · entregado en 3 hitos (E1 aditivo → E2 funcional → E3 destructivo)</div>
+</header>
+
+<section class="mb-8">
+  <h2 class="text-xl font-semibold mb-3">1. Qué se construyó</h2>
+  <p>Una asignatura declara <strong>piezas de dictado</strong> (Cátedra, Práctica, …) anidadas a cada Modalidad, y la <strong>carga horaria de la Modalidad se DERIVA</strong> sumando las horas de sus piezas, en vez de digitarse en 4 casillas. Con esto, curriculum-design deja de bloquear a academic-scheduling y engagement, que anclan sus objetos a la pieza.</p>
+  <div class="mt-3 space-y-2">
+    <div class="card p-3"><span class="pill pill-e1">E1</span> <strong>Objetos publicados (aditivo)</strong>: catálogo <code>InstructionalComponentType</code> + RecordType <code>rt__InstructionalComponent__curricularsection</code> (FK escalar <code>componentTypeId</code>, sin relación Prisma, para no romper el anclaje de academic-scheduling) + capabilities + i18n. Solo mod; el core aditivo lo regeneró la integración de develop.</div>
+    <div class="card p-3"><span class="pill pill-e2">E2</span> <strong>Modelo funcional</strong>: derivación por read-enrichment (override <code>getInstance</code>/<code>listInstances</code>), formulario con piezas + total, tipo por nombre (select nativo), seed, i18n.</div>
+    <div class="card p-3"><span class="pill pill-e3">E3</span> <strong>Retiro destructivo</strong>: baja de <code>theoryHours/practiceHours/labHours/autonomousHours</code> del mod + core + <code>DROP COLUMN</code> en los 18 schemas (UPU local; resto en deploy).</div>
+  </div>
+</section>
+
+<section class="mb-8">
+  <h2 class="text-xl font-semibold mb-3">2. Lo que dejó como conocimiento reusable</h2>
+  <p class="mb-3">Cinco aprendizajes se refinaron a reglas/decisión del KB:</p>
+  <table>
+    <thead><tr><th>Artefacto</th><th>Qué enseña</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">RULE-043<br><span style="color:var(--txt-dim)">(confirmada)</span></td><td>El merge del sync es <strong>union-only (append-only)</strong>: adición → alcanza el mod (develop regenera); <strong>substracción/redefinición → exige commit de core explícito</strong>. Por eso E3 necesitó tocar object-manager.</td></tr>
+      <tr><td class="mono">RULE-049</td><td>Mostrar el <strong>nombre de una FK escalar</strong> en un RecordDetail = <strong>select nativo</strong> (<code>type:select</code> + <code>references</code> + <code>valueField:id</code> + <code>displayField</code>), <strong>no</strong> un componente custom. Precondición: rol con <code>&lt;catalogo&gt;:view</code>.</td></tr>
+      <tr><td class="mono">RULE-050</td><td>Un <strong>campo derivado</strong> (read-enrichment, no persistido) va <strong>solo en VIEW</strong>. En edit/create se cuela al payload de <code>updateInstance</code> → Prisma "valor invalido"; y queda obsoleto. <code>submits:false</code>/<code>readonly</code> no bastan.</td></tr>
+      <tr><td class="mono">RULE-051</td><td>Columnas de un objeto <strong>relacionado</strong> en un RecordList = <code>relations:[...]</code> + columna <code>{key:"&lt;rel&gt;.&lt;campo&gt;", visible:true}</code>. Es <strong>opt-in</strong> (sin <code>visible:true</code> no renderiza). La capacidad ya existe en core.</td></tr>
+      <tr><td class="mono">DEC-020</td><td>Antes de escalar algo a core, <strong>verificar que la capacidad no exista ya</strong>: grep del mecanismo completo (composables/utils, no una función) + <code>git log --grep</code>. No confiar en comentarios del código.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="mb-8">
+  <h2 class="text-xl font-semibold mb-3">3. La corrección de proceso (la lección más cara)</h2>
+  <div class="callout callout-danger">
+    <strong>Qué pasó:</strong> se concluyó "el RecordList no soporta columnas de relación → es core" leyendo <em>una</em> función (<code>applyLayoutColumnOverrides</code>) y un comentario obsoleto. Eso se propagó a un doc de followup, un veredicto de Aduana, drafts de core-extension y un <strong>ticket de Jira creado (UPONE-1686) sobre premisa falsa</strong>. La capacidad <em>ya existía</em> (commit <code>4b9bf665</code>, opt-in con <code>visible:true</code>).
+  </div>
+  <div class="callout callout-success">
+    <strong>Cómo se destapó:</strong> el <code>dkc-detective-mode</code> verificó contra el código real y el git log (DET-33/DET-4). El fix real resultó <strong>mod-only</strong> (una property <code>visible:true</code>), no un cambio de core.
+  </div>
+  <div class="callout callout-info">
+    <strong>Regla para la próxima (DEC-020):</strong> verificar la existencia de la capacidad ANTES de escalar. UPONE-1686 quedó re-encuadrado a la higiene real (documentar la clave + corregir el comentario obsoleto), abierto en SP9.
+  </div>
+</section>
+
+<section class="mb-8">
+  <h2 class="text-xl font-semibold mb-3">4. Gotchas técnicos para recordar</h2>
+  <ul class="list-disc pl-6 space-y-2 text-sm">
+    <li><strong>RecordDetail auto-renderiza campos reales que el layout no coloca</strong> cuando no hay bloque <code>tabs</code>. Por eso las casillas de horas seguían apareciendo en el edit aunque no estuvieran en el schema del layout: los campos aún eran columnas reales (hasta E3). Solución: <code>tabs</code> restringe qué renderiza (como ya hacía el view).</li>
+    <li><strong>El id de la sección vive en <code>item.id</code></strong> (top-level de getInstance/listInstances), no en <code>item.data.id</code>. El enrichment devolvía <code>undefined</code> en runtime hasta corregir <code>idOf = item.id ?? item.data.id</code>. Lo atrapó el smoke, no el unit test.</li>
+    <li><strong>Verificación estática ≠ runtime</strong>: los jueces Read/Grep concluyeron que edit/view estaban "limpios" de casillas de horas; en runtime no era así (auto-render). Los criterios "no se ve X" en UI exigen smoke (DET-36).</li>
+    <li><strong>Seed idempotente pero coherente</strong>: al derivar la carga de las piezas, una modalidad sin piezas muestra 0. Hubo que sembrar piezas en <em>todas</em> las modalidades del demo (no una), para que ninguna quedara en 0.</li>
+  </ul>
+</section>
+
+<section class="mb-8">
+  <h2 class="text-xl font-semibold mb-3">5. Cómo reusar (quick reference)</h2>
+  <div class="card p-4 mono text-sm space-y-3">
+    <div><span style="color:var(--txt-muted)">// FK escalar por nombre en un detalle (RULE-049)</span><br>
+    { "type": "select", "references": "&lt;Catalogo&gt;", "valueField": "id", "displayField": "name" }</div>
+    <div><span style="color:var(--txt-muted)">// Columna de relación en un list (RULE-051)</span><br>
+    "relations": ["&lt;rel&gt;"], "columns": [ { "key": "&lt;rel&gt;.&lt;campo&gt;", "visible": true } ]</div>
+    <div><span style="color:var(--txt-muted)">// Campo derivado (RULE-050): solo en el layout VIEW, nunca edit/create</span></div>
+  </div>
+</section>
+
+<footer class="mt-10 pt-5 text-xs" style="border-top:1px solid var(--stone-border); color:var(--txt-dim)">
+  Teach close generado al cierre de TICKET-134 / UPONE-1619. Reglas: RULE-curriculum-design-043/049/050/051 · Decisión: DEC-020 · Follow-up abierto: UPONE-1686 (SP9).
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — P4 · Activity al motor de enum de core · TICKET-103</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  table.tbl { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  table.tbl th, table.tbl td { border:1px solid var(--stone-border); padding:0.5rem 0.7rem; text-align:left; vertical-align:top; }
+  table.tbl th { background:#1c1917; color:#fcd34d; font-weight:600; }
+  .st-confirmed { color:#6ee7b7; } .st-refuted { color:#f87171; } .st-partial { color:#fcd34d; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-103</span> · P4 Activity → motor de enum de core</span>
+      <span>UPONE-1381 · cerrado 2026-07-08</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">P4 — cómo cerró: <span class="text-amber-400">Activity</span> migrado del workflow relacional al motor de enum de core</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este documento mira <em>hacia atrás</em>: qué se resolvió, qué decisiones cambiaron el rumbo, qué se aprendió, y qué queda pendiente.
+      Su par que mira hacia adelante es <code class="inline">teach-intake.html</code> (el landscape del caso antes de empezar). Está escrito para un dev
+      que <strong>no estuvo</strong> en el ticket.
+    </p>
+
+    <!-- TL;DR -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <span class="block mt-1"><strong>Qué pasó:</strong> los programas de asignatura (el objeto <em>Activity</em>) dejaron de gobernar su ciclo de estados con un motor "workflow" hecho a medida dentro del mod, y pasaron a usar la máquina de estados estándar que ofrece la plataforma (un campo <em>status</em> con transiciones declaradas y validadas por el core).</span>
+        <span class="block mt-1"><strong>Para qué sirvió:</strong> un único flujo de estados uniforme y validado por la plataforma, en vez de un motor bespoke por mod — más simple de mantener y consistente con el resto de up1.</span>
+        <span class="block mt-1"><strong>Cómo cerró:</strong> la migración quedó completa y verificada en vivo. El retiro final del viejo subsistema quedó como una limpieza coordinada con otro equipo (uEngagement), porque su objeto también apuntaba al workflow.</span>
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#historia" class="navlink rounded border border-stone-700 px-2 py-1">la historia</a>
+      <a href="#done" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">supuestos que evolucionaron</a>
+      <a href="#dec" class="navlink rounded border border-stone-700 px-2 py-1">decisiones clave</a>
+      <a href="#sessions" class="navlink rounded border border-stone-700 px-2 py-1">highlights por session</a>
+      <a href="#knowledge" class="navlink rounded border border-stone-700 px-2 py-1">conocimiento</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#path" class="navlink rounded border border-stone-700 px-2 py-1">retomar</a>
+      <a href="#next" class="navlink rounded border border-stone-700 px-2 py-1">qué sigue</a>
+    </nav>
+
+    <!-- LA HISTORIA -->
+    <section id="historia" class="blk mt-12" data-dkc-block="case">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">La historia</h2><span class="blk-tag">narrativa</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> el relato completo del caso, de punta a punta. <strong>Cómo te afecta:</strong> si vas a tocar el estado de un programa de asignatura, acá entendés por qué funciona como funciona hoy. <strong>Por qué mirarla:</strong> resume el "por qué" antes de que entres al detalle técnico.
+      </div>
+      <p class="text-stone-300 text-sm leading-relaxed mb-3">
+        En up1, un <strong>Activity</strong> (un "programa de asignatura", el <em>syllabus</em> académico) tiene un ciclo de vida: Borrador → En revisión → Aprobado → Vigente → Deprecado → Archivado. Ese ciclo hasta SP6 lo gobernaba un <strong>motor de workflow relacional</strong> propio del mod <code class="inline">curriculum-design</code>: tablas (<code class="inline">Workflow</code>, <code class="inline">WorkflowStatus</code>, <code class="inline">WorkflowTransition</code>…), configuración por institución, y un coordinador atómico (<code class="inline">transitionActivityValidated</code>) que validaba la transición y la auditaba. Era potente pero <em>bespoke</em>: solo lo usaba este mod.
+      </p>
+      <p class="text-stone-300 text-sm leading-relaxed mb-3">
+        Mientras tanto el <strong>core</strong> (<code class="inline">object-manager</code>) ya tenía un <strong>motor de transiciones "enum"</strong>: declarás un array <code class="inline">transitions</code> sobre un campo enum en el JSON del objeto, el codegen lo persiste, y el runtime lo valida en <code class="inline">updateInstance</code> — con capabilities por transición (RBAC) y eventos. El ticket <strong>UPONE-1381</strong> (P4) decidió estandarizar: los 3 objetos con flujo de estados (Curriculum, Offering, Activity) pasan a usar <em>ese</em> motor, y el workflow del mod se retira. El corazón académico —Activity— es el más grande porque además de declarar el flujo hay que <strong>migrar sus datos</strong> (remapear los estados viejos) y <strong>desmontar</strong> todo lo que colgaba del workflow (resolver, badge, layouts, seeds, tools del MCP).
+      </p>
+      <p class="text-stone-300 text-sm leading-relaxed mb-3">
+        La decisión de diseño más delicada fue el <strong>gate de publicación "I1"</strong> (de <a href="#" class="text-amber-400">TICKET-061</a>): al publicar un curso, el árbol de evaluación debe sumar exacto. Ese chequeo vivía dentro del coordinador de workflow que estábamos borrando. El motor de enum de core valida transiciones, pero <em>no</em> tiene un hook para reglas de negocio por transición. La pregunta era: ¿dónde reubicarlo sin tocar el core? La respuesta (decisión <strong>D-S5-1</strong>): en el único override de <code class="inline">updateInstance</code> que el mod ya posee (<code class="inline">polymorphicUpdate.resolver.js</code>), como un pre-check que corre antes de delegar al genérico. Cero core.
+      </p>
+      <p class="text-stone-300 text-sm leading-relaxed mb-3">
+        La sorpresa llegó al final. El plan asumía que, migrado Activity, el subsistema de workflow era <em>dead code</em> y se podía borrar entero (objetos + tablas + las columnas FK <code class="inline">currentStatusId</code>/<code class="inline">workflowId</code>). El análisis de impacto de la última session <strong>refutó</strong> ese supuesto: el mod <code class="inline">uengagement-up1</code> (de otro equipo, fuera del scope de SP6) todavía <strong>declara esos mismos FK</strong> sobre el <em>Activity compartido</em>, apuntando a las tablas de workflow que <code class="inline">curriculum-design</code> genera. Borrar las tablas rompería su schema. Los campos están sin datos (vestigiales), pero la <em>declaración</em> basta para bloquear el drop. Por eso el retiro del subsistema se difirió a una limpieza coordinada (backlog <strong>B3</strong>, con un doc de handoff para uEngagement), y P4 cerró sobre sus requerimientos propios ya entregados.
+      </p>
+    </section>
+
+    <!-- WHAT WAS DONE -->
+    <section id="done" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué se hizo</h2><span class="blk-tag">entregado</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> el inventario concreto de cambios. <strong>Cómo te afecta:</strong> es tu mapa de qué archivos tocar si extendés esto. <strong>Por qué mirarla:</strong> separa lo entregado (verificado) de lo diferido.
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Campo <code class="inline">status</code> + transiciones</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">activity.json</code>: enum de 6 estados canónicos, 8 transiciones con capabilities <code class="inline">activity:{approve,publish,deprecate,archive}</code>, <code class="inline">requiresComment</code> declarado, y gate de versionado <code class="inline">versionableFromStates:[Approved,Active]</code>.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Gate I1 reubicado (D-S5-1)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">polymorphicUpdate.resolver.js</code>: <code class="inline">assertActivityEvaluationsOnPublish</code> — al pasar a <code class="inline">Active</code>, exige árbol de evaluación que sume exacto. Cero core.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Resolver + badge + layouts + seeds</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Retirados <code class="inline">transitionActivityValidated</code>/<code class="inline">updateActivityValidated</code>; badge colorea por el enum (sin query); 4 layouts a <code class="inline">status</code>; seeds setean estado directo; remap de datos legacy (BOR→Draft, PUB→Active…).</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">MCP (D-S5-3)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">up1-mcp</code>: <code class="inline">cd_transition_program</code>/<code class="inline">cd_list_transitions</code> leen el grafo declarado y mutan vía <code class="inline">updateInstance</code>; gate de versionado por <code class="inline">versionableFromStates</code>.</p></div>
+      </div>
+      <p class="text-stone-400 text-xs leading-relaxed mt-4">
+        <strong>Verificación:</strong> regresión en verde en 3 repos (object-manager 2287, curriculum-design 1193, up1-mcp 121) + smoke runtime 6/6 contra el tenant UPU vivo (transiciones legales/ilegales, RBAC por transición, gate I1). Commits locales por-sesión, push diferido (RULE-dev-004 — <code class="inline">RULE-dev-004</code> es la política que exige que el trabajo de core se mergee a <code class="inline">develop</code> solo tras revisión del equipo core).
+      </p>
+    </section>
+
+    <!-- HYPOTHESIS EVOLUTION -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Supuestos que evolucionaron</h2><span class="blk-tag">hypothesis-map</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> los supuestos de diseño con los que arrancamos y cómo terminaron. <strong>Cómo te afecta:</strong> el que cambió (H3) es la razón de por qué el ticket no cerró "completo". <strong>Por qué mirarla:</strong> te ahorra repetir el mismo supuesto errado.
+      </div>
+      <p class="text-stone-300 text-sm leading-relaxed mb-3">
+        Como P4 fue un <em>implement</em> (no un fix), los "supuestos" son las apuestas de diseño, no hipótesis de causa raíz. Abajo hay <strong>3</strong>. El dominante es <strong>H3</strong> —el supuesto de que el workflow era dead code puro— porque su refutación al final es lo que redefinió el cierre. H1 y H2 se confirmaron sin sobresaltos.
+      </p>
+      <table class="tbl" data-dkc-block="comparison-table">
+        <thead><tr><th>#</th><th>Supuesto</th><th>Status final</th><th>Evidencia / racional</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>H1</td>
+            <td>El motor de enum de core puede reemplazar al workflow del mod para Activity sin regresión funcional.</td>
+            <td class="st-confirmed">confirmado</td>
+            <td>Smoke 6/6 en UPU: transiciones legales proceden, ilegales rechazadas, RBAC por transición funciona. El único hook faltante (regla de negocio I1) se reubicó en el override del mod (D-S5-1). <span class="text-stone-500">ref: session S5, smoke integration</span></td>
+          </tr>
+          <tr>
+            <td>H2</td>
+            <td>El gate de publicación I1 (árbol de evaluación) se puede reubicar sin tocar el core.</td>
+            <td class="st-confirmed">confirmado</td>
+            <td>Vive en <code class="inline">polymorphicUpdate.updateInstance</code> (único override del mod, CONSTRAINT H7), como pre-check antes de delegar al genérico. El core quedó intacto. <span class="text-stone-500">ref: polymorphicUpdate.resolver.js</span></td>
+          </tr>
+          <tr>
+            <td>H3</td>
+            <td>Migrado Activity, el subsistema workflow es dead code y se puede borrar entero (objetos + tablas + columnas FK).</td>
+            <td class="st-refuted">refutado</td>
+            <td><strong>El análisis de impacto (S6) lo refutó:</strong> <code class="inline">uengagement-up1</code> (otro equipo, out-of-scope) declara <code class="inline">currentStatusId</code>/<code class="inline">workflowId</code> sobre el Activity compartido → borrar las tablas rompe su schema. La <code class="inline">D4</code> del intake ("solo curriculum-design consume workflow") era incompleta. Consecuencia: drop diferido a B3. <span class="text-stone-500">ref: uengagement-up1/objects/Activity.json</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="text-stone-300 text-sm leading-relaxed mt-4">
+        La sorpresa está en H3: el acoplamiento no era <em>funcional</em> (uEngagement no usa el workflow — sus campos están en <code class="inline">null</code>) sino <em>estructural</em> (la declaración del FK basta para bloquear el drop a nivel de codegen). Esto nos llevó a la decisión más importante del cierre: cómo terminar P4 sin poder completar REQ-06 dentro de scope. Eso es lo siguiente.
+      </p>
+    </section>
+
+    <!-- DECISIONS -->
+    <section id="dec" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Decisiones clave</h2><span class="blk-tag">decision-matrix</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> las 2 decisiones que tuvieron alternativas reales. <strong>Cómo te afecta:</strong> si reabrís el caso, acá está el "por qué esa y no otra". <strong>Por qué mirarla:</strong> la decisión de cierre (D2) define el estado en que quedó el ticket.
+      </div>
+      <p class="text-stone-300 text-sm leading-relaxed mb-3">
+        Hay <strong>2</strong> decisiones con alternativas comparables. La dominante es la <strong>D2</strong> (cómo cerrar ante el bloqueo cross-mod), porque determinó el estado final del ticket. El resto de las decisiones del ticket (D-S5-2/3/4, remap de estados) fueron lineales — documentadas en el ticket, sin matriz.
+      </p>
+      <table class="tbl" data-dkc-block="comparison-table">
+        <thead><tr><th>Decisión</th><th>Opción elegida</th><th>Descartadas</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>D1</strong> — dónde reubicar el gate I1 (D-S5-1)</td>
+            <td class="st-confirmed">Pre-check en el override <code class="inline">updateInstance</code> del mod</td>
+            <td>(a) hook en el core; (b) aceptar pérdida del gate</td>
+            <td>El core no debe cargar reglas de negocio de un mod (RULE-dev-004); aceptar la pérdida era una regresión funcional silenciosa de TICKET-061. El override del mod ya existía → cero core, cero regresión.</td>
+          </tr>
+          <tr>
+            <td><strong>D2</strong> — cómo cerrar ante el bloqueo de uEngagement</td>
+            <td class="st-confirmed">A: cerrar sobre REQ propios + B3 <code class="inline">must</code> coordinado</td>
+            <td>B: pausar P4 hasta que uEngagement mueva; C: editar uEngagement (out-of-scope) y dropear todo ya</td>
+            <td>B bloquea el cierre en otro equipo por tiempo indefinido; C viola el scope SP6 (uEngagement read-only) y arriesga romper su mod. A entrega el valor de P4 sin romper nada y deja el drop como follow-up coordinado con un doc de handoff.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="text-stone-300 text-sm leading-relaxed mt-4">
+        Lo no obvio de D2: el ítem B3 quedó marcado <code class="inline">must</code> (importa de verdad), pero <strong>no bloquea el cierre</strong> de P4 — porque su ejecución depende de un equipo externo y de trabajo fuera de scope. Es la distinción entre "importante" y "bloqueante-para-este-ticket". Eso nos lleva a la trayectoria session por session.
+      </p>
+    </section>
+
+    <!-- HIGHLIGHTS POR SESSION -->
+    <section id="sessions" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Highlights por session</h2><span class="blk-tag">trayectoria</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> un aprendizaje por session (no el log). <strong>Cómo te afecta:</strong> leído en orden, es la trayectoria del ticket. <strong>Por qué mirarla:</strong> ubica rápido en qué session vive cada pieza.
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Session</th><th>Tier</th><th>Highlight</th><th>Sorpresa</th></tr></thead>
+        <tbody>
+          <tr><td>S1</td><td>T3</td><td>Curriculum: enum <code class="inline">status</code> 3→6 + transiciones. Expandir un enum <code class="inline">type:string</code> NO requiere migración de DB (validación app-level); solo las transitions persisten vía codegen.</td><td>El 500 de object-manager era un falso positivo (GET a <code class="inline">/graphql</code> sin query).</td></tr>
+          <tr><td>S2</td><td>T3</td><td>Core: se generalizó <code class="inline">version-from-source.js</code> para gatear el versionado de objetos estado-simple vía <code class="inline">versionableFromStates</code> (REQ-04). El gate de versionado es ortogonal al motor de transiciones.</td><td>Review adversarial encontró 3 gaps en el código nuevo (validación de existencia de campo) → corregidos.</td></tr>
+          <tr><td>S3</td><td>T2</td><td>Se declaró el gate de versionado en Curriculum + test que lee la config REAL (no un mock), cerrando la costura productor→consumidor.</td><td>Ninguna — dual-judge 0 findings.</td></tr>
+          <tr><td>S4</td><td>T2</td><td>Offering: campo <code class="inline">lifecycleStatus</code> propio (NO reusar el <code class="inline">status</code> de engagement) — un objeto compartido, un eje de estado por dueño. El guard es no-op para ServiceOffer.</td><td>Un cambio aditivo (columna nueva) queda rehén del drift preexistente de migraciones → el dev reconstruye la DB.</td></tr>
+          <tr><td>S5</td><td>T3</td><td>Activity migrado end-to-end: resolver, I1 gate reubicado (cero core), badge, layouts, seeds, MCP. Verificado con smoke live 6/6.</td><td>El drop de las FK <code class="inline">currentStatusId</code>/<code class="inline">workflowId</code> NO es posible en S5: el sync es aditivo (no prunea campos de un base compartido) y las back-relations de Prisma lo impiden → diferido a S6 (D-S5-5).</td></tr>
+          <tr><td>S6</td><td>T3</td><td>Análisis de impacto del retiro → <strong>bloqueo cross-mod</strong> (uEngagement). Decisión A: cerrar sobre REQ propios + B3 coordinado + doc de handoff.</td><td>El "dead code" no lo era del todo: un mod out-of-scope referencia el subsistema. D4 del intake era incompleta.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- KNOWLEDGE -->
+    <section id="knowledge" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Conocimiento capturado</h2><span class="blk-tag">knowledge</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> qué quedó documentado para el futuro. <strong>Cómo te afecta:</strong> te dice dónde buscar el detalle. <strong>Por qué mirarla:</strong> evita re-descubrir lo ya aprendido.
+      </div>
+      <p class="text-stone-300 text-sm leading-relaxed">
+        <strong>Sin rules ni decisions formales promovidas</strong> en este ticket. El conocimiento quedó en:
+      </p>
+      <ul class="mt-2 text-sm text-stone-300 leading-relaxed list-disc pl-5 space-y-1">
+        <li><strong>Learns L1–L10</strong> en el ticket (sección <code class="inline">## Learns</code>): incluyen que <code class="inline">checkCapability</code> acepta capabilities <code class="inline">object:action</code> desnudas (L1), el drift de migraciones que bloquea <code class="inline">migrate dev</code> en UPU (L6), y la superficie FE/MCP que superó el desglose del spec (L9).</li>
+        <li><strong>Decisiones D-S5-1..D-S5-5</strong> en <code class="inline">decisions_log</code> del ticket — la de más peso es D-S5-5 (por qué el drop de FK se difirió, forzado por sync aditivo + integridad Prisma).</li>
+        <li><strong>Doc de coordinación</strong>: <code class="inline">sp6/workflow-retirement-uengagement-coordinacion.md</code> — para el equipo uEngagement.</li>
+      </ul>
+    </section>
+
+    <!-- LESSONS -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Lecciones aprendidas</h2><span class="blk-tag">lessons</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> lo transferible a otros casos. <strong>Cómo te afecta:</strong> son trampas que ya pagamos. <strong>Por qué mirarla:</strong> cada una se ata a un supuesto de arriba.
+      </div>
+      <div class="space-y-3 text-sm text-stone-300 leading-relaxed">
+        <div class="callout callout-success"><strong>El análisis de impacto de un objeto compartido debe barrer TODOS los mods (de H3 refutada).</strong> El intake asumió que solo curriculum-design consumía el workflow; el consumidor real (uEngagement) vivía en otro mod out-of-scope. En up1, un objeto base (Activity) es la unión de las contribuciones de varios mods — el grep de impacto tiene que incluirlos a todos, no solo el mod activo.</div>
+        <div class="callout callout-warn"><strong>El sync de up1 es aditivo: no prunea campos removidos (de H3, mecánica).</strong> Quitar un campo del JSON del mod no lo saca del base object mergeado si otro mod lo declara. Por eso las columnas FK no se pudieron dropear declarativamente — y por eso el drop es una migración destructiva coordinada, no un cambio de sync.</div>
+        <div class="callout callout-success"><strong>Una regla de negocio por transición no va en el core (de H2 confirmada).</strong> El motor de enum valida el grafo; los hooks de negocio (como el gate I1) viven en el override del mod. Mantiene el core genérico y el mod dueño de su semántica.</div>
+        <div class="callout callout-warn"><strong>"must" no es sinónimo de "bloquea este ticket" (de D2).</strong> Un follow-up puede ser importante (<code class="inline">must</code>) y aun así no bloquear el cierre si su ejecución depende de un equipo externo o de trabajo fuera de scope. Bloquear indefinidamente el cierre en otro equipo es peor que cerrar con la deuda documentada.</div>
+      </div>
+    </section>
+
+    <!-- FAILED APPROACHES -->
+    <section id="failed" class="blk mt-10" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-lg font-semibold text-stone-100">Approaches que fallaron</h2><span class="blk-tag">failed</span></div>
+      <table class="tbl">
+        <thead><tr><th>Approach</th><th>Por qué falló</th><th>Aprendizaje</th></tr></thead>
+        <tbody>
+          <tr><td>F1: aplicar la columna aditiva a UPU con <code class="inline">prisma migrate dev</code></td><td>Exige reset destructivo por drift preexistente ajeno (índices en el schema no presentes en la history). Abortó sin tocar la DB.</td><td>Para un cambio aditivo con drift, <code class="inline">migrate dev</code> no sirve sin reset; alternativa <code class="inline">db push</code> aditivo o reconstrucción — decisión del dev por el data-loss.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- LEARNING PATH -->
+    <section id="path" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Ruta para retomar</h2><span class="blk-tag">learning-path</span></div>
+      <div class="callout callout-note text-sm text-stone-300 leading-relaxed mb-4">
+        <strong>Qué es esta sección:</strong> el orden para un dev que abra un caso similar. <strong>Cómo te afecta:</strong> te ahorra elegir por dónde empezar. <strong>Por qué mirarla:</strong> los 4 pasos van de lo central (el enum) a lo periférico (el retiro pendiente).
+      </div>
+      <div class="tl" data-dkc-block="timeline">
+        <div class="tl-item"><strong class="text-stone-100">1. El campo <code class="inline">status</code> + sus transiciones</strong><p class="text-xs text-stone-400 mt-1">Es el corazón del cambio. <code class="inline">mods/curriculum-design/objects/activity.json</code> (bloque <code class="inline">properties.status</code>). Entender el grafo antes de tocar nada.</p></div>
+        <div class="tl-item"><strong class="text-stone-100">2. El gate I1 de publicación</strong><p class="text-xs text-stone-400 mt-1"><code class="inline">logic/polymorphicUpdate.resolver.js</code> → <code class="inline">assertActivityEvaluationsOnPublish</code>. Reglas de negocio por transición viven acá, no en el core.</p></div>
+        <div class="tl-item"><strong class="text-stone-100">3. El gate de versionado</strong><p class="text-xs text-stone-400 mt-1"><code class="inline">object-manager/.../version-from-source.js</code> + <code class="inline">versionableFromStates</code> en el JSON. Ortogonal al motor de transiciones.</p></div>
+        <div class="tl-item"><strong class="text-stone-100">4. El retiro pendiente del workflow (B3)</strong><p class="text-xs text-stone-400 mt-1">Antes de tocar las tablas workflow, leé <code class="inline">sp6/workflow-retirement-uengagement-coordinacion.md</code> — hay una dependencia cross-mod que hay que resolver primero.</p></div>
+      </div>
+    </section>
+
+    <!-- WHAT TO DO NEXT -->
+    <section id="next" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué sigue (backlog)</h2><span class="blk-tag">next</span></div>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Prioridad</th><th>Qué</th></tr></thead>
+        <tbody>
+          <tr><td>B3</td><td class="st-partial">must (cross-team)</td><td>Drop destructivo del subsistema workflow (objetos + FK + resolvers + tablas). Bloqueado por la referencia de <code class="inline">uengagement-up1</code>; coordinar con ese equipo (ver doc de handoff). <strong>Los seeds ya se eliminaron</strong> (S7, REQ-06/AC-6 — no estaban bloqueados).</td></tr>
+          <tr><td>B1</td><td>could</td><td>ai-agent deriva "required" de <code class="inline">not_null</code> en vez del array <code class="inline">required</code> → pide campos sin sentido en ServiceOffer. Patrón preexistente, out-of-scope.</td></tr>
+          <tr><td>B2</td><td>could</td><td>Un layout genérico de engagement podría renderizar <code class="inline">lifecycleStatus</code> en ServiceOffer. Revisar scoping por recordType en UI.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CHEQUEO -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Chequeo rápido</h2><span class="blk-tag">q&a</span></div>
+      <details class="qa"><summary>¿Cómo cambio el estado de un programa hoy?</summary><div class="ans">Vía <code class="inline">updateInstance</code> seteando <code class="inline">status</code> al estado destino (o <code class="inline">cd_transition_program</code> desde el MCP). El core valida que la transición esté declarada y que tengas la capability. Ya NO existe <code class="inline">transitionActivityValidated</code>.</div></details>
+      <details class="qa"><summary>¿Por qué las columnas <code class="inline">currentStatusId</code>/<code class="inline">workflowId</code> siguen en la tabla si nadie las usa?</summary><div class="ans">Porque <code class="inline">uengagement-up1</code> (otro equipo) todavía las declara sobre el Activity compartido. Borrarlas es una migración destructiva coordinada (B3). Están en <code class="inline">null</code> para todas las actividades.</div></details>
+      <details class="qa"><summary>¿Dónde está la regla de que al publicar el árbol de evaluación debe sumar?</summary><div class="ans">En <code class="inline">polymorphicUpdate.resolver.js</code> → <code class="inline">assertActivityEvaluationsOnPublish</code>, que corre cuando <code class="inline">status</code> pasa a <code class="inline">Active</code>. Se reubicó ahí desde el viejo coordinador de workflow (D-S5-1), sin tocar el core.</div></details>
+    </section>
+
+  </main>
+</body>
+</html>

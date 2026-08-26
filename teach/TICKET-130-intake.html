@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Un bloqueo legitimo del borrado via deleteBulkInstances debe ser aviso, no error de carga · TICKET-130</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-130</span> · El delta bulk del render de bloqueo (UPONE-1557)</span>
+      <span>up1 · 2026-08-12</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Un bloqueo legitimo del borrado via deleteBulkInstances se muestra como pantalla de error de carga en vez de un aviso</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este es el <strong>delta</strong> que dejo abierto <strong>UPONE-1600</strong> sobre el frente frontend de <strong>UPONE-1557</strong>, en el core
+      <code class="inline">layout-engine</code> (<code class="inline">RecordList</code>). UPONE-1600 llevo a paridad el borrado gobernado <strong>individual</strong>
+      (<code class="inline">customDeleteMutation</code>): un rechazo de negocio sale como toast y la lista queda intacta. Pero el path que rutea por
+      <code class="inline">deleteBulkInstances</code> (la rama <code class="inline">else</code> de <code class="inline">handleCriticalDeleteConfirm</code>, cuando el objeto
+      no declara <code class="inline">customDeleteMutation</code>) NO paso por ese fix: cuando el motor de cascada devuelve un bloqueo legitimo, sus errores se escriben
+      en <code class="inline">error.value</code> y la lista entera se reemplaza por la pantalla de error de carga. El objetivo es llevar ESE path a la misma paridad.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — La rama <code class="inline">else</code> de <code class="inline">handleCriticalDeleteConfirm</code> rutea el delete
+        critico por <code class="inline">deleteBulkInstances</code> y, si el payload trae <code class="inline">errors</code>, escribe <code class="inline">error.value</code>
+        (<code class="inline">RecordList.vue:6485-6487</code>) — el MISMO ref que gobierna el <code class="inline">&lt;ErrorState&gt;</code> full-view de CARGA. El fix
+        discrimina por <code class="inline">errors[].type</code> (que el frontend ya pide y el backend ya puebla con <code class="inline">CONSTRAINT_VIOLATION</code>) y
+        enruta el rechazo de negocio al mismo <code class="inline">showWarning</code> del path individual de 1600, sin tocar <code class="inline">error.value</code>. Es fix
+        <strong>frontend puro</strong>, reusa <code class="inline">graphqlErrors.ts</code>; <strong>cero cambio de backend</strong>. Como es UI, el cierre exige
+        <strong>verificacion runtime real</strong> (DET-36).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">las capas del sintoma</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el defecto en codigo</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">A (frontend) vs B (backend)</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">paths de error</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">malla de seguridad</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas de estudio</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">alcance</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan de sessions</a>
+    </nav>
+
+    <!-- BASES: glosario -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos base</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-4">
+        Cinco piezas sostienen el caso. La clave: hay UN solo ref de error (<code class="inline">error.value</code>) que sirve para dos cosas distintas (carga de la
+        lista y resultado del borrado), y en la rama <code class="inline">deleteBulkInstances</code> nace el sintoma visible que 1600 no cubrio.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">rama else / deleteBulkInstances</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Cuando el objeto NO declara <code class="inline">customDeleteMutation</code>, el delete critico single rutea por el motor de cascada (<code class="inline">deleteBulkInstances</code>, un id). Si el motor bloquea por Restrict, devuelve <code class="inline">errors[]</code> en el payload. Es el path que este ticket corrige.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">error.value / &lt;ErrorState&gt;</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El ref reactivo que gobierna el <code class="inline">&lt;ErrorState&gt;</code> full-view de la lista (<code class="inline">RecordList.vue:60</code>, <code class="inline">v-if="error"</code>). Pensado para fallos de CARGA (fetch/filtro). Si se le escribe cualquier cosa, la lista entera se reemplaza por la pantalla de error.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">errors[].type (el discriminador)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El payload de <code class="inline">deleteBulkInstances</code> trae <code class="inline">errors { id field message type }</code> y el frontend YA lo pide (<code class="inline">RecordList.vue:1787-1791</code>). El backend puebla <code class="inline">type: CONSTRAINT_VIOLATION</code> para el rechazo por referencia. Con eso alcanza para discriminar en el front, sin tocar backend.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">graphqlErrors.ts (reuso de 1600)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Util que introdujo UPONE-1600 (<code class="inline">resolveBusinessErrorCode</code>, <code class="inline">readErrorExtensions</code>) para clasificar el rechazo de negocio del path individual. El fix lo reusa/extiende para el bulk, sin duplicar logica (DET-11/DET-32).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">el path individual de 1600 (oraculo)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">En <code class="inline">handleCriticalDeleteConfirm:6514-6517</code>, el catch del path <code class="inline">customMutation</code> ya discrimina y usa <code class="inline">showWarning</code>. Es el comportamiento CORRECTO de referencia: el bulk se lleva a esa paridad.</p></div>
+      </div>
+    </section>
+
+    <!-- BASES + ENTORNO: las capas -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Las capas encadenadas del sintoma</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        El diagrama sigue un delete critico single de un objeto sin <code class="inline">customDeleteMutation</code>, bloqueado por Restrict. El backend bloquea BIEN
+        (nodo verde) y devuelve <code class="inline">errors[]</code> con <code class="inline">type: CONSTRAINT_VIOLATION</code> en el payload. El nodo rojo es el defecto: la
+        rama <code class="inline">else</code> escribe esos mensajes en el ref de carga y nuke la vista.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  A["borrar fila (delete critico, sin customMutation)"] --> B["backend: motor de cascada bloquea por Restrict<br/>errors[] con type=CONSTRAINT_VIOLATION (CORRECTO)"]
+  B --> C{"rama else de handleCriticalDeleteConfirm<br/>(bulkErrors.length > 0)"}
+  C -- "HOY: error.value = errors.map(message)" --> D["&lt;ErrorState&gt; full-view<br/>-> vista destruida"]
+  C -- "FIX: discriminar por type -> showWarning(msg)" --> E["toast con el mensaje del servidor<br/>+ lista intacta"]
+      </pre></div>
+      <p class="text-sm text-stone-400 leading-relaxed mt-3">
+        Dos cosas del mapa. Primero: el bloqueo del backend (nodo <code class="inline">B</code>) es dominio esperado; el fix no lo toca. Segundo: la eleccion es entre las
+        dos ramas del nodo <code class="inline">C</code>; el fix solo cambia esa rama para que el resultado sea el nodo <code class="inline">E</code> (paridad con el path
+        individual de 1600), sin tocar el path de carga real de la lista.
+      </p>
+    </section>
+
+    <!-- BASES: la regla -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Invariante que el fix restaura</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El <span class="text-amber-400">&lt;ErrorState&gt;</span> full-view es para fallos de CARGA de la lista. El resultado de una <span class="text-amber-400">accion</span> (borrar) se comunica con un toast, sin destruir la vista.</div>
+        <div class="ilabel mt-2">Corolario: escribir el error de un borrado en <code class="inline">error.value</code> confunde dos dominios distintos (carga vs accion). El path individual arreglado por 1600 ya respeta este invariante; la rama <code class="inline">deleteBulkInstances</code> todavia lo viola por reusar el ref equivocado.</div>
+      </div>
+    </section>
+
+    <!-- BASES: el defecto en codigo -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El defecto, en codigo</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        En <code class="inline">handleCriticalDeleteConfirm</code> (<code class="inline">RecordList.vue:6445</code>), la rama <code class="inline">else</code> escribe los
+        errores del payload en <code class="inline">error.value</code>. El fix discrimina por <code class="inline">type</code> y usa un toast (como el path individual de 1600),
+        dejando <code class="inline">error.value</code> intacto para el rechazo de negocio.
+      </p>
+      <pre class="code"><span class="c">// RecordList.vue:6485-6487 — rama else (deleteBulkInstances), HOY</span>
+<span class="k">const</span> bulkErrors = bulkResult?.data?.deleteBulkInstances?.errors || [];
+<span class="k">if</span> (bulkErrors.length &gt; 0) {
+  error.value = bulkErrors.map((e) =&gt; e.message).join(<span class="s">' '</span>); <span class="c">// nuke la vista full-view</span>
+  <span class="k">return</span>;
+}
+
+<span class="c">// despues: discriminar por type -> toast para el rechazo de negocio</span>
+<span class="k">if</span> (bulkErrors.length &gt; 0) {
+  <span class="k">const</span> business = bulkErrors.filter(isBusinessType); <span class="c">// type CONSTRAINT_VIOLATION, etc.</span>
+  <span class="k">if</span> (business.length) { <span class="f">showWarning</span>(business.map((e) =&gt; e.message).join(<span class="s">' '</span>)); <span class="c">// lista intacta</span> }
+  <span class="k">else</span> { error.value = bulkErrors.map((e) =&gt; e.message).join(<span class="s">' '</span>); }
+  <span class="k">return</span>;
+}</pre>
+    </section>
+
+    <!-- ENTORNO: A vs B -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Opcion A (frontend, elegida) frente a Opcion B (backend, descartada)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        El comentario que dejo 1600 en el codigo sugeria "agregar <code class="inline">code</code> a <code class="inline">ValidationError</code> en object-manager". Eso es
+        la opcion B. Pero el payload bulk ya trae <code class="inline">type</code>, asi que la opcion A (frontend puro) alcanza y evita tocar un contrato compartido.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A — discriminar por type en el frontend (elegida)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Enrutar el rechazo de negocio del bulk a <code class="inline">showWarning</code> segun <code class="inline">errors[].type</code>, sin tocar <code class="inline">error.value</code>.</p><p><span class="text-emerald-400">+</span> Cero cambio de backend: el <code class="inline">type</code> ya viaja al cliente</p><p><span class="text-emerald-400">+</span> Reusa <code class="inline">graphqlErrors.ts</code> de 1600; alineado con el path individual</p><p><span class="text-emerald-400">+</span> Blast radius minimo (una rama); reversible</p><p><span class="text-rose-400">−</span> Depende de que el backend siga poblando <code class="inline">type</code> (hoy lo hace)</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">B — agregar code a ValidationError (backend)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Agregar y poblar <code class="inline">code</code> en el type <code class="inline">ValidationError</code> para usar <code class="inline">resolveBusinessErrorCode</code> igual que el path individual.</p><p><span class="text-rose-400">−</span> Cambia un type GraphQL compartido por create/update/bulk de TODOS los mods</p><p><span class="text-rose-400">−</span> Cruza a object-manager: mayor blast radius y coordinacion core</p><p><span class="text-rose-400">−</span> Innecesario: el <code class="inline">type</code> del payload ya alcanza para discriminar</p></div></div>
+      </div>
+    </section>
+
+    <!-- ENTORNO: paths de error -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Los paths de error de RecordList (que se toca y que no)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        <code class="inline">RecordList</code> maneja errores de borrado por varios caminos. El fix toca SOLO uno (la fila destacada). Los demas deben sobrevivir intactos —
+        esa es la malla de seguridad.
+      </p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Path</th><th class="p-3">Como muestra el error hoy</th><th class="p-3">Se toca?</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">Carga de la lista (fetch/filtro)</td><td class="p-3 text-center"><code class="inline">&lt;ErrorState&gt;</code> full-view (correcto)</td><td class="p-3 text-center text-rose-400">No</td></tr>
+          <tr><td class="p-3 text-stone-300">customMutation que rechaza (individual)</td><td class="p-3 text-center">toast (ya arreglado por 1600)</td><td class="p-3 text-center text-rose-400">No</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">rama else / deleteBulkInstances</td><td class="p-3 text-center">full-view via <code class="inline">error.value</code> (el delta)</td><td class="p-3 text-center text-emerald-400">Si → toast por type</td></tr>
+          <tr><td class="p-3 text-stone-300">multi-select <code class="inline">deleteSelectedRows</code></td><td class="p-3 text-center">modal <code class="inline">bulkDeleteErrors</code> (+ <code class="inline">error.value=summary</code>)</td><td class="p-3 text-center text-rose-400">No (backlog BL-1)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- RESTRICCIONES: malla de seguridad -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Malla de seguridad y restricciones</h2></div>
+      <div class="callout callout-warn">
+        <strong>⚠ Cambio quirurgico sobre la rama else / deleteBulkInstances</strong> — Debe sobrevivir intacto: (1) el error de CARGA sigue mostrando el
+        <code class="inline">&lt;ErrorState&gt;</code> full-view (el path de <code class="inline">error.value</code> para fetch/filtro NO se toca); (2) el path individual
+        <code class="inline">customMutation</code> arreglado por 1600 sigue con su toast; (3) el delete critico exitoso sigue con toast de exito +
+        <code class="inline">fetchData(true)</code>; (4) el multi-select <code class="inline">deleteSelectedRows</code> conserva su modal <code class="inline">bulkDeleteErrors</code>.
+      </div>
+      <div class="callout callout-info">
+        <strong>ℹ El bloqueo del backend es correcto — no se toca</strong> — El motor de cascada rechaza el hard-delete cuando hay una referencia real (Restrict). Es
+        dominio esperado. El fix es frontend puro: NO se agrega <code class="inline">code</code> a <code class="inline">ValidationError</code> (opcion B descartada), porque el
+        <code class="inline">type</code> del payload ya alcanza.
+      </div>
+      <div class="callout callout-danger">
+        <strong>✗ Verificacion runtime real, no solo unit (DET-36)</strong> — Como es UI config-driven / DB-gated, el cierre exige evidencia runtime: OM + suite +
+        tenant sembrado con un objeto bloqueable por Restrict via bulk engine; borrar la fila y ver el toast con la lista intacta. Si no es reproducible en el entorno,
+        registrar <code class="inline">smoke-not-reproducible</code> con razon auditada. Reglas del ticket: <code class="inline">DET-7</code> (regression),
+        <code class="inline">DET-13</code> (cierre por evidencia), <code class="inline">DET-33</code> (verificar self-report), <code class="inline">DET-36</code> (verificacion
+        runtime/UI), <code class="inline">DET-40</code> (auditoria de reemplazo).
+      </div>
+    </section>
+
+    <!-- Preguntas de estudio -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Preguntas de estudio</h2></div>
+      <details class="qa"><summary>Si UPONE-1600 arreglo el render del bloqueo, por que hace falta este ticket?</summary><div class="ans">Porque 1600 arreglo SOLO el path individual (<code class="inline">customMutation</code>), que lanza y trae <code class="inline">extensions.code</code>. El path que rutea por <code class="inline">deleteBulkInstances</code> (rama <code class="inline">else</code>) no lanza: devuelve <code class="inline">errors[]</code> en el payload y sigue escribiendo <code class="inline">error.value</code> (<code class="inline">RecordList.vue:6485-6487</code>), reemplazando la lista. Es el delta que 1600 dejo anotado en el propio codigo.</div></details>
+      <details class="qa"><summary>Por que el fix no necesita tocar el backend?</summary><div class="ans">Porque el discriminador ya existe en el payload: el selection set pide <code class="inline">errors { id field message type }</code> (<code class="inline">RecordList.vue:1787-1791</code>) y el backend puebla <code class="inline">type: CONSTRAINT_VIOLATION</code> para el rechazo por referencia (<code class="inline">referenceValidationService.js:331</code>). Agregar <code class="inline">code</code> a <code class="inline">ValidationError</code> (opcion B) seria un cambio de contrato compartido innecesario.</div></details>
+      <details class="qa"><summary>Que NO entra en este ticket?</summary><div class="ans">Tres cosas: (1) el frente BACKEND de 1557 (false-RESTRICT por proyeccion RT propia) es <code class="inline">TICKET-122</code>, otra causa raiz; (2) el path individual, ya resuelto por 1600; (3) el multi-select <code class="inline">deleteSelectedRows</code> (<code class="inline">RecordList.vue:6551</code>), que tambien setea <code class="inline">error.value=stats.summary</code> junto a su modal — queda como backlog BL-1 (DET-16), para mantener el delta atomico.</div></details>
+      <details class="qa"><summary>Por que no basta con un unit de componente para cerrar?</summary><div class="ans">Porque el comportamiento es config-driven (objeto con cascada Restrict) y DB-gated (el bloqueo depende de una referencia real). Un unit afirma la logica de la rama, pero el cierre exige verificacion runtime real (DET-36): levantar OM + suite + tenant sembrado y ver el toast con la lista intacta al bloquear el delete. El unit es guard barato, no reemplazo.</div></details>
+    </section>
+
+    <!-- ALCANCE -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Alcance del cambio</h2></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">layout/src/layouts/RecordList/RecordList.vue (rama else)</span>
+        <span class="tag tag-now">layout/src/utils/graphqlErrors.ts (reuso)</span>
+        <span class="tag tag-next">RecordList.spec (component test)</span>
+        <span class="tag tag-next">recordlist.md (doc oficial)</span>
+        <span class="tag tag-next">smoke runtime (DET-36)</span>
+        <span class="tag tag-future">multi-select deleteSelectedRows (backlog BL-1, fuera de alcance)</span>
+        <span class="tag tag-future">code en ValidationError (opcion B, descartada)</span>
+      </div>
+    </section>
+
+    <!-- HACIA ADELANTE: el plan -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Plan de sessions (orientacion)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        Las dos hipotesis del Triage quedaron confirmadas contra el codigo (H1: la rama <code class="inline">else</code> escribe en el ref de carga; H2: el fix es frontend
+        puro por <code class="inline">type</code>). No hay hipotesis abiertas. El plan es un fix corto (tier T3 por ser user-facing con verificacion runtime), con orden
+        tests-first y cierre por smoke real.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Red de seguridad primero (VERDE sobre codigo actual)</div><p class="text-xs text-stone-400">Tests de lo que ya funciona: error de carga sigue mostrando <code class="inline">&lt;ErrorState&gt;</code> full-view; path individual de 1600 sigue con toast; delete critico exitoso -> toast + refetch.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Test que falla (RED del bug)</div><p class="text-xs text-stone-400">Delete via <code class="inline">deleteBulkInstances</code> que devuelve <code class="inline">CONSTRAINT_VIOLATION</code> -> assert de (a) toast con el mensaje del backend y (b) lista NO reemplazada (<code class="inline">error.value</code> null). ROJO hoy.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Implementar el fix</div><p class="text-xs text-stone-400">Discriminar por <code class="inline">type</code> en la rama <code class="inline">else</code>, toast passthrough sin tocar <code class="inline">error.value</code>. DET-40: auditar 1:1 lo que hacia el path viejo. El RED pasa a VERDE.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Gate — smoke runtime (DET-36) + suite</div><p class="text-xs text-stone-400"><code class="inline">RecordList.spec</code> completo verde + evidencia viva: bloquear un delete via bulk engine muestra el aviso con la lista intacta. Doc oficial actualizada. Commits/PR con id <code class="inline">UPONE-1557</code>.</p></div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-130 · up1 / layout-engine (UPONE-1557 frontend, delta bulk). Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

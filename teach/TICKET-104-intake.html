@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Hard delete en cascada sin huerfanos · TICKET-104</title>
+<!-- metadata · ticket: TICKET-104 · kind: intake · project: up1 · generated: 2026-07-13 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background:var(--stone-bg); color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .blk { scroll-margin-top:5rem; }
+  .callout { border-left:4px solid; padding:.85rem 1.1rem; border-radius:0 .5rem .5rem 0; margin:.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,.10); }
+  .callout-danger { border-color:#f87171; background:rgba(248,113,113,.10); }
+  .callout-note { border-color:#38bdf8; background:rgba(56,189,248,.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:.06rem .38rem; border-radius:.25rem; font-size:.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:.6rem; }
+  .brick:hover { border-color:var(--amber); }
+  .pre-mermaid { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+  .tldr { background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(245,158,11,.03)); border:1px solid rgba(245,158,11,.30); border-radius:.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color:var(--txt-dim); font-style:italic; font-size:.8rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:.5rem; background:var(--stone-card); margin:.4rem 0; }
+  details.qa summary { cursor:pointer; padding:.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem .85rem 2rem; color:var(--txt-muted); font-size:.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:.35rem; top:.2rem; bottom:.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:.25rem; width:.7rem; height:.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-104</span> · Hard delete en cascada sin huerfanos</span>
+      <span>up1 · 2026-07-13</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">SP6 · P5 — Eliminacion segura con cascada, restrict y DataLog</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este intake prepara el terreno para arreglar una inconsistencia del borrado generico de UP1: el core ya puede razonar sobre hijos polimorficos para clone/versionado, pero el delete no recorre el mismo grafo. El resultado actual puede dejar huerfanos o esconder impactos. Este teaching explica las bases del flujo de delete, el entorno que lo condiciona y el camino de diseno sin aplicar cambios a los repos de UP1.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <span class="block mt-1"><strong>Que hay:</strong> `deleteBulkInstances` y `deleteInstance` protegen FKs reales, pero no modelan todo el arbol polimorfico de curriculum-design (`ownerType`/`ownerId`, RecordTypes y self-ref).</span>
+        <span class="block mt-1"><strong>Que se hara:</strong> disenar un motor core de preview + delete real con `Cascade` para hijos poseidos, `Restrict` para referencias externas/versiones, y `core_DataLog` por cada nodo eliminado.</span>
+        <span class="block mt-1"><strong>Por que:</strong> es un fix de plataforma, no un parche del mod; UI, API y MCP deben borrar con el mismo contrato y sin huerfanos.</span>
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#bases" class="navlink rounded border border-stone-700 px-2 py-1">bases</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo actual</a>
+      <a href="#entorno" class="navlink rounded border border-stone-700 px-2 py-1">entorno</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#plan" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <section id="bases" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Las bases — conceptos que hay que tener en la cabeza</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">El delete de P5 cruza core, mod, UI y MCP. Estos conceptos son el piso: sin ellos se puede confundir un hijo de dominio con una fila tecnica o tratar una relacion externa como si fuera un hijo poseido.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Hard delete</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Borrado fisico de registros. En SP6 se descarto soft delete porque la lectura generica de core no filtra flags custom de cada mod.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Cascade</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Eliminar junto con el padre los hijos poseidos y exclusivos dentro del mismo subarbol. Debe ser explicito por relacion, no default global.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Restrict</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Bloquear todo el borrado si un nodo esta referenciado desde fuera del subarbol o por una cadena de version. El mensaje debe decir que resolver primero.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Hijo polimorfico</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Registro que pertenece a padres variables mediante <code class="inline">ownerType</code>/<code class="inline">ownerId</code>. La base de datos no lo protege como FK real.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RecordType / subtipo</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Capa de dominio sobre un objeto base, por ejemplo una seccion con tipo de plan, minor o perfil. El preview debe hablar en terminos entendibles para el usuario.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">core_DataLog</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Historial actual de core despues de P3/TICKET-102. Cada nodo eliminado por cascada debe generar su propia entrada, no solo el padre.</p></div>
+      </div>
+    </section>
+
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Las bases — como funciona hoy el delete</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">
+        El flujo real de usuario empieza en <code class="inline">RecordList</code> y llega a <code class="inline">deleteBulkInstances</code>. El modal critico existe, pero hoy sus consecuencias son texto estatico. El punto debil esta entre la validacion de referencias reales y los hijos polimorficos: las FKs se pueden bloquear o cascadar, pero un <code class="inline">ownerType/ownerId</code> no se descubre por Prisma.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  UI["RecordList<br/>delete selected"]
+  MODAL["CriticalWarningModal<br/>consecuencias estaticas"]
+  BULK["deleteBulkInstances<br/>ruta principal"]
+  REF["referenceValidationService<br/>FKs reales"]
+  POLY["metadata.polymorphicChildren<br/>hijos ownerType/ownerId"]
+  DEC{"Referencia externa<br/>o version?"}
+  RESTRICT["Restrict<br/>bloquear todo + mensaje"]
+  CASCADE["Cascade<br/>borrar subarbol"]
+  LOG["core_DataLog<br/>entrada por nodo"]
+  UI --> MODAL --> BULK --> REF
+  REF --> POLY --> DEC
+  DEC -- si --> RESTRICT
+  DEC -- no --> CASCADE --> LOG
+      </pre></div>
+      <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+        La sorpresa importante: P5 no es "poner Cascade por defecto". Hacerlo globalmente podria arrastrar datos de otros mods. El fix sano es construir el subarbol declarado, distinguir referencias internas de externas y solo entonces ejecutar el delete.
+      </p>
+    </section>
+
+    <section id="entorno" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Hacia los lados — que rodea este ticket</h2>
+      <div class="callout callout-note"><strong>P2 / UPONE-1379</strong> — amplia la declaracion de hijos polimorficos que P5 debe consumir. El design debe asumir el nuevo objeto y completar lo que aun falte para delete, especialmente `AcademicProgram -> Curriculum` y requirements.</div>
+      <div class="callout callout-info"><strong>P3 / TICKET-102</strong> — depreco ChangeLog como destino nuevo. P5 debe auditar borrados en `core_DataLog` hijo por hijo, usando snapshot pre-delete para no perder atribucion.</div>
+      <div class="callout callout-warn"><strong>UI y MCP comparten preview</strong> — `CriticalWarningModal`, `cd_delete_section` y `delete_object` necesitan el mismo calculo de impacto. Si cada capa calcula distinto, el usuario confirma una cosa y el backend ejecuta otra.</div>
+      <div class="callout callout-danger"><strong>No es una solucion contenida en el mod</strong> — un resolver local de curriculum-design dejaria inconsistentes `deleteBulkInstances`, `deleteInstance`, MCP y cualquier otro consumidor generico del core.</div>
+    </section>
+
+    <section id="invariant" class="blk mt-10" data-dkc-block="invariant">
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Invariante del diseno</div>
+        <div class="ilabel mt-2">Preview y delete real deben usar el mismo motor de grafo. Si el preview dice "se borran N hijos", el commit debe borrar exactamente ese subarbol o abortar completo con Restrict. No se aceptan deletes parciales.</div>
+      </div>
+    </section>
+
+    <section id="plan" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Hacia adelante — orientacion del plan</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">La spec baja esto a sesiones ejecutables. El orden esperado va de core a mod y luego a UI/MCP, porque la UI no puede mostrar un impacto que el backend aun no sabe calcular.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Discovery ejecutable del grafo de delete</div><p class="text-xs text-stone-400">Confirmar metadata actual, gaps y tests seed disponibles para cada familia de dato.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Motor core de preview + restrict</div><p class="text-xs text-stone-400">Construir subarbol, detectar referencias externas y version chains, devolver impacto accionable.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Delete real transaccional + DataLog</div><p class="text-xs text-stone-400">Ejecutar cascada del mismo plan, auditar cada nodo y abortar completo ante Restrict.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · Metadata curriculum-design</div><p class="text-xs text-stone-400">Completar declaraciones de hijos y semantica por relacion sin tocar otros mods.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 · UI/MCP + casos destructivos</div><p class="text-xs text-stone-400">Preview dinamico en modal y MCP; pruebas que verifican DB sin dato + DataLog por nodo.</p></div>
+      </div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>Por que esto va en object-manager y no solo en curriculum-design?</summary><div class="ans">Porque el entrypoint real de UI usa `deleteBulkInstances` generico, y tambien existen `deleteInstance` y MCP. Si el mod implementa su propio delete, el resto de consumidores queda con el bug.</div></details>
+      <details class="qa"><summary>Por que no Cascade global?</summary><div class="ans">Porque un default global puede borrar datos de otros mods que no pertenecen al subarbol curricular. El criterio correcto es por relacion: Cascade para posesion exclusiva, Restrict para referencias externas o linaje de version.</div></details>
+      <details class="qa"><summary>Que debe probar cada caso destructivo?</summary><div class="ans">Primero confirmar que el dato existe en DB; luego gatillar el delete; despues confirmar que ya no existe; finalmente confirmar que quedo `core_DataLog` por ese nodo. Si hace falta recuperar datos, se puede re-sincronizar desde seed.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · teach-intake · TICKET-104 (UPONE-1382) · up1 · generado por DKC · 2026-07-13
+    </footer>
+  </main>
+</body>
+</html>

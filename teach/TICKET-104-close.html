@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>TICKET-104 · Teach-close — Hard delete en cascada sin huerfanos (UPONE-1382)</title>
+<!-- metadata · ticket: TICKET-104 · kind: close · project: up1 · generated: 2026-07-14 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background:var(--stone-bg); color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .blk { scroll-margin-top:5rem; }
+  .callout { border-left:4px solid; padding:.85rem 1.1rem; border-radius:0 .5rem .5rem 0; margin:.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,.10); }
+  .callout-danger { border-color:#f87171; background:rgba(248,113,113,.10); }
+  .callout-note { border-color:#38bdf8; background:rgba(56,189,248,.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:.06rem .38rem; border-radius:.25rem; font-size:.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:.6rem; }
+  .brick:hover { border-color:var(--amber); }
+  .pre-mermaid { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+  .tldr { background:linear-gradient(135deg,rgba(245,158,11,.10),rgba(245,158,11,.03)); border:1px solid rgba(245,158,11,.30); border-radius:.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color:var(--txt-dim); font-style:italic; font-size:.8rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:.5rem; background:var(--stone-card); margin:.4rem 0; }
+  details.qa summary { cursor:pointer; padding:.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem .85rem 2rem; color:var(--txt-muted); font-size:.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:.35rem; top:.2rem; bottom:.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:.25rem; width:.7rem; height:.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  .tag { display:inline-block; padding:.15rem .55rem; border-radius:.3rem; font-size:.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background:rgba(52,211,153,.15); color:#6ee7b7; border-color:rgba(52,211,153,.35); }
+  .tag-next { background:rgba(245,158,11,.16); color:#fcd34d; border-color:rgba(245,158,11,.35); }
+  .tag-future { background:rgba(168,162,158,.14); color:#d6d3d1; border-color:rgba(168,162,158,.30); }
+  .twocol-head { font-weight:600; padding:.5rem .85rem; border-radius:.5rem .5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-104</span> · Hard delete en cascada sin huerfanos</span>
+      <span>up1 · 2026-07-14</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">SP6 · P5 — Cierre: motor de borrado en cascada verificado contra BD real</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El intake de este ticket (<a href="TICKET-104.teach/teach-intake.html" class="text-amber-400 underline">teach-intake.html</a>) ya explico las bases del delete generico y por que P5 es un fix de plataforma, no un parche de mod — este documento no repite eso. Aca contamos que paso en las 5 sessions que lo ejecutaron: como el motor paso de contrato en papel a codigo transaccional, por que 37 unit tests verdes no bastaron, y que aprendio el equipo cuando la matriz destructiva corrio contra la base de datos real de UPU (el tenant de prueba).
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <span class="block mt-1"><strong>Que se hizo:</strong> se construyo un motor core (<code class="inline">buildDeleteImpactPlan</code> + <code class="inline">executeDeletePlan</code>) que recorre la metadata declarativa de hijos, calcula preview de cascada/restrict, y borra en transaccion con auditoria por nodo; se cableo a UI (<code class="inline">CriticalWarningModal</code>) y a MCP con el mismo preview.</span>
+        <span class="block mt-1"><strong>El momento clave:</strong> una matriz destructiva contra la base de datos real (no mocks) expuso 7 bugs de runtime que 37 unit tests con Prisma simulado nunca cazaron.</span>
+        <span class="block mt-1"><strong>Estado de cierre:</strong> las 5 sessions estan done, el gate final aprobo tras 2 rondas de revision adversarial; solo resta el push (revision del equipo core) y este teach-close.</span>
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#hitos" class="navlink rounded border border-stone-700 px-2 py-1">piezas nuevas</a>
+      <a href="#hipotesis" class="navlink rounded border border-stone-700 px-2 py-1">hipotesis</a>
+      <a href="#decisiones" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#caso" class="navlink rounded border border-stone-700 px-2 py-1">el caso critico</a>
+      <a href="#sesiones" class="navlink rounded border border-stone-700 px-2 py-1">sesiones</a>
+      <a href="#lecciones" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#saber" class="navlink rounded border border-stone-700 px-2 py-1">saber promovido</a>
+      <a href="#retoma" class="navlink rounded border border-stone-700 px-2 py-1">retoma</a>
+      <a href="#proximo" class="navlink rounded border border-stone-700 px-2 py-1">que sigue</a>
+    </nav>
+
+    <!-- Piezas nuevas dejadas por el ticket (glosario de lo que NO existia en el intake) -->
+    <section id="hitos" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Piezas nuevas que dejo el ticket</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">El intake dejo un contrato en papel (<code class="inline">DeleteImpactPlan</code>). Estas son las piezas de codigo reales en las que se convirtio, mas dos siglas de proceso que aparecen seguido en las sessions de abajo.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">buildDeleteImpactPlan</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Motor read-only en <code class="inline">object-manager/.../helpers/deleteImpactPlan.js</code>: recorre metadata polimorfica/self-ref/derivada y arma el plan (nodes, edges, restrictions) que consumen preview UI/MCP y el delete real.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">executeDeletePlan</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Motor transaccional (mismo archivo): ejecuta <code class="inline">plan.deleteOrder</code> capa por capa dentro de un <code class="inline">$transaction</code>, sin try/catch alrededor de los <code class="inline">deleteMany</code> para que cualquier fallo aborte todo (atomicidad REQ-02).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">cascadeDeleteIfApplicable</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Orquestador que decide si el motor entra o no: solo se activa si el objeto declara hijos en su metadata. Sin hijos declarados, el borrado sigue el camino generico de siempre — asi se cumple REQ-06 (sin regresion).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">historyKey</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Campo del plan que le dice a <code class="inline">core_DataLog</code> a que padre atribuir cada hijo borrado, aunque el padre se borre en la misma cascada. Se calcula una vez en el motor, no se re-deriva en cada session.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">DET-33 · verificacion del self-report</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Regla DKC: el resultado de un sub-agente (o de un juez) no es un hecho hasta que alguien lo verifica independientemente contra el codigo/schema real. Aplicada en S5 al confirmar los hallazgos del panel adversarial antes de aceptarlos.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">DET-35 · dual-judge</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Modo reforzado del quality review para tickets T3 (riesgo alto): dos jueces ciegos revisan el mismo diff en paralelo; solo se confirma un hallazgo si ambos coinciden o si el orquestador lo verifica el mismo. Usado en el S5.GATE de este ticket.</p></div>
+      </div>
+    </section>
+
+    <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+      Con el vocabulario nuevo cubierto, el bloque de abajo muestra como cambiaron — o se refutaron — los cinco supuestos con los que arranco la implementacion. Miralo antes de leer las sesiones: te va a ahorrar releer las cinco de nuevo si algo no cierra.
+    </p>
+
+    <!-- Evolucion de hipotesis / supuestos de ejecucion -->
+    <section id="hipotesis" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Evolucion de hipotesis (supuestos de ejecucion)</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">
+        Son 6 supuestos con los que el equipo entro a implementar. Mirando la tabla de una, las dos que mas cambiaron el rumbo son <strong class="text-stone-200">H3</strong> (el orden de las sessions se re-planifico en caliente) y <strong class="text-stone-200">H4</strong> (la que motivo la matriz destructiva de S5.T3, el caso critico de mas abajo). Las demas son refinamientos que evitaron bugs silenciosos.
+      </p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">#</th><th class="text-left p-3">Supuesto inicial</th><th class="text-left p-3">Estado final</th><th class="text-left p-3">Evidencia</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-amber-300 font-medium">H1</td><td class="p-3 text-stone-300">Completar <code class="inline">polymorphicChildren</code>/<code class="inline">directChildren</code> en los 4 objetos alcanza para cerrar el gap de huerfanos.</td><td class="p-3 text-stone-300">partial</td><td class="p-3 text-stone-400 text-xs">S4: solo se declaran hijos <em>poseidos y exclusivos</em> (cascade). Las relaciones Restrict (<code class="inline">planEntry.activityId</code>, FKs cross-mod, <code class="inline">previousVersionId</code>) deben quedar FUERA de la declaracion — si se declaran como hijos, el motor las trataria como cascade en vez de Restrict (MC-09).</td></tr>
+          <tr><td class="p-3 text-amber-300 font-medium">H2</td><td class="p-3 text-stone-300">La deteccion de referencias cross-mod puede arrancar con una lista dirigida por mod (<code class="inline">ENGAGEMENT_REFERENCES</code>).</td><td class="p-3 text-stone-300">refuted</td><td class="p-3 text-stone-400 text-xs">S2 (L5): la lista dirigida generaba duplicados y quedaba desincronizada si uengagement renombraba modelos. Reemplazada por convencion generica <code class="inline">&lt;objectLower&gt;Id</code> + <code class="inline">ownerType/ownerId</code>.</td></tr>
+          <tr><td class="p-3 text-amber-300 font-medium">H3</td><td class="p-3 text-stone-300">El wiring del motor a <code class="inline">deleteBulkInstances</code>/<code class="inline">deleteInstance</code> puede hacerse en S3, apenas el motor este listo.</td><td class="p-3 text-stone-300">refuted</td><td class="p-3 text-stone-400 text-xs">Enmienda registrada en <code class="inline">decisions_log</code> (session S3): se reprograma a S5.T0, despues de S4 (metadata completa), para evitar un falso verde del test anti-huerfanos REQ-09 (L10).</td></tr>
+          <tr><td class="p-3 text-amber-300 font-medium">H4</td><td class="p-3 text-stone-300">37 unit tests verdes con Prisma mockeado son evidencia suficiente de que el motor no deja huerfanos en produccion.</td><td class="p-3 text-stone-300">refuted</td><td class="p-3 text-stone-400 text-xs">S5.T3 (L14): la matriz destructiva contra BD real expuso 7 bugs de runtime invisibles al mock. Ver seccion "El caso critico" abajo.</td></tr>
+          <tr><td class="p-3 text-amber-300 font-medium">H5</td><td class="p-3 text-stone-300">Un solo revisor (LLM principal) alcanza para el gate de S5, dado que ya hay tests e integration verdes.</td><td class="p-3 text-stone-300">refuted</td><td class="p-3 text-stone-400 text-xs">DET-35 escalo el review a panel dual-judge por ser T3 core transversal; el panel encontro hallazgos adicionales (casing RT no-uniforme, gate del preview) que un solo pase no habia cerrado.</td></tr>
+          <tr><td class="p-3 text-amber-300 font-medium">H6</td><td class="p-3 text-stone-300"><code class="inline">RULE-dev-004</code> ("una rama por epica") sirve igual para un ticket core cuyo scope diverge de sus hermanos de epica.</td><td class="p-3 text-stone-300">refuted</td><td class="p-3 text-stone-400 text-xs">L1: el dev indico trabajar en la rama del ticket externo (UPONE-1382), no de la epica (UPONE-1267). Candidato a revision de la rule (ver "Saber promovido").</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+      La sorpresa mayor no esta en una fila individual sino en el patron: casi todos los supuestos que fallaron (H2, H3, H4, H6) comparten la misma raiz — confiar en una simplificacion comoda (lista dirigida, orden original, mock, politica rigida de rama) en vez de verificar contra la realidad (convencion generica, dependencias reales entre sessions, BD real, necesidad concreta del dev). Esa raiz comun reaparece en "Lecciones aprendidas" mas abajo. Antes de eso, veamos las decisiones tecnicas concretas que estas hipotesis forzaron.
+    </p>
+
+    <!-- Decisiones tomadas durante la ejecucion -->
+    <section id="decisiones" class="blk mt-12" data-dkc-block="two-col-compare">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones tomadas — auditoria por nodo (DataLog)</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">De las decisiones de ejecucion, esta es la que mas cambio el diseño de S1.T2: como auditar en <code class="inline">core_DataLog</code> (la tabla de historial de cambios de core) cada nodo borrado por cascada sin duplicar al padre. El dev eligio entre dos opciones en S5.T0.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Opcion A — descartada</div><div class="p-4 text-sm text-stone-400 space-y-2"><p><code class="inline">deleteBulkInstances</code> deja su resumen <code class="inline">BULK_DELETE</code> propio para el padre y el motor audita solo los hijos.</p><p><span class="text-emerald-400">+</span> Cambio minimo sobre el resolver existente.</p><p><span class="text-rose-400">−</span> El padre queda en un resumen sin snapshot individual — no cumple REQ-04 (auditoria uniforme padre+hijos).</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Opcion C — elegida</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>El motor (<code class="inline">executeDeletePlan</code>) audita CADA nodo, padre incluido, con snapshot pre-delete; <code class="inline">withDataLog</code> (el decorator que loguea deletes) se vuelve flag-aware para NO re-loguear el root en el path cascade.</p><p><span class="text-emerald-400">+</span> Cumple REQ-04 sin duplicar el log del padre; misma calidad de auditoria para todo el subarbol.</p><p><span class="text-rose-400">−</span> Requirio tocar <code class="inline">withDataLog.js</code> con un flag de contexto (<code class="inline">_deleteHandledByMotor</code>) — mas superficie de cambio en core compartido.</p></div></div>
+      </div>
+    </section>
+
+    <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+      Una vez resuelto quien audita cada nodo, quedaba la pregunta de cuando conectar el motor al resolver real — y ahi el plan original (S3) no sobrevivio al analisis de riesgo, como ya viste en H3. El siguiente bloque es el momento donde esa cautela se justifico del todo: la matriz destructiva de S5.T3.
+    </p>
+
+    <!-- El caso critico: la matriz destructiva contra BD real -->
+    <section id="caso" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El caso critico — matriz destructiva contra BD real (S5.T3)</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">El motor tenia 37 unit tests verdes con Prisma mockeado (traversal, restrict, historyKey, atomicidad). El wiring al resolver real (S5.T0) tambien paso su propia suite mockeada. Todo el codigo "se veia" listo para produccion.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decision</div><p class="text-sm text-stone-300">En vez de confiar en el mock, se escribio un integration test reproducible (<code class="inline">hard-delete-cascade.integration.test.js</code>) contra la BD real del tenant UPU, con fixtures propios de prefijo unico y auto-limpieza, cubriendo 4 casos (cascade simple, cascade con link derivado, cascade con RT capitalizado, restrict por FK real).</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Aparecieron 7 bugs de runtime que ningun mock detecta: enum de accion en minuscula vs UPPERCASE real, columna inexistente en <code class="inline">core_DataLog</code>, FK de capas RT en camelCase vs minuscula real, <code class="inline">select</code> con campos inexistentes, casing raiz que dejaba huerfanas secciones multi-palabra, orden de borrado que violaba una FK NOT NULL, y casing RT no-uniforme entre mods. Los 7 se corrigieron y quedaron cubiertos por regresion antes de cerrar el gate.</p></div>
+      </div></div>
+    </section>
+
+    <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+      Dos cosas sorprenden aca. Primero, que ninguno de los 7 bugs era de logica de negocio — todos eran de "forma real de los datos" (casing, enums, columnas) que un mock nunca reproduce porque acepta cualquier <code class="inline">where</code>/<code class="inline">select</code> sin validar nada. Segundo, que dos de los 37 tests mockeados no solo fallaban en detectar el bug: <strong class="text-stone-200">afirmaban activamente el comportamiento buggy</strong> (un test consagraba el orden de borrado que violaba la FK; otro afirmaba el <code class="inline">action:'delete'</code> en minuscula que el enum real rechaza). Eso conecta directo con DET-33 (verificacion del self-report): ni el codigo ni sus propios tests son evidencia hasta que alguien los contrasta con la realidad. Con el motor ya endurecido, las siguientes 5 sesiones (S1 a S5) cuentan como se llego hasta aca paso a paso.
+    </p>
+
+    <!-- Highlights por session, narrando el flujo -->
+    <section id="sesiones" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Highlights por session — el flujo real</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Cinco sessions, todas tier T1-T3 excepto S4 (T2). No es un resumen de tareas — es el orden en que cada una se apoyo en la anterior.</p>
+      <div class="tl mt-4">
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 (T1) · Discovery + contrato del plan</div>
+          <p class="text-xs text-stone-400 leading-relaxed">Antes de tocar codigo, S1 confirmo que la metadata declarativa actual era insuficiente (por ejemplo <code class="inline">AcademicProgram</code> no declaraba <code class="inline">Curriculum</code> como hijo) y dejo cerrado el contrato <code class="inline">DeleteImpactPlan</code> — el shape de datos que S2 iba a implementar. Sin este paso, S2 habria tenido que inventar el shape en caliente durante un cambio core. Sorpresa: ninguna, S1 confirmo gaps ya sospechados en el intake.</p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 (T3) · El motor de traversal + Restrict</div>
+          <p class="text-xs text-stone-400 leading-relaxed">Se construyo <code class="inline">buildDeleteImpactPlan</code>: primero el recorrido de hijos polimorficos/self-ref/derivados, despues la deteccion de referencias externas. El primer intento de deteccion (lista dirigida <code class="inline">ENGAGEMENT_REFERENCES</code>) se descarto a mitad de sesion por fragil (H2/L5) y se reemplazo por la convencion generica. Un audit posterior a S2 (S2.1) encontro 2 gaps mas (FK con nombre no-convencional, <code class="inline">recordType</code> nulo en derivados) que se anotaron para S3 en vez de re-abrir S2.</p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S3 (T3) · Delete transaccional + DataLog (sin cablear todavia)</div>
+          <p class="text-xs text-stone-400 leading-relaxed"><code class="inline">executeDeletePlan</code> quedo production-ready y testeado, pero deliberadamente SIN conectarse al resolver real — esa decision de secuencia es la que despues se formaliza como enmienda (H3). En el camino se corrigio un bug de casing de FK (L8) y se elimino un try/catch que silenciaba fallas de integridad (L9), ambos detectados por los propios tests unitarios de S3 antes de llegar a produccion.</p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S4 (T2) · Metadata + superficies de borrado en el mod</div>
+          <p class="text-xs text-stone-400 leading-relaxed">Se completo la declaracion de hijos en los 4 objetos base (solo las relaciones cascade, nunca las Restrict — H1) y se expuso la accion "Eliminar" en las listas del mod, con exclusiones deliberadas (el historial de <code class="inline">core_DataLog</code> y las cadenas de version nunca son borrables desde la UI). Un bloqueante de sync no relacionado con este ticket (drift de otro mod, report-builder) se diagnostico y resolvio con consentimiento del dev antes de seguir. Cerro con smoke en vivo confirmando que el modal aparecia con el contenido esperado.</p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S5 (T3) · El cableado final + la matriz destructiva</div>
+          <p class="text-xs text-stone-400 leading-relaxed">Recien aca, con la metadata completa de S4, se cableo el motor al resolver real (S5.T0, decision DataLog opcion C). Se integro el preview dinamico en <code class="inline">RecordList</code>/<code class="inline">CriticalWarningModal</code> y en las tools MCP (S5.T1/T2). Y por ultimo la matriz destructiva (S5.T3, ver "El caso critico" arriba) endurecio el motor contra 7 bugs reales antes del gate final con panel adversarial.</p>
+        </div>
+      </div>
+    </section>
+
+    <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+      Siguiendo solo la columna de la izquierda de arriba (S1→S5) se ve la trayectoria completa: contrato → motor → ejecucion aislada → metadata del dominio → cableado + verificacion real. Ahora que tienes el mapa completo de sesiones, el bloque de Q&amp;A de abajo consolida las lecciones que vale la pena llevarse, cada una conectada a la hipotesis de la que viene.
+    </p>
+
+    <!-- Lessons learned consolidadas -->
+    <section id="lecciones" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones aprendidas</h2>
+      <details class="qa"><summary>¿Por que un test con Prisma mockeado no alcanza para codigo de borrado core?</summary><div class="ans">(de H4 refutada) Los mocks de Prisma aceptan cualquier <code class="inline">where</code>/<code class="inline">select</code> sin validar enums, columnas ni casing real de FK — 37 unit tests verdes convivieron con un motor que en produccion habria dejado huerfanos y violado una FK. Para delete core con proyecciones RT/ext y auditoria, la evidencia real exige integration contra BD con fixtures propios, no un mock por completo (L14).</div></details>
+      <details class="qa"><summary>¿Es peor un test mockeado que ningun test?</summary><div class="ans">(de H4 refutada, matiz) Si el test AFIRMA el comportamiento buggy en vez de solo no detectarlo, si — dos de los 37 tests consagraban exactamente los bugs que la matriz destructiva encontro (el orden de borrado que violaba la FK; el <code class="inline">action:'delete'</code> en minuscula). Un test que confirma un bug da falsa confianza; ningun test al menos deja la duda abierta.</div></details>
+      <details class="qa"><summary>¿Por que no declarar una lista fija de modelos externos (engagement, scheduling) para las referencias Restrict?</summary><div class="ans">(de H2 refutada) Una lista dirigida por mod queda desincronizada en silencio si el mod externo renombra campos o agrega modelos nuevos, y ademas producia restrictions duplicadas (la misma fila contaba dos veces). La convencion generica <code class="inline">&lt;objectLower&gt;Id</code> + polimorfica <code class="inline">ownerType/ownerId</code> es robusta a esos cambios sin mantenimiento manual (L5, L7).</div></details>
+      <details class="qa"><summary>¿Por que el wiring del motor se movio de S3 a S5.T0?</summary><div class="ans">(de H3 refutada) Cablear el motor antes de que la metadata de los 4 objetos estuviera completa habria dado un falso verde al test anti-huerfanos REQ-09: el motor habria ejecutado cascada sobre un grafo incompleto sin fallar, ocultando el problema en vez de exponerlo. Diferir a S5.T0, ya con S4 cerrada, evita esa trampa (L10).</div></details>
+      <details class="qa"><summary>¿Que aprendimos del casing no-uniforme de tablas RT/ext?</summary><div class="ans">(de H4 refutada, hallazgo secundario de S5.T3) El segmento base de <code class="inline">rt__&lt;RT&gt;__&lt;base&gt;</code> no tiene casing uniforme entre mods: coexisten <code class="inline">rt__Course__activity</code> (FK <code class="inline">activityId</code>) y <code class="inline">rt__Service__Activity</code> (FK <code class="inline">ActivityId</code>). Asumir un casing fijo deja huerfana la proyeccion del casing contrario. La solucion robusta es resolver accessor y FK por introspeccion case-insensitive del <code class="inline">_runtimeDataModel</code> de Prisma, nunca por transformacion de string sobre el nombre del objeto (L15).</div></details>
+      <details class="qa"><summary>¿Por que se escalo a un panel de dos jueces en el gate de S5?</summary><div class="ans">(de H5 refutada) Al ser T3 core transversal, DET-35 exige dual-judge en vez de un solo revisor. El panel encontro, en una segunda ronda sobre el delta de fixes, un problema que la primera ronda no habia cerrado (casing RT no-uniforme) — evidencia de que un solo pase, aunque cuidadoso, tiene puntos ciegos que dos revisores independientes destapan.</div></details>
+      <details class="qa"><summary>¿Por que RULE-dev-004 ("una rama por epica") no encajo aca?</summary><div class="ans">(de H6 refutada) El dev señalo trabajar en la rama del ticket externo (UPONE-1382) y no de la epica (UPONE-1267), porque los tickets de esta epica tienen scope core divergente entre si. Forzar una rama de epica rigida complica la trazabilidad cuando un ticket core no comparte scope con sus hermanos (L1) — candidato a revision de la rule, no una violacion puntual.</div></details>
+    </section>
+
+    <!-- Saber promovido -->
+    <section id="saber" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Saber promovido</h2>
+      <p class="text-sm text-stone-400 mb-3 leading-relaxed">Ningun artefacto (<code class="inline">rules/</code>, <code class="inline">decisions/</code>, <code class="inline">bugs/</code>) se creo como archivo separado durante este ticket todavia — el conocimiento nuevo quedo capturado como Learns en el ticket (<code class="inline">## Learns</code>, L1-L16), a la espera de una promocion explicita.</p>
+      <div class="callout callout-note"><strong>Candidato — RULE-curriculum-design-cross-mod-fk-protect</strong> — el principio generico de proteccion cross-mod (convencion <code class="inline">&lt;objectLower&gt;Id</code> + polimorfica, nunca una lista dirigida por mod). Origen: L4, L5, L7.</div>
+      <div class="callout callout-note"><strong>Candidato — rule de plataforma de introspeccion case-insensitive</strong> — resolver accessor/FK reales contra <code class="inline">_runtimeDataModel</code> de Prisma cuando el casing de tablas de proyeccion RT/ext no es uniforme entre mods. Origen: L15.</div>
+      <div class="callout callout-warn"><strong>Candidato — revision de RULE-dev-004</strong> — pasar de "una rama por epica" a "una rama por ticket core, prefijada con su id externo, agrupable por epica via PR description" cuando los tickets de una epica tienen scope core divergente. Origen: L1.</div>
+      <div class="callout callout-danger"><strong>Sin bugs nuevos documentados</strong> — los 7 hallazgos de runtime de S5.T3 se corrigieron en el mismo ciclo de la session (no se abrieron como <code class="inline">BUG-id</code> separado); quedan documentados como Learn L14 y detalle en el quality review de S5.GATE.</div>
+    </section>
+
+    <!-- Ruta de retoma -->
+    <section id="retoma" class="blk mt-12">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Ruta de retoma para un dev que abre este caso despues</h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Si necesitas debuggear, extender o hacer un refactor relacionado (por ejemplo, el split fisico pendiente de <code class="inline">deleteImpactPlan.js</code>), este es el orden sugerido — no es onboarding general del delete, es especifico a lo que este ticket dejo construido.</p>
+      <ol class="list-decimal list-inside text-sm text-stone-300 space-y-2">
+        <li><strong>Leer el contrato antes que el codigo</strong> — el shape <code class="inline">DeleteImpactPlan</code> (S1.T2, en este mismo ticket, seccion Session 1) explica por que cada campo existe (<code class="inline">historyKey</code>, <code class="inline">deleteOrder</code>, <code class="inline">projectionStack</code>) antes de leer <code class="inline">deleteImpactPlan.js</code> directo — es un archivo grande (~1450 lineas) y sin el contrato es facil perderse.</li>
+        <li><strong>Confirmar el gate antes de tocar el resolver</strong> — <code class="inline">cascadeDeleteIfApplicable</code> en <code class="inline">instance.resolver.js</code> es la unica puerta de entrada al motor; si un objeto nuevo necesita cascada, se declara metadata de hijos, no se toca el resolver.</li>
+        <li><strong>Correr la matriz destructiva antes de confiar en unit tests nuevos</strong> — <code class="inline">object-manager/tests/integration/hard-delete-cascade.integration.test.js</code> es el patron a seguir (fixtures propios con prefijo unico, auto-limpieza en <code class="inline">afterAll</code>) para cualquier caso nuevo de cascade; un mock no es suficiente evidencia para este tipo de codigo (L14).</li>
+        <li><strong>Revisar la metadata del mod antes de declarar un hijo nuevo</strong> — solo van como <code class="inline">polymorphicChildren</code>/<code class="inline">directChildren</code> las relaciones poseidas y exclusivas; una relacion Restrict declarada por error como hijo se cascada en vez de bloquearse (H1).</li>
+      </ol>
+    </section>
+
+    <!-- Que sigue -->
+    <section id="proximo" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Que sigue</h2>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">Push pendiente — revision team core (RULE-dev-004)</span>
+        <span class="tag tag-next">Split fisico de deleteImpactPlan.js (~1450 lineas, sobre limite ~400)</span>
+        <span class="tag tag-future">Promocion de rules candidatas (cross-mod, introspeccion casing, revision RULE-dev-004)</span>
+        <span class="tag tag-future">Deuda i18n EN/PT en deleteWarning (BUG-curriculum-design-004, preexistente)</span>
+      </div>
+      <p class="mt-4 text-sm text-stone-400 leading-relaxed">
+        El ticket no tiene items <code class="inline">must</code> en su <code class="inline">## Backlog</code> — las 5 sessions estan done y el S5.GATE aprobo. Lo unico que falta para el cierre formal es este teach-close y el push (que en autopilot super siempre queda para aprobacion humana explicita, en cualquier modo).
+      </p>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · teach-close · TICKET-104 (UPONE-1382) · up1 · generado por DKC · 2026-07-14
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Validar e2e deepClone de relacion directa (directChildren) · TICKET-047</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-047</span> · Validar e2e deepClone de relacion directa</span>
+      <span>up1 · 2026-06-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Cierre — e2e de la rama directa (directChildren)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Mirada hacia atras del caso resuelto. El intake ya enseño el landscape (que es <code class="inline">deepClone</code>, la diferencia directa vs polimorfica,
+      el plan); aqui contamos <strong>que se hizo, como evolucionaron las hipotesis y que aprendimos</strong>. La rama
+      <code class="inline">deepCloneDirectChildren</code> ya tiene cobertura e2e contra la DB real — la brecha heredada de TICKET-037 quedo cerrada.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se agrego <code class="inline">tests/e2e/clone-direct-children.test.js</code>: un e2e autocontenido que clona,
+        contra Postgres real (UPU), un padre con hijos de relacion directa, en dos escenarios (FK real <code class="inline">parentId</code> sin recursion, y
+        <code class="inline">recursiveBy</code> con remap topologico). Suite e2e <strong>4/4 verde</strong>, DB restaurada sin residuo. El hallazgo que simplifico
+        todo: el bloque <code class="inline">directChildren</code> se inyecta <strong>inline</strong> al helper — sin tocar JSON ni codegen.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#historia" class="navlink rounded border border-stone-700 px-2 py-1">que se hizo</a>
+      <a href="#hipotesis" class="navlink rounded border border-stone-700 px-2 py-1">evolucion hipotesis</a>
+      <a href="#flujo" class="navlink rounded border border-stone-700 px-2 py-1">flujo por session</a>
+      <a href="#knowledge" class="navlink rounded border border-stone-700 px-2 py-1">knowledge</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lessons</a>
+    </nav>
+
+    <!-- ===== QUE SE HIZO (5to eje) ===== -->
+    <section id="historia" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Que se hizo</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">La rama directa del motor de clonacion (helper <code class="inline">deepCloneDirectChildren</code>) solo tenia unit tests con mocks; ningun e2e la ejercitaba contra la DB real.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Que se hizo</div><p class="text-sm text-stone-300">Se escribio un e2e autocontenido reusando el modelo real <code class="inline">CurricularSection</code> (UPU), con el bloque <code class="inline">directChildren</code> inyectado inline, cubriendo FK directa plana y <code class="inline">recursiveBy</code>.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Suite e2e 4/4 verde, DB restaurada sin residuo (teardown por sentinel). Cero cambios de produccion; brecha de cobertura cerrada.</p></div>
+      </div></div>
+    </section>
+
+    <!-- ===== EVOLUCION DE HIPOTESIS ===== -->
+    <section id="hipotesis" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolucion final de las hipotesis</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Las 4 hipotesis del intake se cerraron asi. La sorpresa fue H2/H4: la ejecucion mostro que ni siquiera hacia falta el camino file-based ni un fixture —
+        el bloque va inline, lo que volvio la decision H4 mas barata de lo previsto.
+      </p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipotesis</th><th class="p-3">Estado final</th><th class="text-left p-3">Como se resolvio</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H1 — existe par directo real para declarar directChildren</td><td class="p-3 text-center text-emerald-400">confirmada (pero innecesaria)</td><td class="p-3 text-stone-400">Habia 85 FK directas, pero no se necesito un par "declarado": el bloque va inline en el test.</td></tr>
+          <tr><td class="p-3 text-stone-300">H2 — resolver lee directChildren file-based (sin codegen)</td><td class="p-3 text-center text-amber-400">confirmada pero moot</td><td class="p-3 text-stone-400">El e2e pasa el bloque inline al helper (igual que el polimorfico) → nunca llama a <code class="inline">readDirectChildren</code>. El camino file-based queda cubierto por los unit tests de 037.</td></tr>
+          <tr><td class="p-3 text-stone-300">H3 — el patron del e2e polimorfico se replica</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">El test espeja <code class="inline">clone-activity-polymorphic.test.js</code>: sentinel, guard isDbReady, seed root-first, teardown por sentinel.</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300">H4 — fixture minimo vs par real (a decidir en design)</td><td class="p-3 text-center text-emerald-400">resuelta (DEC-LOCAL-01)</td><td class="p-3 text-stone-400">Ninguna de las dos: reuso del modelo real CurricularSection con bloque inline. Seed minimo, sin codegen, FK self-ref real para recursiveBy.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ===== FLUJO POR SESSION ===== -->
+    <section id="flujo" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Flujo por session</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — e2e directChildren + teardown (T3, ⚑ fuerte)</div><p class="text-xs text-stone-400">Primero se fijo el baseline (rama directa solo unit, e2e inexistente) y se confirmo el modelo: <code class="inline">CurricularSection</code> en UPU, barato de seedear y con self-ref FK real. Luego se escribio el test con dos <code class="inline">it()</code>: el escenario A (3 hijos colgando de <code class="inline">parentId</code> real, clonados a un nuevo padre — verifica el repoint de la FK con integridad enforced por Postgres) y el B (arbol de 5 con <code class="inline">recursiveBy</code> — verifica el remap topologico del self-ref). Un tercer <code class="inline">it()</code> verifica activamente que el teardown por sentinel deja la DB en 0 filas. Se corrio contra la DB Docker (3/3) y la suite e2e completa (4/4, incluido el polimorfico). El reviewer aislado dio approve y se cerro con commits granulares.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — cierre (T1)</div><p class="text-xs text-stone-400">Acceptance checkpoints, validacion de cierre reforzada por reviewer aislado (approve — checks DET-13/16/23 + scope + rama), teach-close y commits finales de records. Sin backlog bloqueante.</p></div>
+      </div>
+    </section>
+
+    <!-- ===== KNOWLEDGE PROMOVIDO ===== -->
+    <section id="knowledge" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Knowledge promovido</h2>
+      <div class="callout callout-note"><strong>DEC-LOCAL-01</strong> — e2e con <code class="inline">directChildren</code> inline sobre CurricularSection real, sin fixture ni codegen. Vive en el spec (no se promovio a DEC formal: afecta solo el approach de testing de este caso).</div>
+      <div class="callout callout-info"><strong>Sin rules ni bugs nuevos</strong> — el caso no descubrio constraints reusables ni defectos; el helper funciono exactamente como lo describen sus unit tests. Los 2 learns (inyeccion inline; CurricularSection cubre ambas ramas) quedaron capturados en este teach-close y en DEC-LOCAL-01.</div>
+    </section>
+
+    <!-- ===== LESSONS LEARNED ===== -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lessons learned</h2>
+      <details class="qa"><summary>¿Cual fue la decision clave que simplifico el caso?</summary><div class="ans">Reconocer que el bloque declarativo (<code class="inline">directChildren</code>/<code class="inline">polymorphicChildren</code>) se pasa <strong>inline</strong> al helper de clonacion. El e2e polimorfico ya lo hacia. Eso eliminó de un golpe tres preocupaciones del intake: editar un JSON de objeto, correr codegen, y el reset canonico. El teardown se reduce a borrar filas por sentinel.</div></details>
+      <details class="qa"><summary>¿Por que CurricularSection y no un par "mas directo" como Workflow←WorkflowTransition?</summary><div class="ans">Costo de seed. Los pares cross-model reales arrastran FK requeridas extra (WorkflowStatus, Instructor, Offering...). CurricularSection se seedea con 4 campos y ya tiene un self-ref FK real (<code class="inline">parentId</code>) que habilita el escenario recursiveBy con integridad referencial enforced por la DB. Un solo modelo cubre ambas ramas del helper.</div></details>
+      <details class="qa"><summary>¿Como se cubrieron las dos ramas del helper con un solo modelo?</summary><div class="ans">Escenario A usa <code class="inline">fk: 'parentId'</code> (FK self-ref real, sin recursiveBy) → prueba el repoint de una FK con constraint de Postgres. Escenario B usa <code class="inline">fk: 'ownerId'</code> + <code class="inline">recursiveBy: 'parentId'</code> → el set se enlaza por un campo y la jerarquia interna por otro, ejercitando el walk topologico y el remap del self-ref. Asi un mismo modelo prueba "FK plana" y "recursion" sin pisarse.</div></details>
+      <details class="qa"><summary>¿Que limitacion conocida quedo en el test?</summary><div class="ans">El assert <code class="inline">createdAt instanceof Date</code> confirma que el timestamp es fresco pero no lo compara contra el original. Es aceptable porque el strip de <code class="inline">id/createdAt/updatedAt</code> ya esta cubierto por el unit test del helper; el e2e se concentra en la persistencia real (FK, jerarquia, mapa).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-047 · up1 · generado por DKC. Cierre: mira hacia atras (resultado + aprendizaje). El landscape y los conceptos base estan en el teach-intake.
+    </footer>
+
+  </main>
+</body>
+</html>

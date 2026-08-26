@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Validación restrictiva de requisitos en planes publicados · TICKET-089</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-089</span> · Validación restrictiva de requisitos en planes publicados</span>
+      <span>up1 · 2026-07-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Validación restrictiva de requisitos en planes publicados (MC-09)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Un <strong>requisito</strong> (<code class="inline">requirement</code>) es una regla académica que cuelga de una asignatura
+      (<code class="inline">ownerType='activity'</code>): prerrequisitos, gates de progresión, etc. Cuando esa asignatura ya forma
+      parte de una <strong>malla publicada</strong> (un <code class="inline">Curriculum</code> con <code class="inline">status='Active'</code>),
+      editar sus requisitos invalidaría planes que ya están vigentes. MC-09 introduce un <strong>guard restrictivo</strong> que
+      bloquea esa mutación y obliga a <em>versionar</em> el programa. Este documento orienta en tres direcciones: las bases del
+      dominio (qué es un requirement y cómo se detecta "publicado"), el entorno (las restricciones del mod que condicionan
+      <em>dónde</em> vive el guard) y el plan de sesiones.
+    </p>
+
+    <!-- BLOQUE: tldr -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        La regla es 100% BE: <code class="inline">requirement</code> no tiene resolver propio, así que el guard se inyecta en los
+        <strong>dos overrides singleton</strong> del mod (create + update) — no en un archivo nuevo (CONSTRAINT H7). "Publicado" =
+        <code class="inline">status='Active'</code>. En SP5 <strong>no hay editor de requisitos por UI</strong> (eso es S7-01/SP6),
+        así que la regla actúa a nivel de mutación (API/MCP/seed) y el mensaje del error es el canal accionable. La única superficie
+        FE de SP5 es una <strong>alerta "malla no editable"</strong> en la vista de malla (REQ-04).
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">cómo muta hoy un requirement</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restricciones del entorno</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">dependencias</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">BE guard vs FE alerta</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan de sesiones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas abiertas</a>
+    </nav>
+
+    <!-- ===== HACIA ABAJO — LAS BASES ===== -->
+
+    <!-- BLOQUE: concept-card / glosario -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Glosario del dominio</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">requirement (owner polimórfico)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            Regla académica. El dueño es polimórfico: <code class="inline">ownerType</code> ∈ <code class="inline">curriculum|activity|offering</code>
+            + <code class="inline">ownerId</code> (string, sin FK en DB — validación por capa app, REQ-06 de MC-03).
+            MC-09 sólo mira los de <code class="inline">ownerType='activity'</code>.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">planEntry</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            La asignatura colocada en un plan. Liga <code class="inline">activityId</code> (string) → Activity y
+            <code class="inline">planId</code> → Curriculum. Es el puente que dice "esta Activity está en estos planes".
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Curriculum.status</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            Enum plano <code class="inline">['Draft','Active','Archived']</code>, <code class="inline">static_default:'Draft'</code>.
+            <strong>Sin workflow</strong> ("no workflow formal en v1"). "Publicado" = <code class="inline">Active</code> (audit C-2).
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">CONSTRAINT H7</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            El scanner del platform junta todos los <code class="inline">*Mutation</code> exports del mod y el último gana en colisión.
+            ⇒ <strong>un solo override por campo de mutación</strong>. Ya existen: <code class="inline">createInstance</code> en
+            <code class="inline">sectionValidation</code>, <code class="inline">updateInstance</code> en <code class="inline">polymorphicUpdate</code>.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">helper-guard (patrón)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            Reglas de dominio como funciones puras <code class="inline">{ prisma, ...ids }</code> que lanzan
+            <code class="inline">Error(`${ERR.CODE}: mensaje`)</code>. Plantilla: <code class="inline">categoryGuard.js</code>
+            (<code class="inline">assertNoEntriesForCategory</code>). Testeable con prisma mockeado.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">canEdit (gate de malla)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <code class="inline">canEdit(status, mode)</code> en <code class="inline">curriculumMesh.logic.ts</code> gatea las acciones de la
+            malla (MC-05/06). Hoy hardcodea <code class="inline">status==='Draft'</code>. REQ-04 lo apoya en una constante compartida.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: flow — estado actual -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Cómo muta hoy un requirement (sin guard)</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Como <code class="inline">requirement</code> no tiene resolver propio, hoy toda mutación cae al CRUD genérico del platform vía
+        los dos overrides del mod, sin ninguna validación de "plan publicado". Ahí es donde MC-09 inserta el guard.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TD
+  M[Mutacion requirement\nownerType=activity] --> O{objectType?}
+  O -- create --> C[sectionValidation.createInstance\nvalidateSectionCreate]
+  O -- update --> U[polymorphicUpdate.updateInstance\nbranch !RT_PATTERN]
+  C --> G[[guard MC-09\nassertActivityNotInActivePlan]]
+  U --> G
+  G --> Q1[planEntry.findMany\nwhere activityId = ownerId]
+  Q1 --> Q2{planIds en\nCurriculum.status=Active?}
+  Q2 -- si --> X[RECHAZA\nversiona el programa]
+  Q2 -- no / sin planes --> D[delega al generic\nmutacion normal]
+      </pre></div>
+      <p class="text-sm text-stone-400 mt-3">
+        El guard hace short-circuit si <code class="inline">ownerType!=='activity'</code> (no toca curriculum/offering) y es no-op si la
+        Activity sólo está en planes Draft o sin planes.
+      </p>
+    </section>
+
+    <!-- ===== HACIA LOS LADOS — EL ENTORNO ===== -->
+
+    <!-- BLOQUE: callout — restricciones del entorno -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Restricciones del entorno</h2>
+
+      <div class="callout callout-warn">
+        <strong>H7 — un override por mutación (dónde vive el guard)</strong> — No se puede crear un <code class="inline">requirement.resolver.js</code>
+        que exporte <code class="inline">createInstance</code>/<code class="inline">updateInstance</code>: clobbearía los overrides existentes.
+        El guard <em>debe</em> inyectarse dentro de <code class="inline">validateSectionCreate</code> (create) y del branch genérico de
+        <code class="inline">polymorphicUpdate</code> (update).
+      </div>
+
+      <div class="callout callout-note mt-3">
+        <strong>Sin editor de requisitos en SP5</strong> — La UI de edición de requisitos es S7-01 (SP6). En SP5 la regla actúa sólo a
+        nivel de mutación (API/MCP/seed); el mensaje del error es el canal accionable. La única superficie FE de SP5 es la alerta
+        "malla no editable" (REQ-04), que vive en la vista de malla ya existente (MC-05).
+      </div>
+
+      <div class="callout callout-info mt-3">
+        <strong>Sync de dos pasos (RULE-mods-050)</strong> — Cambios en <code class="inline">lang/*.json</code> y componentes del mod
+        requieren <code class="inline">layout npm run sync</code> + <code class="inline">suite npm run sync</code> + restart. El smoke visual
+        de la alerta es DB-gated (tenant con plan Active abierto en edición).
+      </div>
+    </section>
+
+    <!-- BLOQUE: tag — dependencias -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Dependencias del ticket</h2>
+      <p class="text-sm text-stone-400 mb-3">Todas cerradas antes de iniciar (gate DET-30):</p>
+      <div class="flex flex-wrap gap-3 items-start">
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-02 / TICKET-082</span>
+          <span class="text-xs text-stone-500">planEntry (detectar planes de una Activity)</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-03 / TICKET-083</span>
+          <span class="text-xs text-stone-500">requirement(ownerType=activity) — lo que se valida</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-05 / TICKET-085</span>
+          <span class="text-xs text-stone-500">gate canEdit + vista de malla — base de REQ-04</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-next">MC-06 / TICKET-086</span>
+          <span class="text-xs text-stone-500">feedback origen de REQ-04</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-future">S7-01 / SP6</span>
+          <span class="text-xs text-stone-500">editor de requisitos + modal on-edit (fuera de SP5)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HACIA ADELANTE — EL PLAN ===== -->
+
+    <!-- BLOQUE: two-col-compare — BE guard vs FE alerta -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Las dos superficies del cambio</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <div class="rounded-lg border border-stone-700 overflow-hidden">
+          <div class="twocol-head bg-stone-800 text-stone-200">
+            BE — el guard (REQ-01/02/03) <span class="text-xs font-normal text-stone-400 ml-2">S1</span>
+          </div>
+          <div class="p-4 text-sm text-stone-400 space-y-2">
+            <p><span class="text-amber-400">◆</span> Helper puro <code class="inline">requirementActivityGuard.js</code> + error nuevo en <code class="inline">errors.js</code>.</p>
+            <p><span class="text-amber-400">◆</span> Wiring en los 2 overrides (create + update), reusando el patrón <code class="inline">categoryGuard</code>.</p>
+            <p><span class="text-amber-400">◆</span> "Publicado" = <code class="inline">Active</code>; Draft/Archived/sin-planes permiten.</p>
+            <p><span class="text-amber-400">◆</span> Mensaje accionable ("crea una nueva versión") como REQ-02 en SP5.</p>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-stone-700 overflow-hidden">
+          <div class="twocol-head bg-stone-800 text-stone-200">
+            FE — la alerta (REQ-04) <span class="text-xs font-normal text-stone-400 ml-2">S2</span>
+          </div>
+          <div class="p-4 text-sm text-stone-400 space-y-2">
+            <p><span class="text-amber-400">◆</span> Extraer el criterio de editabilidad a una constante compartida con <code class="inline">canEdit</code>.</p>
+            <p><span class="text-amber-400">◆</span> Alerta informativa en la vista de malla cuando el plan no es editable.</p>
+            <p><span class="text-amber-400">◆</span> Reusa el <code class="inline">Alert</code> atom del design system (no componente nuevo).</p>
+            <p><span class="text-amber-400">◆</span> i18n en 3 locales. Es el único deliverable FE de SP5.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: timeline — plan de sesiones -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Plan de 2 sesiones</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 — BE: guard restrictivo + análisis de impacto (T2)</div>
+          <p class="text-xs text-stone-400">
+            Helper puro <code class="inline">assertActivityNotInActivePlan</code> (+ variante update) con su error; wiring en
+            <code class="inline">sectionValidation</code> (create) y <code class="inline">polymorphicUpdate</code> (update); tests
+            TC-01/02/03; análisis de impacto colateral (qué ramas de los overrides NO cambian).
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 — FE: fuente única + alerta "malla no editable" (T2)</div>
+          <p class="text-xs text-stone-400">
+            Constante compartida de estados editables consumida por <code class="inline">canEdit</code> y por el texto de la alerta;
+            alerta en la vista de malla; tests TC-04/05/06; i18n en 3 locales; smoke DB-gated.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: study-qa — preguntas abiertas a explorar -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Preguntas abiertas a explorar</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Incógnitas que el dev debe validar durante la ejecución — no son conclusiones.
+      </p>
+
+      <details class="qa">
+        <summary>¿Sólo <code class="inline">Active</code> bloquea, o también <code class="inline">Archived</code>?</summary>
+        <div class="ans">
+          El enum tiene un tercer estado, <code class="inline">Archived</code>. La reunión y el audit C-2 definen "publicado = Active".
+          <code class="inline">Archived</code> es histórico (protegido por inmutabilidad de versión, no por este guard). A confirmar en
+          design: bloquear sólo <code class="inline">Active</code>; si el negocio quisiera proteger <code class="inline">Archived</code>, es
+          un cambio de alcance.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>En el path de <em>update</em>, ¿el payload trae siempre <code class="inline">ownerType</code>/<code class="inline">ownerId</code>?</summary>
+        <div class="ans">
+          Una edición parcial puede no incluir el owner. El guard de update debe resolver el owner efectivo del registro (por id)
+          cuando el <code class="inline">data</code> no lo trae — mismo patrón que <code class="inline">assertCreditRangeOnUpdate</code>.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Dónde debería vivir el criterio "editable/publicado" para no hardcodearlo dos veces?</summary>
+        <div class="ans">
+          Idealmente una sola fuente (config/metadata) consumida por BE y FE. A explorar: ¿el core expone la <code class="inline">metadata</code>
+          del objeto al FE? ¿Curriculum tiene una config de versionamiento que defina estos estados? Si el core limita, la alternativa es
+          una constante por capa derivada del enum.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿El guard rompe la creación de requisitos en planes Draft o de otros <code class="inline">ownerType</code>?</summary>
+        <div class="ans">
+          No debería: short-circuit por <code class="inline">ownerType</code> y chequeo explícito de <code class="inline">status='Active'</code>.
+          El análisis de impacto (REQ-03) y los tests TC-02/TC-03 + la suite del mod lo verifican.
+        </div>
+      </details>
+
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · intake · TICKET-089 · up1 · 2026-07-01. Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

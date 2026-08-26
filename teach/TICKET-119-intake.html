@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Configuracion de plan de estudio modular · TICKET-119</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-119</span> · UPONE-1538 · Configuracion de plan de estudio modular</span>
+      <span>up1 · 2026-08-05</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Configuracion de plan de estudio modular</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Un Plan de estudio puede progresar de dos formas: <strong>Secuencial</strong> (el estudiante avanza por periodos fijos, como semestres) o <strong>Modular</strong>
+      (el estudiante arma su avance por modulos, segun su inscripcion). Hoy el formulario del Plan pide los mismos datos de periodo en ambos modos.
+      Este ticket hace que los campos de periodo <em>dependan de la progresion</em>: en un plan modular no tiene sentido pedir "total de periodos".
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed"><strong class="text-amber-300">TL;DR</strong> —
+      Fix de configuracion (mod-only, 3 JSON de layout). Se agrega una clausula a la regla de visibilidad ya existente:
+      <code class="inline">totalPeriods</code> (y <code class="inline">periodType</code> segun la decision A/B) se muestran solo si <code class="inline">progression == Sequential</code>.
+      <code class="inline">totalCredits</code> queda siempre visible. Sin nuevo campo, sin migracion, sin backend. Descubrimiento del intake: el
+      riesgo del "bug de enum en modo view" que asustaba en el pre-intake <strong>ya no aplica</strong> (core lo resolvio en UPONE-1515).
+      </div>
+    </div>
+
+    <!-- EJE 1 (que sucede) + EJE 2 (por que) -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Que sucede hoy y por que</h2></div>
+      <div class="callout callout-info"><strong>ℹ Que sucede</strong> — En los 3 layouts del Plan (<code class="inline">create</code>/<code class="inline">edit</code>/<code class="inline">view</code>),
+      los 4 campos del RecordType (<code class="inline">progression</code>, <code class="inline">totalCredits</code>, <code class="inline">totalPeriods</code>, <code class="inline">periodType</code>)
+      se muestran cuando el registro es <code class="inline">recordType == Plan</code>. No distinguen la progresion.</div>
+      <div class="callout callout-warn"><strong>⚠ Por que es un problema</strong> — Un plan <strong>Modular</strong> no fija periodos: la progresion depende de la inscripcion del estudiante.
+      Pedir "total de periodos" y "tipo de periodo" en modular es un dato sin sentido. El enum <code class="inline">progression</code> se cerro en SP5 (MC-01/UPONE-1344)
+      justamente como discriminador del modo, anticipando este ajuste.</div>
+      <div class="callout callout-success"><strong>✓ Que se propone</strong> — Agregar la clausula <code class="inline">["progression","==","Sequential"]</code> (en AND con la condicion actual)
+      a <code class="inline">totalPeriods</code> en los 3 layouts. <code class="inline">totalCredits</code> no se toca (independiente del modo). <code class="inline">periodType</code> queda sujeto a la decision A/B.</div>
+    </section>
+
+    <!-- Conceptos clave -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos clave</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">conditions (Vueform)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Sintaxis nativa <code class="inline">[[campo, op, valor]]</code> que controla la visibilidad de un campo. Es el unico mecanismo soportado; <code class="inline">visibleWhen</code>/<code class="inline">showIf</code> no existen en la plataforma.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RecordType Plan vs Minor</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Los 4 campos de periodo viven en <code class="inline">rt__Plan__curriculum</code>. El Minor tiene <code class="inline">properties: {}</code>: nunca ofrece esos campos, por eso no puede haber regresion en el Minor.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">progression</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Enum <code class="inline">[Sequential, Modular]</code>, default Sequential. Es un <code class="inline">String</code> en el modelo generado, sin enforcement en backend: la condicion es barrera de UI, no server-side.</p></div>
+      </div>
+    </section>
+
+    <!-- La regla exacta -->
+    <section id="formula" class="blk mt-12" data-dkc-block="formula">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">La regla de visibilidad exacta</h2></div>
+      <div class="formula text-sm text-stone-300">
+        <div class="mb-2"><code class="inline">totalPeriods</code> se muestra <span class="iff">SI Y SOLO SI</span>:</div>
+        <div class="ml-4 leading-relaxed"><span class="text-emerald-400">(a)</span> recordType == Plan<br><span class="text-emerald-400">(b)</span> progression == Sequential</div>
+        <div class="mt-3 mb-1 text-stone-400"><code class="inline">totalCredits</code>: solo (a). <code class="inline">periodType</code>: (a) + (b) en escenario A · solo (a) en escenario B.</div>
+      </div>
+    </section>
+
+    <!-- Invariante -->
+    <section id="invariant" class="blk mt-10" data-dkc-block="invariant">
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El cambio es <span class="text-amber-400">aditivo</span>: solo agrega una clausula a una condicion que ya existe.</div>
+        <div class="ilabel mt-2">Corolario: no crea campos ni toca backend. El unico riesgo real es de <em>verificacion</em> (que la condicion se evalue bien en los 3 modos), no de implementacion.</div>
+      </div>
+    </section>
+
+    <!-- Decision abierta A/B -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Decision abierta: tipo de periodo (A vs B)</h2></div>
+      <p class="text-sm text-stone-400 mb-4">El unico delta funcional del ticket. Accion de Esteban. El diseno <strong>cubre ambos</strong> y los prueba en runtime, para que la eleccion final sea un cambio de una condicion ya validado.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-amber-700/50 overflow-hidden"><div class="font-semibold px-3 py-2 bg-amber-900/30 text-amber-200">Escenario A (default propuesto)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p><code class="inline">periodType</code> depende de la progresion: visible solo en Secuencial.</p><p><span class="text-emerald-400">+</span> Coherente con que el modular no fija periodos.</p><p><span class="text-rose-400">−</span> Si el modular igual inscribe en un periodo academico, se pierde el dato.</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="font-semibold px-3 py-2 bg-stone-800 text-stone-200">Escenario B</div><div class="p-4 text-sm text-stone-400 space-y-2"><p><code class="inline">periodType</code> es dato general del Plan: se conserva en todo Plan.</p><p><span class="text-emerald-400">+</span> No pierde el tipo de periodo aunque el plan sea modular.</p><p><span class="text-rose-400">−</span> Muestra un campo que puede no aplicar al modo modular.</p></div></div>
+      </div>
+    </section>
+
+    <!-- Riesgo descartado -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El riesgo que el intake descarto</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">El pre-intake marcaba riesgo alto: condicionar por un enum en modo <strong>view</strong> reincidiria en un bug conocido (BUG sp7) donde la condicion comparaba contra la etiqueta traducida ("Secuencial") en vez del valor ("Sequential").</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Verificacion</div><p class="text-sm text-stone-300">Se leyo el codigo actual de core: <code class="inline">RecordDetail.vue:3231-3270</code>. El fix de raiz UPONE-1515 (Opcion A) ya esta en develop: en view los enums se renderizan como <code class="inline">select</code> deshabilitado con el <strong>valor crudo</strong>.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Las <code class="inline">conditions</code> sobre enum en view ya comparan valor-contra-valor. <strong>No hace falta campo espejo.</strong> El ticket se simplifica a los 3 JSON. TC-7 lo re-verifica en runtime.</p></div>
+      </div></div>
+    </section>
+
+    <!-- Que sabe / que falta -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Preguntas para fijar el contexto</h2></div>
+      <details class="qa"><summary>¿Por que no basta con revision estatica y hay que hacer smoke runtime?</summary><div class="ans">Porque la zona de render de <code class="inline">RecordDetail</code> view no tiene red de seguridad unit: en UPONE-1353 un import faltante dejo todos los campos vacios en view y llego a develop sin que ningun test lo atrapara. El sintoma (view mal, edit bien) es identico al de esta clase de bug. Por eso DET-36 exige evidencia runtime real por modo y progresion, no solo inspeccion del JSON.</div></details>
+      <details class="qa"><summary>¿Que pasa si el usuario cambia de Secuencial a Modular con periodos ya cargados?</summary><div class="ans">Vueform excluye del <code class="inline">required</code> los campos ocultos por <code class="inline">conditions</code>, asi que el guardado no deberia bloquearse. Es exactamente lo que valida TC-6; es el caso borde mas importante del ticket.</div></details>
+      <details class="qa"><summary>¿Que queda fuera de alcance?</summary><div class="ans">La malla modular (UPONE-1539), la config de rotacion (<code class="inline">rotationConfig</code>), cualquier cambio de modelo/migracion/backend, y los <em>valores</em> del catalogo de <code class="inline">periodType</code> (heredan <code class="inline">[NEEDS CLARIFICATION]</code> de SP5, pero no bloquean este cambio de visibilidad).</div></details>
+      <details class="qa"><summary>¿Con quien hay que coordinar?</summary><div class="ans">UPONE-1450 (versionamiento del Plan, Finalizada) ya modifico estos mismos layouts/RT de Curriculum. Antes de editar, revisar su diff para no chocar.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · DKC · TICKET-119 (UPONE-1538) · intake. Cobertura 4 ejes: que sucede / por que / que cambio se propone / por que se propone.
+    </footer>
+
+  </main>
+</body>
+</html>

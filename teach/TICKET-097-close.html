@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Hidratación pickers + read-only view · TICKET-097</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad:true, theme:'dark', themeVariables:{ darkMode:true, background:'#0c0a09', primaryColor:'#1c1917', primaryTextColor:'#e7e5e4', primaryBorderColor:'#f59e0b', lineColor:'#a8a29e', secondaryColor:'#292524', tertiaryColor:'#1c1917', mainBkg:'#1c1917', nodeBorder:'#f59e0b', clusterBkg:'#0c0a09', clusterBorder:'#44403c', titleColor:'#fafaf9', edgeLabelBackground:'#1c1917', textColor:'#e7e5e4', fontSize:'13px' }, flowchart:{ htmlLabels:true, curve:'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); } .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); } .callout-danger { border-color:#f87171; background:rgba(248,113,113,0.10); } .callout-ok { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .pre-mermaid { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; list-style:none; } details.qa summary::-webkit-details-marker { display:none; } details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; } details.qa[open] summary::before { content:"▾"; } details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tldr { background:linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+  table.tbl { width:100%; border-collapse:collapse; font-size:0.85rem; } table.tbl th, table.tbl td { border:1px solid var(--stone-border); padding:0.5rem 0.7rem; text-align:left; vertical-align:top; } table.tbl th { background:var(--stone-card); color:#fcd34d; }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-097</span> · Hidratación pickers + read-only view</span>
+      <span>up1 · 2026-06-26</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Cómo un custom Vueform element recibe (de verdad) su valor cargado</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">El cierre de este ticket vale más por <em>cómo</em> se resolvió que por el diff. La hipótesis del intake (<code class="inline">onMounted</code> re-read) era razonable y <strong>estaba equivocada</strong>. Tres intentos fallidos después, el fix real fue una línea conceptual: <strong>declarar y leer la prop <code class="inline">default</code></strong>. Esto es la base para todo futuro custom element de este tipo.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Qué se entregó:</strong> los pickers hidratan al editar y se muestran read-only (chip/glifo) al ver; las líneas de formación abren en modal y sin botón eliminar. <strong>El fix clave:</strong> Vueform entrega el valor persistido del registro a un custom element por <code class="inline">props.default</code>, NO por <code class="inline">element.value</code> ni el proxy <code class="inline">element.el$.value</code>. <strong>El read-only en view</strong> exige <code class="inline">disabled:true</code> explícito en el layout (Vueform no lo deriva de <code class="inline">mode:"view"</code>). <strong>Meta-lección:</strong> el wiring de un custom Vueform element NO lo atrapa el unit test → solo el smoke runtime.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#trail" class="navlink rounded border border-stone-700 px-2 py-1">el rastro de hipótesis</a>
+      <a href="#fix" class="navlink rounded border border-stone-700 px-2 py-1">el fix real</a>
+      <a href="#rules" class="navlink rounded border border-stone-700 px-2 py-1">reglas para el futuro</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <section id="trail" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">El rastro de hipótesis (y por qué cada una cayó)</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Cada intento pasaba vitest (875 tests) y el dual-judge, pero fallaba en el smoke. El motivo: los tests prueban <em>helpers puros con objetos planos</em>, nunca el element real de Vueform. La verdad de terreno solo apareció en el browser.</p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TD
+  A["S1: onMounted re-read de element.value"] -->|smoke: no hidrata| B
+  B["S2 r1: proxy element.el$.value (como this.value de ActivityStatusBadge)"] -->|smoke: read-only OK, valor NO| C
+  C["S2 r2: unwrapMaybeRef sobre element.value (tratarlo como Ref)"] -->|smoke: sigue sin hidratar| D
+  D["S2 r3: declarar prop default + leer props.default"] -->|smoke: FUNCIONA ✅| E["Hidrata edit + read-only view"]
+      </pre></div>
+      <div class="callout callout-info mt-3">La pista decisiva fue la <strong>asimetría</strong>: en r1 el view ya era read-only (<code class="inline">isDisabled</code> se resolvía) pero el valor seguía vacío. Si el disabled llegaba y el value no, el value venía por <em>otra vía</em>. Esa vía era <code class="inline">props.default</code> — el mismo patrón que usa <code class="inline">EnumValuesEditorElement</code> (<code class="inline">initEntries(props.default)</code>), el único custom element writable que ya hidrataba en el codebase.</div>
+    </section>
+
+    <section id="fix" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El fix real</h2>
+      <div class="callout callout-ok"><strong>Hidratación = <code class="inline">props.default</code></strong> — declarar <code class="inline">default: { type: String, default: '' }</code> en <code class="inline">props</code> y leerlo como fuente primaria: <code class="inline">readValue = () =&gt; (props.default || readLoadedValue(proxy()))</code>, usado en el init del <code class="inline">ref</code> local Y como getter de un <code class="inline">watch(..., { immediate:true })</code>.</div>
+      <div class="callout callout-warn"><strong>Read-only en view = <code class="inline">disabled:true</code> en el layout</strong> — Vueform deriva <code class="inline">element.isDisabled</code> solo del <code class="inline">disabled</code> del field (o validación), <strong>no</strong> de <code class="inline">mode:"view"</code>. Sin el <code class="inline">disabled:true</code> en <code class="inline">default_requirementCategory_view.json</code>, el field queda editable en la vista. Con él, el mismo componente cae al branch <code class="inline">isReadonly</code> (chip/glifo + <code class="inline">role=img</code>/<code class="inline">aria-label</code>, alineado con <code class="inline">min-height: var(--vf-min-height)</code>).</div>
+      <div class="callout callout-info"><strong>Extra de UX</strong> — las líneas de formación ahora abren en <strong>modal</strong> (<code class="inline">openMode:"modal"</code>) y sin <strong>eliminar</strong> (<code class="inline">canDelete:false</code>) en los embeds <code class="inline">requirementCategoriesList</code> de Curriculum view+edit. Y el ícono guardado fuera del set curado se prepone como primer elemento y queda seleccionado.</div>
+    </section>
+
+    <section id="rules" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lo que queda escrito para el próximo componente</h2>
+      <table class="tbl">
+        <thead><tr><th>Artefacto</th><th>Qué fija</th></tr></thead>
+        <tbody>
+          <tr><td><strong>RULE-019</strong> (refinada)</td><td>Hidratación del valor cargado = <code class="inline">props.default</code> (no element.value/watch/onMounted ni proxy). Estado de display = <code class="inline">ref</code> local. El wiring solo lo valida el smoke → TC de hidratación = smoke + Affects UI.</td></tr>
+          <tr><td><strong>RULE-021</strong> (nueva)</td><td>Modo read-only/view dual en el mismo componente: <code class="inline">isReadonly</code> desde <code class="inline">element.isDisabled</code> + <code class="inline">disabled:true</code> en el layout view. Coordinar SIEMPRE componente + layout.</td></tr>
+          <tr><td><strong>Failed approaches</strong></td><td>onMounted → proxy → unwrap del Ref, con el porqué de cada caída — para no repetir el camino.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿Por qué <code class="inline">element.value</code> no sirve para leer el valor cargado en <code class="inline">setup</code>?</summary><div class="ans">En el 2º arg de <code class="inline">setup</code>, <code class="inline">context.element</code> es el retorno de <code class="inline">GenericElement.setup</code>: un objeto de Refs/computed SIN unwrap. <code class="inline">element.value</code> es el objeto Ref (identidad estable), no el string; un <code class="inline">watch(() =&gt; element.value)</code> observa esa identidad y nunca dispara. Vueform inyecta el valor del registro por la prop <code class="inline">default</code>, que sí está disponible y es reactiva.</div></details>
+      <details class="qa"><summary>¿Por qué el dual-judge y vitest no atraparon que estaba roto?</summary><div class="ans">Los tests del mod ejercen los helpers puros (<code class="inline">readLoadedValue</code>, <code class="inline">resolveDisabled</code>) con objetos planos que <em>simulan</em> el element — nunca montan el SFC ni el element real de Vueform. El dual-judge revisa código, no runtime. El comportamiento de carga del modal solo existe en el browser con datos → por eso el smoke DB-gated es la aceptación central, y los TC de hidratación/render se marcan smoke + Affects UI.</div></details>
+      <details class="qa"><summary>¿Por qué el view mostraba la grilla editable aunque era "ver"?</summary><div class="ans">Porque se asumió que <code class="inline">element.isDisabled</code> era true en <code class="inline">mode:"view"</code>. Vueform NO lo deriva del mode (su computed solo mira el <code class="inline">disabled</code> del schema o la validación). El fix: <code class="inline">disabled:true</code> explícito por field en el layout view.</div></details>
+      <details class="qa"><summary>¿Quedó código de los intentos fallidos?</summary><div class="ans">Sí, como fallback defensivo y testeado: <code class="inline">resolveElementProxy</code>/<code class="inline">unwrapMaybeRef</code> alimentan la rama secundaria de <code class="inline">readValue</code> (<code class="inline">props.default || readLoadedValue(proxy())</code>) y <code class="inline">resolveDisabled(proxy())</code>. No es ruido: <code class="inline">props.default</code> es la vía primaria, el resto es red de seguridad. Candidato a simplificación futura si se confirma que <code class="inline">props.default</code> es universal.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-097 · close · up1 · 2026-06-26 · Generado por DKC.
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — RecordDetail: la hidratacion no es edicion del usuario · TICKET-128</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-128</span> · UPONE-1540</span>
+      <span>up1 · 2026-08-12</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">RecordDetail: la hidratacion no es edicion del usuario</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">Un formulario de detalle que autopoblaba un campo al abrirse quedaba marcado como "con cambios" y con el campo requerido en rojo, sin que el usuario tocara nada. El caso ensena a distinguir, en el motor de detalle comun (core <code class="inline">layout</code>), lo que hace el sistema al hidratar de lo que hace una edicion real, y a arreglarlo en un unico punto de core que cubre a todos los mods.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed"><strong class="text-amber-300">TL;DR</strong> — <code class="inline">autoPopulate.triggerOnMount</code> hace <code class="inline">element.update()</code> al montar; <code class="inline">update()</code> ensucia (<code class="inline">dirty</code>) y valida el campo. El fix limpia dirty + validacion <strong>solo en el montaje</strong> (<code class="inline">clean()</code> + <code class="inline">resetValidators()</code>, dos veces por el watcher <code class="inline">flush:'pre'</code>), sin tocar el valor ni el submit. Un unico punto de core cubre los 43 campos autoPopulate on-mount de 3 mods. La review de PR cazo un bug fino (el callback de <code class="inline">watch</code> reenviaba el valor observado como flag) que ni el smoke ni el unit habian atrapado.</div>
+    </div>
+
+    <!-- EJE 5 (que se realizo) -->
+    <section id="done" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Que se realizo</h2>
+      <div class="callout callout-success"><strong>✓ Fix (core layout)</strong> — Helper puro <code class="inline">applyAutoPopulateValue(element, value, {isInitialMount, scheduleDeferred})</code>: escribe el valor siempre, y solo en el montaje resetea dirty+validacion del campo. Cableado en los dos sitios de <code class="inline">update()</code> de <code class="inline">executePopulation</code>. Guard de modo <code class="inline">view</code>/<code class="inline">RecordList</code> agregado a <code class="inline">handleCancelAttempt</code> (espejo de <code class="inline">handleCloseAttempt</code>).</div>
+      <div class="callout callout-info"><strong>ℹ Verificacion</strong> — Unit del helper 9/9; area RecordDetail 33/33. Runtime (tenant UPU) antes/despues en el caso ALTA (Curriculum) y cross-mod (up1-manager): sin falso dirty ni rojo al montar, valor preservado, populate intacto (items 139/21/32/2), submit sigue validando, edicion real marca dirty.</div>
+      <div class="callout callout-warn"><strong>⚠ No se hizo (por diseno)</strong> — No se porto la rama vieja <code class="inline">Feat/UPONE-912</code> (498 commits de divergencia; su snapshot resuelve otro disparador: tags). No se toco el contrato dual-populate del mod (Opcion D, follow-up). No se toco ningun mod.</div>
+    </section>
+
+    <!-- Conceptos clave -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conceptos clave</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">dirty (form / element)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Vueform marca <code class="inline">dirty</code> en un watcher del valor: cualquier <code class="inline">update()</code> lo dispara. El core usa <code class="inline">form.dirty</code> para el modal "cambios sin guardar".</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">clean() vs resetValidators()</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">clean()</code> baja solo <code class="inline">dirty</code>. El rojo (validacion) requiere <code class="inline">resetValidators()</code>, que limpia <code class="inline">invalid</code>/<code class="inline">validated</code>/mensajes. Ninguno toca el valor.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">triggerOnMount</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">autoPopulate que corre al montar el formulario (hidratacion), sin edicion del usuario. Es el disparador del falso positivo.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">flush: 'pre'</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El watcher que ensucia corre despues de la llamada actual y antes del render; por eso el reset debe repetirse en <code class="inline">nextTick</code> o se revierte.</p></div>
+      </div>
+    </section>
+
+    <!-- Invariante -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Invariante</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">La <span class="text-amber-400">hidratacion inicial</span> no es una edicion del usuario: no debe marcar el formulario como modificado ni validar campos antes de que el usuario interactue.</div>
+        <div class="ilabel mt-2">Corolario: el reset se aplica SOLO en el path on-mount. Un populate disparado por un watcher (el usuario edito un campo observado) SI es edicion y debe comportarse normal.</div>
+      </div>
+    </section>
+
+    <!-- Evolucion de hipotesis + sessions -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolucion de hipotesis</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Un sintoma, tres mecanismos</div><p class="text-xs text-stone-400">El "cambios sin guardar" + el campo en rojo + el cancelar-en-ver se descompusieron en H1 (falso dirty), H2 (rojo por validacion on-mount) y H4 (guard de view ausente). No habia una unica causa.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">La rama vieja evidencia intencion, no solucion completa</div><p class="text-xs text-stone-400">H5: el fix de UPONE-912 (snapshot de dirty) arregla el falso dirty por tags, pero NO el rojo ni el cancelar-en-ver. Se toma como base conceptual, no se mergea.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Runtime revela la API exacta</div><p class="text-xs text-stone-400">H6/H7 confirmadas en vivo: <code class="inline">clean()</code> no alcanza para el rojo; hace falta <code class="inline">resetValidators()</code>, y ambos dos veces (watcher flush:pre).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">El blast radius es genual de core</div><p class="text-xs text-stone-400">43 campos autoPopulate on-mount en 3 mods, todos por el mismo <code class="inline">executePopulation</code>: se arregla en un punto, sin tocar mods.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">La review caza lo que el test no</div><p class="text-xs text-stone-400">F-1: el callback de <code class="inline">watch</code> reenviaba <code class="inline">newValue</code> como <code class="inline">isInitialMount</code>. El unit pasaba <code class="inline">false</code> explicito; el call site real pasaba el valor observado. Corregido envolviendo el callback.</p></div>
+      </div>
+    </section>
+
+    <!-- Caso: F-1 -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El caso que casi se escapa (F-1)</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">Se agrego <code class="inline">isInitialMount</code> a <code class="inline">executePopulation</code>, usada tambien como callback directo de <code class="inline">watch</code>.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Problema</div><p class="text-sm text-stone-300">Vue invoca el callback con <code class="inline">(newValue, ...)</code>; ese <code class="inline">newValue</code> caia en <code class="inline">isInitialMount</code>. Editar un watchField reseteaba la validacion del dependiente.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Envolver el callback (<code class="inline">() =&gt; executePopulation(false)</code>). El unit y el smoke no lo cazaron; la review de PR si.</p></div>
+      </div></div>
+    </section>
+
+    <!-- Codigo -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El fix, en codigo</h2>
+      <pre class="code"><span class="c">// El reset corre dos veces (ahora + nextTick) por el watcher flush:'pre'.</span>
+<span class="k">function</span> <span class="f">resetElementAfterAutoPopulate</span>(element, scheduleDeferred) {
+  <span class="k">if</span> (!element) <span class="k">return</span>;
+  <span class="k">const</span> reset = () =&gt; { element.<span class="f">clean</span>?.(); element.<span class="f">resetValidators</span>?.(); };
+  <span class="f">reset</span>(); <span class="f">scheduleDeferred</span>(reset);
+}
+
+<span class="c">// on-mount: escribe el valor Y resetea. watcher de edicion: escribe, NO resetea.</span>
+<span class="k">function</span> <span class="f">applyAutoPopulateValue</span>(element, value, { isInitialMount, scheduleDeferred }) {
+  <span class="k">if</span> (!element) <span class="k">return</span>;
+  element.<span class="f">update</span>?.(value);
+  <span class="k">if</span> (isInitialMount) <span class="f">resetElementAfterAutoPopulate</span>(element, scheduleDeferred);
+}
+
+<span class="c">// El pitfall F-1: envolver el callback de watch para NO reenviar newValue como flag.</span>
+<span class="f">watch</span>(() =&gt; vueformInstance.<span class="f">el$</span>(watchField)?.value, () =&gt; <span class="f">executePopulation</span>(<span class="k">false</span>));</pre>
+    </section>
+
+    <!-- Lessons como Q&A -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lessons (Q&amp;A)</h2>
+      <details class="qa"><summary>Por que el unit verde no evito el bug F-1?</summary><div class="ans">El unit probaba el helper con <code class="inline">isInitialMount=false</code> explicito, pero el cableado real de produccion (el callback de <code class="inline">watch</code>) nunca pasaba <code class="inline">false</code>: pasaba el valor observado. Un test que no refleja la aridad del call site consagra el bug. Leccion: verificar la aridad real del call site, no solo el contrato en aislamiento.</div></details>
+      <details class="qa"><summary>Por que un solo clean() no alcanzaba?</summary><div class="ans">Dos razones distintas: (1) el rojo es estado de validacion, no de dirty, asi que necesita <code class="inline">resetValidators()</code> aparte; (2) el watcher que ensucia corre en <code class="inline">flush:'pre'</code> y revierte un unico <code class="inline">clean()</code>, por eso se repite en <code class="inline">nextTick</code>. Ambos se confirmaron en runtime, no por lectura.</div></details>
+      <details class="qa"><summary>Por que arreglar en core y no en el mod?</summary><div class="ans">El <code class="inline">''</code> que enrojece nace en el composable del mod, pero el mecanismo (update on-mount ensucia+valida) es del motor de detalle comun. Arreglarlo en <code class="inline">executePopulation</code> cubre los 43 campos autoPopulate on-mount de los 3 mods de una vez, sin acoplar el fix a un mod.</div></details>
+      <details class="qa"><summary>Que garantiza que el submit sigue validando?</summary><div class="ans"><code class="inline">resetValidators()</code> limpia el estado prematuro pero no desactiva la validacion futura: al guardar, el required vacio vuelve a bloquear. Verificado en runtime con <code class="inline">validate()</code> → <code class="inline">invalid:true</code>.</div></details>
+    </section>
+
+    <section id="verdict" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Knowledge promovido</h2>
+      <div class="callout callout-note"><strong>RULE-layout-044</strong> — Un callback de <code class="inline">watch(source, fn)</code> recibe <code class="inline">(newValue, oldValue)</code>: envolverlo si el primer parametro de <code class="inline">fn</code> no debe ser el valor observado. Nace del hallazgo F-1.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-128 (UPONE-1540) · up1 · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

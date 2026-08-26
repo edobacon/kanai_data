@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Hidratación pickers + render view · TICKET-097</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad:true, theme:'dark', themeVariables:{ darkMode:true, background:'#0c0a09', primaryColor:'#1c1917', primaryTextColor:'#e7e5e4', primaryBorderColor:'#f59e0b', lineColor:'#a8a29e', secondaryColor:'#292524', tertiaryColor:'#1c1917', mainBkg:'#1c1917', nodeBorder:'#f59e0b', clusterBkg:'#0c0a09', clusterBorder:'#44403c', titleColor:'#fafaf9', edgeLabelBackground:'#1c1917', textColor:'#e7e5e4', fontSize:'13px' }, flowchart:{ htmlLabels:true, curve:'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); } .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); } .callout-danger { border-color:#f87171; background:rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .pre-mermaid { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; list-style:none; } details.qa summary::-webkit-details-marker { display:none; } details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; } details.qa[open] summary::before { content:"▾"; } details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tldr { background:linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-097</span> · Hidratación pickers + render view</span>
+      <span>up1 · 2026-06-25</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Dos cabos sueltos: la hidratación al editar y el render del view</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">TICKET-096 arregló que el click resalta la selección. Quedan dos: al abrir el modal de <strong>edición</strong>, los pickers no marcan lo que ya estaba guardado (no <em>hidratan</em>); y el modal de <strong>ver</strong> sigue mostrando el valor como texto en vez del color/ícono. Este ticket cierra ambos.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Qué pasa:</strong> (A) el valor del registro llega al element <em>después</em> del <code class="inline">setup()</code>; el init + <code class="inline">watch</code> de TICKET-096 no lo capturan en ese timing. (B) el layout <code class="inline">view</code> quedó como <code class="inline">type:text</code> (DEC-LOCAL-03). <strong>Qué se hará:</strong> (A) agregar <code class="inline">onMounted</code> que re-lee <code class="inline">element.value</code> tras montar (lo que hace ValidationTextEditorElement); (B) un componente <strong>display read-only</strong> (chip de color + glifo, patrón ActivityStatusBadge) cableado en el view. <strong>Por qué:</strong> sin hidratación el usuario no ve qué tenía configurado; el view en texto no comunica el estilo visual de la línea.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">timing de carga</a>
+      <a href="#why" class="navlink rounded border border-stone-700 px-2 py-1">los dos fixes</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">El timing de carga del modal de edición</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">El click funciona porque muta el <code class="inline">ref</code> local directo. La hidratación depende de que el valor del registro — que el modal carga <em>async</em> — entre al <code class="inline">ref</code>. TICKET-096 init en <code class="inline">setup</code> (puede estar vacío) + <code class="inline">watch</code>. Falta el <code class="inline">onMounted</code> re-read, que es justo donde el valor ya suele estar disponible.</p>
+      <div class="pre-mermaid"><pre class="mermaid">
+sequenceDiagram
+  participant M as Modal edit
+  participant S as setup()
+  participant Mo as onMounted
+  M->>S: instancia el element
+  S->>S: ref = readLoadedValue(element) — element.value AÚN vacío
+  M-->>M: carga el valor del registro (async)
+  Note over S,Mo: TICKET-096: solo watch — puede no disparar en este timing
+  M->>Mo: montado
+  Mo->>Mo: re-lee element.value → ref = valor cargado  ✅ (este ticket)
+      </pre></div>
+    </section>
+
+    <section id="why" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Los dos fixes</h2>
+      <div class="callout callout-warn"><strong>A · Hidratación (bug)</strong> — agregar <code class="inline">onMounted(() =&gt; { selected.value = readLoadedValue(element) })</code> en ambos pickers, además del init + watch. Es el patrón de <code class="inline">ValidationTextEditorElement</code> (que hidrata bien en edit/view). Validación final = smoke del dev (el modal no se monta en vitest).</div>
+      <div class="callout callout-info"><strong>B · Render del view (mejora)</strong> — componente display read-only nuevo (chip de color + glifo del ícono), patrón <code class="inline">ActivityStatusBadge</code> (<code class="inline">submits:false</code>, lee el valor y renderiza). Se cablea SOLO en <code class="inline">default_requirementCategory_view.json</code> (revierte DEC-LOCAL-03 de TICKET-094).</div>
+      <div class="callout callout-danger"><strong>No se toca</strong> el formato del valor (token/<code class="inline">bi-*</code>), ni backend, ni los layouts create/edit (esos ya usan los pickers).</div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿Por qué el click anda pero la hidratación no?</summary><div class="ans">El click muta el <code class="inline">ref</code> local en el handler — no depende de la reactividad de <code class="inline">element.value</code>. La hidratación sí: necesita leer el valor que el modal carga async. El init en <code class="inline">setup</code> corre demasiado temprano (valor aún vacío) y el <code class="inline">watch</code> puede no disparar en ese timing. El <code class="inline">onMounted</code> re-read lee cuando el valor ya está.</div></details>
+      <details class="qa"><summary>¿Por qué un componente display y no reusar el picker en modo read-only?</summary><div class="ans">Decisión del dev: componente dedicado (separa responsabilidades; el picker no se llena de lógica condicional view-vs-edit). Es read-only (patrón ActivityStatusBadge: <code class="inline">submits:false</code>, renderiza desde el valor), liviano: chip de color + glifo. Se cablea solo en el layout view.</div></details>
+      <details class="qa"><summary>¿Cómo se valida la hidratación si no se monta el SFC?</summary><div class="ans">La lógica (`readLoadedValue`, `onMounted` re-read) se cubre a nivel unit donde se puede; el render real del modal es smoke DB-gated. Por eso este ticket marca el smoke del dev como aceptación central — es exactamente el comportamiento que no se reproduce en vitest.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-097 · intake · up1 · 2026-06-25 · Generado por DKC.
+    </footer>
+  </main>
+</body>
+</html>

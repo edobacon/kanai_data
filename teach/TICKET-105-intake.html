@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — No-negativos + typechecking del mod curriculum-design · TICKET-105</title>
+<!-- metadata · ticket: TICKET-105 · kind: intake · project: up1 · generated: 2026-07-29 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-105</span> · No-negativos + typechecking (curriculum-design)</span>
+      <span>up1 · 2026-07-29</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">No-negativos en campos numéricos del mod, y el typechecking preexistente</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este ticket (external <span class="text-amber-300">UPONE-1378</span>, mod <code class="inline">curriculum-design</code>) cierra un hueco de integridad de datos: hoy varios campos numéricos de negocio de la malla (créditos, períodos, pesos, horas, semanas, duraciones, totales) aceptan valores negativos por cualquier canal (UI, MCP, n8n, bulk), lo que rompe cálculos de plan y de sílabo. La buena noticia: no hay que construir nada nuevo para validarlo, el motor ya existe en el core. El ticket suma además un apartado de deuda técnica: resolver los errores de tipado (<code class="inline">vue-tsc</code>) que arrastra el mod. Este documento te deja parado sobre las bases, el entorno y el plan antes de que diseñes o ejecutes.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Qué hay:</strong> 9 campos numéricos del mod (7 tipos de magnitud en 6 archivos) sin guardarraíl de no-negatividad, y un set de errores de tipado preexistentes. <strong>Qué se hará:</strong> S1, declarar <code class="inline">"minimum": 0</code> en el JSON del mod (el validador del core lo enforcea solo) + codegen + sync + tests; S2, re-baselinear <code class="inline">vue-tsc</code> y limpiar los errores propios del mod + gatearlo en CI. <strong>Por qué:</strong> datos inválidos silenciosos corrompen la malla, y el tipado sin gate vuelve a romperse.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">cómo valida hoy</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el cambio</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">entorno</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- ================= BASES (hacia abajo) ================= -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conceptos clave (las bases)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Seis ladrillos que hacen entendible por qué este ticket es casi todo declarativo. El más importante es el primero (<span class="text-amber-400">validador del core</span>): entenderlo explica por qué no escribimos lógica de validación.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Validador del core (<code class="inline">validateBaseFieldFormats</code>)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Función en <code class="inline">object-manager/src/graphql/resolvers/jsonFieldValidator.resolver.js:294</code> que, a nivel API, enforcea <code class="inline">minimum</code>/<code class="inline">maximum</code> sobre cada campo escalar leyendo su metadata. Ya vive en el core y corre para todo request GraphQL.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm"><code class="inline">core_FieldDefinition.properties</code></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La tabla donde el core guarda las propiedades de cada campo (incluida <code class="inline">minimum</code>). La puebla <code class="inline">codegen</code> a partir del JSON del objeto. Es el puente entre "lo que escribo en el JSON" y "lo que el validador aplica en runtime".</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Schema-driven (JSON como fuente de verdad)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Los objetos se definen en JSON; <code class="inline">codegen</code> deriva Prisma + GraphQL + metadata. Por eso agregar una propiedad al JSON es un cambio declarativo, no imperativo.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RecordType (RT) <code class="inline">rt__hijo__base</code></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Sub-tipos de un objeto base (ej. <code class="inline">rt__Session__curricularsection</code>). Varios de los campos en alcance (weight, week, duration, hours, totales) viven en RTs, no en el objeto base.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm"><code class="inline">vue-tsc</code> / bucket A vs B</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Type-checker de Vue/TS. Los errores del mod se dividen en bucket B (propios del mod, los que este ticket resuelve) y bucket A (ruido del symlink <code class="inline">components/ → layout/</code>, que es CORE y queda fuera).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RULE-dev-004 (ownership)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La regla de fronteras: el trabajo <code class="inline">layer: mod</code> se edita dentro de <code class="inline">mods/curriculum-design/</code> y el <code class="inline">sync</code> lo propaga al core. Nunca se edita el core a mano.</p></div>
+      </div>
+    </section>
+
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Cómo se valida hoy (y por qué basta con declararlo)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        El flujo abajo tiene 4 pasos. La clave que reduce el ticket a "config": la propiedad que escribes en el JSON viaja por <code class="inline">codegen</code> hasta la metadata que el validador ya lee en cada request. El validador no distingue el canal, por eso cubre MCP, n8n y bulk (los que saltan la validación de Vueform en el front).
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A["JSON del mod<br/>#quot;minimum#quot;: 0"] --> B["npm run codegen"]
+  B --> C["core_FieldDefinition<br/>.properties"]
+  C --> D{"request GraphQL<br/>(UI / MCP / n8n / bulk)"}
+  D --> E["validateBaseFieldFormats<br/>rechaza valor &lt; 0"]
+      </pre></div>
+      <p class="text-stone-400 text-sm leading-relaxed mt-3">
+        Precedente en uso: <code class="inline">restrictiondefinition.json</code> y <code class="inline">contractrestriction.json</code> del core ya declaran <code class="inline">"minimum": 0</code> exactamente así. No estamos inventando un patrón, lo estamos extendiendo a los campos del mod que faltan.
+      </p>
+    </section>
+
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El cambio, en concreto</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">Sobre el bloque del campo en el JSON del mod, se agrega una sola propiedad. Ejemplo con <code class="inline">activity.credits</code>:</p>
+      <pre class="code"><span class="c">// mods/curriculum-design/objects/activity.json (campo credits)</span>
+{
+  <span class="f">"name"</span>: <span class="s">"credits"</span>,
+  <span class="f">"type"</span>: <span class="s">"number"</span>,
+  <span class="f">"minimum"</span>: <span class="k">0</span>          <span class="c">// ← unica linea nueva</span>
+}</pre>
+      <p class="text-stone-400 text-sm leading-relaxed mt-3">
+        Se repite para los 7 campos en alcance. Luego <code class="inline">npm run codegen</code> (puebla la metadata) y <code class="inline">npm run sync</code> (propaga el JSON del mod al core). <strong>No hay migración de columna</strong>: es validación, el tipo Prisma no cambia.
+      </p>
+    </section>
+
+    <!-- ================= ENTORNO (hacia los lados) ================= -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El entorno: fronteras, exclusiones y una deuda</h2>
+      <div class="callout callout-info"><strong>ℹ Ownership (RULE-dev-004):</strong> todo se edita en <code class="inline">mods/curriculum-design/</code>. El <code class="inline">sync</code> escribe el destino en <code class="inline">object-manager/objects/business/Base/</code>: ese destino no se toca a mano. <code class="inline">layer: mod</code> se mantiene, cero edición directa de core.</div>
+      <div class="callout callout-warn"><strong>⚠ Excluidos a propósito:</strong> <code class="inline">version</code> (Activity, Curriculum) y <code class="inline">position</code> (planEntry, requirement, CurricularSection, CurricularLink) los pone el sistema (versioning y orden Composite), nunca van negativos. Ponerles guardarraíl sería ruido sobre campos que el usuario no edita.</div>
+      <div class="callout callout-note"><strong>↩ En P1, no aquí:</strong> los RT de <code class="inline">requirement</code> (minToSatisfy, creditsRequired, value, thresholdMinGrade) ya recibieron <code class="inline">minimum: 0</code> en <a href="TICKET-101.md" class="text-amber-400">TICKET-101</a> (REQ-09). Este ticket barre el resto. Comparten el external UPONE-1378 pero tocan archivos distintos: sin conflicto.</div>
+      <div class="callout callout-danger"><strong>✗ Deuda de otro repo (BL-1):</strong> Offering (<code class="inline">maxCapacity</code>, <code class="inline">usedCapacity</code>) lo declara <code class="inline">uengagement-up1</code>, no este mod. Queda como propagación (DET-16) fuera de alcance, prioridad <code class="inline">could</code> con owner uengagement-up1.</div>
+    </section>
+
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El invariante que perseguimos</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Ningún campo numérico de <span class="text-amber-400">input de negocio</span> de la malla acepta valores negativos, sin importar el canal.</div>
+        <div class="ilabel mt-2">Corolario: la garantía vive en el backend (validador del core), no en el front. Un cliente que saltee Vueform (MCP, n8n, bulk) igual queda cubierto. Los campos system-managed quedan fuera por diseño.</div>
+      </div>
+    </section>
+
+    <!-- ================= PLAN (hacia adelante) ================= -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El plan: dos sessions</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        S1 es el corazón del request y es de bajo riesgo técnico (declarativo). S2 es el apartado de deuda, y arranca con una incógnita honesta: el análisis de errores de tipado es del 2026-07-22 y ya envejeció, así que su primera task re-mide el terreno antes de tocar nada.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · No-negativos (T3, gate fuerte)</div><p class="text-xs text-stone-400"><code class="inline">"minimum": 0</code> en los 7 campos → codegen → sync (drift 0) → tests de integración por API (negativo rechaza, ≥0 acepta) + smoke en UPU. Independiente de S2.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2.T1 · Re-baseline de <code class="inline">vue-tsc</code> (empírico, bloquea el resto)</div><p class="text-xs text-stone-400">Correr <code class="inline">vue-tsc --noEmit</code> hoy, regenerar el set real de errores propios (bucket B), excluir el ruido del symlink (bucket A). El conteo "58 errores / 4 clusters" de julio ya no es confiable.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2.T2+ · Limpieza + gate</div><p class="text-xs text-stone-400">Resolver los errores propios sin supresión masiva, y decidir dónde gatear el typecheck (el mod no tiene <code class="inline">bitbucket-pipelines.yml</code> propio: hay que ver el pipeline raíz).</p></div>
+      </div>
+    </section>
+
+    <section id="tags" class="blk mt-10" data-dkc-block="tag">
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">Ahora: diseñar spec (S1 listo, S2 con re-baseline)</span>
+        <span class="tag tag-next">Próximo: execute S1 (declarativo + tests)</span>
+        <span class="tag tag-future">Futuro: recalibrar SP de S2 tras el re-baseline</span>
+      </div>
+    </section>
+
+    <!-- ================= AUTOEVALUACIÓN ================= -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿De qué se trata el caso?</summary><div class="ans">De impedir que campos numéricos de negocio de la malla (créditos, períodos, pesos, horas, semanas, duraciones, totales) acepten valores negativos, más un apartado anexo de limpieza de errores de tipado (<code class="inline">vue-tsc</code>) que el mod arrastra.</div></details>
+      <details class="qa"><summary>¿Qué se va a hacer y por qué importa?</summary><div class="ans">S1: declarar <code class="inline">"minimum": 0</code> en el JSON del mod para 9 campos (6 archivos) (el validador del core lo aplica en todos los canales) + codegen + sync + tests. Importa porque un valor negativo silencioso corrompe cálculos de plan y sílabo. S2: re-baselinear y limpiar el tipado + gatearlo en CI, para que la deuda no reaparezca.</div></details>
+      <details class="qa"><summary>¿Qué hipótesis quedaron abiertas y cuál es la más crítica?</summary><div class="ans">Dos, ambas en S2. H6 (la más crítica): el análisis de clusters de tipado es de julio y ya drifteó (un composable desapareció, otro resultó ser de layout), así que el alcance real de S2 solo se conoce tras el re-baseline empírico. H7: el mod no tiene pipeline propio, hay que decidir dónde gatear el typecheck. S1 no tiene hipótesis abiertas.</div></details>
+      <details class="qa"><summary>¿Qué decisiones críticas se tomaron en el intake y por qué?</summary><div class="ans">DEC-INTAKE-01: mantener S1 + S2 en un solo spec (en vez de partir S2 a un ticket propio), con re-baseline de <code class="inline">vue-tsc</code> como primera task de S2. El dev prefirió tenerlos juntos aceptando que el SP de S2 se recalibra tras esa primera task. También se confirmó por reuso (DET-32) que no se construye motor de validación: ya existe en el core.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-105 · intake · up1 · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

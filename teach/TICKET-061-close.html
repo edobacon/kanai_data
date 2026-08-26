@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — MCP-readiness curriculum-design · TICKET-061</title>
+<!-- metadata · ticket: TICKET-061 · kind: close · project: up1 · generated: 2026-06-11 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: {
+    darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4',
+    primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', mainBkg: '#1c1917', nodeBorder: '#f59e0b',
+    titleColor: '#fafaf9', textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1rem 1.2rem; margin:0.5rem 0; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-061</span> · MCP-readiness curriculum-design</span>
+      <span>up1 · 2026-06-11</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Lo que se hizo — enforcement server-side de integridad</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El caso cerró con las 4 reglas de integridad del mod <code class="inline">curriculum-design</code> bajadas al backend
+      (aguas abajo de todos los clientes: web, MCP, API). El mod quedó <strong>MCP-ready</strong>: ya no depende de la
+      cortesía del frontend para mantener datos válidos. Cero cambios en el core de la plataforma; 8 commits en la rama del
+      ticket; suite del mod <strong>695/695</strong>. Este documento mira hacia atrás — qué se construyó, cómo evolucionaron
+      las hipótesis y qué dejó como aprendizaje. (Los conceptos del dominio ya se enseñaron en el teach-intake.)
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se enforzaron <strong>I1</strong> (suma ponderada: `≤` por escritura + `===` al publicar + query de validación),
+        <strong>I2</strong> (Modality default única, cross-table), <strong>I4</strong> (índice único parcial de Workflow default) e
+        <strong>I5</strong> (`uniqueScopedBy` en código de programa). Todo en el mod, sin tocar core. De paso se corrigieron 2 tests
+        stale de TICKET-059 que la regresión destapó. Pendiente: confirmar con negocio si I5 es regla real (es inferida) y la
+        registración en el repo `mcp` (B2, diferida).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">el camino (3 sessions)</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">qué quedó enforzado</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#case" class="navlink rounded border border-stone-700 px-2 py-1">el giro (H7)</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">lecciones + hipótesis</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">qué viene</a>
+    </nav>
+
+    <!-- EL CAMINO -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El camino recorrido — 3 sessions</h2>
+      <p class="text-sm text-stone-400 mt-1">Cada session se apoyó en la anterior: el wrapper de S1 fue el cimiento que S2 reusó.</p></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Wrapper de dominio + I2</div><p class="text-xs text-stone-400">Se creó el helper puro <code class="inline">modalityDefault.js</code>, luego el resolver nuevo <code class="inline">sectionValidation.resolver.js</code> con la estrategia <em>validate-then-delegate</em> para el <code class="inline">createInstance</code>, y se integró la misma validación de update DENTRO de <code class="inline">polymorphicUpdate.resolver.js</code> (no en archivo nuevo — ver el giro H7). Cerró con 18 tests verdes y el arranque del wrapper verificado por sync.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — I1 suma ponderada (la más riesgosa)</div><p class="text-xs text-stone-400">Primero el helper compartido <code class="inline">weightedSum.js</code>; se decidió el <em>fallback</em> de paridad cuando se descubrió que el frontend no puede importar de <code class="inline">logic/</code> tras el sync. Luego el `≤` por escritura (reusando los hooks de S1), el `===` al publicar dentro de <code class="inline">transitionActivityValidated</code> (gateado por categoría Published), y la query <code class="inline">validateActivityEvaluations</code>. La regresión destapó 2 tests stale de TICKET-059 que se corrigieron acá mismo. Cerró 693/693.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — Declarativos + cierre</div><p class="text-xs text-stone-400">Se extendió el builder de índices del seed para soportar `UNIQUE`+`WHERE` y se agregó el índice parcial de Workflow default (I4); se declaró <code class="inline">uniqueScopedBy</code> en AcademicProgram.code (I5); y se documentó el ObjectContract objetivo (B2). Cerró 695/695.</p></div>
+      </div>
+    </section>
+
+    <!-- QUÉ QUEDÓ ENFORZADO -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué quedó enforzado (estado final)</h2></div>
+      <div class="invariant"><div class="text-base font-semibold text-stone-100"><span class="text-amber-400">I1</span> — escritura: <code class="inline">suma(hijos) ≤ padre</code>; publicación: <code class="inline">=== exacto</code></div><div class="ilabel mt-2">`EVALUATION_WEIGHT_EXCEEDS_PARENT` (write) / `EVALUATION_WEIGHT_MISMATCH` (publish). + query read-only para anticipar.</div></div>
+      <div class="invariant"><div class="text-base font-semibold text-stone-100"><span class="text-amber-400">I2</span> — una sola Modality default por dueño</div><div class="ilabel mt-2">`MODALITY_DOUBLE_DEFAULT`, validación cross-table en create y update.</div></div>
+      <div class="invariant"><div class="text-base font-semibold text-stone-100"><span class="text-amber-400">I4</span> — un Workflow default por (institución, scopeType)</div><div class="ilabel mt-2">Índice único parcial DB (backstop universal) + validación runtime ya existente en `createWorkflowValidated`.</div></div>
+      <div class="invariant"><div class="text-base font-semibold text-stone-100"><span class="text-amber-400">I5</span> — code único por institución (declarativo)</div><div class="ilabel mt-2">`uniqueScopedBy:[institutionId]` + backstop `@@unique`. <strong>⚠ Inferido — pendiente confirmar negocio.</strong></div></div>
+    </section>
+
+    <!-- DECISIONES -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Decisiones que moldearon el resultado</h2></div>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Decisión</th><th class="text-left p-3">Elección</th><th class="text-left p-3">Por qué</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-amber-300">D-E — cuándo enforzar</td><td class="p-3">cada escritura</td><td class="p-3 text-stone-400">el MCP escribe incremental; validar solo al publicar dejaría datos inválidos persistidos</td></tr>
+          <tr><td class="p-3 text-amber-300">D-F — comparación</td><td class="p-3">entera exacta</td><td class="p-3 text-stone-400">codegen mapea weight a Int; epsilon sería complejidad sin valor</td></tr>
+          <tr><td class="p-3 text-amber-300">DEC-LOCAL-01 — update I1/I2</td><td class="p-3">integrar en polymorphicUpdate</td><td class="p-3 text-stone-400">H7: dos resolvers no pueden exportar el mismo campo Mutation</td></tr>
+          <tr><td class="p-3 text-amber-300">DEC-LOCAL-03 — single source</td><td class="p-3">paridad testeada (no import)</td><td class="p-3 text-stone-400">el frontend no puede importar de logic/ tras sync (split front/back)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- EL GIRO H7 -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El giro de diseño — el constraint H7</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">I1/I2 necesitaban validar en update, pero ya existía un override de <code class="inline">updateInstance</code> en polymorphicUpdate.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Descubrimiento</div><p class="text-sm text-stone-300">El scanner del platform colisiona si dos <code class="inline">*.resolver.js</code> del mod exportan el mismo campo Mutation (orden no determinista).</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Update integrado en el resolver existente; create en archivo nuevo. Ambos comparten helpers. Sin colisión (sync registró 7 resolvers OK).</p></div>
+      </div></div>
+    </section>
+
+    <!-- LECCIONES + HIPÓTESIS -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Lecciones y evolución de hipótesis</h2></div>
+      <details class="qa"><summary>¿Cómo evolucionaron las hipótesis del intake?</summary><div class="ans">Las 7 quedaron confirmadas. H6 (el override de create no rompe otros objetos) se confirmó porque el patrón delegate-to-generic ya estaba probado en update. H7 (constraint de colisión del scanner) emergió en intake y se validó empíricamente: el sync registró los 7 resolvers sin colisión. Ninguna se refutó.</div></details>
+      <details class="qa"><summary>Lección 1 — validación runtime vs backstop de constraint</summary><div class="ans">Workflow.isDefault YA tenía validación runtime en <code class="inline">createWorkflowValidated</code>, pero el CRUD generic la bypassa. El índice parcial (I4) es el backstop universal que cubre TODOS los paths. Patrón reutilizable: validación amigable en la mutation validated + constraint/índice como red dura.</div></details>
+      <details class="qa"><summary>Lección 2 — single-source vía paridad testeada cuando el import no es posible</summary><div class="ans">El sync separa los destinos (modsComponents→frontend, logic→backend), así que un import cross-layer rompe el bundle. La "fuente única" se garantizó con un test de paridad que falla si front y back divergen — no con un import compartido.</div></details>
+      <details class="qa"><summary>Lección 3 — al agregar un loader al seed o layouts, actualizar sus tests</summary><div class="ans">La regresión destapó 2 tests stale de TICKET-059: el dispatch test no mockeaba el nuevo loader (corría la fn real contra prisma vacío) y el inventario de layouts tenía el conteo viejo. Al sumar un paso al seed o un layout, actualizar los tests de dispatch/inventario en el mismo cambio.</div></details>
+      <details class="qa"><summary>¿Por qué el enforcement vive en el resolver y no en el contrato MCP?</summary><div class="ans">Porque el resolver está aguas abajo de TODOS los clientes. El contrato MCP solo declara/expone la regla; aunque no esté registrado (B2 diferido), el mod ya rechaza los datos inválidos. Así el mod queda MCP-ready sin depender del repo `mcp`.</div></details>
+    </section>
+
+    <!-- QUÉ VIENE -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué viene después</h2></div>
+      <div class="callout callout-warn"><strong>⚠ I5 es inferido</strong> — confirmar con negocio/PO si la unicidad de <code class="inline">AcademicProgram.code</code> es regla real (Confluence dice "código institucional", no "único"). Implementado con backstop seguro; revisar antes de tratarlo como regla dura. (Backlog + Open question del spec.)</div>
+      <div class="callout callout-info"><strong>ℹ Paso de deploy DB-gated</strong> — la propagación del índice I4 (vía seed) y de <code class="inline">uniqueScopedBy</code> a <code class="inline">core_FieldDefinition</code> (vía <code class="inline">npm run codegen</code>) son pasos de deploy, no ejecutados en este ticket para no arriesgar el drift documentado de la DB del dev. El backstop <code class="inline">@@unique</code> ya rechaza duplicados.</div>
+      <div class="callout callout-info"><strong>ℹ Backlog (no bloqueante)</strong> — B1: inconsistencia de la descripción de `weight` (0–1 vs 0–100). B2: transcribir el ObjectContract al repo `mcp` cuando esté disponible. B3: unicidad de `Activity.code` (descopeada, retomar si negocio confirma).</div>
+      <div class="callout callout-success"><strong>✓ Estado</strong> — 4/4 reglas enforzadas server-side, query de validación expuesta, 695/695 tests, doc B2 listo para transcripción. Mod MCP-ready.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teach close · TICKET-061 · up1 · generado por DKC. Mirando atrás: lo construido + el aprendizaje.
+    </footer>
+
+  </main>
+</body>
+</html>

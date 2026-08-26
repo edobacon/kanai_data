@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close: false-Restrict por casing en el motor de delete cascade · TICKET-107</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+  .case-strip { border-radius: 0.5rem; overflow: hidden; border: 1px solid var(--stone-border); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-107</span> · false-Restrict por casing</span>
+      <span>up1 · 2026-07-15</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Cierre: false-Restrict por casing + hardening del motor de delete cascade</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este documento mira hacia atras: que se hizo, en que orden y con que evidencia se cerro cada pieza del ticket. No repite los conceptos de dominio
+      (cascade vs Restrict, <code class="inline">subtreeKeys</code>, <code class="inline">PascalName</code>, el mecanismo exacto del bug) que ya explico el
+      <a class="text-amber-400">teach-intake</a>: aca se asume ese contexto y se cuenta el trabajo real, las decisiones y las lecciones.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong>:
+        <strong>Que habia:</strong> un Plan con categorias de requisito no se podia borrar por un Restrict falso (bug de casing en el motor de delete cascade).
+        <strong>Que se hizo:</strong> se normalizo la comparacion de claves del subarbol (no se parcheo el JSON), se respaldo con integration contra BD real y
+        smoke por la UI, se hizo hardening de cero cambio de comportamiento, se completo i18n en/pt, se registro el KB de la revision (bug, rule, decision, learn)
+        y, a pedido del dev, se amplio a una auditoria de 19 docs de SP6 mas una doc nueva.
+        <strong>Para que sirvio:</strong> un usuario vuelve a poder borrar un Plan con categorias por el path real de la UI, la causa raiz queda cerrada para
+        cualquier hijo futuro declarado en minuscula, y la documentacion de up1 deja de describir mecanismos que ya no existen.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#story" class="navlink rounded border border-stone-700 px-2 py-1">la historia</a>
+      <a href="#done" class="navlink rounded border border-stone-700 px-2 py-1">que se hizo</a>
+      <a href="#hypotheses" class="navlink rounded border border-stone-700 px-2 py-1">hipotesis (final)</a>
+      <a href="#decisions" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#sessions" class="navlink rounded border border-stone-700 px-2 py-1">sessions</a>
+      <a href="#knowledge" class="navlink rounded border border-stone-700 px-2 py-1">knowledge</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lessons</a>
+      <a href="#next" class="navlink rounded border border-stone-700 px-2 py-1">que viene</a>
+    </nav>
+
+    <!-- La historia: narrativa de onboarding, contexto -> decision -> cierre -> crecimiento de alcance -->
+    <section id="story" class="blk mt-12" data-dkc-block="case">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">La historia</h2></div>
+      <div class="space-y-3 text-sm text-stone-400 leading-relaxed">
+        <p>
+          Este ticket nacio al revisar como PR el trabajo de <a class="text-amber-400">TICKET-104 (UPONE-1382)</a>, el motor de hard delete en cascada,
+          todavia sin mergear a <code class="inline">develop</code>. La revision encontro un defecto bloqueante: borrar un <code class="inline">Curriculum</code>
+          (un Plan) que tuviera al menos una <code class="inline">requirementCategory</code> quedaba bloqueado por un Restrict falso, aunque la categoria es un
+          hijo poseido que deberia caer en cascada, no bloquear el borrado.
+        </p>
+        <p>
+          La causa resulto sutil: el motor construye las claves del subarbol con el <code class="inline">object</code> de la metadata tal cual lo declara
+          cada JSON (en minuscula para <code class="inline">requirementCategory</code>), pero al escanear referencias entrantes compara esa pertenencia contra
+          el <code class="inline">PascalName</code> del modelo Prisma. El casing nunca coincidia, asi que la categoria se contaba como referencia externa. Dos
+          unit tests estaban en verde porque cargaban un <code class="inline">object</code> en PascalCase que no existe en el JSON real: el mock ocultaba el
+          bug que el runtime si sufria.
+        </p>
+        <p>
+          La decision principal fue normalizar la comparacion de claves del subarbol (<code class="inline">objectType:id</code> resuelto a un casing canonico),
+          no parchear el JSON a PascalCase. Un parche de solo-JSON arreglaba el sintoma puntual, pero dejaba la comparacion fragil para el proximo hijo
+          declarado en minuscula; normalizar cierra la causa raiz para todo hijo, presente y futuro, a costa de tocar codigo core con revision del equipo core
+          pendiente (RULE-dev-004).
+        </p>
+        <p>
+          La sesion 1 aplico el fix, corrigio los tests falsos verdes y lo respaldo con integration contra la BD real de UPU mas un smoke por el path real de
+          RecordList; un dual-judge (dos jueces ciegos) aprobo el cambio tras resolver empiricamente su unica disputa. Las sesiones 2 y 3 hicieron hardening de
+          cero cambio de comportamiento y completaron i18n mas el mantenimiento del KB de la revision.
+        </p>
+        <p>
+          Con el fix y el KB cerrados, el dev abrio una cuarta sesion como una auditoria mas amplia: actualizar la documentacion de up1 para reflejar los tres
+          tickets de SP6 (DataLog, transiciones y versionado, y este motor de cascada). El alcance crecio mas alla del pedido original de 107, pero el dev
+          definio este ticket como el contenedor natural de la continuacion de 104.
+        </p>
+      </div>
+      <div class="case-strip mt-5 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4 bg-stone-900/40"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">Revision de UPONE-1382 como PR detecto un Restrict falso al borrar un Plan con categorias de requisito.</p></div>
+        <div class="p-4 bg-stone-900/40"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decision</div><p class="text-sm text-stone-300">Normalizar la comparacion de claves de subarbol en el motor; no parchear el JSON.</p></div>
+        <div class="p-4 bg-stone-900/40"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Fix + hardening + i18n + KB cerrados en 3 sessions; una cuarta amplio el alcance a la documentacion de SP6.</p></div>
+      </div>
+    </section>
+
+    <!-- Que se hizo: eje exclusivo del close -->
+    <section id="done" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Que se hizo (resumen del trabajo real)</h2></div>
+      <p class="text-sm text-stone-400 mb-3 leading-relaxed">Un renglon por caso del ticket, con la evidencia que lo respalda.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Caso</th><th class="text-left p-3">Que se hizo</th><th class="text-left p-3">Evidencia</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">C1 ✓</td><td class="p-3 text-stone-300">Normalizar la comparacion de claves en <code class="inline">filterExternal</code>/<code class="inline">walkDirectChildren</code> (helper <code class="inline">normalizeSubtreeKey</code>), corregir los dos unit con PascalCase inexistente, agregar integration TC-2/TC-2b/TC-3 contra BD real y smoke por RecordList.</td><td class="p-3 text-stone-400">39 unit + 7 integration verdes; dual-judge APPROVED; smoke con evidencia runtime.</td></tr>
+          <tr><td class="p-3 text-stone-300">C2</td><td class="p-3 text-stone-300">Hoistear la lectura de <code class="inline">core_FieldDefinition</code> a una sola vez por plan (antes: una lectura por nodo).</td><td class="p-3 text-stone-400">46/46 verde, zero behavior change.</td></tr>
+          <tr><td class="p-3 text-stone-300">C3</td><td class="p-3 text-stone-300">Eliminar la recursion muerta de <code class="inline">walkDirectChildren</code> (frontier/grandchildren descartados sin uso).</td><td class="p-3 text-stone-400">reviewer aislado approve; 46/46 verde.</td></tr>
+          <tr><td class="p-3 text-stone-300">C4</td><td class="p-3 text-stone-300">Reemplazar ids internos de gestion por <code class="inline">UPONE-1382</code> en comentarios del motor (DET-19); confirmar que la cita de <code class="inline">RULE-core-023</code> sigue vigente (sin crearla de nuevo).</td><td class="p-3 text-stone-400">grep sin ids internos; cita confirmada.</td></tr>
+          <tr><td class="p-3 text-stone-300">C5</td><td class="p-3 text-stone-300">Registrar la decision sobre la asimetria entre <code class="inline">deleteImpactPreview</code> y el delete generico.</td><td class="p-3 text-stone-400">DEC-050 (accepted).</td></tr>
+          <tr><td class="p-3 text-stone-300">C6</td><td class="p-3 text-stone-300">Completar el namespace <code class="inline">compositeSectionTree</code> en <code class="inline">lang/en</code> y <code class="inline">lang/pt</code> del mod.</td><td class="p-3 text-stone-400">paridad de 11 keys es/en/pt post-sync.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="text-xs text-stone-500 mt-3">Fuera de los casos C1-C6: session 4 audito y reescribio 19 documentos de core y del mod (mas una doc nueva, <code class="inline">delete-cascade.md</code>) para que reflejen los tres tickets de SP6 (P3 DataLog, P4 transiciones/versionado, P5 este motor de cascada).</p>
+    </section>
+
+    <!-- Evolucion de hipotesis, status final -->
+    <section id="hypotheses" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Evolucion de hipotesis (estado final)</h2></div>
+      <p class="text-sm text-stone-400 mb-3 leading-relaxed">El intake dejo tres hipotesis. Este es su cierre, con la evidencia que las confirma.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">#</th><th class="text-left p-3">Hipotesis</th><th class="text-left p-3">Status final</th><th class="text-left p-3">Evidencia</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300 font-medium">H1</td><td class="p-3 text-stone-300">false-Restrict por casing heterogeneo entre la clave del subarbol en minuscula (<code class="inline">object</code> del JSON) y el <code class="inline">PascalName</code> usado al comparar.</td><td class="p-3"><span class="tag tag-now">confirmada</span></td><td class="p-3 text-stone-400">trazado estatico + unit R-CASING + integration TC-2, ambas bite-verificadas (rojas sin el fix).</td></tr>
+          <tr><td class="p-3 text-stone-300 font-medium">H2</td><td class="p-3 text-stone-300">los unit mockeados verdes ocultaban el bug al cargar un <code class="inline">object</code> PascalCase inexistente en el JSON real.</td><td class="p-3"><span class="tag tag-now">confirmada</span></td><td class="p-3 text-stone-400">T4 e historyKey declaraban <code class="inline">RequirementCategory</code>; <code class="inline">Curriculum.json</code> declara <code class="inline">requirementCategory</code>.</td></tr>
+          <tr><td class="p-3 text-stone-300 font-medium">H3</td><td class="p-3 text-stone-300">la causa raiz (comparar <code class="inline">PascalName</code> crudo) es general, pero hoy solo <code class="inline">requirementCategory</code> la gatilla.</td><td class="p-3"><span class="tag tag-next">parcial, confirmada al normalizar</span></td><td class="p-3 text-stone-400">TC-3 (planEntry) sin regresion tras el fix; <code class="inline">planEntry</code> usa FK <code class="inline">planId</code> y <code class="inline">requirement</code> usa <code class="inline">ownerType</code> minuscula, ninguno matchea hoy el escaneo de FK por convencion.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- Decisiones tomadas -->
+    <section id="decisions" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Decisiones tomadas</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Normalizar, no parchear el JSON</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Cambiar la comparacion de claves del subarbol a identidad normalizada, en vez de reescribir <code class="inline">Curriculum.json</code> a PascalCase. Cierra la causa raiz para cualquier hijo futuro declarado en minuscula. Promovida a RULE-core-031.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">i18n en/pt dentro de este ticket</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Completar el namespace <code class="inline">compositeSectionTree</code> en <code class="inline">lang/en</code> y <code class="inline">lang/pt</code> del mod (C6), en vez de dejarlo como deuda separada del componente, con paridad exacta contra <code class="inline">es</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">DEC-050: la asimetria es intencional</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">deleteImpactPreview</code> corre el motor siempre (fail-safe para UI/MCP); el delete generico gatea por hijos declarados y confia en el FK constraint de la BD. No es un hueco de integridad, se documenta como comportamiento vigente.</p></div>
+      </div>
+    </section>
+
+    <!-- Highlights por session, narrando el flujo -->
+    <section id="sessions" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Highlights por session (el flujo)</h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Cada session se apoyo en la anterior: primero el comportamiento correcto, despues la calidad sobre ese comportamiento, despues el conocimiento, y por ultimo la documentacion del ecosistema completo.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · el fix + tests reales</div><p class="text-xs text-stone-400 leading-relaxed">Ataco C1, el false-Restrict. <code class="inline">normalizeSubtreeKey</code> corrige la comparacion; se corrigieron los dos unit con casing inventado (T4 e historyKey) y se agrego integration real contra UPU (TC-2 requirementCategory, TC-2b categoryId Restrict-FK, TC-3 planEntry). El smoke confirmo cascada real en RecordList. El dual-judge (dos jueces ciegos) termino APPROVED tras resolver empiricamente su unica disputa (cobertura de categoryId) con TC-2b nuevo. Dejo el motor corregido y verificado como base para el hardening siguiente.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · hardening de cero cambio de comportamiento</div><p class="text-xs text-stone-400 leading-relaxed">Con el comportamiento ya correcto, ataco calidad sin tocarlo: hoisteo de la lectura de <code class="inline">core_FieldDefinition</code>, eliminacion de la recursion muerta de <code class="inline">walkDirectChildren</code> y reemplazo de ids internos por <code class="inline">UPONE-1382</code>. Las 46 pruebas de S1 siguieron verdes antes y despues; un reviewer aislado (no dual-judge, porque no hay cambio de comportamiento que juzgar) aprobo sin hallazgos bloqueantes.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · i18n + consolidacion del KB</div><p class="text-xs text-stone-400 leading-relaxed">Cerro los dos pendientes de calidad menor: completo <code class="inline">compositeSectionTree</code> en en/pt del mod con paridad exacta contra es, y consolido el KB de toda la revision: el bug (BUG-curriculum-design-012), la rule de core (RULE-core-031), el learn (L1) y la decision de la asimetria (DEC-050). Todos los records se validaron con <code class="inline">dkc-validate</code> antes de comprometerse.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · auditoria y reescritura de docs SP6</div><p class="text-xs text-stone-400 leading-relaxed">Con el fix, el hardening y el KB cerrados, el dev abrio esta session para una auditoria mas amplia: revisar y actualizar 19 documentos de core y del mod (mas una doc nueva, <code class="inline">delete-cascade.md</code>) para que reflejen los tres tickets de SP6. Un primer barrido automatico sobre-reporto retiros que no eran reales y se corrigio contra el codigo antes de escribir. Tras esa primera pasada, el feedback del dev pidio reescribir a estado actual y purgar artefactos internos de gestion; los 16 docs con ese problema se reescribieron a fondo. Una revision lite estilo dredd cerro con veredicto ALINEADO, sin scope creep.</p></div>
+      </div>
+    </section>
+
+    <!-- Knowledge promovido -->
+    <section id="knowledge" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Knowledge promovido</h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Cuatro records nuevos quedan en el KB del proyecto, derivados directamente de esta revision.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">BUG-curriculum-design-012 <span class="tag tag-now ml-1">fixed</span></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El false-Restrict al borrar un Curriculum con requirementCategory, con su root cause (casing heterogeneo en las claves de subarbol) y su solucion (<code class="inline">normalizeSubtreeKey</code>, fixed en a0f65cb).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RULE-core-031 <span class="tag tag-next ml-1">global · must</span></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Comparar pertenencia al subarbol por identidad normalizada, nunca por <code class="inline">PascalName</code> crudo contra la clave de metadata. Promueve la memoria de proyecto sobre resolver nombres por introspeccion, no por string.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">DEC-050 <span class="tag tag-future ml-1">accepted</span></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La asimetria entre <code class="inline">deleteImpactPreview</code> (siempre corre el motor) y el delete generico (gatea por hijos declarados) es intencional, no un hueco de integridad.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">L1 <span class="tag tag-now ml-1">refined</span></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Los unit del motor de delete deben cargar el <code class="inline">object</code> real declarado en el JSON, no un string inventado; dos tests con PascalCase inexistente ocultaron el bug. Promovido a BUG-curriculum-design-012 y RULE-core-031.</p></div>
+      </div>
+    </section>
+
+    <!-- Lessons learned -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Lessons learned</h2></div>
+      <details class="qa"><summary>¿Por que unit tests en verde no bastan para codigo de datos?</summary><div class="ans">(de H2 confirmada) porque un mock puede cargar un casing o un string que no existe en la fuente real, el JSON del objeto. El test queda verde mientras el runtime real, con el dato real, falla. Para delete, persistencia con proyecciones, casing o FK, exigir integration contra BD real, no basta el unit mockeado.</div></details>
+      <details class="qa"><summary>¿Como se debe resolver el nombre de un modelo o de una FK en codigo core?</summary><div class="ans">Por introspeccion del schema, nunca comparando strings crudos entre convenciones distintas (el <code class="inline">PascalName</code> del modelo Prisma contra el <code class="inline">object</code> de la metadata JSON). Esa comparacion cruda fue exactamente la causa raiz de H1; RULE-core-031 lo deja como regla global del proyecto.</div></details>
+      <details class="qa"><summary>¿Que aprendio el equipo sobre como escribir la documentacion?</summary><div class="ans">Que debe describir el estado ACTUAL en prosa limpia, sin mencionar artefactos internos de gestion (ids de ticket, spec o regla internos). Anexar capas tipo changelog en vez de reescribir el estado actual vuelve la doc confusa para quien la lee despues. Esta leccion vino del feedback del dev en S4, tras la primera pasada de la auditoria.</div></details>
+    </section>
+
+    <!-- Que viene despues -->
+    <section id="next" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Que viene despues</h2></div>
+      <div class="callout callout-info"><strong>ℹ Backlog abierto:</strong> B7 (should): ampliar <code class="inline">findIncomingReferences</code> para detectar FK entrantes con nombre no convencional como <code class="inline">planEntry.categoryId</code>, hallado por el dual-judge en S1, fuera del alcance de este fix de casing. B8 (could): corregir la tabla de <code class="inline">bulk-mutations.md</code> que describe una delegacion inexistente. B9 (should): actualizar el test a11y del badge al enum de 6 estados. B10 (could): remover capabilities muertas de <code class="inline">curriculum-design</code>. B11 (could): limpiar un comentario stale en una story de Storybook. Todos preexistentes o de alcance menor, ninguno bloquea el cierre de este ticket.</div>
+      <div class="callout callout-warn"><strong>⚠ Gate humano pendiente:</strong> push de las ramas y revision del equipo core (RULE-dev-004), porque el fix y el hardening viven en codigo core compartido (<code class="inline">deleteImpactPlan.js</code>) con blast radius amplio. Cerrar este ticket en DKC NO implica el merge a <code class="inline">develop</code>: ese gate sigue externo y separado, y todo el codigo queda commiteado local en la rama <code class="inline">feat/UPONE-1382-hard-delete-cascade</code>, listo para esa revision.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-107 · close · up1 · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

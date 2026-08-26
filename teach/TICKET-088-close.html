@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Malla — Filtros + interacciones avanzadas · TICKET-088</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .badge { display:inline-block; padding:0.1rem 0.5rem; border-radius:9999px; font-size:0.7rem; font-weight:700; }
+  .badge-green { background:rgba(52,211,153,0.15); color:#6ee7b7; border:1px solid rgba(52,211,153,0.35); }
+  .badge-red { background:rgba(248,113,113,0.15); color:#fca5a5; border:1px solid rgba(248,113,113,0.35); }
+  .badge-amber { background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.35); }
+  .badge-blue { background:rgba(129,140,248,0.15); color:#a5b4fc; border:1px solid rgba(129,140,248,0.35); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-088</span> · Malla — Filtros + interacciones avanzadas</span>
+      <span>up1 · 2026-07-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Malla — Filtros + interacciones avanzadas</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      MC-08 corrió en <code class="inline">autopilot: super</code>, 4 sessions consecutivas sin pausa, sobre el mod
+      <code class="inline">curriculum-design</code>. Este documento cuenta qué se construyó realmente en cada session,
+      cómo se reconcilió el scope congelado del ticket con la fuente autoritativa, qué encontró el dual-judge (DET-35)
+      que un review de una sola pasada probablemente no hubiera visto, y qué queda pendiente de verificar en un entorno real.
+    </p>
+
+    <!-- tldr -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        4 sessions, 1212 tests en verde, 8 commits <code class="inline">UPONE-1351-S{1..4}</code>, mod-only.
+        Se entregaron: filtros de malla (chips de línea + rollup de créditos + chips de bloques electivos),
+        bloqueo estructural por prerrequisitos al agregar un curso (modal Cancelar/Volver, créditos NO alertan),
+        drag&amp;drop cross-columna entre períodos con recálculo de posiciones + botón "Agregar período" + alerta de discrepancia,
+        chip de línea en la tarjeta, y el fix verify-first del doble <code class="inline">+</code> (ya resuelto de antes).
+        El dual-judge (T3, en S3 y S4) encontró 5 bugs reales que los tests unitarios en verde no veían.
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">Timeline S1-S4</a>
+      <a href="#decisions" class="navlink rounded border border-stone-700 px-2 py-1">Decisiones clave</a>
+      <a href="#hypotheses" class="navlink rounded border border-stone-700 px-2 py-1">Evolucion hipotesis</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Lessons learned</a>
+      <a href="#backlog" class="navlink rounded border border-stone-700 px-2 py-1">Pendiente</a>
+    </nav>
+
+    <!-- ======================================================
+         BLOQUE: timeline — las 4 sessions
+    ======================================================= -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Timeline de ejecucion (S1-S4)</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 — Presentacion de tarjeta + fix verify-first (REQ-04 + REQ-05)</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T2. REQ-05 (doble <code class="inline">+</code> del boton "Agregar asignatura") se verifico primero contra el render real:
+            ya estaba resuelto desde un commit previo (un solo <code class="inline">Button icon="bi bi-plus-lg"</code> + <code class="inline">$t(addSubject)</code>
+            sin <code class="inline">+</code> literal en los 3 locales). DET-32 lo marco <strong>drop</strong> — no se re-litigo un problema que ya no existia.
+            REQ-04: se amplio <code class="inline">CategoryVM</code>/<code class="inline">toCategoryVM</code> con <code class="inline">icon</code>/abreviacion
+            (<code class="inline">resolveCategoryIcon</code>/<code class="inline">resolveCategoryCode</code>) y se agrego el chip de linea en la tarjeta
+            + badge "electivo" reubicado a la derecha.
+            Gate: <span class="badge badge-green">approve</span> (quality review standard, 1 warn de accesibilidad preexistente en el atom CORE, 1 warn de story sin caso "sin chip").
+            <br class="mt-1"><span class="text-stone-500">Suite:</span> 66 archivos, 1146 tests pass.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 — Filtros de la malla (REQ-01)</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T2. <code class="inline">curriculumMeshFilters.logic.ts</code> nuevo: resaltado por <code class="inline">categoryId</code>,
+            chips de bloques electivos derivados de <code class="inline">blockId</code>, rollup de creditos por linea, boton Limpiar.
+            H5 confirmada empiricamente: los filtros NO tienen gating <code class="inline">canEdit</code> — son de solo lectura,
+            a diferencia del alta/edicion y del DnD de S4.
+            Gate: <span class="badge badge-green">approve</span> (mutation testing verifico que TC-01/TC-08 muerden si se altera la logica; seam DEC-038 respetado).
+            <br class="mt-1"><span class="text-stone-500">Suite:</span> 67 archivos, 1157 tests pass.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S3 — Bloqueo por prerrequisitos [T3, dual-judge]</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T3. Primera task: validar H6 (query <code class="inline">requirement</code> con filtro triple-EQUALS) — confirmada
+            por lectura directa del resolver (<code class="inline">instance.resolver.js:1227</code>), no por suposicion.
+            Se construyo <code class="inline">usePrereqRequirements.ts</code> + <code class="inline">prereqCheck.logic.ts</code>
+            (RecordState Before/Either + Group K-de-N; excluye MetricThreshold) + <code class="inline">PrereqBlockModal</code> (Cancelar/Volver).
+            <strong class="text-red-400">Dual-judge en contradiccion</strong>: Juez A aprobo; Juez B encontro 2 WARNINGs reales que A no vio
+            (scope de chequeo con seleccion completa en vez de <code class="inline">toAdd</code>; UUID crudo en el modal en vez del codigo del curso).
+            Fix quirurgico + re-judge → approve.
+            Gate: <span class="badge badge-green">approve (post-fix)</span>. Suite: 69 archivos, 1196 tests pass.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S4 — Drag&amp;drop + periodos [T3, dual-judge]</div>
+          <p class="text-xs text-stone-400 mt-1 leading-relaxed">
+            Tier T3. <code class="inline">recalcPeriodPosition.logic.ts</code> (recalculo puro origen+destino, 0-based) + wiring
+            <code class="inline">sortablejs</code> multi-list cross-columna (grupo <code class="inline">cm-periods</code>) + persistencia
+            en loop via <code class="inline">UPDATE_PLAN_ENTRY</code> + boton "Agregar periodo" + alerta de discrepancia vs
+            <code class="inline">Curriculum.totalPeriods</code>.
+            <strong class="text-red-400">Ambos jueces reportaron iterate con hallazgos distintos</strong>: Juez A detecto un off-by-one
+            de correctitud del happy-path (<code class="inline">evt.newIndex</code> contaba el header <code class="inline">.cm-colh</code>);
+            Juez B encontro 3 riesgos de robustez (race de drag concurrente, sin rollback en persistencia parcial, "Agregar periodo" sin undo).
+            Fix quirurgico de los 5 hallazgos + re-judge → approve.
+            Gate: <span class="badge badge-green">approve (post-fix)</span>. Suite: 70 archivos, 1212 tests pass.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="mt-4 rounded-lg border border-stone-700 bg-stone-900/50 p-4 text-xs text-stone-400 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div><div class="text-amber-400 font-semibold text-base">4</div><div>sessions (S1-S4)</div></div>
+        <div><div class="text-amber-400 font-semibold text-base">1212</div><div>tests en verde al cierre</div></div>
+        <div><div class="text-amber-400 font-semibold text-base">8</div><div>commits UPONE-1351-S{N}</div></div>
+        <div><div class="text-amber-400 font-semibold text-base">2</div><div>sessions con dual-judge (S3/S4, T3)</div></div>
+      </div>
+
+      <div class="callout callout-note mt-4">
+        <strong>Reconciliacion de scope</strong> — el ticket se creo (2026-06-25) transcribiendo un pre-spec de 3 REQs.
+        La fuente autoritativa <code class="inline">sp5/prespecs/MC-08.md</code> se actualizo el 2026-07-01 (feedback de MC-06) a 5 REQs.
+        El SPEC formal <code class="inline">SPEC-curriculum-design-mesh-filters-interactions</code> transcribio la fuente completa, no la
+        version congelada del ticket — asi entraron REQ-04 (chip de linea) y REQ-05 (fix del <code class="inline">+</code>) que no estaban
+        en la tabla original de 3 filas.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: comparison-table — decisiones clave
+    ======================================================= -->
+    <section id="decisions" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Decisiones clave y su resultado</h2>
+
+      <div class="overflow-x-auto rounded-lg border border-stone-700">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-900 text-stone-400 text-xs uppercase">
+            <tr>
+              <th class="text-left p-3">Decision</th>
+              <th class="text-left p-3">Alternativa descartada</th>
+              <th class="text-left p-3">Resultado</th>
+              <th class="p-3 text-center">Veredicto</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-800 text-xs">
+            <tr class="bg-amber-500/5">
+              <td class="p-3 text-amber-300 font-medium">Checker de prereqs <strong>estructural</strong> (H2)</td>
+              <td class="p-3 text-stone-400">Evaluar <code class="inline">RecordState.mustBe</code> contra historico academico (transcript-based)</td>
+              <td class="p-3 text-stone-300">El check solo responde "¿esta el prereq-curso en un periodo anterior?". Degree-audit (evaluar notas/aprobacion) queda diferido a SP6. Confirmado: <code class="inline">MeshEntry</code> no tiene campo de estado academico.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">confirmada</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium"><code class="inline">MetricThreshold</code> nunca alerta (DEC-035)</td>
+              <td class="p-3 text-stone-400">Alertar tambien por creditos minimos insuficientes</td>
+              <td class="p-3 text-stone-300">Sostenido en las 4 sessions: solo <code class="inline">RecordState</code> y <code class="inline">Group</code> K-de-N bloquean. TC-03 verifica explicitamente que un curso con unico requisito de creditos NO bloquea.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">sostenida</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">Draft aprobado como <code class="inline">skip</code></td>
+              <td class="p-3 text-stone-400">Bloquear hasta aprobacion explicita del dev (DET-18 estricto)</td>
+              <td class="p-3 text-stone-300">En autopilot super, el artefacto (preview.html + intent.md v1) se genero y valido como material de revision asincrona, pero la aprobacion no es sincrona. Es reversible: se itera post-hoc si el dev objeta el visual incremental sobre MC-05.</td>
+              <td class="p-3 text-center"><span class="badge badge-blue">modo autonomo</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">REQ-05 = drop (verify-first)</td>
+              <td class="p-3 text-stone-400">Corregir el doble <code class="inline">+</code> asumiendo que aun existia</td>
+              <td class="p-3 text-stone-300">DET-32 exige verificar antes de construir: el render real y el i18n de los 3 locales ya no tenian el literal <code class="inline">+</code>. El reporte original venia de una version previa. Cero cambios innecesarios.</td>
+              <td class="p-3 text-center"><span class="badge badge-green">correcta</span></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-300 font-medium">Alta por lote = todo-o-nada (L7, DEC-LOCAL)</td>
+              <td class="p-3 text-stone-400">Bloquear solo las actividades con prereqs faltantes, permitir el resto del lote</td>
+              <td class="p-3 text-stone-300">Si cualquier actividad del lote tiene faltantes, se bloquea el lote completo (cero mutations) — consistente con el rollback de <code class="inline">createElectivaEntries</code> de MC-06. <strong>Decision de diseño no confirmada explicitamente con el dev</strong> — candidato a validar.</td>
+              <td class="p-3 text-center"><span class="badge badge-amber">confirmar con dev</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: flow — evolucion de hipotesis
+    ======================================================= -->
+    <section id="hypotheses" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Evolucion de hipotesis</h2>
+      <p class="text-xs text-stone-500 mb-4">Las 6 hipotesis del intake (H1-H6): todas confirmadas, ninguna refutada — a diferencia de otros tickets del modulo donde el intake anticipa mal.</p>
+
+      <div class="pre-mermaid mb-6">
+        <pre class="mermaid">
+flowchart LR
+  H1_ini["H1: creditos NO alertan\n(solo cursos + K-de-N)"]
+  H1_fin["H1: CONFIRMADA\nDEC-035 + schema MetricThreshold\nsostenida en S3 (TC-03)"]
+  H1_ini -->|"KB + schema, ya en intake"| H1_fin
+
+  H2_ini["H2: check ESTRUCTURAL\n(no transcript-based)"]
+  H2_fin["H2: CONFIRMADA — clave conceptual\nMeshEntry sin estado academico\ndegree-audit diferido a SP6"]
+  H2_ini -->|"schema curriculumMesh.logic.ts:35-67"| H2_fin
+
+  H3_ini["H3: malla no carga requirement\n(necesita composable nuevo)"]
+  H3_fin["H3: CONFIRMADA\nusePrereqRequirements.ts nuevo\npatron useBlockOptions"]
+  H3_ini -->|"grep S3.T1"| H3_fin
+
+  H4_ini["H4: DnD cross-column\nes logica nueva (sortablejs sin usar)"]
+  H4_fin["H4: CONFIRMADA\nrecalcPeriodPosition.logic.ts\nadaptado de computePositionUpdates"]
+  H4_ini -->|"grep + precedente single-list"| H4_fin
+
+  H5_ini["H5: filtros SIN gating canEdit\n(read-only, a diferencia de DnD)"]
+  H5_fin["H5: CONFIRMADA (S2.T3)\nhandlers no consultan plan.status/mode"]
+  H5_ini -->|"evidencia S2: inspeccion de codigo"| H5_fin
+
+  H6_ini["H6: listInstances soporta\nfiltro triple-EQUALS para requirement"]
+  H6_fin["H6: CONFIRMADA (S3.T1)\nresolver itera processedFilters\ngenerico -> AND, sin tope"]
+  H6_ini -->|"lectura instance.resolver.js:1227"| H6_fin
+        </pre>
+      </div>
+
+      <div class="callout callout-success">
+        <strong>Lo mas relevante: H6 se confirmo leyendo el resolver, no por analogia.</strong>
+        El intake dejaba H6 como <code class="inline">~ inferred</code> porque solo habia un precedente analogo
+        (<code class="inline">useBlockOptions.ts:70-76</code>, para otro objeto y otra combinacion de campos).
+        En vez de asumir que el patron se replicaba, S3.T1 leyo directamente <code class="inline">instance.resolver.js:1227</code>
+        y confirmo que <code class="inline">processedFilters</code> se itera genericamente sin logica por-campo — el AND final
+        aplica a cualquier combinacion de filtros EQUALS, no solo a la que ya existia en produccion. Es la misma disciplina de
+        verificacion empirica que en TICKET-086 cerro H1.2 con un spike de codigo fuente, en vez de un supuesto razonable.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: study-qa — lessons learned
+    ======================================================= -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Lessons learned</h2>
+      <p class="text-xs text-stone-500 mb-4">Lo mas valioso para el dev que trabaje sobre este modulo, sobre logica de dominio nueva, o sobre el proceso DKC en el futuro.</p>
+
+      <details class="qa">
+        <summary>¿Por que el dual-judge (DET-35) encontro 5 bugs reales que un review de una sola pasada probablemente no hubiera visto?</summary>
+        <div class="ans">
+          <p>En las 2 sessions T3 (S3 y S4) — ambas construyendo <strong>logica de dominio nueva sin precedente local</strong> (checker de prereqs; DnD cross-columna) —
+          los dos jueces ciegos independientes encontraron hallazgos que NO se solapaban entre si:</p>
+          <ul class="list-disc list-inside mt-2 space-y-1">
+            <li><strong>S3</strong> — Juez B (no A): scope del check usaba la seleccion completa en vez de <code class="inline">toAdd</code> al editar un bloque electivo existente (podia bloquear una alta legitima); UUID crudo mostrado en el modal en vez del codigo legible del curso.</li>
+            <li><strong>S4</strong> — Juez A (no B): off-by-one de <code class="inline">evt.newIndex</code> (contaba el header <code class="inline">.cm-colh</code>, cards soltadas al inicio caian un slot mas alla) — bug del <strong>happy-path</strong>, no un edge case.</li>
+            <li><strong>S4</strong> — Juez B (no A): race de drag concurrente durante mutacion in-flight; persist-loop sin rollback en fallo parcial; "Agregar periodo" sin undo.</li>
+          </ul>
+          <p class="mt-2"><strong>Por que importa</strong>: si solo hubiera corrido un juez, cualquiera de los dos habria dejado pasar la mitad de los hallazgos reales.
+          La contradiccion entre jueces (A approve / B iterate en S3; ambos iterate con hallazgos distintos en S4) es justamente la señal que DET-35 esta diseñado para capturar —
+          no ruido, sino cobertura complementaria. Para logica de dominio nueva (sin tests de regresion previos que "muerdan" estos casos), el costo de 2 jueces ciegos se paga solo.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Por que el off-by-one de <code class="inline">evt.newIndex</code> en S4 es mas grave que los hallazgos de robustez del otro juez?</summary>
+        <div class="ans">
+          <p>Los hallazgos de robustez de Juez B (race concurrente, rollback, undo) son casos de borde: ocurren si el usuario interactua de cierta forma o si falla la red.
+          El hallazgo de Juez A es distinto en naturaleza: <code class="inline">evt.newIndex</code> de sortablejs es el indice DOM crudo del elemento soltado, y ese DOM incluia
+          el header <code class="inline">.cm-colh</code> de la columna como si fuera una card mas. Eso significa que <strong>toda tarjeta soltada al inicio de una columna
+          quedaba un slot mas alla de donde el usuario la solto</strong> — no un edge case, sino el comportamiento por defecto del feature en su escenario mas comun.</p>
+          <p class="mt-2">El fix (<code class="inline">newDraggableIndex</code>/<code class="inline">oldDraggableIndex</code>, filtrando solo cards) es quirurgico, pero el punto de la leccion
+          es que un bug de correctitud del happy-path puede esconderse detras de tests unitarios verdes cuando esos tests ejercitan la logica pura (<code class="inline">recalcPeriodPosition.logic.ts</code>)
+          con indices ya "limpios" — nunca con el indice crudo que produce el DOM real con el header incluido.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Por que el vitest del mod no puede probar la interaccion real del drag&amp;drop ni del modal de prereqs?</summary>
+        <div class="ans">
+          <p>Reconfirma L4 de MC-06/MC-08: el vitest de <code class="inline">curriculum-design</code> corre en <code class="inline">environment: 'node'</code>
+          sin <code class="inline">@vitejs/plugin-vue</code> — los <code class="inline">.vue</code> no se montan, y el DnD ademas necesita DOM real + eventos de puntero
+          que ni el node-env ni una story pueden simular. Por eso el patron del mod (heredado de MC-06) es: toda la logica de calculo/decision
+          (<code class="inline">recalcPeriodPosition</code>, <code class="inline">prereqCheck</code>, <code class="inline">curriculumMeshFilters</code>) vive en
+          <code class="inline">.logic.ts</code> puro con <code class="inline">.spec.ts</code> exhaustivo, y el <code class="inline">.vue</code> se cubre con stories + smoke manual.</p>
+          <p class="mt-2"><strong>Consecuencia practica de este ticket</strong>: el smoke real del DnD (arrastrar contra un backend vivo) y del modal de prereqs
+          (bloqueo real contra datos de seed) quedan como gap conocido, documentado explicitamente en L12 y en el backlog — no se dio por cerrado el REQ-03/REQ-02
+          en ambiente productivo solo porque los 1212 tests pasan.</p>
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Que fue realmente nuevo en REQ-04 (chip de linea) si <code class="inline">icon</code>/<code class="inline">code</code> ya existian en el schema?</summary>
+        <div class="ans">
+          <p><code class="inline">icon</code>/<code class="inline">code</code> ya estaban en <code class="inline">requirementCategory.json</code> desde MC-02 (L2) —
+          el objeto de dominio no necesito ningun cambio, ni codegen, ni migracion. Todo el trabajo de REQ-04 fue mapeo frontend puro:
+          exponer esos dos campos en <code class="inline">CategoryVM</code>/<code class="inline">toCategoryVM</code> (que hoy solo traia <code class="inline">{id,name,color,minCredits}</code>)
+          y consumirlos en el chip de la tarjeta.</p>
+          <p class="mt-2">La leccion para el dev: cuando un REQ de UI parece requerir "un campo nuevo", vale la pena verificar primero si el dato ya existe en el schema
+          y solo no esta expuesto en la capa de mapeo — evita trabajo de backend/migracion innecesario. Es el mismo principio de DET-32 aplicado a nivel de campo, no solo de feature completo.</p>
+        </div>
+      </details>
+
+    </section>
+
+    <!-- ======================================================
+         BLOQUE: callout — backlog pendiente
+    ======================================================= -->
+    <section id="backlog" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-4">Pendiente (backlog abierto)</h2>
+      <div class="callout callout-warn">
+        <strong>Smoke UI real — DnD y bloqueo de prereqs contra backend vivo</strong><br>
+        El vitest node-env no ejercita DOM+eventos de puntero (DnD) ni el flujo completo de alta contra datos de seed reales (prereqs).
+        Ambos quedan documentados como gap conocido (L12, S3/S4) — no dar REQ-02/REQ-03 por cerrados en ambiente productivo sin este smoke manual.
+      </div>
+      <div class="callout callout-info mt-2">
+        <strong>W3 — Persistencia atomica de batch en DnD</strong><br>
+        El persist-loop de <code class="inline">UPDATE_PLAN_ENTRY</code> por hermano no tiene transaccion cross-mutation. En fallo parcial se hace
+        refetch + aviso de error, pero una mutation de batch atomica requiere soporte de backend, fuera del scope de este mod-only ticket → backlog <code class="inline">could</code>.
+      </div>
+      <div class="callout callout-note mt-2">
+        <strong>"Agregar periodo" no persiste <code class="inline">totalPeriods</code> (L11)</strong><br>
+        Es intencionalmente solo de vista (<code class="inline">viewExtraPeriods</code>, estado local, reset al cambiar de plan) — de ahi nace la alerta de discrepancia.
+        Si el negocio espera que el conteo persista en <code class="inline">Curriculum.totalPeriods</code>, es un REQ adicional fuera de alcance de S4 → confirmar con el dev.
+      </div>
+      <div class="callout callout-note mt-2">
+        <strong>Otros items menores</strong><br>
+        Story sin caso "sin chip" (gap de documentacion, logica ya cubierta en unit) · <code class="inline">aria-hidden</code> ausente en el atom <code class="inline">Badge</code>
+        (gap preexistente del CORE <code class="inline">layout/</code>, fuera de scope) · el mod <code class="inline">curriculum-design</code> sigue sin config de ESLint (L3, ya reportado en MC-06/L3 equivalente) —
+        el gate de lint de DET-23 no tiene tooling que ejecutar.
+      </div>
+    </section>
+
+    <!-- Invariante final -->
+    <section class="blk mt-12" data-dkc-block="invariant">
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">
+          <span class="text-amber-400">Un solo juez ciego habria aprobado con la mitad de los bugs sin ver.</span>
+          En S3 y S4 los dos jueces reportaron hallazgos que no se solapaban.
+        </div>
+        <div class="ilabel mt-2">
+          Corolario: para logica de dominio nueva sin precedente local ni tests de regresion previos que la ejerciten
+          (checker de prereqs, DnD cross-columna), el dual-judge DET-35 no es redundancia — es la unica forma de que
+          las dos mitades del espacio de bugs se cubran antes de que el codigo llegue al dev.
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · close · TICKET-088 (UPONE-1351) · MC-08 · up1 · 2026-07-02 · DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

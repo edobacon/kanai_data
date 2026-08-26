@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Alta en lote: co-add en prereqs, picker y fix de niveles · TICKET-124</title>
+
+<!--
+  metadata · ticket: TICKET-124 · kind: close · project: up1 · generated: 2026-08-10
+-->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-124</span> · Alta en lote de la malla modular</span>
+      <span>up1 · 2026-08-10</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Alta en lote de la malla modular: co-add en prereqs, picker y derivacion de niveles</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este cierre mira hacia atras: que se realizo en las dos sessions del follow-up de UPONE-1539 y en que orden.
+      El trabajo empezo como un fix acotado del chequeo de prerrequisitos del alta en lote mas un toggle del picker, y
+      un smoke de UI real termino destapando un bug mas profundo en la derivacion de niveles que ya vivia en codigo
+      cerrado. El contexto conceptual (que es el alta modular, que es un grupo OR/K-de-N) ya se cubrio en el intake;
+      aca solo el recorrido de lo hecho y la leccion que deja.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed"><strong class="text-amber-300">TL;DR</strong> —
+        S1 corrigio el chequeo de prereqs del alta en lote (contar los co-agregados como colocados, solo en modular) y
+        agrego el toggle "ver solo lo seleccionado"; el dual-judge marco <em>iterate</em> por un gating mal puesto y se
+        corrigio. S2 nacio del smoke: tres ajustes pedidos por el dev, y el smoke destapo un bug de derivacion de
+        niveles (opciones OR/K-de-N no colocadas colapsaban el min) que se corrigio con el sentinela
+        <code class="inline">ABSENT_PATH</code> + 7 tests + reviewer approve + runtime. Leccion: un smoke de UI real
+        caza lo que los unit mockeados no ven.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">timeline por session</a>
+      <a href="#case" class="navlink rounded border border-stone-700 px-2 py-1">como aparecio el bug de niveles</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#lesson" class="navlink rounded border border-stone-700 px-2 py-1">leccion clave</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- FLUJO POR SESSION (narrativa de acciones, no re-listado de titulos) -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Que se hizo, session por session</h2></div>
+
+      <div class="tl mt-4">
+        <div class="tl-item">
+          <div class="text-sm font-medium text-amber-300">Session 1 — el fix planeado y una correccion del juez</div>
+          <p class="text-xs text-stone-400 leading-relaxed mt-1">
+            Se arranco por el bug reportado: el chequeo de prerrequisitos del alta en lote no miraba los cursos que
+            entraban en el mismo lote. Se cambio <code class="inline">findMissingPrereqsForBatch</code> para tratar los
+            <code class="inline">targetActivityIds</code> del lote como colocados al evaluar cada actividad, y el caller
+            <code class="inline">checkPrereqsForBatch</code> paso a inyectar ese contexto. En paralelo se sumo el toggle
+            "ver solo lo seleccionado" como un filtro puro mas en el pipeline del picker
+            (<code class="inline">filterBySelected</code>) con su control en el <code class="inline">AddEntryModal</code>
+            e i18n. La paridad en up1-mcp se evaluo y quedo N/A: el alta en lote con inter-satisfaccion vive solo en el
+            mod. El dual-judge (DET-35) no aprobo a la primera: los dos jueces coincidieron en <em>iterate</em> porque el
+            fix gateaba mal (el co-add se aplicaba tambien al alta secuencial, que debe conservar el bloqueo Before). Se
+            corrigio pasando el flag <code class="inline">isModular</code> desde el caller y se agrego un test de
+            regresion del camino secuencial. Recien ahi el gate cerro en <em>continue</em>.
+          </p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-amber-300">Session 2 — post-smoke: el smoke pide tres cosas y destapa una cuarta</div>
+          <p class="text-xs text-stone-400 leading-relaxed mt-1">
+            Al smokear lo de S1 en la UI, el dev pidio tres ajustes: (1) quitar un hint que era redundante porque la
+            maqueta ya tenia el banner, (2) aclarar el texto de ayuda del campo de progresion. Y mientras se validaba el
+            alta, el mismo smoke destapo el hallazgo grande: la derivacion de niveles colocaba mal a los cursos con
+            prerrequisitos OR/K-de-N. Una opcion del grupo que no estaba colocada aportaba nivel 0 y colapsaba el minimo
+            (o el K-esimo), dejando el curso un nivel por debajo. Se corrigio excluyendo las vias no colocadas mediante
+            un sentinela <code class="inline">ABSENT_PATH</code> que nunca alcanza nivel final ni creditos, con 7 tests
+            que cubren OR con opcion ausente, grupo sin ninguna via colocada y K-de-N estructural vs insuficiente. El
+            reviewer independiente trazo las 6 interacciones y dio <em>approve</em>, y se verifico en runtime: ADM-5 (OR
+            con solo ADM-1 colocado) paso de estar un nivel abajo a Nivel 2.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMO APARECIO EL BUG DE NIVELES (contexto -> decision -> resultado) -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El caso ADM-5</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">ADM-5 tiene un prereq OR {ADM-1, ADM-2}. Solo ADM-1 estaba colocado. Al agregar cursos por la UI, ADM-5 aparecia un nivel mas abajo de lo esperado.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decision</div><p class="text-sm text-stone-300">La opcion no colocada (ADM-2) no debe aportar nivel 0 al OR; solo cuentan las vias efectivamente colocadas. Se excluye con el sentinela <code class="inline">ABSENT_PATH</code>.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">ADM-5 se ubica en Nivel 2, verificado en runtime. El sentinela nunca alcanza nivel final ni suma creditos.</p></div>
+      </div></div>
+    </section>
+
+    <!-- INVARIANTE -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Invariante que deja el fix</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">En la derivacion de niveles modular, el nivel de un grupo OR/K-de-N se computa <span class="text-amber-400">solo sobre las vias colocadas</span>; una opcion ausente no participa del min ni del K-esimo.</div>
+        <div class="ilabel mt-2">Corolario: agregar una opcion alternativa al plan puede subir el nivel de un curso, pero nunca bajarlo por el mero hecho de que otra via del grupo siga sin colocar.</div>
+      </div>
+    </section>
+
+    <!-- LECCION CLAVE -->
+    <section id="lesson" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Leccion clave</h2></div>
+      <div class="callout callout-warn">
+        <strong>⚠ Un smoke de UI real caza lo que los unit mockeados no ven.</strong> El bug de derivacion de niveles no
+        estaba en el alcance planeado: vivia en codigo cerrado de TICKET-120 y solo salio a la luz al agregar cursos por
+        la UI real durante el smoke de S2. Los unit tests existentes pasaban porque no ejercitaban el camino de un grupo
+        OR con una via ausente en el contexto de una malla concreta. Regla practica: para cambios observables en la UI,
+        el smoke sobre el flujo real de ingreso no es opcional; es donde aparecen los bugs de logica que el mock consagra
+        como correctos.
+      </div>
+    </section>
+
+    <!-- Q&A -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Q&amp;A de estudio</h2></div>
+      <details class="qa"><summary>¿Por que el co-add del fix de prereqs se aplica solo al alta modular y no a la secuencial?</summary><div class="ans">Porque el alta secuencial debe conservar el bloqueo Before: un curso no puede quedar antes que su prerrequisito en la secuencia. El co-add solo tiene sentido en modular, donde la satisfaccion es por presencia (centinela), no por orden temporal. El dual-judge marco iterate justamente porque la primera version filtraba tambien al camino secuencial.</div></details>
+      <details class="qa"><summary>¿Que hace el sentinela ABSENT_PATH y por que no rompe el conteo de creditos?</summary><div class="ans">Marca una via del grupo OR/K-de-N que no esta colocada, de modo que quede excluida del calculo del min/K-esimo. Por construccion nunca alcanza un nivel final ni aporta creditos: solo sirve para que el grupo se evalue sobre las vias reales. El reviewer trazo las 6 interacciones para confirmarlo.</div></details>
+      <details class="qa"><summary>¿Por que los unit tests previos no detectaron el bug de niveles?</summary><div class="ans">Porque el prisma/estado mockeado no ejercitaba el caso de un grupo OR con una opcion ausente dentro de una malla concreta; los tests pasaban validando el camino feliz. El bug solo se manifiesta con el estado real de un plan, y por eso lo destapo el smoke y no la suite unit.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · close · TICKET-124 · up1 · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

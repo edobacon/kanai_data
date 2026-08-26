@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Registro del mod + cobertura MCP · TICKET-084</title>
+<!-- metadata · ticket: TICKET-084 · kind: close · project: up1 · generated: 2026-06-26 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  table.cmp { width:100%; font-size:0.85rem; border-collapse:collapse; }
+  table.cmp th { background:#1c1917; color:var(--txt-muted); text-transform:uppercase; font-size:0.7rem; padding:0.5rem 0.75rem; text-align:left; }
+  table.cmp td { padding:0.55rem 0.75rem; border-top:1px solid var(--stone-border); vertical-align:top; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-084</span> · Registro del mod + cobertura MCP</span>
+      <span>up1 · 2026-06-26 · UPONE-1347</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Cómo cerramos MC-04: los 3 objetos de malla, operables UI + MCP</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      MC-04 cerró la <strong>Épica A</strong> del sprint: los tres objetos de malla (<code class="inline">planEntry</code>, <code class="inline">requirementCategory</code>, <code class="inline">requirement</code>) que MC-02/03 habían creado pasaron de "existir" a <strong>operables</strong> en los dos consumidores del modelo — la UI (vía el GraphQL del mod) y Elric (vía el adaptador MCP). El trabajo fue casi todo declarativo; el único código real fueron ~20 líneas para resolver una FK polimórfica. Este documento cuenta qué se hizo, qué se decidió y qué aprendimos.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Qué se logró:</strong> 12 capabilities object-level en el mod + 3 <code class="inline">ObjectContract</code> en el MCP + allowlist + resolver de FK polimórfica (<code class="inline">ownerId</code>) + validación espejo <code class="inline">min≤max</code>. <strong>Cómo se validó:</strong> suite del mod 909/909, MCP build + 92/92 (dual-judge APPROVED), y <strong>smoke vivo contra UPU</strong> — los 5 TC pasan. <strong>Resultado:</strong> Épica A cerrada; habilita el componente de malla (MC-05/06) y Elric. Pendiente: solo el push (rama <code class="inline">UPONE-1267-sp5</code> en ambos repos).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#story" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">las 3 sesiones</a>
+      <a href="#decisions" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipótesis</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+    </nav>
+
+    <!-- ===== LA HISTORIA (case) ===== -->
+    <section id="story" class="blk mt-12" data-dkc-block="case">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">La historia del caso</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">3 objetos creados por MC-02/03 pero "mudos": sin permisos CRUD en el mod (cero entradas en <code class="inline">capabilities.json</code>) y sin contrato ni allowlist en el MCP. La auditoría inicial corrigió dos cifras heredadas del pre-spec: eran 6 contratos MCP (no 11) y los layouts ya estaban (no había que crear `_list`).</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Qué se hizo</div><p class="text-sm text-stone-300">S1: 12 capabilities object-level + reconciliar layouts/lang (mod). S2: 3 contratos declarativos + allowlist + el resolver de FK polimórfica + validación espejo + tests (MCP). S3: smoke vivo contra UPU. Todo aditivo; los 6 contratos previos intactos.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Los 5 TC pasan (auto + smoke vivo). <code class="inline">describe_object</code> deriva todo del contrato; <code class="inline">ownerId="Estadística"</code> resuelve a la Activity correcta según <code class="inline">ownerType</code>; min>max rechazado con mensaje claro. Épica A cerrada.</p></div>
+      </div></div>
+    </section>
+
+    <!-- ===== TIMELINE de sesiones ===== -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Las 3 sesiones</h2></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · mod · T2 · commit <code class="inline">4151c7b</code></div><p class="text-xs text-stone-400">12 capabilities object-level (RULE-mods-037) + layouts reconciliados (sin `_list`, honra MC-02/03) + lang verificado. Suite del mod 909/909. Hallazgo lateral: un doc de MC-03 sin commitear → commiteado aparte como UPONE-1346 (<code class="inline">cb443d6</code>).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · mcp · T3 ⚑ · commit <code class="inline">5da096e</code></div><p class="text-xs text-stone-400">3 <code class="inline">ObjectContract</code> + allowlist + resolver polimórfico + validación espejo + tests. Loop dual-judge (2 jueces ciegos) APPROVED; atrapó 2 findings reales + 3 mejoras, todos corregidos. tsc + 92/92.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · smoke vivo · T3 ⚑</div><p class="text-xs text-stone-400">Standby inicial (DB-gated) → el dev hizo sync + reinició el MCP → smoke vivo contra UPU: los 5 TC pasan. planEntry creado/listado/borrado, describe deriva, min>max rechazado, ownerId polimórfico resuelve.</p></div>
+      </div>
+    </section>
+
+    <!-- ===== DECISIONES cerradas (comparison-table) ===== -->
+    <section id="decisions" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Las 4 decisiones de diseño</h2></div>
+      <p class="text-stone-400 leading-relaxed mb-3">Cuatro decisiones definieron la forma del cambio. La #1 fue la única con tensión real (heredaba una postura opuesta de MC-03); las otras tres se apoyaron en precedentes existentes del repo.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="cmp">
+        <thead><tr><th>Decisión</th><th>Qué se eligió</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td class="text-amber-300 font-medium">#1 ownerId polimórfico</td><td>Extender el resolver config-driven (<code class="inline">polymorphicFkFrom</code>), no convención documentada</td><td>REQ-05 lo pide resuelto por nombre; MC-03 lo dejó como convención porque allí no había consumidor — aquí el MCP sí lo es. Único código real (~20 líneas).</td></tr>
+          <tr><td class="text-amber-300 font-medium">#2 layouts</td><td>Honrar el no-menú de MC-02/03 — sin `_list` nuevos</td><td>DET-16: no contradecir tickets cerrados. La visibilidad en object-manager es schema-driven, no requiere `_list`.</td></tr>
+          <tr><td class="text-amber-300 font-medium">#3 requirement</td><td>1 contrato base con <code class="inline">recordType</code> enum (no per-RT)</td><td>Precedente <code class="inline">CURRICULUM_CONTRACT</code>; el core enforza los campos por RecordType.</td></tr>
+          <tr><td class="text-amber-300 font-medium">#4 validación min≤max</td><td>Flag <code class="inline">validateCreditRange</code> + función (patrón <code class="inline">validateWeights</code>)</td><td>Reusar el mecanismo flag→función existente evita inventar un DSL de validación.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ===== EVOLUCIÓN de hipótesis ===== -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Cómo evolucionaron las hipótesis</h2></div>
+      <p class="text-stone-400 leading-relaxed mb-3">Las 5 hipótesis del intake se confirmaron todas en ejecución, pero dos se afinaron con datos concretos que cambiaron el tamaño del trabajo:</p>
+      <div class="callout callout-success"><strong>✓ H4 (FK polimórfica) confirmada y dimensionada</strong> — el intake predijo "necesita extensión ~20 líneas". En S2 se confirmó: <code class="inline">resolveContractInputs</code> resuelve el target desde <code class="inline">ownerType</code>, robusto al orden de claves y a sinónimos. El smoke vivo lo probó end-to-end.</div>
+      <div class="callout callout-success"><strong>✓ H2/H3 (gaps reales) confirmadas</strong> — capabilities estaba realmente vacío (REQ-01 = trabajo real, no verificación); los layouts ya existían (REQ-01 se redujo a reconciliación). El "11 contratos" del pre-spec era 6 — corregido por auditoría directa.</div>
+      <div class="callout callout-info">ℹ Ninguna hipótesis se refutó. El intake fue preciso porque la auditoría directa del código (no confiar en el pre-spec ni en los decisions_log de MC-02/03) ancló cada cifra.</div>
+    </section>
+
+    <!-- ===== LECCIONES (study-qa) ===== -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Lecciones aprendidas</h2></div>
+      <details class="qa"><summary>¿Por qué un cambio de "supersede" sobre una decisión de MC-03 no fue conflicto?</summary><div class="ans">MC-03 dejó <code class="inline">ownerId</code> como "convención documentada" PARA SU SCOPE (no tenía consumidor que resolviera por nombre). MC-04 introduce ese consumidor (el MCP), así que extender el resolver no contradice MC-03: completa lo que su scope no necesitaba. Lección: una decisión scoped puede superseder-se cuando aparece el consumidor que la motivaba.</div></details>
+      <details class="qa"><summary>¿Qué atrapó el dual-judge que un single-pass no?</summary><div class="ans">Dos jueces ciegos convergieron en 2 findings reales (el mensaje de validación se descartaba en create — L2; y un gap de cobertura de tests) y discreparon en 3 mejoras (validación en update, enumLabels faltantes, recordType readonly). Todas se corrigieron. El valor: la convergencia separa lo confirmado (ambos) de lo sugerente (uno), y el contraste contra el spec descubre lo que el ejecutor no ve.</div></details>
+      <details class="qa"><summary>¿Por qué importó auditar el código en vez de confiar en el pre-spec?</summary><div class="ans">El pre-spec decía "11 contratos" (eran 6) y "layouts RecordList/RecordDetail" (ya existían, sin `_list` deliberado). Confiar en esas cifras habría inflado el trabajo (re-crear layouts) o subdimensionado (creer que capabilities ya estaba). La auditoría directa ancló REQ-01 a su trabajo real.</div></details>
+      <details class="qa"><summary>¿Qué patrón quedó para exponer un objeto del mod en el MCP?</summary><div class="ans">Es declarativo: una entrada <code class="inline">ObjectContract</code> en <code class="inline">registry.ts</code> (requiredOnCreate + enums + fieldDocs con FK) + sumarla al pack (<code class="inline">objects</code>=allowlist + <code class="inline">contracts</code>). El núcleo genérico deriva describe/create/resolve. Solo se escribe código si hay algo no-declarativo (como la FK polimórfica). Las tools <code class="inline">cd_*</code> ergonómicas son opcionales → SP6.</div></details>
+    </section>
+
+    <section class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Para retomar / aguas abajo</h2></div>
+      <div class="callout callout-warn"><strong>⚠ Pendiente único</strong> — push de los commits locales: mod <code class="inline">4151c7b</code> + <code class="inline">cb443d6</code> (UPONE-1346), MCP <code class="inline">5da096e</code>, todos en rama <code class="inline">UPONE-1267-sp5</code>. El push siempre lo decide el dev.</div>
+      <div class="callout callout-info"><strong>ℹ Habilita</strong> — MC-05/06 (el componente de malla consume estos objetos por GraphQL) y las tools <code class="inline">cd_*</code> de dominio ergonómicas para malla (SP6). El modelo de malla queda completo y operable.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-084 / UPONE-1347 · close · Épica A cerrada · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

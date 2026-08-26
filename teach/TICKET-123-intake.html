@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Un bloqueo legitimo de delete debe ser aviso, no error de carga · TICKET-123</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-123</span> · Un bloqueo legitimo de delete debe ser aviso, no error de carga</span>
+      <span>up1 · 2026-08-07</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Un rechazo de dominio en el borrado se muestra como pantalla de error de carga en vez de un aviso</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este es el frente <strong>frontend</strong> del bug de hard-delete <strong>UPONE-1557</strong>, en el core <code class="inline">layout-engine</code>
+      (<code class="inline">RecordList</code>). Cuando un borrado gobernado (<code class="inline">customDeleteMutation</code>) es rechazado por el servidor con un error
+      de dominio legitimo (por ejemplo, un esquema de niveles que una matriz esta usando), la lista entera se reemplaza por la pantalla roja de error de carga
+      con un texto generico ("Ocurrio un error inesperado"). El mensaje util del backend ("inactivalo en su lugar") nunca se ve, y el usuario pierde la vista.
+      El path de rowAction <code class="inline">type: mutation</code> ya lo hace bien (toast, vista intacta); el objetivo es llevar el custom delete a esa paridad.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — El <code class="inline">catch</code> del custom delete escribe el error en <code class="inline">error.value</code>,
+        el MISMO ref que gobierna el <code class="inline">&lt;ErrorState&gt;</code> full-view de CARGA de la lista. Ademas <code class="inline">useFriendlyErrors</code> no
+        reconoce el mensaje del backend (cae al generico). El fix (Opcion A1) cambia SOLO la rama <code class="inline">customMutation</code> del catch: mostrar el
+        mensaje del servidor como toast (<code class="inline">showWarning</code>) sin tocar <code class="inline">error.value</code> — espejando <code class="inline">useRowMutation</code>,
+        que ya funciona. El bloqueo del backend es <strong>correcto</strong>; lo unico roto es como se muestra. Como es UI, el cierre exige
+        <strong>verificacion runtime real</strong> (DET-36), no solo unit de componente.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">las 3 capas del sintoma</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el defecto en codigo</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">A1 vs A2</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">4 paths de error</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">malla de seguridad</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas de estudio</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">alcance</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan de sessions</a>
+    </nav>
+
+    <!-- BASES: glosario -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos base</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-4">
+        Cinco piezas del render de errores de <code class="inline">RecordList</code> sostienen el caso. La clave es entender que hay UN solo ref de error
+        (<code class="inline">error.value</code>) que hoy sirve para dos cosas distintas (carga de la lista y resultado del borrado), y ahi nace el bug visible.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">customDeleteMutation</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Config de layout que reemplaza el borrado estandar por una mutation GraphQL gobernada por el mod (ej. <code class="inline">deleteLevelSchemeValidated</code>). Su resolver puede rechazar por dominio (ej. "esquema en uso"). Aplica a todo consumer: <code class="inline">levelScheme</code>, <code class="inline">coverageScheme</code>, <code class="inline">objectDefinition</code>, etc.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">error.value / &lt;ErrorState&gt;</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El ref reactivo que gobierna el <code class="inline">&lt;ErrorState&gt;</code> full-view de la lista (<code class="inline">RecordList.vue:60</code>, <code class="inline">v-if="error"</code>). Esta pensado para fallos de CARGA (fetch/filtro). Si se le escribe cualquier cosa, la lista entera se reemplaza por la pantalla de error.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">useFriendlyErrors</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Composable que traduce errores a texto amigable matcheando por TEXTO contra ~40 patrones (en ingles). Si nada matchea, cae a <code class="inline">DEFAULT_ERROR</code> ("Ocurrio un error inesperado"). No tiene patron para el mensaje personalizado del backend en español.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">useRowMutation (el oraculo)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Composable de las rowActions <code class="inline">type: mutation</code>. En <code class="inline">useRowMutation.ts:151</code> muestra el error como toast sin tocar la vista. Es el comportamiento CORRECTO de referencia: el fix lleva el custom delete a esta paridad.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">personalisedError (backend)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Helper del mod que lanza un <code class="inline">Error</code> plano con <code class="inline">.code</code> custom. Apollo NO promueve ese <code class="inline">.code</code> a <code class="inline">extensions.code</code>: lo serializa como <code class="inline">INTERNAL_SERVER_ERROR</code>. Al front solo le llega el <code class="inline">.message</code> en español (que igual es user-ready).</p></div>
+      </div>
+    </section>
+
+    <!-- BASES + ENTORNO: las 3 capas -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Las tres capas encadenadas del sintoma</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        El diagrama sigue un borrado de <code class="inline">LS-100</code> (un esquema en uso). Solo el ultimo eslabon es el defecto que este ticket corrige; los dos
+        primeros son contexto: el backend bloquea BIEN (nodo verde) y el code personalizado se pierde en la frontera GraphQL (defecto habilitante, transversal,
+        que NO se aborda aqui). El nodo rojo es el fix: el catch escribe en el ref de carga y nuke la vista.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  A["borrar LS-100 (esquema en uso)"] --> B["backend: guard R9 rechaza<br/>'inactivalo en su lugar' (CORRECTO)"]
+  B --> C["Apollo serializa como<br/>INTERNAL_SERVER_ERROR (code se pierde)"]
+  C --> D{"catch de handleCriticalDeleteConfirm"}
+  D -- "HOY: error.value = err.message" --> E["&lt;ErrorState&gt; full-view<br/>+ texto generico -> vista destruida"]
+  D -- "FIX A1: showWarning(msg del backend)" --> F["toast con 'inactivalo en su lugar'<br/>+ lista intacta"]
+      </pre></div>
+      <p class="text-sm text-stone-400 leading-relaxed mt-3">
+        Dos cosas del mapa. Primero: el bloqueo del backend (nodo <code class="inline">B</code>) es comportamiento de dominio esperado — una escala en uso NO debe
+        borrarse fisicamente; el fix no lo toca. Segundo: la eleccion es entre las dos ramas del nodo <code class="inline">D</code>; el fix solo cambia esa rama para
+        que el resultado sea el nodo <code class="inline">F</code> (paridad con <code class="inline">useRowMutation</code>), sin tocar el path de carga real de la lista.
+      </p>
+    </section>
+
+    <!-- BASES: la regla -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Invariante que el fix restaura</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El <span class="text-amber-400">&lt;ErrorState&gt;</span> full-view es para fallos de CARGA de la lista. El resultado de una <span class="text-amber-400">accion</span> (borrar) se comunica con un toast, sin destruir la vista.</div>
+        <div class="ilabel mt-2">Corolario: escribir el error de un borrado en <code class="inline">error.value</code> confunde dos dominios distintos (carga vs accion). El path de rowAction <code class="inline">mutation</code> ya respeta este invariante; el custom delete lo viola por reusar el ref equivocado.</div>
+      </div>
+    </section>
+
+    <!-- BASES: el defecto en codigo -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El defecto, en codigo</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        En <code class="inline">handleCriticalDeleteConfirm</code> (<code class="inline">RecordList.vue:6416</code>), el <code class="inline">catch</code> de la rama
+        <code class="inline">customMutation</code> escribe en <code class="inline">error.value</code>. El fix A1 usa un toast (como <code class="inline">useRowMutation</code>)
+        y deja <code class="inline">error.value</code> intacto.
+      </p>
+      <pre class="code"><span class="c">// RecordList.vue:6416 — rama customMutation del catch (HOY)</span>
+} <span class="k">catch</span> (err) {
+  error.value = <span class="s">'Error deleting record: '</span> + err.message; <span class="c">// nuke la vista full-view</span>
+}
+
+<span class="c">// despues (A1): toast passthrough, sin tocar el ref de carga</span>
+} <span class="k">catch</span> (err) {
+  <span class="f">showWarning</span>(err.message); <span class="c">// msg del backend, user-ready; lista intacta</span>
+}</pre>
+    </section>
+
+    <!-- ENTORNO: A1 vs A2 -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Opcion A1 (elegida) frente a Opcion A2 (descartada)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        La decision critica del intake fue el enfoque. A2 (implementar la convencion <code class="inline">_PERSONALISED_ERROR</code> end-to-end) parece "el fix mayor",
+        pero NO es un cambio de front puro y su blast radius es enorme.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A1 — toast en la rama custom delete (elegida)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Mostrar el mensaje del backend como toast en el catch de <code class="inline">customMutation</code>, sin tocar <code class="inline">error.value</code>.</p><p><span class="text-emerald-400">+</span> Blast radius minimo (una funcion); no toca <code class="inline">useFriendlyErrors</code> ni el backend</p><p><span class="text-emerald-400">+</span> Aplica a TODOS los consumers de <code class="inline">customDeleteMutation</code>, sin trabajo per-objeto</p><p><span class="text-emerald-400">+</span> Paridad con <code class="inline">useRowMutation</code> (ya funciona); reversible</p><p><span class="text-rose-400">−</span> Acopla el toast al texto es del backend (aceptable: el mensaje esta diseñado para mostrarse)</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A2 — convencion _PERSONALISED_ERROR end-to-end</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Que <code class="inline">useFriendlyErrors</code> reconozca el error personalizado y haga passthrough en toda la plataforma.</p><p><span class="text-rose-400">−</span> NO es cambio de front: el <code class="inline">code</code> se pierde en <code class="inline">extensions</code>; requiere cambiar el backend de cada mod</p><p><span class="text-rose-400">−</span> Toca un composable compartido (~40 patrones) + backend transversal; riesgo de regresion amplio</p><p><span class="text-rose-400">−</span> Esfuerzo alto (5+ SP); queda como A2' follow-up de deuda tecnica</p></div></div>
+      </div>
+    </section>
+
+    <!-- ENTORNO: los 4 paths de error -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Los cuatro paths de error de RecordList (que se toca y que no)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        <code class="inline">RecordList</code> maneja errores por cuatro caminos distintos. El fix toca SOLO uno (la fila destacada). Entender esto es la malla de
+        seguridad: los otros tres deben sobrevivir intactos.
+      </p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Path</th><th class="p-3">Como muestra el error hoy</th><th class="p-3">Se toca?</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">Carga de la lista (fetch/filtro)</td><td class="p-3 text-center"><code class="inline">&lt;ErrorState&gt;</code> full-view (correcto)</td><td class="p-3 text-center text-rose-400">No</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">customDeleteMutation que rechaza</td><td class="p-3 text-center">full-view + generico (el bug)</td><td class="p-3 text-center text-emerald-400">Si → toast</td></tr>
+          <tr><td class="p-3 text-stone-300">Bulk delete (<code class="inline">handleDeleteConfirmed</code>)</td><td class="p-3 text-center">modal <code class="inline">bulkDeleteErrors</code> propio</td><td class="p-3 text-center text-rose-400">No</td></tr>
+          <tr><td class="p-3 text-stone-300">rowAction <code class="inline">type: mutation</code></td><td class="p-3 text-center">toast (el oraculo correcto)</td><td class="p-3 text-center text-rose-400">No</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- RESTRICCIONES: malla de seguridad -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Malla de seguridad y restricciones</h2></div>
+      <div class="callout callout-warn">
+        <strong>⚠ Cambio quirurgico sobre la rama customMutation del catch</strong> — Debe sobrevivir intacto: (1) el error de CARGA sigue mostrando el
+        <code class="inline">&lt;ErrorState&gt;</code> full-view (el path de <code class="inline">error.value</code> para fetch/filtro NO se toca); (2) el custom delete exitoso
+        sigue con toast de exito + <code class="inline">fetchData(true)</code>; (3) el bulk delete conserva su modal <code class="inline">bulkDeleteErrors</code>; (4) otros
+        consumers de <code class="inline">customDeleteMutation</code> (ej. <code class="inline">deleteObjectDefinition</code>) siguen operando, ahora con toast.
+      </div>
+      <div class="callout callout-info">
+        <strong>ℹ El bloqueo del backend es correcto — no se toca</strong> — El guard R9 (<code class="inline">assertSchemeNotInUse</code>) rechaza el hard-delete de una
+        escala en uso por una matriz. Es comportamiento de dominio esperado. Una escala LIBRE se borra sin problema. El defecto 2.2 (el <code class="inline">code</code> se
+        pierde en <code class="inline">extensions</code>) es transversal pero NO se aborda aqui: A1 no lo necesita porque el <code class="inline">.message</code> ya es
+        user-ready. Cerrarlo entero es A2' (follow-up).
+      </div>
+      <div class="callout callout-danger">
+        <strong>✗ Verificacion runtime real, no solo unit (DET-36)</strong> — Como es UI config-driven / DB-gated, el cierre exige evidencia runtime: OM + suite +
+        tenant UPU sembrado (con la matriz <code class="inline">MAT-GEN</code> apuntando a <code class="inline">LS-100</code>), borrar <code class="inline">LS-100</code> y ver el
+        toast "...inactivalo..." con la lista intacta. Reglas del ticket: <code class="inline">DET-7</code> (regression), <code class="inline">DET-13</code> (cierre por
+        evidencia), <code class="inline">DET-33</code> (verificar self-report), <code class="inline">DET-36</code> (verificacion runtime/UI).
+      </div>
+    </section>
+
+    <!-- Preguntas de estudio -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Preguntas de estudio</h2></div>
+      <details class="qa"><summary>Por que un delete fallido reemplaza toda la lista y no muestra un simple aviso?</summary><div class="ans">Porque el <code class="inline">catch</code> del custom delete escribe en <code class="inline">error.value</code>, que es el mismo ref reactivo que gobierna el <code class="inline">&lt;ErrorState&gt;</code> full-view de CARGA (<code class="inline">v-if="error"</code>, <code class="inline">RecordList.vue:60</code>). Ese ref esta pensado para fallos de fetch/filtro; al escribirle el resultado de una accion, la vista entera se monta como error. Ademas el texto pasa por <code class="inline">useFriendlyErrors</code>, que no reconoce el mensaje y devuelve el generico.</div></details>
+      <details class="qa"><summary>El bloqueo del backend es un bug que hay que arreglar?</summary><div class="ans">No. El guard R9 rechaza correctamente el hard-delete de un esquema en uso por una matriz; es comportamiento de dominio esperado (una escala libre si se borra). Lo unico roto es COMO se muestra ese rechazo en el front. Separar "que se bloquea" (correcto) de "como se renderiza" (roto) es la clave del caso, igual que en el bug hermano TICKET-122.</div></details>
+      <details class="qa"><summary>Por que A1 y no A2 (la convencion _PERSONALISED_ERROR)?</summary><div class="ans">A2 no es un cambio de front puro: el <code class="inline">code</code> personalizado se pierde en <code class="inline">extensions</code> (llega como <code class="inline">INTERNAL_SERVER_ERROR</code>), asi que keyear por <code class="inline">extensions.code</code> exige cambiar el backend de cada mod. A2 toca un composable compartido por toda la plataforma + backend transversal, con riesgo de regresion sobre ~40 patrones. A1 arregla ambos sintomas visibles con una funcion y aplica a todos los consumers. A2' queda como follow-up de deuda tecnica.</div></details>
+      <details class="qa"><summary>Por que no basta con un unit de componente para cerrar?</summary><div class="ans">Porque el comportamiento es config-driven (layout con <code class="inline">customDeleteMutation</code>) y DB-gated (el rechazo "en uso" es una query cross-tabla que solo el backend conoce). Un unit puede afirmar la logica del catch, pero el cierre exige verificacion runtime real (DET-36): levantar OM + suite + tenant UPU sembrado y ver el toast con la lista intacta al borrar <code class="inline">LS-100</code>. El unit es guard barato, no reemplazo.</div></details>
+    </section>
+
+    <!-- ALCANCE -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Alcance del cambio</h2></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">layout/src/layouts/RecordList/RecordList.vue</span>
+        <span class="tag tag-next">RecordList.spec (component test)</span>
+        <span class="tag tag-next">smoke runtime UPU (DET-36)</span>
+        <span class="tag tag-future">A2' — convencion _PERSONALISED_ERROR end-to-end (deuda tecnica, fuera de alcance)</span>
+      </div>
+    </section>
+
+    <!-- HACIA ADELANTE: el plan -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Plan de sessions (orientacion)</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed mb-3">
+        Las dos hipotesis del Triage quedaron confirmadas en el intake (H1: el catch escribe en el ref de carga y <code class="inline">useFriendlyErrors</code> no
+        reconoce el mensaje; H2: el fix correcto es A1). No hay hipotesis abiertas. El plan es un fix corto (tier T3 por ser user-facing con verificacion runtime),
+        con orden tests-first y cierre por smoke real.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Red de seguridad primero (VERDE sobre codigo actual)</div><p class="text-xs text-stone-400">Tests de lo que ya funciona: error de carga sigue mostrando <code class="inline">&lt;ErrorState&gt;</code> full-view; custom delete exitoso -> toast de exito + refetch.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Test que falla (RED del bug)</div><p class="text-xs text-stone-400">Custom delete que rechaza -> assert de (a) toast con el mensaje del backend y (b) lista NO reemplazada (<code class="inline">error.value</code> null). ROJO hoy.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Implementar A1</div><p class="text-xs text-stone-400">Toast passthrough en la rama <code class="inline">customMutation</code> del catch, sin tocar <code class="inline">error.value</code>. El RED pasa a VERDE.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Gate — smoke runtime (DET-36) + suite</div><p class="text-xs text-stone-400"><code class="inline">RecordList.spec</code> completo verde + evidencia viva: borrar <code class="inline">LS-100</code> (en uso) muestra el aviso "inactivalo en su lugar" con la lista intacta; borrar una escala libre la elimina. Commits/PR con id <code class="inline">UPONE-1557</code>.</p></div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-123 · up1 / layout-engine (UPONE-1557 frontend). Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

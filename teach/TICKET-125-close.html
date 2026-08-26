@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Créditos reales en el co-add del alta en lote · TICKET-125</title>
+
+<!--
+  metadata · ticket: TICKET-125 · kind: close · project: up1 · generated: 2026-08-11
+-->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-125</span> · Créditos reales en el co-add del alta en lote</span>
+      <span>up1 · 2026-08-11</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Créditos reales en el co-add del alta en lote</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este follow-up de UPONE-1539 (sobre TICKET-124) cerró la faceta de créditos del co-add de REQ-1. Al agregar en lote
+      un curso gateado por un umbral de créditos junto con los cursos que aportan esos créditos, el chequeo reportaba un
+      falso "faltan créditos" y no colocaba el curso gateado. La causa: las entries sintéticas del co-add nacían con 0
+      créditos. Este teaching mira hacia atrás: qué se hizo, cómo evolucionó el diagnóstico y qué queda como lección.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed"><strong class="text-amber-300">TL;DR</strong> —
+        El co-add del alta en lote tenía dos facetas: la presencia del prereq-curso (ya resuelta en REQ-1) y los
+        créditos que aportan los co-agregados. La segunda quedó fuera del fix original y solo se descubrió probando en
+        runtime. Se corrigió pasando los créditos reales a las entries sintéticas (nuevo <code class="inline">creditsByActivity</code>).
+        3 tests nuevos, suite del mod 1543 → 1546 verde, runtime verificado con "Electivo Modular D".
+      </div>
+    </div>
+
+    <!-- EJE 5: que se realizo -->
+    <section id="done" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se realizó</h2>
+      <div class="callout callout-success"><strong>✓ Fix</strong> — <code class="inline">buildCoAddedEntries</code> pasó a
+        recibir un mapa <code class="inline">creditsByActivity</code> (id → créditos) y asignar esos créditos a cada entry
+        sintética. El caller <code class="inline">checkPrereqsForBatch</code> construye ese mapa
+        (<code class="inline">activityCreditsById</code>) desde el catálogo. Un id ausente del mapa cae a 0. El evaluador
+        (<code class="inline">evaluateRequirementTree</code> / <code class="inline">aggregateCreditsBefore</code>) no se
+        tocó: solo se le entrega la data correcta.</div>
+      <div class="callout callout-warn"><strong>⚠ Límite conocido</strong> — El scope <code class="inline">category</code>
+        no suma co-agregados: su <code class="inline">categoryId</code> queda null hasta la colocación efectiva, así que un
+        umbral por categoría no se satisface en el alta conjunta. Queda documentado, no resuelto.</div>
+    </section>
+
+    <!-- Evolucion de hipotesis (obligatorio en close) -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolución del diagnóstico</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">REQ-1 (TICKET-124) resolvió la presencia</div>
+          <p class="text-xs text-stone-400">El co-add contaba a los cursos del lote como colocados para satisfacer prereqs de tipo curso (OR/K-de-N). Se creyó cerrado el co-add.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Runtime reveló la segunda faceta</div>
+          <p class="text-xs text-stone-400">Probando con un curso gateado por <code class="inline">Credits >= 45</code>, el alta conjunta seguía bloqueando: "40 de 45". Los tests de presencia estaban verdes, pero el umbral de créditos nunca se cumplía.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Causa raíz en las entries sintéticas</div>
+          <p class="text-xs text-stone-400"><code class="inline">buildCoAddedEntries</code> ponía <code class="inline">credits: 0</code>; <code class="inline">aggregateCreditsBefore</code> sumaba 0 por cada co-agregado. La presencia se contaba, los créditos no.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Fix + verificación</div>
+          <p class="text-xs text-stone-400">Créditos reales en las entries sintéticas. Runtime: D solo bloquea (40/45); D + B (45 exactos) o D + B + C agrega todo y ubica D en Nivel 4.</p></div>
+      </div>
+    </section>
+
+    <!-- Invariante: la leccion central -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La lección</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Una entry sintética debe portar <span class="text-amber-400">TODA</span> la data que el evaluador consume, no solo la que motivó su creación.</div>
+        <div class="ilabel mt-2">Corolario: el co-add nació para satisfacer prereqs de tipo curso (presencia), y por eso solo se le puso período centinela. Pero el evaluador también lee créditos. Cualquier campo que el evaluador consuma (período, créditos, y lo que se agregue mañana) tiene que estar en la entry sintética, o el chequeo miente en silencio. Los tests de presencia no cazan esto: hay que ejercitar cada dimensión que el evaluador lee.</div>
+      </div>
+    </section>
+
+    <!-- Q&A de estudio -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿Por qué el fix de REQ-1 no cubría este caso si "ya contaba los co-agregados"?</summary>
+        <div class="ans">REQ-1 los contaba como <em>colocados</em> para satisfacer prereqs de tipo curso (presencia). El evaluador tiene un segundo camino: umbrales de créditos (<code class="inline">MetricThreshold Credits >= N</code>), que suman los créditos de lo colocado. Las entries sintéticas tenían presencia pero 0 créditos, así que satisfacían la primera dimensión y no la segunda.</div></details>
+      <details class="qa"><summary>¿Por qué se descubrió en runtime y no en los tests?</summary>
+        <div class="ans">Los tests del co-add ejercitaban prereqs de tipo curso (OR/K-de-N), no umbrales de créditos. La faceta de créditos solo aparece cuando el curso gateado depende de un <code class="inline">MetricThreshold Credits</code>, escenario que se probó recién en el smoke con "Electivo Modular D". De ahí los 3 tests nuevos, que ahora fijan esa dimensión.</div></details>
+      <details class="qa"><summary>¿Qué pasa con un curso sin créditos en el catálogo?</summary>
+        <div class="ans">Su id no aparece en <code class="inline">activityCreditsById</code> y cae a 0, que es el comportamiento por defecto seguro (no infla el umbral). El scope <code class="inline">category</code> sigue sin sumar co-agregados por el <code class="inline">categoryId</code> null; ese límite quedó documentado, no resuelto.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-125 close · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<meta name="dkc-teach-kind" content="close" />
+<title>Teach close — Sílabo (Offering tipo Syllabus) · TICKET-064</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0c0a09; color:#e7e5e4; font-family: ui-sans-serif, system-ui, sans-serif; line-height:1.7; max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem; }
+  h1 { font-size: 1.6rem; font-weight:600; color:#fafaf9; }
+  h2 { font-size: 1.2rem; font-weight:600; color:#fafaf9; margin-top:2.2rem; border-bottom:1px solid #292524; padding-bottom:.35rem; }
+  h3 { font-size: 1rem; font-weight:600; color:#f59e0b; margin-top:1.4rem; }
+  code { background:#1c1917; padding:.1rem .35rem; border-radius:4px; font-family: SFMono-Regular, Menlo, Consolas, monospace; font-size:.85em; color:#fbbf24; }
+  blockquote { border-left:3px solid #f59e0b; background:#1c1917; margin:1rem 0; padding:.6rem 1rem; border-radius:0 6px 6px 0; color:#d6d3d1; }
+  table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.9rem; }
+  th,td { border:1px solid #292524; padding:.5rem .6rem; text-align:left; vertical-align:top; }
+  th { background:#1c1917; color:#fafaf9; font-weight:600; }
+  .tl { background:#1c1917; border:1px solid #44403c; border-radius:8px; padding:1rem 1.25rem; margin:1.25rem 0; }
+  .ok { color:#4ade80; } .warn { color:#fbbf24; } .no { color:#f87171; }
+  ul { padding-left:1.25rem; } li { margin:.25rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Teach close — Sílabo (Offering tipo <code>Syllabus</code>) · TICKET-064</h1>
+<p><strong>Ticket</strong>: <a href="../ticket-064.md">TICKET-064</a> (UPONE-1269) · <strong>Spec</strong>: <a href="../../specs/curriculum-design/SPEC-023-syllabus-offering.md">SPEC-023</a> · <strong>Módulo</strong>: curriculum-design · <strong>Sessions</strong>: 3 · <strong>Autopilot</strong>: super</p>
+
+<blockquote><strong>Cómo leer este teach</strong>: cuenta el caso ya resuelto. Si solo lees el TL;DR y "La historia / variaciones del plan", tienes el núcleo — porque la lección principal de este ticket NO fue el código, sino cómo un blocker descubierto en ejecución reescribió el plan dos veces.</blockquote>
+
+<div class="tl">
+<h3 style="margin-top:0">TL;DR</h3>
+<p>El "Sílabo" se entregó como el mismo <code>Offering</code> de engagement, anclado a una asignatura (<code>Activity{recordType: Course}</code>) + su período (<code>termId</code>) + un discriminador <code>recordType</code> propio. Vista completa (lista filtrada, detalle, crear, editar) en Curriculum Design. <strong>El giro</strong>: el plan original (derivar el tipo de Activity, sin tocar el Offering) chocó con un límite del frontend (la lista no podía filtrar a 2 saltos), se difirió, se evaluaron 3 opciones, y se resolvió reintroduciendo <code>recordType</code> en el Offering desde CD — el mismo patrón que CD ya usaba para <code>Activity</code>.</p>
+</div>
+
+<h2>1. ¿Qué se hizo? (estado final)</h2>
+<ul>
+<li><strong>Modelo</strong>: el <code>Offering</code> compartido ganó <code>termId</code> (FK→Term, nullable) y <code>recordType</code> (enum <code>[ServiceOffer, Syllabus]</code>, not_null, <code>static_default ServiceOffer</code>), ambos aportados por <code>curriculum-design/objects/Offering.json</code> (deep-merge del sync, sin tocar archivos de engagement).</li>
+<li><strong>Backend</strong>: <code>createSyllabusOffering</code> (valida Course, unicidad scoped, setea <code>recordType: Syllabus</code>) + query <code>syllabusOfferings</code> (where 2-hop, queda como API programática).</li>
+<li><strong>Vista</strong>: 4 layouts del sílabo — lista (filtro <code>recordType=Syllabus</code>), detalle, crear (picker de asignatura Course + período), editar; registrados en el nav vía <code>app.json.defaultObjects</code>. + filtro <code>recordType=Course</code> en la lista de Activity de CD (cerró un leak preexistente de 15 Activities de engagement).</li>
+<li><strong>i18n + seed</strong>: lang es/en/pt (status + recordType); seed idempotente (Activity Course + ActivityLine + 2 Terms + 3 sílabos).</li>
+<li><strong>Verificado</strong>: sync+db push backfill-safe (30 ServiceOffer + 3 Syllabus, sin data-loss); vitest 8/8; regresión engagement OK; <strong>smoke UI autenticado (Playwright)</strong> de lista/detalle/crear/editar + Activity.</li>
+</ul>
+
+<h2>2. ¿Por qué así? (lectura post-hoc)</h2>
+<blockquote><strong>Por qué mirarla</strong>: la solución final NO fue la del plan. Entender por qué es la lección reutilizable para cualquier objeto compartido entre mods.</blockquote>
+<p>El "tipo" de una oferta vive conceptualmente en su <code>Activity</code> (Course/Service), a 2 saltos del <code>Offering</code>. El plan original (Opción B / DEC-LOCAL-01) derivaba el tipo de ahí — limpio en backend. Pero el frontend de listas (<code>RecordList</code>) solo consume <code>listInstances</code> y filtra a <strong>1 salto</strong> (learn L6): no podía expresar "offerings cuya Activity es Course". La salida correcta resultó ser la que el codebase <strong>ya usaba para Activity</strong>: poner el discriminador como campo propio del objeto listado (<code>recordType</code>), declarado desde CD. No es denormalización gratuita — es el patrón idiomático de up1 (CD ya declara <code>Activity.recordType</code> cubriendo Course+Service; engagement lo consume).</p>
+
+<h2>3. ¿Qué cambió y por qué? (variaciones del plan — crítico)</h2>
+<blockquote><strong>Como te afecta</strong>: corriste en autopilot super; no viste el giro en vivo. Acá está. El plan cambió <strong>dos veces</strong>.</blockquote>
+<table>
+<tr><th>Momento</th><th>Plan</th><th>Qué pasó</th><th>Resolución</th></tr>
+<tr><td>Intake</td><td>Sílabo = RecordType del Offering (D-1)</td><td>model-v2 retiró <code>Offering.recordType</code> (4 capas)</td><td>DEC-LOCAL-01: derivar de <code>Activity{Course}</code> (Opción B)</td></tr>
+<tr><td>S2 (vista)</td><td>Lista consume <code>syllabusOfferings</code></td><td><span class="no">Blocker L6</span>: RecordList no consume queries custom ni filtra 2 saltos</td><td>DEC-LOCAL-03: <strong>diferir</strong> la lista (Opción C, decisión del dev)</td></tr>
+<tr><td>Post-S2</td><td>B4 como follow-up (TICKET-068)</td><td>Evaluación A/B + hallazgo: CD ya declara <code>Activity.recordType</code> → precedente</td><td>DEC-LOCAL-04: <strong>reincorporar</strong> como S3 vía <code>recordType</code> desde CD; TICKET-068 eliminado</td></tr>
+<tr><td>S3 smoke</td><td>—</td><td>Display de <code>activityLineId</code> mostraba timestamp en detalle/edición</td><td>B6: <code>relationDisplayFields</code> en RecordDetail va por <strong>nombre de campo</strong>, no objeto → fix</td></tr>
+<tr><td>S3 post-smoke</td><td>Detalle mostraba la línea, no la asignatura</td><td>El frontend no resuelve display de 2 saltos (asignatura está a 2 saltos)</td><td>DEC-LOCAL-05: <code>activityId</code> (FK→Activity) denormalizado → "Asignatura" a 1 salto; <strong>read-only en editar</strong> (cambiarla = re-anclaje); <strong>delete fuera de v1</strong> (canDelete:false, decisión del dev). Modelo confirmado en Confluence uP1.</td></tr>
+</table>
+<blockquote><strong>Fuente del modelo (Confluence uP1, Confirmed)</strong>: <a href="https://u-planner.atlassian.net/wiki/spaces/uP1/pages/2108162102/Offering">Offering</a> ("Offering cuelga de ActivityLine, no de Activity") · <a href="https://u-planner.atlassian.net/wiki/spaces/uP1/pages/2107080818/ActivityLine">ActivityLine</a> ("Offering → ActivityLine → Activity"; "Sin campo name. El código identifica la línea").</blockquote>
+
+<h2>4. Highlights por session</h2>
+<ul>
+<li><strong>S1</strong> (⚑ fuerte): backend del sílabo (termId + resolvers + sync/db push + 8/8 tests + regresión). Gate continue.</li>
+<li><strong>S2</strong> (auto): 3 layouts (view/create/edit) + i18n + seed. Gate <strong>standby</strong> — la lista quedó diferida por el blocker L6.</li>
+<li><strong>S3</strong> (⚑ fuerte): <code>recordType</code> en Offering+Activity desde CD + lista filtrada + nav + B6 fix. Reviewer aislado approve. Smoke UI. Gate continue → cierre.</li>
+</ul>
+
+<h2>5. Knowledge promovido</h2>
+<ul>
+<li><strong>DEC-LOCAL-01/02/03/04</strong>: la cadena de decisiones de modelo (derivar → diferir → reincorporar) — en SPEC-023.</li>
+<li><strong>Learns L2–L7</strong>: model-v2 sin <code>Offering.recordType</code> (L2); filtro 1-salto del recordList (L3); deep-merge de slices (L4); gotcha backticks en SDL (L5); <strong>RecordList cableado a listInstances + sin query custom (L6)</strong>; nav desde <code>app.json.defaultObjects</code>, no <code>showInNav</code> (L7).</li>
+<li><strong>Dossier + plan</strong> en <code>TICKET-064.b4-eval/</code>: evidencia de 5 capas del estado de <code>Offering.recordType</code> + el precedente Activity.</li>
+</ul>
+
+<h2>6. Lecciones (para tickets futuros)</h2>
+<ul>
+<li><span class="warn">Verificar la capa de consumo del frontend, no solo el backend.</span> El plan de S2 asumió que la lista consumiría una query custom; el blocker L6 solo apareció al mirar <code>RecordList.vue</code>. Para features de UI sobre objetos compartidos, validar <strong>cómo</strong> el componente obtiene los datos antes de diseñar el backend.</li>
+<li><span class="warn">El discriminador de tipo va en el objeto que se lista.</span> Patrón idiomático up1 (Activity.recordType). Para filtrar una lista por tipo, el campo debe estar a 1 salto — en el propio objeto.</li>
+<li><span class="warn">FK display: RecordList resuelve <code>relationDisplayFields</code> por objeto/referencia; RecordDetail por nombre de campo.</span> Declarar ambas claves evita el bug B6 (timestamp en vez del valor).</li>
+<li><span class="warn">El nav de un app sale de <code>app.json.defaultObjects</code></span> (no de <code>showInNav</code>), y el orden de tabs es alfabético por nombre de layout (sin campo de orden — B7).</li>
+</ul>
+
+<h2>7. Pendiente (backlog, no bloqueante)</h2>
+<ul>
+<li><strong>B5</strong> (engagement): filtrar <code>recordType=ServiceOffer</code> en sus listas + setear el valor explícito + confirmar intención model-v2. Coordinar con el dueño del Offering.</li>
+<li><strong>B7</strong> (core): orden configurable de tabs del menú ("Ofertas" 3°) — requiere cambio en la suite.</li>
+<li><strong>B1/B2/B3</strong>: workflow/inscripciones, secciones MADS, paginación de <code>syllabusOfferings</code>.</li>
+<li>Delete del sílabo: <strong>fuera de v1</strong> (canDelete:false, DEC-LOCAL-05). Re-anclar la asignatura en editar (resolver <code>updateSyllabusOffering</code>) también queda para más adelante.</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — P4 · Motor de transiciones de core · TICKET-103</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-103</span> · P4 Motor de transiciones de core</span>
+      <span>up1 · 2026-07-07</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">P4 — Estandarizar el flujo de estados en el motor de transiciones de core</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este ticket (Jira <strong>UPONE-1381</strong>) hace que tres objetos del dominio curricular — <strong>Curriculum</strong> (plan de estudio),
+      <strong>Activity</strong> (asignatura/curso) y <strong>Offering</strong> (sílabo) — dejen de depender del <em>workflow relacional</em> que hoy
+      vive dentro del mod <code class="inline">curriculum-design</code> y pasen a usar el <em>motor de transiciones "enum"</em> que la plataforma
+      (<code class="inline">object-manager</code>) ya provee. La idea de fondo: un flujo de estados <strong>estándar, validado por el core</strong>,
+      declarado como datos en el JSON del objeto, en vez de un motor a medida que cada mod mantiene por su cuenta. Este documento te orienta
+      <strong>antes de ejecutar</strong>: sobre qué bases nos paramos, qué rodea el caso y qué vamos a hacer.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <span class="block mt-1"><strong>Qué hay:</strong> el core ya tiene un motor de transiciones por campo enum (declarás <code class="inline">transitions</code> en el JSON, el codegen las persiste, el runtime las valida en <code class="inline">updateInstance</code>). Activity hoy usa otro motor distinto (workflow relacional del mod, con tablas y config por institución).</span>
+        <span class="block mt-1"><strong>Qué se hará:</strong> declarar <code class="inline">transitions</code> en los 3 objetos, migrar Activity al enum (con remapeo de datos), reubicar el gate de versionado a la config del versionado (no al workflow), y retirar el workflow del mod (dead code tras migrar Activity).</span>
+        <span class="block mt-1"><strong>Por qué:</strong> uniformidad y mantenibilidad — un solo motor validado por la plataforma en vez de uno bespoke por mod.</span>
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">las bases</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">dos motores</a>
+      <a href="#state" class="navlink rounded border border-stone-700 px-2 py-1">los estados</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restricciones del entorno</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">el gate de versionado</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">qué se toca</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">el plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">chequeo</a>
+    </nav>
+
+    <!-- ============== LAS BASES (hacia abajo) ============== -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Las bases — el vocabulario del caso</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Antes de tocar nada conviene tener claros cinco términos. Los tres primeros son la maquinaria de la plataforma sobre la que nos apoyamos;
+        los dos últimos son cómo se modela hoy el dominio curricular.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Motor enum de core (<code class="inline">properties.transitions</code>)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Máquina de estados declarativa sobre un campo <em>enum</em>. Se declara <code class="inline">{from,to,conditions?,requiredCapabilities?,onTransition?}</code> en el JSON del objeto; el codegen la persiste en <code class="inline">core_FieldDefinition.properties.transitions</code> y el runtime la valida. Doc: <code class="inline">object-manager/docs/enum-transitions.md</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm"><code class="inline">enforceEnumTransitions</code></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El guard que ejecuta esa validación en <code class="inline">updateInstance</code> (cableado en <code class="inline">instance.resolver.js:135</code>, paths base :4146 y RecordType :3961). Rechaza transiciones no declaradas, evalúa <code class="inline">conditions</code>, chequea capabilities (OR) y emite eventos <code class="inline">onTransition</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Gate de versionado (<code class="inline">version-from-source.js</code>)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">prepareVersionData</code> decide desde qué estado se puede versionar y con qué estado nace la nueva versión. Hoy discrimina por <code class="inline">needsWorkflow = !!initialStateField</code>: si hay workflow, gatea por <code class="inline">allowsVersioning</code>. Es <strong>ortogonal</strong> al motor de transiciones.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Workflow relacional del mod</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El <em>otro</em> motor: objetos <code class="inline">Workflow</code>/<code class="inline">WorkflowStatus</code>/<code class="inline">WorkflowTransition</code>/<code class="inline">WorkflowTransitionHistory</code>. Estados como <em>entidades</em> (FK), configurables por institución en runtime, con historial. Hoy solo <strong>Activity</strong> lo usa (vía <code class="inline">currentStatusId</code>).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm"><code class="inline">recordType</code> (Offering)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Offering es un objeto <em>compartido</em>: <code class="inline">recordType</code> distingue <code class="inline">ServiceOffer</code> (engagement) de <code class="inline">Syllabus</code> (curriculum-design). Importa porque el flujo de estados del sílabo debe acotarse a <code class="inline">recordType=Syllabus</code> sin tocar a engagement.</p></div>
+      </div>
+    </section>
+
+    <!-- ============== EL ENTORNO (hacia los lados): los dos motores ============== -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El entorno — dos motores que no hay que confundir</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        El corazón del caso es una <strong>migración de un motor a otro</strong>. No son incompatibles ni compiten: aplican a shapes de campo distintos
+        (enum vs FK). Entender la diferencia es lo que evita "recrear" el motor cuando en realidad ya existe. El propio código lo advierte
+        (<code class="inline">enum-transition-guard.js</code>: <em>"NO CONFUNDIR con WorkflowTransition"</em>).
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Motor enum de core (destino)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Restricción declarativa sobre un campo <em>enum</em> (string). Vive en <code class="inline">core_FieldDefinition.properties</code>, sin tablas nuevas.</p><p><span class="text-emerald-400">+</span> Build-time, versionado con el mod, uniforme por tenant, validado por la plataforma.</p><p><span class="text-emerald-400">+</span> Ya está completo y probado (épica AP: UPONE-1293/1294/1296, finalizada 2026-07-02).</p><p><span class="text-rose-400">−</span> No configurable en runtime ni por institución.</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Workflow relacional del mod (origen)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Grafo de workflow con estados como entidades (FK). Config por institución (Univalle=<code class="inline">activity-standard</code>, AIEP=<code class="inline">activity-fast</code>).</p><p><span class="text-emerald-400">+</span> Runtime, multi-institución, con historial y comentario por transición.</p><p><span class="text-rose-400">−</span> Bespoke del mod, más superficie que mantener; solo lo usa Activity.</p><p><span class="text-rose-400">−</span> Se <strong>retira</strong> en P4 (dead code tras migrar Activity).</p></div></div>
+      </div>
+      <div class="callout callout-warn mt-4"><strong>⚠ Lo que se acepta perder (decisión tomada 07-07):</strong> config por institución (flujo único por tenant), configurabilidad en runtime, historial relacional de transiciones y comentario libre. El historial se recupera parcialmente vía <code class="inline">onTransition</code> → DataLog (P3/TICKET-102). Está documentado en el ticket ("Activity — pérdida al migrar").</div>
+    </section>
+
+    <!-- ============== LAS BASES + PLAN: los estados ============== -->
+    <section id="state" class="blk mt-12" data-dkc-block="state-machine">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Los estados — el modelo canónico</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        El equipo entregó los estados canónicos (2026-07-07). <strong>Curriculum y Activity comparten el mismo set de 6 estados</strong> con las mismas
+        aristas (cambian solo las capabilities: <code class="inline">curriculum:*</code> vs <code class="inline">activity:*</code>). El diagrama de abajo es ese
+        grafo de 6 estados. Fijate en dos cosas: el inicio siempre es <code class="inline">Draft</code>, y hay "vueltas atrás" a Draft desde InReview/Approved/Active
+        (devolver para corregir). <strong>Offering es distinto</strong>: solo 4 estados (Draft/InReview/Active/Archived), sin Approved ni Deprecated, y permite <code class="inline">Draft→Active</code> directo.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> InReview
+  InReview --> Approved: requiere approve
+  InReview --> Draft
+  Approved --> Active: requiere publish
+  Approved --> Draft
+  Active --> Deprecated: requiere deprecate
+  Active --> Draft
+  Deprecated --> Archived: requiere archive
+      </pre></div>
+      <p class="text-stone-400 text-sm leading-relaxed mt-4">
+        Para Activity hay además un <strong>remapeo de datos existentes</strong> del workflow viejo al enum nuevo (verificado contra el seed real):
+        <code class="inline">BOR→Draft</code>, <code class="inline">EDIT/REV-DEC→InReview</code>, <code class="inline">PUB→Active</code>, <code class="inline">DIS→Archived</code>
+        (DIS es categoría <em>Closed</em>=terminal → Archived, decidido con el dev). <code class="inline">Approved</code> es estado nuevo sin datos previos que remapear.
+      </p>
+    </section>
+
+    <!-- ============== EL ENTORNO: restricciones que condicionan el approach ============== -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Restricciones del entorno — lo que cambió el approach</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Tres restricciones del motor y del sync, verificadas en código, moldean cómo se implementa. Ignorarlas lleva a no-ops silenciosos o a que el sync rechace el cambio.
+      </p>
+      <div class="callout callout-danger"><strong>✗ "core field protected" — por qué Offering usa un campo NUEVO:</strong> el Merge Sync rechaza que un mod agregue <code class="inline">transitions</code> a un campo <em>ya existente de otro dueño</em>. El <code class="inline">status</code> de Offering (<code class="inline">Active/Inactive/Cancelled</code>) lo posee <strong>uengagement</strong> (fuera de scope SP6). Por eso curriculum-design NO puede reusar <code class="inline">status</code>: aporta un campo propio <code class="inline">lifecycleStatus</code> (Draft/InReview/Active/Archived) con su flujo. Modela un eje distinto (autoría del sílabo) del <code class="inline">status</code> de disponibilidad de engagement, que queda intacto.</div>
+      <div class="callout callout-warn"><strong>⚠ Campos <code class="inline">ext__</code> son no-op:</strong> <code class="inline">transitions</code> declarado en un campo extended se descarta en silencio (no lo recoge el codegen AP-01). El campo de estado debe ser <strong>campo base</strong>, no extended.</div>
+      <div class="callout callout-danger"><strong>✗ Retiro del workflow = migración destructiva:</strong> eliminar los objetos <code class="inline">workflow*</code> dropea 4 tablas. En super autopilot esto <strong>NO se auto-aprueba</strong>: pide consent explícito al momento del migrate (data-loss).</div>
+    </section>
+
+    <!-- ============== EL GATE DE VERSIONADO como invariante ============== -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El punto delicado — el gate de versionado</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Al quitar el workflow del mod, <code class="inline">version-from-source.js</code> cae por diseño a la rama sin-workflow (trabajo previo de TICKET-074 lo hizo opcional) y
+        <strong>pierde</strong> el gate <code class="inline">allowsVersioning</code>. REQ-04 reubica ese gate a la config del versionado del JSON (Vía B, decidida). Este es el invariante a preservar:
+      </p>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Versionar un objeto es válido <span class="text-amber-400">SI Y SOLO SI</span> su estado actual ∈ <code class="inline">versionableFromStates</code>; si no, falla con <code class="inline">SOURCE_NOT_VERSIONABLE</code>. La nueva versión nace en el <code class="inline">static_default</code> del enum (Draft).</div>
+        <div class="ilabel mt-2">Corolario: Curriculum y Activity declaran <code class="inline">versionableFromStates:[Approved,Active]</code> en su bloque <code class="inline">versioning</code>; el deep-clone de hijos polimórficos (REQ-05) NO se toca.</div>
+      </div>
+    </section>
+
+    <!-- ============== QUÉ SE TOCA (entorno/tags) ============== -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué se toca — el radio del cambio</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">El cambio cruza 3 repos. El de core (<code class="inline">version-from-source.js</code>) es el más sensible: RULE-dev-004, merge a develop gated por review del team core.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">object-manager (core)</span>
+        <span class="tag tag-now">mods/curriculum-design</span>
+        <span class="tag tag-next">up1-mcp (tools cd_*)</span>
+        <span class="tag tag-future">layout (color del badge)</span>
+        <span class="tag tag-future">uengagement — NO se toca (read-only)</span>
+      </div>
+    </section>
+
+    <!-- ============== HACIA ADELANTE: el plan ============== -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Hacia adelante — el plan (orientación)</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">6 sessions previstas, riesgo-first. El detalle de tasks lo fija el spec (design-feature); esto es el mapa mental del recorrido.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Curriculum</div><p class="text-xs text-stone-400">Expandir status 3→6 + transitions + capabilities; codegen/sync/migrate. Establece el patrón end-to-end sobre el objeto más simple.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Core — gate de versionado</div><p class="text-xs text-stone-400">Generalizar <code class="inline">prepareVersionData</code> a <code class="inline">versionableFromStates</code>. El cambio de core, riesgo-first (RULE-dev-004).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Curriculum versioning + deep-clone</div><p class="text-xs text-stone-400">Declarar el gate en el JSON de Curriculum; regression del deep-clone (REQ-05).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · Offering (lifecycleStatus)</div><p class="text-xs text-stone-400">Campo nuevo + transitions scoped Syllabus; sin tocar engagement.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 · Activity — migración</div><p class="text-xs text-stone-400">Reemplazar FK por enum + remap de datos + reemplazar el coordinador por <code class="inline">updateInstance</code>. La session más pesada.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S6 · Retiro workflow + MCP + cierre</div><p class="text-xs text-stone-400">Eliminar seed/resolvers/objetos (destructivo, consent); tools MCP; integration + smoke UPU.</p></div>
+      </div>
+    </section>
+
+    <!-- ============== CHEQUEO ============== -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Chequeo — ¿entendés el caso?</h2></div>
+      <details class="qa"><summary>¿De qué se trata el caso, en una frase?</summary><div class="ans">Mover el flujo de estados de Curriculum/Activity/Offering al motor de transiciones declarativo del core, reubicar el gate de versionado a la config del versionado, y retirar el workflow relacional del mod (que solo usaba Activity).</div></details>
+      <details class="qa"><summary>¿Por qué no "reusamos" el campo status de Offering para el flujo del sílabo?</summary><div class="ans">Porque ese <code class="inline">status</code> lo posee uengagement (Active/Inactive/Cancelled), está fuera de scope, y el sync bloquea agregar transitions a un campo ajeno ("core field protected"). Además modela otra cosa (disponibilidad, no autoría). Por eso curriculum-design aporta un campo propio <code class="inline">lifecycleStatus</code>.</div></details>
+      <details class="qa"><summary>¿Cuál es el punto más crítico a cuidar durante execute?</summary><div class="ans">Dos: (1) el gate de versionado no puede perderse al quitar el workflow — se reubica a <code class="inline">versionableFromStates</code> en el JSON (REQ-04, cambio de core); (2) la migración de datos de Activity (BOR/EDIT/REV-DEC/PUB/DIS → canónico) sin regresión, y el retiro del workflow es destructivo (consent).</div></details>
+      <details class="qa"><summary>¿Qué decisiones críticas se tomaron en el intake y por qué?</summary><div class="ans">Offering → campo propio <code class="inline">lifecycleStatus</code> (evita colisión con engagement, ownership limpio). DIS→Archived (categoría Closed=terminal). Capabilities <code class="inline">object:action</code> desnudo (consistente con las existentes). Gate de versionado por Vía B (config del JSON, no workflow). REQ-06 retira TODO el subsistema workflow porque tras migrar Activity queda huérfano.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · teach-intake · TICKET-103 (UPONE-1381) · up1 · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

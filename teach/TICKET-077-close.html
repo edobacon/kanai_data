@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Tenant Base override stale sombrea la def del mod · TICKET-077</title>
+<!-- metadata · ticket: TICKET-077 · kind: close · project: up1 · generated: 2026-06-22 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: {
+    darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4',
+    primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', mainBkg: '#1c1917', nodeBorder: '#f59e0b',
+    textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; line-height:1.6; }
+  .wrap { max-width: 56rem; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  h1 { font-size:1.6rem; font-weight:800; color:#fafaf9; } h2 { font-size:1.15rem; font-weight:700; color:var(--amber); margin-top:2rem; border-bottom:1px solid var(--stone-border); padding-bottom:.4rem; }
+  .callout { border-left:4px solid; padding:.85rem 1.1rem; border-radius:0 .5rem .5rem 0; margin:.7rem 0; }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,.10); } .callout-success { border-color:#34d399; background:rgba(52,211,153,.10); }
+  .callout-danger { border-color:#f87171; background:rgba(248,113,113,.10); } .callout-note { border-color:#38bdf8; background:rgba(56,189,248,.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:.06rem .38rem; border-radius:.25rem; font-size:.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:.6rem; padding:.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:.8rem; color:#cbd5e1; }
+  .brick { background:linear-gradient(135deg,#1c1917,#0c0a09); border:1px solid var(--stone-border); border-radius:.6rem; padding:1rem 1.2rem; margin:.6rem 0; }
+  table { width:100%; border-collapse:collapse; margin:.6rem 0; font-size:.86rem; } th,td { border:1px solid var(--stone-border); padding:.45rem .7rem; text-align:left; } th { color:var(--amber); }
+  .mermaid { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:.6rem; padding:1rem; margin:.8rem 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p style="color:var(--txt-dim);font-size:.82rem;">TICKET-077 · curriculum-design · cierre · 2026-06-22</p>
+  <h1>El override de tenant que sobrevivió a la migración al mod</h1>
+  <p style="color:var(--txt-muted);">Editar / clonar / versionar un Curriculum tipo Plan fallaba. La premisa del ticket (casteo FK mod-only + revert coordinado) era un mis-diagnóstico heredado. La causa real era de <strong>ubicación de fuente</strong>, no de código.</p>
+
+  <h2>La lección central</h2>
+  <div class="callout callout-warn">
+    Cuando un objeto pasa de <strong>tenant-specific</strong> a <strong>definido en un mod</strong>, puede quedar un override viejo en <code class="inline">object-manager/objects/tenants/&lt;T&gt;/Base/&lt;obj&gt;.json</code>. El codegen lo lee con <strong>last-wins (tenant &gt; business)</strong> y registra el objeto contra el modelo VIEJO. El mod queda sombreado.
+  </div>
+  <div class="callout callout-danger">
+    <strong>Un <code class="inline">reset-tenant</code> NO lo arregla</strong>: regenera el registry desde el mismo source committeado stale. Y el sync no regenera los tenant Base (son artefactos de migración congelados). Por eso el reset del dev no movía la aguja.
+  </div>
+
+  <h2>Síntoma → causa (la cadena)</h2>
+  <table>
+    <tr><th>Flujo</th><th>Error crudo</th><th>Por qué</th></tr>
+    <tr><td>Editar / Clonar</td><td><code class="inline">Unknown argument totalCredits</code></td><td>El tenant Base viejo tenía <code class="inline">totalCredits</code> como campo base → el registry lo marca <code class="inline">isBaseField=true</code> → el bucket-split del core lo manda a la tabla base (no a <code class="inline">rt__Plan</code>)</td></tr>
+    <tr><td>Versionar</td><td><code class="inline">OBJECT_NOT_VERSIONABLE</code></td><td>El override viejo no declaraba <code class="inline">metadata.versioning</code> → <code class="inline">versioningConfig</code> quedaba null</td></tr>
+  </table>
+  <div class="mermaid">
+flowchart LR
+  A["form suite<br/>(payload plano)"] --> B["adapter mod<br/>updateCurriculumWithRecordType<br/>(alias rt__Plan)"]
+  B --> C["core updateInstance<br/>bucket-split por<br/>loadRtFieldsFromDb"]
+  C --> D{"registry<br/>core_FieldDefinition"}
+  D -->|"totalCredits<br/>isBaseField=true (STALE)"| E["base curriculum.update()<br/>→ Unknown argument ✗"]
+  D -.->|"tras quitar el override<br/>isBaseField=false"| F["rt__Plan upsert<br/>→ OK ✓"]
+  G["tenants/UPU/Base/<br/>curriculum.json (viejo)"] -->|"objectToFileMap<br/>last-wins"| D
+  </div>
+
+  <h2>El fix (opción aprobada por el dev)</h2>
+  <div class="brick">
+    <code class="inline">git rm object-manager/objects/tenants/UPU/Base/curriculum.json</code><br/>
+    → Curriculum cae al <code class="inline">business/Base</code> mod-derived (modelo reducido + versioning), igual que AcademicProgram (que nunca tuvo override). El resolver de TICKET-074 (thin adapter) <strong>no se tocó</strong>: era correcto, solo dependía de un registry correcto.
+  </div>
+  <div class="callout callout-success">
+    Verificado: registry correcto (<code class="inline">totalCredits isBaseField=false</code>, <code class="inline">totalPeriods/periodType</code> presentes, <code class="inline">versioningConfig</code> poblado) + los 3 flujos OK en la suite. S3: revertido <code class="inline">98590c0</code> (fix mal ubicado en core, hoy dead code — 0 objetos at-risk, 542/542).
+  </div>
+
+  <h2>Qué llevarse</h2>
+  <ul style="color:var(--txt-muted);list-style:disc;padding-left:1.3rem;">
+    <li><strong>Capturá el error CRUDO, no el friendly.</strong> El friendly (<em>"Valor inválido"</em>) es client-side; el Prisma real (<code class="inline">Unknown argument</code> vs <code class="inline">Invalid value</code>) distingue mis-bucketing de coerción — y desarmó dos mis-diagnósticos previos (074/076 culparon a casteo FK / coerción).</li>
+    <li><strong>El output de un sub-agente es self-report.</strong> El agente infirió "clone funciona"; el repro empírico mostró que clone también fallaba. Verificar (DET-33).</li>
+    <li><strong>Verificá contra el git/source, no contra el artefacto generado.</strong> El registry (DB) lagea; la verdad está en los <code class="inline">objects/</code> committeados. Y ojo con <code class="inline">objectToFileMap</code>: <code class="inline">getObjectToFileMap('&lt;T&gt;')['&lt;Obj&gt;']</code> te dice qué archivo gana.</li>
+    <li><strong>Cuestioná la premisa del ticket.</strong> "mod-only + revert coordinado" era arrastre de un mis-diagnóstico; el diagnóstico real lo reescribió.</li>
+  </ul>
+
+  <div class="callout callout-note">
+    <strong>Regla capturada:</strong> RULE-curriculum-design-010 (must). <strong>Follow-ups (otro ticket):</strong> 6 tenant Base leftovers más (campus/career/course/faculty/modality/supportCenter) + bug latente del codegen (no reconcilia <code class="inline">isBaseField</code> base↔RT; poison-pill por <code class="inline">@@unique</code> + try/catch por-RT).
+  </div>
+</div>
+</body>
+</html>

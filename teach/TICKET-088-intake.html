@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Malla — Filtros + interacciones avanzadas · TICKET-088</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-088</span> · Malla — Filtros + interacciones avanzadas</span>
+      <span>up1 · 2026-07-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Malla — Filtros + interacciones avanzadas</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      MC-08 es el cuarto ticket sobre <code class="inline">CurriculumMesh</code>, y el primero que agrega <strong>interaccion sin escritura directa de contenido</strong>:
+      filtros de vista, un checker de prerrequisitos que puede bloquear un alta, y drag&amp;drop que reordena tarjetas entre columnas.
+      No se toca el modelo de datos — todo opera sobre <code class="inline">planEntry</code> (MC-02), bloques electivos (MC-06) y ahora tambien lee
+      <code class="inline">requirement(ownerType=activity)</code> (MC-03) por primera vez desde la malla.
+      Este documento orienta en tres direcciones: como funciona la malla hoy, que restricciones y precedentes del modulo aplican,
+      y como se secuencia el trabajo en 4 sesiones.
+    </p>
+
+    <!-- BLOQUE: tldr -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        Se agregan filtros (chips de linea + bloques electivos + rollup de creditos), un checker de prerrequisitos <strong>estructural</strong>
+        (no basado en notas) que bloquea el alta si falta un prereq-curso en periodo anterior, y drag&amp;drop cross-columna que persiste
+        <code class="inline">period</code>/<code class="inline">position</code>. Se suman dos fixes chicos de presentacion (doble <code class="inline">+</code> y chip de linea en tarjeta).
+        El scope formal quedo desactualizado en la transcripcion congelada del ticket: la fuente autoritativa tiene 5 REQs, no 3 — el spec sigue la fuente, no el ticket.
+        Los mayores riesgos (S3 y S4) se validan empiricamente al inicio de cada sesion, no se asumen de antemano.
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#reconcile" class="navlink rounded border border-stone-700 px-2 py-1">reconciliacion de scope</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">estado actual</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante prereqs</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restricciones del entorno</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">dependencias</a>
+      <a href="#addflow" class="navlink rounded border border-stone-700 px-2 py-1">add-flow + prereq gate</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan de sesiones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas abiertas</a>
+    </nav>
+
+    <!-- ===== HACIA LOS LADOS — RECONCILIACION DE SCOPE ===== -->
+
+    <section id="reconcile" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Reconciliacion de scope — leer antes de tomar el ticket como esta escrito</h2>
+      <div class="callout callout-warn">
+        <strong>El ticket transcribe 3 REQs; la fuente hoy tiene 5.</strong>
+        La transcripcion inline del pre-spec quedo <strong>congelada al crear el ticket</strong> (2026-06-25).
+        La fuente autoritativa (<code class="inline">sp5/prespecs/MC-08.md</code>) se actualizo el 2026-07-01, tras feedback de MC-06,
+        y hoy tiene <strong>5 REQs / 11 TCs / 5 tasks</strong>. El SPEC formal (que se genera con <code class="inline">design-feature</code> al tomar el ticket)
+        transcribe la fuente completa 1:1 — no la version congelada de este documento.
+      </div>
+      <div class="callout callout-info mt-3">
+        Delta relevante para orientarte: REQ-01 ahora incluye <strong>rollup de creditos por linea</strong> (no solo chips);
+        REQ-03 suma una <strong>alerta de discrepancia</strong> de conteo de periodos vs <code class="inline">Curriculum.totalPeriods</code>;
+        se agregan REQ-04 (chip de linea en tarjeta, Should) y REQ-05 (fix del doble <code class="inline">+</code>, Must). Ambos se detallan mas abajo.
+      </div>
+    </section>
+
+    <!-- ===== HACIA ABAJO — LAS BASES ===== -->
+
+    <!-- BLOQUE: concept-card / glosario -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Glosario del dominio</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">planEntry / period / position</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            Un curso colocado en la malla. <code class="inline">period</code> es la columna (1-based, "semestre");
+            <code class="inline">position</code> es el orden dentro de esa columna. El DnD de REQ-03 escribe ambos campos.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">categoryId (linea de formacion)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            FK a <code class="inline">requirementCategory</code>. Agrupa cursos por eje tematico.
+            Los chips de REQ-01 resaltan/atenuan tarjetas por este campo.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">blockId (bloque electivo)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            FK a <code class="inline">requirementGroup</code> (introducido en MC-06). Los chips de bloques electivos
+            de REQ-01 se derivan de los <code class="inline">blockId</code> presentes en la malla actual.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">requirement / RecordState / Group / MetricThreshold</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <code class="inline">requirement</code> (MC-03) es la tabla generica de prerrequisitos, con <code class="inline">ownerType</code>/<code class="inline">recordType</code>.
+            <code class="inline">RecordState</code> = "debe existir tal curso" (campos <code class="inline">targetId</code>, <code class="inline">timing</code> Before/Concurrent/Either, <code class="inline">mustBe</code>).
+            <code class="inline">Group</code> = "K de N cursos" (<code class="inline">combinator</code>, <code class="inline">minToSatisfy</code>).
+            <code class="inline">MetricThreshold</code> = umbral numerico (ej. creditos minimos) — <strong>no participa</strong> del bloqueo de REQ-02.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Vueform element / atomo Modal</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <code class="inline">Vueform element</code> es el tipo de componente custom que expone <code class="inline">CurriculumMeshElement.vue</code> a la plataforma.
+            El atomo <code class="inline">Modal</code> del design system (con <code class="inline">Teleport</code>) es el unico mecanismo de dialogo disponible
+            dentro de un Vueform element — ver restriccion mas abajo.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Patron <code class="inline">.logic.ts</code> + <code class="inline">.logic.spec.ts</code></div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            Convencion del modulo: la logica de dominio (pura, sin Vue) vive en archivos <code class="inline">*.logic.ts</code>
+            y se testea en <code class="inline">*.logic.spec.ts</code>. El componente <code class="inline">.vue</code> solo consume
+            esa logica via <code class="inline">computed()</code>. MC-08 sigue este patron para filtros, rollup, prereqs y recalculo de posiciones.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: flow — estado actual -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Como funciona la malla hoy</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Las entradas se agrupan en columnas por periodo con <code class="inline">groupByPeriod()</code> (<code class="inline">curriculumMesh.logic.ts:135-159</code>),
+        logica pura ya testeada — es el precedente directo a seguir para los filtros y el rollup nuevos.
+        Las categorias (lineas) se cargan con la query <code class="inline">LIST_CATEGORIES</code> filtrada por <code class="inline">curriculumId</code>
+        y se mapean a <code class="inline">CategoryVM</code> (<code class="inline">useCurriculumMesh.ts:104-112</code>).
+        Hoy <code class="inline">CategoryVM</code> es <code class="inline">{id,name,color,minCredits}</code> — sin icono ni abreviacion, por eso REQ-04
+        necesita ampliarlo. La leyenda que se ve en <code class="inline">CurriculumMeshElement.vue:91</code> es <strong>estatica</strong> y
+        esta marcada explicitamente en el codigo como el placeholder que MC-08 reemplaza por filtros interactivos.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A[LIST_CATEGORIES] --> B["toCategoryVM()\n{id,name,color,minCredits}"]
+  B --> C["Leyenda estatica\nCurriculumMeshElement.vue:91\n(placeholder MC-08)"]
+  D[planEntry] --> E["groupByPeriod()\ncurriculumMesh.logic.ts:135-159"]
+  E --> F[Columnas por periodo]
+  F --> G["Tarjeta MeshCard\nisElective / categoryColor"]
+      </pre></div>
+      <p class="text-sm text-stone-400 mt-3">
+        MC-08 reemplaza C por chips interactivos, agrega un rollup de creditos junto a B, y agrega logica nueva de prereqs y de
+        recalculo de posiciones que se engancha antes/durante el flujo de alta y el DnD respectivamente.
+      </p>
+    </section>
+
+    <!-- BLOQUE: invariant — la clave de H2 -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Invariante clave: el checker de prerrequisitos es estructural, no academico</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">
+          El bloqueo de REQ-02 verifica <span class="text-amber-400">donde esta colocado</span> un curso en la malla (su <code class="inline">period</code>),
+          <span class="text-amber-400">nunca</span> si el estudiante lo aprobo, lo curso o que nota obtuvo.
+        </div>
+        <div class="ilabel mt-2">
+          Corolario: aunque <code class="inline">RecordState.mustBe</code> tenga valores como <code class="inline">Approved</code> o <code class="inline">Taken</code>,
+          MC-08 <strong>no los evalua contra un historico academico</strong> — eso es degree-audit, diferido explicitamente a SP6.
+          <code class="inline">MeshEntry</code> no tiene estado de aprobacion ni nota; solo <code class="inline">period</code>/<code class="inline">position</code>
+          (<code class="inline">curriculumMesh.logic.ts:35-67</code>). El check simplemente responde: "¿el prereq-curso esta en un periodo anterior al que estoy agregando?".
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HACIA LOS LADOS — EL ENTORNO ===== -->
+
+    <!-- BLOQUE: callout — restricciones del entorno -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Restricciones del entorno (KB del modulo)</h2>
+
+      <div class="callout callout-danger">
+        <strong>RULE-curriculum-design-014</strong> — Todo modal nuevo (el modal de bloqueo de REQ-02) usa el atomo
+        <code class="inline">Modal</code> del design system con <code class="inline">Teleport to="body"</code>.
+        <strong>Nunca</strong> <code class="inline">ModalStackManager</code> de la plataforma — no esta disponible para Vueform elements
+        custom (BUG-platform-011, confirmado en MC-06). <code class="inline">sortablejs</code> para el DnD de REQ-03 y logica en
+        archivos <code class="inline">.ts</code> puros son parte de la misma regla.
+      </div>
+
+      <div class="callout callout-warn mt-3">
+        <strong>DEC-035 — el bloqueo es alerta informativa, no correccion automatica</strong>. Si faltan prereqs, el modal
+        <strong>solo ofrece Cancelar o Volver</strong> — nunca ajusta la malla por si mismo. Y los creditos
+        (<code class="inline">MetricThreshold</code>) <strong>nunca disparan alerta</strong>, aunque el curso tenga ese requisito:
+        solo cursos (<code class="inline">RecordState</code>) y grupos K-de-N (<code class="inline">Group</code>) bloquean.
+      </div>
+
+      <div class="callout callout-info mt-3">
+        <strong>DEC-038 / RULE-mods-051 — seam de arquitectura</strong>: la logica de dominio nueva (filtros, prereqs, recalculo
+        de posiciones) va al <strong>adapter</strong> (<code class="inline">CurriculumMeshElement.vue</code> + sus <code class="inline">.ts</code> puros),
+        <strong>nunca</strong> a las primitivas de render (grid/columna/tarjeta-shell). Estas ultimas siguen sin conocer
+        identificadores curriculares — verificable por grep. Las tasks de UI (modal de bloqueo, DnD) exigen
+        <strong>tests de interaccion</strong>, no solo <code class="inline">.spec.ts</code> de logica pura (DET-23, dimension testing).
+      </div>
+
+      <div class="callout callout-note mt-3">
+        <strong>DET-32 — reuso confirmado</strong>: <code class="inline">sortablejs</code> ya es dependencia del mod
+        (<code class="inline">package.json:26</code>, <code class="inline">^1.15.6</code>) — se reusa la libreria, pero la logica
+        cross-columna (mover una tarjeta de un periodo a otro, recalculando ambos extremos) es <strong>nueva</strong>: no existe
+        hoy en la malla ni en el precedente disponible.
+      </div>
+    </section>
+
+    <!-- BLOQUE: tag — dependencias -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Dependencias del ticket</h2>
+      <p class="text-sm text-stone-400 mb-3">Todas cerradas (gate de inicio ya verificado) — que aporta cada una:</p>
+      <div class="flex flex-wrap gap-3 items-start">
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-05 (TICKET-085)</span>
+          <span class="text-xs text-stone-500">componente base CurriculumMesh sobre el que operan filtros y DnD</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-03 (TICKET-083)</span>
+          <span class="text-xs text-stone-500">objeto requirement (ownerType=activity) — la malla aun no lo carga, MC-08 es quien lo hace por primera vez</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-06 (TICKET-086)</span>
+          <span class="text-xs text-stone-500">bloques electivos (blockId) — de aca salen los chips de bloque de REQ-01</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-future">Precedente: CompositeSectionTree</span>
+          <span class="text-xs text-stone-500">unico precedente local de Sortable — pero es single-list; MC-08 necesita multi-list cross-columna</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOQUE: flow — add-flow + prereq gate -->
+    <section id="addflow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Donde se engancha el checker de prerrequisitos</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        El flujo de alta ya existe desde MC-06: <code class="inline">onAddEntryConfirm()</code> (<code class="inline">CurriculumMeshElement.vue:866-892</code>)
+        llama a <code class="inline">createObligatoriaEntries()</code> / <code class="inline">createElectivaEntries()</code>, que a su vez disparan
+        <code class="inline">CREATE_PLAN_ENTRY</code> en loop. El check de REQ-02 se inserta <strong>antes</strong> de esos loops —
+        no reemplaza el flujo existente, lo condiciona.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TD
+  A[onAddEntryConfirm] --> B["prereqCheck.logic.ts\nRecordState Before + Group K-de-N"]
+  B --> C{"Faltan prereqs?"}
+  C -- "si" --> D["Modal de faltantes\nCancelar / Volver"]
+  C -- "no" --> E["createObligatoriaEntries /\ncreateElectivaEntries"]
+  D -- "Cancelar" --> F[No se agrega]
+  D -- "Volver" --> A
+  E --> G["CREATE_PLAN_ENTRY (loop)"]
+      </pre></div>
+    </section>
+
+    <!-- ===== HACIA ADELANTE — EL PLAN ===== -->
+
+    <!-- BLOQUE: timeline — plan de 4 sesiones -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Plan de 4 sesiones (esqueleto — el detalle final lo completa el spec)</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 — Presentacion de tarjeta + fix rapido (REQ-05 + REQ-04)</div>
+          <p class="text-xs text-stone-400">
+            Quitar el <code class="inline">+</code> duplicado del texto i18n de <code class="inline">buttons.addSubject</code> (3 locales),
+            conservando el icono del atomo <code class="inline">Button</code> (REQ-05, Must/fix). En paralelo, ampliar
+            <code class="inline">CategoryVM</code>/<code class="inline">toCategoryVM</code> con <code class="inline">icon</code>/abreviacion
+            y agregar el chip de linea (icono + abreviacion + color) en la tarjeta, con el badge "electivo" reubicado a la derecha (REQ-04, Should).
+            Se agrupan porque ambos tocan la misma superficie de presentacion de tarjeta/lineas.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 — Filtros de la malla (REQ-01)</div>
+          <p class="text-xs text-stone-400">
+            Chips de lineas (resaltar/atenuar por <code class="inline">categoryId</code>) + chips de bloques electivos
+            (derivados de <code class="inline">blockId</code> presentes) + rollup de creditos por linea + boton limpiar.
+            Depende de S1 porque consume el <code class="inline">icon</code>/abreviacion que S1 expone en <code class="inline">CategoryVM</code>.
+            Logica en <code class="inline">.ts</code> puro + <code class="inline">.spec.ts</code>, siguiendo el patron de <code class="inline">groupByPeriod()</code>.
+            Los filtros son de solo lectura — no mutan <code class="inline">planEntry</code> (a diferencia del DnD de S4).
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S3 — Bloqueo por prerrequisitos [⚑ T3]</div>
+          <p class="text-xs text-stone-400">
+            Composable nuevo <code class="inline">usePrereqRequirements</code> (query <code class="inline">requirement</code>
+            con <code class="inline">ownerType=activity</code>) + <code class="inline">prereqCheck.logic.ts</code>
+            (evalua <code class="inline">RecordState</code> timing Before y <code class="inline">Group</code> K-de-N; excluye <code class="inline">MetricThreshold</code>)
+            + modal casero de faltantes. <strong>Primera task de la sesion:</strong> validar empiricamente que el query
+            <code class="inline">listInstances</code> soporta el filtro triple <code class="inline">ownerType</code>+<code class="inline">ownerId</code>+<code class="inline">recordType</code>
+            (por analogia con <code class="inline">useBlockOptions.ts:70-76</code>, pero sin confirmar aun para este objeto). Sesion marcada de riesgo:
+            no hay precedente local de evaluacion de prerrequisitos.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S4 — Drag&amp;drop + periodos [⚑ T3]</div>
+          <p class="text-xs text-stone-400">
+            DnD cross-columna con <code class="inline">sortablejs</code> (multi-list — el precedente local es single-list) +
+            recalculo de <code class="inline">period</code>/<code class="inline">position</code> en origen y destino (logica pura,
+            inspirada en <code class="inline">computePositionUpdates()</code> de <code class="inline">CompositeSectionTree</code>) +
+            persistencia via <code class="inline">UPDATE_PLAN_ENTRY</code> (mutation ya reusable) + boton "Agregar periodo" +
+            alerta de discrepancia de conteo vs <code class="inline">Curriculum.totalPeriods</code>. Independiente de S3
+            (ambas dependen solo del componente base MC-05, ya cerrado), pero igual de riesgosa por falta de precedente multi-list.
+          </p>
+        </div>
+
+      </div>
+      <p class="text-sm text-stone-400 mt-4">
+        S1/S2 tienen dependencia estricta de orden. S3 y S4 son independientes entre si y podrian intercambiarse si conviene,
+        pero ambas requieren validar su hipotesis de riesgo (H6 en S3, ausencia de precedente en S4) como primer paso, no al final.
+      </p>
+    </section>
+
+    <!-- BLOQUE: study-qa — preguntas abiertas -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Preguntas abiertas a validar durante la ejecucion</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        No son conclusiones — son las incognitas (hipotesis <code class="inline">~ inferred</code> del ticket) que el dev debe
+        confirmar empiricamente antes de construir sobre ellas.
+      </p>
+
+      <details class="qa">
+        <summary>¿El gating <code class="inline">canEdit</code> (solo malla en <code class="inline">Draft</code>) aplica a los filtros de REQ-01?</summary>
+        <div class="ans">
+          Hipotesis de trabajo: <strong>no deberia aplicar</strong>. El alta/edicion (REQ-04 existente de MC-06) esta gateada por
+          <code class="inline">EDITABLE_STATUSES</code>/<code class="inline">canEdit</code> porque muta la malla. Los filtros son
+          resaltado/atenuado puramente visual — no mutan <code class="inline">planEntry</code> — por lo que deberian funcionar
+          incluso con la malla en modo lectura. Se valida empiricamente en S2. El DnD de S4, en cambio, si es edicion y si deberia
+          quedar sujeto a <code class="inline">canEdit</code>.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿El query <code class="inline">listInstances</code> de <code class="inline">requirement</code> soporta filtro triple EQUALS (<code class="inline">ownerType</code>+<code class="inline">ownerId</code>+<code class="inline">recordType</code>)?</summary>
+        <div class="ans">
+          Hay un precedente analogo — <code class="inline">useBlockOptions.ts:70-76</code> ya filtra triple-EQUALS pero para
+          <code class="inline">Group</code>/<code class="inline">curriculum</code>, un objeto y combinacion de valores distintos.
+          No hay confirmacion directa para <code class="inline">requirement(ownerType=activity)</code>. Esta es la primera task
+          de S3, antes de construir <code class="inline">usePrereqRequirements</code> sobre un supuesto no verificado.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Como se recalculan <code class="inline">position</code> en ambos extremos (columna origen y destino) al soltar una tarjeta?</summary>
+        <div class="ans">
+          El precedente <code class="inline">computePositionUpdates()</code> de <code class="inline">CompositeSectionTree/buildPayloads.ts:93-97</code>
+          resuelve el caso single-list (reordenar dentro de una sola coleccion). MC-08 necesita la variante cross-columna:
+          recalcular posiciones en la columna de origen (los que quedan) y en la de destino (los que se corren) simultaneamente.
+          El diseño exacto del algoritmo se define al inicio de S4, usando el precedente como punto de partida, no como solucion directa.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Que forma toma la alerta de discrepancia de conteo de periodos vs <code class="inline">Curriculum.totalPeriods</code>?</summary>
+        <div class="ans">
+          Confirmado que es <strong>no bloqueante</strong> (a diferencia del modal de prereqs de REQ-02, que si bloquea).
+          El mecanismo visual exacto (banner, toast, badge) no esta definido en el pre-spec transcrito — se especifica en el
+          spec formal de S4, respetando que es informativa y no impide continuar.
+        </div>
+      </details>
+
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · intake · TICKET-088 · up1 · 2026-07-02. Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — HU-4 Config versioning · TICKET-038</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-038</span> · HU-4 Config versioning</span>
+      <span>up1 · 2026-06-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">HU-4 — Config <em>versioning</em> declarativo en el JSON del object</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      En up1 (la plataforma educativa multi-tenant) los objetos de negocio se definen en archivos JSON; un proceso
+      llamado <strong>codegen</strong> — el generador que traduce esos JSON a schema Prisma y al registro en DB — los
+      lee y materializa. Esta historia agrega una capacidad nueva: declarar un bloque <code class="inline">versioning</code>
+      dentro de <code class="inline">metadata</code> de un object para <strong>activar el versionamiento sin escribir
+      código</strong>. El trabajo concreto de HU-4 es la <strong>capa de validación</strong> de ese bloque en el codegen
+      (la persistencia ya existe — lo vemos abajo, es la sorpresa principal de este intake).
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <span class="font-semibold">Qué hay:</span> los objects JSON pasan por un codegen que ya sabe persistir
+        <code class="inline">metadata.versioning</code> al registro (lo dejó HU-0j).
+        <span class="font-semibold">Qué se hará:</span> agregar un helper de validación
+        (<code class="inline">validate-versioning.js</code>) que verifica estructura, exige que
+        <code class="inline">linkageField</code> sea FK reflexivo, emite <em>warning</em> para campos de política
+        obsoletos y <em>error</em> para estrategias fuera de SP3.
+        <span class="font-semibold">Por qué:</span> que un dev de mod active versionamiento declarativamente, con
+        feedback de codegen claro si el bloque está mal — sin tocar código del core.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">contexto</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">cómo encaja</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el bloque</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">alcance</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- ENTORNO: dependencias y restricciones que rodean el caso -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El entorno: de qué depende y qué lo limita</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        HU-4 no se para sola. Antes de empezar conviene saber qué la rodea: dos dependencias ya cerradas que
+        habilitan el terreno, y una restricción de alcance que define qué NO se hace todavía.
+      </p>
+      <div class="callout callout-success"><strong>✓ Dependencias satisfechas</strong> — HU-0j (TICKET-033) ya creó la columna
+        <code class="inline">versioningConfig</code> en <code class="inline">core_ObjectDefinition</code> <em>y</em> la función
+        <code class="inline">syncVersioningConfigToRegistry</code> que persiste el bloque. HU-0e (TICKET-033) habilitó el FK reflexivo
+        (un campo que referencia a su propio object). Ambas en <code class="inline">status: closed</code>.</p></div>
+      <div class="callout callout-warn"><strong>⚠ La política NO vive en este bloque</strong> — quién puede versionar y desde qué estado
+        es responsabilidad de <code class="inline">WorkflowStatus.allowsVersioning</code> y del FK de entrada del
+        <code class="inline">Workflow</code>, no del bloque <code class="inline">versioning</code>. Por eso
+        <code class="inline">allowedFromStates</code>/<code class="inline">initialStateValue</code> declarados aquí generan <em>warning</em>.</p></div>
+      <div class="callout callout-danger"><strong>✗ Rama protegida</strong> — el repo de código está hoy en <code class="inline">develop</code>
+        (rama protegida) y no existe aún <code class="inline">UPONE-1206</code>. Por RULE-dev-004 (regla de trabajo core: todo
+        <code class="inline">layer:core</code> de la épica va en una sola rama <code class="inline">UPONE-1206</code>) esto se resuelve
+        en la transición a execute, antes de tocar código.</p></div>
+    </section>
+
+    <!-- BASES: glosario fundacional del dominio -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Las bases: conceptos que hay que tener claros</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Cinco ladrillos conceptuales sostienen el caso. Si los entiendes, el resto del intake se lee solo.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">codegen</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">generatePrismaSchema.js</code> — lee todos los object JSON, valida sus bloques de <code class="inline">metadata</code>, genera el schema Prisma y sincroniza el registro en DB. Es el punto donde se inyecta la validación de HU-4.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">bloque <code class="inline">versioning</code></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Sub-objeto bajo <code class="inline">metadata</code> que declara cómo se versiona un object: qué campo enlaza versiones (<code class="inline">linkageField</code>), cuál guarda el número (<code class="inline">versionField</code>) y con qué estrategia (<code class="inline">versionStrategy</code>).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">FK reflexivo</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Foreign key que apunta al MISMO object (ej. <code class="inline">previousVersionId</code> en Activity → references <code class="inline">Activity</code>). Es lo que encadena una versión con su anterior. HU-4 valida que <code class="inline">linkageField</code> sea exactamente esto.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">registry (<code class="inline">versioningConfig</code>)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Columna JSON en <code class="inline">core_ObjectDefinition</code> donde se persiste el bloque para lectura en runtime sin re-leer el JSON. Shape: <code class="inline">{ versioning, prefillFrom }</code>. Poblada por HU-0j.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">patrón de validación de metadata</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Convención del codegen: un helper <code class="inline">validate-&lt;capacidad&gt;.js</code> que retorna <code class="inline">string[]</code> de errores; un wrapper que hace <code class="inline">throw</code> si hay errores (aborta codegen). Análogo más reciente: <code class="inline">validate-prefill-from.js</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm"><code class="inline">versionStrategy</code></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Cómo se calcula el número de versión. En SP3 sólo <code class="inline">increment</code> (entero auto-incremental). <code class="inline">user-provided</code> y <code class="inline">semver</code> están fuera de alcance (épica 1206) → diferidos a SP4.</p></div>
+      </div>
+    </section>
+
+    <!-- BASES + ENTORNO: cómo encaja el cambio en el pipeline existente -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Cómo funciona hoy y dónde entra HU-4</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        El codegen ya tiene una secuencia de validadores que corren al inicio (polymorphicChildren, prefillFrom) y, más
+        adelante, una fase de sincronización al registro. HU-4 <strong>inserta un validador nuevo</strong> en la cadena de
+        validación (en ámbar abajo); la persistencia de la derecha <strong>ya existe</strong> — sólo hay que confirmar que
+        sigue funcionando con el bloque validado.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  J[object JSON\nmetadata.versioning] --> V1[validatePolymorphicChildren]
+  V1 --> V2[validatePrefillFrom]
+  V2 --> V3[validateVersioning\nNUEVO · HU-4]
+  V3 -- bloque malformado --> ERR[throw → aborta codegen]
+  V3 -- bloque válido --> GEN[genera schema Prisma]
+  GEN --> SYNC[syncVersioningConfigToRegistry\nYA EXISTE · HU-0j]
+  SYNC --> DB[(core_ObjectDefinition\nversioningConfig)]
+      </pre></div>
+    </section>
+
+    <!-- BASES: el shape concreto del bloque -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El bloque, concreto</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Así se ve una declaración válida. Los tres primeros campos son requeridos; los dos últimos opcionales con default.
+        Nota un detalle que importa para la validación: el campo de versión en el JSON se declara
+        <code class="inline">"type": "integer"</code> (no <code class="inline">"Int"</code> — "Int" es el tipo Prisma resultante).
+      </p>
+      <pre class="code"><span class="c">// objects/business/Base/activity.json → metadata.versioning</span>
+{
+  <span class="f">"linkageField"</span>: <span class="s">"previousVersionId"</span>,   <span class="c">// FK reflexivo a Activity</span>
+  <span class="f">"versionField"</span>: <span class="s">"version"</span>,             <span class="c">// type:"integer" para increment</span>
+  <span class="f">"versionStrategy"</span>: <span class="s">"increment"</span>,        <span class="c">// única strategy en SP3</span>
+  <span class="f">"auditSourceField"</span>: <span class="s">"versionSourceId"</span>,  <span class="c">// opcional (default versionSourceId)</span>
+  <span class="f">"initialStateField"</span>: <span class="s">"currentStatusId"</span> <span class="c">// opcional (default currentStatusId)</span>
+}</pre>
+    </section>
+
+    <!-- ENTORNO: el invariante que organiza el diseño -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El invariante que hay que respetar</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El bloque <code class="inline">versioning</code> describe la <span class="text-amber-400">mecánica</span> del versionamiento, nunca la <span class="text-amber-400">política</span>.</div>
+        <div class="ilabel mt-2">Corolario: campos de mecánica (linkage, versionField, strategy, audit, initialState) son válidos aquí; campos de política (allowedFromStates, initialStateValue) son warning — su hogar es <code class="inline">WorkflowStatus</code>/<code class="inline">Workflow</code>. Esta línea divide qué se acepta, qué se advierte y qué se rechaza.</div>
+      </div>
+    </section>
+
+    <!-- ENTORNO: alcance SP3 vs futuro -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Alcance de las estrategias</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        De las tres estrategias posibles, sólo una entra en este sprint. Las otras dos se rechazan con error explícito —
+        el validador debe decir por qué (fuera de alcance, no "valor inválido").
+      </p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">increment — SP3 (esta HU)</span>
+        <span class="tag tag-future">user-provided — SP4 (error en SP3)</span>
+        <span class="tag tag-future">semver — SP4 (error en SP3)</span>
+      </div>
+    </section>
+
+    <!-- ADELANTE: el plan de sessions -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Hacia adelante: el plan</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        El trabajo se reparte en cuatro sessions. La crítica es <strong>S2</strong> (gate ⚑ fuerte): es donde el cross-ref del
+        FK reflexivo se topa con la realidad de que <code class="inline">previousVersionId</code> hoy es un string plano, y donde
+        se confirma que la persistencia existente sigue poblando el registry.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Validación estructural (T2)</div><p class="text-xs text-stone-400">Requeridos/opcionales/tipos del bloque. Malformados rechazados, válidos aceptados.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Cross-ref reflexivo + persistencia (T2, ⚑ fuerte)</div><p class="text-xs text-stone-400"><code class="inline">linkageField</code> debe ser FK reflexivo; confirmar persistencia vía <code class="inline">syncVersioningConfigToRegistry</code>.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Warnings y errores de estrategia (T1)</div><p class="text-xs text-stone-400">Warning para campos de política obsoletos; error para strategy ≠ increment.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · Cierre (T1)</div><p class="text-xs text-stone-400">Doc <code class="inline">versioning-capability.md</code>, commits DET-27, teach-close.</p></div>
+      </div>
+    </section>
+
+    <!-- Autoevaluación: las 4 preguntas de la barra de éxito -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Q&amp;A — ¿entendiste el caso?</h2></div>
+      <details class="qa"><summary>¿De qué se trata el caso?</summary><div class="ans">Activar el versionamiento de un object declarando un bloque <code class="inline">versioning</code> en su JSON, y que el codegen valide ese bloque (estructura, FK reflexivo, estrategia) además de persistirlo al registro. El foco de HU-4 es la validación, porque la persistencia ya la entregó HU-0j.</div></details>
+      <details class="qa"><summary>¿Qué se va a hacer y por qué importa?</summary><div class="ans">Crear un helper <code class="inline">validate-versioning.js</code> (patrón <code class="inline">validate-prefill-from.js</code>) y cablearlo en el codegen para abortar con error claro si el bloque está mal. Importa porque sin validación un bloque mal declarado fallaría en runtime de forma opaca; con ella, el dev de mod recibe feedback en build-time.</div></details>
+      <details class="qa"><summary>¿Qué quedó abierto y qué verificar primero?</summary><div class="ans">No quedan hipótesis abiertas — H1/H2/H3 se confirmaron contra el código en intake. Lo más crítico de verificar en ejecución es S2: que el cross-ref reflexivo de <code class="inline">linkageField</code> funcione y que el bloque efectivamente quede persistido en <code class="inline">versioningConfig</code> tras el sync.</div></details>
+      <details class="qa"><summary>¿Qué decisión crítica se tomó en el intake?</summary><div class="ans">D9 (acotada a la épica 1206): <code class="inline">versionStrategy</code> en SP3 es <strong>sólo increment</strong>. <code class="inline">user-provided</code> (requiere UI de input + ordering por linaje) y <code class="inline">semver</code> (requiere parsing) son trabajo de SP4. El intake fue por lo demás lineal: las hipótesis se validaron sin alternativas comparables que requirieran matriz de decisión.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-038 · intake · up1 · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

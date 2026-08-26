@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Validar e2e deepClone de relacion directa (directChildren) · TICKET-047</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-047</span> · Validar e2e deepClone de relacion directa</span>
+      <span>up1 · 2026-06-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Validar e2e la rama deepClone de relacion directa (directChildren)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este ticket cierra una <strong>brecha de cobertura de test</strong> heredada de TICKET-037 (HU-2 de la epica de clonacion
+      <code class="inline">UPONE-1206</code>). El motor de clonacion de objetos — <code class="inline">deepClone</code> — sabe copiar un objeto
+      junto con sus hijos por dos caminos distintos: <strong>relacion polimorfica</strong> (un hijo que puede colgar de varios tipos de padre)
+      y <strong>relacion directa</strong> (un hijo con una foreign key simple, declarado en el bloque <code class="inline">metadata.directChildren</code>).
+      El camino polimorfico ya esta probado end-to-end contra la base real; el camino directo quedo <strong>solo probado con mocks (unit)</strong>.
+      Este caso lo lleva a una prueba e2e real, de forma <strong>autocontenida</strong>: genera su propio escenario, lo clona, verifica, y restaura la base al estado previo.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <strong>Que hay:</strong> el helper <code class="inline">deepCloneDirectChildren</code> (rama de relacion FK directa del motor de clonacion) existe y funciona en unit tests, pero nunca corrio contra Postgres real.
+        <strong>Que se hara:</strong> un test e2e que clona un padre con hijos de relacion directa contra la DB Docker, verifica que las FK repunten al nuevo padre y que el mapa <code class="inline">oldId→newId</code> sea consistente, y deja la DB sin residuo.
+        <strong>Por que:</strong> sin consumidor real en SP3 (el unico caso del sprint es polimorfico), la rama directa es codigo sin red de seguridad e2e — un cambio futuro podria romperla sin que ningun test lo note.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">como clona hoy</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#entorno" class="navlink rounded border border-stone-700 px-2 py-1">entorno</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">decision abierta</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">study-qa</a>
+    </nav>
+
+    <!-- ============ LAS BASES (hacia abajo) ============ -->
+
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conceptos clave (las bases)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Antes de tocar nada, estos son los ladrillos del dominio. Todo el caso gira sobre la diferencia entre clonar por <em>relacion directa</em>
+        vs <em>relacion polimorfica</em> — y sobre el hecho de que el bloque que activa la clonacion directa se lee del JSON del objeto, no de la base de datos.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">deepClone</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Operacion del object-manager que copia un objeto y, recursivamente, sus hijos — generando ids frescos y un mapa <code class="inline">oldId→{newId,type}</code> de todo lo clonado.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">directChildren</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Bloque declarativo <code class="inline">metadata.directChildren</code> en el JSON de un objeto: lista los hijos que cuelgan por una <strong>FK simple</strong> (relacion directa) y deben clonarse junto al padre.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Relacion directa vs polimorfica</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Directa = hijo con una FK concreta a un solo tipo de padre (ej. <code class="inline">WorkflowTransition.workflowId</code>). Polimorfica = hijo que apunta a varios tipos posibles (par <code class="inline">parentType</code>+<code class="inline">parentId</code>).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">recursiveBy</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Marca en <code class="inline">directChildren</code> que la relacion es <strong>auto-referencial</strong> (un padre del mismo tipo, ej. <code class="inline">OrgUnit.parentId</code>): exige clonar respetando la jerarquia y remapear la self-FK.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">e2e autocontenido</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Test que crea su propio escenario (seed), corre contra la DB real, verifica, y en teardown <strong>restaura la DB al estado previo</strong> — sin dejar filas residuales para el resto del sprint.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">readDirectChildren (file-based)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Funcion en <code class="inline">deep-clone-direct.js</code> que lee el bloque <code class="inline">directChildren</code> del <strong>archivo JSON</strong> del objeto (no del registry de la DB) — por eso declararlo temporal en un JSON real lo activa sin codegen.</p></div>
+      </div>
+    </section>
+
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Como clona hoy el motor (routing de particion)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Asi funciona <strong>hoy</strong>, antes de este ticket. Cuando llega un <code class="inline">deepClone</code>, el resolver en
+        <code class="inline">instance.resolver.js</code> particiona los hijos en dos ramas segun como esten relacionados con el padre. La rama
+        polimorfica ya tiene cobertura e2e; la directa (resaltada) es la que este caso va a ejercitar contra datos reales.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  A[deepClone padre] --> B{ Como cuelga cada hijo? }
+  B -- "relacion polimorfica<br/>(parentType + parentId)" --> C[rama polimorfica]
+  B -- "FK simple en<br/>metadata.directChildren" --> D[deepCloneDirectChildren]
+  C --> E[clonar hijos + remapear parentId]
+  D --> F[clonar hijos + repuntar FK al nuevo padre]
+  D --> G{ recursiveBy? }
+  G -- si --> H[preservar jerarquia<br/>remapear self-FK]
+  E --> Z[mapa oldId -> newId,type]
+  F --> Z
+  H --> Z
+  C -.->|"e2e VERDE<br/>clone-activity-polymorphic"| OK1[cubierto]
+  D -.->|"solo unit con mocks<br/>SIN e2e"| GAP[brecha que cierra 047]
+      </pre></div>
+    </section>
+
+    <section id="invariant" class="blk mt-10" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El invariante que el e2e debe probar</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Tras clonar un padre con hijos de relacion directa, cada hijo clonado apunta su <span class="text-amber-400">FK al NUEVO padre</span> (nunca al original), recibe <span class="text-amber-400">id y timestamps frescos</span>, y el mapa <span class="text-amber-400">oldId→{newId,type}</span> contiene a todos los clonados de forma consistente.</div>
+        <div class="ilabel mt-2">Corolario: si la relacion es <code class="inline">recursiveBy</code> (auto-referencial), la jerarquia se preserva — el root se clona antes que sus hijos y la self-FK se remapea al nuevo id, no al viejo.</div>
+      </div>
+    </section>
+
+    <!-- ============ EL ENTORNO (hacia los lados) ============ -->
+
+    <section id="entorno" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El entorno y sus restricciones (hacia los lados)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Que rodea este caso y que limites impone. Tres piezas del entorno condicionan el approach: el e2e polimorfico que ya existe (y sirve de patron),
+        el hecho de que <code class="inline">directChildren</code> se lee del archivo, y la regla de rama de la epica.
+      </p>
+      <div class="callout callout-success"><strong>✓ Patron existente</strong> — <code class="inline">tests/e2e/clone-activity-polymorphic.test.js</code> ya corre verde contra la DB Docker (setup filas reales → clonar → assert → teardown). El e2e directo se modela sobre el — no se inventa estructura nueva.</div>
+      <div class="callout callout-info"><strong>ℹ Activacion sin codegen</strong> — como <code class="inline">readDirectChildren</code> lee el bloque del JSON del objeto (H2 confirmada en <code class="inline">deep-clone-direct.js</code>), declarar <code class="inline">directChildren</code> temporal en un JSON real lo activa en runtime sin pasar por codegen ni tocar el registry. Revertible con <code class="inline">git checkout</code>.</div>
+      <div class="callout callout-warn"><strong>⚠ Sin residuo</strong> — la DB Docker <code class="inline">pg</code> es compartida durante el sprint. El test DEBE restaurar el estado previo (teardown de filas; reset canonico solo si fuera imprescindible). Es criterio de aceptacion, no opcional.</div>
+      <div class="callout callout-danger"><strong>✗ Rama de la epica</strong> — <code class="inline">RULE-dev-004</code>: todo trabajo en object-manager va en la rama epica <code class="inline">UPONE-1206</code>. Commits con prefijo <code class="inline">TICKET-047</code> (el ticket no tiene Jira propio; <code class="inline">external: null</code>). No abrir rama nueva.</div>
+    </section>
+
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Pregunta abierta a resolver en design (H4)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        La unica decision sin cerrar del intake. El e2e necesita un padre+hijo con relacion directa; hay dos formas de conseguirlo y
+        <strong>aun no esta decidido cual</strong> — es lo primero que <code class="inline">design-improvement</code> debe zanjar, porque define todo el seed y el teardown.
+        No es una conclusion: es la pregunta que abre el diseño.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A — Par directo existente (H1)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Usar un par real del modelo (ej. <code class="inline">Workflow←WorkflowTransition.workflowId</code>) y declararle <code class="inline">directChildren</code> temporal.</p><p><span class="text-emerald-400">+</span> No crea tabla fixture ni necesita codegen; mas representativo de produccion.</p><p><span class="text-rose-400">−</span> Los hijos reales arrastran FK requeridas extra (ej. <code class="inline">fromStatusId/toStatusId</code>) → seed mas costoso.</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">B — Fixture minimo (H4)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Un objeto fixture efimero parent+child con solo la FK necesaria, en tenant TEST.</p><p><span class="text-emerald-400">+</span> Seed minimo, control total del escenario, sin FK colaterales.</p><p><span class="text-rose-400">−</span> Implica codegen + schema en el tenant → teardown/reset mas pesado; menos representativo.</p></div></div>
+      </div>
+    </section>
+
+    <!-- ============ EL PLAN (hacia adelante) ============ -->
+
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El plan (hacia adelante)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Orientacion del plan de sessions (esqueleto — se refina en design). Dos sessions: una de ejecucion fuerte (T3) y un cierre liviano.
+      </p>
+      <div class="flex flex-wrap gap-2 items-center mb-4" data-dkc-block="tag">
+        <span class="tag tag-now">ahora: teach-intake → design-improvement</span>
+        <span class="tag tag-next">S1 · e2e + teardown (T3)</span>
+        <span class="tag tag-future">S2 · cierre + teach-close (T1)</span>
+      </div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — caso real + e2e directChildren + restore</div><p class="text-xs text-stone-400">Preparar el escenario (decision A vs B de design), seed, clonar, asserts de FK/jerarquia/mapa, teardown que restaura la DB. Gate fuerte: e2e verde contra DB real + DB restaurada + regresion verde (incluido el e2e polimorfico).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — cierre</div><p class="text-xs text-stone-400">Commits DET-27 (codigo + repo dkc) y teach-close. Gate auto: suite verde + teach-close validado.</p></div>
+      </div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio (barra de exito)</h2>
+      <details class="qa"><summary>¿De que se trata el caso?</summary><div class="ans">De llevar la rama de clonacion por relacion directa (<code class="inline">deepCloneDirectChildren</code> + bloque <code class="inline">directChildren</code>), heredada de TICKET-037, de "solo unit con mocks" a "validada e2e contra Postgres real", sin dejar residuo en la DB compartida.</div></details>
+      <details class="qa"><summary>¿Que se va a hacer a alto nivel y por que importa?</summary><div class="ans">Escribir un e2e autocontenido que clona un padre con hijos de relacion directa contra la DB Docker y verifica el invariante (FK al nuevo padre, ids frescos, mapa consistente, jerarquia si hay <code class="inline">recursiveBy</code>). Importa porque hoy esa rama no tiene red de seguridad e2e: un refactor futuro podria romperla en silencio.</div></details>
+      <details class="qa"><summary>¿Que hipotesis quedo abierta y cual es la mas critica?</summary><div class="ans">H4: par directo existente (H1) vs fixture minimo (H4). Es la mas critica porque define el seed, el teardown y si hace falta codegen. H1, H2 y H3 ya estan confirmadas en el intake. Se resuelve primero en design-improvement.</div></details>
+      <details class="qa"><summary>¿Que decisiones criticas se tomaron en el intake?</summary><div class="ans">El intake fue mayormente lineal: confirmo que el deepClone directo se activa file-based (sin codegen, H2) y que el patron del e2e polimorfico se reusa (H3). La unica decision con alternativas comparables (par real vs fixture) quedo deliberadamente abierta para design — por eso no hay matriz de decision cerrada aqui.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-047 · up1 · generado por DKC. Pre-ejecucion: orienta hacia las bases, el entorno y el plan — los resultados y la evolucion de hipotesis van en el teach-close.
+    </footer>
+
+  </main>
+</body>
+</html>

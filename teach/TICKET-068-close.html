@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Curriculum v2 en UPU (dev reset) · TICKET-068</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: { darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917', nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c', titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px' },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background:rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background:linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-068</span> · Curriculum v2 en UPU (dev reset)</span>
+      <span>up1 · 2026-06-16</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Cómo se resolvió el eclipse del Curriculum v1 en UPU</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El intake ya explicó <em>por qué</em> UPU servía el modelo viejo (override de tenant que eclipsa el v2 del mod) y <em>qué</em> íbamos a hacer (dev reset).
+      Este cierre mira <strong>hacia atrás</strong>: qué se ejecutó realmente, cómo evolucionaron las hipótesis, y las dos lecciones que cambiaron el plan en vuelo.
+      No re-explica los conceptos base (override total, objeto mod-autorado, model-v2) — para eso está el teach-intake.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — UPU ahora sirve el <code class="inline">Curriculum</code> model-v2: se borró el override de tenant, se sembró v2-nativo desde el mod y se hizo <code class="inline">reset-tenant UPU</code>.
+        Verificado live (introspección GraphQL v2, 0 campos v1) + 2 filas sembradas (Plan→AcademicProgram, Minor→Institution). Dos giros en el camino: el seed era <strong>mod-side</strong> (no object-manager), y tras el reset hizo falta un <strong>cold restart</strong> (no nodemon-reload) para que el server recargara el schema.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#hizo" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">evolución de hipótesis</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo por session</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lessons</a>
+      <a href="#next" class="navlink rounded border border-stone-700 px-2 py-1">qué viene</a>
+    </nav>
+
+    <!-- QUÉ SE HIZO -->
+    <section id="hizo" class="blk mt-12" data-dkc-block="case">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué se hizo</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Punto de partida</div><p class="text-sm text-stone-300">El GraphQL de UPU servía <code class="inline">Curriculum</code> v1 (careerId/publicId/isCurrent…) porque el override de tenant eclipsaba el v2 del mod. Sin filas sembradas.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Acción</div><p class="text-sm text-stone-300">Seed v2-nativo en el mod (<code class="inline">_data-curriculum.js</code>) → borrar el override → <code class="inline">reset-tenant UPU</code> (codegen v2 + migrate + seed) → cold restart del OM.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">UPU sirve v2 (introspección live, 0 campos v1). 2 filas: Plan (owner=AcademicProgram UV-ICIV, +rt__Plan 240cr/10p) y Minor (owner=Institution). Otros tenants intactos.</p></div>
+      </div></div>
+    </section>
+
+    <!-- EVOLUCIÓN DE HIPÓTESIS -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Evolución de hipótesis (estado final)</h2></div>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipótesis (intake)</th><th class="p-3">Final</th><th class="text-left p-3">Por qué</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H-A: reforma del objeto mínima/nula</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">DET-32: v2+rt__Plan/Minor ya cubrían todo; campos v1 = drop. El objeto del mod no se tocó.</td></tr>
+          <tr><td class="p-3 text-stone-300">H-B: H1/H2/H4 (backfill) no aplican</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">Reseed v2-nativo → sin filas que migrar → bloqueantes disueltos.</td></tr>
+          <tr><td class="p-3 text-stone-300">H-C: no afecta otros tenants (H6)</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400"><code class="inline">reset-tenant</code> single-tenant; solo UPU tenía override.</td></tr>
+          <tr><td class="p-3 text-stone-300">H-D: owner del seed resoluble</td><td class="p-3 text-center text-amber-300">confirmada (revisada)</td><td class="p-3 text-stone-400">Owner = <strong>AcademicProgram</strong> (el mod lo siembra), no Institution como asumió el primer borrador.</td></tr>
+          <tr class="bg-rose-500/5"><td class="p-3 text-stone-300">(emergente) scope mod vs object-manager</td><td class="p-3 text-center text-rose-300">corregida</td><td class="p-3 text-stone-400">El seed es mod-side (corre en <code class="inline">sync</code>), no <code class="inline">object-manager/prisma</code>. Feedback del dev. (L3)</td></tr>
+          <tr class="bg-rose-500/5"><td class="p-3 text-stone-300">(emergente) reload runtime tras reset</td><td class="p-3 text-center text-rose-300">resuelta</td><td class="p-3 text-stone-400">nodemon-reload NO recarga el schema por-tenant; hizo falta cold restart. (L4)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- FLUJO POR SESSION -->
+    <section id="flow" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El camino recorrido (por session)</h2></div>
+      <div class="tl mt-2">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Seed v2-nativo en el mod (sin DB)</div><p class="text-xs text-stone-400">Se confirmó el shape v2 generado (Curriculum + rt__Plan + enums), se escribió <code class="inline">_data-curriculum.js</code> (Plan owner=AcademicProgram + Minor owner=Institution, idempotente por (institutionId, code), satélite anidado) y se wireó en el <code class="inline">seed.js</code> del mod tras <code class="inline">loadAcademicPrograms</code>. <code class="inline">node --check</code> verde. Quedó committeado en la rama del mod (UPONE-1261). Gate: standby — porque S2 cruzaba object-manager + DB.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Baja del override + reset-tenant + smoke (DB-gated)</div><p class="text-xs text-stone-400">Con aprobación del dev al data-loss (protocolo de 2 momentos), se borró el override y se corrió <code class="inline">reset-tenant UPU</code>. Apareció el guard AI de Prisma (destrabado con el consentimiento literal del dev) y el drift §7 (resuelto regenerando el baseline desde vacío). El reset corrió el seed → filas v2. El smoke inicial mostró v1 (server stale); un <strong>cold restart</strong> del OM lo llevó a v2 live. Cierre.</p></div>
+      </div>
+    </section>
+
+    <!-- LESSONS (study-qa) -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Lessons learned</h2></div>
+      <details class="qa"><summary>¿Dónde va el seed de datos de un objeto de un mod en up1?</summary><div class="ans">En <code class="inline">mods/&lt;mod&gt;/seed/</code> (un <code class="inline">seed.js</code> entrypoint que importa <code class="inline">_data-*.js</code>), que <strong>corre durante <code class="inline">npm run sync</code></strong> — NO en <code class="inline">object-manager/prisma/{tenant}/seed.js</code> (ese es el seed core). Confundirlos infla el scope a object-manager innecesariamente. El primer borrador del spec lo ubicó mal; el dev lo corrigió. (L3)</div></details>
+      <details class="qa"><summary>¿Por qué el GraphQL seguía sirviendo v1 tras el reset, y cómo se arregló?</summary><div class="ans">El server corría bajo nodemon. Un nodemon-reload (incluso con respawn del proceso, PID nuevo) <strong>no recargó el schema por-tenant</strong> — siguió sirviendo v1 pese a que TODAS las fuentes persistentes (prisma schema, dynamic.js, business/Base, core_ObjectDefinition, core_FieldDefinition, filas DB) eran v2. El fix fue un <strong>cold restart real</strong>: matar nodemon + el listener, esperar el puerto libre, levantar fresco. Regla: tras <code class="inline">reset-tenant</code>/codegen, cold restart del OM, no touch-reload. (L4)</div></details>
+      <details class="qa"><summary>¿Por qué "reformar el objeto" terminó siendo no tocar nada?</summary><div class="ans">La cascada DET-32 (necesidad/reuso) mostró que el v2 + <code class="inline">rt__Plan</code>/<code class="inline">rt__Minor</code> ya cubrían el scope, y que los campos v1 (publicId/versionCode/isCurrent/careerId/modality) estaban superseded (drop) porque no había data viva que preservar. El Request decía "reformar", pero la respuesta correcta fue confirmar que el canónico ya era el destino. Verdicto: build (seed) / reuse (objeto) / drop (legacy).</div></details>
+      <details class="qa"><summary>¿Por qué owner=AcademicProgram y no Institution?</summary><div class="ans">El borrador asumió que AcademicProgram no estaba seedeado en UPU. Falso: el mod lo siembra (<code class="inline">_data-academicprogram.js</code>, ej. UV-ICIV). Para un Plan, AcademicProgram es el owner program-centric correcto (intención v2). El Minor, al ser compartido, cuelga de la Institution. Lección: verificar el seed del mod, no solo la lista de tipos del seed core.</div></details>
+    </section>
+
+    <!-- QUÉ VIENE -->
+    <section id="next" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué viene después</h2></div>
+      <div class="callout callout-warn"><strong>⚠ object-manager tree entangled</strong> — el <code class="inline">reset-tenant</code> regeneró archivos (business/Base, prisma schemas, dynamic.js, typeDefs) mezclados con el WIP de UPONE-1261 del dev en <code class="inline">develop</code>, y el override quedó borrado. El dev debe revisar <code class="inline">git status</code> de object-manager antes de commitear su batch. El seed del mod sí quedó committeado aparte (UPONE-1261, sin push).</div>
+      <div class="callout callout-info"><strong>ℹ Habilita UPONE-1270</strong> — con UPU sirviendo v2 (versionado por <code class="inline">previousVersionId</code>), queda desbloqueado el roadmap de clonar/versionar planes.</div>
+      <div class="callout callout-success"><strong>✓ Knowledge promovido</strong> — DECISION-017 (Opción F) reafirmada por la ejecución; learns L3 (seed mod-side) y L4 (cold restart tras reset) son candidatos a RULE de proceso / nota en <code class="inline">operations/database-reset.md §8</code>.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 (close) · TICKET-068 · up1 · mira hacia atrás (qué se hizo / decisiones / lecciones). Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Crear bloque electivo desde edición + fix doble "+" · TICKET-098</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .blk { scroll-margin-top:5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; } details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  table.cmp { width:100%; border-collapse:collapse; font-size:0.85rem; }
+  table.cmp th, table.cmp td { border:1px solid var(--stone-border); padding:0.5rem 0.7rem; text-align:left; vertical-align:top; }
+  table.cmp th { background:#292524; color:#fafaf9; }
+  .tl { position:relative; padding-left:1.6rem; } .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; } .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background:linear-gradient(135deg,rgba(245,158,11,0.10),rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-098</span> · Bloque electivo en edición + doble "+"</span>
+      <span>up1 · 2026-07-01</span>
+    </div>
+  </header>
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Cierre — Bloque electivo desde edición + fix doble "+"</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">Qué se hizo, qué se decidió y qué se aprendió. Las bases (cómo se crea un bloque, la asimetría) están en el teach-intake.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Fix de paridad entregado reusando lo existente: el modal de edición ahora crea
+        bloques electivos nuevos (evento <code class="inline">saveNewBlock</code> → el Element crea el <code class="inline">rt__Group__requirement</code>
+        y reusa <code class="inline">onEditSave</code>). Y se quitó el doble "+" del botón agregar. <strong>1139 tests verdes</strong>
+        (incluye 2 component tests nuevos), lint + typecheck limpios, 2 commits locales. Smoke DB-gated pendiente.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#flujo" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#dec" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#learns" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#handoff" class="navlink rounded border border-stone-700 px-2 py-1">pendiente</a>
+    </nav>
+
+    <section id="flujo" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se hizo, en orden</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Grounding</div><p class="text-xs text-stone-400">Se comparó alta vs edición: la lógica de crear bloque estaba extraída y reusable, pero <code class="inline">EditEntryModal</code> no la importaba. Se decidió linkear al Jira de MC-06 (<code class="inline">UPONE-1349</code>) y se sumó el fix del doble "+".</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Item 2 (doble "+")</div><p class="text-xs text-stone-400">Se quitó el "+ " de <code class="inline">buttons.addSubject</code> en los 3 locales; el icono <code class="inline">bi-plus-lg</code> ya aporta el "+".</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Item 1 (bloque en edición)</div><p class="text-xs text-stone-400">UI con opción "crear nuevo" + input reusando <code class="inline">resolveBlockSelection</code>; evento <code class="inline">saveNewBlock</code>; handler <code class="inline">onEditSaveNewBlock</code> (crea el bloque, reusa <code class="inline">onEditSave</code>); i18n editModal; tests. Un test existente (conteo de opciones) se actualizó por el cambio intencional.</p></div>
+      </div>
+    </section>
+
+    <section id="dec" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones</h2>
+      <div style="overflow-x:auto"><table class="cmp">
+        <thead><tr><th>Decisión</th><th>Qué se eligió</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td>Enfoque</td><td>reuso + evento nuevo <code class="inline">saveNewBlock</code></td><td>mantiene el path <code class="inline">save</code> existente intacto (cero regresión) y agrega solo el caso nuevo</td></tr>
+          <tr><td>Dónde crea el bloque</td><td>en el Element (espejo de <code class="inline">createElectivaEntries</code>)</td><td>el modal es presentacional; las mutaciones viven en el Element</td></tr>
+          <tr><td>minToSatisfy del bloque nuevo</td><td>1</td><td>en edición se reclasifica una asignatura; el bloque nace con 1 (análogo al alta)</td></tr>
+          <tr><td>Jira</td><td>linkear a <code class="inline">UPONE-1349</code> (MC-06)</td><td>mismo componente; decisión del dev; commits con ese id (DET-19)</td></tr>
+          <tr><td>Doble "+"</td><td>quitar "+" de la etiqueta (no del icono)</td><td>el icono es la convención del botón; el "+" del texto era el redundante</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="learns" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones</h2>
+      <details class="qa"><summary>Un módulo puro ya extraído acelera la paridad entre superficies</summary><div class="ans"><code class="inline">blockSelect.logic</code> era Vue-free/GraphQL-free y ya testeado; darle la capacidad a la edición fue wiring, no lógica nueva. Vale la pena revisar si una capacidad "que falta" en un lugar ya existe extraída en otro.</div></details>
+      <details class="qa"><summary>Agregar una opción a un <code class="inline">&lt;select&gt;</code> rompe tests de conteo — actualizarlos con el cambio</summary><div class="ans">El test existente asertaba placeholder + N opciones. Al sumar "crear nuevo" el conteo cambió (3→4); es un cambio intencional del REQ, así que el test se actualiza (no se elude) y se agregan tests para la conducta nueva.</div></details>
+      <details class="qa"><summary>Doble icono/afijo: revisar icono + etiqueta juntos</summary><div class="ans">Un botón con <code class="inline">icon</code> + etiqueta que empieza con el mismo símbolo duplica el glifo. Al usar el atom <code class="inline">Button</code> con icono, la etiqueta i18n no debe repetir el símbolo.</div></details>
+    </section>
+
+    <section id="handoff" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Pendiente / handoff</h2>
+      <div class="callout callout-warn"><strong>Smoke DB-gated (RULE-mods-050)</strong> — Tras <code class="inline">layout sync</code> + <code class="inline">suite sync</code> + restart, en un tenant: editar una asignatura → rol electiva → "crear bloque nuevo" + nombre → guardar → el bloque se crea y el planEntry queda asignado; y verificar que el botón "Asignatura" muestra un solo "+".</div>
+      <div class="callout callout-info mt-3"><strong>Push</strong> — Commits (<code class="inline">2f42565</code>, <code class="inline">6674f19</code>) locales en <code class="inline">UPONE-1267-sp5</code>. Merge a develop tras revisión del team up1 (RULE-dev-004).</div>
+      <div class="callout callout-success mt-3"><strong>Cobertura</strong> — A diferencia de un smoke-only, este ticket tiene tests component (jsdom) que montan el modal y verifican el flujo de crear bloque nuevo y la validación de nombre vacío.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · close · TICKET-098 · up1 · 2026-07-01. Generado por DKC.</footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Versionar objetos sin workflow · TICKET-074</title>
+<!-- metadata · ticket: TICKET-074 · kind: close · project: up1 · generated: 2026-06-18 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-074</span> · Versionar objetos sin workflow</span>
+      <span>up1 · 2026-06-18</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Lo que se hizo — versionar sin workflow + el efecto dominó en el update de curriculum</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El ticket arrancó acotado (hacer opcional el chequeo de workflow al versionar) y, durante la verificación E2E
+      en vivo, el dev destapó dos bugs adyacentes del path de <strong>update</strong> de curriculum que se plegaron
+      por decisión suya. Cerró entregando los fixes de datos (todos verificados) y difiriendo dos frentes de mayor
+      alcance a backlog. Este documento es el recorrido y las lecciones — asume los conceptos del teach-intake.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se entregó: (1) <strong>versionado de objetos sin workflow</strong>
+        (<code class="inline">prepareVersionData</code> gateado a <code class="inline">needsWorkflow</code>), verificado
+        en vivo (v2 Draft encadenada); (2) fix <strong>institutionId FK→connect</strong> en <code class="inline">updateInstance</code>
+        (simetría con create); (3) <strong>split RecordType en el update</strong> de curriculum vía
+        <code class="inline">updateCurriculumWithRecordType</code> (mirror del create), que destrabó "Unknown argument
+        progression". Se difirió a backlog: el path RT atómico en <em>versión</em> (B1) y la navegación post-guardar
+        del customEndpoint full-page (B2, suite-side). Core tocado: solo versioning helper + FK fix en object-manager
+        (lo demás mod-only; un intento de tocar el layout-engine fue revertido).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">recorrido</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipótesis</a>
+      <a href="#trade" class="navlink rounded border border-stone-700 px-2 py-1">trade-off</a>
+      <a href="#kb" class="navlink rounded border border-stone-700 px-2 py-1">backlog/KB</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+    </nav>
+
+    <!-- TIMELINE: el flujo real por session -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El recorrido (por session)</h2></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Fix workflow-opcional + tests</div><p class="text-xs text-stone-400">Se gateó la lógica de workflow de <code class="inline">prepareVersionData</code> a <code class="inline">needsWorkflow = !!initialStateField</code> (include/checks/set condicionales). Se extendió el unit con 4 casos sin-workflow (13/13, activity preservado). Smoke E2E vivo: tras descubrir que el OM corría código viejo (arrancado con <code class="inline">npm start</code> plano, sin watch), se reinició → versionar un Curriculum Plan dio v2 Draft encadenada, sin crash.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Observación del frente #2 (extensión RT en versión)</div><p class="text-xs text-stone-400">Se inspeccionó la DB: la v1 tenía <code class="inline">rt__Plan__curriculum</code> (totalCredits 240); la <strong>v2 quedó NULL</strong>. Confirmó H4: el versionado destraba el crash pero NO arrastra la extensión RT. Decisión: no expandir el ticket; backlog B1 (path RT atómico, core, TICKET-056).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — Bugs del update de curriculum (plegados por el dev)</div><p class="text-xs text-stone-400">Editando un Minor en la suite, el dev encontró dos errores en cadena. Primero <code class="inline">institutionId</code>: se arregló en <code class="inline">updateInstance</code> convirtiendo FK escalar→connect (simetría con create). Destrabado eso, emergió <code class="inline">progression</code>: el update no separaba campos RecordType a su extensión; se agregó <code class="inline">updateCurriculumWithRecordType</code> (mirror del create) + wiring del layout. El guardado quedó OK (verificado por el dev). La navegación post-guardar no se resolvió mod-only → backlog B2.</p></div>
+      </div>
+    </section>
+
+    <!-- HYPOTHESIS EVOLUTION -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Evolución final de hipótesis</h2></div>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipótesis</th><th class="p-3">Resultado</th><th class="text-left p-3">Evidencia</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H1 — prepareVersionData asume workflow siempre</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">crash real + lectura del helper</td></tr>
+          <tr><td class="p-3 text-stone-300">H2 — Curriculum usa enum simple, sin FK workflow</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">config + error Prisma</td></tr>
+          <tr><td class="p-3 text-stone-300">H3 — gate por initialStateField preserva activity</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">13/13 unit, activity intacto</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300">H4 — la v2 NO arrastra la extensión RT</td><td class="p-3 text-center text-amber-300">confirmada (dolorosa)</td><td class="p-3 text-stone-400">v2 = NULL en DB → backlog B1</td></tr>
+          <tr><td class="p-3 text-stone-300">H5 — deepClone de hijos atómico en asNewVersion</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">resolver $transaction</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- TRADE-OFF: customEndpoint vs update genérico -->
+    <section id="trade" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El trade-off del split en update (lección central)</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        El update de curriculum tenía dos caminos, y ninguno daba todo. Entenderlo evita re-pisar el rastrillo.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Update genérico (objectType=Curriculum)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>El form lo usaba originalmente.</p><p><span class="text-emerald-400">+</span> Navega al recordlist tras guardar.</p><p><span class="text-rose-400">−</span> NO separa campos RecordType → "Unknown argument progression/institutionId".</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">customEndpoint (alias rt__, mirror del create)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>El fix que se aplicó.</p><p><span class="text-emerald-400">+</span> Hace el split base/rt → guarda Minor y Plan OK.</p><p><span class="text-rose-400">−</span> El path customEndpoint full-page no dispara la navegación → se queda en el form (B2).</p></div></div>
+      </div>
+    </section>
+
+    <!-- BACKLOG / KB promovido -->
+    <section id="kb" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Lo que queda (backlog) y reglas</h2></div>
+      <div class="callout callout-warn"><strong>⚠ B1 — path RT atómico en versión (core)</strong>: versionar un Curriculum Plan no arrastra su <code class="inline">rt__Plan__curriculum</code>. Trabajo de core (TICKET-056), coordinar con team up1.</div>
+      <div class="callout callout-warn"><strong>⚠ B2 — navegación post-guardar (suite-side)</strong>: el customEndpoint full-page edit guarda pero no vuelve al recordlist. NO es mod-only — vive en la app suite / layout-engine. Follow-up front.</div>
+      <div class="callout callout-success"><strong>✓ RULE candidata</strong>: la asimetría create/update se repite — <code class="inline">createInstance</code> hace FK→connect y split RT; <code class="inline">updateInstance</code> no. Al converger un objeto a RecordType + relación requerida + extensión, el UPDATE necesita su propio adapter <code class="inline">update&lt;Obj&gt;WithRecordType</code> (mirror del create) — no asumir paridad.</div>
+      <div class="callout callout-note"><strong>ℹ Operativo</strong>: el OM corría con <code class="inline">npm start</code> (sin watch) → no recargaba cambios de <code class="inline">src/</code>. Reiniciar el OM tras editar core es obligatorio para verificar en vivo.</div>
+    </section>
+
+    <!-- LESSONS (study-qa) -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Lecciones</h2></div>
+      <details class="qa"><summary>¿Por qué el versionado de curriculum crasheaba y cómo se generalizó?</summary><div class="ans"><code class="inline">prepareVersionData</code> incluía <code class="inline">currentstatus</code>/<code class="inline">workflow</code> incondicionalmente. Curriculum no las modela. Se gateó todo a <code class="inline">needsWorkflow = !!initialStateField</code>: presente (activity) → path workflow idéntico; ausente (curriculum/academicProgram) → se salta y el estado lo da el <code class="inline">static_default</code>. Generaliza la plataforma sin parchear caso por caso.</div></details>
+      <details class="qa"><summary>¿Por qué el fix de versionado NO cerró "versionar curriculum end-to-end"?</summary><div class="ans">Destrabó el crash, pero la v2 nace sin su extensión <code class="inline">rt__Plan__curriculum</code> (frente #2 / B1): el path de versión usa <code class="inline">objectType=Curriculum</code> base; con el alias <code class="inline">rt__</code> el guard L40 lo rechaza (path RT no-atómico, TICKET-056). Es trabajo de core aparte.</div></details>
+      <details class="qa"><summary>¿Cuál fue el error de proceso y cómo lo corrigió el dev?</summary><div class="ans">Para arreglar la navegación toqué <code class="inline">RecordDetail.vue</code> (layout-engine core). El dev lo atajó: debe ser mod-only. Se revirtió y se intentó la vía mod (<code class="inline">returnsScalar:true</code> + retorno escalar). Lección: la navegación post-submit de un customEndpoint full-page la gobierna la app suite, NO se arregla tocando core layout desde este ticket — y cuando no alcanza mod-only, se difiere (B2) en vez de invadir core.</div></details>
+      <details class="qa"><summary>¿Qué quedó realmente entregado y verificado?</summary><div class="ans">Versionado sin workflow (E2E vivo), fix institutionId (E2E + unit + 542 resolvers sin regresión), split RT en update (guardado verificado por el dev). Diferido: B1 (RT atómico en versión) y B2 (navegación suite-side). El push de los commits quedó pendiente de aprobación humana (super autopilot).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-074 · close · up1 · Generado por DKC.
+    </footer>
+  </main>
+</body>
+</html>

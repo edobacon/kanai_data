@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Nombre de vista declarable por app · TICKET-132</title>
+<!--
+  metadata · ticket: TICKET-132 · kind: close · project: up1 · generated: 2026-08-21
+  Externo: UPONE-1645 · Core Extension Change Type 3 · SP ejecutados: 3
+-->
+<style>
+  :root { --bg:#0c0a09; --panel:#1c1917; --border:#44403c; --amber:#f59e0b; --text:#e7e5e4; --muted:#a8a29e; --green:#22c55e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.55; }
+  main { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.5rem; border-bottom:2px solid var(--amber); padding-bottom:.5rem; }
+  h2 { font-size: 1.15rem; color:var(--amber); margin-top:2rem; }
+  h3 { font-size: 1rem; color:#fafaf9; margin-top:1.25rem; }
+  code, pre { font-family: SFMono-Regular,Menlo,Consolas,monospace; }
+  code { background:var(--panel); padding:.1rem .35rem; border-radius:4px; font-size:.85em; }
+  pre { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto; font-size:.82rem; }
+  table { border-collapse: collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+  th, td { border:1px solid var(--border); padding:.45rem .6rem; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--amber); }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin:1rem 0; }
+  .ok { color:var(--green); font-weight:600; }
+  .muted { color:var(--muted); }
+  ul { padding-left:1.25rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Nombre de vista declarable por app (<code>labelKey</code>)</h1>
+<p class="muted">TICKET-132 · UPONE-1645 · Core Extension Change Type 3 · Cerrado 2026-08-21 · 3 SP ejecutados en 3 sessions</p>
+
+<div class="panel">
+<strong>Qué quedó resuelto.</strong> Cada app puede declarar, de forma opt-in, la clave i18n del nombre de una vista de su menú (<code>labelKey</code>), que gana sobre la clave global <code>object.&lt;Objeto&gt;</code> y aplica solo a su app. Dos apps que declaran el mismo objeto Base (Curriculum Design y Engagement sobre <code>Activity</code>/<code>Offering</code>) muestran nombres distintos sin pisarse. Desbloquea la parte de UPONE-1616 que no era ejecutable.
+</div>
+
+<h2>La cadena, eslabón por eslabón</h2>
+<p>El dato viaja de la config del mod al render. Los 5 eslabones que tocó el ticket (los 2 que el análisis en papel había omitido — tipo GraphQL y selección del cliente — son los marcados ⚑):</p>
+<table>
+<tr><th>#</th><th>Eslabón</th><th>Archivo (fuente en <code>suite</code>)</th><th>Cambio</th></tr>
+<tr><td>Schema</td><td>Variante objeto <code>{object, layouts?, labelKey?}</code> + <code>labelKey</code> en <code>navByRole</code>, <code>additionalProperties:false</code></td><td>object-manager/objects/up1/suite/up1_suite_app.json</td><td>REQ-01 · DEC-LOCAL-01</td></tr>
+<tr><td>4</td><td>Normalización server preserva <code>labelKey</code> (antes lo descartaba)</td><td>suite/logic/app.resolver.js (<code>normalizeTab</code>)</td><td>REQ-02</td></tr>
+<tr><td>5 ⚑</td><td>Tipo GraphQL <code>NavTab.labelKey: String</code></td><td>suite/logic/app.schema.graphql</td><td>REQ-02</td></tr>
+<tr><td>6</td><td>Interfaz cliente <code>NavTab.labelKey</code></td><td>suite/composables/navTabs.ts</td><td>REQ-02</td></tr>
+<tr><td>7 ⚑</td><td>Query del cliente pide <code>labelKey</code></td><td>suite/composables/useObjectManager.ts</td><td>REQ-02</td></tr>
+<tr><td>8</td><td>Resolución del label con cascada de 3 niveles</td><td>suite/composables/navTabs.ts + useObjectManager.ts</td><td>REQ-03</td></tr>
+</table>
+
+<h2>La cascada de 3 niveles (lo más importante de aprender)</h2>
+<p>El spike original tenía un gap: una <code>labelKey</code> declarada pero inexistente en el catálogo caía <em>directo al nombre técnico</em> de la tabla. La ejecución formal lo corrigió extrayendo un helper puro:</p>
+<pre>resolveNavGroupLabel({ objectName, isDashboards, ownLabelKey, translate }):
+  1) labelKey declarada (si traduce)      → gana
+  2) object.&lt;Objeto&gt; (si traduce)         → si no hay labelKey o no traduce
+  3) nombre técnico del objeto            → último recurso
+  (dashboards siempre resuelve por object.Dashboards, ignora labelKey)</pre>
+<p>Una <code>labelKey</code> mal escrita degrada con gracia a <code>object.&lt;Objeto&gt;</code>, nunca al nombre técnico. La propiedad que evita el efecto cruzado entre mods: cada mod declara la clave en <strong>su propio namespace i18n</strong> (<code>{workspace}/{stem}</code>).</p>
+
+<h2>Cómo se verificó</h2>
+<ul>
+<li><span class="ok">Unit</span>: 18 casos nuevos (66→84 tests, sin regresión), typecheck 0 errores. Helpers puros (<code>normalizeTab</code>, <code>resolveNavGroupLabel</code>, <code>buildTabLabelKeys</code>) testeados en aislamiento.</li>
+<li><span class="ok">API</span>: introspección confirmó <code>NavTab.labelKey</code> en el schema regenerado (diagnóstico server-first antes de tocar el cliente).</li>
+<li><span class="ok">Runtime</span> (tenant UPU): menú de Curriculum Design mostró "Programa de asignatura"/"Sílabos"; Engagement, mismo tenant, sin cambios ("Actividad"/"Ofertas"); breadcrumb heredó el nombre declarado (REQ-07).</li>
+<li><span class="ok">Sync</span>: <code>sync:logic</code> regeneró los gemelos de object-manager desde las fuentes de suite (no editados a mano); <code>drift:check -- UPU</code>: NO ERRORS.</li>
+</ul>
+
+<h2>Decisiones clave</h2>
+<table>
+<tr><th>Decisión</th><th>Por qué</th></tr>
+<tr><td>Clave i18n (<code>labelKey</code>), no texto literal (DEC-LOCAL-02)</td><td>Traducible en 3 idiomas; no mete texto de UI en configuración.</td></tr>
+<tr><td>Declarar <code>labelKey</code> explícito manteniendo <code>additionalProperties:false</code> (DEC-LOCAL-01)</td><td>Schema estricto que sigue atrapando typos; no abrir el contrato.</td></tr>
+<tr><td>Editar solo fuentes en <code>suite</code>; gemelos de OM por sync</td><td>El typeDefs de OM es generado; editarlo a mano destruye regeneraciones ajenas.</td></tr>
+</table>
+
+<h2>Learn que dejó la ejecución</h2>
+<div class="panel">
+<strong>Paridad i18n vs idioma del smoke.</strong> El stash del spike traía solo las traducciones en español. El ticket declaraba una NFR de paridad en 3 idiomas, pero el smoke se hizo solo en <code>es</code>. El reviewer del gate final detectó que <code>en</code>/<code>pt</code> no tenían las claves. <strong>Aprendizaje:</strong> cuando un ticket declara una NFR i18n, verificar la paridad del catálogo en los 3 idiomas en execute, no solo el idioma con el que se probó — la cascada de fallback lo hace no-fatal, pero la capacidad no queda disponible en los idiomas faltantes.
+</div>
+
+<h2>Pendiente al merge (gate de core)</h2>
+<p>Es Core Extension Change Type 3: la aprobación de core es <strong>gate de merge</strong>, se presenta en el PR (commits/branch con id <code>UPONE-1645</code>). Open questions no bloqueantes para core: aceptar también texto literal además de clave; ubicación final de la doc de la capacidad.</p>
+
+</main>
+</body>
+</html>

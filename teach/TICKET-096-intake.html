@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Fix selección de pickers + curaduría de íconos · TICKET-096</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad:true, theme:'dark', themeVariables:{ darkMode:true, background:'#0c0a09', primaryColor:'#1c1917', primaryTextColor:'#e7e5e4', primaryBorderColor:'#f59e0b', lineColor:'#a8a29e', secondaryColor:'#292524', tertiaryColor:'#1c1917', mainBkg:'#1c1917', nodeBorder:'#f59e0b', clusterBkg:'#0c0a09', clusterBorder:'#44403c', titleColor:'#fafaf9', edgeLabelBackground:'#1c1917', textColor:'#e7e5e4', fontSize:'13px' }, flowchart:{ htmlLabels:true, curve:'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-danger { border-color:#f87171; background:rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .pre-mermaid { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  .tldr { background:linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-096</span> · Fix selección pickers + íconos</span>
+      <span>up1 · 2026-06-25</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Por qué la selección de los pickers no se ve, y por qué los íconos están mal curados</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      TICKET-094 entregó el ColorPicker y el IconPicker. Al usarlos en la suite emergieron dos cosas: el swatch/ícono <strong>seleccionado no se resalta</strong> (ni el guardado al abrir edición, ni el que clickeas), y el catálogo de íconos arranca con flechas y alineaciones en vez de íconos educacionales. Este ticket corrige ambas. La primera es un <strong>bug de reactividad</strong> con causa raíz ya localizada; la segunda es <strong>curaduría</strong>.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Qué pasa:</strong> ambos pickers derivan el estado seleccionado de <code class="inline">element.value</code> dentro de un <code class="inline">computed</code> → no reacciona al <code class="inline">update()</code> (click no resalta) y está vacío al montar (no hidrata). El indicador CSS ya existe; el estado no cambia. <strong>Qué se hará:</strong> migrar a estado LOCAL (<code class="inline">ref</code> + init desde <code class="inline">element.value</code> con fallback a <code class="inline">element.form$.data</code> + <code class="inline">watch</code> + <code class="inline">element.update()</code>), patrón de <code class="inline">ValidationTextEditorElement</code>. Y curar el default del IconPicker a un set educacional (catálogo completo sigue buscable). <strong>Por qué:</strong> sin feedback de selección el componente es inusable; los íconos de navegación no representan líneas de formación.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">cómo fluye el valor</a>
+      <a href="#why" class="navlink rounded border border-stone-700 px-2 py-1">la trampa</a>
+      <a href="#plan" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- BASES + cómo fluye -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Cómo fluye el valor en un Vueform element writable</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Un element que escribe (<code class="inline">submits:true</code>) tiene dos momentos: <em>hidratar</em> (el form de edición carga el valor del registro) y <em>seleccionar</em> (el usuario hace click). El display debe reflejar AMBOS. El error de TICKET-094 fue intentar leer el valor "en vivo" con un computed, que no cubre ninguno de los dos de forma fiable.</p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  Edit[Form edit abre] -->|carga async| EV["element.value (puede llegar vacío al setup)"]
+  EV -->|init| LOCAL["ref local 'selected'"]
+  FD["element.form$.data (fallback hidratación)"] -->|init si EV vacío| LOCAL
+  Click[Usuario click] -->|select| LOCAL
+  LOCAL -->|persiste| UP["element.update()"]
+  LOCAL -->|render reactivo| UI["borde + check / aria-checked"]
+  EV -.watch.-> LOCAL
+      </pre></div>
+    </section>
+
+    <!-- La trampa (entorno) -->
+    <section id="why" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La trampa de reactividad (y por qué RULE-019 se queda corta)</h2>
+      <div class="callout callout-danger"><strong>✗ Lo que hicimos (TICKET-094)</strong> — <code class="inline">const currentValue = computed(() =&gt; element.value)</code>. El <code class="inline">computed</code> no vuelve a evaluar de forma fiable cuando <code class="inline">element.update()</code> cambia el valor, y al montar la edición <code class="inline">element.value</code> aún no trae el dato → ni resalta al click ni hidrata.</div>
+      <div class="callout callout-info"><strong>✓ El patrón probado</strong> — <code class="inline">ValidationTextEditorElement</code> (mod object-manager-editor) mantiene estado LOCAL: <code class="inline">const text = ref(typeof element.value === 'string' ? element.value : props.default)</code>, con un <strong>fallback que lee <code class="inline">element.form$.data</code></strong> para el valor cargado, y persiste con <code class="inline">element.update()</code>.</div>
+      <div class="callout callout-warn"><strong>⚠ RULE-curriculum-design-019</strong> hoy dice "writable = setup()+element.update()". Le falta el matiz: <strong>el estado de display debe ser LOCAL</strong>, no un computed sobre <code class="inline">element.value</code>. Este ticket la refuerza.</div>
+    </section>
+
+    <!-- ADELANTE -->
+    <section id="plan" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Hacia adelante — el plan</h2>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Una sesión (T2, dual-judge). El fix de reactividad es la misma receta en ambos pickers; la curaduría toca solo <code class="inline">useIconPicker.ts</code>.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">S1.T1 — ColorPicker</div><p class="mt-1.5 text-xs text-stone-400">ref local + fallback form$.data + watch; selección/hidratación reactivas.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">S1.T2 — IconPicker</div><p class="mt-1.5 text-xs text-stone-400">Misma reactividad + set curado educacional por defecto (catálogo completo buscable).</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">S1.T3 — Tests</div><p class="mt-1.5 text-xs text-stone-400">Cubrir el flujo de selección (montar el SFC si se puede) + el set curado por defecto. Smoke real obligatorio al cierre.</p></div>
+      </div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿Por qué el computed sobre element.value no alcanza?</summary><div class="ans">Dos motivos: (1) tras <code class="inline">element.update()</code> el computed no re-evalúa de forma fiable (la dependencia reactiva sobre la propiedad del element no se rastrea como un ref propio), así que el resalte no cambia; (2) al montar el form de edición, el valor del registro llega async — al momento del setup <code class="inline">element.value</code> puede estar vacío, y el computed se queda con ese vacío. El estado local + watch + fallback a <code class="inline">form$.data</code> cubre ambos.</div></details>
+      <details class="qa"><summary>¿El CSS de selección estaba mal?</summary><div class="ans">No. <code class="inline">.cp-swatch--selected</code> (borde + SVG check) y <code class="inline">.ip-cell--selected</code> (borde + fondo) existen y son correctos. El bug es que <code class="inline">isSelected()</code> nunca devuelve true porque el estado del que depende no cambia. Es un bug de estado, no de estilo.</div></details>
+      <details class="qa"><summary>¿Por qué salían flechas en el IconPicker?</summary><div class="ans"><code class="inline">filterIcons('')</code> devuelve los primeros 120 nombres del manifest en orden alfabético, que arranca con <code class="inline">align-*</code>, <code class="inline">arrow-*</code>, <code class="inline">chevron-*</code>. No había curaduría. El fix: un set educacional curado se muestra primero; el catálogo completo (2078) sigue accesible al escribir en la búsqueda.</div></details>
+      <details class="qa"><summary>¿Cómo se valida que esta vez sí funciona?</summary><div class="ans">El gap de TICKET-094 fue confiar solo en tests de lógica pura. Acá se agrega cobertura del flujo de selección y, sobre todo, el <strong>smoke runtime es obligatorio al cierre</strong>: tras <code class="inline">npm run sync</code> + reinicio de la suite, abrir una línea con color/ícono guardados y verificar hidratación + click. Es DB-gated; lo corre el dev, pero el cierre exige evidencia.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-096 · intake · up1 · 2026-06-25 · Generado por DKC.
+    </footer>
+  </main>
+</body>
+</html>

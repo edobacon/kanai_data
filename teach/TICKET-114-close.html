@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Retiro del subsistema workflow relacional · TICKET-114</title>
+<!-- metadata · ticket: TICKET-114 · kind: close · project: up1 · generated: 2026-07-22 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"\25B8"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"\25BE"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-114</span> · Retiro del subsistema workflow relacional</span>
+      <span>up1 · 2026-07-22</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Retiro del subsistema workflow relacional (curriculum-design)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El motor de workflow relacional del mod (los objetos <code class="inline">Workflow*</code> con sus resolvers
+      <code class="inline">*Validated</code> y su seed) quedo como codigo muerto cuando <code class="inline">Activity.status</code>
+      migro al motor de enum de core (UPONE-1381/P4), y SS-423 removio la ultima FK externa de uEngagement. Este ticket
+      ejecuto el retiro: borrado mod-side + drop de schema en UPU, dejando la propagacion multi-tenant a la coordinacion de deploy.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR:</strong> retiro completo a nivel <strong>mod</strong> (8 archivos borrados, poda de
+        <code class="inline">errors.js</code>, seeds/tests/docs limpios) y a nivel <strong>BD de UPU</strong> (drop de 8 tablas,
+        28 filas de Activity preservadas). El drop multi-tenant, el <code class="inline">model:bump</code> y el
+        <code class="inline">drift:check</code> global quedan <strong>delegados a deploy</strong> (backlog <em>should</em>, via los PRs de coordinacion core).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">flujo por session</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">que se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipotesis</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#deferred" class="navlink rounded border border-stone-700 px-2 py-1">lo que sigue</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+    </nav>
+
+    <!-- ================= flujo por session ================= -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Flujo por session</h2>
+      <div class="tl mt-4">
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 · Borrado + regeneracion local (tier T2)</div>
+          <p class="text-xs text-stone-400 leading-relaxed">
+            Se fijo primero el baseline de regresion (<code class="inline">npm test</code> = 1251/1251) como red de seguridad del refactor.
+            Luego se barrio la superficie real de borrado, que el analisis de impacto habia subestimado: no eran 2 archivos sino 8
+            (4 objetos <code class="inline">workflow*.json</code>, 3 resolvers + 3 schemas graphql, y 2 helpers, donde
+            <code class="inline">assertExists</code> solo lo usaban esos resolvers). Se podo la seccion <code class="inline">WORKFLOW_*</code>
+            de <code class="inline">errors.js</code>, se removieron 4 indices muertos de <code class="inline">_data-indexes.js</code>, se
+            reescribio el test de indices sobre los sobrevivientes y se limpiaron comentarios/seeds. Cierre: codegen + sync local y suite
+            en 1229/1229 (baseline menos los 22 tests del propio workflow). Gate: continue.
+          </p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 · Migracion destructiva en UPU + descubrimiento del limite (tier T3)</div>
+          <p class="text-xs text-stone-400 leading-relaxed">
+            Se verifico la precondicion 0-FK en UPU (28 Activity, 0 <code class="inline">workflowId</code>, 0 <code class="inline">currentStatusId</code>).
+            Con consentimiento del dev se hizo orphan-cleanup en object-manager (borrar <code class="inline">Base/workflow*.json</code> + los FK de
+            <code class="inline">activity.json</code>), se regenero BASEMODEL y se aplico <code class="inline">prisma db push --accept-data-loss</code>
+            sobre UPU: 8 tablas dropeadas, N8nWorkflow intacto, las 28 filas preservadas (drop quirurgico, no reset). Se completo el barrido de docs (23 archivos).
+            El descubrimiento clave freno el avance: el codegen/sync de up1 es append-only en todas las capas, asi que un sync ahora generaria una migracion
+            multi-mod, no un drop aislado, y ademas el working tree de OM estaba entrelazado con pending ajeno. Gate: standby (drop multi-tenant = coordinacion core, RULE-dev-004).
+          </p>
+        </div>
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S3 · Review de PR, cleanup de residuos y apertura de PRs</div>
+          <p class="text-xs text-stone-400 leading-relaxed">
+            Se corrio la review (dredd) de los cambios como PR: veredicto aprobable a nivel mod, con un hallazgo de docs de seed stale.
+            Se resolvieron los residuos: se borro <code class="inline">SMOKE-UPU.md</code>, se reescribio <code class="inline">seed/README.md</code>, se
+            quitaron labels pt huerfanos y mocks de test inertes, y se retiro la seccion viva de workflow del <code class="inline">CLAUDE.md</code> del mod
+            (que aun lo describia como vigente). Una re-revision cazo 3 refs colgantes que introdujo el borrado del SMOKE y se corrigieron. Se pushearon ambas ramas
+            y se abrieron los PRs (#24 curriculum-design, #421 object-manager, este ultimo con develop mergeado). Se actualizo el KB (RULE-003 retirada, RULE-004 sincronizada, KB externo).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= que se hizo (antes/despues) ================= -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Que cambio (antes / despues)</h2>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Dimension</th><th class="p-3">Antes</th><th class="p-3">Despues</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">Estado de Activity</td><td class="p-3 text-center text-stone-400">FK relacional (workflowId/currentStatusId)</td><td class="p-3 text-center text-amber-300">enum <code class="inline">status</code> (motor de core)</td></tr>
+          <tr><td class="p-3 text-stone-300">Objetos workflow</td><td class="p-3 text-center text-stone-400">4 objetos + 3 resolvers + 3 schemas</td><td class="p-3 text-center text-amber-300">eliminados (mod + core)</td></tr>
+          <tr><td class="p-3 text-stone-300">errors.js</td><td class="p-3 text-center text-stone-400">codes WORKFLOW_* + ACTIVITY_*</td><td class="p-3 text-center text-amber-300">podados (dead code)</td></tr>
+          <tr><td class="p-3 text-stone-300">BD UPU</td><td class="p-3 text-center text-stone-400">8 tablas workflow + 2 columnas</td><td class="p-3 text-center text-amber-300">dropeadas (28 Activity intactas)</td></tr>
+          <tr><td class="p-3 text-stone-300">Suite del mod</td><td class="p-3 text-center text-stone-400">1251/1251</td><td class="p-3 text-center text-amber-300">1229/1229 (menos 22 del workflow)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ================= evolucion de hipotesis ================= -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolucion de la hipotesis</h2>
+      <div class="callout callout-success"><strong>&#10003; Confirmada</strong> &nbsp;"Es codigo muerto, seguro de retirar": ningun consumidor vivo del modelo prisma <code class="inline">Workflow*</code> en <code class="inline">logic/</code>; N8nWorkflow es otro objeto (n8n), no se toca.</div>
+      <div class="callout callout-warn"><strong>&#9888; Refinada</strong> &nbsp;La superficie real de borrado era <strong>8 archivos, no 2</strong> (el plan subestimo resolvers/schemas/helpers).</div>
+      <div class="callout callout-warn"><strong>&#9888; Refinada</strong> &nbsp;"El drop se aplica con un codegen+sync+migrate": <strong>falso en up1</strong>. El sync es append-only y no quirurgico, asi que el drop no es aislable sin coordinacion de core (se descubrio en S2).</div>
+    </section>
+
+    <!-- ================= invariante (el gran aprendizaje) ================= -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Invariante que dejo el caso</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El codegen/sync de up1 es <span class="text-amber-400">append-only en todas las capas</span> (merge de business/, BASEMODEL, schema por-tenant). Borrar un objeto <span class="text-amber-400">no</span> remueve su tabla.</div>
+        <div class="ilabel mt-2">Corolario: retirar un objeto exige orphan-cleanup manual + <code class="inline">codegen -- BASEMODEL</code> + <code class="inline">db push --accept-data-loss</code> por tenant. No hay flujo <em>prune</em> soportado; cada retiro futuro repite el patron manual y el drop destructivo pertenece a una coordinacion de core (RULE-dev-004), nunca a un migrate autonomo del mod.</div>
+      </div>
+    </section>
+
+    <!-- ================= knowledge promovido + lo que sigue ================= -->
+    <section id="deferred" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Knowledge promovido y lo que sigue</h2>
+      <div class="callout callout-info"><strong>KB actualizado</strong> &nbsp;<code class="inline">RULE-curriculum-design-003</code> (mutations workflow) marcada <strong>retirada</strong>; <code class="inline">RULE-curriculum-design-004</code> sincronizada (los FK ya no son "drop diferido a un ticket propio": este es ese ticket). KB externo (<code class="inline">example-curriculum-design.md</code>, <code class="inline">programa-de-asignatura.md</code>) corregido.</div>
+      <div class="callout callout-warn"><strong>&#9888; Deferido a deploy (backlog <em>should</em>, no bloquea el cierre por DET-17)</strong> &nbsp;Drop en los demas tenants (mismo <code class="inline">db push</code> por tenant, precondicion 0-FK), <code class="inline">model:bump &#8594; snapshot-v7</code>, y <code class="inline">drift:check</code> global. Se resuelven al mergear los PRs #24 y #421 en la sincronizacion coordinada de core.</div>
+      <div class="callout callout-info"><strong>Deuda detectada, encaminada</strong> &nbsp;Al pushear salieron 58 errores de typecheck <strong>preexistentes</strong> del mod (ajenos a este retiro); se registraron como apartado en TICKET-105 (UPONE-1378) con su alcance por clusters.</div>
+    </section>
+
+    <!-- ================= lecciones ================= -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones (autoevaluacion)</h2>
+      <details class="qa"><summary>Por que el drop destructivo no se pudo cerrar dentro del ticket, si el codigo ya estaba retirado?</summary><div class="ans">Porque el sync de up1 es append-only y no quirurgico: un codegen+sync regenera el modelo de todos los mods, asi que el drop no es aislable como una migracion propia. Ademas el working tree de object-manager (core) estaba entrelazado con pending ajeno. El drop multi-tenant pertenece a la coordinacion de deploy (RULE-dev-004), por eso S2 quedo en standby y el cierre delega esa parte a los PRs.</div></details>
+      <details class="qa"><summary>Por que una suite verde (1229/1229) no alcanzaba para dar por seguro el retiro?</summary><div class="ans">Los unit tests del mod corren sobre un Prisma mock y transpilan sin type-check (vitest/esbuild): validan comportamiento, no la correctitud del schema ni del path real de la UI. La confianza real vino del smoke en UPU (drop aplicado con 28 filas preservadas + status enum funcionando) y del barrido por-codigo de refs colgantes, no solo del verde de la suite.</div></details>
+      <details class="qa"><summary>Por que la documentacion de seed quedo stale pese al barrido de docs de S2?</summary><div class="ans">El barrido de S2 cubrio <code class="inline">docs/</code> pero omitio dos superficies muy centradas en workflow que viven fuera de ese arbol: <code class="inline">seed/README.md</code>, <code class="inline">seed/SMOKE-UPU.md</code> y el <code class="inline">CLAUDE.md</code> del mod. Leccion: en un retiro, la propagacion (DET-16) debe barrer TODAS las superficies de doc (incluidas las de instrucciones para agentes), no solo la carpeta docs/. Un borrado tambien puede introducir refs colgantes nuevas (paso con el SMOKE), asi que conviene re-auditar despues de borrar.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-114 (UPONE-1459) · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

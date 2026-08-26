@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — La maquina de estados debe resolver el alias RecordType a la PK base · TICKET-131</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"\25B8"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"\25BE"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-131</span> · UPONE-1608 (Caso B)</span>
+      <span>up1 · 2026-08-13</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">La maquina de estados debe resolver el alias RecordType a la PK base</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Cuando un usuario abre el detalle de una matriz de competencias para operar su ciclo de vida (Borrador, En revision, Aprobada...),
+      el backend deberia devolver las transiciones validas del estado actual. Hoy, en lugar de eso, los resolvers de la maquina de estados
+      (<code class="inline">getValidTransitions</code> y <code class="inline">previewBulkTransition</code>) revientan con
+      <code class="inline">Unknown argument 'id'</code>. Este intake arma el mapa del problema antes de tocar codigo: es la misma clase de
+      defecto que el Caso A de este mismo Jira (previews de borrado), pero en otra superficie: un alias de RecordType que no se resuelve a su PK base.
+    </p>
+
+    <!-- EJE 1 (que sucede) + EJE 2 (por que) + EJE 3 (que cambio) + EJE 4 (por que ese cambio) en el TL;DR -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> &nbsp;
+        <strong>Que hay:</strong> los resolvers de la maquina de estados reciben el alias <code class="inline">rt__&lt;Rt&gt;__&lt;base&gt;</code> y leen el registro con
+        <code class="inline">where: { id }</code>; la tabla de proyeccion no tiene <code class="inline">id</code> (su PK es la FK <code class="inline">&lt;base&gt;Id</code>) &rarr; Prisma rechaza el argumento.
+        <strong>Por que importa:</strong> la vista de la matriz no puede leer ni operar sus transiciones; y al partir del objeto base tampoco sirve, porque el estado y la metadata viven en la proyeccion, no en el base.
+        <strong>Que se hara:</strong> keyear por <code class="inline">&lt;baseLower&gt;Id</code> cuando el objeto es RecordType, reutilizando el helper <code class="inline">resolveRecordTypeToBaseObject</code> que entrega el Caso A (TICKET-129).
+        <strong>Por que asi:</strong> es la misma resolucion alias&rarr;base que el resto del motor ya aplica; no es logica nueva, es llevar la maquina de estados a paridad.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">las bases</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">como falla hoy</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">el entorno</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">la regla</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el patron a replicar</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">el plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- LAS BASES (hacia abajo) -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Las bases &mdash; el piso conceptual</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">Para entender el bug hay que tener claros cuatro ladrillos de como funciona HOY la maquina de estados sobre RecordTypes.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RecordType (alias de presentacion)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Una matriz de competencias no es un objeto propio: es un RecordType de <code class="inline">CompetencyNode</code>, listado como <code class="inline">rt__Matrix__competencynode</code>. Su metadata y su campo <code class="inline">status</code> (con las <code class="inline">transitions</code>) viven en la proyeccion; el objeto base <code class="inline">CompetencyNode</code> no tiene <code class="inline">status</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Tabla de proyeccion sin <code class="inline">id</code></div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La tabla fisica <code class="inline">rt__&lt;Rt&gt;__&lt;base&gt;</code> no tiene columna <code class="inline">id</code>: su clave primaria es la FK al objeto base (<code class="inline">competencynodeId</code>). Cualquier query que filtre por <code class="inline">id</code> sobre ella es invalida.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Maquina de estados</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">getValidTransitions</code> y <code class="inline">previewBulkTransition</code> (en <code class="inline">objectDefinition.resolver.js</code>) leen el registro para saber su <code class="inline">status</code> actual y calcular a que estados puede pasar. Ambos asumen que el modelo tiene columna <code class="inline">id</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">La isla sin tratamiento RT</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El motor de borrado (<code class="inline">instance.resolver.js</code>) ya sabe resolver el alias a base. La maquina de estados, en otro archivo, quedo fuera de ese tratamiento: nunca recibio la resolucion RT-aware.</p></div>
+      </div>
+    </section>
+
+    <!-- COMO FALLA HOY -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Como falla hoy &mdash; el flujo</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">El layout puede apuntar al RT o al objeto base, y ninguno de los dos caminos sirve: uno crashea, el otro pierde los datos.</p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  U[Vista de matriz pide transiciones del status] --> D{Layout apunta a...}
+  D -- rt__Matrix__competencynode --> G[getValidTransitions lee findUnique where id]
+  G --> X[La proyeccion no tiene columna id]
+  X --> E[Unknown argument id - INTERNAL_SERVER_ERROR]
+  D -- CompetencyNode base --> B[findUnique where id no crashea]
+  B --> L[Pero status y metadata viven en el RT, no en el base]
+  L --> Z[Registro sin datos - no hay workaround por el base]
+      </pre></div>
+    </section>
+
+    <!-- EL ENTORNO -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El entorno &mdash; que rodea el caso</h2></div>
+      <div class="callout callout-note"><strong>&#8505; Origen (UPONE-1537)</strong> &mdash; El crash aparecio armando la vista de edicion de las matrices de competencia (mod <code class="inline">curriculum-mapping</code>). El dev reporto: al partir del RT, la metadata y el estado cargan pero la maquina de estados falla; al partir del base, no falla pero se pierden los datos. Esa observacion es la que destapo el defecto de core.</div>
+      <div class="callout callout-info"><strong>&#8505; Hermano de Caso A (mismo Jira UPONE-1608)</strong> &mdash; El Caso A resuelve el alias RT en los previews de borrado (TICKET-129) y extrae el helper <code class="inline">resolveRecordTypeToBaseObject</code>. Este Caso B es la misma causa raiz en la maquina de estados y consume ese helper. Por eso este ticket depende de TICKET-129.</div>
+      <div class="callout callout-warn"><strong>&#9888; Antecedente (UPONE-1479)</strong> &mdash; Ese ticket resolvio la clase de alias en el path de borrado real. Ni el preview (Caso A) ni la maquina de estados (Caso B) recibieron el tratamiento entonces. No es idea nueva: es aplicar una resolucion ya probada donde falto.</div>
+      <div class="callout callout-danger"><strong>&#10007; Trampa a evitar</strong> &mdash; Resolver el alias con un <code class="inline">startsWith('rt__')</code> o cortando el string a mano. El casing del base no es derivable del nombre: hay que resolverlo por introspeccion (<code class="inline">core_ObjectDefinition</code>), igual que el resto del motor. El parser <code class="inline">parseRecordTypeParentName</code> ya existe en el mismo archivo, sin usar en estos resolvers.</div>
+    </section>
+
+    <!-- LA REGLA -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">La regla que gobierna el fix</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El nombre de un RecordType es un <span class="text-amber-400">alias de presentacion</span>: hay que resolverlo a la PK del objeto base <span class="text-amber-400">antes</span> de leer el registro.</div>
+        <div class="ilabel mt-2">RULE-core-043 (nacida de UPONE-1479). Corolario: todo entrypoint que lea un registro para decidir sobre el (borrar, previsualizar, o transicionar su estado) debe resolver primero. Un resolver que consulta la proyeccion por <code class="inline">id</code> esta consultando una columna que no existe.</div>
+      </div>
+    </section>
+
+    <!-- EL PATRON A REPLICAR -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El patron que ya existe (a reutilizar)</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">Esto es lo que <code class="inline">instance.resolver.js</code> ya hace para keyear un RecordType por su PK real. El fix aplica la misma tecnica en <code class="inline">getValidTransitions</code> y <code class="inline">previewBulkTransition</code>, consumiendo el helper del Caso A.</p>
+      <pre class="code"><span class="c">// detectar si el objeto es un alias de RecordType y keyear por su PK real</span>
+<span class="k">const</span> rtMatch = objectName.<span class="f">match</span>(<span class="s">/^rt__(.+)__(.+)$/</span>);   <span class="c">// -&gt; [_, rtName, baseLower] | null</span>
+<span class="k">const</span> pkWhere = rtMatch
+  ? { [<span class="s">`${rtMatch[2]}Id`</span>]: <span class="f">coerceId</span>(recordId) }   <span class="c">// RT: &lt;baseLower&gt;Id (ej. competencynodeId)</span>
+  : { id: <span class="f">coerceId</span>(recordId) };                    <span class="c">// base: id</span>
+
+<span class="k">const</span> rawRecord = <span class="k">await</span> prisma[modelName].<span class="f">findUnique</span>({ where: pkWhere, ... });</pre>
+      <p class="text-stone-500 text-xs mt-3 leading-relaxed"><code class="inline">coerceId</code> ya tolera la PK string tipo cuid del RT (<code class="inline">Number(cuid)</code> es NaN y devuelve el string), asi sirve para RT y base. El <code class="inline">include</code> de la extension ya funciona; el unico punto roto es el <code class="inline">where</code>.</p>
+    </section>
+
+    <!-- HACIA ADELANTE -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Hacia adelante &mdash; el plan (orientacion)</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">Una sola session (fix acotado, ~2 SP). El detalle fino de tasks lo fija el spec; esto es el mapa.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Reproducir el crash (RED)</div><p class="text-xs text-stone-400">Test de integracion que llama <code class="inline">getValidTransitions</code> sobre <code class="inline">rt__Matrix__competencynode</code> contra BD real (tenant UPU) y reproduce <code class="inline">Unknown argument 'id'</code>.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Hacer RT-aware los dos resolvers</div><p class="text-xs text-stone-400">Keyear por <code class="inline">&lt;baseLower&gt;Id</code> en <code class="inline">getValidTransitions</code> y <code class="inline">previewBulkTransition</code>, consumiendo <code class="inline">resolveRecordTypeToBaseObject</code> (helper del Caso A / TICKET-129). El resto de la logica (include de la extension, guard de transiciones) no cambia.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Cobertura de integracion contra BD real</div><p class="text-xs text-stone-400">Hoy no hay test de estos resolvers. Paridad (transiciones == las declaradas por el RT) y no-regresion (objeto base con <code class="inline">id</code> numerico). Prisma mockeado no es evidencia (RULE-core-034).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Doc + gate de revision core</div><p class="text-xs text-stone-400">Anotar el comportamiento RT-aware en <code class="inline">record-types.md</code>; el merge a develop espera revision del team up1 (RULE-dev-004).</p></div>
+      </div>
+    </section>
+
+    <!-- Q&A -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Q&amp;A de estudio</h2></div>
+      <details class="qa"><summary>Si al partir del objeto base <code class="inline">CompetencyNode</code> no crashea, ¿por que no usar eso como workaround?</summary><div class="ans">Porque el <code class="inline">status</code> y toda la metadata de la matriz viven en la proyeccion <code class="inline">rt__Matrix__competencynode</code>, no en el base. Al leer el base no crashea, pero el registro no tiene el estado ni las transiciones que la vista necesita. No hay atajo por el base: hay que resolver el alias a su PK y leer la proyeccion.</div></details>
+      <details class="qa"><summary>¿Por que este caso entra en el mismo Jira que los previews de borrado (Caso A)?</summary><div class="ans">Porque es la misma causa raiz: un alias de RecordType que no se resuelve a su PK base, y un resolver que asume <code class="inline">where: { id }</code>. Difieren en la superficie (borrado vs maquina de estados) y en el archivo, pero comparten el helper de resolucion. En DKC se ejecutan como dos tickets separados (129 y 131) bajo un solo Jira, patron 1 Jira a N.</div></details>
+      <details class="qa"><summary>¿Por que depende de TICKET-129 y no se hace independiente?</summary><div class="ans">Porque el Caso A extrae el helper <code class="inline">resolveRecordTypeToBaseObject</code> como unica fuente de verdad de la resolucion alias a base. Este ticket lo consume en vez de duplicar el bloque. Si 131 corriera antes, tendria que crear su propia copia y luego reconciliarla. Por eso 129 primero.</div></details>
+      <details class="qa"><summary>¿Por que la validacion pide BD real y no alcanza con unit tests?</summary><div class="ans">Porque la lectura depende del shape real de la proyeccion (PK <code class="inline">competencynodeId</code>, no <code class="inline">id</code>) y de la introspeccion del casing. Un Prisma mockeado puede dar verde con datos que no reflejan ese shape y consagrar el bug (RULE-core-034 / RULE-dev-test-real-shape-not-mocked).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · intake · TICKET-131 (UPONE-1608, Caso B) · up1 · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

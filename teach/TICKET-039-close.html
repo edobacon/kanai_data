@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — HU-3 asNewVersion en createInstance · TICKET-039</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917', nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c', titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524; --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; } .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; } .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-039</span> · HU-3 asNewVersion en createInstance</span>
+      <span>up1 · 2026-06-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">HU-3 — cierre: qué se construyó y qué aprendimos</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      <code class="inline">createInstance</code> ahora sabe versionar: con <code class="inline">asNewVersion: true</code> crea la siguiente versión de un objeto (bump + linkage + estado inicial del workflow), con los writes acotados a un <code class="inline">$transaction</code> Serializable. Este teach-close mira <strong>hacia atrás</strong> — lo ejecutado, cómo evolucionaron las hipótesis, y las lecciones. (Las bases del dominio están en el teach-intake.)
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se entregó la capa de versionamiento de <code class="inline">createInstance</code> en 5 sesiones: guards (REQ-01/02), helper <code class="inline">prepareVersionData</code> (REQ-03/04), y el <code class="inline">$transaction</code> Serializable atómico (REQ-05). <strong>91 unit tests + e2e de rollback contra UPU real, cero regresión en 64 callers, 9 commits.</strong> El audit con <code class="inline">versionSourceId</code> se delegó a HU-6; la UI a HU-7/10/11.
+      </div>
+    </div>
+
+    <!-- Qué se realizó (5to eje del close) -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué se realizó</h2></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · guards baratos</div><p class="text-xs text-stone-400">Extracción de <code class="inline">asNewVersion</code> de <code class="inline">data</code> + <code class="inline">AS_NEW_VERSION_REQUIRES_PREFILL</code> + <code class="inline">OBJECT_NOT_VERSIONABLE</code> (lee el registry). 2 unit.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · validación multi-capa + prepare data</div><p class="text-xs text-stone-400">Helper <code class="inline">prepareVersionData</code>: carga source+currentStatus+workflow, valida <code class="inline">SOURCE_NOT_VERSIONABLE</code>/<code class="inline">WORKFLOW_HAS_NO_INITIAL_STATUS</code>, prepara increment+linkage+estado inicial. 6 unit.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · transacción atómica</div><p class="text-xs text-stone-400"><code class="inline">finalizeCreate(db)</code>: create+deepClone en <code class="inline">$transaction({isolationLevel:'Serializable'})</code> para <code class="inline">asNewVersion</code>; path normal byte-idéntico. Review exhaustive. 91/91 sin regresión.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · e2e contra DB real</div><p class="text-xs text-stone-400">Reset canónico de UPU + e2e: rollback del <code class="inline">$transaction</code> (write+throw → 0 filas) + commit persiste. Evidencia real de atomicidad.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 · cierre</div><p class="text-xs text-stone-400">Commits granulares DET-27, teach-close, acceptance checkpoints, status closed.</p></div>
+      </div>
+    </section>
+
+    <!-- Evolución de hipótesis (cerradas) -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Evolución de las hipótesis</h2></div>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipótesis (intake)</th><th class="p-3">Resultado</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H1 — tx solo en writes evita threadear <code class="inline">tx</code> a 5 helpers</td><td class="p-3 text-emerald-400">✓ confirmada — <code class="inline">finalizeCreate(db)</code> pasa <code class="inline">db</code> solo a create+deepClone; validación afuera</td></tr>
+          <tr><td class="p-3 text-stone-300">H2 — FK único <code class="inline">initialStatusId</code> suficiente, sin caso "múltiples"</td><td class="p-3 text-emerald-400">✓ confirmada — cardinalidad 1; no existe <code class="inline">WORKFLOW_HAS_MULTIPLE_*</code></td></tr>
+          <tr><td class="p-3 text-stone-300">H3 — P2034 solo bajo alta concurrencia; retry opcional</td><td class="p-3 text-amber-400">~ abierta — no se observó en UPU; retry diferido a SP4 (OQ-1, sin evidencia de contención aún)</td></tr>
+          <tr><td class="p-3 text-stone-300">H4 — set inicial es creación, no transición</td><td class="p-3 text-emerald-400">✓ confirmada — no aplica <code class="inline">RULE-cd-004</code></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Shape final</h2></div>
+      <pre class="code"><span class="c">// asNewVersion: writes atomicos solo para el path de version</span>
+<span class="k">if</span> (asNewVersion) <span class="k">return</span> <span class="k">await</span> prisma.$transaction((tx) => finalizeCreate(tx), { isolationLevel: <span class="s">'Serializable'</span> });
+<span class="k">return</span> <span class="k">await</span> finalizeCreate(prisma);  <span class="c">// path normal: byte-identico (64 callers)</span></pre>
+    </section>
+
+    <!-- Lessons -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Lecciones</h2></div>
+      <details class="qa"><summary>Extraer la preparación de versión a un helper desacopló el testing</summary><div class="ans">Igual que <code class="inline">applyPrefillFromSource</code> (HU-1), mover la lógica a <code class="inline">version-from-source.js</code> permitió unit-testear REQ-03/04 sin arrastrar el path completo de <code class="inline">createInstance</code> (que es muy acoplado: fieldDefinitions, formula, layout). Patrón a repetir.</div></details>
+      <details class="qa"><summary>El audit con versionSourceId NO era de HU-3</summary><div class="ans">Descubrimos que <code class="inline">logInstanceOperation</code> escribe <code class="inline">core_SchemaAuditLog</code> (best-effort), mientras el audit de negocio con <code class="inline">versionSourceId</code> en <code class="inline">ChangeLog</code> viaja por el event path → flow n8n, que es HU-6 (TICKET-041). DEC-LOCAL-03: HU-3 entrega solo la atomicidad, no duplica HU-6.</div></details>
+      <details class="qa"><summary>El unit no puede probar rollback transaccional — eso es e2e</summary><div class="ans">El mock de <code class="inline">$transaction</code> no simula rollback. La garantía de atomicidad de REQ-05 solo se verifica contra Postgres real (S4 e2e). El unit cubre la matriz de errores + no-regresión; el e2e cubre la semántica transaccional.</div></details>
+      <details class="qa"><summary>El e2e debe usar ctx.skip(), no early-return</summary><div class="ans">Un <code class="inline">if (!isDbReady) return</code> hace que vitest reporte el test como <em>passed</em> aunque no corra nada → falso verde en CI sin DB. <code class="inline">ctx.skip()</code> lo marca <em>skipped</em> (honesto).</div></details>
+    </section>
+
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué queda fuera / diferido</h2></div>
+      <div class="callout callout-info"><strong>HU-6 (TICKET-041)</strong> — persistencia de <code class="inline">versionSourceId</code>/<code class="inline">createdVia</code> en el audit de negocio (event path).</div>
+      <div class="callout callout-info"><strong>TICKET-048</strong> — e2e del flujo completo via resolver + UI (parkeado, depende de HU-8/10/11).</div>
+      <div class="callout callout-warn"><strong>SP4</strong> — <code class="inline">versionStrategy: user-provided</code> y retry de <code class="inline">P2034</code> (OQ-1, sin evidencia de contención todavía).</div>
+    </section>
+
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">ENTREGADO: Ladrillo 2 (asNewVersion atómico)</span>
+        <span class="tag tag-future">DESBLOQUEA: HU-6, HU-7, HU-10</span>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 (close) · TICKET-039 · HU-3 asNewVersion · up1 · 91 unit + e2e real · 9 commits · generado por DKC.
+    </footer>
+  </main>
+</body>
+</html>

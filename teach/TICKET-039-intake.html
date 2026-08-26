@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — HU-3 asNewVersion en createInstance · TICKET-039</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-039</span> · HU-3 asNewVersion en createInstance</span>
+      <span>up1 · 2026-06-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">HU-3 — <code class="inline">asNewVersion</code> en <code class="inline">createInstance</code></h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El sistema ya sabe <em>clonar</em> un objeto (HU-1 <code class="inline">prefillFrom</code>). HU-3 pone <strong>una capa de versionamiento encima de esa clonación</strong>: cuando creas un objeto pasando <code class="inline">asNewVersion: true</code>, no nace un duplicado suelto sino la <strong>siguiente versión</strong> de un objeto existente — con su número de versión incrementado, su enlace al predecesor, su estado inicial leído del workflow, y una auditoría que recuerda de qué versión salió. Este teaching te deja el mapa del terreno <strong>antes</strong> de tocar código: sobre qué bases nos paramos, qué hay alrededor, y por dónde va el plan.
+    </p>
+
+    <!-- ============ tldr ============ -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <strong>Qué hay:</strong> <code class="inline">createInstance</code> ya acepta <code class="inline">prefillFrom</code> (clona campos de un source) pero <em>no</em> es transaccional ni sabe de versiones.
+        <strong>Qué se hará:</strong> agregar un flag <code class="inline">asNewVersion</code> que, sobre el prefill, bumpea el número de versión, enlaza al predecesor, setea el estado inicial leyendo el FK del workflow y audita con <code class="inline">versionSourceId</code> — con los <em>writes</em> (y solo los writes) dentro de un <code class="inline">$transaction</code> Serializable.
+        <strong>Por qué:</strong> versionar es una necesidad transversal de la plataforma; resolverla como flag declarativo en <code class="inline">createInstance</code> evita un resolver custom por cada objeto versionable.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">cómo es hoy</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo</a>
+      <a href="#formula" class="navlink rounded border border-stone-700 px-2 py-1">condición</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">prefill vs versión</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">entorno</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- ============ concept-card · BASES (glosario del dominio) ============ -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos clave (las bases)</h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">El vocabulario sobre el que se apoya HU-3. Todos estos "ladrillos" ya existen en el sistema gracias a las HU previas del épico — HU-3 los <em>combina</em>, no los inventa.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">prefillFrom (HU-1)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Copia los campos de un objeto <em>source</em> al crear uno nuevo (lo explícito pisa lo copiado). Viaja dentro de <code class="inline">data: JSON!</code>, no como input tipado.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">versioningConfig (HU-2/HU-4)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Snapshot en el registry (<code class="inline">core_ObjectDefinition.versioningConfig</code>) con el bloque <code class="inline">versioning</code>: <code class="inline">linkageField</code>, <code class="inline">versionField</code>, <code class="inline">versionStrategy</code>, <code class="inline">initialStateField</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">linkageField</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Campo que enlaza una versión con su predecesora (= <code class="inline">source.id</code>). Es lo que después permite reconstruir la cadena de versiones.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">allowsVersioning</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Flag en <code class="inline">WorkflowStatus</code>. Solo desde un estado con <code class="inline">allowsVersioning=true</code> se puede versionar (ej: un Activity PUBlicado).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">workflow.initialStatusId</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">FK único (HU-0h, Opción C) que dice en qué estado nace una versión nueva. Cardinalidad 1 → no existe el caso "múltiples estados iniciales".</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">$transaction Serializable</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Aislamiento máximo de Prisma/Postgres. Garantiza que crear-la-versión + enlazar + auditar sea atómico (todo o nada). Único precedente: <code class="inline">createWorkflowValidated</code>.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ code · BASES (cómo es createInstance HOY) ============ -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Cómo funciona hoy <code class="inline">createInstance</code></h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Estado actual (<code class="inline">instance.resolver.js:2177-2869</code>). Dos cosas importan para HU-3: (1) <code class="inline">prefillFrom</code> se extrae de <code class="inline">data</code> antes de validar; (2) <strong>no hay <code class="inline">$transaction</code></strong> — el create y el deepClone de hijos corren secuenciales, sin rollback si algo falla a mitad.</p>
+      <pre class="code"><span class="c">// createInstance — wrapper de auth + event publish</span>
+createInstance: withEventPublish(<span class="s">'create'</span>, withObjectAuth(<span class="s">'create'</span>, <span class="k">async</span> (_, { objectType, data }, context) => {
+  <span class="k">const</span> { prisma, tenantId } = context;
+
+  <span class="c">// prefillFrom viaja DENTRO de data (no es input tipado en el SDL)</span>
+  <span class="k">const</span> runtimePrefillFrom = data?.prefillFrom || <span class="k">null</span>;
+  <span class="k">if</span> (runtimePrefillFrom !== <span class="k">null</span>) <span class="k">delete</span> data.prefillFrom;
+
+  <span class="k">const</span> prefillFrom = <span class="k">await</span> resolveEffectivePrefillFrom({ prisma, objectType, prefillFrom: runtimePrefillFrom });
+  data = <span class="k">await</span> applyPrefillFromSource({ prisma, objectType, data, prefillFrom });
+
+  <span class="c">// ... validaciones, FK, formula fields ...</span>
+  <span class="k">const</span> created = <span class="k">await</span> prisma[modelName].create({ data: prismaData, include });  <span class="c">// NO transaccional</span>
+  <span class="k">await</span> logInstanceOperation(...);                 <span class="c">// audit (swallow-on-error)</span>
+  <span class="c">// ... deepClone hijos -> cloneMap ...</span>
+  <span class="k">return</span> { id, data, extended, cloneMap };
+}))</pre>
+    </section>
+
+    <!-- ============ flow · cómo encaja asNewVersion en el flujo ============ -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Flujo propuesto de <code class="inline">asNewVersion</code></h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">La idea de diseño (a validar al ejecutar): <strong>todo lo que lee/valida queda FUERA</strong> del transaction; <strong>solo los writes</strong> entran. Así no hay que threadear <code class="inline">tx</code> a los 5 helpers internos.</p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  A[createInstance asNewVersion=true] --> B{prefillFrom presente?}
+  B -- no --> E1[throw AS_NEW_VERSION_REQUIRES_PREFILL]
+  B -- si --> C{objeto tiene bloque versioning?}
+  C -- no --> E2[throw OBJECT_NOT_VERSIONABLE]
+  C -- si --> D[leer source + currentStatus + workflow]
+  D --> F{currentStatus.allowsVersioning?}
+  F -- no --> E3[throw SOURCE_NOT_VERSIONABLE]
+  F -- si --> G{workflow.initialStatusId seteado?}
+  G -- no --> E4[throw WORKFLOW_HAS_NO_INITIAL_STATUS]
+  G -- si --> H[preparar data: version+1, linkageField=source.id, currentStatusId=initialStatusId]
+  H --> T[/$transaction Serializable/]
+  T --> W1[create version]
+  T --> W2[clone hijos]
+  T --> W3[audit Create + versionSourceId]
+  T --> R[return created]
+      </pre></div>
+    </section>
+
+    <!-- ============ formula · condición exacta ============ -->
+    <section id="formula" class="blk mt-12" data-dkc-block="formula">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">La condición exacta</h2></div>
+      <div class="formula text-sm text-stone-300">
+        <div class="mb-2">Una creación procede como <span class="text-amber-300">nueva versión</span> <span class="iff">SI Y SOLO SI</span>:</div>
+        <div class="ml-4 leading-relaxed">
+          <span class="text-emerald-400">(a)</span> <code class="inline">asNewVersion === true</code> y viene <code class="inline">prefillFrom</code><br>
+          <span class="text-emerald-400">(b)</span> el objeto declara bloque <code class="inline">versioning</code> en el registry<br>
+          <span class="text-emerald-400">(c)</span> el <code class="inline">currentStatus</code> del source tiene <code class="inline">allowsVersioning === true</code><br>
+          <span class="text-emerald-400">(d)</span> el <code class="inline">workflow</code> del source tiene <code class="inline">initialStatusId</code> seteado
+        </div>
+        <div class="mt-3 text-xs text-stone-500">Cada cláusula que falla tiene su error nombrado: (a)→<code class="inline">AS_NEW_VERSION_REQUIRES_PREFILL</code>, (b)→<code class="inline">OBJECT_NOT_VERSIONABLE</code>, (c)→<code class="inline">SOURCE_NOT_VERSIONABLE</code>, (d)→<code class="inline">WORKFLOW_HAS_NO_INITIAL_STATUS</code>.</div>
+      </div>
+    </section>
+
+    <!-- ============ invariant ============ -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Invariante de atomicidad</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Las <span class="text-amber-400">lecturas y validaciones</span> ocurren ANTES del transaction; <span class="text-amber-400">solo los writes</span> (create + clone + audit) viven dentro del <code class="inline" style="font-size:0.9em">$transaction Serializable</code>.</div>
+        <div class="ilabel mt-2">Corolario: cualquier <code class="inline">await</code> que escriba fuera del bloque rompe la atomicidad. Al refactorizar, todo write de la versión va dentro — ni uno fuera.</div>
+      </div>
+      <p class="text-xs text-stone-500 mt-3">Nota de diseño: setear el estado inicial de una versión es <strong>creación</strong>, no transición → no aplica <code class="inline">RULE-cd-004</code> (que gobierna <code class="inline">transitionActivity</code>).</p>
+    </section>
+
+    <!-- ============ two-col-compare · ENTORNO (esto vs lo de al lado) ============ -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Clonar (HU-1) vs Versionar (HU-3) — lo de al lado</h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">HU-3 se apoya en HU-1, pero hacen cosas distintas. Entender el límite evita confundir un duplicado con una versión.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Clonar — <code class="inline">prefillFrom</code> (HU-1)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Crea un objeto <em>independiente</em> copiando campos de otro.</p><p><span class="text-emerald-400">+</span> No exige config de versioning ni estado especial.</p><p><span class="text-rose-400">−</span> No enlaza al origen, no incrementa versión, no audita linaje.</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Versionar — <code class="inline">asNewVersion</code> (HU-3)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Crea la <em>siguiente versión</em> de un objeto: prefill + bump + enlace + estado inicial + audit.</p><p><span class="text-emerald-400">+</span> Linaje reconstruible (<code class="inline">linkageField</code>), auditoría con <code class="inline">versionSourceId</code>.</p><p><span class="text-rose-400">−</span> Exige bloque <code class="inline">versioning</code>, <code class="inline">allowsVersioning</code> y FK de entrada del workflow.</p></div></div>
+      </div>
+    </section>
+
+    <!-- ============ callout · ENTORNO (dependencias / restricciones) ============ -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El entorno: dependencias y restricciones</h2></div>
+      <div class="callout callout-success"><strong>✓ Todas las dependencias cerradas</strong> — HU-1/HU-2/HU-4/HU-9 + Track 0 (HU-0a/0d/0e/0f/0h/0j) ya están <code class="inline">closed</code>. HU-3 es el primer ticket que <em>combina</em> todo lo anterior; no espera nada.</div>
+      <div class="callout callout-info"><strong>ℹ Patrón de referencia</strong> — el único uso de <code class="inline">isolationLevel: 'Serializable'</code> en el repo es <code class="inline">createWorkflowValidated</code> (mod curriculum-design <code class="inline">workflow.resolver.js</code>). Es el molde a imitar: lecturas de validación + create, todo con <code class="inline">tx</code>.</div>
+      <div class="callout callout-warn"><strong>⚠ Cuidado al refactorizar</strong> — <code class="inline">createInstance</code> hoy no es transaccional y sus helpers usan el <code class="inline">prisma</code> global. La decisión de acotar el <code class="inline">$transaction</code> solo a los writes es justamente para <em>no</em> tener que threadear <code class="inline">tx</code> a 5 helpers.</div>
+      <div class="callout callout-note"><strong>↔ Pregunta abierta a explorar</strong> — <code class="inline">P2034</code> (serialization failure) puede ocurrir bajo concurrencia alta; Prisma no reintenta solo. En UPU (2 instancias) probablemente no se observe — <em>queda por validar empíricamente</em> si hace falta retry, no se asume todavía.</div>
+    </section>
+
+    <!-- ============ timeline · ADELANTE (plan de sessions, orientación) ============ -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Hacia adelante: el plan (5 sesiones)</h2></div>
+      <p class="text-sm text-stone-400 mb-4 leading-relaxed">Orientación, no detalle: el orden separa "agregar el param y los rechazos baratos" → "las lecturas multi-capa" → "el transaction" → "tests exhaustivos" → "cierre". Los gates fuertes están en S3 (atomicidad) y S4 (matriz de errores).</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · param + rechazos baratos <span class="text-stone-500">[T2]</span></div><p class="text-xs text-stone-400">SDL/extracción de <code class="inline">asNewVersion</code> + <code class="inline">AS_NEW_VERSION_REQUIRES_PREFILL</code> y <code class="inline">OBJECT_NOT_VERSIONABLE</code>.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · fase de validación / lecturas <span class="text-stone-500">[T2]</span></div><p class="text-xs text-stone-400">Lee <code class="inline">versioningConfig</code>, valida <code class="inline">allowsVersioning</code>, lee <code class="inline">workflow.initialStatusId</code>; rechazos correctos.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · fase write (transaction) <span class="text-amber-400">[T3 · gate fuerte]</span></div><p class="text-xs text-stone-400"><code class="inline">$transaction Serializable</code>: create + linkage + audit <code class="inline">versionSourceId</code>. Atomicidad + rollback.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · tests exhaustivos <span class="text-amber-400">[T2 · gate fuerte]</span></div><p class="text-xs text-stone-400">Increment correcto, matriz de errores, rollback en fallo del write.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 · cierre <span class="text-stone-500">[T1]</span></div><p class="text-xs text-stone-400">Commits DET-27 + teach-close.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ tag ============ -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Dónde estamos parados</h2></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">AHORA: Ladrillo 2 (versionamiento sobre prefill)</span>
+        <span class="tag tag-next">PRÓXIMO: HU-6/HU-7 dependen de HU-3</span>
+        <span class="tag tag-future">FUTURO SP4: versionStrategy user-provided + retry P2034</span>
+      </div>
+    </section>
+
+    <!-- ============ study-qa ============ -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Q&amp;A de estudio</h2></div>
+      <details class="qa"><summary>¿Por qué <code class="inline">asNewVersion</code> requiere obligatoriamente <code class="inline">prefillFrom</code>?</summary><div class="ans">Porque una versión nueva nace copiando el contenido de la versión anterior. Sin prefill no habría de dónde heredar los campos; versionar es, conceptualmente, "clonar + marcar como siguiente eslabón". De ahí el error <code class="inline">AS_NEW_VERSION_REQUIRES_PREFILL</code>.</div></details>
+      <details class="qa"><summary>¿Por qué solo los writes van dentro del <code class="inline">$transaction</code> y no toda la función?</summary><div class="ans">Para no threadear el objeto <code class="inline">tx</code> a los ~5 helpers de validación que hoy usan el <code class="inline">prisma</code> global. Las lecturas/validaciones no mutan estado, así que pueden correr antes; solo create + clone + audit necesitan atomicidad. Es el mismo recorte que hace <code class="inline">createWorkflowValidated</code>.</div></details>
+      <details class="qa"><summary>¿Setear el estado inicial de la versión viola <code class="inline">RULE-cd-004</code>?</summary><div class="ans">No. <code class="inline">RULE-cd-004</code> gobierna las <em>transiciones</em> de estado (<code class="inline">transitionActivity</code>). Aquí el estado inicial se asigna en el momento de <em>crear</em> el objeto — es creación, no transición. Por eso se lee directo de <code class="inline">workflow.initialStatusId</code> sin pasar por la máquina de transiciones.</div></details>
+      <details class="qa"><summary>¿Por qué no existe un error <code class="inline">WORKFLOW_HAS_MULTIPLE_*</code>?</summary><div class="ans">Porque <code class="inline">initialStatusId</code> es un FK de cardinalidad 1 (Opción C, HU-0h): un workflow tiene a lo sumo un estado inicial. Estructuralmente no puede haber "múltiples", así que ese caso de error no aplica.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 (intake) · TICKET-039 · HU-3 asNewVersion · up1 · generado por DKC · cubre bases (cómo es hoy + glosario) · entorno (dependencias + patrón vecino) · plan (5 sesiones).
+    </footer>
+
+  </main>
+</body>
+</html>

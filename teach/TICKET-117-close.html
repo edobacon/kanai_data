@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Borrado por RecordType · TICKET-117</title>
+<!-- metadata · ticket: TICKET-117 · kind: close · project: up1 · generated: 2026-08-03 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917', nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c', titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px' }, flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524; --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"\25B8"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"\25BE"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  table.cmp { width:100%; border-collapse:collapse; font-size:0.86rem; }
+  table.cmp th, table.cmp td { border:1px solid var(--stone-border); padding:0.5rem 0.7rem; text-align:left; }
+  table.cmp thead { background:#1c1917; color:var(--txt-muted); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-117</span> · Borrado por RecordType</span>
+      <span>up1 · 2026-08-03</span>
+    </div>
+  </header>
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Borrado por RecordType: como quedo resuelto</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">Cierre de UPONE-1479. El borrado por el nombre de un RecordType ahora se comporta igual que por el objeto base: cascadea hijos, respeta soft-delete y Restrict, y audita por nodo, en los dos entrypoints. Este documento mira hacia atras: que se hizo, que decisiones se tomaron, como evolucionaron las hipotesis y que lecciones quedaron.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <strong class="text-amber-300">TL;DR</strong> — <strong>Que se realizo:</strong> se resolvio el nombre RT a su base al inicio de <code class="inline">deleteInstance</code> y <code class="inline">deleteBulkInstances</code> y se retiraron las dos ramas RT paralelas (Opcion B). El camino generico limpia las proyecciones <code class="inline">rt__/ext__</code> resolviendo la FK por introspeccion. <strong>Como se valido:</strong> 8 red tests RT (bulk+single) rojos->verdes, suite unit completa 110/110 (2395 tests), integration 17/17 contra UPU real. <strong>Estado:</strong> codigo commiteado en la rama de trabajo; pendiente el gate humano de revision del team core (RULE-dev-004) + merge a <code class="inline">develop</code>.
+    </div>
+
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La historia del caso</h2>
+      <p class="text-stone-400 text-sm mb-3 leading-relaxed">Cinco momentos. Lo interesante: casi ningun problema lo cazo el fix inicial; cada capa de verificacion (dual-judge, commit del dev, pipeline) destapo algo que la anterior no.</p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — red tests + fix Opcion B</div><p class="text-xs text-stone-400">Se escribieron 8 red tests RT (hard/soft/Restrict/DataLog, bulk+single) que fallaban por los huerfanos; el fix (RT->base + retiro de las ramas RT) los puso verdes.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1.GATE — el dual-judge caza el evento</div><p class="text-xs text-stone-400">Los 15 tests pasaban, pero el review adversarial detecto que el bulk pasaba a emitir el evento <code class="inline">delete</code> con el nombre base y el single con el RT. Fix: preservar <code class="inline">rawObjectType</code>.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Commit del dev — FK por introspeccion</div><p class="text-xs text-stone-400">La limpieza de proyecciones ensamblaba <code class="inline">${base}Id</code>, que falla por casing (<code class="inline">OrgUnitId</code> vs <code class="inline">availabilityId</code>). Se reemplazo por introspeccion de <code class="inline">information_schema</code> + 2 tests OrgUnit.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Re-review — el escape del LIKE roto</div><p class="text-xs text-stone-400">El dual-judge del delta vio que <code class="inline">LIKE 'rt\_\_%'</code> no filtra (los <code class="inline">\</code> se pierden en el template literal JS). Se cambio a <code class="inline">LEFT(table_name,4)='rt__'</code>.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">Pipeline — 2 unit obsoletos</div><p class="text-xs text-stone-400">La regresion local (5 suites) no incluia <code class="inline">recordType.resolver.test.js</code>, que asertaba la rama RT retirada. El pipeline (110 suites) lo cazo; se realinearon al nuevo contrato.</p></div>
+      </div>
+    </section>
+
+    <section id="decisions" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones clave</h2>
+      <div class="overflow-x-auto"><table class="cmp">
+        <thead><tr><th>Decision</th><th>Por que</th></tr></thead>
+        <tbody>
+          <tr><td>Opcion B (RT->base + generico) sobre parche localizado</td><td>Cierra hard + soft de una vez y ataca la causa raiz; el parche localizado dejaba el soft roto</td></tr>
+          <tr><td>Fix a ambos resolvers</td><td>Misma causa raiz (L1); tocar solo el bulk dejaba el single roto</td></tr>
+          <tr><td>Evento con el objectType original (rawObjectType)</td><td>Preserva el contrato downstream (n8n/BullMQ se suscriben por objectType) y alinea single/bulk</td></tr>
+          <tr><td>FK de proyeccion por introspeccion</td><td>El casing no es derivable del nombre del objeto; ensamblar el string dejaba proyecciones colgando</td></tr>
+          <tr><td>Cerrar DKC con merge externo</td><td>El codigo esta completo y verde; la revision de core + merge a develop son gates humanos que el dev maneja por fuera</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolucion de hipotesis y lecciones</h2>
+      <details class="qa"><summary>Como evolucionaron las hipotesis del intake?</summary><div class="ans">Las 4 (H1 bulk-hard, H2 bulk-soft-latente, H3 single-misma-causa, H4 Opcion-B-viable) se confirmaron contra codigo y se sostuvieron en execute. La unica sorpresa fue un 5to frente que el intake no anticipo: la limpieza de proyecciones por <code class="inline">${base}Id</code> era un bug pre-existente de casing, latente hasta que el red test de RT-sin-hijos (OrgUnit) lo destapo.</div></details>
+      <details class="qa"><summary>Leccion 1 — el RT es un alias, no un tipo con metadata propia</summary><div class="ans">La metadata que gobierna el borrado (hijos, soft-delete) vive en el objeto base. Resolver el alias a base ANTES de leer metadata o aplicar politica. Capturado en RULE-core-043.</div></details>
+      <details class="qa"><summary>Leccion 2 — el casing de la FK de una proyeccion no se infiere del nombre</summary><div class="ans"><code class="inline">OrgUnit->OrgUnitId</code> pero <code class="inline">Availability->availabilityId</code>. Resolver por introspeccion (information_schema / core_FieldDefinition), nunca por string. Y en <code class="inline">$queryRaw</code>, cuidado con <code class="inline">LIKE</code> y backslashes en template literals. Capturado en RULE-core-044.</div></details>
+      <details class="qa"><summary>Leccion 3 — al reenrutar una rama, verificar ancho</summary><div class="ans">Auditar TODOS los sinks que leen el input original (eventos, DataLog, decorators que leen args) y correr la suite unit COMPLETA, no solo el area tematica: los tests de estado de BD no cazan divergencias de evento, y unit mockeados en otro archivo consagran los internals retirados. Capturado en RULE-core-045.</div></details>
+      <details class="qa"><summary>Que gate humano queda pendiente?</summary><div class="ans">Revision del team core (RULE-dev-004, porque toca <code class="inline">deleteBulkInstances</code>/<code class="inline">deleteInstance</code> compartidos) + push + merge a <code class="inline">develop</code>. El codigo esta commiteado local en <code class="inline">feat/UPONE-1479-recordtype-delete-cascade</code>.</div></details>
+    </section>
+
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lo que queda garantizado</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Borrar un registro produce el <span class="text-amber-400">mismo</span> resultado por el nombre base o por el del RecordType, en ambos entrypoints.</div>
+        <div class="ilabel mt-2">El objectType de entrada es un alias de presentacion; nunca cambia la politica de borrado (cascada, Restrict, soft-delete, DataLog) del objeto real.</div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · DKC · TICKET-117 (UPONE-1479) · close</footer>
+  </main>
+</body>
+</html>

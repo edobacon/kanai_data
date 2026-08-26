@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Previews de impacto de borrado resuelven el alias RecordType · TICKET-129</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  table.cmp { width:100%; border-collapse:collapse; font-size:0.82rem; }
+  table.cmp th, table.cmp td { border:1px solid var(--stone-border); padding:0.55rem 0.7rem; text-align:left; vertical-align:top; }
+  table.cmp th { background:#1c1917; color: var(--amber); font-weight:600; }
+  table.cmp td { color: var(--txt-muted); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-129</span> · UPONE-1608</span>
+      <span>up1 · 2026-08-18</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Los previews de impacto de borrado ya resuelven el alias RecordType a objeto base</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El intake dejo el mapa del problema; este cierre cuenta el resultado. El caso se resolvio llevando los dos
+      previews de impacto de borrado a paridad con el borrado real: ahora resuelven el alias
+      <code class="inline">rt__&lt;Rt&gt;__&lt;base&gt;</code> al objeto base antes de invocar el motor, usando una resolucion
+      que se extrajo a un helper compartido en lugar de duplicarse. Aca queda que se hizo, como cerraron las hipotesis,
+      que se decidio y por que, y las lecciones para el proximo que toque este codigo.
+    </p>
+
+    <!-- TL;DR (mirando hacia atras, lenguaje de negocio) -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        Cuando un usuario abria el modal para borrar filas de un catalogo gobernado por un RecordType, el conteo del
+        modal no aparecia y el backend ensuciaba su log con un error de base de datos. Ahora el modal recibe un plan
+        de impacto valido (cuantos registros se afectan, que referencias bloquean el borrado) tambien para esos
+        catalogos, y el log queda limpio. Se logro reutilizando la resolucion que el borrado real ya hacia, sin cambiar
+        la logica del motor de impacto. Verificado contra base de datos real (tenant UPU).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#historia" class="navlink rounded border border-stone-700 px-2 py-1">la historia</a>
+      <a href="#done" class="navlink rounded border border-stone-700 px-2 py-1">que se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipotesis (final)</a>
+      <a href="#dec" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#session" class="navlink rounded border border-stone-700 px-2 py-1">el flujo (S1)</a>
+      <a href="#kb" class="navlink rounded border border-stone-700 px-2 py-1">knowledge</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#path" class="navlink rounded border border-stone-700 px-2 py-1">para retomar</a>
+    </nav>
+
+    <!-- LA HISTORIA -->
+    <section id="historia" class="blk mt-12" data-dkc-block="case">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">La historia</h2></div>
+      <div class="text-stone-400 text-sm leading-relaxed space-y-3">
+        <p>
+          El problema entro reportado desde un mod: al abrir el modal de borrado sobre un catalogo listado por su
+          <em>RecordType</em> (por ejemplo <code class="inline">rt__Scheme__levelscheme</code>), el modal no mostraba el
+          conteo de registros afectados y el object-manager escupia un <code class="inline">PrismaClientValidationError</code>
+          en cada apertura. La causa: los dos previews de impacto — <code class="inline">deleteImpactPreview</code> y
+          <code class="inline">softDeleteImpactPreview</code> — pasaban el nombre del RecordType crudo al motor, que lo
+          trataba como objeto base y consultaba la tabla de proyeccion por una columna <code class="inline">id</code> que
+          en esa tabla no existe.
+        </p>
+        <p>
+          El intake dejo claro que no era una idea nueva: el <strong>borrado real</strong>
+          (<code class="inline">deleteBulkInstances</code>) ya sabia resolver ese alias al objeto base desde UPONE-1479
+          (el ticket antecesor). Los previews simplemente nunca recibieron esa resolucion. Asi que el fix no invento nada:
+          llevo los previews a <strong>paridad</strong> con el borrado real.
+        </p>
+        <p>
+          La decision principal fue como consolidar esa resolucion. En vez de copiar el bloque en cada preview, se
+          extrajo a un helper compartido (<code class="inline">resolveRecordTypeToBaseObject</code>). Al mapear los
+          call-sites aparecio un dato que corrigio el rumbo: el bloque de resolucion no estaba en un solo lugar sino
+          <strong>duplicado</strong> — vivia inline tanto en <code class="inline">deleteBulkInstances</code> como en
+          <code class="inline">deleteInstance</code>. Extraer sin migrar ambos delete-paths solo habria movido una copia,
+          no consolidado. Por eso el helper terminó aplicandose en cuatro call-sites, no dos.
+        </p>
+        <p>
+          Lo delicado era tocar por refactor dos paths de borrado ya probados. Se cubrio con dos guardas: la
+          verificacion contra base de datos real (no unit mockeado, que en codigo destructivo/RT da falso verde) y la
+          preservacion explicita del guard extra de <code class="inline">deleteInstance</code> (el que aborta con un error
+          claro si el alias resuelve a un base sin modelo Prisma). El caso cierra con el crash reproducido en rojo y
+          luego en verde, paridad de conteos alias/base confirmada, y las suites de borrado existentes sin regresion.
+        </p>
+      </div>
+    </section>
+
+    <!-- QUE SE HIZO -->
+    <section id="done" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Que se hizo</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Helper compartido</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Se creo <code class="inline">resolveRecordTypeToBaseObject</code> (<code class="inline">helpers/resolveRecordTypeToBaseObject.js</code>) con la resolucion alias → base anclada en <code class="inline">parseRecordTypeFileName</code> + introspeccion case-insensitive sobre <code class="inline">core_ObjectDefinition</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Cuatro call-sites migrados</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Los dos previews (nuevo) + <code class="inline">deleteBulkInstances</code> + <code class="inline">deleteInstance</code>, que duplicaban el bloque inline, ahora llaman al helper. Se preservo <code class="inline">rawObjectType</code> y el guard de modelo de <code class="inline">deleteInstance</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Cobertura de integracion real-DB</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Suite nueva <code class="inline">delete-impact-preview-rt-alias.integration.test.js</code> (TC-1..TC-5) contra tenant UPU, mas TC-7 unit para el guard de <code class="inline">deleteInstance</code>. Antes no habia ningun test de los previews.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Doc actualizada</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">delete-cascade.md</code> y <code class="inline">record-types.md</code> documentan la paridad de previews y borrado con alias RT (comportamiento observable — DET-37).</p></div>
+      </div>
+    </section>
+
+    <!-- EVOLUCION FINAL DE HIPOTESIS -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Hipotesis — como cerraron</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">
+        El Triage entro con dos hipotesis y ambas se <strong>confirmaron</strong> sin sorpresas de fondo: la primera es
+        la dominante (localiza la causa exacta del crash), la segunda define la forma correcta del fix. La unica sorpresa
+        no estaba en las hipotesis sino en el mapeo de call-sites: aparecio un cuarto punto de resolucion duplicado que
+        el intake no habia contado (ver el flujo de la session).
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  H1["H1 CONFIRMADA · los previews pasan el objectType crudo<br/>al motor sin resolver el alias RT"] --> E1["evidencia: instance.resolver.js:1467 y :1506<br/>invocaban el motor con el tipo crudo"]
+  H2["H2 CONFIRMADA · el fix consistente con UPONE-1479<br/>es resolver alias to base, no el PK del RT"] --> E2["evidencia: la metadata de borrado<br/>(directChildren, softDelete) vive en el base"]
+  E1 --> FIX["helper compartido aplicado en 4 call-sites"]
+  E2 --> FIX
+      </pre></div>
+      <p class="text-stone-400 text-sm mt-4 leading-relaxed">
+        La lectura post-hoc: la primera hipotesis apuntaba al sintoma visible (los previews) y resulto ser exactamente
+        la causa, pero completar el fix exigio mirar una capa mas — cuantos lugares del codebase repetian la resolucion.
+        Ese conteo, no las hipotesis, fue lo que definio el tamano real del cambio.
+      </p>
+    </section>
+
+    <!-- DECISIONES -->
+    <section id="dec" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Decisiones tomadas</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">
+        Tres decisiones criticas gobernaron el fix. La dominante es la primera (como consolidar la resolucion): condiciona
+        cuanto codigo probado se toca. Las otras dos son de anclaje tecnico y de estrategia de verificacion.
+      </p>
+      <table class="cmp">
+        <thead><tr><th>Decision</th><th>Se eligio</th><th>Alternativa descartada</th><th>Por que</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Como consolidar la resolucion alias → base</td>
+            <td>Extraer a un helper compartido y migrar los <strong>4</strong> call-sites</td>
+            <td>Duplicar el bloque en cada preview (2 copias mas)</td>
+            <td>El bloque ya estaba duplicado inline en dos delete-paths; extraer sin migrarlos solo mueve una copia. El helper deja una sola fuente de verdad real.</td>
+          </tr>
+          <tr>
+            <td>Como reconocer el objeto base del alias</td>
+            <td><code class="inline">parseRecordTypeFileName</code> + introspeccion <code class="inline">core_ObjectDefinition</code> (case-insensitive)</td>
+            <td><code class="inline">startsWith('rt__')</code> / recortar el string a mano</td>
+            <td>El casing del base no es derivable del nombre; un match por string es fragil y contradice RULE-core-035/043. Se replica el mecanismo del borrado real.</td>
+          </tr>
+          <tr>
+            <td>Como verificar el fix</td>
+            <td>Integracion contra BD real (tenant UPU), crash reproducido en rojo primero</td>
+            <td>Unit con Prisma mockeado</td>
+            <td>La resolucion depende de introspeccion y del casing real de columnas; un mock da falso verde y consagra el bug (RULE-core-034 / RULE-dev-test-real-shape-not-mocked).</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- EL FLUJO POR SESSION -->
+    <section id="session" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El flujo — Session 1 (T2, ⚑ fuerte)</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">
+        Fue una sola session. Lo que sigue es el <strong>orden</strong> en que se atacó, no un re-listado de titulos: cada
+        paso habilita al siguiente.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">1 · Reproducir en rojo (T1)</div><p class="text-xs text-stone-400">Antes de tocar produccion se escribieron los tests de integracion que reproducen el crash contra el codigo actual: <code class="inline">deleteImpactPreview</code> (TC-1) y <code class="inline">softDeleteImpactPreview</code> (TC-2) sobre <code class="inline">rt__Scheme__levelscheme</code>. Rojo confirmado con <code class="inline">Unknown argument id</code> — el bug queda fijado antes del fix.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">2 · Extraer el helper y migrar 4 call-sites (T2)</div><p class="text-xs text-stone-400">Se creo <code class="inline">resolveRecordTypeToBaseObject</code> y se aplico en los dos previews mas <code class="inline">deleteBulkInstances</code> y <code class="inline">deleteInstance</code>. Aca aparecio el descubrimiento clave: eran cuatro lugares, no dos, porque el bloque ya estaba duplicado. Se preservo el guard de modelo de <code class="inline">deleteInstance</code> en su call-site (el helper no lo absorbe). Los tests de T1 pasan a verde.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">3 · Completar cobertura y correr regresion real-DB (T3)</div><p class="text-xs text-stone-400">Se agregaron TC-3 (paridad de conteos alias vs base), TC-4 (restrict con referencia viva), TC-5 (base sin RT, no-regresion) y TC-7 (guard de <code class="inline">deleteInstance</code>). Se corrieron la suite nueva y <code class="inline">hard-delete-cascade.integration.test.js</code> contra BD real. Verde: 5/5 preview, 28/28 hard-delete, 175/175 unit.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">4 · Documentar (T4, en paralelo con T3)</div><p class="text-xs text-stone-400">Se actualizaron <code class="inline">delete-cascade.md</code> y <code class="inline">record-types.md</code>. Archivos disjuntos de los tests, por eso corrio en paralelo con T3.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">5 · Gate de session (S1.GATE)</div><p class="text-xs text-stone-400">Quality review, evidencia runtime, commit DET-27 con id UPONE-1608 y decision canonica. Un pendiente honesto quedo registrado: la suite <code class="inline">scenario-delete-cascade</code> no pudo correr por un drift preexistente (<code class="inline">Scenario.active</code> ausente en el Prisma generado), ajeno a este fix — falla antes de entrar al path de borrado.</p></div>
+      </div>
+    </section>
+
+    <!-- KNOWLEDGE PROMOTED -->
+    <section id="kb" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Knowledge promovido</h2></div>
+      <div class="callout callout-note">
+        <strong>ℹ Sin artefactos nuevos promovidos en este ticket.</strong> No nacieron rules, bugs ni decisions nuevas:
+        la regla que gobierna el fix ya existia — <strong>RULE-core-043</strong> (el nombre de un RecordType es un alias
+        de presentacion; resolver a base antes de aplicar la politica de borrado), nacida de UPONE-1479. Este ticket la
+        <em>aplica</em> a un lugar donde faltaba, no la redefine. La tabla <code class="inline">## Learns</code> del ticket
+        quedo vacia (0 raw): no hubo descubrimiento que ameritara un record nuevo mas alla del ya conocido patron de
+        resolucion.
+      </div>
+    </section>
+
+    <!-- LESSONS -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Lecciones</h2></div>
+      <details class="qa"><summary>Cuando llevas un path a "paridad" con otro, primero conta cuantas copias del comportamiento existen</summary><div class="ans">(de H2 confirmada) El fix parecia "resolver el alias en 2 previews". Al mapear los call-sites, la resolucion ya estaba duplicada inline en dos delete-paths. Extraer un helper sin migrar esos dos habria dejado tres copias divergentes en vez de una. La leccion: antes de consolidar, buscar TODOS los sitios que repiten el comportamiento (DET-40 auditoria de reemplazo), no solo los del sintoma.</div></details>
+      <details class="qa"><summary>Para codigo destructivo o de RecordTypes, el unit mockeado no es evidencia</summary><div class="ans">(de H1 confirmada) La resolucion depende de introspeccion sobre <code class="inline">core_ObjectDefinition</code> y del casing real de las columnas de la proyeccion. Un Prisma mockeado puede pasar en verde con un shape que no existe en la BD y consagrar el bug. El guard autoritativo fue reproducir el crash en rojo contra tenant real y recien entonces pasarlo a verde (RULE-core-034).</div></details>
+      <details class="qa"><summary>Al refactorizar un guard existente, preservalo en el call-site correcto, no lo diluyas en el helper</summary><div class="ans">(de H2 confirmada) <code class="inline">deleteInstance</code> tenia un guard extra: aborta con un error claro si el alias resuelve a un base sin modelo Prisma. Ese guard NO se movio al helper compartido (no aplica a los otros call-sites) — quedo en su call-site y TC-7 lo fija. Mover un guard a un lugar mas generico de lo que corresponde cambia silenciosamente el comportamiento de los demas consumidores.</div></details>
+      <details class="qa"><summary>Un bloqueo por drift preexistente se reporta, no se esconde ni se "arregla" de paso</summary><div class="ans">La suite <code class="inline">scenario-delete-cascade</code> no corrio por <code class="inline">Scenario.active</code> ausente en el Prisma generado — problema ajeno a este fix. Se dejo registrado explicitamente en la regresion como BLOCKED externo, no se marco como verde falso ni se intento resolver dentro de este ticket (habria expandido el scope).</div></details>
+    </section>
+
+    <!-- LEARNING PATH -->
+    <section id="path" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Para retomar este caso</h2></div>
+      <p class="text-stone-400 text-sm mb-4 leading-relaxed">
+        Orden sugerido para un dev que abra un caso similar (otro entrypoint que decida sobre borrado, o un bug de
+        conteo en el modal). Son 4 paradas; la primera es el corazon del cambio.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">1 · El helper de resolucion</div><p class="text-xs text-stone-400"><code class="inline">object-manager/src/graphql/resolvers/helpers/resolveRecordTypeToBaseObject.js</code> — es la unica fuente de verdad de la resolucion alias → base. Entenderlo antes de tocar cualquier path de borrado.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">2 · Los 4 call-sites</div><p class="text-xs text-stone-400"><code class="inline">instance.resolver.js</code>: los dos previews (<code class="inline">deleteImpactPreview</code>/<code class="inline">softDeleteImpactPreview</code>) y los dos delete-paths (<code class="inline">deleteBulkInstances</code>, <code class="inline">deleteInstance</code>). Cualquier nuevo entrypoint de borrado debe llamar al helper igual que estos.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">3 · La suite de integracion</div><p class="text-xs text-stone-400"><code class="inline">tests/integration/delete-impact-preview-rt-alias.integration.test.js</code> — el patron de como probar esto contra BD real. Copiar su estructura para nuevos casos de alias RT.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">4 · La deuda que NO se toco</div><p class="text-xs text-stone-400">La divergencia semantica preview-vs-ejecucion (follow-up de UPONE-1557) sigue abierta. Si el bug nuevo es sobre <em>que</em> referencias detecta el preview vs la ejecucion (no un crash), es esa deuda, no esta.</p></div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · close · TICKET-129 (UPONE-1608) · up1 · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Derived genérico en codegen (polymorphicChildrenDerived) · TICKET-049</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-049</span> · Derived genérico en codegen</span>
+      <span>up1 · 2026-06-02</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Derived genérico en codegen — remap declarativo de FKs internas entre hijos clonados</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Cuando un usuario crea una nueva versión de un objeto (ej. una <code class="inline">Activity</code> en el módulo
+      <em>curriculum-design</em>), el motor de <strong>object-manager</strong> clona en cascada a sus hijos polimórficos —
+      las <code class="inline">CurricularSection</code>. Pero hay un detalle que el motor <strong>no</strong> resuelve solo:
+      algunos hijos tienen <em>foreign keys (FK) que apuntan a otros hijos</em> — un <code class="inline">CurricularLink</code>
+      referencia dos <code class="inline">CurricularSection</code> vía <code class="inline">sourceSectionId</code>/<code class="inline">targetSectionId</code>.
+      Tras clonar, esas FK siguen apuntando a las secciones <em>viejas</em>. Hoy eso se arregla con un hook escrito a mano por módulo.
+      Este ticket convierte ese arreglo en una <strong>capacidad declarativa del motor</strong>, para que cualquier objeto futuro lo obtenga gratis.
+    </p>
+
+    <!-- TL;DR — autopilot: que hay / que se hara / por que -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <strong>Qué hay:</strong> el motor de clonado de versionado remapea el dueño y el self-ref de los hijos, pero las FK
+        <em>entre</em> hijos las remapea un hook + flow n8n escrito a mano en curriculum-design (~93 líneas).
+        <strong>Qué se hará:</strong> generalizar ese remap a un bloque declarativo <code class="inline">polymorphicChildrenDerived</code>
+        persistido por el codegen + una fase derived genérica en el motor, y retirar el hook + flow por-módulo.
+        <strong>Por qué:</strong> elimina deuda técnica por-mod y habilita a cualquier objeto futuro a remapear sus FK internas sin código a medida.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restricciones</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">cómo funciona hoy</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">el remap actual</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">pregunta abierta</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">áreas</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">el plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">autoevaluación</a>
+    </nav>
+
+    <!-- ============ BASES (hacia abajo): glosario ============ -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conceptos clave (las bases)</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        Seis ladrillos conceptuales sobre los que se apoya todo el caso. Los tres primeros son el <em>mecanismo de clonado</em>
+        que ya existe; los tres últimos, el <em>arreglo por-módulo</em> que vamos a generalizar. Si entiendes estos seis,
+        entiendes el problema completo.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">deepClonePolymorphicChildren</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La función del motor (<code class="inline">deep-clone-polymorphic.js</code>) que, al versionar, clona en cascada a los hijos polimórficos de un objeto. Invocada dentro de <code class="inline">finalizeCreate</code> del resolver de instancias.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">cloneMap / buildRemapAPI</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El índice <code class="inline">Map&lt;oldId → {newId, type}&gt;</code> que el clonado va construyendo. <code class="inline">buildRemapAPI</code> lo envuelve con <code class="inline">has/remap/typeOf/toObject</code> — es la pieza que sabe a qué id nuevo corresponde cada id viejo.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">polymorphicChildren</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Bloque de metadata por objeto que declara qué hijos clonar y cómo (<code class="inline">{name, object, via, ownerTypeValue, recursiveBy}</code>). El motor remapea el <em>dueño</em> y el <em>self-ref</em>, pero no las FK entre hijos.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">FK interna entre hijos (FK derivada)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Una FK de un hijo clonado que apunta a <em>otro</em> hijo clonado del mismo árbol. Ej: <code class="inline">CurricularLink.sourceSectionId</code> → una <code class="inline">CurricularSection</code>. Tras clonar, queda apuntando a la sección vieja: hay que remapearla con el <code class="inline">cloneMap</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">versioningConfig</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Columna de <code class="inline">core_ObjectDefinition</code> que el codegen llena con <code class="inline">{versioning, prefillFrom}</code> vía <code class="inline">syncVersioningConfigToRegistry</code>. Es el lugar natural donde persistir el nuevo bloque declarativo.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">hook + flow n8n (lo que se retira)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El arreglo actual: el resolver <code class="inline">activity.versioning-hook.resolver.js</code> (mutación GraphQL) + un flow n8n (<code class="inline">versioning-remap.json</code>) que escucha el evento <code class="inline">:create</code> y llama a esa mutación. Funcionan en par.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ BASES: cómo funciona HOY (flow) ============ -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Cómo funciona el versionado HOY</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        El flujo de abajo muestra el camino actual cuando se versiona una <code class="inline">Activity</code>. Mira las dos mitades:
+        la <strong>izquierda</strong> (motor genérico, in-process) ya remapea dueño + self-ref y publica un evento con el
+        <code class="inline">_cloneMap</code> adjunto. La <strong>derecha</strong> (arreglo por-módulo, asíncrono) es lo que este ticket
+        absorbe al motor: hoy un flow n8n filtra el evento y llama a una mutación GraphQL que remapea las FK de los links.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A[Usuario versiona Activity] --> B[finalizeCreate]
+  B --> C["deepClonePolymorphicChildren()<br/>clona Sections · remapea owner + self-ref"]
+  C --> D[["cloneMap (oldId → newId)"]]
+  D --> E["evento :create<br/>con _cloneMap adjunto"]
+  subgraph hoy["arreglo por-módulo (asíncrono) — se retira"]
+    E --> F{flow n8n<br/>filtra _createdVia=version}
+    F -- sí --> G["mutación remapVersionedCurricularLinks<br/>remapea sourceSectionId/targetSectionId"]
+    F -- no --> H[descarta]
+  end
+  G --> I[CurricularLink clonados con FK correctas]
+      </pre></div>
+    </section>
+
+    <!-- ============ BASES: el remap actual (code, estado actual) ============ -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El remap actual vs. el bloque declarativo propuesto</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        Arriba, el núcleo del hook por-módulo (<code class="inline">activity.versioning-hook.resolver.js:52-76</code>): por cada link
+        resuelve los ids nuevos y, si alguna FK cae fuera del <code class="inline">cloneMap</code> (un link cross-owner), hace
+        <em>skip + warn</em> en vez de crear un link huérfano — esa defensa existe porque no hay constraint de FK en la DB.
+        Abajo, la forma declarativa que reemplazaría esas 93 líneas: el objeto solo <em>declara</em> qué hijo derivado tiene
+        qué FK y a qué tipo apunta.
+      </p>
+      <pre class="code"><span class="c">// HOY — lógica imperativa por-módulo (curriculum-design)</span>
+<span class="k">for</span> (<span class="k">const</span> link <span class="k">of</span> sourceLinks) {
+  <span class="k">const</span> newSourceId = resolveNewId(link.sourceSectionId);
+  <span class="k">const</span> newTargetId = resolveNewId(link.targetSectionId);
+  <span class="k">if</span> (!newSourceId || !newTargetId) {       <span class="c">// FK fuera del cloneMap (cross-owner)</span>
+    console.warn(<span class="s">'[versioning-hook] link fuera del cloneMap → skip'</span>);
+    skipped += <span class="s">1</span>; <span class="k">continue</span>;            <span class="c">// defensivo: no crear huérfano</span>
+  }
+  <span class="k">await</span> prisma.curricularLink.create({ data: { sourceSectionId: newSourceId, targetSectionId: newTargetId, ... } });
+}
+
+<span class="c">// PROPUESTO — declarativo en metadata del objeto (genérico)</span>
+<span class="f">"polymorphicChildrenDerived"</span>: [
+  { <span class="f">"object"</span>: <span class="s">"CurricularLink"</span>, <span class="f">"via"</span>: <span class="s">"sourceSectionId,targetSectionId"</span>, <span class="f">"remapTo"</span>: <span class="s">"sections"</span> }
+]</pre>
+    </section>
+
+    <!-- ============ ADELANTE: pregunta abierta (two-col, H4 como pregunta a explorar) ============ -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Pregunta abierta a explorar en design (H4)</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        Hay <strong>una</strong> decisión arquitectónica que el intake dejó deliberadamente abierta y que <code class="inline">design-feature</code>
+        debe cerrar al inicio de la session del motor: <em>¿dónde corre la fase derived?</em> Las dos lecturas de abajo no son un
+        veredicto cerrado — son el trade-off que aún se evalúa. El dato técnico que inclina la balanza ya está confirmado: el
+        <code class="inline">cloneMap</code> ya está en scope dentro de <code class="inline">finalizeCreate</code>, justo después de clonar.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A · Síncrono in-engine</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>La fase derived corre dentro de <code class="inline">finalizeCreate</code>, reusando el <code class="inline">cloneMap</code> ya disponible.</p><p><span class="text-emerald-400">+</span> Elimina la dependencia n8n + GraphQL por-mod; sin lag eventual; transaccional.</p><p><span class="text-rose-400">−</span> Toca el motor core (mayor superficie de regresión a cubrir con tests).</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">B · Hook genérico asíncrono</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Conservar el patrón evento → consumer, pero genérico (un solo flow para todos los objetos, dirigido por la config).</p><p><span class="text-emerald-400">+</span> Cambio acotado al motor; mantiene el desacople por eventos.</p><p><span class="text-rose-400">−</span> Mantiene la infra n8n + GraphQL y el lag eventual; más piezas móviles que migrar.</p></div></div>
+      </div>
+    </section>
+
+    <!-- ============ ENTORNO + restricciones (callout) ============ -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Restricciones del entorno</h2>
+      <div class="callout callout-warn"><strong>⚠ Multi-repo</strong> — <code class="inline">object-manager</code> y <code class="inline">mods/curriculum-design</code> son submódulos git distintos. La migración (declarar el bloque + retirar hook/flow) toca ambos: los commits se reparten por repo.</div>
+      <div class="callout callout-danger"><strong>✗ Rama protegida</strong> — al arrancar execute, el repo de código está en <code class="inline">develop</code> (protegida) con working tree sucio. Antes de tocar código hay que pasar a la rama de ticket <code class="inline">UPONE-1206</code> (guarda de inicio DET-30); no se toca el estado sucio preexistente.</div>
+      <div class="callout callout-note"><strong>ℹ RULE-platform-007</strong> — el codegen consume las relaciones FK en lowercase sin el sufijo <code class="inline">Id</code> (accessor Prisma). La fase derived opera sobre el <em>campo escalar</em> <code class="inline">sourceSectionId</code> directo (como el hook), no sobre el accessor — sin impacto si se respeta el escalar.</div>
+    </section>
+
+    <!-- ============ ENTORNO: áreas afectadas (tag) ============ -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Áreas afectadas</h2>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">object-manager · motor de clonado</span>
+        <span class="tag tag-now">object-manager · codegen</span>
+        <span class="tag tag-next">mods/curriculum-design · migración</span>
+        <span class="tag tag-future">mods futuros · remap gratis</span>
+      </div>
+    </section>
+
+    <!-- ============ ADELANTE: el plan (timeline) ============ -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El plan (orientación, 5 sessions)</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        El esqueleto del plan, a nivel orientación (el detalle de tasks lo fija <code class="inline">design-feature</code>). El orden no es
+        arbitrario: cada session habilita a la siguiente — no se puede retirar el hook (S4) hasta que la fase genérica exista (S3),
+        y la fase no puede leer el bloque hasta que el codegen lo persista (S2).
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Bloque declarativo + validator codegen</div><p class="text-xs text-stone-400">Define el shape de <code class="inline">polymorphicChildrenDerived</code> y lo valida en build-time. Tier T1.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Persistencia en codegen</div><p class="text-xs text-stone-400">Extiende <code class="inline">versioningConfig</code> para guardar el bloque. Tier T2.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Fase derived genérica en el motor</div><p class="text-xs text-stone-400">Aquí se cierra H4 (síncrono vs asíncrono). Reusa el <code class="inline">cloneMap</code>, defensivo skip cross-owner. Tier T3 ⚑.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · Migración curriculum-design</div><p class="text-xs text-stone-400">Declara el bloque en Activity, retira hook + flow. Multi-repo. Tier T3 ⚑.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 · Regresión + test genérico + cierre</div><p class="text-xs text-stone-400">Demuestra el remap en un objeto distinto, sin código por-mod. Tier T3.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ Autoevaluación (study-qa) ============ -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Autoevaluación</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">Si puedes responder estas cuatro, tienes el mapa mental para entrar a diseñar.</p>
+      <details class="qa"><summary>¿De qué se trata el caso?</summary><div class="ans">El motor de versionado clona hijos polimórficos y remapea dueño + self-ref, pero no las FK <em>entre</em> hijos (ej. un link que referencia dos secciones clonadas). Hoy eso lo arregla un hook + flow por-módulo. El ticket lo generaliza a una capacidad declarativa del motor.</div></details>
+      <details class="qa"><summary>¿Qué se va a hacer y por qué importa?</summary><div class="ans">Añadir un bloque declarativo <code class="inline">polymorphicChildrenDerived</code> (persistido por el codegen) + una fase derived genérica en el motor que remapea las FK vía <code class="inline">cloneMap</code>, y retirar el hook + flow de curriculum-design. Importa porque elimina deuda por-mod y cualquier objeto futuro obtiene el remap sin código a medida.</div></details>
+      <details class="qa"><summary>¿Qué hipótesis quedó abierta y cuál es la más crítica de verificar primero?</summary><div class="ans">H4: si la fase derived corre síncrona in-engine (recomendación del intake, reusando el <code class="inline">cloneMap</code> en scope) o se mantiene asíncrona vía un hook genérico. Es lo primero a cerrar en S3 porque condiciona si la migración (S4) retira o conserva el flow n8n.</div></details>
+      <details class="qa"><summary>¿Qué se confirmó en el intake que cambia el approach?</summary><div class="ans">Que el <code class="inline">cloneMap</code> ya está en scope dentro de <code class="inline">finalizeCreate</code> justo tras clonar (habilita el camino síncrono), que <code class="inline">versioningConfig</code> ya existe como punto de persistencia (no hace falta columna nueva), y que <code class="inline">buildRemapAPI</code> ya expone todo lo necesario (no hay que ampliar la API del map).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · teach-intake · TICKET-049 · up1 · generado por DKC (autopilot super).
+    </footer>
+
+  </main>
+</body>
+</html>

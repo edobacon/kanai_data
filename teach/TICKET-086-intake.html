@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Malla — Agregar y editar asignaturas (obligatorias + electivas) · TICKET-086</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-086</span> · Malla — Agregar y editar asignaturas (obligatorias + electivas)</span>
+      <span>up1 · 2026-06-30</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Malla — Agregar y editar asignaturas (obligatorias + electivas)</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      MC-06 es el primer ticket que introduce <strong>escritura</strong> en la malla curricular.
+      Hasta MC-05, el componente <code class="inline">CurriculumMesh</code> solo renderizaba la cuadricula en modo lectura.
+      Ahora hay que habilitar el alta de asignaturas (obligatorias y electivas), la edicion de sus atributos y su eliminacion,
+      todo dentro de las restricciones de la plataforma: modales caseros, separacion presentacion/dominio y reutilizacion de Vueform.
+      Este documento orienta en tres direcciones: las bases del dominio, las restricciones del entorno y el plan de sesiones.
+    </p>
+
+    <!-- BLOQUE: tldr -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        Se agrega escritura a la malla: alta de <code class="inline">planEntry</code> (obligatorio sin <code class="inline">blockId</code>, electivo con <code class="inline">blockId</code>),
+        edicion de creditos/linea/rol y eliminacion. El flujo usa modales caseros (no el orchestrator de plataforma) y un picker de Activity construido sobre <code class="inline">listInstances</code>.
+        El mayor riesgo previo es la integracion de <code class="inline">SelectElement</code> de Vueform dentro del modal casero — se valida empiricamente en S3.
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restriccion clave</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">glosario</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo estado actual</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">dependencias</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">obligatoria vs electiva</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan de sesiones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas abiertas</a>
+    </nav>
+
+    <!-- ===== HACIA LOS LADOS — EL ENTORNO ===== -->
+
+    <!-- BLOQUE: callout — restriccion clave del entorno -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Restriccion clave del entorno</h2>
+
+      <div class="callout callout-danger">
+        <strong>BUG-platform-011 — ModalStackManager no disponible en custom Vueform elements</strong><br>
+        El <code class="inline">ModalStackManager</code> de la plataforma <strong>no se expone</strong> a elementos Vueform personalizados.
+        Consecuencia directa: cualquier modal que se necesite dentro de este modulo
+        debe construirse con el atomo <code class="inline">Modal</code> del design system y usar
+        <code class="inline">&lt;Teleport to="body"&gt;</code> — igual que hace <code class="inline">CompositeSectionTree</code>
+        (precedente probado en el mismo modulo).
+      </div>
+
+      <div class="callout callout-info mt-3">
+        <strong>Arquitectura seam (DEC-038 / RULE-mods-051)</strong> — El componente se separa en dos capas:
+        <ol class="mt-1 ml-4 list-decimal text-sm space-y-0.5">
+          <li><strong>Core presentacional agnostico</strong>: grid, columna, tarjeta-shell, summary-bar. Sin conocer <code class="inline">planEntry</code>, creditos ni electivo. Contenido por slot, acciones por evento.</li>
+          <li><strong>Adapter de dominio</strong> (<code class="inline">CurriculumMeshElement.vue</code> + logica <code class="inline">.ts</code>): toda la logica de MC-06 vive aqui — alta, tagging electivo, edicion.</li>
+        </ol>
+        Las primitivas de render no reciben identificadores del dominio.
+      </div>
+
+      <div class="callout callout-note mt-3">
+        <strong>Reutilizacion (DET-32)</strong> — El select-suggest (autocompletar + elegir bloque existente) se <strong>reusa</strong>
+        de Vueform (<code class="inline">SelectElement</code> con <code class="inline">search:true</code>), no se construye desde cero.
+        El picker de catalogo de Activity se construye sobre <code class="inline">listInstances</code>.
+      </div>
+    </section>
+
+    <!-- ===== HACIA ABAJO — LAS BASES ===== -->
+
+    <!-- BLOQUE: concept-card / glosario -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Glosario del dominio curricular</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Curriculum (malla)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            El plan de estudios. Tiene un campo <code class="inline">status</code> (ej. <code class="inline">Draft</code>).
+            La edicion de la malla <strong>solo se habilita en estado <code class="inline">Draft</code></strong>.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">planEntry</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            Un curso <em>colocado</em> en la malla. Campos clave:
+            <code class="inline">planId</code> (FK Curriculum),
+            <code class="inline">activityId</code> (FK Activity),
+            <code class="inline">period</code> (1-based),
+            <code class="inline">position</code> (orden en el periodo),
+            <code class="inline">categoryId</code> (linea de formacion, nullable),
+            <code class="inline">blockId</code> (bloque electivo, nullable),
+            <code class="inline">credits</code> (override; null = hereda de Activity),
+            <code class="inline">kind</code> (ej. <code class="inline">'Course'</code>).
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Activity (asignatura)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            La asignatura del catalogo — la "plantilla". Campo <code class="inline">isCurrent</code> marca la version vigente.
+            <code class="inline">executionUnitId</code> → <code class="inline">OrgUnit</code> (departamento que la dicta).
+            El picker filtra por <code class="inline">isCurrent=true</code> y por departamento.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">requirementCategory (linea)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            La "linea de formacion" que agrupa cursos por eje tematico.
+            Se asigna via <code class="inline">categoryId</code> en el <code class="inline">planEntry</code>.
+            Es opcional (nullable).
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">requirementGroup (bloque electivo)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            El "bloque electivo" — tambien llamado <em>OptionPool</em>.
+            <code class="inline">recordType=Group</code>, <code class="inline">ownerType=curriculum</code>,
+            <code class="inline">combinator=OR</code>, <code class="inline">minToSatisfy</code> (el K de "elige K de N"),
+            <code class="inline">label</code> (nombre del bloque).
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Creditos heredados / isElective</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <code class="inline">effectiveCredits = planEntry.credits ?? Activity.credits</code><br>
+            Si <code class="inline">planEntry.credits</code> es <code class="inline">null</code>, se hereda de la Activity.<br>
+            <code class="inline">isElective = blockId != null</code> — lo deriva el backend al leer; no se almacena.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: flow — estado actual del componente -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Como funciona hoy (MC-05 — solo lectura)</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        El componente <code class="inline">CurriculumMesh</code> ya renderiza la malla como grid de columnas por periodo con tarjetas,
+        pero sin capacidad de escritura. El boton de alta esta <code class="inline">disabled</code>
+        y <code class="inline">onAddPlaceholder</code> es un stub vacio. Las escrituras al backend
+        usan la mutation generica <code class="inline">createInstance(objectType, data)</code> del platform
+        — no hay resolver custom de create para <code class="inline">planEntry</code>.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A[CurriculumMesh\nMC-05 renderiza grid] --> B[Columna por periodo\ntarjetas planEntry]
+  B --> C{Boton Alta}
+  C -- "disabled\nonAddPlaceholder = stub" --> D[No hace nada]
+  B --> E[Tarjeta planEntry\nsolo lectura]
+  E -- "no hay acciones\nde edicion/quitar" --> F[Vista estatica]
+      </pre></div>
+      <p class="text-sm text-stone-400 mt-3">
+        MC-06 habilita exactamente ese boton y esas acciones sobre la tarjeta — dentro del adapter de dominio.
+      </p>
+    </section>
+
+    <!-- BLOQUE: tag — dependencias -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Dependencias del ticket</h2>
+      <p class="text-sm text-stone-400 mb-3">Modulos y tickets que MC-06 consume o extiende:</p>
+      <div class="flex flex-wrap gap-3 items-start">
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-02</span>
+          <span class="text-xs text-stone-500">aporta planEntry</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-03</span>
+          <span class="text-xs text-stone-500">aporta requirement Group (bloque electivo)</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-now">MC-05</span>
+          <span class="text-xs text-stone-500">componente base CurriculumMesh</span>
+        </div>
+        <div class="flex flex-col items-start gap-1">
+          <span class="tag tag-next">uengagement-up1</span>
+          <span class="text-xs text-stone-500">OrgUnit — el picker filtra Activity por departamento</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== HACIA ADELANTE — EL PLAN ===== -->
+
+    <!-- BLOQUE: two-col-compare — obligatoria vs electiva -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Approach: obligatoria vs electiva</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <div class="rounded-lg border border-stone-700 overflow-hidden">
+          <div class="twocol-head bg-stone-800 text-stone-200">
+            Asignatura obligatoria <span class="text-xs font-normal text-stone-400 ml-2">(Must)</span>
+          </div>
+          <div class="p-4 text-sm text-stone-400 space-y-2">
+            <p>Modal de 2 pasos: paso 1 selecciona tipo y linea de formacion en masa; paso 2 abre el picker de Activity.</p>
+            <p><span class="text-emerald-400">+</span> El picker filtra por departamento (<code class="inline">OrgUnit</code>) y oculta cursos ya agregados al plan. Solo muestra <code class="inline">isCurrent=true</code>.</p>
+            <p><span class="text-emerald-400">+</span> Crea <code class="inline">planEntry</code> <strong>sin</strong> <code class="inline">blockId</code>. <code class="inline">categoryId</code> es opcional. Creditos heredados de la Activity (sin override).</p>
+            <p><span class="text-rose-400">−</span> Sin bloque, no hay logica de <code class="inline">minToSatisfy</code> ni de agrupacion — mas simple pero menos flexible.</p>
+          </div>
+        </div>
+
+        <div class="rounded-lg border border-stone-700 overflow-hidden">
+          <div class="twocol-head bg-stone-800 text-stone-200">
+            Asignatura electiva <span class="text-xs font-normal text-stone-400 ml-2">(Should)</span>
+          </div>
+          <div class="p-4 text-sm text-stone-400 space-y-2">
+            <p>El mismo picker de Activity, pero antes se elige (o nombra) un bloque electivo via <strong>select-suggest</strong>: elegir bloque existente del plan o escribir el nombre de uno nuevo.</p>
+            <p><span class="text-emerald-400">+</span> Es <em>tagging</em>: se crea el <code class="inline">planEntry</code> con <code class="inline">blockId</code>. El bloque se crea o crece como consecuencia; no se edita directamente.</p>
+            <p><span class="text-emerald-400">+</span> <code class="inline">minToSatisfy</code> se auto-deriva del conteo de cursos en el bloque.</p>
+            <p><span class="text-rose-400">−</span> Requiere un composable nuevo para listar los bloques existentes del plan (las opciones remotas no salen del composable generico actual). Se construye en S4.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-4 text-sm text-stone-400">
+        Ademas de alta, se necesita un <strong>modal de edicion/eliminacion</strong> por planEntry existente: permite cambiar creditos (override),
+        linea de formacion, rol (obligatoria ↔ electiva) y "quitar de la malla". Se construye en S5.
+      </div>
+    </section>
+
+    <!-- BLOQUE: timeline — plan de sesiones -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Plan de 5 sesiones</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S1 — Modal shell + paso 1 (tipo y linea)</div>
+          <p class="text-xs text-stone-400">
+            Crear el shell del modal casero (<code class="inline">Modal</code> + <code class="inline">Teleport</code>).
+            Implementar el paso 1 del flujo obligatorio: seleccion de tipo y linea de formacion.
+            Conectar el boton de alta en el adapter de dominio para abrir el modal.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S2 — Picker de Activity + alta obligatoria end-to-end</div>
+          <p class="text-xs text-stone-400">
+            Construir el picker sobre <code class="inline">listInstances</code>: filtro por departamento, ocultar ya-agregados,
+            solo <code class="inline">isCurrent</code>. Crear el <code class="inline">planEntry</code> sin <code class="inline">blockId</code>
+            via <code class="inline">createInstance</code>. Al cerrar esta sesion el flujo obligatorio esta completo (cierra el Must).
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S3 — Select-suggest de bloque + validacion de Vueform en modal casero</div>
+          <p class="text-xs text-stone-400">
+            Integrar <code class="inline">SelectElement</code> de Vueform (<code class="inline">search:true</code>) dentro del modal casero.
+            Validar empiricamente que renderiza correctamente (hay evidencia favorable en una story del Modal,
+            pero se confirma aqui). Implementar la entrada de texto para nombrar un bloque nuevo.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S4 — Tagging electivo (bloque, precarga, minToSatisfy, label)</div>
+          <p class="text-xs text-stone-400">
+            Crear el composable nuevo para listar bloques existentes del plan.
+            Implementar la creacion del <code class="inline">planEntry</code> con <code class="inline">blockId</code>.
+            Logica de auto-derivacion de <code class="inline">minToSatisfy</code> segun conteo de cursos.
+            Precarga del selector con los bloques actuales.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">S5 — Modal editar / quitar planEntry</div>
+          <p class="text-xs text-stone-400">
+            Modal de edicion por tarjeta existente: creditos override, linea de formacion,
+            cambio de rol (obligatoria ↔ electiva, afecta presencia/ausencia de <code class="inline">blockId</code>)
+            y "quitar de la malla". Cierre de todos los Should del ticket.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BLOQUE: study-qa — preguntas abiertas a explorar -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Preguntas abiertas a explorar</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Estas no son conclusiones — son las incognitas que el dev debe tener presentes y validar durante la ejecucion.
+      </p>
+
+      <details class="qa">
+        <summary>¿El <code class="inline">SelectElement</code> de Vueform (con <code class="inline">search:true</code>) renderiza correctamente dentro del modal casero?</summary>
+        <div class="ans">
+          Hay evidencia favorable: existe una story del componente <code class="inline">Modal</code> que lo muestra embebido con un SelectElement.
+          Sin embargo, la confirmacion empirica viene al inicio de S3, cuando se integra en el flujo real de alta electiva.
+          Si hay problemas de portal/z-index o de contexto Vueform, se resuelve en esa sesion antes de avanzar.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Como se maneja la creacion de un bloque nuevo — con el <code class="inline">create:true</code> de Vueform o con input de texto separado?</summary>
+        <div class="ans">
+          La decision es usar <strong>input de texto separado</strong> (no el <code class="inline">create:true</code> de Vueform).
+          Razon: evitar el riesgo del <code class="inline">ModalStackManager</code> (BUG-platform-011) que podria activarse si Vueform intenta
+          abrir un sub-dialogo para confirmar la creacion. Ademas, coincide con el delta de la reunion: el label del bloque
+          se ingresa por texto libre, no por selector de creacion.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Donde vive la logica para listar los bloques existentes del plan y como se pobla el select-suggest?</summary>
+        <div class="ans">
+          El composable generico existente no apunta a <code class="inline">requirementGroup</code> con los filtros necesarios
+          (<code class="inline">ownerType=curriculum</code>, <code class="inline">planId</code> especifico).
+          Se requiere un composable nuevo — o extender el existente con soporte para ese caso.
+          El punto de decision exacto (extender vs nuevo) se toma al inicio de S4, tras revisar el composable actual.
+        </div>
+      </details>
+
+      <details class="qa">
+        <summary>¿Que ocurre al cambiar el rol de una asignatura de obligatoria a electiva (o viceversa) en el modal de edicion?</summary>
+        <div class="ans">
+          Cambiar a electiva implica asignar un <code class="inline">blockId</code> al <code class="inline">planEntry</code> existente
+          (puede requerir elegir o crear un bloque). Cambiar a obligatoria implica limpiar el <code class="inline">blockId</code>
+          (desconectar del bloque). El comportamiento sobre <code class="inline">minToSatisfy</code> del bloque que pierde un curso
+          debe definirse: ¿se recalcula automaticamente o requiere accion manual? Esto se especifica en el design de S5.
+        </div>
+      </details>
+
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · intake · TICKET-086 · up1 · 2026-06-30. Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

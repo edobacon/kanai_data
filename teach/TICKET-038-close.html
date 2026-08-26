@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — HU-4 Config versioning · TICKET-038</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  .callout-note { border-color:#38bdf8; background:rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background:linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-038</span> · HU-4 Config versioning</span>
+      <span>up1 · 2026-06-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">HU-4 cerrada — qué se hizo y qué aprendimos</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Mirada hacia atrás del caso. El intake ya enseñó el landscape (qué es el bloque <code class="inline">versioning</code>,
+      el codegen, el FK reflexivo); aquí no se re-explica eso — se cuenta <strong>qué se ejecutó, cómo evolucionaron las
+      hipótesis y qué dejó de aprendizaje</strong>.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se entregó la <strong>capa de validación</strong> del bloque
+        <code class="inline">metadata.versioning</code> en el codegen: un helper <code class="inline">validate-versioning.js</code>
+        (estructura, FK reflexivo, versionField integer, strategy SP3, warnings de política) cableado en el pipeline, con
+        29 unit tests + regresión codegen vacía (72/72 suite, prisma diff 0). La <strong>persistencia ya existía</strong>
+        (HU-0j) — sólo se confirmó. La <strong>activación en un objeto real</strong> (declarar versioning en Activity, volver
+        <code class="inline">previousVersionId</code> reflexivo) quedó como trabajo aparte (OQ-1).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#story" class="navlink rounded border border-stone-700 px-2 py-1">la historia</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">por session</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipótesis</a>
+      <a href="#know" class="navlink rounded border border-stone-700 px-2 py-1">knowledge</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lessons</a>
+      <a href="#next" class="navlink rounded border border-stone-700 px-2 py-1">qué viene</a>
+    </nav>
+
+    <!-- La historia -->
+    <section id="story" class="blk mt-12" data-dkc-block="case">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">La historia</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">El AC pedía "codegen valida + persiste" el bloque <code class="inline">versioning</code>. El intake descubrió que la persistencia ya estaba hecha (HU-0j + gate abierto en HU-2).</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Decisión</div><p class="text-sm text-stone-300">Acotar el alcance real a la <strong>capa de validación</strong> (estructura + reflexivo + strategy + warnings) y confirmar la persistencia con un test, sin reimplementarla. Activación en objeto real diferida (DEC-LOCAL-04).</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Validador entregado e inerte sobre objetos sin la key; 72/72 tests; regresión codegen vacía; doc + AC cumplidos. 4 sessions, ~1-2 SP.</p></div>
+      </div></div>
+    </section>
+
+    <!-- Flujo por session -->
+    <section id="flow" class="blk mt-12" data-dkc-block="timeline">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El camino recorrido (por session)</h2></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Validación estructural</div><p class="text-xs text-stone-400">Se creó <code class="inline">validate-versioning.js</code> modelado en <code class="inline">validate-prefill-from.js</code> (requeridos/opcionales/tipos, versionField integer, strategy sólo increment con mensaje "fuera de alcance" para semver/user-provided), se cableó el wrapper que hace <code class="inline">throw</code> tras <code class="inline">validatePrefillFrom</code>, y 16 tests. El reviewer aislado pidió endurecer una aserción y un caso extra (versionField vacío) — se aplicaron antes de commitear.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Cross-ref reflexivo + persistencia (⚑ fuerte)</div><p class="text-xs text-stone-400">Se sumó la validación de <code class="inline">linkageField</code> como FK reflexivo (existe + <code class="inline">isForeignKey</code> + <code class="inline">references === json.title</code>), un test que confirma que el bloque canónico round-trips a <code class="inline">versioningConfig.versioning</code> (REQ-06, sin tocar el sync), y la prueba dura: <code class="inline">npm run codegen</code> corrió completo (validador OK sobre 58 JSON, sync 73 null, prisma diff 0). Reviewer aislado: approve.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — Warnings de política</div><p class="text-xs text-stone-400">Se agregó un colector de warnings <em>puro</em> (separado de la validación de errores para no mezclar side-effects) que el wrapper emite vía <code class="inline">console.warn</code>: <code class="inline">allowedFromStates</code>/<code class="inline">initialStateValue</code> advierten sin abortar. 6 tests; review inline light (T1).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 — Doc + cierre</div><p class="text-xs text-stone-400">Se documentó la capacidad en <code class="inline">versioning-capability.md</code>, corrió la suite codegen completa (72/72) y se cerró con teach-close + validación de cierre reforzada (reviewer aislado approve, scope y rama OK).</p></div>
+      </div>
+    </section>
+
+    <!-- Evolución de hipótesis -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Evolución de hipótesis</h2></div>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">Las 3 hipótesis del intake se confirmaron contra el código real ya en intake-explore; la ejecución las ratificó sin sorpresas.</p>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Hipótesis</th><th class="p-3">Estado final</th><th class="text-left p-3">Cómo se ratificó</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300">H1 — la validación sigue el patrón de bloques metadata</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">El helper se modeló 1:1 en validate-prefill-from.js; el reviewer confirmó consistencia total</td></tr>
+          <tr><td class="p-3 text-stone-300">H2 — linkageField se valida por references al mismo objeto</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">V6 usa <code class="inline">json.title</code>; 4 casos (reflexivo/no-FK/ajeno/inexistente) verdes</td></tr>
+          <tr><td class="p-3 text-stone-300">H3 — warning (no error) para campos de política</td><td class="p-3 text-center text-emerald-400">confirmada</td><td class="p-3 text-stone-400">console.warn separado del path de errores; codegen no aborta</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- Knowledge promovido -->
+    <section id="know" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Knowledge promovido</h2></div>
+      <div class="callout callout-note"><strong>Sin rules/bugs/decisiones formales nuevas.</strong> Los 4 learns del intake se descartaron tras refinarlos: 3 son hechos del caso ya capturados en el spec + <code class="inline">versioning-capability.md</code>, y el 4º (el patrón <code class="inline">validate-&lt;cap&gt;.js</code>) ya está cubierto por <code class="inline">RULE-core-019</code> y es discoverable en 3 helpers (polymorphic/prefill/versioning). No se duplicó KB.</div>
+      <div class="callout callout-info">Las decisiones de diseño (DEC-LOCAL-01 strategy SP3, -02 json.title, -03 split warning/error, -04 alcance validación) viven inline en el spec — afectan sólo esta feature, no se promovieron a DEC formal.</div>
+    </section>
+
+    <!-- Lessons learned -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Lessons learned</h2></div>
+      <details class="qa"><summary>El AC decía "valida + persiste" — ¿por qué el alcance terminó siendo sólo validar?</summary><div class="ans">Porque la persistencia ya estaba entregada por HU-0j y el gate <code class="inline">(versioning || prefillFrom)</code> abierto por HU-2. Leer el código real en intake-explore (no asumir desde el AC) recortó el trabajo a la mitad y evitó reimplementar algo que funcionaba. Lección: el AC describe el resultado deseado, no el delta — verificar qué ya existe antes de estimar.</div></details>
+      <details class="qa"><summary>¿Por qué rechazar semver/user-provided con "fuera de alcance" en vez de "valor inválido"?</summary><div class="ans">Son strategies del diseño diferidas a SP4, no errores de tipeo. Un mensaje que las distingue le dice al dev "esto es una feature futura, no te equivocaste". Relajarlas en SP4 es ampliar un array de constantes (<code class="inline">SP4_ALLOWED_STRATEGIES</code>). Lección: los mensajes de error son UX para el dev — que comuniquen intención, no sólo rechazo.</div></details>
+      <details class="qa"><summary>¿Por qué el colector de warnings quedó separado de la validación de errores?</summary><div class="ans">Para no mezclar side-effects (console.warn) en una función pura que retorna <code class="inline">string[]</code>. <code class="inline">collectVersioningWarnings</code> es testeable sin spies; el wrapper del codegen lo emite. Lección: separar "qué advertir" (puro, testeable) de "cómo emitirlo" (side-effect en el borde) mantiene la lógica verificable.</div></details>
+      <details class="qa"><summary>¿Cómo se probó la "cero regresión" sin objetos que usen la feature?</summary><div class="ans">El validador es inerte sin la key; ningún objeto declara <code class="inline">versioning</code> aún. Correr <code class="inline">npm run codegen</code> completo confirmó: validador OK sobre 58 JSON, sync 73 null, y <code class="inline">git diff prisma/</code> vacío. Lección: una capa nueva que es inerte por construcción se valida regenerando y comprobando diff cero, no sólo con unit tests.</div></details>
+    </section>
+
+    <!-- Qué viene -->
+    <section id="next" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Qué viene después</h2></div>
+      <div class="callout callout-warn"><strong>OQ-1 — activación real (trabajo aparte).</strong> Declarar <code class="inline">metadata.versioning</code> en un objeto de producción (ej. <code class="inline">Activity</code>) exige convertir <code class="inline">previousVersionId</code> en FK reflexivo (cambio de modelo, IMP-5/HU-0e aplicado al JSON). Es un ticket/HU separado — esta HU entregó la validación que ese trabajo necesitará. Backlog del ticket sin items <code class="inline">must</code>: no bloquea el cierre.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-038 · close · up1 · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

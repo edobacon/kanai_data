@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Polish clonación/versionamiento · TICKET-051</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-051</span> · Polish clonación/versionamiento</span>
+      <span>up1 · 2026-06-04</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Polish de la plataforma de clonación/versionamiento</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Cuando HU-10 (UPONE-1216) habilitó clonar y versionar objetos en up1, el cierre dejó tres
+      asperezas marcadas como <em>could</em>: un título de modal feo para objetos Record-Type, un
+      enforcement de unicidad que solo sabía hablar de CurricularSection, y un toast que no decía qué
+      versión acababas de crear. Este ticket (UPONE-1219, capa core de la épica UPONE-1206) las pule.
+      Ninguna es un bug que rompa producción — son deuda de plataforma que conviene saldar antes de que
+      más objetos entren al flujo de clonación.
+    </p>
+
+    <!-- EJE 1 (que sucede) + EJE 4 (por que se propone) + autopilot TL;DR -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Tres polish de plataforma sobre layout + object-manager:
+        <strong>B6</strong> título legible para modales RT (humanizar <code class="inline">rt__Mod__obj</code> en el choke point del modal),
+        <strong>B5</strong> generalizar el enforcement de unicidad scoped para que sea config-driven (leer <code class="inline">uniqueScopedBy</code> desde la DB en vez de hardcodear CurricularSection) + su unit test faltante,
+        <strong>B2</strong> toast de versión parametrizado ("Versión N creada desde versión N-1").
+        <br><span class="text-stone-400">Modo <strong class="text-amber-300">super autopilot</strong>: se ejecutan las 2 sesiones (S1 layout, S2 object-manager) de corrido, decidiendo y documentando; solo el push pide aprobación. Branch core <code class="inline">UPONE-1206</code> (RULE-dev-004) — el cierre DKC no mergea a develop.</span>
+      </div>
+    </div>
+
+    <!-- EJE 2 (por que) — el dolor de cada item -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Por qué duele hoy</h2>
+      <div class="callout callout-warn"><strong>B6</strong> — Al abrir "Crear registro" sobre una Modalidad, el modal titula <code class="inline">Crear Nuevo rt__Modality__curricularsection</code>. El usuario ve el nombre técnico de la proyección RT, no un label legible. El clone ya se arregló en 044, pero el create normal y otros modales RT siguen crudos.</div>
+      <div class="callout callout-warn"><strong>B5</strong> — La regla "no dos modalidades con el mismo nombre/código en el mismo Activity" está escrita con <code class="inline">if (baseModelName === 'CurricularSection')</code>. El próximo objeto que necesite unicidad scoped tendría que volver a tocar el resolver. Y la lógica no tiene unit test (lo advirtió el reviewer en 044).</div>
+      <div class="callout callout-note"><strong>B2</strong> — Crear una versión muestra "Nueva versión creada", sin número. El dev de 044 (DEC-LOCAL-03) quería "Versión N creada desde versión N-1" pero faltaba que el front recibiera el <code class="inline">version</code>.</div>
+    </section>
+
+    <!-- concept-card: ladrillos del dominio -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conceptos clave</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">RT projection</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Record-Type: un subtipo de un objeto base, nombrado <code class="inline">rt__&lt;Mod&gt;__&lt;base&gt;</code> (ej. <code class="inline">rt__Modality__curricularsection</code>). Tiene su propia tabla y campos además de los del base.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">uniqueScopedBy</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Propiedad declarada en un campo del JSON del objeto: array de campos que forman el scope de unicidad. Ej. <code class="inline">name.uniqueScopedBy = ["ownerId","recordType"]</code>: el name es único dentro de ese par.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">version-from-source</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Helper que al crear una versión setea <code class="inline">version = maxVersionInLineage + 1</code> y <code class="inline">previousVersionId</code>. Por eso N-1 se puede inferir como <code class="inline">version - 1</code>.</p></div>
+      </div>
+    </section>
+
+    <!-- EJE 3 (que cambio se propone) — code -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se propone tocar</h2>
+      <pre class="code"><span class="c">// B6 — choke point unico: ModalStackManager.vue (fallback del titulo)</span>
+<span class="c">//   antes:</span> displayName = options.objectLabel || options.objectName
+<span class="c">//   ahora:</span> displayName = options.objectLabel || <span class="f">humanizeObjectName</span>(options.objectName)
+<span class="c">//   + util compartido layout/src/utils/humanizeObjectName.ts con rama rt__</span>
+
+<span class="c">// B5 — config-driven: sync persiste uniqueScopedBy -&gt; resolver lo lee</span>
+<span class="c">//   generatePrismaSchema.js: properties.uniqueScopedBy = fieldSchema.uniqueScopedBy</span>
+<span class="c">//   instance.resolver.js: reemplazar el if (=== 'CurricularSection') por</span>
+<span class="c">//   lectura de core_FieldDefinition.properties.uniqueScopedBy (ya se consulta ahi)</span>
+
+<span class="c">// B2 — solo front: pedir `data` (ya trae version) + i18n parametrizado</span>
+<span class="k">const</span> newVersion = res?.data?.createInstance?.data?.version;
+$t(<span class="s">'recordList.actions.versionCreated'</span>, { version: newVersion, sourceVersion: newVersion - <span class="s">1</span> });</pre>
+    </section>
+
+    <!-- comparison-table: B5 opciones A vs B (por que se eligio A) -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">B5: por qué opción (a) sobre (b) — DEC-LOCAL-01</h2>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Opción</th><th class="p-3">Mecanismo</th><th class="p-3">Costo / riesgo</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">(a) sync-persist ✓</td><td class="p-3">sync escribe <code class="inline">uniqueScopedBy</code> en <code class="inline">core_FieldDefinition.properties</code>; el resolver lo lee (ya consulta esa tabla ahí mismo)</td><td class="p-3">Aditivo, merge-based. Requiere correr sync (parte del flujo). Cero mecanismo nuevo.</td></tr>
+          <tr><td class="p-3 text-stone-300">(b) runtime read JSON</td><td class="p-3">leer el object JSON synced del filesystem en runtime + cache</td><td class="p-3">Introduce I/O de filesystem en el hot path, acopla a nombres de archivo, falla silencioso si no se sincronizó.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- formula: el invariante de unicidad scoped -->
+    <section id="formula" class="blk mt-12" data-dkc-block="formula">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El invariante que B5 generaliza</h2>
+      <div class="formula text-sm text-stone-300">
+        <div class="mb-2">crear un registro con valor <code class="inline">v</code> en campo <code class="inline">f</code> <span class="iff">FALLA</span> si:</div>
+        <div class="ml-4 leading-relaxed"><span class="text-emerald-400">(a)</span> <code class="inline">f</code> declara <code class="inline">uniqueScopedBy = [s1..sn]</code> &nbsp;Y<br><span class="text-emerald-400">(b)</span> ya existe otro registro con el mismo <code class="inline">v</code> donde todos los <code class="inline">s1..sn</code> coinciden</div>
+        <div class="mt-2 text-stone-500">Hoy: la condición está hardcodeada a <code class="inline">CurricularSection</code> + {name, code}. Después: cualquier objeto/campo que declare <code class="inline">uniqueScopedBy</code> la obtiene gratis.</div>
+      </div>
+    </section>
+
+    <!-- study-qa -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿Por qué B2 no toca el backend?</summary><div class="ans">Porque el resolver de <code class="inline">createInstance</code> ya retorna <code class="inline">data: JSON</code> con el registro completo, que incluye <code class="inline">version</code>. El selection set del front solo pedía <code class="inline">id</code>. Basta pedir <code class="inline">data</code>; el SDL <code class="inline">InstanceResult.data</code> ya existe.</div></details>
+      <details class="qa"><summary>¿Por qué B6 humaniza en vez de fetchear el label i18n real del RT?</summary><div class="ans">El <code class="inline">objectLabel</code> solo está fetcheado para el objeto padre, no para el RT específico en el path no-clone. Fetchearlo por RT agrega latencia async antes de abrir el modal (parpadeo). Humanizar <code class="inline">rt__Modality__curricularsection → "Modality"</code> en el choke point cubre todos los call sites sin latencia. El label i18n exacto queda como mejora futura.</div></details>
+      <details class="qa"><summary>¿El cambio de B5 puede romper el enforcement actual de CurricularSection?</summary><div class="ans">No debería: la generalización debe producir exactamente el mismo <code class="inline">scopeWhere</code> + <code class="inline">findFirst</code> para CurricularSection (name/code, scope [ownerId, recordType]). El unit test (parte de B5) fija ese comportamiento como regression, y se corre la suite vitest existente.</div></details>
+      <details class="qa"><summary>¿Qué gobierna el branch y el merge?</summary><div class="ans">RULE-dev-004 / core_work_policy: todo trabajo core de la épica va en la rama <code class="inline">UPONE-1206</code>; se mergea a develop SOLO tras revisión del team up1. El cierre DKC de este ticket NO implica merge — solo deja commits en la rama de épica.</div></details>
+    </section>
+
+    <!-- gaps activos -->
+    <section id="gaps" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Gaps activos al entrar a design</h2>
+      <div class="callout callout-info">El enforcement de unicidad corre en <code class="inline">createInstance</code> pero NO en <code class="inline">updateInstance</code>. B5 mantiene ese alcance (solo create) — generalizar a update es out-of-scope; se anota si el dev lo quiere después.</div>
+      <div class="callout callout-info">B6 humaniza el discriminador técnico (segmento central del nombre RT), no el label i18n de BD. Suficiente para un fallback; el label exacto es mejora futura.</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-051 intake · Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

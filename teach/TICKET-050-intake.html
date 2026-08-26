@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — RBAC por capability para versionar y clonar · TICKET-050</title>
+
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">TICKET-050</span> · RBAC por capability para versionar y clonar</span>
+      <span>up1 · 2026-06-04</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">RBAC por capability para versionar y clonar</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      En up1 — la plataforma educativa multi-tenant con arquitectura modular — el mod
+      <code class="inline">curriculum-design</code> ya expone dos acciones de fila sobre sus objetos:
+      <strong>versionar</strong> una Activity y <strong>clonar</strong> una BibliographyReference o una Modalidad.
+      Hoy esas acciones se muestran u ocultan <em>solo según el estado del workflow del objeto</em>
+      (<code class="inline">currentstatus.allowsVersioning</code>), igual para todos los usuarios. No hay forma de
+      decir "este usuario sí puede versionar, este otro no". Este ticket agrega esa dimensión: un
+      <strong>permiso RBAC por objeto</strong> que gobierna quién ve y quién puede ejecutar versionar/clonar,
+      siguiendo la filosofía declarativa de up1 (capabilities custom por mod, core genérico).
+    </p>
+
+    <!-- TL;DR (autopilot: qué hay / qué se hará / por qué) -->
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <strong>Qué hay:</strong> versionar/clonar se gatean solo por estado, sin control por usuario.
+        <strong>Qué se hará:</strong> declarar capabilities object-level (<code class="inline">activity:version</code>,
+        <code class="inline">bibliographyreference:clone</code>, <code class="inline">curricularsection:clone</code>),
+        gatear los row actions con <code class="inline">requiredCapability</code> (UI) y agregar un check server-side
+        en <code class="inline">createInstance</code> (backend) que enforce <em>solo si el mod lo declara en su metadata</em>.
+        <strong>Por qué:</strong> que cada mod decida soberanamente qué usuario, según qué permiso, tiene disponible cada acción
+        — defensa en profundidad (UI + backend) sin imponer política desde el core.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">las 3 capas</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">cómo se ve hoy</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">entorno</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">áreas</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- ============ LAS BASES (hacia abajo) ============ -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Las bases — el RBAC de up1, hoy</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Antes de tocar nada conviene tener el glosario del modelo de permisos sobre el que se apoya el cambio.
+        up1 usa un RBAC estilo Moodle: <em>capabilities</em> con nombre-string, asignadas a roles, consultables
+        desde el frontend. Estos cinco ladrillos son todo lo que necesitas para entender el resto del teaching.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">capability</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Permiso atómico identificado por un string (<code class="inline">objeto:accion</code>, ej. <code class="inline">activity:version</code>). Vive en la tabla <code class="inline">core_Capability</code> y se asigna a roles. El backend acumula las del usuario; el frontend las consulta.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">capabilities.json</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Archivo declarativo por mod que <em>crea</em> capabilities custom más allá del CRUD. <code class="inline">curriculum-design</code> ya declara <code class="inline">activity:audit</code>, <code class="inline">approve</code>, <code class="inline">publish</code>. El sync las inserta en DB.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">requiredCapability</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Clave que un row action declara en su layout JSON. El motor <code class="inline">isActionVisible</code> oculta la acción si el usuario no tiene esa capability — gating de UI 100% declarativo, sin código core.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">createInstance / withObjectAuth</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El resolver genérico del core que crea objetos. Versionar y clonar <em>comparten</em> este resolver (distinguidos por flags <code class="inline">asNewVersion</code> / <code class="inline">prefillFrom.source</code>); hoy ambos exigen solo el permiso genérico <code class="inline">create</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RULE-mods-037</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Regla del proyecto: las capabilities object-level se nombran <em>sin</em> prefijo <code class="inline">mod/</code> (<code class="inline">activity:version</code>, no <code class="inline">mod/...:version</code>). Gobierna el naming de las nuevas capabilities.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">opt-in declarativo</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Modo de enforcement elegido: el core <em>lee</em> una capability declarada en el metadata del objeto y la aplica solo si está presente. Sin declaración → permite (comportamiento actual). La mecánica es genérica (core), la política es del mod.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ EL PLAN orientativo: las 3 capas (hacia adelante) ============ -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">El cambio en 3 capas — dónde vive cada cosa</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        El hallazgo clave del intake es que el cambio NO es monolítico: se reparte en tres capas con dueños
+        distintos. Dos son 100% declarativas (viven en el mod, cero código core); la tercera obliga a tocar el
+        core. Entender este reparto orienta el plan de sessions: lo declarativo es barato y reversible, el
+        enforcement backend es el corazón de riesgo. El diagrama muestra el recorrido de una acción "versionar"
+        desde que el usuario la ve hasta que el backend la autoriza.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  subgraph C1["Capa 1 · UI gating — declarativo en el mod"]
+    A["row action 'versionar'<br/>requiredCapability: activity:version"] --> B{ isActionVisible:<br/>¿usuario tiene la cap? }
+    B -- no --> H["botón oculto"]
+    B -- sí --> V["botón visible"]
+  end
+  subgraph C2["Capa 2 · Capabilities — declarativo en el mod"]
+    K["capabilities.json<br/>activity:version, *:clone"] --> KS["sync crea en core_Capability<br/>+ asignación a roles"]
+  end
+  subgraph C3["Capa 3 · Enforcement backend — core (inevitable)"]
+    V --> R["createInstance(asNewVersion)"]
+    R --> G{ metadata.versioning<br/>.requiredCapability declarada? }
+    G -- no --> P["permite (como hoy)"]
+    G -- sí --> Q{ ¿usuario tiene la cap? }
+    Q -- no --> X["throw permiso<br/>(antes de DB/eventos/audit)"]
+    Q -- sí --> P
+  end
+  KS -.alimenta.-> B
+  KS -.alimenta.-> Q
+      </pre></div>
+    </section>
+
+    <!-- ============ CÓMO SE VE HOY (las bases en código) ============ -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Cómo se ve hoy en el código</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Para fijar el "antes": así se declara hoy un gating en un row action (carril vivo
+        <code class="inline">requiredCapability</code>, usado en mods reales como <code class="inline">hw-assessment-list.json</code>)
+        y así luce la única autorización que el backend exige hoy a versionar/clonar.
+      </p>
+      <pre class="code"><span class="c">// front · layout JSON de un row action (carril vivo: requiredCapability)</span>
+{
+  <span class="f">"key"</span>: <span class="s">"version"</span>,
+  <span class="f">"label"</span>: <span class="s">"Crear nueva versión"</span>,
+  <span class="f">"requiredCapability"</span>: <span class="s">"activity:version"</span>,   <span class="c">// ← lo que agrega este ticket</span>
+  <span class="f">"visibilityConditions"</span>: [ <span class="c">/* allowsVersioning, ya existente */</span> ]
+}
+
+<span class="c">// back · object-manager/instance.resolver.js — autorización actual</span>
+<span class="c">// versionar y clonar comparten createInstance con el MISMO permiso genérico:</span>
+withObjectAuth(<span class="s">'create'</span>, createInstance)   <span class="c">// no distingue version/clone de un alta normal</span></pre>
+    </section>
+
+    <!-- ============ INVARIANTE — la regla rectora del diseño ============ -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">El invariante que rige el diseño</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Toda la decisión de cómo implementar el enforcement backend se subordina a un principio de la
+        filosofía up1: la <strong>soberanía del mod sobre su política</strong>. El core no impone seguridad;
+        ofrece un mecanismo y el mod decide si lo usa.
+      </p>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El core <span class="text-amber-400">enforce una capability si y solo si el mod la declaró</span> en el metadata del objeto. Sin declaración, permite.</div>
+        <div class="ilabel mt-2">Corolario: un versionado/clonado sin protección es una decisión válida de negocio del mod — NO un hueco que el core deba cerrar a la fuerza. Por eso la ausencia de declaración no genera warning ni error del validador.</div>
+      </div>
+    </section>
+
+    <!-- ============ EL ENTORNO (hacia los lados) ============ -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">El entorno — qué rodea este cambio</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Tres piezas del contexto lateral que condicionan la ejecución y que conviene tener presentes antes
+        de codear.
+      </p>
+      <div class="callout callout-warn"><strong>⚠ TICKET-044 activo sobre el mismo Jira (UPONE-1216)</strong> — este ticket asume que los row actions de versionar/clonar <em>ya están declarados</em> por TICKET-044 (HU-10). Aquí solo se agrega el <code class="inline">requiredCapability</code> encima. Hay que coordinar para no pisarse.</div>
+      <div class="callout callout-note"><strong>ℹ Reparto de branches (RULE-dev-004)</strong> — el trabajo de mod (<code class="inline">mods/curriculum-design/</code>) va a la rama <code class="inline">UPONE-1038</code>; el trabajo de core (object-manager, layout) va a <code class="inline">UPONE-1206</code>. Un mismo ticket toca ambas ramas.</div>
+      <div class="callout callout-danger"><strong>✗ Cobertura dual del check (caveat de propagación, L1)</strong> — el clone de Modalidad (un RecordType) pasa por un bloque <em>separado</em> del resolver (~L2357+), distinto del clone del objeto base. El check de permiso debe cubrir AMBOS spots o el clone de Modalidad se escapa del enforcement.</div>
+    </section>
+
+    <!-- ============ EL PLAN — orientación, no detalle (hacia adelante) ============ -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Hacia dónde vamos — orientación del plan</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        A nivel orientación (el detalle de tasks lo fija <code class="inline">design-feature</code>), el trabajo
+        recorre de lo más declarativo y barato a lo más sensible del core. Este orden permite validar el carril
+        feliz de UI antes de comprometer el enforcement server-side.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">1 · Declarar capabilities (mod)</div><p class="text-xs text-stone-400">Agregar <code class="inline">activity:version</code>, <code class="inline">bibliographyreference:clone</code>, <code class="inline">curricularsection:clone</code> a <code class="inline">capabilities.json</code> + asignarlas a roles. 100% declarativo.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">2 · Gatear row actions (mod)</div><p class="text-xs text-stone-400">Agregar <code class="inline">requiredCapability</code> a los row actions de versionar/clonar en los layouts. El motor de UI ya lo soporta.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">3 · Mecanismo genérico de enforcement (core)</div><p class="text-xs text-stone-400">Enseñar a <code class="inline">createInstance</code> a leer <code class="inline">metadata.*.requiredCapability</code> y enforcearla si está presente — cubriendo objeto base y bloque RecordType.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">4 · Validar end-to-end</div><p class="text-xs text-stone-400">UI con/sin capability, rechazo backend de mutación directa, y regresión de que el gating por estado se preserva.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ ÁREAS AFECTADAS ============ -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Áreas que toca</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">Tres superficies, con peso decreciente de declarativo a código.</p>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">mod · curriculum-design (capabilities.json + layouts)</span>
+        <span class="tag tag-next">core · object-manager (instance.resolver.js)</span>
+        <span class="tag tag-future">core · layout (solo tests del wiring existente)</span>
+      </div>
+    </section>
+
+    <!-- ============ Q&A DE ESTUDIO ============ -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Q&amp;A para fijar el modelo mental</h2>
+      <details class="qa"><summary>¿Por qué hace falta tocar el core si el frontend ya sabe ocultar el botón por capability?</summary><div class="ans">Porque ocultar el botón es solo defensa de UI: un usuario podría invocar la mutación <code class="inline">createInstance</code> directo (vía API/GraphQL) saltándose el frontend. La decisión fue defensa en profundidad (UI + backend), así que el check server-side es necesario. Y como <code class="inline">createInstance</code> es un resolver genérico del core que los mods no aportan, ese check vive inevitablemente en el core.</div></details>
+      <details class="qa"><summary>Si el enforcement vive en el core, ¿no rompe a todos los objetos que usan createInstance?</summary><div class="ans">No, gracias al modo opt-in declarativo. El core solo enforce si el objeto declara <code class="inline">requiredCapability</code> en su metadata. Los ~14 call-sites de creación scratch (enrollment, recurrence, calendar, import, bulk, AI agent, n8n…) no declaran nada → quedan idénticos a hoy. El blast radius real se limita a curriculum-design.</div></details>
+      <details class="qa"><summary>¿Por qué object-level (<code class="inline">activity:version</code>) y no RT-level (<code class="inline">curricularsection:modality:version</code>)?</summary><div class="ans">Porque las capabilities object-level se auto-asignan a los roles default (Admin/Consultor/Colaborador) en el generador, mientras que las RT-level y field-level NO se auto-asignan y requerirían asignación explícita en seed. Object-level es más simple y <code class="inline">curricularsection:clone</code> ya cubre todos los RecordTypes incluida Modalidad.</div></details>
+      <details class="qa"><summary>¿Qué pasa si el backend rechaza el permiso a mitad de un versionado? ¿Queda estado inconsistente?</summary><div class="ans">No. El throw de permiso ocurre ANTES de <code class="inline">finalizeCreate</code> (escrituras a DB), ANTES del audit log, y <code class="inline">withEventPublish</code> publica DESPUÉS del resolver. Es decir: sin escrituras, sin eventos, sin audit. El rechazo es atómico y seguro.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · catálogo de bloques (RULE-workflow-teach-html-catalog). Generado por DKC · TICKET-050 · up1.
+    </footer>
+
+  </main>
+</body>
+</html>

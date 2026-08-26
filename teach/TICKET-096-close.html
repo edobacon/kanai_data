@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Fix selección de pickers + curaduría · TICKET-096</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad:true, theme:'dark', themeVariables:{ darkMode:true, background:'#0c0a09', primaryColor:'#1c1917', primaryTextColor:'#e7e5e4', primaryBorderColor:'#f59e0b', lineColor:'#a8a29e', secondaryColor:'#292524', tertiaryColor:'#1c1917', mainBkg:'#1c1917', nodeBorder:'#f59e0b', clusterBkg:'#0c0a09', clusterBorder:'#44403c', titleColor:'#fafaf9', edgeLabelBackground:'#1c1917', textColor:'#e7e5e4', fontSize:'13px' }, flowchart:{ htmlLabels:true, curve:'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .tl { position:relative; padding-left:1.6rem; } .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; } .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; } details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; } details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tldr { background:linear-gradient(135deg, rgba(52,211,153,0.10), rgba(52,211,153,0.03)); border:1px solid rgba(52,211,153,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  table.kv { width:100%; border-collapse:collapse; font-size:0.86rem; } table.kv th, table.kv td { border:1px solid var(--stone-border); padding:0.4rem 0.7rem; text-align:left; } table.kv th { background:#292524; color:#fafaf9; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">TICKET-096</span> · Fix selección pickers + íconos</span>
+      <span>up1 · 2026-06-25 · CERRADO</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Cómo quedó el fix de selección y la curaduría de íconos</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">El bug era de reactividad: ambos pickers derivaban la selección de un <code class="inline">computed(() =&gt; element.value)</code> que no reaccionaba al click ni hidrataba al abrir edición. Se migró a estado LOCAL (patrón ValidationTextEditorElement) y se curó el catálogo de íconos a uno educacional. La verificación final del render es el smoke que vos corrés.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-emerald-300">TL;DR del cierre</strong> — <strong>Qué se hizo:</strong> ColorPicker e IconPicker pasan a <code class="inline">ref selected</code> (init <code class="inline">readLoadedValue</code>: element.value + fallback <code class="inline">form$.data</code>) + <code class="inline">watch</code> + <code class="inline">select()</code> que muta el ref y persiste. IconPicker estrena <code class="inline">CURATED_EDUCATIONAL</code> (43 íconos) por defecto; el catálogo completo sigue buscable. <strong>Resultado:</strong> suite 836→844 (+8 hidratación), dual-judge APPROVED (0 iter), eslint 0, tsc 0. RULE-019 reforzada. <strong>Falta (vos):</strong> <code class="inline">npm run sync</code> + reiniciar suite + verificar hidratación/selección reales.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#hist" class="navlink rounded border border-stone-700 px-2 py-1">qué se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">hipótesis</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <section id="hist" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se entregó (1 session, T2)</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1.T1/T2 — Reactividad</div><p class="text-xs text-stone-400">Ambos pickers: <code class="inline">ref selected</code> = <code class="inline">readLoadedValue(element)</code> (directo + fallback <code class="inline">form$.data[name]</code>) + <code class="inline">watch(() =&gt; element.value)</code> para la carga async + <code class="inline">select()</code> muta el ref y persiste con <code class="inline">element.update()</code>. <code class="inline">aria-checked</code>/<code class="inline">aria-selected</code> derivan del ref local.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1.T2 — Curaduría</div><p class="text-xs text-stone-400"><code class="inline">CURATED_EDUCATIONAL</code> (43 nombres, todos en el manifest, 0 navegación) por defecto; con búsqueda filtra los 2078.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1.T3 — Tests + guías</div><p class="text-xs text-stone-400"><code class="inline">readLoadedValue</code> extraído a <code class="inline">use*.ts</code> + 8 unit tests de hidratación; tests del contrato curado; guías actualizadas. dual-judge APPROVED.</p></div>
+      </div>
+    </section>
+
+    <section id="hyp" class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Hipótesis del intake → resultado</h2>
+      <table class="kv">
+        <thead><tr><th>Hipótesis</th><th>Resultado</th></tr></thead>
+        <tbody>
+          <tr><td>H1/H3 — el bug es de estado (computed), no de CSS</td><td>✓ Confirmada. El CSS de selección ya existía; el ref local lo activa.</td></tr>
+          <tr><td>H2 — no hidrata porque element.value llega async; fallback form$.data</td><td>✓ Confirmada. <code class="inline">readLoadedValue</code> + watch cubren ambos momentos.</td></tr>
+          <tr><td>H4 — default nav-heavy por alfabético del manifest</td><td>✓ Confirmada. <code class="inline">CURATED_EDUCATIONAL</code> reemplaza el default.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="lessons" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones</h2>
+      <div class="callout callout-warn"><strong>⚠ RULE-curriculum-design-019 reforzada</strong> — el patrón writable no es solo <code class="inline">setup()+update()</code>: el estado de display que el usuario VE debe ser un <code class="inline">ref</code> LOCAL, no un <code class="inline">computed(() =&gt; element.value)</code> (no reacciona al update ni hidrata async). Init con fallback a <code class="inline">form$.data</code> + watch.</div>
+      <div class="callout callout-info"><strong>ℹ Curaduría sobre catálogo masivo</strong> — exponer un manifest grande (2078) sin curar muestra lo alfabéticamente primero (ruido). Curado por defecto + full por búsqueda es el equilibrio descubrible.</div>
+      <div class="callout callout-success"><strong>✓ El gap de TICKET-094 se cerró parcialmente</strong> — la hidratación (<code class="inline">readLoadedValue</code>) ahora SÍ tiene unit tests. El wiring SFC→DOM sigue sin montarse en vitest (límite del mod) → el smoke runtime es el gate real, y por eso este cierre lo exige explícitamente.</div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de cierre</h2>
+      <details class="qa"><summary>¿Por qué un ref local y no seguir con computed?</summary><div class="ans">Un <code class="inline">computed(() =&gt; element.value)</code> (a) no re-evalúa fiable cuando <code class="inline">element.update()</code> cambia el valor → el click no resaltaba, y (b) al montar la edición el valor del registro llega async y el computed se quedaba con el vacío inicial → no hidrataba. El ref local se muta directo en el click (resalte inmediato) y se inicializa/sincroniza desde <code class="inline">element.value</code>/<code class="inline">form$.data</code> + watch (hidratación). Es el patrón de ValidationTextEditorElement.</div></details>
+      <details class="qa"><summary>¿Por qué los dos pickers usan tokens de borde distintos?</summary><div class="ans">No es inconsistencia accidental: el ColorPicker usa <code class="inline">--up1-text-primary</code> (adaptativo, alto contraste) porque el ring va sobre un swatch coloreado — un ring teal (<code class="inline">--up1-primary</code>) se fundiría con el swatch "primary" teal. El IconPicker usa <code class="inline">--up1-primary</code> porque sus celdas son neutras. Cada uno es correcto para su fondo.</div></details>
+      <details class="qa"><summary>¿Qué tengo que verificar yo?</summary><div class="ans"><code class="inline">npm run sync</code> + reiniciar el dev server de la suite + abrir una línea de formación que ya tenga color/ícono: deben aparecer marcados (hidratación). Clickear otro: debe resaltarse. Y el IconPicker debe arrancar con íconos educacionales, no flechas. Es el smoke DB-gated — la lógica está cubierta por tests, pero el render real solo se ve en la suite.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · TICKET-096 · close · up1 · 2026-06-25 · Generado por DKC.
+    </footer>
+  </main>
+</body>
+</html>
