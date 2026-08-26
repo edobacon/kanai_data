@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Crear factura: cliente, DatePicker y receptor · JOR-067</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">JOR-067</span> · Crear factura: cliente, DatePicker y receptor</span>
+      <span>jormat-evolution · 2026-07-06</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Cierre: qué se hizo en la vista de crear factura</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este documento mira <strong>hacia atrás</strong>: qué se implementó, qué decisiones se cerraron y qué quedó aprendido. Las bases y el contexto están en el teach-intake — acá no se repiten. El ticket alineó la sección de cliente/receptor y el campo Fecha de la vista de crear factura a la maqueta, en 2 sessions, 100% frontend.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se construyó un <strong>DatePicker propio</strong> (con <code class="inline">date-fns</code>, cero dependencias nuevas) para el campo Fecha; se <strong>unificaron los dos inputs de RUT en un único select-suggest</strong> que al elegir un cliente <strong>puebla los 5 datos</strong> del receptor; y se implementó <strong>"Actualizar receptor"</strong> (re-fetch por RUT). 1477 tests verdes, cobertura global ≥90, sin romper el autocompletado previo (JOR-058).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#hizo" class="navlink rounded border border-stone-700 px-2 py-1">Qué se hizo</a>
+      <a href="#hipotesis" class="navlink rounded border border-stone-700 px-2 py-1">Hipótesis</a>
+      <a href="#decisiones" class="navlink rounded border border-stone-700 px-2 py-1">Decisiones</a>
+      <a href="#lecciones" class="navlink rounded border border-stone-700 px-2 py-1">Lecciones</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- 5º eje: qué se realizó (por session, flujo de acciones) -->
+    <section id="hizo" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se hizo, por session</h2>
+      <p class="text-stone-400 leading-relaxed mb-3 text-sm">
+        Dos sessions, cada una cerrada con tests verdes y cobertura ≥90. El orden aisló la decisión de dependencias en S1.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — DatePicker propio</div><p class="text-xs text-stone-400">Se creó <code class="inline">ui/date-picker/</code> (componente + test + story + barrel): un calendario en popover construido con date-fns, con cierre por click-fuera/Escape, integrado a react-hook-form vía <code class="inline">Controller</code>. Se reemplazó el <code class="inline">&lt;input type=date&gt;</code> del campo Fecha. Se adaptó 1 test que asertaba el input nativo. Commit <code class="inline">25cbbd3</code>.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Cliente y receptor</div><p class="text-xs text-stone-400">Se extendió el schema del <code class="inline">receptor</code> a 5 campos (opcionales); se unificaron los dos inputs de RUT en un único select-suggest que al elegir puebla los 5 datos y se muestran en "Datos del cliente"; y "Actualizar receptor" pasó de stub a re-fetch por RUT (con AbortSignal). Se adaptaron los tests del autocompletado JOR-058 y del guard. Commit <code class="inline">2d35c52</code>.</p></div>
+      </div>
+    </section>
+
+    <!-- Evolución de hipótesis -->
+    <section id="hipotesis" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Cómo evolucionaron las hipótesis</h2>
+      <div class="callout callout-success"><strong>✓ H1 confirmada</strong> — el poblado y el refresh eran cableado front puro: el endpoint y el <code class="inline">clienteSchema</code> ya tenían los 5 campos; solo faltaba extender el schema del receptor y poblar en el onSelect/handler. Se confirmó en 4 capas.</div>
+      <div class="callout callout-info"><strong>H2 resuelta en ejecución</strong> — la duda de dependencias (¿shadcn con react-day-picker/cmdk?) se cerró por el camino de mínimas deps: se construyó todo con date-fns + el listbox que ya existía. Cero deps nuevas, sin rebuild de imagen.</div>
+      <div class="callout callout-info"><strong>H3 confirmada</strong> — el DatePicker quedó como primitiva reusable en <code class="inline">ui/date-picker/</code>, sin bloquear contra el spec de la librería UI (JOR-006).</div>
+    </section>
+
+    <!-- Decisiones cerradas -->
+    <section id="decisiones" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones que quedaron cerradas</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Cero dependencias nuevas</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">DatePicker con date-fns + popover propio (patrón del listbox existente). Respeta "solo aditivo" y evita rebuild. El DET-32 quedó registrado como <em>mixed</em> (build el picker, reduce el select y el schema).</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Un único campo RUT</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Se eliminó el input de RUT suelto y el de razón social; el select-suggest es la única entrada, alineado a la maqueta 03. Los datos completos viven en "Datos del cliente".</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Schema aditivo</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">telefono/ciudad/direccion se agregaron como <em>opcionales</em> al receptor para no romper el listado (vista 02) ni el refine de emisión.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">Smoke no reproducible</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La vista completa necesita Docker + CIAM/MSAL; el smoke en navegador quedó como <code class="inline">smoke-not-reproducible</code> (auditado), con el render jsdom del flujo como evidencia más fuerte disponible.</p></div>
+      </div>
+    </section>
+
+    <!-- Lecciones -->
+    <section id="lecciones" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones (lessons learned)</h2>
+      <div class="callout callout-warn"><strong>Tests atados al widget nativo son frágiles</strong> — varios tests asertaban <code class="inline">input[type=date]</code> o el placeholder del RUT; al cambiar el widget hubo que adaptarlos. Conviene asertar rol/comportamiento, no el elemento nativo (ya cubierto por RULE-frontend-002).</div>
+      <div class="callout callout-warn"><strong>Campo RHF ≠ state local de UI</strong> — el buscador select-suggest es state local, no ensucia el form; los tests del guard de cambios deben ensuciar vía un campo registrado (se usó O.C.). Distinción clave al escribir tests de "unsaved changes".</div>
+      <div class="callout callout-info"><strong>Reuso &gt; build paga</strong> — el listbox del autocompletado previo (JOR-058) se reutilizó para el select-suggest; el DET-32 evitó introducir cmdk/react-day-picker sin necesidad.</div>
+    </section>
+
+    <section id="tags" class="blk mt-10" data-dkc-block="tag">
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">Hecho: DatePicker + RUT único + refresh</span>
+        <span class="tag tag-future">Follow-up: catalogar DatePicker en la librería UI (JOR-006)</span>
+        <span class="tag tag-future">Follow-up: smoke real cuando haya entorno Docker/MSAL</span>
+      </div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de cierre</h2>
+      <details class="qa"><summary>¿Qué cambió para el usuario?</summary><div class="ans">Un solo campo Rut/Razón social con autocompletado; al elegir un cliente ve todos sus datos (teléfono, ciudad, dirección incluidos); un selector de fecha propio; y un botón "Actualizar receptor" que ahora sí recarga los datos.</div></details>
+      <details class="qa"><summary>¿Por qué no se usó el DatePicker estándar de shadcn?</summary><div class="ans">Habría requerido 2-3 dependencias nuevas (react-day-picker, cmdk, popover) y rebuild de imagen. Con date-fns (ya instalada) y el patrón de popover que la vista ya usaba, se logró el mismo resultado sin deps. Decisión registrada en DET-32.</div></details>
+      <details class="qa"><summary>¿Cómo se garantizó no romper lo anterior?</summary><div class="ans">La suite completa quedó en 1477/1477 verde con cobertura global ≥90; los tests del autocompletado JOR-058 se preservaron (adaptando solo selectores, no comportamiento). El schema se extendió con campos opcionales para no afectar el listado ni la emisión.</div></details>
+      <details class="qa"><summary>¿Qué quedó pendiente?</summary><div class="ans">Dos follow-ups no bloqueantes: catalogar el DatePicker en la librería UI (JOR-006) y correr un smoke real de la vista cuando haya entorno Docker/MSAL disponible.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · JOR-067 · close · jormat-evolution · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

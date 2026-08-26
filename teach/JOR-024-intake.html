@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Migrar componentes frontend a RULE-frontend-001 · JOR-024</title>
+<!-- metadata · ticket: JOR-024 · kind: intake · project: jormat-evolution · generated: 2026-06-14 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">JOR-024</span> · Migrar componentes a RULE-frontend-001</span>
+      <span>jormat-evolution · 2026-06-14</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Migrar el frontend a la convencion de organizacion de componentes</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      En el ticket JOR-023 el equipo registro <strong>RULE-frontend-001</strong> — la regla que define como se
+      organizan los archivos de un componente React en este frontend (donde vive el componente, su test y su
+      story). Pero la regla nacio <em>despues</em> de que JOR-005 ya hubiera escrito buena parte del shell y de
+      las primitivas. Resultado: hay codigo que no sigue la convencion que ahora es ley. Este ticket es el
+      <strong>refactor que cierra esa brecha</strong>: no agrega features ni cambia comportamiento — reordena
+      archivos y agrega la cobertura de test/story que falta, para que el codigo existente quede alineado con la
+      regla. Es <strong>zero-behavior-change</strong>: nada de lo que ve el usuario cambia.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Que hay:</strong> 7 primitivas en <code class="inline">components/ui/</code>
+        sin story ni test, 6 composites del shell (Breadcrumb, EmpresaSwitcher, AccountMenu, NavItem, NavGroup, AppShell)
+        sueltos en vez de en carpeta-por-componente, y un par <code class="inline">Home.test/stories</code> huerfano
+        separado de su componente real. <strong>Que se hara:</strong> agregar story+test a cada primitiva, mover cada
+        composite a su carpeta con test+story, y extraer un composite <code class="inline">Home</code> co-locado.
+        <strong>Por que:</strong> cumplir RULE-frontend-001 (descubribilidad, cobertura explicita, story+test por
+        componente) sin tocar nada de lo entregado (<code class="inline">auth/</code>, <code class="inline">services/api.ts</code>).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restricciones</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">estructura objetivo</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">antes/despues</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">areas</a>
+    </nav>
+
+    <!-- ============ EL ENTORNO (hacia los lados): restricciones que rodean el caso ============ -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Restricciones que rodean el cambio</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-3">
+        Antes de tocar nada, tres limites enmarcan el trabajo. El primero es de propiedad: <strong>RULE-global-003</strong>
+        — la regla que prohibe modificar el codigo base entregado por un tercero — deja fuera de alcance
+        <code class="inline">src/auth/*</code> (MSAL, guards) y <code class="inline">src/services/api.ts</code> (cliente axios).
+        El shell y las primitivas SI son nuestros (los creo el equipo en JOR-005), asi que reordenarlos es valido.
+        El segundo es de naturaleza: es un <strong>refactor</strong>, no una mejora — el render no cambia.
+        El tercero es tecnico: las stories corren como tests reales en un navegador (ver conceptos abajo) y algunas
+        primitivas montan su contenido en un portal, lo que complica el escaneo de accesibilidad.
+      </p>
+      <div class="callout callout-danger"><strong>✗ Fuera de alcance</strong> — <code class="inline">src/auth/*</code> y <code class="inline">src/services/api.ts</code> no se tocan (RULE-global-003: codigo base entregado).</div>
+      <div class="callout callout-warn"><strong>⚠ Zero-behavior-change</strong> — los tests existentes (Sidebar, TopBar, Home) son la red de seguridad: deben seguir verdes con la MISMA logica. Si un test cambia su comportamiento, el refactor dejo de ser refactor.</div>
+      <div class="callout callout-warn"><strong>⚠ Portales radix</strong> — dropdown-menu, sheet y tooltip renderizan su contenido en un portal fuera del nodo. El addon de accesibilidad solo ve lo montado: una story que no abre el overlay deja el contenido sin escanear. Las stories interactivas deben abrirlo en su <code class="inline">play()</code>.</div>
+    </section>
+
+    <!-- ============ LAS BASES (hacia abajo): glosario del dominio ============ -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Conceptos clave (el piso)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Para entender el caso hay que conocer el vocabulario de la convencion y de la infraestructura de test del proyecto.
+        Estos son los ladrillos:
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Primitiva (shadcn)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Componente base de UI generado por <code class="inline">npx shadcn add</code> (button, badge, dialog…). Vive PLANO en <code class="inline">components/ui/x.tsx</code> porque el CLI siempre lo escribe asi.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Composite</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Componente que <em>compone</em> primitivas para un proposito concreto (Sidebar, TopBar, Breadcrumb). Vive en CARPETA por componente: <code class="inline">Comp/{Comp.tsx,.test,.stories,index.ts}</code>.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">RULE-frontend-001</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La convencion objetivo: ui/ plano + composites en carpeta, cada componente con story Y test co-locados (mismo dir). Un test/story separado de su componente es "drift" a corregir.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Story (Storybook)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Archivo <code class="inline">x.stories.tsx</code> que documenta variantes del componente. En este repo ademas corre como <strong>test visual + a11y</strong> via el addon-vitest.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Vitest dual-project</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed"><code class="inline">vitest run</code> corre 2 proyectos: <strong>jsdom</strong> (tests unitarios <code class="inline">.test.tsx</code>) y <strong>storybook</strong> (las stories en chromium real via Playwright).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">barrel (index.ts)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Archivo que re-exporta el componente de una carpeta. Mover un composite a carpeta exige que su barrel y el del padre (TopBar/Sidebar) sigan resolviendo los imports.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LAS BASES: como es la estructura objetivo (flow) ============ -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">La estructura objetivo, de un vistazo</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        La regla bifurca segun el tipo de componente. Este es el arbol de decision que se aplica a cada archivo que se toca:
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TD
+  A[Componente React] --> B{ es primitiva de components/ui ? }
+  B -- si --> C[PLANO: x.tsx + x.stories.tsx + x.test.tsx hermanos]
+  B -- no, es composite --> D{ es sub-componente de otro composite ? }
+  D -- no --> E[CARPETA: Comp/Comp.tsx + .test + .stories + index.ts]
+  D -- si --> F[SUB-CARPETA bajo el padre: TopBar/Breadcrumb/...]
+  F --> G[barrel del padre re-exporta]
+      </pre></div>
+      <p class="text-stone-400 text-sm leading-relaxed mt-4">
+        Una decision del intake quedo fijada aqui: los sub-componentes (NavItem/NavGroup de Sidebar; Breadcrumb/
+        EmpresaSwitcher/AccountMenu de TopBar) se <strong>anidan bajo su padre</strong> (rama F) en vez de promoverse a
+        hermanos de TopBar/Sidebar. Asi se preserva el agrupamiento semantico — leer <code class="inline">shell/TopBar/</code>
+        dice de un vistazo que Breadcrumb pertenece al TopBar — y la regla lo permite explicitamente ("sub-carpeta si crecen").
+      </p>
+    </section>
+
+    <!-- ============ LAS BASES: antes/despues concreto (code) ============ -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Antes y despues (TopBar como ejemplo)</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Concreto, asi se ve el reordenamiento de un composite con sub-componentes. El barrel <code class="inline">index.ts</code>
+        del padre absorbe el cambio de paths para que los consumidores externos no noten nada:
+      </p>
+      <pre class="code"><span class="c">// ANTES — sub-componentes sueltos, sin test ni story</span>
+shell/TopBar/
+  TopBar.tsx  TopBar.test.tsx  TopBar.stories.tsx  index.ts
+  Breadcrumb.tsx        <span class="c">// suelto</span>
+  EmpresaSwitcher.tsx   <span class="c">// suelto</span>
+  AccountMenu.tsx       <span class="c">// suelto</span>
+
+<span class="c">// DESPUES — cada sub-componente en su carpeta con test+story</span>
+shell/TopBar/
+  TopBar.tsx  TopBar.test.tsx  TopBar.stories.tsx  index.ts
+  Breadcrumb/      Breadcrumb.tsx  .test.tsx  .stories.tsx  index.ts
+  EmpresaSwitcher/ EmpresaSwitcher.tsx  .test.tsx  .stories.tsx  index.ts
+  AccountMenu/     AccountMenu.tsx  .test.tsx  .stories.tsx  index.ts</pre>
+    </section>
+
+    <!-- ============ ancla conceptual ============ -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El invariante que gobierna todo</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Despues de cada movimiento, <span class="text-amber-400">la suite de tests existente debe seguir verde con su logica intacta</span>.</div>
+        <div class="ilabel mt-2">Corolario: si un test hay que reescribirlo para que pase, no es refactor — es un cambio de comportamiento camuflado. Los tests nuevos solo AGREGAN cobertura; los viejos solo cambian de ruta de import, nunca de aserciones.</div>
+      </div>
+    </section>
+
+    <!-- ============ HACIA ADELANTE: el plan (timeline) ============ -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">El camino: 5 sessions por riesgo creciente</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        El plan ordena el trabajo de menor a mayor riesgo. Las primeras dos sessions solo AGREGAN archivos (riesgo
+        casi nulo); las ultimas tres MUEVEN archivos (riesgo de romper imports), cerrando con una validacion completa
+        en Docker. Esto es orientacion — el detalle de cada task lo fija el spec del design.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Primitivas simples</div><p class="text-xs text-stone-400">story+test para button, badge, avatar, separator + test para ThemeToggle. Aditivo puro.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Primitivas radix-portal</div><p class="text-xs text-stone-400">story+test para dropdown-menu, sheet, tooltip. Aqui se confirma la pregunta abierta del a11y en portales.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — Composites de TopBar a carpeta</div><p class="text-xs text-stone-400">Breadcrumb, EmpresaSwitcher, AccountMenu → sub-carpeta + test+story; actualizar barrel.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 — Composites de Sidebar + AppShell</div><p class="text-xs text-stone-400">NavItem, NavGroup → sub-carpeta; AppShell → carpeta; actualizar barrels.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 — Home + validacion final</div><p class="text-xs text-stone-400">extraer composite Home co-locado, reapuntar page.tsx, mover los huerfanos; build + vitest + a11y + Docker.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ autoevaluacion + preguntas abiertas ============ -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A para validar que entendiste el caso</h2>
+      <details class="qa"><summary>¿Por que las primitivas van planas y los composites en carpeta?</summary><div class="ans">Porque <code class="inline">npx shadcn add</code> siempre escribe la primitiva plana en <code class="inline">components/ui/x.tsx</code>; forzar carpeta-por-primitiva pelearia con el CLI cada vez que se agrega una. Los composites no los genera ningun CLI, asi que co-locar componente+test+story+barrel en una carpeta mejora descubribilidad y escala cuando crecen.</div></details>
+      <details class="qa"><summary>¿Cual es la unica pregunta tecnica que queda abierta al entrar a execute?</summary><div class="ans">Si las stories de las primitivas radix (dropdown-menu, sheet, tooltip), que montan en portal, necesitan un <code class="inline">play()</code> que abra el overlay para que el addon de a11y escanee su contenido. Es la hipotesis H4 (parcial). Se confirma empiricamente en S2 — es la session mas critica de verificar.</div></details>
+      <details class="qa"><summary>¿Como se garantiza que esto es zero-behavior-change?</summary><div class="ans">Los tests existentes de Sidebar, TopBar y Home se capturan como baseline en S1 y deben seguir verdes en cada gate. Mover un composite solo cambia rutas de import (en su barrel y consumidores), nunca la logica. La validacion final corre la suite completa + build + a11y en el contenedor Docker.</div></details>
+      <details class="qa"><summary>¿Que NO se puede tocar y por que?</summary><div class="ans"><code class="inline">src/auth/*</code> y <code class="inline">src/services/api.ts</code>: son codigo base entregado por un tercero (RULE-global-003). El shell y las primitivas si son del equipo (JOR-005), por eso reordenarlos es valido.</div></details>
+    </section>
+
+    <!-- ============ areas afectadas ============ -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Areas que toca (y que no)</h2>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">components/ui/ (8 primitivas)</span>
+        <span class="tag tag-now">shell/TopBar/</span>
+        <span class="tag tag-now">shell/Sidebar/</span>
+        <span class="tag tag-next">shell/AppShell</span>
+        <span class="tag tag-next">shell/Home → app/(app)/page.tsx</span>
+        <span class="tag tag-future">auth/ · services/api.ts (FUERA — no se tocan)</span>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · JOR-024 · jormat-evolution · refactor pre-execute. Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

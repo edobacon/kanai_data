@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Performance de DB: indices, filtro por cancha y fillRumaData · PEH-031</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">PEH-031</span> · Performance de DB: indices, filtro por cancha y fillRumaData</span>
+      <span>pehuen · 2026-08-21</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Performance de DB: indices, filtro por cancha y optimizacion de memoria en fillRumaData</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">Un caso reportado en produccion (filtrar rumas por la cancha "CN MOLINA" deja al sistema sin responder) se investigo contra la base real y se convirtio en un problema general: falta de indices en MongoDB, un patron de llenado de datos (fillRumaData) que trae y procesa mas de lo necesario, y la duda de si estos problemas ya estan resueltos en la version que se esta migrando a Nuxt. Este documento da el mapa de base, entorno y plan antes de que empiece el diseno.</p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed"><strong class="text-amber-300">TL;DR</strong> — El legacy no tiene indices utiles (solo <code class="inline">_id</code>): cada carga de rumas hace COLLSCAN de 290k+ guias. Con indices, la capa DB baja de 283ms a 9ms, pero el grueso del tiempo (17.9s medidos, inflados ~10x por qemu) esta en el procesamiento de la aplicacion: populate sin lean, un join O(n^2) y moment() en el loop. En Nuxt casi todo esto ya esta resuelto salvo el join O(n^2). El plan ataca primero los indices (barato y de alto impacto), despues construye un helper optimizado en paralelo al actual con una comparativa de paridad obligatoria antes de cortar, y por ultimo replica el ajuste acotado en Nuxt.</div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">avisos</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">flujo</a>
+      <a href="#code" class="navlink rounded border border-stone-700 px-2 py-1">codigo</a>
+      <a href="#case" class="navlink rounded border border-stone-700 px-2 py-1">caso</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">mediciones</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">legacy vs nuxt</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">modulos</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">invariante</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">plan</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">preguntas abiertas</a>
+    </nav>
+
+    <!-- ENTORNO: restricciones, dependencias y limites del analisis -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Avisos que enmarcan el analisis</h2></div>
+      <div class="callout callout-info"><strong>ℹ Caveat de medicion</strong> — El legacy local corre en Node 15 amd64 bajo qemu sobre Mac ARM. Eso infla el tiempo app-side unas 10 veces: los 17.9s medidos en <code class="inline">rumas?cancha=CN_MOLINA</code> NO representan produccion (droplet amd64 nativo). El benchmark en Node nativo dio ~1.5s para el mismo dataset. Para evaluar performance real, usar Node nativo o medir solo la capa DB con <code class="inline">explain</code>.</div>
+      <div class="callout callout-warn"><strong>⚠ Entornos distintos</strong> — Produccion usa otra base (<code class="inline">mongodb+srv://</code> managed en DigitalOcean, con replicaSet). Los indices creados durante este analisis en la base <code class="inline">pehuen</code> del host dev NO se propagan solos: hay que crearlos tambien en produccion, idealmente off-peak.</div>
+      <div class="callout callout-danger"><strong>✗ Efecto colateral del analisis</strong> — Al correr <code class="inline">explain</code> y probar hipotesis se crearon 4 indices en la base dev (<code class="inline">guias{ruma:1}</code>, <code class="inline">guiaextradatas{guia:1}</code>, <code class="inline">ajustes{ruma:1}</code>, <code class="inline">rumas{cancha:1,createdAt:-1}</code>). Son reversibles con <code class="inline">dropIndex</code>, pero el diseno tiene que decidir si quedan como baseline dev o se revierten para medir un before/after limpio.</div>
+    </section>
+
+    <!-- BASES: glosario para entender el resto del documento -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos clave (las bases)</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Indice vs COLLSCAN</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Sin un indice sobre el campo filtrado, MongoDB recorre TODA la coleccion (COLLSCAN) para encontrar los documentos que matchean. Con un indice, salta directo a los candidatos (index seek). En este caso, <code class="inline">guias.getIndexes()</code> solo tenia <code class="inline">{_id:1}</code>: cualquier filtro por <code class="inline">ruma</code> o <code class="inline">guiaArauco</code> escaneaba las 290k+ guias completas.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">populate + hydrate vs lean</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Mongoose, por defecto, convierte cada documento crudo en una instancia de modelo completa (hydrate) y resuelve referencias con <code class="inline">.populate()</code>, lo que cuesta CPU y memoria por cada documento. <code class="inline">.lean()</code> devuelve objetos planos, sin ese costo, cuando no se necesitan metodos de instancia. El benchmark del analisis mostro hydrate+populate en 592ms contra 267ms con lean+populate para el mismo dataset.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Join O(n^2) vs Map</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Cruzar dos listas con <code class="inline">.filter()</code> dentro de un loop compara cada elemento de una lista contra todos los de la otra: con 3726 guias x 4177 registros de extra data son ~15.5M operaciones. Indexar la segunda lista en un <code class="inline">Map</code> por su clave y hacer un lookup O(1) por elemento evita esa explosion. El benchmark midio 233ms para el join en loop contra 2ms con Map.</p></div>
+      </div>
+    </section>
+
+    <!-- BASES: como funciona hoy el endpoint -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Como funciona hoy el listado de rumas (legacy)</h2></div>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A["GET /api/rumas?cancha=X"] --> B["RumaController.listRumas"]
+  B --> C["rumaService.queryRumas"]
+  C --> D{"Se pagino ya?"}
+  D -- si, 10 rumas de la pagina --> E["rumaService.fillRumaData"]
+  E --> F["Guia.find({ruma:$in}) + 4 populate sin lean"]
+  F --> G["join en memoria: guiaExtraData.filter() por cada guia"]
+  G --> H["moment() por cada guia en el loop"]
+  H --> I["respuesta al front"]
+      </pre></div>
+      <p class="mt-3 text-xs text-stone-500">El costo NO depende de cuantas rumas hay (CN Molina tiene solo 11), sino de cuantas guias arrastran las rumas de esa pagina: 2 de las 11 rumas de CN Molina concentran ~1900 guias cada una, sumando 3726 guias procesadas para una sola pagina de 10 resultados.</p>
+    </section>
+
+    <!-- BASES: el bug menor detectado, como referencia de codigo real -->
+    <section id="code" class="blk mt-12" data-dkc-block="code">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Detalle de codigo: el bug menor de queryRumas</h2></div>
+      <pre class="code"><span class="c">// pehuen-server/src/services/ruma.service.ts:37</span>
+<span class="k">const</span> aplicaFiltroEstado =
+  filter.estado <span class="f">&amp;&amp;</span> isValidObjectId(filter.estadoRuma) <span class="f">&amp;&amp;</span>
+  (select.estadoRuma = filter.estado);
+<span class="c">// isValidObjectId() valida filter.estadoRuma, que nunca viene en el filtro real</span>
+<span class="c">// (el campo que SI llega es filter.estado). Resultado: el filtro por estado</span>
+<span class="c">// nunca se aplica en queryRumas, sin que nadie lo note porque no lanza error.</span></pre>
+      <p class="mt-3 text-xs text-stone-500">Detectado aparte, durante la auditoria de queries (no forma parte del flujo lento reportado). Queda como decision abierta para diseno: confirmar si es un NO-bug (comportamiento intencional que nadie usa) o un bug real a corregir.</p>
+    </section>
+
+    <!-- BASES/ENTORNO: la investigacion del caso puntual como caso narrativo -->
+    <section id="case" class="blk mt-12" data-dkc-block="case">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El caso que dio origen al ticket</h2></div>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">En produccion, filtrar el listado de rumas por la cancha "CN MOLINA" dejaba al sistema sin responder. El pedido inicial fue puntual, pero al investigar se decidio ampliar el alcance a TODA la base (auditoria de indices cross-cutting), no solo a este filtro.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-amber-500 mb-1">Investigacion</div><p class="text-sm text-stone-300">Se corrio <code class="inline">explain()</code> sobre las queries calientes y un benchmark comparando hydrate+populate, lean+populate y join con Map, aislando cuanto tiempo esta en la DB y cuanto en el procesamiento de la aplicacion.</p></div>
+        <div class="p-4"><div class="text-xs uppercase tracking-wide text-emerald-500 mb-1">Hallazgo</div><p class="text-sm text-stone-300">La causa no es una sola: cero indices generan COLLSCAN en la DB, y ademas fillRumaData procesa sin lean, con un join O(n^2) y moment() en el loop. Ambas capas contribuyen y ambas se atacan (H1 a H4, todas confirmed).</p></div>
+      </div></div>
+    </section>
+
+    <!-- BASES: mediciones reales, before/after -->
+    <section id="table" class="blk mt-12" data-dkc-block="comparison-table">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Mediciones: antes y despues de crear indices</h2></div>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table class="w-full text-sm">
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th class="text-left p-3">Query</th><th class="p-3">Antes (COLLSCAN)</th><th class="p-3">Despues (index seek)</th></tr></thead>
+        <tbody class="divide-y divide-stone-800">
+          <tr><td class="p-3 text-stone-300"><code class="inline">guias{ruma:$in}</code></td><td class="p-3 text-center">283ms, docsExamined 290752</td><td class="p-3 text-center text-emerald-400">9ms, docsExamined 3726</td></tr>
+          <tr><td class="p-3 text-stone-300"><code class="inline">guiaextradatas{guia:$in}</code></td><td class="p-3 text-center">157ms, docsExamined 314834</td><td class="p-3 text-center text-emerald-400">27ms, docsExamined 4177</td></tr>
+          <tr class="bg-amber-500/5"><td class="p-3 text-amber-300 font-medium">rumas?cancha=CN_MOLINA (endpoint completo, local con qemu) ✗ no comparable a prod</td><td class="p-3 text-center">17.9s</td><td class="p-3 text-center">0.55s sin filtro (misma pagina, sin CN Molina)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="mt-3 text-xs text-stone-500">Las dos primeras filas son antes/despues confiables (capa DB, aislada). La tercera fila mezcla capa DB + procesamiento app-side bajo qemu: sirve para ver la magnitud del problema, no como numero de referencia para prod.</p>
+    </section>
+
+    <!-- ENTORNO: como esta el mismo problema en Nuxt, el sistema hermano en migracion -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Legacy vs Nuxt: que ya esta resuelto en el destino de la migracion</h2></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">pehuen-server (legacy, hoy en produccion)</div><div class="p-4 text-sm text-stone-400 space-y-2">
+          <p>Sin indices declarados (solo <code class="inline">_id</code> en guias, rumas, guiaextradatas, ajustes).</p>
+          <p><span class="text-rose-400">−</span> fillRumaData sin <code class="inline">.lean()</code>, con 4 <code class="inline">.populate()</code>, join O(n^2) con <code class="inline">.filter()</code> y <code class="inline">moment()</code> dentro del loop.</p>
+          <p><span class="text-emerald-400">+</span> Tiene valor inmediato: es lo que corre en produccion hoy, asi que arreglar indices aca es lo que resuelve el caso reportado.</p>
+        </div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">pehuen_nuxt (destino de la migracion)</div><div class="p-4 text-sm text-stone-400 space-y-2">
+          <p>Indices YA declarados en los modelos (<code class="inline">guia.model.ts:116-120</code>, <code class="inline">ruma.model.ts:53-54</code>, <code class="inline">ajuste.model.ts:68-70</code>, <code class="inline">guia-volumen.model.ts:23-24</code>); filtro por cancha YA usa indice compuesto + paginacion real.</p>
+          <p><span class="text-emerald-400">+</span> fillRumaData YA usa <code class="inline">.lean()</code> y saco el parseo de fechas del loop.</p>
+          <p><span class="text-rose-400">−</span> Persiste el mismo join O(n^2) con <code class="inline">.filter()</code> en <code class="inline">server/services/ruma.service.ts:166-167</code> y <code class="inline">:210</code> (acotado a la pagina, no a todo el dataset). <code class="inline">autoIndex</code> no esta seteado explicito para produccion.</p>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ENTORNO: modulos y colecciones que tocan este cambio -->
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Modulos y colecciones que rodean el caso</h2></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">rumas (foco del reporte)</span>
+        <span class="tag tag-now">guias</span>
+        <span class="tag tag-now">guiaextradatas</span>
+        <span class="tag tag-next">ajustes</span>
+        <span class="tag tag-next">stats</span>
+        <span class="tag tag-next">mii / cancha / producto (indices de soporte)</span>
+        <span class="tag tag-future">pehuen_nuxt (auditoria, sin ejecutar aca salvo el residual O(n^2))</span>
+      </div>
+    </section>
+
+    <!-- HACIA ADELANTE: la regla que ancla el enfoque dual-helper para el diseno -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Invariante que va a gobernar la implementacion</h2></div>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El helper optimizado NO reemplaza a <code class="inline">fillRumaData</code> hasta que un deep-equal de <span class="text-amber-400">todos</span> los campos calculados (volCalculado, volMR, volM3, mesCorta, anioPlantacion, producto/productQty, especiesGuias, zona, procedencia) sea identico entre ambos, para el mismo input.</div>
+        <div class="ilabel mt-2">Corolario (DET-40, auditoria de reemplazo): antes de cortar hay que enumerar TODO lo que hace hoy el camino viejo y verificar 1:1 que el nuevo lo replica. Una diferencia sin explicar es un hallazgo bloqueante, no un detalle a resolver despues del corte.</div>
+      </div>
+    </section>
+
+    <!-- HACIA ADELANTE: el plan de sessions, a nivel orientacion -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Hacia donde va el plan (orientacion, no detalle de tasks)</h2></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Indices en el legacy</div><p class="text-xs text-stone-400">Fijar el set definitivo desde la auditoria (validando cada indice con explain), declararlo en el schema de mongoose, definir la estrategia de creacion en produccion (off-peak, autoIndex:false) y decidir si los 4 indices dejados en la base dev quedan o se revierten.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · Helper optimizado + comparativa de paridad</div><p class="text-xs text-stone-400">Crear el helper nuevo (Map + lean/proyeccion, aggregation como candidato alternativo) sin tocar el actual. Construir el harness que corre ambos sobre el mismo input y compara resultado y rendimiento. Auditoria DET-40 completa antes de considerar el corte.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Corte y Nuxt</div><p class="text-xs text-stone-400">Recien con la paridad en verde, conmutar el endpoint al helper optimizado y deprecar el viejo. En paralelo, auditar y aplicar el mismo criterio al residual O(n^2) de pehuen_nuxt, con su propio test de paridad.</p></div>
+      </div>
+      <p class="mt-3 text-xs text-stone-500">El orden no es arbitrario: los indices son el cambio de menor riesgo y mayor impacto, asi que van primero. El refactor de fillRumaData es el de mayor riesgo (toca un calculo de negocio existente) y por eso lleva paridad obligatoria antes de tocar produccion.</p>
+    </section>
+
+    <!-- HACIA ADELANTE: lo que el diseno todavia tiene que decidir -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Preguntas abiertas para el diseno (nada de esto esta decidido todavia)</h2></div>
+      <details class="qa"><summary>¿Cuanto se invierte en el legacy vs solo auditar Nuxt?</summary><div class="ans">El legacy es lo que corre en produccion hoy, asi que las mejoras de indices ahi tienen valor inmediato. Pero el sistema esta migrando a Nuxt, donde casi todo (indices, lean, moment fuera del loop, filtro con paginacion) ya esta resuelto. El diseno tiene que fijar cuanto refactor profundo vale la pena en un codigo que se va a reemplazar, versus aplicar solo lo barato (indices) y dejar el resto documentado como pendiente en Nuxt.</div></details>
+      <details class="qa"><summary>¿El helper optimizado usa Map en JS, aggregation en Mongo, o ambos como candidatos a comparar?</summary><div class="ans">El enfoque dual-helper permite evaluar ambos caminos antes de decidir. Falta fijar el mecanismo de seleccion (flag de entorno, param de query temporal, o dos endpoints) y donde vive el harness de comparativa (test de integracion versus script one-off).</div></details>
+      <details class="qa"><summary>¿Cual es el set definitivo de indices a crear?</summary><div class="ans">La auditoria de queries dejo una lista de candidatos de prioridad alta (guias, guiaextradatas, ajustes, rumas, mii, cancha, producto) y otra de prioridad media/baja. Cada uno debe validarse contra explain antes de fijarse: no todos los candidatos listados necesariamente valen la pena.</div></details>
+      <details class="qa"><summary>¿Se dejan o se revierten los 4 indices creados durante el analisis en la base dev?</summary><div class="ans">Son reversibles (dropIndex), pero decidir esto define si el before/after que se mida despues es limpio o ya arranca con parte de la mejora aplicada (Learn L2 del ticket).</div></details>
+      <details class="qa"><summary>¿El filtro por estado en queryRumas es un bug real o un NO-bug?</summary><div class="ans">El codigo valida un campo que nunca llega (filter.estadoRuma en vez de filter.estado), asi que el filtro por estado nunca se aplica hoy. Antes de corregirlo hay que confirmar si algun consumidor depende de ese comportamiento actual, o si simplemente nadie lo usa y es seguro arreglarlo (Learn L4).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · generado por DKC para PEH-031 (proyecto pehuen), previo a design-improvement.
+    </footer>
+
+  </main>
+</body>
+</html>

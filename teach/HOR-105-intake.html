@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Mutation testing gate para DKC · HOR-105</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">HOR-105</span> · Mutation testing gate para DKC</span>
+      <span>horadric · 2026-06-04</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Mutation testing gate para el flujo de DKC</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      DKC ya manda que los tests "fallen cuando la condición no se cumple" (DET-7) y que el cierre sea
+      "por evidencia" (DET-13). Pero hoy nada <em>mide</em> si los tests realmente sirven: una suite verde
+      solo prueba que el código no explota, no que las aserciones distingan un defecto de su ausencia.
+      Este ticket introduce <strong>mutation testing</strong> — inyectar defectos a propósito y exigir que
+      algún test falle — como respaldo empírico de la dimensión #4 (testing) de DET-23. El desafío central
+      no es la técnica (es conocida) sino <strong>ubicarla sin enlentecer el flujo</strong>, porque es
+      compute-bound por naturaleza.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed"><strong class="text-amber-300">TL;DR</strong> —
+        <strong>Qué hay:</strong> un gate de calidad (DET-23 dim testing) que se juzga a ojo.
+        <strong>Qué se hará:</strong> un comando <code class="inline">dkc-mutate</code> que muta solo el diff de la
+        session, corre solo los tests que cubren cada línea, en un worktree aislado en background; el score alimenta
+        la dimensión testing en modo <em>warn</em>. <strong>Por qué:</strong> hace empírica una regla que hoy es
+        declarativa, sin meter latencia en el camino crítico (async + 3 palancas de velocidad).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">conceptos</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">el pipeline</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">naïve vs scoped</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">entorno</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">el plan</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">alcance</a>
+    </nav>
+
+    <!-- LAS BASES (hacia abajo): glosario del dominio de mutation testing -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Conceptos clave — las bases</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Mutante</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Una copia del código con UN defecto inyectado (ej. <code class="inline">&lt;=</code>→<code class="inline">&lt;</code>, <code class="inline">==</code>→<code class="inline">!=</code>, <code class="inline">return x</code>→<code class="inline">return null</code>).</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Mutante muerto</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Al menos un test falla con el defecto presente. La red lo atrapó: bien.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Mutante sobreviviente</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Toda la suite sigue verde con el defecto. Un agujero en la red = <strong>un test que falta</strong>, no un bug de producción.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Mutation score</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">killed / total. Mide la <em>calidad</em> de la suite, no la cobertura. 100% cobertura puede tener score bajo.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Coverage-scoped run</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Por cada mutante, correr solo los tests que ejercitan esa línea (no la suite entera). La palanca de velocidad grande.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Test-gap</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Lo que produce un sobreviviente: un test faltante. Es aditivo y seguro de diferir — no toca producción.</p></div>
+      </div>
+    </section>
+
+    <!-- HACIA ADELANTE (orientación): cómo encaja el gate en el ciclo DKC -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Dónde encaja en el flujo (async, no bloquea)</h2></div>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart TB
+  G["S{N}.GATE cierra · commit DET-27 (ref estable)"] --> D["dispara dkc-mutate<br/>worktree aislado · background"]
+  G --> N["S{N+1} arranca normal<br/>(no espera)"]
+  D --> R{"score / sobrevivientes"}
+  R -- "leve" --> B["backlog must (DET-17)<br/>bloquea request-close"]
+  R -- "crítico" --> H["hardening task<br/>al inicio de S{N+1} (G-open)"]
+  R -- "score" --> Q["alimenta dim #4 testing<br/>de DET-23 (modo warn)"]
+      </pre></div>
+    </section>
+
+    <!-- HACIA LOS LADOS (entorno) via two-col: por qué NO el enfoque del repo de referencia -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Por qué no copiar el mutador de referencia</h2></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Naïve (harness-sdd · mutate.py)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Muta el archivo entero; corre la <strong>suite completa</strong> por cada mutante.</p><p><span class="text-emerald-400">+</span> Simple, sin dependencias, ~200 líneas.</p><p><span class="text-rose-400">−</span> Costo O(mutantes × suite). Viable en un CLI de juguete; inviable en up1/horadric.</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">Scoped (este ticket · dkc-mutate)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>Muta solo el <strong>diff de la session</strong>; por mutante corre solo los tests que <strong>cubren esa línea</strong>; incremental + async en worktree.</p><p><span class="text-emerald-400">+</span> Costo O(mutantes_del_diff × tests_que_cubren). 10-100× más rápido.</p><p><span class="text-rose-400">−</span> Apoyado en Stryker/mutmut (dependencia por stack) + requiere mapa de cobertura previo.</p></div></div>
+      </div>
+    </section>
+
+    <!-- HACIA LOS LADOS (entorno): dependencias y restricciones -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El entorno — dependencias y restricciones</h2></div>
+      <div class="callout callout-info"><strong>ℹ DETs que ya hacen el trabajo pesado</strong> — DET-17 (backlog must bloquea cierre) garantiza que ningún test-gap se pierda; G-open (gate de apertura de session) es el punto de reconciliación de findings críticos. No se inventan mecanismos nuevos — se cablean los existentes.</div>
+      <div class="callout callout-warn"><strong>⚠ Tocar el catálogo de DETs propaga</strong> — agregar DET-31 cambia el conteo de reglas en CLAUDE.md global, DECKARD.md y el bloque condensado. Hay que regenerar con <code class="inline">dkc-export-rules --global</code> (NO editar a mano) y propagar el conteo (DET-16).</div>
+      <div class="callout callout-danger"><strong>✗ El worktree async NUNCA toca el working tree del dev</strong> — la mutación reescribe archivos para inyectar defectos; debe ocurrir en un worktree git aislado, jamás in-place. Riesgo conocido: la contaminación git observada con el reviewer aislado. El agente es read-only sobre el repo principal.</div>
+    </section>
+
+    <!-- HACIA ADELANTE (el plan): orientación, no detalle -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">El plan — medir antes de cablear</h2></div>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Prototipo dkc-mutate + medición de latencia (⚑ fuerte)</div><p class="text-xs text-stone-400">El riesgo real (H1) es la latencia. S1 construye el motor y mide wall-clock sobre un diff real ANTES de comprometer DETs/gates. Si la medición mata H1, el diseño se revisa.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Agente mutation_tester + schema JSON</div><p class="text-xs text-stone-400">Espejo del agente tester existente: corre dkc-mutate, reporta score + sobrevivientes + severidad.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — DET-31 + bloque mutation en config (⚑ fuerte)</div><p class="text-xs text-stone-400">La regla + el threshold config-driven por proyecto, patrón override como tiers. Regenerar condensado.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 — Cableado de gates en modo WARN (⚑ fuerte)</div><p class="text-xs text-stone-400">Dispatch async en S{N}.GATE + reconciliación híbrida en G-open + bloqueo en close. Warn-first: no bloquea mientras se calibra.</p></div>
+      </div>
+    </section>
+
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <div class="flex items-center gap-3 mb-3"><h2 class="text-xl font-semibold text-stone-100">Alcance del cambio</h2></div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">deckard-core: commands</span>
+        <span class="tag tag-now">deckard-core: prompts/agents</span>
+        <span class="tag tag-now">deckard-core: DETs</span>
+        <span class="tag tag-next">config schema por proyecto</span>
+        <span class="tag tag-future">horadric viewer (diferido)</span>
+      </div>
+      <p class="mt-3 text-xs text-stone-500">Preguntas abiertas a explorar en execute: ¿la latencia real cae en el rango aceptable? (S1 lo mide). ¿Qué umbral de "crítico vs leve" usar por stack? (se calibra en warn-mode con datos reales).</p>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · HOR-105 · intake. Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

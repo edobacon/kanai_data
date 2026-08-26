@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Crear factura: cliente, DatePicker y receptor · JOR-067</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .blk-tag { font-family: var(--font-mono, monospace); font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--txt-dim); border: 1px solid var(--stone-border); border-radius: 0.3rem; padding: 0.1rem 0.45rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .formula { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.9rem 1.1rem; font-family:"SFMono-Regular",Monaco,monospace; }
+  .formula .iff { color: var(--amber); font-weight:700; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">JOR-067</span> · Crear factura: cliente, DatePicker y receptor</span>
+      <span>jormat-evolution · 2026-07-06</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Crear factura cliente: RUT como select-suggest, datos del cliente, DatePicker y "Actualizar receptor"</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este caso pule la vista <strong>Crear factura cliente</strong> del modulo de ventas — la pantalla donde se arma y emite una factura. El corazon del trabajo esta en la seccion de <em>cliente/receptor</em> y en el campo <em>Fecha</em>. Hoy esa seccion se desvio de la maqueta: tiene <strong>dos inputs de RUT</strong> (un buscador de cliente + un campo RUT suelto) cuando la maqueta define <strong>uno solo</strong>, y al elegir un cliente solo se copian dos de sus cinco datos. El objetivo es alinear la UI a la maqueta y completar tres comportamientos que quedaron a medias.
+    </p>
+
+    <div class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        <strong>Que hay:</strong> una vista de crear factura funcional (componente <code class="inline">TransactionBuilder</code>) con un buscador de cliente que ya consume un endpoint real, pero con un RUT duplicado, datos del cliente a medio poblar, fecha con picker nativo del navegador y un boton "Actualizar receptor" que no hace nada.
+        <strong>Que se hara:</strong> unificar el RUT en un unico select-suggest, poblar todos los datos del cliente al elegirlo, reemplazar la fecha por un DatePicker propio y hacer que "Actualizar receptor" recargue los datos.
+        <strong>Por que:</strong> alinear la vista a la maqueta acordada y cerrar comportamientos incompletos, sin tocar backend (el endpoint ya entrega todo lo necesario).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">Conceptos</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">Bases y entorno</a>
+      <a href="#flow" class="navlink rounded border border-stone-700 px-2 py-1">Flujo actual</a>
+      <a href="#twocol" class="navlink rounded border border-stone-700 px-2 py-1">Pregunta abierta</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">Plan</a>
+      <a href="#tags" class="navlink rounded border border-stone-700 px-2 py-1">Fases</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">Q&amp;A</a>
+    </nav>
+
+    <!-- BASES (hacia abajo): glosario del dominio del caso -->
+    <section id="card" class="blk mt-12" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Conceptos clave</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        Estos son los ladrillos sobre los que se apoya el caso. El par que mas confunde es <strong>receptor</strong> vs <strong>cliente</strong>: no son lo mismo, y la diferencia explica por que "Actualizar receptor" existe como accion separada.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">TransactionBuilder</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Componente React que orquesta toda la vista de crear factura (cabecera, items, totales, pago y cliente). Es codigo existente que se extiende, no se reescribe.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">CustomerCard</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">La tarjeta "Datos del cliente" de esa vista. Muestra los datos del receptor y aloja el boton "Actualizar receptor".</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Receptor vs Cliente</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El <em>receptor</em> es a quien se le emite el documento (los datos que viven en el formulario). El <em>cliente</em> es la ficha maestra del catalogo. Elegir un cliente copia sus datos al receptor.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">Select-suggest</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Un campo de texto que, al escribir, sugiere opciones (typeahead) y al elegir una la fija. Es lo que reemplaza a los dos inputs de RUT actuales.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">DatePicker</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Selector de fecha construido en la app (con la libreria <code class="inline">date-fns</code> ya instalada), en vez del <code class="inline">&lt;input type=date&gt;</code> nativo del navegador que se usa hoy.</p></div>
+        <div class="brick p-4 transition-colors"><div class="text-amber-400 font-semibold text-sm">DET-32 (necesidad/reuso)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Regla DKC que obliga, antes de construir algo, a preguntarse si ya existe o si se resuelve mas barato (reuso &gt; build). Aca decide si se agregan dependencias nuevas o no.</p></div>
+      </div>
+    </section>
+
+    <!-- BASES + ENTORNO (hacia los lados): lo que ya existe y lo que rodea al cambio -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Sobre que bases nos paramos y que rodea al caso</h2>
+      <div class="callout callout-success"><strong>✓ El backend ya esta listo</strong> — el endpoint <code class="inline">GET /api/catalogos/clientes?q=</code> existe y su <code class="inline">ClienteDto</code> ya devuelve los cinco campos (razon social, RUT, telefono, ciudad, direccion). El hook de front <code class="inline">useClientes(q)</code> tambien existe. No se toca backend: el trabajo es 100% frontend.</div>
+      <div class="callout callout-info"><strong>ℹ El buscador ya consume datos reales</strong> — la seccion "Buscar cliente" ya usa <code class="inline">useClientes</code> y al elegir un cliente copia RUT + razon social. Faltan los otros tres campos y falta unificar el RUT duplicado. Es cableado, no obra nueva de datos.</div>
+      <div class="callout callout-warn"><strong>⚠ Faltan primitivas de UI para el approach "shadcn estandar"</strong> — la carpeta <code class="inline">components/ui/</code> no tiene <code class="inline">Popover</code>, <code class="inline">Command</code> ni <code class="inline">Calendar</code>, y no estan instaladas <code class="inline">react-day-picker</code>/<code class="inline">@radix-ui/react-popover</code>/<code class="inline">cmdk</code>. Solo esta <code class="inline">date-fns</code>. Esto abre la pregunta de dependencias que resuelve DET-32 en diseño.</div>
+      <div class="callout callout-danger"><strong>✗ Regresion a cuidar</strong> — existen tests del autocompletado del cliente (de un ticket previo, JOR-058) que deben seguir verdes despues de unificar los dos inputs de RUT. El piso de cobertura del proyecto es 90% y no debe bajar.</div>
+    </section>
+
+    <!-- BASES (como funciona HOY) -->
+    <section id="flow" class="blk mt-12" data-dkc-block="flow">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Como funciona hoy la seleccion de cliente</h2>
+      <p class="text-stone-400 leading-relaxed mb-3 text-sm">
+        El diagrama muestra el flujo actual (3 pasos con una fuga al final). El nodo a mirar es el ultimo: al elegir un cliente, solo se copian <strong>2 de los 5 campos</strong> al receptor — por eso la tarjeta "Datos del cliente" queda con telefono, ciudad y direccion vacios.
+      </p>
+      <div class="pre-mermaid"><pre class="mermaid">
+flowchart LR
+  A[Escribo en Buscar cliente] --> B[useClientes consulta el endpoint]
+  B --> C[Elijo un cliente de la lista]
+  C --> D[Se copian SOLO rut + razonSocial al receptor]
+  D --> E{Datos del cliente}
+  E -- llenos --> F[rut, razonSocial]
+  E -- vacios --> G[telefono, ciudad, direccion]
+      </pre></div>
+      <p class="text-stone-400 leading-relaxed mt-3 text-sm">
+        Dos observaciones que no saltan del diagrama: (1) el paso "Escribo en Buscar cliente" convive con un <em>segundo</em> input de RUT aparte — esa duplicacion es la que la maqueta elimina; (2) el boton "Actualizar receptor" no aparece en el flujo porque hoy no hace nada (solo muestra un aviso). Ambos huecos son parte del alcance.
+      </p>
+    </section>
+
+    <!-- ENTORNO + ADELANTE: la pregunta abierta de diseño (deps), enmarcada como pregunta -->
+    <section id="twocol" class="blk mt-12" data-dkc-block="two-col-compare">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Pregunta abierta para diseño: ¿dependencias nuevas o no?</h2>
+      <p class="text-stone-400 leading-relaxed mb-4 text-sm">
+        Esta es la decision tecnica que queda <strong>abierta</strong> y que el gate DET-32 debe cerrar en la fase de diseño. No esta resuelta aun; se enmarca como dos caminos a evaluar. La recomendacion tentativa del intake es el camino B (minimizar deps), pero el veredicto formal es de diseño.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">A · shadcn estandar (agregar deps)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>DatePicker = Popover + Calendar sobre <code class="inline">react-day-picker</code>; select-suggest con <code class="inline">cmdk</code>.</p><p><span class="text-emerald-400">+</span> Idiomatico, accesible de fabrica, menos codigo propio.</p><p><span class="text-rose-400">−</span> 2-3 dependencias nuevas + rebuild de imagen; mas superficie.</p></div></div>
+        <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="twocol-head bg-stone-800 text-stone-200">B · minimizar deps (reuso)</div><div class="p-4 text-sm text-stone-400 space-y-2"><p>DatePicker con <code class="inline">date-fns</code> (ya instalada) sobre un popover accesible; select-suggest reutilizando el listbox que ya existe en la vista.</p><p><span class="text-emerald-400">+</span> Sin deps nuevas (o a lo sumo una), control total, respeta "solo aditivo".</p><p><span class="text-rose-400">−</span> Mas codigo propio para escribir y testear (accesibilidad y teclado a mano).</p></div></div>
+      </div>
+      <p class="text-stone-400 leading-relaxed mt-4 text-sm">
+        La sorpresa util aca: el proyecto ya resolvio autocompletados con un listbox propio, asi que el camino B no parte de cero. Esto conecta con el plan: la primera session arranca justamente resolviendo esta pregunta antes de escribir el componente.
+      </p>
+    </section>
+
+    <!-- ADELANTE: el plan de sessions, a nivel orientacion -->
+    <section id="timeline" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Hacia adelante: el plan (2 sessions)</h2>
+      <p class="text-stone-400 leading-relaxed mb-3 text-sm">
+        El trabajo se orienta en dos sessions independientes, ordenadas para aislar la decision de dependencias en la primera. Es orientacion, no detalle: las tasks concretas las fija la fase de diseño.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — DatePicker custom</div><p class="text-xs text-stone-400">Resolver la pregunta de deps (DET-32), construir el componente reutilizable con su test y su story, y conectarlo al campo Fecha.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Cliente y receptor</div><p class="text-xs text-stone-400">Unificar los dos RUT en un select-suggest, poblar todos los datos del cliente al elegirlo, y hacer que "Actualizar receptor" recargue por RUT. Sin romper los tests del autocompletado previo.</p></div>
+      </div>
+    </section>
+
+    <section id="tags" class="blk mt-12" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Fases del trabajo</h2>
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="tag tag-now">Ahora: S1 DatePicker</span><span class="tag tag-next">Proximo: S2 cliente/receptor</span><span class="tag tag-future">Futuro: catalogar DatePicker en la libreria UI (JOR-006)</span>
+      </div>
+    </section>
+
+    <!-- Q&A: la barra de exito del teach-intake (las 4 preguntas) -->
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Q&amp;A de estudio</h2>
+      <details class="qa"><summary>¿De que se trata el caso?</summary><div class="ans">De pulir la vista de crear factura para alinearla a la maqueta: un unico RUT que autocompleta clientes, datos del cliente completos al seleccionar, un selector de fecha propio y un boton de "actualizar receptor" funcional. Todo en frontend.</div></details>
+      <details class="qa"><summary>¿Que se va a hacer y por que importa?</summary><div class="ans">Unificar el RUT duplicado en un select-suggest, poblar los 5 campos del cliente, reemplazar el input de fecha por un DatePicker propio y cablear el refresh del receptor. Importa porque la UI hoy no coincide con lo acordado y hay comportamientos a medias que confunden al usuario.</div></details>
+      <details class="qa"><summary>¿Que preguntas quedan abiertas y cual es la mas critica?</summary><div class="ans">La mas critica es si se agregan dependencias nuevas (react-day-picker/cmdk/popover) o se construye con lo que ya hay. La decide DET-32 al inicio de S1, porque condiciona como se construye el DatePicker y el select-suggest.</div></details>
+      <details class="qa"><summary>¿Que decisiones se tomaron en el intake y por que?</summary><div class="ans">Cuatro decisiones locales: (1) minimizar dependencias por defecto —recomendacion sujeta a DET-32—; (2) construir el DatePicker como primitiva reusable en <code class="inline">ui/date-picker/</code> sin bloquear contra otro spec; (3) crear una spec nueva para no contaminar un spec en curso ajeno; (4) trabajar sobre la rama <code class="inline">epic/jormat-v1</code> (verificada, no protegida).</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · JOR-067 · intake · jormat-evolution · generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Mutation testing gate para DKC · HOR-105</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: {
+    darkMode: true, background: '#0c0a09', primaryColor: '#1c1917', primaryTextColor: '#e7e5e4',
+    primaryBorderColor: '#f59e0b', lineColor: '#a8a29e', mainBkg: '#1c1917', nodeBorder: '#f59e0b',
+    clusterBkg: '#0c0a09', clusterBorder: '#44403c', titleColor: '#fafaf9', textColor: '#e7e5e4', fontSize: '13px' },
+    flowchart: { htmlLabels: true, curve: 'basis' } });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  table { width:100%; font-size:0.85rem; } th,td { text-align:left; padding:0.4rem 0.6rem; border-bottom:1px solid var(--stone-border); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">HOR-105</span> · Mutation testing gate para DKC</span>
+      <span>horadric · 2026-06-04</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Mutation testing gate — qué se construyó y qué se aprendió</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      HOR-105 entregó un gate de mutation testing DKC-owned: un motor (<code class="inline">dkc-mutate</code>),
+      un agente, una regla (DET-31) y el cableado warn-first — más la validación empírica en repos reales.
+      El recorrido enseña tanto sobre <em>la técnica</em> como sobre <em>las arrugas de correr un tooling central
+      contra repos heterogéneos</em>.
+    </p>
+
+    <div class="tldr mt-7 text-sm text-stone-200 leading-relaxed" data-dkc-block="tldr">
+      <strong class="text-amber-300">TL;DR</strong> — Se logró: motor con diff-only + coverage-scoped + worktree aislado,
+      footprint cero en los repos (tooling vive en DKC). H1 confirmada en vivo (horadric: 100%/4.2s, 1.6 tests/mutante).
+      Multi-repo: <strong>CD corre OK</strong> excluyendo llm-e2e (score 40%, test-gaps reales). Límite encontrado:
+      repos con <strong>vitest-3 projects</strong> (layout) chocan con el runner de stryker 8 → diferido (B5). Modo warn-first:
+      el gate no bloquea aún.
+    </div>
+
+    <!-- QUÉ SE HIZO -->
+    <section class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué se hizo (6 sessions)</h2>
+      <div class="tl mt-2">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Motor + fallback</div><p class="text-xs text-stone-400"><code class="inline">dkc-mutate</code> con diff-only + worktree; mutador fallback embebido. self-test discrimina kill/survive.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Agente mutation_tester</div><p class="text-xs text-stone-400">Espejo del tester: JSON con score/survived/severity, escape hatch de equivalentes.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — DET-31 + config</div><p class="text-xs text-stone-400">Regla en el catálogo (31 DETs en el global) + bloque <code class="inline">mutation:</code> config-driven con fallback warn.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 — Cableado warn-first</div><p class="text-xs text-stone-400">Dispatch async en S{N}.GATE + reconciliación híbrida (G-open/backlog must) + bloqueo de close por job pendiente.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 — Invocación real + H1</div><p class="text-xs text-stone-400">stryker real desde cache DKC en worktree; H1 confirmada en horadric (100%, 4.2s, coverage-scoped).</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S6 — Multi-repo (up1)</div><p class="text-xs text-stone-400">--repo, sub-caches por major de vitest, symlinks cross-repo, scoping llm-e2e. CD ✓; layout topa incompat upstream.</p></div>
+      </div>
+    </section>
+
+    <!-- DECISIONES -->
+    <section class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Decisiones que pesaron</h2>
+      <div class="overflow-x-auto rounded-lg border border-stone-700"><table>
+        <thead class="bg-stone-900 text-stone-400 text-xs uppercase"><tr><th>Decisión</th><th>Qué se eligió</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td class="text-amber-300">DEC-01 No reinventar el mutador</td><td>Stryker + mutmut (no portar el mutate.py naïve)</td><td>Las palancas de velocidad (coverage-scoping, incremental) vienen de fábrica</td></tr>
+          <tr><td class="text-amber-300">DEC-02 DKC-owned, footprint cero</td><td>Tooling en cache DKC; worktree efímero reusa el runner del repo</td><td>up1 es repo compartido — no imponer devDeps a repos ajenos (constraint del dev)</td></tr>
+          <tr><td class="text-amber-300">Sub-caches por major</td><td>vitest3 (stryker 8) / vitest4 (stryker 9)</td><td>ESM resuelve el vitest del runner desde el cache → el major debe matchear</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- LESSONS -->
+    <section class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lessons (lo no obvio)</h2>
+      <details class="qa"><summary>¿Por qué un mutante sobreviviente no es un bug?</summary><div class="ans">La suite corre verde antes de mutar. Un sobreviviente = ninguna aserción distingue el defecto = falta un test. Es aditivo (escribir test), no toca producción → seguro de encolar/diferir. Pero ojo: puede ser un mutante <em>equivalente</em> (sin efecto observable) — por eso el agente tiene escape hatch.</div></details>
+      <details class="qa"><summary>¿Por qué falla correr un tooling central contra repos arbitrarios? (la arruga grande)</summary><div class="ans">ESM ignora <code class="inline">NODE_PATH</code>: stryker (en el cache DKC) importa <code class="inline">vitest</code>/<code class="inline">typescript</code> desde el cache, NO desde el repo. Si la versión no matchea, rompe. Solución: sub-caches por major + agregar peer-deps (typescript) al cache. horadric funcionó por coincidencia de versión; layout/CD (vitest 3) necesitaron el sub-cache vitest3.</div></details>
+      <details class="qa"><summary>¿Por qué CD corre y layout no, si ambos son vitest 3?</summary><div class="ans">CD usa un config single-project → el runner de stryker 8 lo maneja. layout usa la API <code class="inline">test.projects</code> de vitest 3 (unit + browser); stryker 8 lee <code class="inline">project.server.moduleGraph</code> que vitest 3 reestructuró → <code class="inline">TypeError</code>. Es incompat upstream del runner, no de dkc-mutate.</div></details>
+      <details class="qa"><summary>¿Qué arrugas de up1 aparecieron?</summary><div class="ans">Symlinks cross-repo (CD: <code class="inline">composables → ../../layout/src/...</code>) quedan rotos en el worktree (ruta relativa → /tmp); fix: re-apuntar a target absoluto + <code class="inline">inPlace:true</code> (evita el sandbox-copy). Y suites con tests de infra (integration/llm-e2e con DB): hay que excluirlas (scoping file-level).</div></details>
+    </section>
+
+    <!-- ESTADO / LÍMITES -->
+    <section class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Estado al cerrar</h2>
+      <div class="callout callout-success"><strong>✓ Funciona</strong> — Motor + agente + DET-31 + cableado warn-first. Validado e2e en horadric (single-project vitest 4) y CD (single-project vitest 3, excluyendo llm-e2e). Footprint cero verificado en los 3 repos.</div>
+      <div class="callout callout-warn"><strong>⚠ Diferido (B5, should)</strong> — Repos con vitest-3 <code class="inline">projects</code> (layout): incompat upstream del runner stryker 8. Workaround verificado-seguro: un <code class="inline">vitest.mutation.config.ts</code> single-project en el repo (nombre no estándar → inerte para el resto). Se retoma en el sprint de esos repos.</div>
+      <div class="callout callout-info"><strong>ℹ Warn-first</strong> — El gate está cableado pero OFF por diseño (<code class="inline">mutation.enabled</code> ausente). La activación + graduación warn→block + render en HC viewer (B1) son follow-ups de calibración.</div>
+    </section>
+
+    <section class="blk mt-12" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lo que queda como verdad</h2>
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El gate de mutación corre <span class="text-amber-400">contra el repo, desde DKC, con footprint cero</span> — y un sobreviviente es un test-gap, no un bug.</div>
+        <div class="text-stone-400 mt-2 text-sm">Corolario: la adopción no requiere tocar el repo (salvo repos con vitest-projects, que necesitan un config de mutación dedicado hasta que el runner upstream soporte la API). La latencia es "segundos" gracias a diff-only + coverage-scoped.</div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · HOR-105 · close. Generado por DKC.</footer>
+  </main>
+</body>
+</html>

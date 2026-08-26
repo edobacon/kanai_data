@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Perfil local de DKC — reducir contexto y superficie de tools sin degradar Claude Code · HOR-103</title>
+
+<!--
+  metadata · ticket: HOR-103 · kind: close · project: horadric · generated: 2026-05-31
+-->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root {
+    --amber: #f59e0b; --stone-bg: #0c0a09; --stone-card: #1c1917; --stone-border: #292524;
+    --txt: #e7e5e4; --txt-muted: #a8a29e; --txt-dim: #78716c;
+  }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-danger { border-color:#f87171; background: rgba(248,113,113,0.10); }
+  .callout-note { border-color:#38bdf8; background: rgba(56,189,248,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; } pre.code .k { color:#c084fc; } pre.code .s { color:#86efac; } pre.code .f { color:#fbbf24; }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  .brick:hover { border-color: var(--amber); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  .pre-mermaid { background: var(--stone-card); border:1px solid var(--stone-border); border-radius:0.6rem; padding:1rem; overflow-x:auto; }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  .tag { display:inline-block; padding:0.15rem 0.55rem; border-radius:0.3rem; font-size:0.72rem; font-weight:600; border:1px solid; }
+  .tag-now { background: rgba(52,211,153,0.15); color:#6ee7b7; border-color: rgba(52,211,153,0.35); }
+  .tag-next { background: rgba(245,158,11,0.16); color:#fcd34d; border-color: rgba(245,158,11,0.35); }
+  .tag-future { background: rgba(168,162,158,0.14); color:#d6d3d1; border-color: rgba(168,162,158,0.30); }
+  .twocol-head { font-weight:600; padding:0.5rem 0.85rem; border-radius:0.5rem 0.5rem 0 0; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">HOR-103</span> · Perfil local de DKC — reducir contexto y superficie de tools sin degradar Claude Code</span>
+      <span>horadric · 2026-05-31</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Perfil local de DKC — reducir contexto y superficie de tools sin degradar Claude Code</h1>
+
+    <!-- EJE 5: qué se realizó — intro narrativa -->
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      Este teach-close es el complemento del <code class="inline">teach-intake</code> del ticket
+      <code class="inline">HOR-103</code>: si el intake describía el landscape antes de ejecutar (el problema, las hipótesis, el plan),
+      este close documenta lo que realmente ocurrió. El ticket implementó tres mejoras en tres sessions secuenciales para
+      acercar DKC — el sistema spec-driven de gestión de conocimiento y flujo de trabajo — a un host LLM local con
+      ventana reducida, sin tocar el comportamiento del host actual (Claude Code). Las dos hipótesis que el intake dejaba
+      abiertas quedaron confirmadas con evidencia empírica en S1. Las tres sessions cerraron limpias. Lo que sigue
+      es la historia completa para que puedas retomar el caso, extender el trabajo o aplicar los patrones en otro módulo.
+    </p>
+
+    <!-- NAV -->
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#tldr" class="navlink rounded border border-stone-700 px-2 py-1">TL;DR</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">resultado clave</a>
+      <a href="#timeline" class="navlink rounded border border-stone-700 px-2 py-1">S1 → S2 → S3</a>
+      <a href="#table" class="navlink rounded border border-stone-700 px-2 py-1">default vs local</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">hipótesis confirmadas</a>
+      <a href="#card" class="navlink rounded border border-stone-700 px-2 py-1">decisiones</a>
+      <a href="#invariant" class="navlink rounded border border-stone-700 px-2 py-1">lecciones</a>
+      <a href="#learning-path" class="navlink rounded border border-stone-700 px-2 py-1">para retomar</a>
+    </nav>
+
+    <!-- ===== TL;DR ===== -->
+    <div id="tldr" class="tldr mt-7 flex items-start gap-3" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> —
+        En tres sessions, HOR-103 añadió un perfil dual a DKC: activar <code class="inline">DKC_PROFILE=local</code>
+        baja el baseline de contexto de 39,580 a <strong>28,938 tokens</strong> (−27%), dejando al sistema dentro del
+        presupuesto de un host local con ventana de 128K. El perfil default de Claude Code quedó byte-idéntico:
+        39,580 tokens, validators verdes, sin ningún cambio de comportamiento.
+        La superficie de 78 tools quedó documentada por step en el frontmatter (<code class="inline">tools:</code>),
+        con un validator de coherencia que detecta drift automáticamente.
+        Todo lo que depende de tener un host local instalado quedó en backlog bloqueado-por-host.
+      </div>
+    </div>
+
+    <!-- ===== CALLOUT — resultado clave ===== -->
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Resultado clave</h2>
+
+      <div class="callout callout-success">
+        <strong>REQ-PRESERVE-02 cumplido</strong> — El baseline del perfil default mide exactamente <strong>39,580 tokens</strong>
+        antes y después del ticket. <code class="inline">git diff --stat prompts/_style.md</code> vacío:
+        el archivo íntegro es byte-idéntico. Ninguna de las tres sessions degradó el host actual.
+      </div>
+
+      <div class="callout callout-success">
+        <strong>REQ-IMPROVE-01 cumplido (S1)</strong> — <code class="inline">prompts/_style-condensed.md</code>
+        (catálogo de 12 principios, 1,581 tokens) reemplaza los 12,223 tokens del íntegro bajo perfil local.
+        Baseline local: <strong>28,938 tokens</strong> (&lt; 32K objetivo). El condensado se surfacea entero
+        bajo perfil local — sin granularidad por step (ver L1).
+      </div>
+
+      <div class="callout callout-success">
+        <strong>REQ-IMPROVE-02 cumplido (S2)</strong> — <code class="inline">dkc-validate-tools</code> confirma
+        35 steps coherentes (declaradas == usadas). El comando comparte la lógica grep en modo
+        <code class="inline">--fix</code> (generador) y modo validate (verificador), haciendo el drift imposible por construcción (ver L3).
+      </div>
+
+      <div class="callout callout-note">
+        <strong>Backlog bloqueado-por-host</strong> — El enfoque A (filtrado dinámico del tool-set server-side)
+        y la medición de respeto de gates en modelo local quedan pendientes hasta que exista un host local instalado.
+        El frontmatter <code class="inline">tools:</code> ya provee la base para el enfoque A cuando llegue ese momento.
+      </div>
+    </section>
+
+    <!-- ===== TIMELINE — S1 → S2 → S3 ===== -->
+    <p class="mt-8 text-stone-400 text-sm leading-relaxed">
+      El plan de tres sessions fue secuencial por dependencia dura: S2 (<code class="inline">tools:</code> por step) y S3
+      (doc del perfil) necesitaban el switch <code class="inline">DKC_PROFILE</code> que S1 definiría. Lo que sigue
+      es un highlight por session — no el log de tasks, sino lo que un dev que abre el caso después necesita saber de cada fase.
+    </p>
+
+    <section id="timeline" class="blk mt-4" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lo que ocurrió en cada session</h2>
+      <div class="tl mt-4">
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">
+            S1 — Condensado de <code class="inline">_style</code> + switch del perfil
+            <span class="ml-2 tag tag-now">gate ⚑ fuerte — T2 — continue</span>
+          </div>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Commits</strong>: <code class="inline">a3f4f91</code> (feat: perfil local + condensado + measure profile-aware)
+            · <code class="inline">3a76ba6</code> (chore: records S1).
+          </p>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Lo relevante</strong>: el condensado de <code class="inline">_style</code> resultó tan compacto (~2K)
+            que no necesita granularidad <code class="inline">style:</code> por step — se surfacea entero bajo perfil local.
+            Eso simplificó la implementación: cero cambios a los ~28 frontmatters de steps.
+            La decisión de dónde vive el switch quedó resuelta como variable de entorno
+            <code class="inline">DKC_PROFILE</code> (documentada en <code class="inline">prompts/agent-tiers.md</code>),
+            descartando <code class="inline">config.yaml</code> porque el dev alterna Claude↔local sesión a sesión
+            en el mismo PC y proyecto.
+          </p>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Sorpresa</strong>: el blockquote de wiring no podía ir en <code class="inline">_style.md</code> íntegro
+            (+139 tokens romperían REQ-PRESERVE-02). La discoverability vive en el condensado y en <code class="inline">agent-tiers.md</code> —
+            mismo principio que el íntegro de las DETs (las reglas determinísticas del flujo) no se auto-anota "te condensan".
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">
+            S2 — Frontmatter <code class="inline">tools:</code> por step + validator de coherencia
+            <span class="ml-2 tag tag-now">gate auto — T2 — continue</span>
+          </div>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Commit</strong>: <code class="inline">2acd2eb</code> (feat: frontmatter tools: por step + dkc-validate-tools).
+          </p>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Lo relevante</strong>: <code class="inline">dkc-validate-tools</code> es generador y validador en un solo
+            comando (modo <code class="inline">--fix</code> vs validate). El grep es compartido, lo que hace imposible por
+            construcción que las tools declaradas y las usadas diverjan.
+            26 de los 35 steps tienen al menos una tool; 9 tienen <code class="inline">tools: []</code> (steps de doc/gate puros).
+          </p>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Sorpresa</strong>: agregar <code class="inline">tools:</code> al frontmatter de steps no mueve el
+            baseline de contexto — solo cuentan DETs + <code class="inline">_style</code> en el baseline puro.
+            Eso confirmó que S2 era de costo cero en términos de presupuesto de contexto.
+          </p>
+        </div>
+
+        <div class="tl-item">
+          <div class="text-sm font-medium text-stone-200">
+            S3 — Perfil local consolidado en <code class="inline">agent-tiers.md</code>
+            <span class="ml-2 tag tag-now">gate ⚑ fuerte — T1 — continue (cierre)</span>
+          </div>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Commit</strong>: <code class="inline">9336c60</code> (docs: perfil local consolidado en agent-tiers.md).
+          </p>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Lo relevante</strong>: session de consolidación documental.
+            <code class="inline">prompts/agent-tiers.md</code> (el documento que describe cómo opera DKC bajo diferentes
+            niveles de recursos) ahora incluye la sección <em>Perfil de contexto — DKC_PROFILE</em> con tabla de 6 palancas,
+            medición final (default 39,580 / local 28,938, −27%) y nota de replicación del piso de DETs (Lean-B — el
+            mecanismo de condensado global que alimenta <code class="inline">~/.claude/CLAUDE.md</code>) para hosts sin acceso al global de Claude Code.
+          </p>
+          <p class="text-xs text-stone-400 mt-1">
+            <strong>Sorpresa</strong>: ninguna. Session de solo docs, sin código — reviewer inline light fue proporcional y suficiente.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <p class="mt-5 text-stone-400 text-sm leading-relaxed">
+      Lo que unifica las tres sessions es la métrica de no-degradación: cada gate verificó que el baseline del perfil
+      default seguía en 39,580 tokens. Esa verificación repetida no es overhead — es la garantía que hace que el trabajo
+      de S1/S2/S3 sea reversible sin riesgo para el host actual. Con ese contexto, la tabla siguiente muestra el
+      estado final de ambos perfiles lado a lado.
+    </p>
+
+    <!-- ===== COMPARISON-TABLE — default vs local final ===== -->
+    <section id="table" class="blk mt-6" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Perfil default vs perfil local — estado final</h2>
+      <div class="overflow-x-auto rounded-lg border border-stone-700">
+        <table class="w-full text-sm">
+          <thead class="bg-stone-900 text-stone-400 text-xs uppercase">
+            <tr>
+              <th class="text-left p-3">Dimensión</th>
+              <th class="text-left p-3">Perfil default (Claude Code)</th>
+              <th class="text-left p-3">Perfil local (<code>DKC_PROFILE=local</code>)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-stone-800">
+            <tr>
+              <td class="p-3 text-stone-400">Activación</td>
+              <td class="p-3 text-stone-300">Sin variable (<em>default</em>)</td>
+              <td class="p-3 text-stone-300"><code class="inline">DKC_PROFILE=local</code></td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-400">Baseline puro</td>
+              <td class="p-3 text-stone-300"><strong class="text-stone-100">39,580 tokens</strong> (idéntico a pre-HOR-103)</td>
+              <td class="p-3 text-emerald-400 font-medium"><strong>28,938 tokens</strong> (−27%, &lt; 32K objetivo)</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-400">DETs cargadas</td>
+              <td class="p-3 text-stone-300">27,357 tok (condensado Lean-B)</td>
+              <td class="p-3 text-stone-300">27,357 tok (ídem — no cambia)</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-400"><code class="inline">_style.md</code></td>
+              <td class="p-3 text-stone-300">12,223 tok (íntegro, byte-idéntico)</td>
+              <td class="p-3 text-stone-300">1,581 tok (condensado <code class="inline">_style-condensed.md</code>)</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-400">Tools frontmatter</td>
+              <td class="p-3 text-stone-300">35 steps con <code class="inline">tools:</code> declarado</td>
+              <td class="p-3 text-stone-300">ídem (sin filtrado — espera enfoque A, Backlog)</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-400">Validators</td>
+              <td class="p-3 text-stone-300">verdes (SessionBlock, SpecTask, dkc-validate-tools)</td>
+              <td class="p-3 text-stone-300">ídem</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-stone-400">Contenido íntegro on-demand</td>
+              <td class="p-3 text-stone-300"><code class="inline">prompts/_style.md</code> accesible (REQ-PRESERVE-01)</td>
+              <td class="p-3 text-stone-300">ídem — no se eliminó nada</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="mt-5 text-stone-400 text-sm leading-relaxed">
+      La fila clave es <em>_style.md</em>: de 12,223 tokens íntegros a 1,581 tokens de condensado — una reducción de
+      un 87% en ese componente. Los demás componentes del baseline no cambian entre perfiles.
+      Eso muestra que el enfoque fue quirúrgico: solo se movió el componente que representaba el 31% del baseline sin
+      ningún mecanismo de reducción. La tabla confirma numéricamente las dos hipótesis que el intake dejaba abiertas.
+      Las hipótesis se detallan a continuación.
+    </p>
+
+    <!-- ===== STUDY-QA — hipótesis confirmadas ===== -->
+    <section id="qa" class="blk mt-6" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolución de hipótesis — propuesta → confirmada</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        El intake tenía dos hipótesis abiertas, ambas marcadas como "propuesta". Las dos se verificaron en S1.GATE con
+        medición empírica. <strong>H1 es la dominante</strong> — todo el ticket dependía de que se cumpliera. H2 es
+        consecuencia directa de H1 y se obtiene de la misma medición. Ambas cerraron en la primera session.
+      </p>
+
+      <details class="qa" open>
+        <summary>H1 (DOMINANTE) — El perfil dual reduce contexto en <code>local</code> sin tocar el default → <span class="text-emerald-400">CONFIRMADA</span></summary>
+        <div class="ans">
+          <p><strong>Enunciado original (intake)</strong>: <code class="inline">DKC_PROFILE=local</code> activo → baseline local baja del target de 32K; perfil default (variable no seteada) → baseline idéntico a hoy (39.6K).</p>
+          <p class="mt-2"><strong>Evidencia (S1.GATE)</strong>: <code class="inline">dkc-measure-context-base --json</code> sin variable → 39,580 tok (idéntico). Con <code class="inline">DKC_PROFILE=local</code> → 28,938 tok (&lt; 32K). <code class="inline">git diff --stat prompts/_style.md</code> vacío — el íntegro byte-idéntico.</p>
+          <p class="mt-2"><strong>Cómo cerró</strong>: el mecanismo condicional en <code class="inline">dkc-measure-context-base</code> (CLI <code class="inline">--local</code> + variable de entorno, con precedencia CLI-sobre-env) funcionó exactamente como se diseñó. El switch no toca ninguna ruta del perfil default.</p>
+          <p class="mt-2"><strong>Evolución respecto al intake</strong>: el intake planteaba H1 como "propuesta" y condición bloqueante del gate de S1. Cerró en S1.GATE con evidencia dura — no hubo iteración ni ajuste del mecanismo.</p>
+        </div>
+      </details>
+
+      <details class="qa" open>
+        <summary>H2 (derivada) — <code>_style</code> point-of-use baja el baseline local por debajo de 32K → <span class="text-emerald-400">CONFIRMADA</span></summary>
+        <div class="ans">
+          <p><strong>Enunciado original (intake)</strong>: <code class="inline">_style.md</code> (12,223 tok) movido a point-of-use baja el baseline del perfil local de 39.6K a menos de 32K — un delta de al menos 7.6K tokens.</p>
+          <p class="mt-2"><strong>Evidencia (S1.GATE)</strong>: <code class="inline">_style</code> 12,223 tok → condensado 1,581 tok. Baseline local: 28,938 tok (margen de 3K respecto al objetivo de 32K). Delta real: 10,642 tok (más holgado que los 7.6K estimados).</p>
+          <p class="mt-2"><strong>Cómo cerró</strong>: la reducción fue mayor de lo esperado. El condensado resultó más compacto que el lower-bound que el intake estimaba. La heurística chars/3.7 de <code class="inline">dkc-measure-context-base</code> (el instrumento de medición basado en ese ratio de caracteres por token) fue suficientemente precisa para el gate.</p>
+          <p class="mt-2"><strong>Incertidumbre resuelta</strong>: el intake señalaba que la reducción real dependía de cuántos principios declara cada step. La solución encontrada disolvió esa incertidumbre: como el condensado se surfacea entero (no granular por step), la varianza desapareció. Se simplificó el modelo a costa de un margen algo menor, pero el target se cumplió con holgura.</p>
+          <p class="mt-2"><strong>Evolución respecto al intake</strong>: H2 era "derivada de H1" — si H1 pasaba, H2 se obtenía de la misma medición. Así ocurrió exactamente. No requirió steps adicionales.</p>
+        </div>
+      </details>
+    </section>
+
+    <p class="mt-5 text-stone-400 text-sm leading-relaxed">
+      Lo notable de la evolución de hipótesis es que ambas cerraron en la misma session y con la misma evidencia.
+      Eso no es habitual — normalmente H2 requiere observación adicional. En este caso, la arquitectura del mecanismo
+      (condensado que se surfacea entero, no granular) colapsó la verificación de ambas en una sola medición.
+      Esa simplificación es en sí misma una de las lecciones del ticket. Las decisiones que llevaron a esa arquitectura
+      se detallan a continuación.
+    </p>
+
+    <!-- ===== CONCEPT-CARD — decisiones clave ===== -->
+    <section id="card" class="blk mt-6" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Tres decisiones que fijaron el diseño</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Estas son las tres decisiones más importantes del ticket — las que podrían parecer raras si abres el código sin contexto.
+        Cada una tenía alternativas viables que se descartaron por razones concretas.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Switch del perfil = env var</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Elegida</strong>: variable de entorno <code class="inline">DKC_PROFILE</code>.
+            Documentada en <code class="inline">prompts/agent-tiers.md</code>.
+          </p>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Descartada</strong>: <code class="inline">config.yaml</code> de proyecto — granularidad incorrecta.
+            El dev alterna Claude Code ↔ local sesión a sesión en el mismo PC y proyecto; una config de proyecto no captura esa variación.
+          </p>
+          <p class="mt-1.5 text-xs text-emerald-400 leading-relaxed text-xs">Runtime, coexiste Claude↔local en el mismo PC sin tocar archivos del proyecto.</p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Mecanismo de _style = condensado completo</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Elegida</strong>: <code class="inline">prompts/_style-condensed.md</code> se surfacea entero bajo perfil local.
+            Host-agnóstico, cero cambios al server MCP.
+          </p>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Descartada</strong>: granularidad <code class="inline">style:</code> por step (paridad con el mecanismo de DETs seleccionadas por step).
+            El íntegro de <code class="inline">_style.md</code> son 12 principios (no 1,280 líneas como las DETs) — el condensado a 1.5K cabe entero y evita tocar ~28 frontmatters.
+          </p>
+          <p class="mt-1.5 text-xs text-emerald-400 text-xs">Paridad en el patrón (condensado point-of-use), no en el mecanismo de selección.</p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Tools surface = enfoque C (frontmatter)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Elegida</strong>: frontmatter <code class="inline">tools:</code> por step generado desde <code class="inline">grep dkc_</code> real + validator de coherencia.
+          </p>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Descartado B</strong>: fachadas de tools — rompe HC server, validators, convención <code class="inline">dkc.md</code>.
+            <strong>Descartado A</strong>: tool-set dinámico server-side — depende de host local inexistente → Backlog.
+          </p>
+          <p class="mt-1.5 text-xs text-emerald-400 text-xs">Host-agnóstico hoy; habilita enfoque A cuando llegue el host local.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <p class="mt-5 text-stone-400 text-sm leading-relaxed">
+      Las tres decisiones tienen un hilo común: cada una rechazó la opción que requería más precondiciones no cumplidas
+      (un host local, cambios al server, granularidad innecesaria) a favor de la opción host-agnóstica con menor riesgo de regresión.
+      Lo que esas decisiones producen — y lo que vale la pena recordar si abres código similar — son tres lecciones.
+    </p>
+
+    <!-- ===== INVARIANT — lecciones aprendidas ===== -->
+    <section id="invariant" class="blk mt-6" data-dkc-block="invariant">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lecciones aprendidas (R5)</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Las tres lecciones del ticket están conectadas con las hipótesis: L1 y L2 surgieron de la confirmación de H2
+        (cómo funciona realmente el mecanismo de <code class="inline">_style</code>); L3 surgió de implementar el generador
+        de S2. Se presentan con el marcador de la hipótesis que las originó para que puedas trazar la cadena.
+      </p>
+
+      <div class="invariant mb-4">
+        <div class="text-base font-semibold text-stone-100">
+          L1 — (de H2 confirmada) <span class="text-amber-400">Paridad en el patrón, no en el mecanismo de selección</span>
+        </div>
+        <div class="text-sm text-stone-300 mt-2 leading-relaxed">
+          El condensado de <code class="inline">_style</code> (~2K, 1,581 tok) es lo suficientemente compacto para
+          surfacearse entero bajo perfil local — no necesita la granularidad <code class="inline">style:</code> por step
+          que tienen las DETs (cuyo íntegro son 1,280 líneas). Cuando el intake planteó H2 asumía incertidumbre sobre
+          cuántos principios declararía cada step; la solución colapsó esa incertidumbre eligiendo no tener granularidad.
+          Si en el futuro <code class="inline">_style.md</code> crece hasta el orden de magnitud de las DETs, este patrón
+          debería revisarse — el mecanismo granular existe y está probado (HOR-085).
+        </div>
+        <div class="ilabel mt-2">Aplicable a: cualquier archivo de prompts que se esté pensando reducir. Si el condensado cabe en &lt;3K, surfacea entero. Si no, granularidad por step.</div>
+      </div>
+
+      <div class="invariant mb-4">
+        <div class="text-base font-semibold text-stone-100">
+          L2 — (de H1 confirmada) <span class="text-amber-400">El wiring del perfil NO va en el archivo íntegro</span>
+        </div>
+        <div class="text-sm text-stone-300 mt-2 leading-relaxed">
+          Añadir el blockquote de wiring directamente en <code class="inline">_style.md</code> rompería REQ-PRESERVE-02
+          (+139 tokens en el íntegro → baseline default sube). La discoverability del switch vive en
+          <code class="inline">_style-condensed.md</code> (header autodescriptivo que explica la relación con el íntegro)
+          y en <code class="inline">agent-tiers.md</code> (el punto único del switch).
+          Esto sigue el mismo principio que el íntegro de las DETs — <code class="inline">prompts/deterministic-rules.md</code>
+          no se auto-anota "te condensan en <code class="inline">dets_catalog.py</code>": el wiring vive en el condensado, no en el original.
+        </div>
+        <div class="ilabel mt-2">Aplicable a: cualquier par íntegro/condensado en DKC. El íntegro es fuente de verdad de contenido; la instrucción de cómo usarlo vive en el condensado y en el punto de configuración.</div>
+      </div>
+
+      <div class="invariant">
+        <div class="text-base font-semibold text-stone-100">
+          L3 — (de implementación S2) <span class="text-amber-400">Generador y validador comparten la misma lógica grep</span>
+        </div>
+        <div class="text-sm text-stone-300 mt-2 leading-relaxed">
+          <code class="inline">dkc-validate-tools</code> opera en dos modos con la misma lógica grep interna:
+          <code class="inline">--fix</code> (genera y escribe el campo <code class="inline">tools:</code>) y validate
+          (verifica coherencia). Al compartir la lógica, es imposible por construcción que el campo declarado y el
+          campo real diverjan — si modificas el cuerpo del step y corres el comando, el campo se recalcula desde el
+          mismo grep que el validador usa. No hay dos fuentes de verdad que sincronizar manualmente.
+          Este patrón es reutilizable para cualquier campo de frontmatter que deba derivarse del uso real en el cuerpo
+          del archivo (ej. un campo futuro <code class="inline">reads:</code> que registre los archivos que el step lee).
+        </div>
+        <div class="ilabel mt-2">Aplicable a: campos derivados-de-uso en frontmatter de steps o cualquier otro tipo de archivo donde el campo refleja qué hay en el cuerpo. "Generar desde uso real, no a mano" debe ser la regla por construcción.</div>
+      </div>
+    </section>
+
+    <p class="mt-5 text-stone-400 text-sm leading-relaxed">
+      Las tres lecciones convergen en una idea: las reducciones más robustas son las que hacen que el estado incorrecto
+      sea imposible por construcción — ya sea que el mecanismo no distinga perfiles cuando no debe (L1, L2), o que el
+      campo declarado no pueda desincronizarse del uso real (L3). Con las lecciones claras, lo que sigue es el path
+      sugerido para quien retome el caso.
+    </p>
+
+    <!-- ===== LEARNING-PATH ===== -->
+    <section id="learning-path" class="blk mt-6" data-dkc-block="concept-card">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Para retomar el caso</h2>
+      <p class="text-sm text-stone-400 mb-4">
+        Este bloque está escrito para un dev que llega al código después — ya sea a depurar, a extender el perfil local,
+        o a activar el enfoque A cuando exista el host local. El orden es el de lectura útil, no el de implementación original.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Paso 1 — Entender el switch del perfil</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Por qué primero</strong>: todo lo demás depende de cómo funciona <code class="inline">DKC_PROFILE</code>.
+            <br><strong>Refs</strong>: <code class="inline">prompts/agent-tiers.md</code> (sección "Perfil de contexto — DKC_PROFILE"),
+            <code class="inline">commands/dkc-measure-context-base</code> (líneas del bloque condicional de perfil),
+            <code class="inline">prompts/_style-condensed.md</code> (el condensado que se activa bajo perfil local).
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Paso 2 — Verificar el estado actual</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Por qué</strong>: confirmar que el baseline sigue en los valores documentados antes de hacer cualquier cambio.
+            <br><strong>Comando</strong>: <code class="inline">./commands/dkc-measure-context-base --json</code> (default) y
+            <code class="inline">./commands/dkc-measure-context-base --local --json</code> (local).
+            <br><strong>Valores esperados</strong>: default 39,580 tok · local 28,938 tok.
+            Cualquier desviación indica que algo cambió en <code class="inline">prompts/_style.md</code> o en las DETs.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Paso 3 — Verificar coherencia de tools</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Por qué</strong>: los frontmatters de steps pueden desincronizarse si se modifican steps sin correr el generador.
+            <br><strong>Comando</strong>: <code class="inline">./commands/dkc-validate-tools</code> (debe reportar "OK: 35 steps coherentes").
+            <br>Si hay drift, correr <code class="inline">./commands/dkc-validate-tools --fix</code> para regenerar desde uso real.
+          </p>
+        </div>
+
+        <div class="brick p-4 transition-colors">
+          <div class="text-amber-400 font-semibold text-sm">Paso 4 — Para activar el enfoque A (Backlog B1)</div>
+          <p class="mt-1.5 text-xs text-stone-400 leading-relaxed">
+            <strong>Cuándo</strong>: cuando exista un host local que soporte filtrado dinámico del tool-set.
+            <br><strong>Base ya disponible</strong>: el campo <code class="inline">tools:</code> en cada step es exactamente la entrada que el servidor necesita para filtrar el tool-set expuesto. La lógica de lectura del frontmatter ya existe en el server MCP.
+            <br><strong>Ref</strong>: spec <code class="inline">SPEC-workflow-local-only-readiness-102</code> (sección DEC-LOCAL-02 y Backlog B1).
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== WHAT TO DO NEXT — backlog ===== -->
+    <section class="blk mt-10" data-dkc-block="tag">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Pendiente (backlog bloqueado-por-host)</h2>
+      <div class="space-y-3 mt-4">
+        <div class="flex items-start gap-3">
+          <span class="tag tag-future shrink-0 mt-0.5">could</span>
+          <p class="text-sm text-stone-400"><strong class="text-stone-300">B1 — Enfoque A: tool-set dinámico server-side.</strong>
+            Consumir el campo <code class="inline">tools:</code> del frontmatter en el server MCP para exponer solo las tools que el step usa.
+            Requiere host local que soporte filtrado de tool-set. La base (frontmatter <code class="inline">tools:</code> en 35 steps) ya existe.</p>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="tag tag-future shrink-0 mt-0.5">should</span>
+          <p class="text-sm text-stone-400"><strong class="text-stone-300">B2 — Medir respeto de gates DET en modelo local.</strong>
+            Correr un tactic-execute y contar cuántos gates del flujo DKC respeta el modelo local.
+            Requiere host local instalado. Punto de partida: <code class="inline">prompts/agent-tiers.md</code> (nota de replicación Lean-B).</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · HOR-103 close · horadric · 2026-05-31. Generado por DKC scribe.
+    </footer>
+
+  </main>
+</body>
+</html>

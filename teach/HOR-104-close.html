@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Diferenciacion SP LLM/dev · HOR-104</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background:var(--stone-bg); color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; }
+  .blk { scroll-margin-top:5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background:var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background:var(--amber); border:2px solid var(--stone-bg); }
+  .tldr { background:linear-gradient(135deg,rgba(245,158,11,0.10),rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  table { width:100%; font-size:0.85rem; } th,td { padding:0.4rem 0.6rem; text-align:left; border-bottom:1px solid var(--stone-border); }
+  thead th { color:var(--txt-dim); font-size:0.72rem; text-transform:uppercase; }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">HOR-104</span> · Diferenciacion SP LLM/dev</span>
+      <span>horadric · 2026-06-01</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">HOR-104 cerrada — qué se hizo y qué aprendimos</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">El intake enseñó el problema (el speedup salía 0% por construcción y los SP no se veían). Aquí: qué se ejecutó en los dos repos, cómo evolucionó, y el aprendizaje.</p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — Se arregló y surfaceó la diferenciación SP LLM/dev de DKC.
+        <strong>Motor (deckard):</strong> `executed = round(sp_llm×c) + sp_human` → el speedup deja de ser 0% por defecto (A); labels clarificados sin renombrar campos (C-lite).
+        <strong>Viewer (horadric-cube):</strong> badge `Σtotal·👤dev·🤖llm` en card, columnas en grid, badge en cabecera del detalle, y roster completo de sesiones (las N del plan con estado).
+        7 commits, type-check+build verdes, 2 reviewers aislados approve. Roll-up de kanban diferido (could).
+      </div>
+    </div>
+
+    <!-- La historia -->
+    <section class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">La historia</h2>
+      <div class="rounded-lg border border-stone-700 overflow-hidden"><div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-stone-800">
+        <div class="p-4"><div class="text-xs uppercase text-stone-500 mb-1">Contexto</div><p class="text-sm text-stone-300">Calibración de SP4 mostró speedup 0% en 4/6 cerrados — no por falta de aporte del LLM, sino porque el default fijaba <code class="inline">executed = llm+human = proxy</code>. Y los SP no se veían en HC.</p></div>
+        <div class="p-4"><div class="text-xs uppercase text-amber-500 mb-1">Decisión</div><p class="text-sm text-stone-300">A (factor de compresión por work_type) + C-lite (clarificar sin renombrar → cero migración) + viz en 4 superficies. B (wall-clock) y roll-up quedaron fuera/diferidos.</p></div>
+        <div class="p-4"><div class="text-xs uppercase text-emerald-500 mb-1">Resultado</div><p class="text-sm text-stone-300">Speedup real por defecto; el peso LLM vs dev visible en card/grid/detalle; el roster muestra las N sesiones. 2 repos, 9 commits, sin regresión.</p></div>
+      </div></div>
+    </section>
+
+    <!-- Flujo por session -->
+    <section class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">El camino recorrido</h2>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 · Motor — compresión (deckard, ⚑ fuerte)</div><p class="text-xs text-stone-400">Se redefinió sec 5d: <code class="inline">executed = round(sp_llm×c)+sp_human</code> con ratios por work_type (refactor 0.4…explore 0.8); se reconcilió el doc (speedup = proxy−executed derivado; delta = override manual) + edge sp_llm=0 + OQ-1 doble-descuento. Backward-compat: closed no se recalcula. Reviewer aislado confirmó consistencia.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 · C-lite (deckard)</div><p class="text-xs text-stone-400">Leyenda en <code class="inline">dkc-sp-calibration</code> aclarando qué mide cada factor, preservando los nombres de campo.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 · Plomería + badge card (horadric-cube, ⚑ fuerte)</div><p class="text-xs text-stone-400">Se expuso <code class="inline">story_points</code> en <code class="inline">TicketSummary</code> (server→tipo→api) y se creó <code class="inline">SpBadge.vue</code> reusable, cableado en <code class="inline">TicketCard</code>. Reviewer pidió a11y (aria-label) → atendido.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 · Grid + detalle + roster + cierre</div><p class="text-xs text-stone-400">Columnas SP ordenables en <code class="inline">TicketsGrid</code>; badge en la cabecera de <code class="inline">TicketDetail</code> (reusa SpBadge); roster completo en <code class="inline">SectionSessions</code> (merge plan↔ejecutadas, chips con estado). Roll-up diferido. Validación de cierre reforzada (2 repos) approve.</p></div>
+      </div>
+    </section>
+
+    <!-- Evolución de hipótesis -->
+    <section class="blk mt-12" data-dkc-block="comparison-table">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolución de hipótesis</h2>
+      <table><thead><tr><th>Hipótesis</th><th>Estado final</th></tr></thead><tbody>
+        <tr><td>H1 — el default fija executed=llm+human → speedup 0</td><td class="text-emerald-400">confirmada (origen del fix)</td></tr>
+        <tr><td>H2 — el modelo conceptual ya quería executed&lt;proxy</td><td class="text-emerald-400">confirmada (sólo faltaba implementarlo)</td></tr>
+        <tr><td>H3 — los SP no se muestran en HC</td><td class="text-emerald-400">confirmada (TicketSummary no los exponía)</td></tr>
+        <tr><td>H4 — renombrar implica migración</td><td class="text-emerald-400">resuelta por C-lite (no se renombró)</td></tr>
+      </tbody></table>
+    </section>
+
+    <!-- Knowledge -->
+    <section class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Knowledge</h2>
+      <div class="callout callout-info">Sin rules/bugs nuevos. Decisiones de diseño inline en el spec (DEC-LOCAL-01 compresión por work_type, -02 C-lite, -03 sin recálculo retroactivo, -04 badge 3-segmentos). El patrón de validación SP queda documentado en <code class="inline">docs/story-points.md</code>.</div>
+      <div class="callout callout-success"><code class="inline">SpBadge.vue</code> nació como componente reusable: 3 consumidores (card, grid, cabecera detalle) — extraerlo evitó duplicar markup, decisión que se validó al sumarse el detalle y el grid.</div>
+    </section>
+
+    <!-- Lessons -->
+    <section class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lessons learned</h2>
+      <details class="qa"><summary>¿Por qué el speedup salía 0% y cómo se arregló sin pedir datos nuevos?</summary><div class="ans">El default igualaba executed al proxy (llm+human). La compresión por work_type (un factor c&lt;1 sobre la parte automatizable) hace executed&lt;proxy → speedup&gt;0, sin instrumentar wall-clock (eso era "B", diferido). Lección: a veces el modelo conceptual ya es correcto y el bug está sólo en el cálculo por defecto que lo colapsa.</div></details>
+      <details class="qa"><summary>¿Por qué C-lite y no renombrar los campos?</summary><div class="ans">Renombrar (llm_factor→automatable_proxy) obligaba a migrar todos los tickets cerrados con SP poblado, transversal a todos los proyectos. C-lite logra la honestidad en la presentación (labels HC + doc + leyenda de calibración) con cero migración. Lección: la claridad puede vivir en la capa de presentación; no siempre hay que tocar el dato canónico.</div></details>
+      <details class="qa"><summary>¿Cómo se mostró el roster sin romper el render de sesiones ejecutadas?</summary><div class="ans">En vez de sintetizar SessionSummary "projected" e inyectarlas en el render complejo existente (riesgoso), se agregó una tira de chips derivada de <code class="inline">sessionPlan</code> (que el server ya parseaba) mergeada por número con las ejecutadas. Aditivo, bajo riesgo. Lección: ante un componente complejo, un bloque aditivo derivado de datos ya disponibles supera a un refactor invasivo.</div></details>
+      <details class="qa"><summary>¿Por qué el alcance creció dos veces (detalle, roster) y estuvo bien?</summary><div class="ans">Ambas extensiones (REQ-08 cabecera detalle, REQ-09 roster) las pidió el dev y eran del mismo frente viewer/misma pasada HC; reusaban SpBadge / datos ya plumbed. Se registraron como scope-discovery (super: auto-continuar, scope autorizado). Lección: el scope-discovery del dev dentro del mismo frente es sano si se registra y reusa lo construido.</div></details>
+    </section>
+
+    <!-- Qué viene -->
+    <section class="blk mt-12" data-dkc-block="callout">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Qué viene después</h2>
+      <div class="callout callout-warn"><strong>Diferidos (no bloquean):</strong> REQ-06 roll-up por columna del kanban (could — el roster + badges ya cubren la visibilidad); "B" (anclar executed en wall-clock real de timestamps de session) como follow-up para SP defendibles ante el PM; calibrar los ratios c con 5+ tickets cerrados post-cambio (OQ-1 doble-descuento).</div>
+      <div class="callout callout-info"><strong>Verificación visual pendiente:</strong> type-check + build + 2 reviewers aislados verdes confirman la implementación; la confirmación pixel-a-pixel se hace abriendo HC (los SP-poblados viven en up1 033-038 para card/grid; el roster se ve en cualquier ticket con plan, ej. este HOR-104 → 4 sesiones).</div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · HOR-104 · close · horadric · generado por DKC.</footer>
+  </main>
+</body>
+</html>

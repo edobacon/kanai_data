@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Migrar componentes frontend a RULE-frontend-001 · JOR-024</title>
+<!-- metadata · ticket: JOR-024 · kind: close · project: jormat-evolution · generated: 2026-06-14 -->
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } }
+  }
+</script>
+<script type="module">
+  import mermaid from '/vendor/mermaid/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true, theme: 'dark',
+    themeVariables: {
+      darkMode: true, background: '#0c0a09', primaryColor: '#1c1917',
+      primaryTextColor: '#e7e5e4', primaryBorderColor: '#f59e0b', lineColor: '#a8a29e',
+      secondaryColor: '#292524', tertiaryColor: '#1c1917', mainBkg: '#1c1917',
+      nodeBorder: '#f59e0b', clusterBkg: '#0c0a09', clusterBorder: '#44403c',
+      titleColor: '#fafaf9', edgeLabelBackground: '#1c1917', textColor: '#e7e5e4', fontSize: '13px'
+    },
+    flowchart: { htmlLabels: true, curve: 'basis' }
+  });
+</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left: 4px solid; padding: 0.85rem 1.1rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.4rem 0; }
+  .callout-info { border-color:#818cf8; background: rgba(129,140,248,0.10); }
+  .callout-success { border-color:#34d399; background: rgba(52,211,153,0.10); }
+  .callout-warn { border-color:#fbbf24; background: rgba(251,191,36,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  pre.code { background:#020617; border:1px solid var(--stone-border); border-radius:0.6rem; padding:0.95rem 1.15rem; overflow-x:auto; font-family:"SFMono-Regular",Monaco,Consolas,monospace; font-size:0.8rem; line-height:1.55; color:#cbd5e1; }
+  pre.code .c { color:#78716c; font-style:italic; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background: var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color: var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color: var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color: var(--txt-muted); font-size:0.9rem; }
+  .tl { position:relative; padding-left:1.6rem; }
+  .tl::before { content:""; position:absolute; left:0.35rem; top:0.2rem; bottom:0.2rem; width:2px; background: var(--stone-border); }
+  .tl-item { position:relative; padding-bottom:1rem; }
+  .tl-item::before { content:""; position:absolute; left:-1.43rem; top:0.25rem; width:0.7rem; height:0.7rem; border-radius:50%; background: var(--amber); border:2px solid var(--stone-bg); }
+  a.navlink { color: var(--txt-muted); } a.navlink:hover { color: var(--amber); }
+  .tldr { background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color: var(--txt-dim); font-style:italic; font-size:0.8rem; }
+</style>
+</head>
+<body class="antialiased">
+
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach close · <span class="text-amber-400">JOR-024</span> · Migrar componentes a RULE-frontend-001</span>
+      <span>jormat-evolution · 2026-06-14</span>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-6 py-10">
+
+    <h1 class="text-3xl font-bold text-stone-100">Lo que aprendimos migrando el frontend a la convencion</h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      El refactor cerro la brecha entre el codigo del shell/primitivas (escrito en JOR-005, antes de la regla)
+      y <strong>RULE-frontend-001</strong>. Cinco sessions, ordenadas de menor a mayor riesgo, llevaron la suite
+      de <strong>59 a 140 tests</strong> sin romper nada: zero-behavior-change confirmado por build host + Docker.
+      Este documento mira atras: que se hizo, como evolucionaron las hipotesis, y las lecciones que quedaron
+      destiladas en una rule nueva.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Que se hizo:</strong> 8 primitivas con story+test,
+        6 composites del shell movidos a carpeta-por-componente, composite <code class="inline">Home</code> extraido
+        y co-locado, 0 huerfanos. <strong>Resultado:</strong> 41 archivos / 140 tests verdes, build host+Docker OK,
+        a11y sin violaciones, todo dentro de <code class="inline">execute_scope</code>. <strong>Legado:</strong>
+        nueva <code class="inline">RULE-frontend-002</code> con las convenciones de test/story de este stack.
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#done" class="navlink rounded border border-stone-700 px-2 py-1">que se hizo</a>
+      <a href="#hyp" class="navlink rounded border border-stone-700 px-2 py-1">evolucion hipotesis</a>
+      <a href="#knowledge" class="navlink rounded border border-stone-700 px-2 py-1">knowledge promovido</a>
+      <a href="#lessons" class="navlink rounded border border-stone-700 px-2 py-1">lessons</a>
+    </nav>
+
+    <!-- ============ QUE SE REALIZO (5to eje) — timeline ============ -->
+    <section id="done" class="blk mt-12" data-dkc-block="timeline">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Que se realizo, session por session</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        El orden por riesgo creciente pago: las dos primeras sessions (aditivas puras) calibraron el patron de
+        test/story; las tres siguientes (movimientos) ya tenian la red de seguridad de tests verde.
+      </p>
+      <div class="tl mt-4">
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S1 — Primitivas simples (commit 81576f3)</div><p class="text-xs text-stone-400">story+test para button, badge, avatar, separator + test ThemeToggle. 59 → 105 tests.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S2 — Primitivas radix-portal (dec1c73)</div><p class="text-xs text-stone-400">dropdown-menu, sheet, tooltip. Confirmo H4: a11y del portal via play(). 105 → 119.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S3 — Composites de TopBar (eac0f73)</div><p class="text-xs text-stone-400">Breadcrumb/EmpresaSwitcher/AccountMenu a sub-carpeta; tests relocados de TopBar.test; TopBar.test → composicion. 119 → 127.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S4 — Sidebar + AppShell (6005caf)</div><p class="text-xs text-stone-400">NavItem/NavGroup + AppShell a carpeta; fix imports relativos. 127 → 140.</p></div>
+        <div class="tl-item"><div class="text-sm font-medium text-stone-200">S5 — Home + validacion final (d3222d3)</div><p class="text-xs text-stone-400">composite Home co-locado, page.tsx orquesta; build host+Docker, vitest 140/140, 0 huerfanos.</p></div>
+      </div>
+    </section>
+
+    <div class="callout callout-success mt-6" data-dkc-block="callout"><strong>✓ Resultado</strong> — 27 archivos nuevos, +81 tests, 0 fail. Imports externos sin cambios (barrel = nombre del componente). RULE-global-003 respetada (auth/ y services/api.ts intactos).</div>
+
+    <!-- ============ EVOLUCION DE HIPOTESIS ============ -->
+    <section id="hyp" class="blk mt-12" data-dkc-block="case">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Evolucion de las hipotesis</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Las cuatro hipotesis del intake se resolvieron todas confirmadas. La unica que entro abierta (H4) se
+        confirmo empiricamente en S2 — y resulto ser la fuente de la leccion mas reutilizable.
+      </p>
+      <div class="space-y-2 text-sm">
+        <div class="rounded-lg border border-stone-700 p-3"><span class="text-emerald-400 font-semibold">H1 ✓</span> <span class="text-stone-300">Primitivas solo necesitaban story+test hermanos — confirmado, planas sin mover.</span></div>
+        <div class="rounded-lg border border-stone-700 p-3"><span class="text-emerald-400 font-semibold">H2 ✓</span> <span class="text-stone-300">Mover composites resuelve via barrel — confirmado; ademas el barrel con nombre=componente hizo que los imports externos NO cambiaran (mejor de lo esperado).</span></div>
+        <div class="rounded-lg border border-stone-700 p-3"><span class="text-emerald-400 font-semibold">H3 ✓</span> <span class="text-stone-300">Home se extrajo a composite y page.tsx quedo como orquestador — confirmado, transparente al build.</span></div>
+        <div class="rounded-lg border border-stone-700 p-3"><span class="text-emerald-400 font-semibold">H4 ✓ (era parcial)</span> <span class="text-stone-300">Las stories radix necesitan play() que abra el overlay para el a11y; los tests jsdom usan defaultOpen. Confirmado en S2.</span></div>
+      </div>
+    </section>
+
+    <!-- ============ KNOWLEDGE PROMOVIDO ============ -->
+    <section id="knowledge" class="blk mt-12" data-dkc-block="code">
+      <h2 class="text-xl font-semibold text-stone-100 mb-1">Knowledge promovido</h2>
+      <p class="text-stone-400 text-sm leading-relaxed mb-4">
+        Los 5 learns del ticket se consolidaron en una rule nueva — son convenciones del stack, no detalles del caso:
+      </p>
+      <div class="callout callout-info"><strong>RULE-frontend-002</strong> — Convenciones de autoria de test+story por componente (vitest dual-project + storybook-nextjs-vite). Complementa RULE-frontend-001 (donde van los archivos) diciendo COMO escribirlos.</div>
+      <pre class="code"><span class="c">// los 5 patrones que la rule codifica:</span>
+1. radix-portal en test jsdom -> defaultOpen; en story -> play() abre overlay (a11y); contenido en screen, no canvas
+2. story con hooks de App Router -> parameters.nextjs.appDirectory: true (+ navigation.pathname)
+3. mover componente a sub-carpeta -> imports relativos a sibling suben un nivel (./x -> ../x); alias @/ no se afecta
+4. story de componente con prop requerida -> args: { children: null } aunque uses render (TS la exige)
+5. cache storybook flaky -> rm -rf node_modules/.cache/storybook .vite antes del full vitest run</pre>
+    </section>
+
+    <!-- ============ INVARIANTE QUE SE SOSTUVO ============ -->
+    <section id="invariant" class="blk mt-12" data-dkc-block="invariant">
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">El refactor mantuvo <span class="text-amber-400">zero-behavior-change</span>: los 59 tests del baseline siguen verdes, sin reescribir su logica.</div>
+        <div class="ilabel mt-2">Corolario: mover composites con barrel = nombre del componente hace el cambio transparente para los consumidores; relocar tests entre archivos preserva sus aserciones (solo cambia la ruta de import).</div>
+      </div>
+    </section>
+
+    <!-- ============ LESSONS LEARNED ============ -->
+    <section id="lessons" class="blk mt-12" data-dkc-block="study-qa">
+      <h2 class="text-xl font-semibold text-stone-100 mb-3">Lessons learned (Q&amp;A para el proximo refactor de frontend)</h2>
+      <details class="qa"><summary>¿Como ordenar un refactor de movimientos masivos?</summary><div class="ans">Por riesgo creciente: primero lo aditivo (agregar tests/stories, riesgo ~0), despues los movimientos (riesgo de imports), cerrando con validacion completa. Cuando llegas a mover, ya tenes la suite verde como red.</div></details>
+      <details class="qa"><summary>¿Como minimizar el riesgo de romper imports al mover a carpeta?</summary><div class="ans">Nombrar la carpeta igual que el componente y poner un index.ts barrel: los imports existentes (`./Breadcrumb`, `@/shell/AppShell`) resuelven a la carpeta sin cambios. Solo los imports relativos a un sibling dentro del componente movido (NavGroup→NavItem) necesitan subir un nivel.</div></details>
+      <details class="qa"><summary>¿Donde testear un componente radix que monta en portal?</summary><div class="ans">El test jsdom con `defaultOpen` valida el contenido montado de forma deterministica; la story (chromium) abre el overlay en `play()` para el escaneo de a11y. La division test/story del stack se aprovecha exactamente para esto.</div></details>
+      <details class="qa"><summary>¿Que valido el reviewer aislado al cierre?</summary><div class="ans">En contexto limpio (sin haber visto la ejecucion): que cada cambio corresponde al spec, que los imports/barrels resuelven, que ningun archivo cae fuera de execute_scope, que no quedan huerfanos, y que el trabajo esta en rama de ticket. Recomendacion: approve.</div></details>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">
+      Teaching v2 · JOR-024 · jormat-evolution · refactor cerrado (5 sessions, 140/140 tests). Generado por DKC.
+    </footer>
+
+  </main>
+</body>
+</html>

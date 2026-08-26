@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Re-surfacing activo de DETs · HOR-087</title>
+<script src="/vendor/tailwindcss-browser.js"></script>
+<script>if (window.tailwind) { tailwind.config = { theme: { extend: { fontFamily: { mono: ['SFMono-Regular','Menlo','Consolas','monospace'] } } } } }</script>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524; --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html, body { background: var(--stone-bg); color: var(--txt); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .blk { scroll-margin-top: 5rem; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.4rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code.inline { background:#292524; color:#fcd34d; padding:0.06rem 0.38rem; border-radius:0.25rem; font-size:0.84em; border:1px solid var(--stone-border); }
+  .brick { background:linear-gradient(135deg,#1c1917 0%,#0c0a09 100%); border:1px solid var(--stone-border); border-radius:0.6rem; }
+  details.qa { border:1px solid var(--stone-border); border-radius:0.5rem; background:var(--stone-card); margin:0.4rem 0; }
+  details.qa summary { cursor:pointer; padding:0.7rem 1rem; font-weight:600; color:var(--txt); list-style:none; }
+  details.qa summary::-webkit-details-marker { display:none; }
+  details.qa summary::before { content:"▸"; color:var(--amber); margin-right:0.5rem; }
+  details.qa[open] summary::before { content:"▾"; }
+  details.qa .ans { padding:0 1rem 0.85rem 2rem; color:var(--txt-muted); font-size:0.9rem; }
+  .tldr { background:linear-gradient(135deg,rgba(245,158,11,0.10),rgba(245,158,11,0.03)); border:1px solid rgba(245,158,11,0.30); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant { background:#020617; border:1px solid var(--amber); border-radius:0.7rem; padding:1.1rem 1.3rem; }
+  .invariant .ilabel { color:var(--txt-dim); font-style:italic; font-size:0.8rem; }
+  a.navlink { color:var(--txt-muted); } a.navlink:hover { color:var(--amber); }
+</style>
+</head>
+<body class="antialiased">
+  <header class="sticky top-0 z-10 border-b border-stone-800 bg-stone-950/90 backdrop-blur">
+    <div class="mx-auto max-w-5xl px-6 py-3 flex items-center justify-between text-xs text-stone-500">
+      <span>Teach intake · <span class="text-amber-400">HOR-087</span> · Re-surfacing activo de DETs</span>
+      <span>horadric · 2026-05-31</span>
+    </div>
+  </header>
+  <main class="mx-auto max-w-5xl px-6 py-10">
+    <h1 class="text-3xl font-bold text-stone-100">Re-surfacing activo de DETs — cablear el <code class="inline">dets:</code></h1>
+    <p class="mt-3 text-stone-400 leading-relaxed">
+      HOR-085 hizo que 11 steps declararan en su frontmatter el set de DETs que los gatean (<code class="inline">dets: [N..]</code>) y les quitó la lectura del archivo completo de reglas. Pero dejó eso <strong>declarado, no cableado</strong>: ningún cuerpo de step instruye realmente traer ese set vía <code class="inline">dkc_get_rules(dets=...)</code>. Este ticket cierra ese bucle — convierte la metadata pasiva en una instrucción activa.
+    </p>
+
+    <div class="tldr mt-7" data-dkc-block="tldr">
+      <div class="text-sm text-stone-200 leading-relaxed">
+        <strong class="text-amber-300">TL;DR</strong> — <strong>Qué hay:</strong> los 11 steps de HOR-085 tienen <code class="inline">dets:</code> en frontmatter pero ningún body los re-surfacea (gap B2). <strong>Qué se hará:</strong> agregar una instrucción activa estándar al inicio del body de cada step ("al ingresar: <code class="inline">dkc_get_rules(dets=&lt;frontmatter.dets&gt;)</code>") + a-hook comment conceptual + actualizar Principio 12. <strong>Por qué:</strong> en Claude Code materializa la saliencia point-of-use (el objetivo real de HOR-085); en hosts sin global (Codex/Cursor/Ollama) restaura la cobertura que la remoción de <code class="inline">reads:</code> había bajado bajo baseline. Además, es el prerrequisito del Flujo A (aligerar el global).
+      </div>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2 text-xs" data-dkc-block="toc">
+      <a href="#bases" class="navlink rounded border border-stone-700 px-2 py-1">las bases</a>
+      <a href="#entorno" class="navlink rounded border border-stone-700 px-2 py-1">el entorno</a>
+      <a href="#callout" class="navlink rounded border border-stone-700 px-2 py-1">restricción</a>
+      <a href="#qa" class="navlink rounded border border-stone-700 px-2 py-1">autoevaluación</a>
+    </nav>
+
+    <section id="bases" class="blk mt-12" data-dkc-block="concept-card">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Las bases — qué dejó HOR-085 y qué falta</h2></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">dets: (frontmatter)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Lista de DETs que gatean el step, declarada por HOR-085. Hoy es <strong>pasiva</strong>: nadie la consume en runtime.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">dkc_get_rules(dets=...)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">El tool (HOR-085 S1) que devuelve esos condensados. Ya existe y funciona — falta que los steps lo llamen.</p></div>
+        <div class="brick p-4"><div class="text-amber-400 font-semibold text-sm">a-hook (capa 5)</div><p class="mt-1.5 text-xs text-stone-400 leading-relaxed">Marcador de enforcement del patrón de 5 capas (RULE-009). <strong>Hoy es conceptual</strong> (instrucción al LLM), no hook runtime del harness.</p></div>
+      </div>
+    </section>
+
+    <section id="entorno" class="blk mt-12">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">El entorno — dónde encaja</h2></div>
+      <p class="text-sm text-stone-400 leading-relaxed">
+        Este ticket es el <strong>B</strong> de un flujo B→A→C que nació al cerrar HOR-085. <strong>HOR-085</strong> es el predecesor directo (migró los steps, dejó B2). <strong>HOR-088</strong> (Flujo A — aligerar el global) <em>depende</em> de este: A reemplaza la inyección del global por este re-surfacing, así que sin B activo, A quitaría el floor de adherencia sin red. El cambio vive en `prompts/steps/` + Principio 12 de `_style.md`; no toca código del server (el tool ya está). Lo rodea el patrón multi-provider (DET-25/HOR-060): los hosts sin global son justamente los que más ganan con este cableado.
+      </p>
+    </section>
+
+    <section id="callout" class="blk mt-12" data-dkc-block="callout">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">La restricción</h2></div>
+      <div class="callout callout-warn"><strong>⚠ Anti-objetivo</strong> — la instrucción de body debe ser concisa y de valor real. No agregar verbosidad que duplique lo que el global ya hace en Claude Code de forma redundante; el valor concreto es para hosts sin global + la saliencia point-of-use.</div>
+      <div class="callout callout-info"><strong>ℹ a-hooks son conceptuales</strong> — no esperar enforcement runtime. La instrucción de body ES el mecanismo activo; el a-hook comment se agrega solo por consistencia con el patrón de 5 capas.</div>
+    </section>
+
+    <section id="qa" class="blk mt-12" data-dkc-block="study-qa">
+      <div class="mb-3"><h2 class="text-xl font-semibold text-stone-100">Autoevaluación</h2></div>
+      <details class="qa"><summary>¿De qué se trata el caso?</summary><div class="ans">Cerrar el gap B2 de HOR-085: el <code class="inline">dets:</code> declarado en 11 steps es metadata pasiva. Este ticket agrega la instrucción activa de body que hace que cada step traiga su set condensado vía <code class="inline">dkc_get_rules(dets=...)</code>.</div></details>
+      <details class="qa"><summary>¿Por qué importa, si en Claude Code el global ya inyecta todo?</summary><div class="ans">Dos razones: (1) la saliencia point-of-use — traer la regla en el momento de uso es el objetivo de HOR-085, que sin esto no se materializa; (2) hosts sin global (Codex/Cursor/Ollama) perdieron cobertura al quitarse el <code class="inline">reads:</code> — el cableado la restaura. Y es el prerrequisito del Flujo A.</div></details>
+      <details class="qa"><summary>¿Qué quedó decidido en intake?</summary><div class="ans">H3 resuelto: los a-hooks son conceptuales (no runtime), así que la instrucción de body es el mecanismo activo real. El a-hook comment se agrega por consistencia de patrón, sin depender de runtime. Sin código de server (el tool ya existe).</div></details>
+      <details class="qa"><summary>¿Cuál es el riesgo principal a vigilar?</summary><div class="ans">El anti-objetivo: agregar ruido/verbosidad sin valor. La instrucción debe ser 1-2 líneas, estándar y concisa. El quality review (reviewer aislado) lo evaluará.</div></details>
+    </section>
+
+    <section class="blk mt-12" data-dkc-block="invariant">
+      <div class="invariant">
+        <div class="text-lg font-semibold text-stone-100">Un step que declara <code class="inline">dets:</code> debe, al ingresar, <span class="text-amber-400">traerlas activamente</span> — la declaración sin la llamada es metadata muerta.</div>
+        <div class="ilabel mt-2">Corolario: en Claude Code el global es la red; fuera de Claude Code, esta llamada es la única cobertura. Por eso el cableado no es opcional para multi-provider.</div>
+      </div>
+    </section>
+
+    <footer class="mt-14 border-t border-stone-800 pt-5 text-xs text-stone-600">Teaching v2 · intake · HOR-087 · generado por DKC (autopilot super).</footer>
+  </main>
+</body>
+</html>
