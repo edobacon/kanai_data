@@ -436,7 +436,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
 |---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
 | S1.T1 | Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Sessions` del ticket | REQ-PRESERVE-01, REQ-CONVIV-01 | researcher | — | ticket (baseline), UPU DB (read) | vuelco por los 6 roles capturado, guardado en el ticket | (no aplica) | DET-2, DET-13 | pending | 1 |
-| S1.T2 | Auditar rol por rol: por cada accion que declara, verificar que la capability exista/este asignada; anotar huecos (esperado: solo institucion en cd) | REQ-ADD-01, REQ-PRESERVE-01 | researcher | S1.T1 | ticket | huecos por rol listados; confirmar que el unico hueco es `institution:view` | (no aplica) | DET-4, DET-5 | pending | 1 |
+| S1.T2 | Auditar rol por rol: por cada accion que declara, verificar que la capability exista/este asignada; anotar huecos (esperado: solo institucion en cd) Esta auditoria ES el medio de verificacion de REQ-ADD-01 (descubre el hueco de institucion) y REQ-PRESERVE-01 (fija el baseline); no es un entregable aparte. | REQ-ADD-01, REQ-PRESERVE-01 | researcher | S1.T1 | ticket | huecos por rol listados; confirmar que el unico hueco es `institution:view` | (no aplica) | DET-4, DET-5 | pending | 1 |
 | S1.T3 | Inventariar TODAS las referencias a los nombres de rol viejos: (a) documentos (grep); (b) arrays `roles:` de layouts de cd/cm y `app.json` de otros mods (dbSync.js:846-855 re-crea roles desde layout); (c) filtro por rol activo (authChecker.js:116-118). Registrar cada una con path:linea para remediar en S4 | REQ-PRESERVE-02, REQ-RETIRE-01 | researcher | — | ticket | inventario de refs (docs+layouts+app.json+runtime) con path:linea | (no aplica) | DET-16, DET-40 | pending | 1 |
 | S1.T4 | Correr las 2 suites `rbacRoles.test.js` (cd + cm) y registrar el conteo verde como baseline de comportamiento | REQ-PRESERVE-04, REQ-TEST-01 | developer | — | — | `X/X passing` en ambas, guardado en `## Sessions` | (no aplica) | DET-7, DET-13 | pending | 1 |
 | **S1.GATE** | **Gate de sync Session 1 (tier: T3)** — persistir baseline + auditoria en `## Sessions`, decidir continue/iterate | — | reviewer | S1.T1, S1.T2, S1.T3, S1.T4 | ticket | gate persistido + baseline verde + huecos documentados | (no aplica — cierre) | DET-20, DET-23 | pending | 1 |
@@ -446,11 +446,12 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
 |---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
 | S2.T1 | Confirmar el nombre exacto de la cap de institucion (`institution:view`, objeto base `Institution`) contra `core_Capability`/`generateCapabilities.js:117-119` | REQ-ADD-01 | researcher | S1.GATE | — | nombre canonico confirmado | (no aplica) | DET-1, DET-4 | pending | 2 |
-| S2.T2 | Agregar `institution:view` a `READ_CAPS` del seed de cd (efectiva runtime sin vinculo) | REQ-ADD-01 | developer | S2.T1 | `mods/curriculum-design/seed/_data-rbac.js` | sync corre; los 4 roles de cd reciben la cap en `core_RoleCapability` | git revert | DET-5, DET-8, RULE (institution-view-gap) | pending | 2 |
+| S2.T2 | Agregar `institution:view` a `READ_CAPS` del seed de cd (efectiva runtime sin vinculo) | REQ-ADD-01 | developer | S2.T1, S2.T6 | `mods/curriculum-design/seed/_data-rbac.js` | sync corre; los 4 roles de cd reciben la cap en `core_RoleCapability` | git revert | DET-5, DET-8, RULE (institution-view-gap) | pending | 2 |
 | S2.T3 | Actualizar `rbacRoles.test.js` de cd para exigir `institution:view` en los 4 roles (assert intencional) | REQ-ADD-01, REQ-PRESERVE-04 | developer | S2.T2 | `mods/curriculum-design/tests/unit/rbacRoles.test.js` | suite verde con el nuevo assert | git revert | DET-7 | pending | 2 |
 | S2.T4 | Declarar la base de cd (`Curriculum Design - Consultor Curricular`) derivada del mapa: `READ_CAPS` + `institution:view` + transversales; y la base de cm (`Curriculum Mapping - Consultor Curricular`) con sus READ_CAPS + transversales | REQ-SET-01 | developer | S2.T2 | `mods/curriculum-design/roles/*.json`, `mods/curriculum-mapping/roles/*.json` (dir nuevo) | sync materializa las 2 bases; caps resueltas == Consultor del mapa (+institucion en cd) | git revert (borrar archivos) | DET-1, DET-2, DET-40 | pending | 2 |
 | S2.T5 | Verificar que declarar las bases NO cambia permisos efectivos (sin vinculo no inyecta): re-vuelco vs baseline S1 | REQ-PRESERVE-03 | reviewer | S2.T4 | UPU DB (read) | vuelco identico al baseline salvo institucion | (no aplica) | DET-13, DET-33 | pending | 2 |
-| **S2.GATE** | **Gate de sync Session 2 (tier: T2)** — persistir, vitest cd verde, decidir continue/iterate | — | reviewer | S2.T1..S2.T5 | ticket | gate persistido + tests verdes | (no aplica — cierre) | DET-20, DET-23 | pending | 2 |
+| S2.T6 | Secuenciar/rebase con UPONE-1619 (mismo mods/curriculum-design/seed/_data-rbac.js): acordar orden de merge o rebase ANTES de tocar el seed (S2.T2). Riesgo alto de secuenciacion. | REQ-PRESERVE-02 | researcher | S1.GATE | ticket / canal UPONE-1619 | orden de merge o rebase acordado con 1619 antes de tocar el seed | n/a (coordinacion) | DET-16 | pending | 2 |
+| **S2.GATE** | **Gate de sync Session 2 (tier: T2)** — persistir, vitest cd verde, decidir continue/iterate | — | reviewer | S2.T1..S2.T6 | ticket | gate persistido + tests verdes | (no aplica — cierre) | DET-20, DET-23 | pending | 2 |
 
 ### Session 3 — Declarar las 6 extensiones + herencia + reformular paridad [tipo: auto] [tier: T2]
 
@@ -482,7 +483,8 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | S5.T4 | Caso del PO end-to-end (HR2): entrar como Diseñador, crear un plan de estudio con el select de institucion poblado y guardar | REQ-ADD-01 | reviewer | S5.T3 | UPU (runtime) | plan guardado; evidencia runtime (screenshot/DOM) | (no aplica) | DET-13, DET-36 | pending | 5 |
 | S5.T5 | Actualizar la doc oficial observable (RBAC del mod + los nombres de rol en docs de los dos mods) | REQ-PRESERVE-02 | developer | S5.T1 | `mods/curriculum-design/docs/*`, `mods/curriculum-mapping/docs/*` (los que apliquen) | doc refleja sets + nombres nuevos; sin nombres viejos | git revert | DET-37 | pending | 5 |
 | S5.T6 | Enviar el aviso a core por el punto ciego de la proteccion de nombres (H12, `dbSync.js:1031-1040`) — no bloqueante; registrar el canal usado | REQ-NOTIFY-01 | researcher | — | ticket / canal core | aviso enviado y registrado | (no aplica) | DET-16 | pending | 5 |
-| **S5.GATE** | **Gate de sync Session 5 (tier: T3)** — persistir, regresion completa + smoke UI, HR1/HR2/HR9 verificados con evidencia runtime, decidir continue/iterate | — | reviewer | S5.T1..S5.T6 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 5 |
+| S5.T7 | Aviso a UPONE-1530 (frontera del MCP): notificar el cambio de nombres de rol y permisos que mueven lo que el MCP expone/valida. | REQ-VIS-01 | researcher | S4.GATE | ticket / canal UPONE-1530 | aviso enviado y registrado | n/a (aviso) | DET-16 | pending | 5 |
+| **S5.GATE** | **Gate de sync Session 5 (tier: T3)** — persistir, regresion completa + smoke UI, HR1/HR2/HR9 verificados con evidencia runtime, decidir continue/iterate | — | reviewer | S5.T1..S5.T7 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 5 |
 
 ### Session 6 — Compuesto + privatizacion + vinculos (6 roles) + verificacion final [tipo: ⚑ fuerte] [tier: T3]
 
@@ -602,6 +604,8 @@ PO aprueba REQ-VIS-01: privatizar la visibilidad de las 2 apps (cd/cm) a los 6 r
 
 ## Acceptance checkpoints
 
+- [ ] **Auditoria de capabilities por rol** vs acciones declaradas ejecutada (S1.T2): huecos documentados; es el medio de verificacion de REQ-ADD-01 y REQ-PRESERVE-01.
+
 - [ ] **Funcional**: scenarios de REQ-PRESERVE-01..04, REQ-CONVIV-01, REQ-ADD-01, REQ-SET-01, REQ-SET-02, REQ-VIS-01, REQ-LINK-01, REQ-RETIRE-01 pasan.
 - [ ] **Compuesto (REQ-SET-02)**: la union resuelta del compuesto == Diseñador ∪ Autoridad por modulo; sets standalone intactos.
 - [ ] **Privatizacion (REQ-VIS-01)**: las 2 apps se ven solo por los 6 roles; los 15 restantes no las ven y ninguno las necesitaba (inventario); coordinado con UPONE-1616.
@@ -668,3 +672,10 @@ PO aprueba REQ-VIS-01: privatizar la visibilidad de las 2 apps (cd/cm) a los 6 r
 - S6: Capturar en el KB de kanai (rule records) las RULE candidatas del ticket: (1) un set (base∪extension) debe replicar el mapa del rol sin sobrantes ni faltantes; (2) el renombre de roles debe ser idempotente por nombre viejo y correr ANTES de ensureRoles. Con what/why/where/when (DET-37 dim2). (valida: REQ-SET-01, REQ-PRESERVE-02; rollback: borrar los rule records creados)
 
 ### Enmienda 9
+
+### Enmienda 10
+
+**Tasks agregadas:**
+
+- S2: Secuenciar/rebase con UPONE-1619 (mismo mods/curriculum-design/seed/_data-rbac.js): acordar orden de merge o rebase ANTES de tocar el seed (S2.T2). Riesgo alto de secuenciacion. (valida: REQ-PRESERVE-02; rollback: n/a (coordinacion))
+- S5: Aviso a UPONE-1530 (frontera del MCP): notificar el cambio de nombres de rol y permisos que mueven lo que el MCP expone/valida. (valida: REQ-VIS-01; rollback: n/a (aviso))
