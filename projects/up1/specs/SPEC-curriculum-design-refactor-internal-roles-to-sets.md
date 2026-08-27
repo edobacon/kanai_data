@@ -146,14 +146,14 @@ El sistema MUST materializar los sets via sync sin que ello cambie los permisos 
 #### Acceptance
 **El usuario puede verificar que funciona**: tras declarar los sets y correr el sync (S2-S5, sin `modRoleId` asignado), el vuelco de permisos efectivos por rol es identico al de antes de declararlos.
 
-### REQ-CONVIV-01: Con los vinculos creados (S6), el efectivo sigue sin cambiar (convivencia mapa + set)
+### REQ-CONVIV-01 `inferred`: Con los vinculos creados (S6), el efectivo sigue sin cambiar (convivencia mapa + set)
 
 > **Que cambia**: en S6 se asignan los `modRoleId` (via runbook), asi que los sets pasan a inyectar. El permiso efectivo de cada rol NO cambia igual, porque el mapa del rol sigue vivo y la inyeccion deduplica.
 > **Por que**: el mapa no se retira (cut-over diferido). El efectivo es `union(mapa, set)`; para los 4 curriculares el set replica el mapa, y para Admin/Consultor el set es subconjunto de sus directos. La union deduplicada es igual al conjunto previo.
 
 El sistema MUST garantizar que, tras asignar `modRoleId` a las 6 filas, el conjunto de capabilities efectivas de cada uno de los 6 roles sea identico al estado previo al vinculo (salvo `institution:view` ya contemplado). En particular: para los 4 curriculares `union(mapa_rol, set) == mapa_rol` (el set replica el mapa, REQ-SET-01); para Admin/Consultor el set (`Diseñador + Autoridad`) es subconjunto de sus `core_RoleCapability` directos, que ademas el core repone via `DEFAULT_ROLES` (Learn L1). Un set que conceda una capability **fuera** del conjunto previo del rol es una fuga y MUST ser detectado por el test de equivalencia (0 sobrantes, REQ-SET-01).
 
-> **Certeza por rol**: `confirmed` para los 4 curriculares (convivencia verificable por el vuelco runtime, S6.T9). Para **Admin/Consultor** es `inferred`-estructural: su convivencia NO es falsable en runtime porque el refill de core (`DEFAULT_ROLES`, Learn L1) ya hace su efectivo "todo"; queda probada estructuralmente por S6.T2 (compuesto == Diseñador ∪ Autoridad) + L1 (directos ⊇ todo) => la inyeccion del compuesto es no-op. No se afirma como hecho runtime (DET-4).
+> **Certeza por rol**: `confirmed` para los 4 curriculares (convivencia verificable por el vuelco runtime, S7.T4). Para **Admin/Consultor** es `inferred`-estructural: su convivencia NO es falsable en runtime porque el refill de core (`DEFAULT_ROLES`, Learn L1) ya hace su efectivo "todo"; queda probada estructuralmente por S6.T2 (compuesto == Diseñador ∪ Autoridad) + L1 (directos ⊇ todo) => la inyeccion del compuesto es no-op. No se afirma como hecho runtime (DET-4).
 
 **Actor**: usuario con rol activo (los 6 mapeados)
 **Layers**: backend, database
@@ -424,6 +424,8 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | `curriculum-design/tests/unit/rbacRoles.test.js` | `ROLE_NAMES` con nombres viejos; assert Consultor == READ_CAPS | nombres nuevos; READ_CAPS con institucion; nuevos tests de equivalencia y renombre |
 | `curriculum-mapping/tests/unit/rbacRoles.test.js` | compara ambos seeds por igualdad | paridad de roles conservada; composicion por modulo divergente documentada |
 | 5 documentos (identificar en S1) | nombres viejos | nombres nuevos |
+| add (doc) | — | `projects/up1/kb/sp9/UPONE-1615-escenario-final-roles-sets-permisos.md` | Doc del escenario final consolidado (REQ-DOC-01, S7.T5) |
+| add (doc) | — | `projects/up1/kb/sp9/UPONE-1615-runbook-asignacion-modrole.md` | Runbook de asignacion de modRoleId, ops up1-manager (REQ-LINK-01, S7.T2) |
 
 > **Nota DET-40 (transcripcion)**: el mapa del rol usa strings planos lowercase (`academicprogram:view`, `curriculum.status:modify`, `offering.lifecycleStatus:modify`); el formato de set-file agrupa por target con arrays de accion y admite PascalCase (`{ "AcademicProgram": ["view"], "Curriculum.status": ["modify"] }`). El sync canonicaliza (`capabilityCandidates`, `dbSync.js:880-920`: lowercasea objeto/RT, preserva el nombre de campo) y matchea el primer candidato existente. Las caps de campo/RT (`competencynode:matrix.status:modify` en cm; `offering.lifecycleStatus:modify` en cd) requieren expresar el target exacto. **Mitigacion: derivar los sets del mapa vivo, no transcribir a mano.**
 
@@ -433,10 +435,10 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 
 | # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
 |---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S1.T1 | Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Regression baseline` del ticket | REQ-PRESERVE-01, REQ-CONVIV-01 | researcher | — | ticket (baseline), UPU DB (read) | vuelco por los 6 roles capturado, guardado en el ticket | (no aplica) | DET-2, DET-13 | pending | 1 |
+| S1.T1 | Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Sessions` del ticket | REQ-PRESERVE-01, REQ-CONVIV-01 | researcher | — | ticket (baseline), UPU DB (read) | vuelco por los 6 roles capturado, guardado en el ticket | (no aplica) | DET-2, DET-13 | pending | 1 |
 | S1.T2 | Auditar rol por rol: por cada accion que declara, verificar que la capability exista/este asignada; anotar huecos (esperado: solo institucion en cd) | REQ-ADD-01, REQ-PRESERVE-01 | researcher | S1.T1 | ticket | huecos por rol listados; confirmar que el unico hueco es `institution:view` | (no aplica) | DET-4, DET-5 | pending | 1 |
 | S1.T3 | Inventariar TODAS las referencias a los nombres de rol viejos: (a) documentos (grep); (b) arrays `roles:` de layouts de cd/cm y `app.json` de otros mods (dbSync.js:846-855 re-crea roles desde layout); (c) filtro por rol activo (authChecker.js:116-118). Registrar cada una con path:linea para remediar en S4 | REQ-PRESERVE-02, REQ-RETIRE-01 | researcher | — | ticket | inventario de refs (docs+layouts+app.json+runtime) con path:linea | (no aplica) | DET-16, DET-40 | pending | 1 |
-| S1.T4 | Correr las 2 suites `rbacRoles.test.js` (cd + cm) y registrar el conteo verde como baseline de comportamiento | REQ-PRESERVE-04 | developer | — | — | `X/X passing` en ambas, guardado en `## Regression baseline` | (no aplica) | DET-7, DET-13 | pending | 1 |
+| S1.T4 | Correr las 2 suites `rbacRoles.test.js` (cd + cm) y registrar el conteo verde como baseline de comportamiento | REQ-PRESERVE-04 | developer | — | — | `X/X passing` en ambas, guardado en `## Sessions` | (no aplica) | DET-7, DET-13 | pending | 1 |
 | **S1.GATE** | **Gate de sync Session 1 (tier: T3)** — persistir baseline + auditoria en `## Sessions`, decidir continue/iterate | — | reviewer | S1.T1, S1.T2, S1.T3, S1.T4 | ticket | gate persistido + baseline verde + huecos documentados | (no aplica — cierre) | DET-20, DET-23 | pending | 1 |
 
 ### Session 2 — Criterio 2 (institucion) + declarar las 2 bases [tipo: auto] [tier: T2]
@@ -456,7 +458,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 |---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
 | S3.T1 | Declarar las 3 extensiones de cd (Revisor/Diseñador/Autoridad) con `extends` a la base + el delta de cada rol, derivado del mapa | REQ-SET-01 | developer | S2.GATE | `mods/curriculum-design/roles/*.json` | sync materializa; herencia resuelve union sin duplicar | git revert | DET-1, DET-40 | pending | 3 |
 | S3.T2 | Declarar las 3 extensiones de cm con `extends` a su base + delta (ojo caps de campo `competencynode:matrix.status:modify`, 3 segmentos) | REQ-SET-01 | developer | S2.GATE | `mods/curriculum-mapping/roles/*.json` | sync materializa; caps de campo/RT resueltas al candidato canonico correcto | git revert | DET-1, DET-40 | pending | 3 |
-| S3.T3 | Test de equivalencia estructural: por rol/mod, union `base∪extension` resuelta == `MOD_CAPABILITIES_BY_ROLE` (count-agnostic) | REQ-SET-01, REQ-PRESERVE-01 | developer | S3.T1, S3.T2 | ambos `rbacRoles.test.js` | test verde; 0 faltantes/sobrantes por rol | git revert | DET-7, DET-40 | pending | 3 |
+| S3.T3 | Test de equivalencia estructural: por rol/mod, union `base∪extension` resuelta == `MOD_CAPABILITIES_BY_ROLE` (count-agnostic); + assert de no-colision (D3, mitiga H12): ningun nombre de set coincide con un nombre de rol (Admin, Consultor, 4 Learning Assurance) | REQ-SET-01, REQ-PRESERVE-01 | developer | S3.T1, S3.T2 | ambos `rbacRoles.test.js` | test verde; 0 faltantes/sobrantes por rol | git revert | DET-7, DET-40 | pending | 3 |
 | S3.T4 | Reformular el test de paridad cd↔cm: conservar la paridad de nombres de rol; documentar que la composicion por modulo diverge a proposito (D8) | REQ-PRESERVE-04 | developer | S3.T3 | `mods/curriculum-mapping/tests/unit/rbacRoles.test.js` | suite verde con el nuevo invariante documentado | git revert | DET-7 | pending | 3 |
 | **S3.GATE** | **Gate de sync Session 3 (tier: T2)** — persistir, ambas suites verdes, decidir continue/iterate | — | reviewer | S3.T1..S3.T4 | ticket | gate persistido + tests verdes | (no aplica — cierre) | DET-20, DET-23 | pending | 3 |
 
@@ -474,7 +476,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 
 | # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
 |---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S5.T1 | Retirar los 2 fixtures (`roles/GestorCurricular.json`, `roles/LectorCurricular.json`) y agregar el retiro GUARDADO del `core_Role` huerfano (solo si 0 asignaciones y 0 layouts) al seed de cd | REQ-RETIRE-01 | developer | S4.GATE | `mods/curriculum-design/roles/` (rm), `mods/curriculum-design/seed/_data-rbac.js` | sync elimina los 2 `core_ModRole`; huerfano eliminado si desusado | git revert + restaurar fixtures | DET-8, DET-40 | pending | 5 |
+| S5.T1 | Retirar los 2 fixtures (`roles/GestorCurricular.json`, `roles/LectorCurricular.json`) y capturar el `core_Role` huerfano (id, nombre, asignaciones, layouts) ANTES del retiro, y agregar el retiro GUARDADO (solo si 0 asignaciones y 0 layouts) al seed de cd | REQ-RETIRE-01 | developer | S4.GATE | `mods/curriculum-design/roles/` (rm), `mods/curriculum-design/seed/_data-rbac.js` | sync elimina los 2 `core_ModRole`; huerfano eliminado si desusado | git revert (archivos del mod) + re-crear el `core_Role` desde la captura previa; el borrado corre SOLO con 0 asignaciones y 0 layouts (guard), por lo que la re-creacion restaura un rol inerte identico (DET-8) | DET-8, DET-40 | pending | 5 |
 | S5.T2 | Correr el sync 2× y confirmar que ni el huerfano ni los fixtures reaparecen (HR9) | REQ-RETIRE-01 | reviewer | S5.T1 | UPU DB (read) | 2ª corrida no regenera nada | (no aplica) | DET-13, DET-33 | pending | 5 |
 | S5.T3 | Verificacion runtime de permisos efectivos rol por rol (smoke UPU) vs baseline S1 (HR1): ningun rol pierde caps; entrar con cada rol y ejecutar sus acciones | REQ-PRESERVE-01 | reviewer | S5.T1 | UPU (runtime) | vuelco por rol == baseline (+institucion en cd); evidencia runtime real | (no aplica) | DET-13, DET-33, DET-36 | pending | 5 |
 | S5.T4 | Caso del PO end-to-end (HR2): entrar como Diseñador, crear un plan de estudio con el select de institucion poblado y guardar | REQ-ADD-01 | reviewer | S5.T3 | UPU (runtime) | plan guardado; evidencia runtime (screenshot/DOM) | (no aplica) | DET-13, DET-36 | pending | 5 |
@@ -492,12 +494,14 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | S6.T1 | Declarar el set compuesto (extends Autoridad + delta Diseñador) en cd y en cm, derivado del mapa | REQ-SET-02 | developer | S5.GATE | `mods/curriculum-design/roles/*.json`, `mods/curriculum-mapping/roles/*.json` | sync materializa; union resuelta == Diseñador ∪ Autoridad por mod | git revert (borrar archivos) | DET-1, DET-40 | pending | 6 |
 | S6.T2 | Test de equivalencia del compuesto: union resuelta == `set_Diseñador ∪ set_Autoridad` (0 faltantes/sobrantes) | REQ-SET-02, REQ-CONVIV-01 | developer | S6.T1 | ambos `rbacRoles.test.js` | test verde | git revert | DET-7, DET-40 | pending | 6 |
 | S6.T3 | Declarar `roles:[los 6]` en el `app.json` de cd y cm; verificar que `syncAppRoles` crea las 6 filas (modRoleId null) y privatiza | REQ-VIS-01 | developer | S6.T0 | `mods/curriculum-design/config/app.json`, `mods/curriculum-mapping/config/app.json` | sync crea 6 filas por app; apps ya no publicas | git revert (quitar array `roles`) | DET-8, DET-40 | pending | 6 |
-| S6.T4 | Verificar privatizacion contra el inventario: los 15 roles no incluidos no tienen alcance curricular legitimo; smoke UPU con un rol fuera de los 6 (no ve las apps) y uno dentro (si) | REQ-VIS-01 | reviewer | S6.T3 | UPU (runtime), `kb/sp9/UPONE-1615-inventario-de-roles.md` | evidencia runtime: menu privatizado correcto; 0 roles legitimos afuera | (no aplica) | DET-13, DET-33, DET-36 | pending | 6 |
-| S6.T5 | Producir el runbook de asignacion de `modRoleId` en up1-manager (Admin/Consultor -> compuesto; 4 curriculares -> su set uno-a-uno; gotcha stale-deletion; nota refill de core) | REQ-LINK-01 | developer | S6.T1 | ticket / doc runbook | runbook completo, paso a paso, con las 12 asignaciones (6 roles × 2 apps) | (no aplica) | DET-37 | pending | 6 |
-| S6.T6 | Aplicar el runbook en UPU (smoke) y verificar el efectivo con vinculos: vuelco por los 6 roles == baseline S1 (salvo institucion); Admin/Consultor ven y operan; PO end-to-end sigue OK | REQ-CONVIV-01, REQ-LINK-01 | reviewer | S6.T3, S6.T5 | UPU (runtime) | evidencia runtime: modRoleId asignado en las 6 filas; efectivo == baseline; dedup confirmado | revertir asignaciones en up1-manager (set 'No profile') | DET-13, DET-33, DET-36 | pending | 6 |
-| S6.T8 | Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5 | REQ-DOC-01 | — | — | — | — | git revert de la doc | — | pending | 6 |
-| S6.T9 | Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde. | REQ-TEST-01, REQ-CONVIV-01 | — | — | — | — | revertir tests agregados | — | pending | 6 |
-| **S6.GATE** | **Gate de sync Session 6 (tier: T3)** — persistir, privatizacion verificada + convivencia (efectivo sin cambio) con evidencia runtime, runbook entregado, coordinacion UPONE-1616 registrada, decidir cierre | — | reviewer | S6.T0..S6.T9 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 6 |
+| **S6.GATE** | **Gate de sync Session 6 (tier: T3)** — persistir; sets compuestos declarados, test de equivalencia verde, privatizacion declarada (app.json, filas modRoleId null); decidir continue/iterate | — | reviewer | S6.T0..S6.T3 | ticket | gate persistido + tests verdes + privatizacion declarada | (no aplica — cierre) | DET-20, DET-23 | pending | 6 |
+| S7.T1 | Verificar privatizacion contra el inventario: los 15 roles no incluidos no tienen alcance curricular legitimo; smoke UPU con un rol fuera de los 6 (no ve las apps) y uno dentro (si) | REQ-VIS-01 | reviewer | S6.T3 | UPU (runtime), `kb/sp9/UPONE-1615-inventario-de-roles.md` | evidencia runtime: menu privatizado correcto; 0 roles legitimos afuera | (no aplica) | DET-13, DET-33, DET-36 | pending | 7 |
+| S7.T2 | Producir el runbook de asignacion de `modRoleId` en up1-manager (Admin/Consultor -> compuesto; 4 curriculares -> su set uno-a-uno; gotcha stale-deletion; nota refill de core) | REQ-LINK-01 | developer | S6.T1 | `projects/up1/kb/sp9/UPONE-1615-runbook-asignacion-modrole.md` | runbook completo, paso a paso, con las 12 asignaciones (6 roles × 2 apps) | (no aplica) | DET-37 | pending | 7 |
+| S7.T3 | Aplicar el runbook en UPU (smoke) y verificar el efectivo con vinculos: vuelco por los 6 roles == baseline S1 (salvo institucion); Admin/Consultor ven y operan; PO end-to-end sigue OK | REQ-CONVIV-01, REQ-LINK-01 | reviewer | S6.T3, S7.T2 | UPU (runtime) | evidencia runtime: modRoleId asignado en las 6 filas; efectivo == baseline; dedup confirmado | revertir asignaciones en up1-manager (set 'No profile') | DET-13, DET-33, DET-36 | pending | 7 |
+| S7.T4 | Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde. | REQ-TEST-01, REQ-CONVIV-01 | — | — | — | — | revertir tests agregados | — | pending | 7 |
+| S7.T5 | Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S7.T2 | REQ-DOC-01 | developer | S7.T2, S7.T3 | `projects/up1/kb/sp9/UPONE-1615-escenario-final-roles-sets-permisos.md` | doc publicada refleja el estado real verificado (vs baseline S1) | git revert de la doc | DET-37 | pending | 7 |
+| S7.T6 | Capturar en el KB de kanai (rule records) las RULE candidatas del ticket: (1) un set (base∪extension) debe replicar el mapa del rol sin sobrantes ni faltantes; (2) el renombre de roles debe ser idempotente por nombre viejo y correr ANTES de ensureRoles. Con what/why/where/when (DET-37 dim2). | REQ-SET-01, REQ-PRESERVE-02 | — | — | — | — | borrar los rule records creados | — | pending | 7 |
+| **S7.GATE** | **Gate de sync Session 7 (tier: T3)** — persistir; verificacion runtime con vinculos (efectivo == baseline S1), privatizacion verificada, runbook entregado+aplicado, doc del escenario final, RULE capturada; decidir cierre | — | reviewer | S7.T1..S7.T6 | ticket | gate persistido + evidencia runtime + doc + runbook | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 7 |
 
 ## Constraints
 
@@ -522,7 +526,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|------------|
 | Retirar el mapa del rol sin vinculos → regresion total | Baja (mitigado por diseño) | Todos los roles pierden permisos runtime | REQ-PRESERVE-01: el mapa NO se retira. Sin vinculo el set es inerte; con vinculo (S6) el efectivo no cambia por dedup |
-| Con vinculos vivos (S6), un set que concede DE MAS = fuga inmediata | Media | Un rol gana permisos no previstos | Test de equivalencia 0 sobrantes (S3.T3/S6.T2) + verificacion runtime (S6.T9) |
+| Con vinculos vivos (S6), un set que concede DE MAS = fuga inmediata | Media | Un rol gana permisos no previstos | Test de equivalencia 0 sobrantes (S3.T3/S6.T2) + verificacion runtime (S7.T4) |
 | Transcribir mal ~100 caps a los sets (casing / caps de campo) | Media | Regresion silenciosa al crear vinculos | Derivar del mapa vivo + test de equivalencia estructural (S3.T3) + baseline runtime (S5.T3) |
 | Renombre ingenuo forka (4 nuevos + 4 viejos con 120 asignaciones) | Media | Perdida de asignaciones / roles duplicados | Paso de renombre por nombre viejo idempotente en ambos seeds + verificacion HR3 sobre base con nombres viejos (S4) |
 | Colision de archivo con UPONE-1619 en `_data-rbac.js` | Media | Bloqueo/pisada de cambios | Secuenciar o rebasar; coordinar antes de tocar el archivo |
@@ -581,10 +585,10 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 - **Session**: design (rearmado).
 
 ### DEC-LOCAL-06: coverage-scope → smoke+na
-Camino runtime del resolver de sets (resolveModRoleCapabilityNames/enrichUserWithModRoleCapabilities: herencia multinivel, dedup por nombre, guarda de ciclos) es CORE (H1: el ticket consume, no construye), cubierto por sus tests (UPONE-1353/1354). En el mod se verifica por smoke runtime S6.T9 con vinculo presente (DET-36). Unit del resolver desde el mod = N/A: fuera de execute_scope (mods/curriculum-design|mapping/), Aduana mod-only. Cobertura estructural en scope: S3.T3, S6.T2 (equivalencia set<->mapa sobre roles/*.json).
+Camino runtime del resolver de sets (resolveModRoleCapabilityNames/enrichUserWithModRoleCapabilities: herencia multinivel, dedup por nombre, guarda de ciclos) es CORE (H1: el ticket consume, no construye), cubierto por sus tests (UPONE-1353/1354). En el mod se verifica por smoke runtime S7.T4 con vinculo presente (DET-36). Unit del resolver desde el mod = N/A: fuera de execute_scope (mods/curriculum-design|mapping/), Aduana mod-only. Cobertura estructural en scope: S3.T3, S6.T2 (equivalencia set<->mapa sobre roles/*.json).
 
 ### DEC-LOCAL-07: conviv-admin-consultor → inferred-structural
-La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO es falsable en runtime: el refill de core (DEFAULT_ROLES, Learn L1) mantiene su efectivo en "todo", asi que el vuelco no puede detectar un cambio. Se degrada esa parte de REQ-CONVIV-01 a inferred y se prueba estructuralmente: S6.T2 (compuesto == Diseñador union Autoridad) + L1 (directos incluyen todo) => inyeccion no-op. Los 4 curriculares siguen confirmed (verificable por vuelco runtime, S6.T9). Se descarta el assert de subconjunto por tautologico (directos = todo por L1) y por rozar execute_scope (core).
+La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO es falsable en runtime: el refill de core (DEFAULT_ROLES, Learn L1) mantiene su efectivo en "todo", asi que el vuelco no puede detectar un cambio. Se degrada esa parte de REQ-CONVIV-01 a inferred y se prueba estructuralmente: S6.T2 (compuesto == Diseñador union Autoridad) + L1 (directos incluyen todo) => inyeccion no-op. Los 4 curriculares siguen confirmed (verificable por vuelco runtime, S7.T4). Se descarta el assert de subconjunto por tautologico (directos = todo por L1) y por rozar execute_scope (core).
 
 ## Acceptance checkpoints
 
@@ -619,20 +623,20 @@ La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO 
 - edit S3.T4 { isTest=true }
 - edit S4.T3 { isTest=true }
 - edit S6.T2 { isTest=true }
-- edit S6.T3 { rollback="Rollback ORDENADO (irreversible respecto de modRoleId): (1) primero revertir en up1-manager las asignaciones de modRoleId hechas en S6.T6 o restaurar desde la captura previa de las 12 asignaciones; (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas up1_suite_app_role con sus modRoleId, que git no restaura." }
+- edit S6.T3 { rollback="Rollback ORDENADO (irreversible respecto de modRoleId): (1) primero revertir en up1-manager las asignaciones de modRoleId hechas en S7.T3 o restaurar desde la captura previa de las 12 asignaciones; (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas up1_suite_app_role con sus modRoleId, que git no restaura." }
 
 ### Enmienda 4
 
 **Task ops:**
 
-- edit S6.T8 { desc="Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5" }
-- edit S6.T3 { rollback="Rollback ORDENADO, irreversible respecto de modRoleId: (1) en up1-manager poner en null el modRoleId de las 6 filas up1_suite_app_role (deshace las asignaciones de S6.T6; el pre-estado real es modRoleId null); (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas con sus modRoleId, que git no restaura." }
+- edit S7.T5 { desc="Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S7.T2" }
+- edit S6.T3 { rollback="Rollback ORDENADO, irreversible respecto de modRoleId: (1) en up1-manager poner en null el modRoleId de las 6 filas up1_suite_app_role (deshace las asignaciones de S7.T3; el pre-estado real es modRoleId null); (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas con sus modRoleId, que git no restaura." }
 
 ### Enmienda 5
 
 **Task ops:**
 
-- edit S1.T1 { desc="Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Regression baseline` del ticket", validates=["REQ-PRESERVE-01","REQ-CONVIV-01"] }
+- edit S1.T1 { desc="Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Sessions` del ticket", validates=["REQ-PRESERVE-01","REQ-CONVIV-01"] }
 
 ### Enmienda 6
 
@@ -645,4 +649,10 @@ La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO 
 
 **Task ops:**
 
-- edit S6.T9 { desc="Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde.", validates=["REQ-TEST-01","REQ-CONVIV-01"], isTest=true }
+- edit S7.T4 { desc="Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde.", validates=["REQ-TEST-01","REQ-CONVIV-01"], isTest=true }
+
+### Enmienda 8
+
+**Tasks agregadas:**
+
+- S6: Capturar en el KB de kanai (rule records) las RULE candidatas del ticket: (1) un set (base∪extension) debe replicar el mapa del rol sin sobrantes ni faltantes; (2) el renombre de roles debe ser idempotente por nombre viejo y correr ANTES de ensureRoles. Con what/why/where/when (DET-37 dim2). (valida: REQ-SET-01, REQ-PRESERVE-02; rollback: borrar los rule records creados)
