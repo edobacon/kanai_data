@@ -98,9 +98,15 @@ Unico mod pack cargado hoy (`mods/academic-scheduling/ai/`). Dominio: asignar se
 
 ## 5. Curriculum design / mapping: que sabe hoy
 
-- **No hay tools dedicadas** para curriculum-design ni curriculum-mapping: no existe su pack `ai/` (gate 2 del [overview](overview.md#6-activacion-de-mods-los-dos-gates)), aunque sus apps esten activas.
-- **Si se pueden LEER sus datos** con las tools genericas, porque los objetos existen y el rol los ve: programas academicos (`AcademicProgram`), planes de estudio (`Curriculum`, recordType `Plan`), asignaturas y su estructura (`CurricularSection` + sus RecordTypes), `requirement`, `planEntry`, `BibliographyReference`, y para mapping las competencias (`CompetencyNode` + `matrix`/`competency`/`subcompetency`), `CompetencyAlignment` ("Tributacion"), `CompetencyNodeOwnerUnit`.
-- **Limite**: puede leer/escribir los datos como objetos genericos, pero **no tiene inteligencia de dominio** (busquedas tolerantes a acentos, armar la malla, prerequisitos, versionar/clonar, transiciones de estado, perfil de egreso). Eso requeriria agregar un pack `ai/` por mod — ver [dev-and-usage.md](dev-and-usage.md#4-agregar-un-mod-pack).
+> **Actualizacion 2026-08-27 (UPONE-1530):** ambos mods ya tienen pack `ai/`. Antes no existia; hoy si.
+
+- **curriculum-design**: pack `ai/` con 4 tools de dominio (`cd_validate_activity_evaluations`, `cd_create_formtemplate_for_activity`, `cd_add_plan_entries_batch`, `cd_remove_plan_entries_batch`) + contrato de la asignatura (`Activity`/`Course`). Lectura/edicion del curso por las genericas guiada por el contrato.
+- **curriculum-mapping**: pack `ai/` **read-only** (UPONE-1530, primera pasada). **Sin tools de dominio** (`tools: []`): la lectura va por las genericas. Expone el subconjunto **estable** con `recordType` acotado:
+  - esquema de niveles (`LevelScheme`, recordType `Scheme`),
+  - esquema de cobertura (`CoverageScheme`, forma base),
+  - la **matriz raiz** de competencias (`CompetencyNode`, recordType `Matrix`; datos generales de UPONE-1537).
+  Los contratos presentan los campos **por nombre** (`fieldDocs`). **Frontera de lo diferido** (declarada en `notExposed`): toda escritura; las competencias y subcompetencias (recordType `Competency`/`SubCompetency`) y la adopcion (Facultad/Planes) que construye **UPONE-1633**; las rubricas (`RubricDescriptor`, `RubricDimension`); y el alineamiento (`CompetencyAlignment`).
+- **Limite conocido de escritura (curriculum-mapping)**: la escritura generica del MCP nuevo esta abierta y la unica frontera efectiva es RBAC (`src/index.js:42`); este ticket **no** agrega enforcement por objectType. La confirmacion en vivo del rechazo por falta de capability (lectura y escritura) quedo **inferida del gate** (`src/tools/capability-gate.js`) y **diferida** a un follow-up con un rol negativo (decision del PO 2026-08-27; ver el spec `SPEC-mcp-curriculum-mapping-read`).
 
 ## 6. Reglas de uso que el agente debe respetar
 
