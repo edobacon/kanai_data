@@ -377,9 +377,9 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 
 | # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
 |---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S1.T1 | Volcar el conjunto de capabilities efectivas por rol en UPU (antes de tocar nada) y guardarlo como baseline en `## Regression baseline` del ticket | REQ-PRESERVE-01 | researcher | — | ticket (baseline), UPU DB (read) | vuelco por los 4 roles capturado, guardado en el ticket | (no aplica) | DET-2, DET-13 | pending | 1 |
+| S1.T1 | Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Regression baseline` del ticket | REQ-PRESERVE-01, REQ-CONVIV-01 | researcher | — | ticket (baseline), UPU DB (read) | vuelco por los 6 roles capturado, guardado en el ticket | (no aplica) | DET-2, DET-13 | pending | 1 |
 | S1.T2 | Auditar rol por rol: por cada accion que declara, verificar que la capability exista/este asignada; anotar huecos (esperado: solo institucion en cd) | REQ-ADD-01, REQ-PRESERVE-01 | researcher | S1.T1 | ticket | huecos por rol listados; confirmar que el unico hueco es `institution:view` | (no aplica) | DET-4, DET-5 | pending | 1 |
-| S1.T3 | Identificar los 5 documentos que citan los nombres de rol viejos (barrido `grep` en repo) y registrarlos para el renombre de S4 | REQ-PRESERVE-02 | researcher | — | ticket | lista de 5 docs con path:linea | (no aplica) | DET-16 | pending | 1 |
+| S1.T3 | Inventariar TODAS las referencias a los nombres de rol viejos: (a) documentos (grep); (b) arrays `roles:` de layouts de cd/cm y `app.json` de otros mods (dbSync.js:846-855 re-crea roles desde layout); (c) filtro por rol activo (authChecker.js:116-118). Registrar cada una con path:linea para remediar en S4 | REQ-PRESERVE-02, REQ-RETIRE-01 | researcher | — | ticket | inventario de refs (docs+layouts+app.json+runtime) con path:linea | (no aplica) | DET-16, DET-40 | pending | 1 |
 | S1.T4 | Correr las 2 suites `rbacRoles.test.js` (cd + cm) y registrar el conteo verde como baseline de comportamiento | REQ-PRESERVE-04 | developer | — | — | `X/X passing` en ambas, guardado en `## Regression baseline` | (no aplica) | DET-7, DET-13 | pending | 1 |
 | **S1.GATE** | **Gate de sync Session 1 (tier: T3)** — persistir baseline + auditoria en `## Sessions`, decidir continue/iterate | — | reviewer | S1.T1, S1.T2, S1.T3, S1.T4 | ticket | gate persistido + baseline verde + huecos documentados | (no aplica — cierre) | DET-20, DET-23 | pending | 1 |
 
@@ -411,7 +411,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | S4.T1 | Implementar el paso de renombre por nombre viejo (idempotente, guardado) en el seed de cd, ANTES de `ensureRoles`; actualizar `ROLE_DEFINITIONS` a los nombres nuevos | REQ-PRESERVE-02 | developer | S3.GATE | `mods/curriculum-design/seed/_data-rbac.js` | corrida sobre base con nombres viejos → 4 roles renombrados | git revert | DET-8, DET-40 | pending | 4 |
 | S4.T2 | Replicar el paso de renombre en el seed de cm (idempotente en cualquier orden respecto de cd); actualizar `ROLE_DEFINITIONS` | REQ-PRESERVE-02 | developer | S4.T1 | `mods/curriculum-mapping/seed/_data-rbac.js` | corrida en cualquier orden converge a 4 roles nuevos | git revert | DET-8, DET-40 | pending | 4 |
 | S4.T3 | Test de renombre idempotente sobre base con nombres viejos (HR3): 4 roles no 8, 120 asignaciones conservadas, 0 nombres viejos | REQ-PRESERVE-02 | developer | S4.T2 | ambos `rbacRoles.test.js` | test verde (integration si el mock no cubre el conteo real de roles) | git revert | DET-7, DET-40 | pending | 4 |
-| S4.T4 | Barrer los 5 documentos + assertions de tests que citan nombres viejos → nombres nuevos | REQ-PRESERVE-02 | developer | S4.T3 | 5 docs + ambos `rbacRoles.test.js` | grep de nombres viejos → 0 en repo | git revert | DET-16 | pending | 4 |
+| S4.T4 | Remediar TODAS las referencias del inventario de S1.T3 (docs + assertions de tests + layouts/app.json + runtime) de nombres viejos → nuevos, para que el sync no re-cree roles con nombre viejo | REQ-PRESERVE-02, REQ-RETIRE-01 | developer | S4.T3 | docs + ambos `rbacRoles.test.js` + layouts/app.json de cd/cm | grep de nombres viejos → 0 en repo (docs+codigo); sync no re-crea rol con nombre viejo | git revert | DET-16, DET-40 | pending | 4 |
 | **S4.GATE** | **Gate de sync Session 4 (tier: T3)** — persistir, verificar HR3 sobre base con nombres viejos, decidir continue/iterate | — | reviewer | S4.T1..S4.T4 | ticket | gate persistido + HR3 verificado + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-40 | pending | 4 |
 
 ### Session 5 — Retiro destructivo + verificacion runtime rol por rol + docs + aviso [tipo: ⚑ fuerte] [tier: T3]
@@ -567,7 +567,7 @@ Testing como requisito final: cobertura que ejercite el camino real (vinculacion
 **Tasks agregadas:**
 
 - S6: Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5 (valida: REQ-DOC-01; rollback: git revert de la doc)
-- S5: Cobertura del camino real + verificacion runtime rol por rol (smoke UPU) + regresion RBAC verde (valida: REQ-TEST-01, test; rollback: revertir tests agregados)
+- S6.T9 (runtime, DET-36): verificacion del camino CON vinculos (modRoleId != null): vuelco por los 6 roles == baseline S1 (salvo institucion), evidencia herencia+dedup en runtime; evidencia concreta screenshot/console/DOM. NO unit del resolver de core (N/A, ver coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde. (valida: REQ-TEST-01, REQ-CONVIV-01)
 
 ### Enmienda 2
 **REQs:**
@@ -599,3 +599,22 @@ Enviar a team core el aviso del punto ciego de validateModRoleNameCollisions (H1
 
 - edit S6.T8 { desc="Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5" }
 - edit S6.T3 { rollback="Rollback ORDENADO, irreversible respecto de modRoleId: (1) en up1-manager poner en null el modRoleId de las 6 filas up1_suite_app_role (deshace las asignaciones de S6.T6; el pre-estado real es modRoleId null); (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas con sus modRoleId, que git no restaura." }
+
+### Enmienda 5
+
+**Task ops:**
+
+- edit S1.T1 { desc="Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Regression baseline` del ticket", validates=["REQ-PRESERVE-01","REQ-CONVIV-01"] }
+
+### Enmienda 6
+
+**Task ops:**
+
+- edit S1.T3 { desc="Inventariar TODAS las referencias a los nombres de rol viejos: (a) documentos (grep); (b) arrays roles: de layouts de cd/cm y app.json de otros mods (dbSync.js:846-855 re-crea roles desde layout); (c) filtro por rol activo (authChecker.js:116-118). Registrar cada una con path:linea para remediar en S4", validates=["REQ-PRESERVE-02","REQ-RETIRE-01"] }
+- edit S4.T4 { desc="Remediar TODAS las referencias del inventario de S1.T3 (docs + assertions de tests + layouts/app.json + runtime) de nombres viejos a nuevos, para que el sync no re-cree roles con nombre viejo", validates=["REQ-PRESERVE-02","REQ-RETIRE-01"] }
+
+### Enmienda 7
+
+**Task ops:**
+
+- edit S6.T9 { desc="Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde.", validates=["REQ-TEST-01","REQ-CONVIV-01"], isTest=true }
