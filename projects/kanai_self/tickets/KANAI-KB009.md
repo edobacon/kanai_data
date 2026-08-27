@@ -49,6 +49,11 @@ Durante la ejecución de un ticket real (up1 / UPONE-1530) el LLM (Claude 4.8) N
 - Construir `kanai export-rules --global` (regenerable, entre marcadores, "no editar a mano") que escriba el contrato + DETs condensados de Kanai en el `CLAUDE.md` global, **reemplazando el bloque DKC** (Kanai es el sucesor; los DET son casi 1:1).
 - El instalador (`pnpm kanai:install`) debe hacer las 3 cosas: skills + reglas al global + el hook del punto 3.
 
+### 7. Integración con el host git / creación de PR (P1)
+- Kanai NO sabe crear ni comentar PRs, ni conoce el host git de los repos. En UPONE-1530 el push + los dos PR (Bitbucket) los hizo el LLM con recursos de la era DKC/dredd, FUERA de Kanai: credenciales `~/.bitbucket.env` + `~/.bitbucket_token`, el helper `deckard/commands/dredd-bb.sh` (lee/comenta, no crea) y una memoria del LLM con el endpoint de creación.
+- `DET-19` solo fija la convención de nombres (usar el id externo en commits/branches/PRs), NO una capacidad.
+- **Fix**: que Kanai conozca el host git por repo (Bitbucket Cloud en up1) y pueda, como parte del cierre, guiar/ejecutar push + apertura de PR (título/descripcion desde el ticket, base configurable), en vez de depender de que el LLM traiga la integración por fuera. Considerar reusar/portar el mecanismo de `dredd-bb.sh` a Kanai (con las credenciales resueltas por config, nunca impresas).
+
 ## Fuera de alcance
 - Migrar los proyectos existentes de DKC (ya migrados). Este ticket es sobre el MOTOR/instalación de Kanai, no sobre datos.
 - Reescribir el modelo de datos del spec (evaluar si el cuerpo se renderiza desde estructura es parte de #4, pero su implementación completa puede derivar a su propio ticket).
@@ -60,6 +65,7 @@ Durante la ejecución de un ticket real (up1 / UPONE-1530) el LLM (Claude 4.8) N
 - [ ] Hay tools MCP para test cases, learns (refine/discard) y teach; un ticket se puede ejecutar y cerrar SIN tocar el store a mano.
 - [ ] `refine_spec` no duplica tasks; no se re-derivan TCs basura.
 - [ ] `kanai export-rules --global` inyecta las reglas de Kanai en el global y reemplaza el bloque DKC; el instalador lo corre.
+- [ ] Kanai conoce el host git por repo y puede guiar/ejecutar push + apertura de PR desde el cierre, sin depender de recursos de DKC/dredd externos.
 
 ## Origen
 Detectado ejecutando up1/UPONE-1530 (Curriculum Mapping | MCP sync) por Kanai el 2026-08-27. Ese ticket se completó (S1-S3, verificación runtime) pero el registro se hizo mayormente por edición directa del store por los gaps de arriba.
