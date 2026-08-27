@@ -24,6 +24,7 @@ Ante cualquier conflicto entre lo que dice un ticket, un doc de sprint, un comen
 | `features/` | Capacidades transversales de la plataforma | Si | Si |
 | `core/` | Comportamiento de core y de cada workspace (object-manager, layout, suite) | Si | Si |
 | `curriculum-design/`, `mods/` | Estado actual de cada mod | Si | Si |
+| `mcp/` | Servidor MCP (up1-mcp interno): servicios, transporte, dev local, mod packs | Si | Si |
 | `operations/` | Setup, entorno local, navegacion, reset de BD | Si | Si |
 | `confluence/`, `onboarding/`, `learning-assurance/` | Material derivado / de contexto | Si | Parcial (derivado) |
 | `sp4/`, `sp5/`, `sp6/`, `sp7/` ... | **Trabajo y analisis DURANTE el sprint**: requerimientos, reuniones, QA, reviews, deltas de analisis, propuestas | **No** (historico) | **No** |
@@ -32,7 +33,7 @@ Ante cualquier conflicto entre lo que dice un ticket, un doc de sprint, un comen
 
 **El punto clave sobre `sp*/`**: son el registro del trabajo hecho durante un sprint. **No reflejan necesariamente lo implementado**: pueden contener tickets completados o no, disenos que despues cambiaron, propuestas descartadas y analisis previos al codigo final. Son insumo historico, no la doc viva. No se actualizan hacia atras; quedan como estaban.
 
-La doc **completa y vigente** vive en las carpetas evergreen (`features/`, `core/`, `curriculum-design/`, `mods/`, `operations/`). Ahi es donde se consolida lo que de verdad se construyo.
+La doc **completa y vigente** vive en las carpetas evergreen (`features/`, `core/`, `curriculum-design/`, `mods/`, `mcp/`, `operations/`). Ahi es donde se consolida lo que de verdad se construyo.
 
 ## 3. Regla de oro al actualizar docs externos
 
@@ -51,6 +52,7 @@ La doc **completa y vigente** vive en las carpetas evergreen (`features/`, `core
 | Capacidad transversal nueva (aplica a varios objetos/mods) | `features/<capacidad>.md` (nuevo) + fila en `index.md` |
 | Comportamiento de core / de un workspace | `core/<workspace>.md` o `core/object-manager.md` |
 | Trabajo dentro de un mod | `mods/example-<mod>.md` y/o la carpeta del mod (`curriculum-design/`, etc.) |
+| Servidor MCP (up1-mcp interno): servicios, transporte, dev local, mod packs | `mcp/<tema>.md` |
 | Setup, entorno, operacion | `operations/<tema>.md` |
 | Analisis profundo / diseno / propuesta no implementada | `sp<N>/` (queda como analisis, se referencia desde el evergreen si aporta) |
 

@@ -10,7 +10,7 @@ repos: [uplanner/up1 (monorepo)]
 
 Plataforma central de uPlanner para instituciones educativas. Monorepo multi-tenant que integra mods independientes en un solo sistema cohesivo.
 
-> **Antes de actualizar cualquier doc**: leer [mantenimiento.md](mantenimiento.md). Principio rector: **el codigo manda**. Las carpetas `sp*/` son trabajo y analisis de sprint (historico), no fuente de verdad de lo implementado; la doc viva y completa vive en `features/`, `core/`, `curriculum-design/`, `mods/` y `operations/`, verificada contra el codigo real.
+> **Antes de actualizar cualquier doc**: leer [mantenimiento.md](mantenimiento.md). Principio rector: **el codigo manda**. Las carpetas `sp*/` son trabajo y analisis de sprint (historico), no fuente de verdad de lo implementado; la doc viva y completa vive en `features/`, `core/`, `curriculum-design/`, `mods/`, `mcp/` y `operations/`, verificada contra el codigo real.
 
 ```text
                     ┌─────────┐
@@ -99,6 +99,16 @@ Node.js 22, PostgreSQL, GraphQL (Apollo Server 5), Prisma ORM, Vue 3, Nuxt 4, Bo
 | [operations/playwright-navigation.md](operations/playwright-navigation.md) | Navegacion uP1 con Playwright: login Clerk, sidebar, modales, busqueda, edicion inline, helpers reutilizables |
 | [operations/n8n-local-setup.md](operations/n8n-local-setup.md) | Setup local de n8n sin Docker: pnpm, crear BD, cuentas owner/member, session bridge, API key rotation, troubleshooting |
 | [operations/yupi-deployment.md](operations/yupi-deployment.md) | **Deployment de Yupi + tuning de CI** (UPONE-1435): Yupi via submodulos (up1-Yupi/{ai-core,ai-bridge,ai-observability}), getYupiRepos(), retiro de AI infra embebida, memoria de build Docker 6144 MB, lifecycle de mods (active vs standby) |
+
+### MCP — Servidor de agentes (Model Context Protocol)
+
+Servidor que permite a agentes externos (Claude, ChatGPT, Gemini) operar uP1 con la identidad y permisos reales del usuario, via HTTP + Clerk OAuth. Workspace `mcp` del monorepo (up1-mcp interno; reemplaza a Elric).
+
+| Archivo | Descripcion |
+|---------|-------------|
+| [mcp/overview.md](mcp/overview.md) | **Vision general**: que es y donde vive, relacion con Elric, transporte HTTP + OAuth, modelo de sesion, seguridad (auth + tenant), los dos gates de activacion de mods, motor declarativo |
+| [mcp/services.md](mcp/services.md) | **Catalogo de servicios**: tools core genericas (CRUD, permisos), sesion/institucion, excepciones core (delete con impacto, change history, create guide), mod pack `academic-scheduling` (as_*), estado de curriculum-design/mapping, reglas de uso del agente |
+| [mcp/dev-and-usage.md](mcp/dev-and-usage.md) | **Dev local y uso**: loop de dev (up1-start.sh --mcp, npm run dev, sync, .env), conectar Claude Code (registro http + OAuth), gotchas de auth (pubkey del object-manager, identidad +clerk_test), como agregar un mod pack minimo, troubleshooting |
 
 ### Confluence (extraccion)
 
