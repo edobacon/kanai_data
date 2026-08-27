@@ -55,7 +55,7 @@ status: draft
 - **Acotar el permiso `offering:create/modify` del Diseñador** (O2): requiere acuerdo con engagement. Open question, no task.
 - **Tocar core**: solo un aviso por el punto ciego de la proteccion de nombres (H12).
 
-**Tamano estimado**: **7 sessions** ejecutables. **SP: sube de 8** (la capa de vinculos/compuestos/privatizacion no estaba dimensionada; re-estimar). Las mas riesgosas son S4 (renombre — riesgo de fork), S5 (retiro destructivo) y **S6 (privatizacion observable + vinculos runtime vivos + coordinacion UPONE-1616)**.
+**Tamano estimado**: **7 sessions** ejecutables. **SP: 8** (re-estimado con la skill calibrada DET-26: ejecucion + investigacion con apoyo del LLM; proxy sin-LLM 11, speedup 4). Las mas riesgosas son S4 (renombre — riesgo de fork), S5 (retiro destructivo) y **S6 (privatizacion observable + vinculos runtime vivos + coordinacion UPONE-1616)**.
 
 **Como vas a saber que funciona**:
 - Vuelco de capabilities efectivas por rol **antes y despues** es identico salvo `institution:view` en los 4 roles de cd (convivencia: el set no cambia el efectivo).
@@ -594,6 +594,12 @@ Camino runtime del resolver de sets (resolveModRoleCapabilityNames/enrichUserWit
 ### DEC-LOCAL-07: conviv-admin-consultor → inferred-structural
 La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO es falsable en runtime: el refill de core (DEFAULT_ROLES, Learn L1) mantiene su efectivo en "todo", asi que el vuelco no puede detectar un cambio. Se degrada esa parte de REQ-CONVIV-01 a inferred y se prueba estructuralmente: S6.T2 (compuesto == Diseñador union Autoridad) + L1 (directos incluyen todo) => inyeccion no-op. Los 4 curriculares siguen confirmed (verificable por vuelco runtime, S7.T4). Se descarta el assert de subconjunto por tautologico (directos = todo por L1) y por rozar execute_scope (core).
 
+### DEC-LOCAL-08: sp-reestimation → estimated=8
+Re-estimacion confirmada con la skill calibrada (DET-26): ejecucion 3 + investigacion 4 (raw 6, con apoyo LLM c_inv 0.8) = 7 -> Fibonacci 8. Proxy sin-LLM 11, llm_speedup 4 (~36%). Coincide con el published. Metodo: heuristic-calibrated. Confirmado por dev/PO.
+
+### DEC-LOCAL-09: privatization-approval → approve
+PO aprueba REQ-VIS-01: privatizar la visibilidad de las 2 apps (cd/cm) a los 6 roles via app.json; 15 roles pierden la vista publica. Cambio observable intencional en un ticket refactor, derivado de O1 parcial (2026-08-26). Confirmado por dev/PO.
+
 ## Acceptance checkpoints
 
 - [ ] **Funcional**: scenarios de REQ-PRESERVE-01..04, REQ-CONVIV-01, REQ-ADD-01, REQ-SET-01, REQ-SET-02, REQ-VIS-01, REQ-LINK-01, REQ-RETIRE-01 pasan.
@@ -660,3 +666,5 @@ La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO 
 **Tasks agregadas:**
 
 - S6: Capturar en el KB de kanai (rule records) las RULE candidatas del ticket: (1) un set (base∪extension) debe replicar el mapa del rol sin sobrantes ni faltantes; (2) el renombre de roles debe ser idempotente por nombre viejo y correr ANTES de ensureRoles. Con what/why/where/when (DET-37 dim2). (valida: REQ-SET-01, REQ-PRESERVE-02; rollback: borrar los rule records creados)
+
+### Enmienda 9
