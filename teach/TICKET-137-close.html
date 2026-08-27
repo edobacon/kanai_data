@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="dkc-teach-format" content="v2"><title>Teach close — Curriculum Mapping | MCP sync (UPONE-1530)</title>
+<style>
+:root{color-scheme:dark;--bg:#0c1220;--card:#121c2d;--border:#263957;--text:#e7eef8;--muted:#9aacc4;--brand:#7dd3fc;--accent:#a78bfa}*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0c1220,#0a101b);color:var(--text);font:15px/1.65 Inter,system-ui,sans-serif}header{border-bottom:1px solid var(--border);padding:18px 28px;color:var(--muted);font-size:12px}main{max-width:920px;margin:0 auto;padding:30px 28px}h1,h2,h3{color:var(--text);line-height:1.25}h1{font-size:28px}h2{font-size:19px;margin-top:26px}.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin:12px 0}.callout{border-left:4px solid var(--brand)}.warn{border-left:4px solid #f0b429}.mono,code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#bae6fd}ul{padding-left:22px}.eyebrow{color:var(--brand);font-size:11px;letter-spacing:.12em;text-transform:uppercase}</style></head>
+<body><header>Teach close · <span class="mono">TICKET-137</span> · UPONE-1530</header><main>
+<h1>Curriculum Mapping | MCP sync — cierre</h1>
+<p class="eyebrow">Lo realizado, cómo se evaluó y cómo se testeó</p>
+
+<div class="card callout">
+<b>Qué se hizo:</b> se expuso el dominio de <b>mapeo curricular</b> en el MCP oficial de uP1 (<code>@uplanner/mcp</code>), <b>solo lectura</b> del subconjunto estable, vía un pack declarativo en el repo del mod (<code>curriculum-mapping.git/ai/</code>). Objetos: esquema de niveles (<code>LevelScheme</code>/Scheme), esquema de cobertura (<code>CoverageScheme</code>, base) y la matriz raíz de competencias (<code>CompetencyNode</code>/Matrix, datos generales de UPONE-1537).
+</div>
+
+<h2>Cómo se construyó</h2>
+<ul>
+<li><b>S1</b> — Pack read-only (<code>ai/index.js</code> + <code>ai/contracts.js</code>, sin tools de dominio; la lectura va por las genéricas), molde curriculum-design. <code>npm run sync</code> lo materializa; verificado en el catálogo <code>about</code>.</li>
+<li><b>S2</b> — Verificación runtime contra el tenant UPU. <b>Positivo</b>: 4 matrices y 5 esquemas reales leídos, por nombre y filtrados por tipo. <b>Negativo</b>: con un rol sin la capability (<code>gestor-ret</code>) la lectura de mapeo fue rechazada, mientras un objeto que ese rol sí ve respondió — frontera RBAC confirmada.</li>
+<li><b>S3</b> — Test de contrato (<code>test/curriculum-mapping-pack.test.mjs</code>, runner nativo de node), regresión de los dominios ya expuestos verde, y doc/KB actualizados.</li>
+</ul>
+
+<h2>Cómo se evaluó (decisiones)</h2>
+<ul>
+<li><b>DEC-LOCAL-01</b> + OK del PO: el pack vive en el repo del mod (formato del MCP nuevo, descubrimiento por carpeta), desviación del request registrada sin reescribirlo.</li>
+<li><b>DEC-LOCAL-02</b>: la frontera de escritura es RBAC; no se agrega enforcement por objectType (la escritura genérica está abierta, límite conocido).</li>
+<li><b>DEC-LOCAL-05</b>: el rechazo negativo se infería del gate y su confirmación en vivo estaba diferida; se pudo cerrar en la misma sesión usando un rol negativo real (<code>gestor-ret</code>).</li>
+</ul>
+
+<h2>Cómo se testeó</h2>
+<ul>
+<li>Contrato: 4 checks del pack (objetos/recordTypes acotados, <code>notExposed</code>, read-only) — verde.</li>
+<li>Regresión: suite completa del MCP (incluye academic-scheduling y curriculum-design) — verde, sin regresión.</li>
+<li>Runtime: lectura positiva con datos reales del tenant + rechazo negativo con rol sin capability.</li>
+</ul>
+
+<div class="card warn">
+<b>Hallazgo (queda como seguimiento):</b> el rechazo por falta de permiso en lectura sale como <b>error genérico</b>, no como un <code>PERMISSION_DENIED</code> claro. La seguridad opera (no filtra datos), pero el mensaje es pobre. Registrado en <code>BUG-mcp-002</code>.
+</div>
+
+<h2>Frontera de lo diferido</h2>
+<p>Fuera de alcance, declarado en <code>notExposed</code>: toda escritura; competencias y subcompetencias y la adopción (Facultad/Planes) que construye <b>UPONE-1633</b>; rúbricas; alineamiento. La escritura y sus tools de dominio quedan para un ticket futuro.</p>
+</main></body></html>
