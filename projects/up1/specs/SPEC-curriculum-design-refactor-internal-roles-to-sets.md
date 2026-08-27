@@ -134,6 +134,12 @@ El sistema MUST renombrar los 4 roles reutilizando las entidades `core_Role` exi
 
 El sistema MUST materializar los sets via sync sin que ello cambie los permisos efectivos de ningun usuario, mientras no exista ninguna fila `up1_suite_app_role` con `modRoleId` apuntando a esos sets. Esta invariante aplica al estado de S2-S5 (los vinculos se crean en S6).
 
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: Tras declarar los sets + sync sin modRoleId (S2-S5), el vuelco efectivo por rol == estado previo (0 deltas por rol)
+
+</details>
+
 **Actor**: system
 **Layers**: backend, database
 
@@ -146,6 +152,8 @@ El sistema MUST materializar los sets via sync sin que ello cambie los permisos 
 > **Por que**: el mapa no se retira (cut-over diferido). El efectivo es `union(mapa, set)`; para los 4 curriculares el set replica el mapa, y para Admin/Consultor el set es subconjunto de sus directos. La union deduplicada es igual al conjunto previo.
 
 El sistema MUST garantizar que, tras asignar `modRoleId` a las 6 filas, el conjunto de capabilities efectivas de cada uno de los 6 roles sea identico al estado previo al vinculo (salvo `institution:view` ya contemplado). En particular: para los 4 curriculares `union(mapa_rol, set) == mapa_rol` (el set replica el mapa, REQ-SET-01); para Admin/Consultor el set (`Diseñador + Autoridad`) es subconjunto de sus `core_RoleCapability` directos, que ademas el core repone via `DEFAULT_ROLES` (Learn L1). Un set que conceda una capability **fuera** del conjunto previo del rol es una fuga y MUST ser detectado por el test de equivalencia (0 sobrantes, REQ-SET-01).
+
+> **Certeza por rol**: `confirmed` para los 4 curriculares (convivencia verificable por el vuelco runtime, S6.T9). Para **Admin/Consultor** es `inferred`-estructural: su convivencia NO es falsable en runtime porque el refill de core (`DEFAULT_ROLES`, Learn L1) ya hace su efectivo "todo"; queda probada estructuralmente por S6.T2 (compuesto == Diseñador ∪ Autoridad) + L1 (directos ⊇ todo) => la inyeccion del compuesto es no-op. No se afirma como hecho runtime (DET-4).
 
 **Actor**: usuario con rol activo (los 6 mapeados)
 **Layers**: backend, database
@@ -173,6 +181,12 @@ El sistema MUST garantizar que, tras asignar `modRoleId` a las 6 filas, el conju
 > **Por que**: un test que falla al refactorizar significa que el refactor rompio algo — no que el test este mal. El test de paridad guarda un invariante que la migracion cambia a proposito (composicion por modulo divergira).
 
 El sistema MUST mantener verde `mods/curriculum-design/tests/unit/rbacRoles.test.js` y `mods/curriculum-mapping/tests/unit/rbacRoles.test.js`. Cualquier cambio a esos tests MUST ser intencional (institucion agregada, paridad reformulada por composicion-por-modulo) y documentar el nuevo invariante; NO se relaja un assert para "que pase".
+
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: Ambas suites rbacRoles.test.js (cd + cm) verdes (X/X passing); cada assert modificado documentado como invariante intencional, sin relajar para pasar
+
+</details>
 
 **Actor**: system (CI)
 **Layers**: backend (tests)
@@ -297,6 +311,12 @@ El sistema MUST declarar el array `roles` con los **6 roles** (Admin, Consultor,
 
 El sistema (equipo) MUST producir un runbook que documente, paso a paso en up1-manager, la asignacion: `Admin` -> compuesto, `Consultor` -> compuesto, y cada `Learning Assurance - <Rol>` -> su set homonimo por modulo (uno-a-uno), en las dos apps. El runbook MUST incluir: el gotcha de stale-deletion (el array `roles` del app.json debe conservar los 6), la advertencia de que crear el vinculo privatiza (coordinar UPONE-1616), y que Admin/Consultor conservan su acceso total por el refill de core (Learn L1). La verificacion en UPU (S6) aplica el runbook y comprueba el efectivo (REQ-CONVIV-01).
 
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: Aplicado el runbook en up1-manager, las 6 filas por app (12 en total) quedan con modRoleId != null y el vuelco coincide con baseline (REQ-CONVIV-01)
+
+</details>
+
 **Actor**: administrador (tenant, up1-manager)
 **Layers**: ops / runbook (documentacion), verificacion runtime
 
@@ -329,6 +349,42 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 
 #### Acceptance
 **El usuario puede verificar que funciona**: en UPU no existen `GestorCurricular` (rol) ni los 2 sets de fixture, y tras un segundo sync siguen sin existir.
+
+### REQ-DOC-01: Documentar el escenario final consolidado de roles, sets y permisos tras la migracion: mapa rol->set->capabilities por modulo (cd/cm); los 4 roles renombrados a "Learning Assurance - <Rol>" con las 120 asignaciones conservadas; el rol huerfano GestorCurricular + 2 fixtures retirados; los 10 sets (2 base + 6 extensiones + 2 compuestos Disenador+Autoridad); el caveat del refill de core sobre Admin/Consultor (learn L1); la institucion agregada a la base de cd; los 6 vinculos rol->set y el runbook de asignacion manual de modRoleId (learn L2).
+
+**Fuente**: DET-37 dim1 (cambio observable de RBAC/config) + Request del ticket
+
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: La doc del escenario final existe y refleja el estado real verificado en runtime (contrastado vs baseline S1).
+
+#### Scenario: La doc lista los 10 sets y el mapa rol->set por modulo sin omitir los 2 compuestos.
+
+</details>
+
+### REQ-TEST-01: Testing como requisito final: cobertura que ejercite el camino real (vinculacion, herencia, deduplicacion, renombre sobre base con nombres viejos) + verificacion runtime de permisos efectivos rol por rol (smoke UPU, DET-36) + regresion de la suite RBAC verde.
+
+**Fuente**: Request del ticket (exige cobertura del camino real y verificacion runtime) + DET-7
+
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: La suite RBAC corre verde tras los cambios (regresion).
+
+#### Scenario: El renombre sobre una base con los nombres viejos deja 4 roles (no 8) con las 120 asignaciones intactas.
+
+#### Scenario: Los permisos efectivos por rol en runtime no cambian (baseline S1 == post, salvo institucion).
+
+</details>
+
+### REQ-NOTIFY-01: Enviar a team core el aviso del punto ciego de validateModRoleNameCollisions (H12: el guard solo lee config.app.roles, ciego a roles por seed/layout). No bloqueante; el cierre verifica por evidencia que el aviso se envio.
+
+**Fuente**: Request TICKET-133 (item aviso a core) + H12; DOC-sp9-aviso-core-validatemodrolenamecollisions
+
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: Queda evidencia registrada (link/ticket/mensaje) de que el aviso se envio a core.
+
+</details>
 
 ## Refactor map
 
@@ -423,7 +479,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | S5.T3 | Verificacion runtime de permisos efectivos rol por rol (smoke UPU) vs baseline S1 (HR1): ningun rol pierde caps; entrar con cada rol y ejecutar sus acciones | REQ-PRESERVE-01 | reviewer | S5.T1 | UPU (runtime) | vuelco por rol == baseline (+institucion en cd); evidencia runtime real | (no aplica) | DET-13, DET-33, DET-36 | pending | 5 |
 | S5.T4 | Caso del PO end-to-end (HR2): entrar como Diseñador, crear un plan de estudio con el select de institucion poblado y guardar | REQ-ADD-01 | reviewer | S5.T3 | UPU (runtime) | plan guardado; evidencia runtime (screenshot/DOM) | (no aplica) | DET-13, DET-36 | pending | 5 |
 | S5.T5 | Actualizar la doc oficial observable (RBAC del mod + los nombres de rol en docs de los dos mods) | REQ-PRESERVE-02 | developer | S5.T1 | `mods/curriculum-design/docs/*`, `mods/curriculum-mapping/docs/*` (los que apliquen) | doc refleja sets + nombres nuevos; sin nombres viejos | git revert | DET-37 | pending | 5 |
-| S5.T6 | Enviar el aviso a core por el punto ciego de la proteccion de nombres (H12, `dbSync.js:1031-1040`) — no bloqueante; registrar el canal usado | request (item "avisar al core sobre el punto ciego de proteccion de nombres", H12) | researcher | — | ticket / canal core | aviso enviado y registrado | (no aplica) | DET-16 | pending | 5 |
+| S5.T6 | Enviar el aviso a core por el punto ciego de la proteccion de nombres (H12, `dbSync.js:1031-1040`) — no bloqueante; registrar el canal usado | REQ-NOTIFY-01 | researcher | — | ticket / canal core | aviso enviado y registrado | (no aplica) | DET-16 | pending | 5 |
 | **S5.GATE** | **Gate de sync Session 5 (tier: T3)** — persistir, regresion completa + smoke UI, HR1/HR2/HR9 verificados con evidencia runtime, decidir continue/iterate | — | reviewer | S5.T1..S5.T6 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 5 |
 
 ### Session 6 — Compuesto + privatizacion + vinculos (6 roles) + verificacion final [tipo: ⚑ fuerte] [tier: T3]
@@ -439,7 +495,9 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | S6.T4 | Verificar privatizacion contra el inventario: los 15 roles no incluidos no tienen alcance curricular legitimo; smoke UPU con un rol fuera de los 6 (no ve las apps) y uno dentro (si) | REQ-VIS-01 | reviewer | S6.T3 | UPU (runtime), `kb/sp9/UPONE-1615-inventario-de-roles.md` | evidencia runtime: menu privatizado correcto; 0 roles legitimos afuera | (no aplica) | DET-13, DET-33, DET-36 | pending | 6 |
 | S6.T5 | Producir el runbook de asignacion de `modRoleId` en up1-manager (Admin/Consultor -> compuesto; 4 curriculares -> su set uno-a-uno; gotcha stale-deletion; nota refill de core) | REQ-LINK-01 | developer | S6.T1 | ticket / doc runbook | runbook completo, paso a paso, con las 12 asignaciones (6 roles × 2 apps) | (no aplica) | DET-37 | pending | 6 |
 | S6.T6 | Aplicar el runbook en UPU (smoke) y verificar el efectivo con vinculos: vuelco por los 6 roles == baseline S1 (salvo institucion); Admin/Consultor ven y operan; PO end-to-end sigue OK | REQ-CONVIV-01, REQ-LINK-01 | reviewer | S6.T3, S6.T5 | UPU (runtime) | evidencia runtime: modRoleId asignado en las 6 filas; efectivo == baseline; dedup confirmado | revertir asignaciones en up1-manager (set 'No profile') | DET-13, DET-33, DET-36 | pending | 6 |
-| **S6.GATE** | **Gate de sync Session 6 (tier: T3)** — persistir, privatizacion verificada + convivencia (efectivo sin cambio) con evidencia runtime, runbook entregado, coordinacion UPONE-1616 registrada, decidir cierre | — | reviewer | S6.T0..S6.T6 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 6 |
+| S6.T8 | Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5 | REQ-DOC-01 | — | — | — | — | git revert de la doc | — | pending | 6 |
+| S6.T9 | Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde. | REQ-TEST-01, REQ-CONVIV-01 | — | — | — | — | revertir tests agregados | — | pending | 6 |
+| **S6.GATE** | **Gate de sync Session 6 (tier: T3)** — persistir, privatizacion verificada + convivencia (efectivo sin cambio) con evidencia runtime, runbook entregado, coordinacion UPONE-1616 registrada, decidir cierre | — | reviewer | S6.T0..S6.T9 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 6 |
 
 ## Constraints
 
@@ -520,6 +578,12 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 - **Consecuencias**: cambio observable (los 15 pierden la vista publica, intencional); el titular deja de ser zero-behavior-change.
 - **Session**: design (rearmado).
 
+### DEC-LOCAL-06: coverage-scope → smoke+na
+Camino runtime del resolver de sets (resolveModRoleCapabilityNames/enrichUserWithModRoleCapabilities: herencia multinivel, dedup por nombre, guarda de ciclos) es CORE (H1: el ticket consume, no construye), cubierto por sus tests (UPONE-1353/1354). En el mod se verifica por smoke runtime S6.T9 con vinculo presente (DET-36). Unit del resolver desde el mod = N/A: fuera de execute_scope (mods/curriculum-design|mapping/), Aduana mod-only. Cobertura estructural en scope: S3.T3, S6.T2 (equivalencia set<->mapa sobre roles/*.json).
+
+### DEC-LOCAL-07: conviv-admin-consultor → inferred-structural
+La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO es falsable en runtime: el refill de core (DEFAULT_ROLES, Learn L1) mantiene su efectivo en "todo", asi que el vuelco no puede detectar un cambio. Se degrada esa parte de REQ-CONVIV-01 a inferred y se prueba estructuralmente: S6.T2 (compuesto == Diseñador union Autoridad) + L1 (directos incluyen todo) => inyeccion no-op. Los 4 curriculares siguen confirmed (verificable por vuelco runtime, S6.T9). Se descarta el assert de subconjunto por tautologico (directos = todo por L1) y por rozar execute_scope (core).
+
 ## Acceptance checkpoints
 
 - [ ] **Funcional**: scenarios de REQ-PRESERVE-01..04, REQ-CONVIV-01, REQ-ADD-01, REQ-SET-01, REQ-SET-02, REQ-VIS-01, REQ-LINK-01, REQ-RETIRE-01 pasan.
@@ -541,46 +605,8 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 ### Enmienda 1
 **REQs:**
 
-#### REQ-DOC-01 `confirmed` (add)
-> Fuente: DET-37 dim1 (cambio observable de RBAC/config) + Request del ticket
-Documentar el escenario final consolidado de roles, sets y permisos tras la migracion: mapa rol->set->capabilities por modulo (cd/cm); los 4 roles renombrados a "Learning Assurance - <Rol>" con las 120 asignaciones conservadas; el rol huerfano GestorCurricular + 2 fixtures retirados; los 10 sets (2 base + 6 extensiones + 2 compuestos Disenador+Autoridad); el caveat del refill de core sobre Admin/Consultor (learn L1); la institucion agregada a la base de cd; los 6 vinculos rol->set y el runbook de asignacion manual de modRoleId (learn L2).
-
-<details><summary>Casos de test</summary>
-
-- [happy] La doc del escenario final existe y refleja el estado real verificado en runtime (contrastado vs baseline S1).
-- [edge] La doc lista los 10 sets y el mapa rol->set por modulo sin omitir los 2 compuestos.
-
-</details>
-
-#### REQ-TEST-01 `confirmed` (add)
-> Fuente: Request del ticket (exige cobertura del camino real y verificacion runtime) + DET-7
-Testing como requisito final: cobertura que ejercite el camino real (vinculacion, herencia, deduplicacion, renombre sobre base con nombres viejos) + verificacion runtime de permisos efectivos rol por rol (smoke UPU, DET-36) + regresion de la suite RBAC verde.
-
-<details><summary>Casos de test</summary>
-
-- [happy] La suite RBAC corre verde tras los cambios (regresion).
-- [boundary] El renombre sobre una base con los nombres viejos deja 4 roles (no 8) con las 120 asignaciones intactas.
-- [regression] Los permisos efectivos por rol en runtime no cambian (baseline S1 == post, salvo institucion).
-
-</details>
-
-**Tasks agregadas:**
-
-- S6: Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5 (valida: REQ-DOC-01; rollback: git revert de la doc)
-- S6.T9 (runtime, DET-36): verificacion del camino CON vinculos (modRoleId != null): vuelco por los 6 roles == baseline S1 (salvo institucion), evidencia herencia+dedup en runtime; evidencia concreta screenshot/console/DOM. NO unit del resolver de core (N/A, ver coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde. (valida: REQ-TEST-01, REQ-CONVIV-01)
-
 ### Enmienda 2
 **REQs:**
-
-#### REQ-NOTIFY-01 `confirmed` (add)
-> Fuente: Request TICKET-133 (item aviso a core) + H12; DOC-sp9-aviso-core-validatemodrolenamecollisions
-Enviar a team core el aviso del punto ciego de validateModRoleNameCollisions (H12: el guard solo lee config.app.roles, ciego a roles por seed/layout). No bloqueante; el cierre verifica por evidencia que el aviso se envio.
-
-<details><summary>Casos de test</summary>
-
-- [happy] Queda evidencia registrada (link/ticket/mensaje) de que el aviso se envio a core.
-
-</details>
 
 ### Enmienda 3
 
