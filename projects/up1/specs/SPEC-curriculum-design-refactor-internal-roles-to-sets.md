@@ -424,7 +424,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 | S5.T4 | Caso del PO end-to-end (HR2): entrar como Diseñador, crear un plan de estudio con el select de institucion poblado y guardar | REQ-ADD-01 | reviewer | S5.T3 | UPU (runtime) | plan guardado; evidencia runtime (screenshot/DOM) | (no aplica) | DET-13, DET-36 | pending | 5 |
 | S5.T5 | Actualizar la doc oficial observable (RBAC del mod + los nombres de rol en docs de los dos mods) | REQ-PRESERVE-02 | developer | S5.T1 | `mods/curriculum-design/docs/*`, `mods/curriculum-mapping/docs/*` (los que apliquen) | doc refleja sets + nombres nuevos; sin nombres viejos | git revert | DET-37 | pending | 5 |
 | S5.T6 | Enviar el aviso a core por el punto ciego de la proteccion de nombres (H12, `dbSync.js:1031-1040`) — no bloqueante; registrar el canal usado | request (item "avisar al core sobre el punto ciego de proteccion de nombres", H12) | researcher | — | ticket / canal core | aviso enviado y registrado | (no aplica) | DET-16 | pending | 5 |
-| **S5.GATE** | **Gate de sync Session 5 (tier: T3)** — persistir, regresion completa + smoke UI, HR1/HR2/HR9 verificados con evidencia runtime, decidir cierre | — | reviewer | S5.T1..S5.T6 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 5 |
+| **S5.GATE** | **Gate de sync Session 5 (tier: T3)** — persistir, regresion completa + smoke UI, HR1/HR2/HR9 verificados con evidencia runtime, decidir continue/iterate | — | reviewer | S5.T1..S5.T6 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 5 |
 
 ### Session 6 — Compuesto + privatizacion + vinculos (6 roles) + verificacion final [tipo: ⚑ fuerte] [tier: T3]
 
@@ -566,7 +566,7 @@ Testing como requisito final: cobertura que ejercite el camino real (vinculacion
 
 **Tasks agregadas:**
 
-- S6: Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook de S5 (valida: REQ-DOC-01; rollback: git revert de la doc)
+- S6: Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5 (valida: REQ-DOC-01; rollback: git revert de la doc)
 - S5: Cobertura del camino real + verificacion runtime rol por rol (smoke UPU) + regresion RBAC verde (valida: REQ-TEST-01, test; rollback: revertir tests agregados)
 
 ### Enmienda 2
@@ -581,3 +581,21 @@ Enviar a team core el aviso del punto ciego de validateModRoleNameCollisions (H1
 - [happy] Queda evidencia registrada (link/ticket/mensaje) de que el aviso se envio a core.
 
 </details>
+
+### Enmienda 3
+
+**Task ops:**
+
+- move S5.T7 → S6
+- edit S3.T3 { isTest=true }
+- edit S3.T4 { isTest=true }
+- edit S4.T3 { isTest=true }
+- edit S6.T2 { isTest=true }
+- edit S6.T3 { rollback="Rollback ORDENADO (irreversible respecto de modRoleId): (1) primero revertir en up1-manager las asignaciones de modRoleId hechas en S6.T6 o restaurar desde la captura previa de las 12 asignaciones; (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas up1_suite_app_role con sus modRoleId, que git no restaura." }
+
+### Enmienda 4
+
+**Task ops:**
+
+- edit S6.T8 { desc="Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S6.T5" }
+- edit S6.T3 { rollback="Rollback ORDENADO, irreversible respecto de modRoleId: (1) en up1-manager poner en null el modRoleId de las 6 filas up1_suite_app_role (deshace las asignaciones de S6.T6; el pre-estado real es modRoleId null); (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas con sus modRoleId, que git no restaura." }
