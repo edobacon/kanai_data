@@ -2,7 +2,7 @@
 id: SPEC-mcp-curriculum-mapping-read
 project: up1
 ticket: TICKET-137
-status: draft
+status: approved
 ---
 
 # MCP · Curriculum Mapping (lectura del subconjunto estable)
@@ -68,17 +68,19 @@ Habilitar el dominio curriculum-mapping en el MCP oficial de uP1 (`@uplanner/mcp
 #### Scenario: Los contratos viven en `contracts.js` del pack; ningun archivo de registro central del MCP fue modificado.
 
 </details>
-### REQ-03: Toda operacion de lectura del dominio curriculum-mapping DEBE quedar gobernada por los permisos del usuario real autenticado en el MCP: el gate de capability evalua `objectType:view` del rol activo y rechaza con PERMISSION_DENIED cuando la capability no esta presente. Los nombres de rol y capabilities son frontera del MCP: no se reinterpretan ni se mapean dentro del pack.
+### REQ-03: Toda operacion de lectura del dominio curriculum-mapping DEBE quedar gobernada por los permisos del usuario real autenticado en el MCP. El camino POSITIVO (usuario CON la capability `objectType:view` del rol activo lee datos reales del tenant) DEBE verificarse con evidencia runtime en S2 y es requisito de cierre. El rechazo por falta de capability (PERMISSION_DENIED) se INFIERE del mecanismo del MCP: `src/tools/capability-gate.js` gatea cada tool por las capabilities del rol activo antes de ejecutar, y RULE-mcp-004 fija los permisos del usuario como frontera; su confirmacion en vivo con un rol negativo se DIFIERE a un follow-up y NO bloquea S2 ni el cierre del ticket (ajuste autorizado por el PO, 2026-08-27). Los nombres de rol y capabilities siguen siendo frontera del MCP: no se reinterpretan ni se mapean dentro del pack.
 
-**Fuente**: RULE-mcp-004 (permisos del usuario real como frontera del MCP) + src/tools/capability-gate.js (MCP nuevo)
+**Fuente**: Ajuste autorizado por PO 2026-08-27 (pedido de cambio del ticket TICKET-137) + src/tools/capability-gate.js (gate por capabilities del rol activo) + RULE-mcp-004 (permisos del usuario como frontera) + REQ-03 original
 
 <details><summary>Scenarios de validacion</summary>
 
-#### Scenario: Usuario con `levelscheme:view`, `coveragescheme:view` y `competencynode:view` consulta los tres objetos y recibe registros del tenant.
+#### Scenario: Un usuario CON la capability de lectura consulta LevelScheme, CoverageScheme y la matriz raiz y obtiene los registros reales del tenant en lenguaje de negocio; la salida runtime queda como evidencia de S2.
 
-#### Scenario: Usuario cuyo rol activo carece de `competencynode:view` recibe PERMISSION_DENIED al consultar CompetencyNode, no un resultado vacio.
+#### Scenario: El rechazo por falta de capability queda documentado como INFERIDO desde `src/tools/capability-gate.js` con la traza del gate citada; el ticket no declara evidencia runtime negativa como cumplida.
 
-#### Scenario: El pack no declara ni traduce nombres de rol propios: la resolucion de capability ocurre solo en el gate del MCP (src/tools/capability-gate.js).
+#### Scenario: El pack no define, mapea ni reinterpreta nombres de rol ni capabilities: la unica fuente es el rol activo del usuario autenticado que evalua el gate del MCP.
+
+#### Scenario: El gate de S2 cierra con la evidencia positiva y el deferral registrado; ningun criterio de cierre de S2 ni del ticket exige la provision del rol negativo.
 
 </details>
 ### REQ-04: La lectura de la matriz y de los esquemas DEBE poder acotarse por recordType usando los identificadores reales del backend: `rt__Scheme__levelscheme` para LevelScheme y `rt__Matrix__competencynode` para CompetencyNode. CoverageScheme no tiene recordTypes y se lee en su forma base.
@@ -94,15 +96,17 @@ Habilitar el dominio curriculum-mapping en el MCP oficial de uP1 (`@uplanner/mcp
 #### Scenario: La lectura de CoverageScheme no requiere filtro de recordType y devuelve los registros base del tenant.
 
 </details>
-### REQ-05: El alcance de este ticket es SOLO LECTURA y la unica frontera efectiva es RBAC: sin la capability de escritura correspondiente el usuario no muta datos (PERMISSION_DENIED). NO se implementa enforcement por allowlist de objectTypes ni bloqueo por contrato: hoy la escritura generica del MCP nuevo esta abierta y no rehusa por objectType (`src/index.js:42`). Este ticket no agrega ese enforcement; se declara como limite conocido y se documenta en la frontera de lo diferido.
+### REQ-05: El alcance de este ticket es SOLO LECTURA y la unica frontera efectiva es RBAC: sin la capability de escritura correspondiente el usuario no muta datos (PERMISSION_DENIED). Ese rechazo se INFIERE del mismo gate de capabilities del MCP (`src/tools/capability-gate.js`) y su confirmacion en vivo con un rol sin capability se DIFIERE a un follow-up, no bloqueante (ajuste del PO 2026-08-27). NO se implementa enforcement por allowlist de objectTypes ni bloqueo por contrato: hoy la escritura generica del MCP nuevo esta abierta y no rehusa por objectType (`src/index.js:42`). Este ticket no agrega ese enforcement; el limite conocido se mantiene declarado y documentado en la frontera de lo diferido, junto con el hecho de que su verificacion en vivo quedo diferida.
 
-**Fuente**: src/index.js:42 (MCP nuevo: escritura generica abierta, sin filtro por objectType) + src/tools/capability-gate.js (RBAC como unica frontera efectiva)
+**Fuente**: Ajuste autorizado por PO 2026-08-27 (pedido de cambio del ticket TICKET-137) + src/index.js:42 (escritura generica sin rehuse por objectType) + src/tools/capability-gate.js + REQ-05 original
 
 <details><summary>Scenarios de validacion</summary>
 
-#### Scenario: Usuario sin la capability de escritura sobre CompetencyNode recibe PERMISSION_DENIED al intentar mutar por el camino generico.
+#### Scenario: El pack no agrega ningun mecanismo de allowlist ni bloqueo de escritura; el codigo del ticket no toca el camino generico de mutacion del MCP.
 
-#### Scenario: No se agrega ningun bloqueo por objectType en el camino generico: los dominios ya expuestos (academic-scheduling, curriculum-design) conservan su comportamiento de escritura.
+#### Scenario: La doc de frontera declara el rechazo de escritura por falta de capability como inferido del gate, con la referencia al gate, y marca su confirmacion en vivo como diferida.
+
+#### Scenario: El limite conocido (escritura generica abierta, gobernada solo por RBAC) sigue escrito en la frontera de lo diferido del pack y en el KB de Kanai.
 
 </details>
 ### REQ-06: El catalogo del MCP es el `about` DINAMICO construido por `buildModsDoc` desde los packs activos: el ticket DEBE verificar que curriculum-mapping aparece ahi con su routing y su domainDoc. NO existen `docs/TOOLS.md`, `manifest.json`, `docs/CAPABILITIES.md` ni `docs/ROADMAP.md` en el MCP nuevo; no se actualiza ninguno. La documentacion complementaria es: entrada de doc de agente en `.ai/` si aplica al repo del mod, y actualizacion del KB de Kanai (specs `mcp/*`), incluyendo la frontera de lo diferido.
@@ -131,17 +135,17 @@ Habilitar el dominio curriculum-mapping en el MCP oficial de uP1 (`@uplanner/mcp
 #### Scenario: Un contrato con recordType mal declarado hace fallar el test de contrato correspondiente.
 
 </details>
-### REQ-08: La verificacion de este ticket DEBE incluir evidencia runtime real contra la plataforma con usuario autenticado (OTP): consulta de los tres objetos devolviendo datos reales del tenant, acotada por recordType donde aplica, y el rechazo por falta de capability. La evidencia debe ser runtime (salida real de la operacion, no referencia a un archivo de test); los tests de logica pura del MCP no sustituyen esta verificacion.
+### REQ-08: La verificacion de cierre de este ticket DEBE incluir evidencia runtime real del camino POSITIVO contra la plataforma con usuario autenticado (OTP): consulta de los tres objetos (LevelScheme, CoverageScheme y la matriz raiz) devolviendo datos reales del tenant, acotada por recordType donde aplica, con referencias y enums resueltos por nombre. La evidencia debe ser runtime (salida real de la operacion, no referencia a un archivo de test); los tests de logica pura del MCP no la sustituyen. El escenario NEGATIVO (rechazo por falta de capability con un rol sin la capability) NO es evidencia requerida para cerrar S2 ni el ticket: se infiere del gate del MCP y su confirmacion en vivo se difiere a un follow-up cuando el rol negativo este disponible (ajuste del PO 2026-08-27).
 
-**Fuente**: DET-36 (verificacion runtime/UI: smoke-executed exige evidencia runtime real) + DoD de UPONE-1530 (kb/sp9/UPONE-1530-detalle.md)
+**Fuente**: Ajuste autorizado por PO 2026-08-27 (pedido de cambio del ticket TICKET-137) + REQ-08 original + src/tools/capability-gate.js
 
 <details><summary>Scenarios de validacion</summary>
 
-#### Scenario: Con usuario autenticado, la lectura de LevelScheme/CoverageScheme/CompetencyNode devuelve registros reales del tenant UPU y la salida queda capturada como evidencia.
+#### Scenario: La consulta autenticada de los tres objetos devuelve registros reales del tenant y su salida runtime queda capturada como evidencia de cierre.
 
-#### Scenario: Con un rol sin la capability de lectura correspondiente, la operacion devuelve PERMISSION_DENIED y la salida queda capturada como evidencia.
+#### Scenario: La lectura de CompetencyNode acotada a `rt__Matrix__competencynode` no devuelve nodos de competencia ni subcompetencia en la corrida runtime real.
 
-#### Scenario: La lectura de CompetencyNode acotada a `rt__Matrix__competencynode` no devuelve nodos de competencia ni subcompetencia.
+#### Scenario: El checklist de cierre de S2 no incluye evidencia runtime negativa; el escenario de rechazo aparece marcado como diferido/inferido con su follow-up asociado.
 
 </details>
 ### REQ-09: El pack DEBE declarar en `notExposed` de forma explicita la frontera de lo diferido: toda escritura; las competencias y subcompetencias (`rt__Competency__competencynode` y `rt__SubCompetency__competencynode`) y la adopcion (Facultad/Planes) que construye UPONE-1633 (en curso); las rubricas (RubricDescriptor, RubricDimension); y el alineamiento (CompetencyAlignment). Exponer unicamente la matriz raiz evita tocar el contrato que UPONE-1633 completa.
@@ -155,6 +159,20 @@ Habilitar el dominio curriculum-mapping en el MCP oficial de uP1 (`@uplanner/mcp
 #### Scenario: Ninguno de los objetos ni recordTypes listados en `notExposed` aparece en `pack.objects` ni en `contracts.js`.
 
 #### Scenario: La frontera declarada queda reflejada en el `about` dinamico y en el KB de Kanai, de modo que UPONE-1633 puede completar la matriz sin colisionar con el contrato expuesto.
+
+</details>
+
+### REQ-10: El ticket DEBE registrar una decision local que documente el ajuste autorizado por el PO (2026-08-27): el rechazo por falta de capability (lectura y escritura) se INFIERE del gate de capabilities del MCP en lugar de verificarse en vivo, y su confirmacion runtime con un rol negativo se DIFIERE a un follow-up para no bloquear el avance del ticket. La decision DEBE dejar constancia de: quien autoriza (PO), la fecha, el driver (conseguir el rol negativo toma tiempo y bloquearia S2), el mecanismo del que se infiere (`src/tools/capability-gate.js` + RULE-mcp-004), el alcance NO afectado (la lectura sigue igual; el camino positivo sigue siendo evidencia runtime requerida) y el follow-up que recoge la confirmacion en vivo pendiente.
+
+**Fuente**: Pedido de cambio del ticket TICKET-137, ajuste autorizado por el PO 2026-08-27 (ultimo bullet: "Agregar una decision local que registre este ajuste del PO")
+
+<details><summary>Scenarios de validacion</summary>
+
+#### Scenario: Existe la decision local del ticket con autor (PO), fecha 2026-08-27, driver, mecanismo inferido y follow-up asociado, referenciada desde REQ-03, REQ-05 y REQ-08.
+
+#### Scenario: La decision declara explicitamente que el alcance de lectura no cambia: solo cambia como se verifica el rechazo por permisos.
+
+#### Scenario: El gate de cierre del ticket encuentra la verificacion negativa marcada como diferida con la decision como source_ref, y no la reporta como evidencia faltante bloqueante.
 
 </details>
 
@@ -194,28 +212,28 @@ No se declara `blockGenericMutation` (no existe en el MCP nuevo) ni recordTypes 
 
 | # | Task | source_ref | Files | Validation | Rollback |
 |---|------|-----------|-------|------------|----------|
-| S1.T1 | Crear el pack `curriculum-mapping.git/ai/index.js` (JS): `objects` (3), `contracts` (de contracts.js), `routingHints`, `about`, `domainDoc`, `notExposed`. Molde: curriculum-design.git/ai/index.js. NO editar `src/mods/index.js`. | REQ-01 | `curriculum-mapping.git/ai/index.js` | el pack exporta un ModPack valido (array `tools`); descubierto por `discoverModPacks` | git revert (archivo nuevo) |
-| S1.T2 | Declarar en `curriculum-mapping.git/ai/contracts.js` los 3 ObjectContract de lectura (LevelScheme rt__Scheme__levelscheme; CoverageScheme base; CompetencyNode solo rt__Matrix__competencynode), por nombre; nada de `notExposed` en objects/contracts. | REQ-02, REQ-09 | `curriculum-mapping.git/ai/contracts.js` | `pack.contracts` registra los 3; recordTypes acotados | git revert |
-| S1.T3 | `npm run sync --workspace=mcp` y verificar el descubrimiento: `src/mods/curriculum-mapping/` generado, pack activo, los 3 objetos consultables por las tools genericas, y curriculum-mapping en el `about` dinamico. | REQ-01, REQ-06 | (sync; sin editar src del MCP) | cm aparece en `about` con routing + domainDoc | re-run sync / quitar el pack |
-| **S1.GATE** | Gate de sync S1 (T2): persistir, quality review, decidir continue/iterate | - | ticket | pack descubierto sin colision; about lista cm | (no aplica) |
+| S1.T1 | Crear el pack `curriculum-mapping.git/ai/index.js` (JS): objects (3), contracts (de contracts.js), routingHints, about, domainDoc, notExposed. Molde: curriculum-design.git/ai/index.js. NO editar `src/mods/index.js`. | REQ-01 | `curriculum-mapping.git/ai/index.js` | pack valido, descubierto por discoverModPacks | git revert |
+| S1.T2 | Declarar en `curriculum-mapping.git/ai/contracts.js` los 3 ObjectContract de lectura por nombre (LevelScheme rt__Scheme__levelscheme; CoverageScheme base; CompetencyNode solo rt__Matrix__competencynode). | REQ-02, REQ-04, REQ-09 | `ai/contracts.js` | pack.contracts registra los 3; recordTypes acotados | git revert |
+| S1.T3 | `npm run sync --workspace=mcp` y verificar: pack activo, 3 objetos consultables por genericas, cm en el about dinamico. | REQ-01, REQ-06 | (sync) | cm en about con routing + domainDoc | re-run sync |
+| **S1.GATE** | Gate S1 (T2): persistir, quality review, continue/iterate | - | ticket | pack descubierto; about lista cm | (no aplica) |
 
-### Session 2 - Verificacion de lectura real y permisos [tipo: ⚑ fuerte] [tier: T3]
+### Session 2 - Verificacion runtime (camino positivo) + permisos [tipo: ⚑ fuerte] [tier: T3]
 
 | # | Task | source_ref | Files | Validation | Rollback |
 |---|------|-----------|-------|------------|----------|
-| S2.T1 | Con usuario real (OTP) consultar LevelScheme, CoverageScheme y CompetencyNode (`rt__Matrix__competencynode`) y confirmar datos reales del tenant; luego, con un rol sin la capability de lectura, confirmar PERMISSION_DENIED (no resultado vacio). Registrar la salida real. | REQ-03, REQ-08 | (verificacion runtime) | evidencia runtime real de lectura y de rechazo | (no aplica) |
-| S2.T2 | Verificar REQ-05: un usuario sin la capability de escritura sobre CompetencyNode intenta mutar por el camino generico y recibe PERMISSION_DENIED; documentar que el rechazo es de RBAC, no de un filtro por objectType (`src/index.js:42`). | REQ-05 | (verificacion runtime) | evidencia runtime del rechazo RBAC | (no aplica) |
-| S2.T3 | Provisionar el rol negativo: coordinar con quien administra RBAC en UPU un rol SIN la capability de lectura del dominio (y sin capability de escritura sobre CompetencyNode), creando un rol de prueba o degradando uno, y documentar como se restaura. Precondicion de probar PERMISSION_DENIED. | REQ-03, REQ-05, REQ-08 | (setup RBAC en UPU) | rol negativo disponible + plan de restauracion | restaurar/eliminar el rol |
-| **S2.GATE** | Gate de sync S2 (T3, ⚑ fuerte): persistir evidencia runtime (DET-36), decidir continue/iterate | - | ticket | REQ-03/05/08 con evidencia runtime real | (no aplica) |
+| S2.T1 | Evidencia runtime del **camino positivo** (criterio de cierre): con usuario autenticado (OTP) y un rol CON la capability, consultar LevelScheme, CoverageScheme y CompetencyNode (rt__Matrix__competencynode) con datos reales del tenant, presentacion por nombre y filtrado por recordType. | REQ-02, REQ-03, REQ-04, REQ-08 | (verificacion runtime) | salida real de las 3 consultas | (no aplica) |
+| S2.T2 | **[DIFERIDA]** Confirmacion en vivo del rechazo por falta de capability (lectura y escritura) con un rol negativo. El comportamiento se **infiere** del gate (`src/tools/capability-gate.js` + RULE-mcp-004); se ejecuta cuando el rol este disponible en UPU. NO bloquea S2 ni el cierre. | REQ-03, REQ-05, REQ-08 | (diferido) evidencia runtime del rechazo cuando exista el rol | restaurar/eliminar el rol |
+| S2.T3 | Registrar DEC-LOCAL-05 (ajuste del PO: inferir el rechazo + diferir su confirmacion en vivo); documentar el diferido en el `notExposed` del pack y en el KB de Kanai; abrir el follow-up de la confirmacion runtime pendiente. | REQ-10 | KB Kanai, notExposed del pack | decision + follow-up registrados | (no aplica) |
+| **S2.GATE** | Gate S2 (T3, ⚑ fuerte): cierra con la evidencia runtime del **camino positivo** (S2.T1) + el rechazo por permisos **inferido** del gate + el deferral documentado (S2.T2/T3). NO exige el rol negativo. | - | ticket | evidencia positiva runtime + inferencia + deferral documentado | (no aplica) |
 
 ### Session 3 - Tests + doc + frontera [tipo: auto] [tier: T1]
 
 | # | Task | source_ref | Files | Validation | Rollback |
 |---|------|-----------|-------|------------|----------|
-| S3.T1 | Tests de contrato como `test/*.mjs` con el runner NATIVO de node (sin vitest): los 3 contratos declaran solo los recordTypes permitidos, enums/refs por nombre, y `notExposed` lista la frontera de REQ-09. | REQ-07, REQ-09 | `test/*.mjs` (repo del MCP) | `node test/*.mjs` verde; asserts concretos | git revert |
-| S3.T2 | Regresion de los dos dominios que hoy expone el MCP (academic-scheduling, curriculum-design) con el runner nativo; dejar verde y registrar antes/despues. | REQ-07 | (ejecucion de suites) | suite completa verde; delta 0 fallos | (no aplica) |
-| S3.T3 | Cerrar la dimension docs (DET-37 dim1) con lo que existe: verificar cm en el `about` dinamico; entrada `.ai/` del repo del mod si aplica; actualizar el KB de Kanai (specs `mcp/*`) con el dominio expuesto y la frontera de lo diferido. NO se tocan docs/TOOLS.md/manifest.json (no existen). | REQ-06 | `.ai/` del mod (si aplica), KB Kanai | about verificado; KB actualizado | git revert |
-| **S3.GATE** | Gate de sync S3 (T1): persistir, decidir continue/close | - | ticket | tests verdes; about + KB actualizados | (no aplica) |
+| S3.T1 | Tests de contrato como `test/*.mjs` (runner nativo, sin vitest; logica pura con dobles): recordTypes permitidos, enums/refs por nombre, notExposed segun REQ-09. Precondicion de la suite: `npm run sync --workspace=mcp`. | REQ-07, REQ-09 | `test/*.mjs` | `node test/*.mjs` verde | git revert |
+| S3.T2 | Regresion de los dominios expuestos (academic-scheduling, curriculum-design) con el runner nativo; verde; registrar antes/despues. | REQ-07 | (suites) | suite verde; delta 0 | (no aplica) |
+| S3.T3 | Docs (DET-37 dim1): verificar cm en el about dinamico; entrada `.ai/` del mod si aplica; actualizar KB de Kanai con el dominio y la frontera de lo diferido. NO se tocan docs/TOOLS.md/manifest.json. | REQ-06 | `.ai/`, KB Kanai | about verificado; KB actualizado | git revert |
+| **S3.GATE** | Gate S3 (T1): persistir, continue/close | - | ticket | tests verdes; about + KB actualizados | (no aplica) |
 
 ## Constraints
 
@@ -229,7 +247,7 @@ No se declara `blockGenericMutation` (no existe en el MCP nuevo) ni recordTypes 
 |------------|------|-------------|------|
 | Backend curriculum-mapping (UPONE-1454/1455/1537, Finalizadas) | internal (up1) | LevelScheme, CoverageScheme, CompetencyNode (matriz raiz) desplegados en UPU con datos | Bajo: esquemas estables; la matriz tiene partes diferidas (1633) fuera de alcance |
 | Plataforma real + usuario autenticado (OAuth/Clerk) | internal (up1) | S2 requiere consultar contra una instancia real con un rol CON la capability de lectura del dominio | Medio: sin instancia/usuario, S2 no cierra (bloqueo honesto) |
-| Rol de prueba SIN la capability (rol negativo) | internal (up1) | REQ-03/05/08 exigen probar PERMISSION_DENIED con un rol sin `<obj>:view` y sin capability de escritura: provisionar/degradar un rol en UPU y restaurarlo (ver S2.T3) | Medio: requiere quien administre RBAC en UPU |
+| Rol de prueba SIN la capability (rol negativo) | internal (up1) | DIFERIDO (OK del PO 2026-08-27, DEC-LOCAL-05): el rechazo por permisos se infiere del gate del MCP; su confirmacion en vivo (S2.T2) se ejecuta cuando el rol este disponible. NO bloquea el cierre. | Bajo (diferido) |
 | RBAC del dominio (UPONE-1615, hermano SP9) | internal (up1) | Las capabilities de los roles curriculares definen que lee el MCP | Medio: si 1615 cambia los roles, coordinar el ORDEN de la verificacion |
 | Acuerdo de sincronizacion MCP del sprint (UPONE-1619) | coordinacion | 1619 comparte el acuerdo de sync con el MCP; si introduce objetos nuevos en su dominio, su cobertura MCP corre por su cuenta. Para cm no bloquea | Bajo |
 
@@ -243,6 +261,8 @@ No se declara `blockGenericMutation` (no existe en el MCP nuevo) ni recordTypes 
 | Escritura generica abierta (frontera solo RBAC) | low | El MCP podria mutar si el rol tuviera la capability | REQ-05: es limite conocido; sin la capability de escritura no muta. No se agrega enforcement por objectType en este ticket |
 
 ## Open questions
+
+- [x] **Rol negativo / rechazo por permisos** (resuelto, DEC-LOCAL-05): inferido del gate del MCP; su confirmacion en vivo se difiere (S2.T2), no bloquea. OK del PO 2026-08-27.
 
 - [x] **Subconjunto de CompetencyNode** (resuelto): solo la matriz raiz (`rt__Matrix__competencynode`, UPONE-1537). Competencias/subcompetencias/adopcion (UPONE-1633) en `notExposed`.
 - [x] **Empaquetado** (resuelto, DEC-LOCAL-01): pack en `curriculum-mapping.git/ai/`, materializado por `npm run sync`.
@@ -272,6 +292,12 @@ No se declara `blockGenericMutation` (no existe en el MCP nuevo) ni recordTypes 
 - **Desviacion del request**: el pack vive en el repo del mod (`curriculum-mapping.git/ai/`), no en el del MCP como decia el request. **OK del PO 2026-08-27**: es el formato del MCP nuevo (los packs se descubren desde los repos de mod), con precedente en curriculum-design; el `ai/` es metadata declarativa de agente, aditiva, no cambia el backend del mod. El request no se reescribe (DET-3); esta decision lo autoriza.
 - **SP9**: **confirmado por el PO 2026-08-27** que 1530 se ejecuta en SP9, con acceso a UPU y administracion de permisos disponible para cerrar la verificacion fuerte (S2).
 
+### DEC-LOCAL-05: Inferir el rechazo por permisos y diferir su confirmacion en vivo (OK del PO 2026-08-27)
+- **Contexto**: verificar el rechazo por falta de capability (lectura y escritura) exige un rol negativo en UPU que tomara tiempo conseguir y bloquearia el gate fuerte de S2.
+- **Decision (OK del PO 2026-08-27)**: el rechazo por permisos se **infiere** del mecanismo del MCP (`src/tools/capability-gate.js` gatea cada tool por las capabilities del rol activo; RULE-mcp-004: permisos del usuario como frontera). Su **confirmacion en vivo** con un rol negativo se **difiere** a un follow-up (S2.T2), no bloqueante.
+- **Alcance NO afectado**: la lectura sigue igual; el **camino positivo** (leer datos reales con un rol capable) sigue siendo evidencia runtime **requerida** para cerrar S2 (S2.T1).
+- **Follow-up**: confirmar en vivo el rechazo (lectura y escritura) cuando el rol negativo este disponible.
+
 ## Technical reference
 
 - **Descubrimiento de packs** (`src/mods/index.js`): `discoverModPacks` lee las carpetas de `src/mods/`; un pack valido exporta un objeto con `tools` (aunque sea `[]`). NO hay lista `MODS` ni manifiesto. El gate de visibilidad (`registerMods` + `getAppsFiltered`): el pack aparece solo si su `id` coincide con una app activa para el tenant y el rol del usuario.
@@ -293,14 +319,14 @@ No se declara `blockGenericMutation` (no existe en el MCP nuevo) ni recordTypes 
 
 ## Acceptance checkpoints
 
-- [ ] **Funcional**: los scenarios de REQ-01..REQ-09 pasan (REQ-03/05/08 con evidencia runtime de S2; REQ-09 = `notExposed` correcto).
-- [ ] **Tests** (DET-37 dim4): tests de contrato como `test/*.mjs` (runner nativo) + regresion de academic-scheduling y curriculum-design, corridos y en VERDE.
+- [ ] **Funcional**: los scenarios de REQ-01..REQ-10 pasan. REQ-03/08 con evidencia runtime del **camino positivo** (S2.T1). El **rechazo por permisos** (camino negativo de REQ-03/05/08) se **infiere** del gate del MCP y su confirmacion en vivo se **difiere** (S2.T2, DEC-LOCAL-05): NO es evidencia requerida para cerrar. REQ-10: la decision del ajuste del PO queda registrada.
+- [ ] **Tests** (DET-37 dim4): tests de contrato como `test/*.mjs` (runner nativo) + regresion de academic-scheduling y curriculum-design, en VERDE.
 - [ ] **NFRs**: N/A (lectura acotada).
 - [ ] **Rules**: patron del MCP nuevo respetado (pack por carpeta, contratos en el pack, lectura por genericas, RBAC como frontera).
 - [ ] **Integration**: sin regresion en los dominios ya expuestos (academic-scheduling, curriculum-design).
-- [ ] **Docs (DET-37 dim1)**: curriculum-mapping verificado en el `about` dinamico; entrada `.ai/` del mod si aplica; KB de Kanai (specs `mcp/*`) actualizado con el dominio y la frontera de lo diferido. NO se actualizan docs/TOOLS.md, manifest.json, CAPABILITIES.md ni ROADMAP.md (no existen en el MCP nuevo).
+- [ ] **Docs (DET-37 dim1)**: cm verificado en el `about` dinamico; entrada `.ai/` del mod si aplica; KB de Kanai (specs `mcp/*`) actualizado con el dominio, la frontera de lo diferido y el diferido de la confirmacion negativa (DEC-LOCAL-05). NO se actualizan docs/TOOLS.md/manifest.json (no existen).
 - [ ] **KB DKC (DET-37 dim2)**: N/A obligatorio (posible learn en execute).
-- [ ] **Runtime (DET-36)**: evidencia runtime real de lectura y de rechazo por permisos capturada en S2.
+- [ ] **Runtime (DET-36)**: evidencia runtime real del **camino positivo** de lectura capturada en S2 (S2.T1). El **rechazo por permisos** se infiere del gate (`src/tools/capability-gate.js` + RULE-mcp-004); su confirmacion en vivo se difiere a un follow-up (S2.T2, DEC-LOCAL-05) y NO es evidencia requerida para cerrar.
 
 ## Archiving
 
@@ -354,3 +380,22 @@ Una spec se archiva cuando deja de ser fuente de verdad. Usar `/dkc-archive-spec
 - edit S3.T4 { desc="Escribir los tests de contrato como archivos `test/*.mjs` ejecutados con el test runner NATIVO de node (`node test/*.mjs`), sin vitest: verificar que los tres contratos declaran solo los recordTypes permitidos (`rt__Scheme__levelscheme`, base de CoverageScheme, `rt__Matrix__competencynode`), que los enums y referencias se presentan por nombre, y que `notExposed` lista la frontera de REQ-09 (escritura, competencias/subcompetencias, adopcion de UPONE-1633, rubricas, alineamiento).", rollback="Borrar los archivos `test/*.mjs` agregados por esta task; son archivos nuevos y su eliminacion no afecta la suite existente.", validates=["REQ-02","REQ-04","REQ-07","REQ-09"], isTest=true }
 - edit S3.T5 { desc="Correr la regresion de los dos dominios que hoy expone el MCP nuevo, academic-scheduling y curriculum-design, con el runner nativo de node y dejarla verde. Registrar la salida real (antes/despues) en la tabla de Regression del ticket. No se ejercita ningun dominio retirado.", rollback="No aplica (solo ejecucion de suites, sin cambios de codigo). Si la regresion queda roja por el pack nuevo, revertir el pack segun el rollback de S1.T6 y re-correr para confirmar el verde previo.", validates=["REQ-07"], isTest=true }
 - edit S3.T6 { desc="Cerrar la dimension de documentacion (DET-37 dim1) con los artefactos que existen realmente: (1) verificar que curriculum-mapping aparece en el `about` dinamico con su routing y su domainDoc; (2) agregar la entrada de doc de agente en `.ai/` del repo del mod si aplica; (3) actualizar el KB de Kanai (specs `mcp/*`) documentando el dominio expuesto y la frontera de lo diferido (escritura, competencias/subcompetencias y adopcion de UPONE-1633, rubricas, alineamiento, y el limite conocido de escritura generica abierta). No se actualiza `manifest.json`, `docs/TOOLS.md`, `docs/CAPABILITIES.md` ni `docs/ROADMAP.md`: no existen en el MCP nuevo.", rollback="Revertir el commit de documentacion: quitar la entrada `.ai/` agregada y restaurar la version previa de las specs `mcp/*` del KB de Kanai. Cambios solo documentales, sin impacto en runtime.", validates=["REQ-06","REQ-09"], isTest=false }
+
+### Enmienda 3
+**REQs:**
+
+- REQ-03 (edit) `confirmed`: Toda operacion de lectura del dominio curriculum-mapping DEBE quedar gobernada por los permisos del usuario real autenticado en el MCP. El c
+- REQ-05 (edit) `confirmed`: El alcance de este ticket es SOLO LECTURA y la unica frontera efectiva es RBAC: sin la capability de escritura correspondiente el usuario no
+- REQ-08 (edit) `confirmed`: La verificacion de cierre de este ticket DEBE incluir evidencia runtime real del camino POSITIVO contra la plataforma con usuario autenticad
+- REQ-10 (add) `confirmed`: El ticket DEBE registrar una decision local que documente el ajuste autorizado por el PO (2026-08-27): el rechazo por falta de capability (l
+
+**Tasks agregadas:**
+
+- S2: Registrar la decision local del ajuste del PO (2026-08-27): inferir el rechazo por permisos del gate de capabilities del MCP y diferir su confirmacion en vivo. Incluir autor, fecha, driver (rol negativo no disponible a tiempo), mecanismo inferido (`src/tools/capability-gate.js` + RULE-mcp-004), alcance no afectado (lectura intacta; camino positivo sigue siendo evidencia runtime requerida) y el follow-up que recoge la confirmacion pendiente. Enlazar la decision desde REQ-03, REQ-05 y REQ-08. (valida: REQ-10; rollback: Borrar el record de decision creado y quitar sus referencias en REQ-03/REQ-05/REQ-08; el ticket vuelve a exigir la verificacion negativa en vivo como bloqueante.)
+- S2: Documentar en la frontera de lo diferido del pack y en el KB de Kanai (specs `mcp/*`) que el rechazo por falta de capability (lectura y escritura) queda INFERIDO del gate del MCP, citando la traza del mecanismo, y abrir el follow-up que recoge su confirmacion runtime cuando exista un rol sin la capability. (valida: REQ-03, REQ-05, REQ-08, REQ-10; rollback: Revertir los cambios de documentacion en el pack y en el KB de Kanai, y cerrar/eliminar el follow-up abierto.)
+- S2: Capturar la evidencia runtime del camino POSITIVO como criterio de cierre del gate fuerte de S2: consulta autenticada (OTP) de LevelScheme (`rt__Scheme__levelscheme`), CoverageScheme (base) y CompetencyNode acotado a `rt__Matrix__competencynode`, con salida real del tenant y presentacion por nombre; dejar la salida cruda como evidencia y consignar en el gate que el escenario negativo queda diferido/inferido. (valida: REQ-03, REQ-08; rollback: Descartar la evidencia runtime registrada y reabrir el gate de S2 como pendiente de verificacion.)
+
+**Task ops:**
+
+- edit S2.T3 { desc="DIFERIDA (follow-up, no bloqueante — ajuste del PO 2026-08-27): provisionar el rol SIN la capability de lectura del dominio y confirmar en vivo el PERMISSION_DENIED. No se ejecuta en S2 ni bloquea el cierre del ticket; se ejecuta cuando el rol negativo este disponible. Mientras tanto el rechazo queda inferido del gate del MCP (`src/tools/capability-gate.js`).", rollback="Revertir la marca de diferida y volver a exigir la provision del rol negativo como task bloqueante de S2.", validates=["REQ-03","REQ-10"] }
+- edit S2.T2 { desc="DIFERIDA (verificacion diferida, no bloqueante — ajuste del PO 2026-08-27): intento de mutacion con un rol sin la capability de escritura para confirmar en vivo el PERMISSION_DENIED de REQ-05. El rechazo se infiere del mismo gate de capabilities (`src/tools/capability-gate.js`); la confirmacion runtime se ejecuta junto al follow-up del rol negativo. El limite conocido (escritura generica abierta, frontera solo RBAC) se mantiene declarado en la frontera de lo diferido.", rollback="Revertir la marca de diferida y volver a exigir el escenario de escritura en vivo como task bloqueante de S2.", validates=["REQ-05","REQ-10"] }
