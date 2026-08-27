@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Orden y nombres del menu de Curriculum Design · TICKET-136</title>
+<!--
+  metadata · ticket: TICKET-136 · kind: close · project: up1 · generated: 2026-08-24
+  Externo: UPONE-1616 · improvement · SP: N/A · Consumidor de UPONE-1645
+-->
+<style>
+  :root { --bg:#0c0a09; --panel:#1c1917; --border:#44403c; --amber:#f59e0b; --text:#e7e5e4; --muted:#a8a29e; --green:#22c55e; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+  main{max-width:880px;margin:0 auto;padding:2rem 1.25rem 4rem}
+  h1{font-size:1.5rem;border-bottom:2px solid var(--amber);padding-bottom:.5rem}
+  h2{font-size:1.15rem;color:var(--amber);margin-top:2rem}
+  code{background:var(--panel);padding:.1rem .35rem;border-radius:4px;font-size:.85em;font-family:SFMono-Regular,Menlo,Consolas,monospace}
+  pre{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.82rem}
+  table{border-collapse:collapse;width:100%;margin:.75rem 0;font-size:.88rem}
+  th,td{border:1px solid var(--border);padding:.45rem .6rem;text-align:left;vertical-align:top}
+  th{background:var(--panel);color:var(--amber)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0}
+  .ok{color:var(--green);font-weight:600}
+  .muted{color:var(--muted)}
+  ul{padding-left:1.25rem}
+</style>
+</head>
+<body>
+<main>
+<h1>Orden y nombres del menu de Curriculum Design</h1>
+<p class="muted">TICKET-136 · UPONE-1616 · improvement · Cerrado 2026-08-24 · 2 sessions · consumidor de UPONE-1645</p>
+
+<div class="panel">
+<strong>Que quedo resuelto.</strong> El menu de Curriculum Design ahora sigue el orden de trabajo del PO (carrera → plan → asignatura → silabos → historial) y cada una de sus 5 vistas muestra el nombre pedido, declarado por el propio mod via <code>labelKey</code> (UPONE-1645), sin tocar core, sin decision de PO y sin afectar a Engagement.
+</div>
+
+<h2>Lo que se hizo, en dos tramos</h2>
+<table>
+<tr><th>Session</th><th>Que</th><th>Depende de 1645</th></tr>
+<tr><td>S1</td><td>Reordenar las 5 vistas al orden PO (posicion en <code>defaultObjects</code>, forma mixta que <strong>preserva</strong> las labelKey de Activity/Offering) + alinear el encabezado de Curriculum ("Currículos" → "Planes de estudios") + actualizar el test</td><td>No</td></tr>
+<tr><td>S2</td><td>Completar las 5 vistas a forma objeto con <code>labelKey</code> propia del mod + i18n es/en/pt + smoke en dos apps + doc/RULE</td><td>Sí</td></tr>
+</table>
+
+<h2>La idea clave: labelKey por app gana sobre el override por tenant</h2>
+<p>El nombre del menu se resolvia por <code>object.&lt;Objeto&gt;</code>, una clave compartida que en UPU gobierna el <em>override por tenant</em>. Declarar el nombre en el mod perdia contra ese override. Con UPONE-1645, el mod declara una <code>labelKey</code> en <strong>su propio namespace</strong> (<code>nav.curriculumDesign.*</code>), que se resuelve <strong>antes</strong> de <code>object.&lt;Objeto&gt;</code> y que el override (solo toca <code>object.*</code>) no alcanza.</p>
+<pre>defaultObjects: [{ object: "Curriculum", labelKey: "nav.curriculumDesign.curriculum" }, ...]
+nav.curriculumDesign.curriculum = "Planes de estudios"   (es/en/pt)</pre>
+<p>Verificado en runtime: el menu mostro <strong>"Planes de estudios"</strong> (labelKey del mod), ganando sobre el override <strong>"Planes de Estudio"</strong>; y Engagement, que declara los mismos <code>Activity</code>/<code>Offering</code> sin labelKey, conservo "Actividad"/"Ofertas" (aislamiento por app).</p>
+
+<h2>El aprendizaje de la ejecucion: reconciliar el baseline post-dependencia</h2>
+<div class="panel">
+El spec se escribio (2026-08-18) asumiendo que UPONE-1645 aun no habia tocado el mod. Cuando se ejecuto (2026-08-24), 1645 ya estaba mergeado y su smoke habia dejado Activity/Offering en forma objeto con labelKey. El <strong>spec-judge dual (DET-38)</strong> lo atajo: ejecutar el reorden en "forma string pura" como decia el spec original habria <strong>despojado</strong> esas labelKey (regresion de nombres). Se reconcilio (DEC-LOCAL-03): el reorden <strong>preserva</strong> las labelKey (forma mixta en S1) y S2 solo completa las 3 vistas libres. <strong>Leccion:</strong> cuando un ticket depende de otro que ya mergeo, revalidar el baseline real del working tree antes de ejecutar el plan escrito antes del merge. Capturado en <code>RULE-curriculum-design-047</code>.
+</div>
+
+<h2>Verificacion</h2>
+<ul>
+<li><span class="ok">Test</span>: <code>layouts-declared.test.ts</code> 158/158 verde (array mixto en S1, forma objeto en S2).</li>
+<li><span class="ok">i18n</span>: 5 claves <code>nav.curriculumDesign.*</code> con paridad es/en/pt.</li>
+<li><span class="ok">Runtime</span> (UPU): 5 nombres objetivo en CD; Engagement intacto; encabezado alineado.</li>
+<li><span class="ok">Gates</span>: S1 reviewer aislado approve; S2 dual-judge (DET-35) ambos approve.</li>
+</ul>
+
+<h2>Pendiente (fuera de este ticket)</h2>
+<p>Rama <code>UPONE-1616</code> en curriculum-design con 2 commits (S1, S2). El push y el PR quedan para el dev (dependen de que UPONE-1645 este en develop, que ya lo esta). Coordinar con UPONE-1615 (visibilidad por rol) antes de vincular.</p>
+</main>
+</body>
+</html>

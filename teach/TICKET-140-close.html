@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Nav i18n preload · TICKET-140</title>
+<!-- metadata · ticket: TICKET-140 · kind: close · project: up1 · generated: 2026-08-24 · Externo: UPONE-1716 · Core Extension Bug fix -->
+<style>
+  :root{--bg:#0c0a09;--panel:#1c1917;--border:#44403c;--amber:#f59e0b;--text:#e7e5e4;--muted:#a8a29e;--green:#22c55e}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+  main{max-width:860px;margin:0 auto;padding:2rem 1.25rem 4rem}
+  h1{font-size:1.45rem;border-bottom:2px solid var(--green);padding-bottom:.5rem}
+  h2{font-size:1.1rem;color:var(--amber);margin-top:1.8rem}
+  code{background:var(--panel);padding:.1rem .35rem;border-radius:4px;font-size:.85em;font-family:SFMono-Regular,Menlo,Consolas,monospace}
+  pre{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.82rem}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0}
+  ul{padding-left:1.25rem} li{margin:4px 0}
+  .muted{color:var(--muted)} .ok{color:var(--green)}
+  table{border-collapse:collapse;width:100%;font-size:.85rem;margin:.5rem 0}
+  th,td{border:1px solid var(--border);padding:.4rem .55rem;text-align:left;vertical-align:top}
+  th{color:var(--amber)}
+</style>
+</head>
+<body>
+<main>
+<h1>Nav i18n: como quedo resuelto el bug de los nombres de vista sin traducir</h1>
+<p class="muted">TICKET-140 · UPONE-1716 · Core Extension (Bug fix) · workspace suite · origen UPONE-1616</p>
+
+<h2>El problema, en una linea</h2>
+<div class="panel">
+La nav mostraba el nombre de vista de <strong>todos</strong> los objetos del app, pero el i18n solo cargaba el namespace del objeto <strong>activo</strong>, asi que los demas salian en el idioma fuente (es) aunque tuvieran traduccion publicada.
+</div>
+
+<h2>Por que pasaba (el mecanismo)</h2>
+<ul>
+<li>El nombre de vista vive en <code>layout.&lt;layout&gt;.label</code>, dentro del namespace <strong>por-objeto</strong> <code>{mod}/{Objeto}</code>.</li>
+<li>El runtime carga namespaces <strong>por contexto de ruta activa</strong>: solo el objeto abierto aporta su stem, asi que su namespace es el unico que se carga.</li>
+<li>Los <strong>tabs</strong> si traducian porque su <code>labelKey</code> (<code>nav.&lt;mod&gt;.*</code>) vive en <code>{mod}/common</code>, siempre cargado (asimetria de RULE-curriculum-design-047, UPONE-1645).</li>
+</ul>
+
+<h2>Como se resolvio (A1b)</h2>
+<p>La nav precarga los namespaces por-objeto de <strong>todos</strong> los objetos que renderiza. Piezas:</p>
+<table>
+<tr><th>Archivo</th><th>Que hace</th></tr>
+<tr><td><code>utils/i18nBridge.ts</code></td><td>Helpers puros: <code>resolveNavNamespaces</code> (ns por-objeto en orden de lookup, tenant sobre base) y <code>composeFallbackNS</code> (activo &gt; nav &gt; bundled, dedup del activo).</td></tr>
+<tr><td><code>plugins/i18n.ts</code></td><td>Set persistente <code>navNamespaces</code> + senal reactiva <code>navNsVersion</code> + <code>ensureNavNamespaces</code> (idempotente, con rollback); <code>applyContext</code> recompone <code>fallbackNS</code> incluyendo la nav; recarga en <code>languageChanged</code>; provee helper + senal.</td></tr>
+<tr><td><code>composables/useObjectManager.ts</code></td><td><code>watch</code> client-only sobre clave estable del set de objetos; <code>navObjects</code> lee <code>i18nNavVersion</code> para re-renderizar tras la carga async.</td></tr>
+</table>
+
+<h2>Las tres trampas que habia que cuidar</h2>
+<ul>
+<li><strong>Persistencia:</strong> <code>applyContext</code> reescribe <code>fallbackNS</code> en cada ruta. Sin reincluir los ns de nav, navegar los perdia. Se resuelve componiendo <code>fallbackNS</code> siempre con <code>navNamespaces</code>.</li>
+<li><strong>Reactividad:</strong> <code>translate</code> es sincrono, <code>loadNamespaces</code> async. La senal <code>navNsVersion</code> (que <code>navObjects</code> lee, como ya leia <code>i18nLanguage</code>) dispara el re-render al terminar la carga.</li>
+<li><strong>Switch de idioma en caliente:</strong> el watch no re-dispara si los objetos no cambian, asi que el handler de <code>languageChanged</code> recarga los ns de nav para el nuevo idioma.</li>
+</ul>
+
+<h2>Como se verifico</h2>
+<ul>
+<li class="ok">Spec-judge dual APPROVED (DET-38); quality gate dual APPROVED (DET-35) con findings incorporados (orden tenant-sobre-base, try/catch rollback, tests).</li>
+<li class="ok">Unit 40/40 (helpers puros: orden, dedup, prioridad, bordes) + suite 94/94, typecheck 0 err en archivos tocados.</li>
+<li class="ok">Smoke runtime en UPU (en/pt) con evidencia i18next dura: los 5 nombres de vista de objetos no activos traducen sin navegar; persisten al navegar; el switch en/pt re-resuelve; <code>fallbackNS</code> con la prioridad correcta.</li>
+</ul>
+
+<h2>Que NO se toco (y por que)</h2>
+<ul>
+<li>El <code>hydration mismatch</code> de consola es <strong>preexistente</strong> (el fix es no-op en SSR, precarga client-only); se reporta, no se corrige aqui.</li>
+<li>Workaround mod (mover labels a <code>common</code>): descartado por Aduana.</li>
+</ul>
+
+<h2>Limitaciones aceptadas (candidatas a backlog)</h2>
+<ul>
+<li>Borde de <code>show-source-strings</code>: si el set de objetos cambia en debug mode, los nuevos quedan crudos hasta el siguiente cambio de set. Dev-only.</li>
+<li>Poda de <code>navNamespaces</code> entre tenants (acotado por sesion).</li>
+<li>Guard out-of-order de <code>applyContextGuarded</code>: preexistente, fuera de alcance.</li>
+</ul>
+
+<h2>Estado al cierre</h2>
+<div class="panel">
+Codigo en suite rama <code>UPONE-1716</code> (2 commits, pusheada). PR hacia develop pendiente de crear/mergear (accion externa). KB: RULE-core-051 (patron precarga de ns de nav). Ticket DKC: <strong>closed</strong> con acceptance ejecutado y evidencia.
+</div>
+</main>
+</body>
+</html>

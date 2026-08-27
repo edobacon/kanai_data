@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — i18n del arbol de requisitos · TICKET-142 / UPONE-1541</title>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524;
+    --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html,body { background:var(--stone-bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; margin:0; padding:0; }
+  .wrap { max-width:900px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  .card { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:0.75rem;
+    padding:1.1rem 1.25rem; margin:0.9rem 0; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.6rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code,.mono { font-family:SFMono-Regular,Menlo,Consolas,monospace; }
+  code { background:#292524; padding:0.1rem 0.35rem; border-radius:0.3rem; font-size:0.85em; color:#fbbf24; }
+  h1,h2,h3 { color:#fafaf9; line-height:1.25; }
+  h1 { font-size:1.5rem; } h2 { font-size:1.2rem; margin-top:1.6rem; border-bottom:1px solid var(--stone-border); padding-bottom:0.3rem; }
+  a { color:#fbbf24; }
+  table { border-collapse:collapse; width:100%; font-size:0.9rem; margin:0.5rem 0; }
+  th,td { border:1px solid var(--stone-border); padding:0.4rem 0.6rem; text-align:left; vertical-align:top; }
+  th { background:#292524; color:#fafaf9; }
+  .muted { color:var(--txt-muted); } .dim { color:var(--txt-dim); font-size:0.85rem; }
+  .tag { display:inline-block; background:#292524; color:var(--amber); border-radius:0.3rem; padding:0.1rem 0.5rem; font-size:0.75rem; margin-right:0.3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Teach close · Localizar los labels por defecto del arbol de requisitos</h1>
+<p class="dim"><span class="tag">TICKET-142</span><span class="tag">UPONE-1541</span><span class="tag">fix</span><span class="tag">i18n</span><span class="tag">curriculum-design</span> · cerrado 2026-08-26</p>
+
+<div class="callout callout-info">
+<strong>En una frase:</strong> al cambiar el idioma de la UI, ciertos labels del arbol de requisitos
+seguian en el idioma de creacion; el render ahora deriva el texto traducido para los nodos con label
+"por defecto" (raiz OR, metrica, pool) en vez de mostrar el literal guardado.
+</div>
+
+<h2>Causa raiz</h2>
+<p>Los labels de los requisitos se <strong>persisten como texto literal</strong> (en el idioma en que se
+crearon), no como claves i18n. El render (<code>ReglaUnificadaView/RequirementTreeNode.ts</code>)
+traducia solo dos cosas: los badges de combinador y el <strong>badge de via</strong> (para las vias
+<em>ignora</em> el label guardado y usa <code>t('reglaUnificada.viaBadge')</code>, por eso "Path 1/2" si
+cambiaba de idioma). Todo lo demas mostraba el literal guardado: el contenedor raiz OR
+("Cualquiera de las vias"), la metrica ("Metrica (creditos) &ge; 60") y el pool ("Electivo: 4 de 6").</p>
+
+<h2>El fix (mod-only, en el render)</h2>
+<p>El render deriva el texto traducido para los nodos cuyo label es <strong>siempre un default</strong>
+(no autorable por el usuario), desde sus propios campos, igual que ya hacia con las vias:</p>
+<table>
+<tr><th>Nodo</th><th>Antes (literal guardado)</th><th>Ahora (derivado i18n)</th></tr>
+<tr><td>Contenedor raiz OR</td><td>"Cualquiera de las vias"</td><td><code>t('reglaUnificada.orRootLabel')</code></td></tr>
+<tr><td>Metrica</td><td>"Metrica (creditos) &ge; 60"</td><td><code>t('reglaUnificada.chip.metric', {metric, operator, value})</code></td></tr>
+<tr><td>Pool K-de-N</td><td>"Electivo: 4 de 6"</td><td><code>t('reglaUnificada.electivePool', {k, n})</code></td></tr>
+<tr><td>Nombre de curso</td><td>"{name} ({code})"</td><td><em>se deja</em> (es dato real, no UI)</td></tr>
+</table>
+<p>Claves nuevas <code>reglaUnificada.orRootLabel</code> y <code>reglaUnificada.electivePool</code> en
+es/en/pt. Las de metrica (<code>metric.Credits</code>, <code>operator.*</code>, <code>chip.metric</code>)
+ya existian.</p>
+
+<div class="callout callout-warn">
+<strong>Que NO cubre (y por que):</strong> los labels <em>autorados a mano</em> por un usuario, y el
+modelo de almacenamiento (el label sigue siendo un literal en un objeto core). Cambiar eso en el origen
+(guardar claves i18n en el objeto <code>requirement</code>) seria core, de blast radius grande, y se
+descarto. El fix del render cubre los nodos con label por defecto, que son los que produce el seed y el
+alta.
+</div>
+
+<h2>Como se valido</h2>
+<ul>
+<li><strong>3 tests de render</strong> (<code>RequirementTreeNode.spec.ts</code>): raiz OR, metrica y pool
+muestran la clave i18n (no el literal). El mock de <code>t</code> devuelve la clave, asi que assertar la
+clave == confirma que usa i18n.</li>
+<li><strong>Paridad i18n</strong>: las 2 claves nuevas presentes en es/en/pt.</li>
+<li><strong>Runtime en UPU</strong>: con la suite en ingles, el arbol de <code>C-ESTADISTIC-107</code>
+muestra "Any of the paths", "Credits &ge; 60" y "Elective: 4 of 6" traducidos. Los nombres de curso
+siguen en su idioma de dato (correcto).</li>
+<li><strong>Regresion</strong>: suite completa 1593 tests, typecheck y lint en verde.</li>
+</ul>
+
+<h2>Alcance</h2>
+<p class="muted">Aduana: <code>todo-mod-only</code>. El fix vive en <code>modsComponents/ReglaUnificadaView</code>
+(render del mod) + <code>lang/</code> del mod; el objeto <code>requirement</code> es core pero NO se toca
+su schema (solo se actualizo una descripcion como cleanup post-review). Detectado en el smoke runtime de
+TICKET-135; se separo en su propio ticket DKC bajo el mismo Jira UPONE-1541 por tocar la capacidad de
+UPONE-1378 que el spec de 135 excluia.</p>
+
+<p class="dim">Commit principal: <code>3eeb445</code> (render + i18n + tests). Higiene post-review
+(dredd): <code>cb5805c</code>.</p>
+
+</div>
+</body>
+</html>

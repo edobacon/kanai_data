@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Nav i18n preload · TICKET-140</title>
+<!-- metadata · ticket: TICKET-140 · kind: intake · project: up1 · generated: 2026-08-24 · Externo: UPONE-1716 · Core Extension Bug fix -->
+<style>
+  :root{--bg:#0c0a09;--panel:#1c1917;--border:#44403c;--amber:#f59e0b;--text:#e7e5e4;--muted:#a8a29e;--green:#22c55e}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.55}
+  main{max-width:860px;margin:0 auto;padding:2rem 1.25rem 4rem}
+  h1{font-size:1.45rem;border-bottom:2px solid var(--amber);padding-bottom:.5rem}
+  h2{font-size:1.1rem;color:var(--amber);margin-top:1.8rem}
+  code{background:var(--panel);padding:.1rem .35rem;border-radius:4px;font-size:.85em;font-family:SFMono-Regular,Menlo,Consolas,monospace}
+  pre{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.82rem}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0}
+  ul{padding-left:1.25rem} li{margin:4px 0}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Nav i18n: cargar los nombres de vista de todos los objetos, no solo el activo</h1>
+<p class="muted">TICKET-140 · UPONE-1716 · Core Extension (Bug fix) · workspace suite · origen UPONE-1616</p>
+
+<h2>El concepto que hay que entender</h2>
+<div class="panel">
+El i18n de suite carga catálogos <strong>por contexto de ruta activa</strong>. Cuando estás en una vista, se cargan: el namespace <code>{workspace}/common</code> (siempre) + los namespaces derivados del <strong>objeto/layout activo</strong> (<code>{workspace}/{objetoActivo}</code>). Los namespaces por-objeto de los <strong>otros</strong> objetos NO se cargan hasta navegar a ellos.
+</div>
+<p>Pero la barra de navegación renderiza los nombres de vista de <strong>todos</strong> los objetos del app a la vez (tabs, dropdown, encabezados). Los nombres de vista viven en el label del layout (<code>layout.&lt;layout&gt;.label</code>), que está en el namespace <strong>por-objeto</strong>. Resultado: solo la vista activa traduce; las demás caen al texto crudo (el idioma fuente).</p>
+
+<h2>Por qué los tabs sí traducen y los nombres de vista no</h2>
+<ul>
+<li><strong>Tab</strong> = <code>labelKey</code> (<code>nav.&lt;mod&gt;.*</code>) → vive en <code>{mod}/common</code>, <strong>siempre cargado</strong> → traduce (UPONE-1645 + RULE-047).</li>
+<li><strong>Nombre de vista</strong> = <code>layout.&lt;layout&gt;.label</code> → namespace <strong>por-objeto</strong>, cargado solo para el objeto activo → no traduce para los demás.</li>
+</ul>
+
+<h2>Mecanismo (rutas exactas)</h2>
+<pre>i18nBridge.ts:buildLevels(ctx)      -> niveles solo de ctx.{objectName,layoutType,layoutName} (ruta activa)
+i18nBridge.ts:resolveNamespaces      -> carga {workspace}/{stem} de esos niveles + common + embeddables
+plugins/i18n.ts:applyContext         -> arma defaultNS/fallbackNS desde resolveNamespaces(ctx); watcher de ruta recompone
+useObjectManager.ts:614-615          -> translateWithFallback('layout.&lt;name&gt;.label', crudo) por layout de CADA grupo
+ObjectNavBar.vue:50                  -> {{ layout.label }} (ya traducido, o crudo si el ns no cargó)</pre>
+
+<h2>El fix (A1b) y su trampa</h2>
+<p>La nav debe cargar los namespaces por-objeto de <strong>todos los objetos que renderiza</strong>. Enfoque A1b: un helper en el plugin (<code>ensureNavNamespaces(objectNames)</code>) que cargue <code>{workspace}/{obj}</code> de cada objeto de la nav y los sume al <code>fallbackNS</code>; lo invoca <code>useObjectManager</code> (que conoce el set de la nav).</p>
+<div class="panel">
+<strong>Trampa a cuidar — reactividad.</strong> <code>translateWithFallback</code> se llama <strong>sincrónico</strong> al renderizar la nav; <code>loadNamespaces</code> es <strong>async</strong>. Si los labels se calculan antes de que el namespace cargue, salen crudos igual. El fix tiene que garantizar que, al terminar la carga, la nav <strong>re-renderiza</strong> (i18next-vue reacciona a <code>changeLanguage</code>, no siempre a <code>loadNamespaces</code>). Esa es la parte no trivial del ticket, no el "cargar el namespace".
+</div>
+
+<h2>Qué NO es</h2>
+<ul>
+<li>No es un problema de datos: 1616 ya publicó las traducciones (verificado en <code>locales-dist/</code>).</li>
+<li>No es del mod: el mecanismo de carga es core (suite). El workaround mod (mover labels a <code>common</code>) se descartó (Aduana).</li>
+<li>No toca el override por tenant ni el <code>labelKey</code> (eso ya funciona).</li>
+</ul>
+
+<h2>Cómo se sabrá que funciona</h2>
+<p>En un tenant en inglés, abrir el dropdown de vistas de una app multi-vista (Curriculum Design) <strong>sin</strong> navegar a cada una: los 5 nombres salen traducidos. Repetir en otra app multi-vista. Sin regresión en la vista activa ni en los tabs.</p>
+</main>
+</body>
+</html>

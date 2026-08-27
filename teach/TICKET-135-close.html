@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close — Seed de requisitos EST200 · TICKET-135 / UPONE-1541</title>
+<style>
+  :root { --amber:#f59e0b; --stone-bg:#0c0a09; --stone-card:#1c1917; --stone-border:#292524;
+    --txt:#e7e5e4; --txt-muted:#a8a29e; --txt-dim:#78716c; }
+  html,body { background:var(--stone-bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; margin:0; padding:0; }
+  .wrap { max-width:900px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+  .card { background:var(--stone-card); border:1px solid var(--stone-border); border-radius:0.75rem;
+    padding:1.1rem 1.25rem; margin:0.9rem 0; }
+  .callout { border-left:4px solid; padding:0.85rem 1.1rem; border-radius:0 0.5rem 0.5rem 0; margin:0.6rem 0; }
+  .callout-info { border-color:#818cf8; background:rgba(129,140,248,0.10); }
+  .callout-warn { border-color:#fbbf24; background:rgba(251,191,36,0.10); }
+  .callout-success { border-color:#34d399; background:rgba(52,211,153,0.10); }
+  code,.mono { font-family:SFMono-Regular,Menlo,Consolas,monospace; }
+  code { background:#292524; padding:0.1rem 0.35rem; border-radius:0.3rem; font-size:0.85em; color:#fbbf24; }
+  h1,h2,h3 { color:#fafaf9; line-height:1.25; }
+  h1 { font-size:1.5rem; } h2 { font-size:1.2rem; margin-top:1.6rem; border-bottom:1px solid var(--stone-border); padding-bottom:0.3rem; }
+  a { color:#fbbf24; }
+  table { border-collapse:collapse; width:100%; font-size:0.9rem; margin:0.5rem 0; }
+  th,td { border:1px solid var(--stone-border); padding:0.4rem 0.6rem; text-align:left; vertical-align:top; }
+  th { background:#292524; color:#fafaf9; }
+  .muted { color:var(--txt-muted); } .dim { color:var(--txt-dim); font-size:0.85rem; }
+  pre { background:#0f0d0c; border:1px solid var(--stone-border); border-radius:0.5rem; padding:0.8rem; overflow:auto; font-size:0.82rem; }
+  .tag { display:inline-block; background:#292524; color:var(--amber); border-radius:0.3rem; padding:0.1rem 0.5rem; font-size:0.75rem; margin-right:0.3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Teach close · Seed de requisitos EST200 reproducible por el editor</h1>
+<p class="dim"><span class="tag">TICKET-135</span><span class="tag">UPONE-1541</span><span class="tag">refactor</span><span class="tag">curriculum-design</span> · cerrado 2026-08-26</p>
+
+<div class="callout callout-info">
+<strong>En una frase:</strong> el arbol de requisitos de ejemplo que el sistema sembraba tenia una forma
+que el editor visual no podia crear desde cero; este refactor lo reescribio a la forma canonica del
+alta, sin tocar esquema ni motor de evaluacion, de modo que el ejemplo sembrado sea uno que el
+usuario podria haber creado el mismo.
+</div>
+
+<h2>El problema</h2>
+<p>El seed <code>_data-requirement.js</code> (arbol "EST200") tenia una <strong>raiz <code>Group[AND]</code>
+con un <code>Group[OR]</code> anidado</strong> y dos condiciones globales colgando de la raiz. El alta del
+editor (UPONE-1378), en cambio, <strong>siempre</strong> crea el <code>Group[OR]</code> contenedor en la raiz
+y cuelga todo bajo una via: no hay camino para poner un <code>Group</code> por encima ni para crear
+condiciones globales. Resultado: el disenador veia un ejemplo <em>no reproducible</em>, una promesa
+incumplida del sistema. Ademas un bloque electivo se sembraba sobre un Plan con campos que ninguna
+pantalla captura (<code>ProgressGate</code>, <code>creditsRequired</code>).</p>
+
+<h2>Que se hizo (forma vieja &rarr; nueva)</h2>
+<table>
+<tr><th>Aspecto</th><th>Antes</th><th>Ahora</th></tr>
+<tr><td>Raiz</td><td><code>Group[AND]</code> "Requisitos EST200"</td><td><code>Group[OR]</code> "Cualquiera de las vias"</td></tr>
+<tr><td>Vias</td><td>un <code>Group[OR]</code> anidado</td><td>2 <code>Group[AND]</code> "Todos de la via" directo bajo la raiz</td></tr>
+<tr><td>Condiciones globales (creditos, advisory)</td><td>colgando de la raiz (1 vez)</td><td><strong>duplicadas en cada via</strong> (preservan la semantica bajo OR)</td></tr>
+<tr><td>timing en hojas de curso</td><td>ausente (no alcanzable por el alta)</td><td>explicito (<code>Before</code> en las Approved)</td></tr>
+<tr><td>Guard de idempotencia</td><td>por label global de la raiz</td><td><strong>por owner</strong> (Activity resuelta por code ANTES del guard)</td></tr>
+<tr><td>Electivo</td><td>bloque sobre un Plan (owner curriculum, ProgressGate)</td><td>pool <code>Group[OR, minToSatisfy]</code> K-de-N dentro de la via 2, anclado por code a cursos reales</td></tr>
+<tr><td>Labels</td><td>autorados a mano</td><td>literales por defecto del alta (sin autoria)</td></tr>
+</table>
+
+<h2>Por que importa (las 2 ideas clave)</h2>
+<div class="callout callout-warn">
+<strong>1. Distribuir bajo un OR = duplicar lo comun.</strong> Al aplanar de <code>(A ∨ B) ∧ C</code> a
+<code>(A ∧ C) ∨ (B ∧ C)</code>, las condiciones globales <code>C</code> (creditos, advisory) hay que
+<strong>duplicarlas</strong> en cada via: una condicion que vive en una sola rama de un OR deja de
+exigirse cuando se cumple la otra. Es una equivalencia logica (distribucion), no una decision de estilo.
+</div>
+<div class="callout callout-warn">
+<strong>2. El guard de idempotencia depende de la determinacion del owner.</strong> La raiz aplanada
+pasa a tener un label generico y compartible ("Cualquiera de las vias"), asi que un guard por-label
+global haria falso match o replantaria. La solucion: guard <strong>por owner</strong>, resolviendo la
+Activity ancla (determinista por <code>code</code>) ANTES del guard. Esto actualizo
+<code>RULE-curriculum-design-022</code> de "guard global por label" a "guard coherente con la
+determinacion del owner".
+</div>
+
+<h2>Como se valido</h2>
+<ul>
+<li><strong>Prueba de forma que corre el loader real</strong> (<code>seed-counts.test.ts</code>): asserta
+combinador por grupo, jerarquia por padre y campos de hoja. Escrita primero como espejo de la forma
+vieja (S1), luego actualizada a la nueva (S2/S3). Falla si alguien altera la forma del arbol.</li>
+<li><strong>Prueba de re-seed idempotente</strong>: corre <code>loadRequirement</code> dos veces sobre el
+mismo mock stateful (con <code>stableFindFirst</code> para dar id estable a la Activity ancla) y asserta
+0 creates en la segunda corrida.</li>
+<li><strong>DET-40 (auditoria de reemplazo)</strong>: enumerado 1:1 lo que hacia el bloque electivo viejo
+y que replica el pool nuevo vs. que se retira intencional; propagado a los 2 consumidores
+(<code>seed.js</code> log + <code>seed-entry.test.ts</code> mock), sin referencias colgantes.</li>
+<li><strong>Runtime en UPU (DET-36 / H6)</strong>: tras <code>setup:reset</code> con la rama, el arbol
+sembrado en <code>C-ESTADISTIC-107</code> se ve con la forma nueva; abierto en ingles, raiz/metrica/pool
+se traducen (fix i18n de TICKET-142). La diferencia visual que motivo el ticket desaparecio.</li>
+<li><strong>Regresion</strong>: suite completa 97 files / 1593 tests, 0 regresiones (delta aditivo).</li>
+</ul>
+
+<h2>Gotchas para el proximo</h2>
+<ul>
+<li>El mock de <code>seed-counts.test.ts</code> resuelve <code>findFirst</code> a un id NUEVO por llamada.
+Para probar re-seed idempotente hay que estabilizar el id de la ancla, o el guard por owner nunca hace
+match y da un falso "duplica" (artefacto del mock, no bug).</li>
+<li>Un re-seed sobre una DB con el arbol viejo NO lo convierte: el guard por owner ve la raiz existente y
+hace skip. Para ver la forma nueva hace falta un <strong>reseed limpio</strong>
+(<code>setup:reset</code> dropea+recrea), no un <code>sync</code> incremental.</li>
+<li>El pool electivo se anclo por <code>code</code> a cursos <code>C-*</code> reales (Active); el
+<code>findMany(Course) take:6 orderBy id</code> anterior caia en las Activities de menor id (las demo en
+Draft), inconsistente con el principio "casos reales y alcanzables".</li>
+</ul>
+
+<h2>Alcance y decisiones</h2>
+<p class="muted">Aduana: <code>todo-mod-only</code> (ningun objeto Base, capability ni evento). No cambio
+esquema, RecordTypes ni motor de evaluacion. Se extendio el scope post-aprobacion con la Session 5
+(i18n del combinador AND/OR del RT Group en en/pt) por decision del dev (DEC-LOCAL-05), reabriendo el
+dual-judge DET-38 (aprobado en iteracion 2). El fix del render i18n se separo en TICKET-142 (mismo Jira)
+por tocar <code>ReglaUnificadaView</code>, que el spec de 135 excluia.</p>
+
+<p class="dim">Commits en la rama <code>UPONE-1541-seed-shape</code>: S1 baseline, S2 aplanado+guard,
+S3 retiro electivo+pool, S4 docs+KB, S5 i18n, fix pool por code, fix i18n render, higiene post-review.</p>
+
+</div>
+</body>
+</html>
