@@ -28,7 +28,7 @@ status: draft
 
 | # | Decision | Por que importa |
 |---|----------|----------------|
-| 1 | Los sets se declaran **inertes** (sin vinculos) y el mapa rol→cap **NO se retira**: sigue siendo la fuente runtime hasta que se creen los vinculos (diferido) | Si se retirara el mapa ahora sin vinculos, los 4 roles perderian TODOS sus permisos en runtime — regresion catastrofica. Es el nucleo del zero-behavior-change |
+| 1 | Los sets **conviven** con el mapa rol→cap (que **NO se retira**; cut-over diferido). Sin vinculo (S2-S5) el set es inerte; en **S6 se crean 6 vinculos** (Admin/Consultor + 4 curriculares) y el set inyecta, pero el efectivo **no cambia** por dedup (REQ-CONVIV-01) | Si se retirara el mapa ahora sin vinculos, los 4 roles perderian TODOS sus permisos en runtime — regresion catastrofica. Es el nucleo del zero-behavior-change |
 | 2 | La capability `institution:view` se agrega al **mapa del rol** (`READ_CAPS` de cd), no solo al set | Es la unica via para que el criterio 2 del PO sea verificable runtime EN ESTE TICKET (el set no inyecta sin vinculo). Es la unica adicion intencional al comportamiento |
 | 3 | La composicion de cada set se **deriva** del mapa vivo, no se transcribe a mano, y se valida con un test de equivalencia `base ∪ extension == mapa del rol` | Son ~100 permisos con casing y caps de campo (`<obj>.<campo>:modify`, `<obj>:<rt>.<campo>:modify`); transcribir mal = regresion silenciosa cuando se creen los vinculos |
 | 4 | El renombre usa un **paso idempotente por nombre viejo** en LOS DOS seeds, antes de `ensureRoles` | Los seeds crean roles por nombre; cambiar solo el literal forka (crea 4 nuevos, deja 4 viejos con 120 asignaciones). El orden entre seeds no esta garantizado |
@@ -521,7 +521,8 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|------------|
-| Retirar el mapa del rol sin vinculos → regresion total | Baja (mitigado por diseño) | Todos los roles pierden permisos runtime | REQ-PRESERVE-01: el mapa NO se retira; los sets quedan inertes hasta los vinculos (diferidos) |
+| Retirar el mapa del rol sin vinculos → regresion total | Baja (mitigado por diseño) | Todos los roles pierden permisos runtime | REQ-PRESERVE-01: el mapa NO se retira. Sin vinculo el set es inerte; con vinculo (S6) el efectivo no cambia por dedup |
+| Con vinculos vivos (S6), un set que concede DE MAS = fuga inmediata | Media | Un rol gana permisos no previstos | Test de equivalencia 0 sobrantes (S3.T3/S6.T2) + verificacion runtime (S6.T9) |
 | Transcribir mal ~100 caps a los sets (casing / caps de campo) | Media | Regresion silenciosa al crear vinculos | Derivar del mapa vivo + test de equivalencia estructural (S3.T3) + baseline runtime (S5.T3) |
 | Renombre ingenuo forka (4 nuevos + 4 viejos con 120 asignaciones) | Media | Perdida de asignaciones / roles duplicados | Paso de renombre por nombre viejo idempotente en ambos seeds + verificacion HR3 sobre base con nombres viejos (S4) |
 | Colision de archivo con UPONE-1619 en `_data-rbac.js` | Media | Bloqueo/pisada de cambios | Secuenciar o rebasar; coordinar antes de tocar el archivo |
@@ -539,6 +540,7 @@ El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/rol
 ## Decisions
 
 ### DEC-LOCAL-01: Sets inertes + mapa del rol como fuente runtime activa (dos fases)
+> **SUPERSEDED por DEC-LOCAL-05 (2026-08-26)**: O1 se resolvio parcial; S6 crea 6 vinculos (Admin/Consultor + 4 curriculares) + privatiza la visibilidad. La alternativa (b) "crear los vinculos ya" deja de estar bloqueada (se ejecuta parcialmente). El texto original se conserva por inmutabilidad (DET-6).
 - **Contexto**: los sets no inyectan sin vinculo, y los vinculos estan bloqueados (O1). ¿Como migrar sin regresion?
 - **Drivers**: zero behavior change; criterio 2 verificable runtime en este ticket; O1 bloqueado.
 - **Opcion elegida**: declarar los sets como dato inerte (fuente futura) y **conservar** el mapa `MOD_CAPABILITIES_BY_ROLE` como fuente runtime activa. El cut-over (retirar el mapa, inyeccion por set) se difiere con los vinculos.
