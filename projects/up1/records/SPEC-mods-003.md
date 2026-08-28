@@ -1,0 +1,1308 @@
+---
+id: SPEC-mods-003
+project: up1
+type: doc
+module: mods
+tags:
+  - academic-scheduling
+  - mod
+  - scheduling
+  - shift
+  - timeblock
+  - resource
+  - scenario
+  - ruleset
+  - contract
+  - sns
+  - scenariojob
+  - concurrency
+---
+
+# Capa de lenguaje en mods de uP1: Guia de diseno e implementacion
+
+## Indice
+
+1. [Principio fundamental](#1-principio-fundamental)
+2. [Arquitectura del sistema](#2-arquitectura-del-sistema)
+3. [Estructura de archivos en el mod](#3-estructura-de-archivos-en-el-mod)
+4. [Anatomia de un archivo de traduccion](#4-anatomia-de-un-archivo-de-traduccion)
+5. [Categorias de claves](#5-categorias-de-claves)
+6. [Integracion con layouts](#6-integracion-con-layouts)
+7. [Integracion con componentes Vue](#7-integracion-con-componentes-vue)
+8. [Mecanismo de sync](#8-mecanismo-de-sync)
+9. [Jerarquia de cascada (override)](#9-jerarquia-de-cascada-override)
+10. [Origenes de traducciones (sin destino unificado)](#10-origenes-de-traducciones-sin-destino-unificado)
+11. [Placeholders dinamicos](#11-placeholders-dinamicos)
+12. [Keys por mod vs keys transversales](#12-keys-por-mod-vs-keys-transversales)
+13. [Override por cliente (tenant)](#13-override-por-cliente-tenant)
+14. [Ejemplo completo: curriculum-design](#14-ejemplo-completo-curriculum-design)
+15. [Ejemplo en produccion: uengagement-up1](#15-ejemplo-en-produccion-uengagement-up1)
+16. [Do's y Don'ts](#16-dos-y-donts)
+17. [Troubleshooting](#17-troubleshooting)
+
+---
+
+## 1. Principio fundamental
+
+La base de datos almacena **claves de traduccion**, no texto plano. El texto visible se resuelve en **runtime** segun el idioma del usuario.
+
+```
+BD: { "status": "ACTIVE" }         ← dato
+Lang: { "column.status": "Estado" } ← traduccion
+UI: "Estado: ACTIVE"                ← resolucion en runtime via $t()
+```
+
+Esto permite que un mismo dato se muestre en espanol, ingles o portugues sin cambiar nada en la logica ni en la base de datos.
+
+---
+
+## 2. Arquitectura del sistema
+
+### Migracion (jul 2026)
+
+Entre el 8 y el 9 de julio de 2026 (PR `fix/lang-arq`) up1 migro la libreria de i18n en todo el stack (suite, layout, mods, report-builder): de `vue-i18n` a `i18next` + `i18next-vue`. El pipeline de sync tambien cambio: `suite/scripts/sync-i18n.js` (deep-merge upsert hacia `suite/lang/`) fue eliminado y reemplazado por `suite/scripts/publish-i18n.js` (copia 1:1 sin merge). Este capitulo describe el sistema NUEVO.
+
+### Flujo end-to-end
+
+```text
+┌───────────────────────────────────────────────────────────┐
+│ Fuentes de traducciones (por workspace)                   │
+│                                                            │
+│  lang/{lng}/{stem}.i18n.json                               │
+│  lang/tenants/{tenant}/{lng}/{stem}.i18n.json (opcional)    │
+│                                                            │
+│  suite/lang/  layout/lang/  report-builder/lang/            │
+│  mods/{mod}/lang/  object-manager/lang/                     │
+└──────────────────────────┬──────────────────────────────────┘
+                           │  npm run sync
+                           │  (suite/scripts/publish-i18n.js)
+                           │  copia 1:1, sin merge
+                           ▼
+              ┌────────────────────────────────────┐
+              │ suite/locales-dist/{lng}/{ns}.json  │
+              │ suite/locales-dist/manifest.json    │
+              │ NO editar directamente               │
+              └──────────────┬───────────────────────┘
+                             │  HTTP GET /locales/{lng}/{ns}.json
+                             │  (suite/plugins/i18n.ts, instancia i18next)
+                             ▼
+              ┌────────────────────────────────────┐
+              │ core_Translation (BD, por tenant)   │
+              │ GET /tenants/{tenantId}/{lng}.json  │
+              │ maxima prioridad, sin rebuild        │
+              └──────────────┬───────────────────────┘
+                             ▼
+                    ┌──────────────────┐
+                    │ useTranslation() │
+                    │ / $t()           │
+                    └────────┬─────────┘
+                             ▼
+                    ┌──────────────────┐
+                    │ Texto visible    │
+                    │ en UI            │
+                    └──────────────────┘
+```
+
+### Participantes
+
+| Componente | Rol |
+|-----------|-----|
+| `mods/{mod}/lang/` | Fuente de verdad del mod. Aqui se edita |
+| `suite/scripts/publish-i18n.js` | Copia 1:1 (sin merge) cada archivo fuente a un namespace publicado en `suite/locales-dist/` |
+| `suite/scripts/lib/i18n-source-map.mjs` | Descubre workspaces con `lang/`, mapea archivos a namespaces, detecta colisiones y layouts legacy |
+| `suite/locales-dist/` | Destino publicado. NUNCA editar directamente (se regenera en cada `npm run sync`) |
+| `suite/plugins/i18n.ts` | Instancia i18next por render, carga el manifest, resuelve namespaces por contexto, aplica overrides de tenant desde la BD |
+| `object-manager` (`core_Translation` + `tenantTranslations.js`) | Overrides de tenant persistidos en BD, servidos sin rebuild |
+| `useTranslation()` / `$t()` | API de `i18next-vue` que resuelve claves a texto |
+| Layout Engine | Consume claves i18n para labels de columnas, tabs, steps, acciones |
+
+### Fuentes que alimentan la publicacion
+
+El publish recorre **todos los workspaces** del monorepo que tengan carpeta `lang/` (respeta `ignoredMods`):
+
+| Origen | Que traduce | Namespace publicado |
+|--------|------------|---------------------|
+| `layout/lang/` | UI generica: RecordList, RecordDetail, filtros, paginacion, errores, validaciones | `layout/RecordList`, `layout/RecordDetail`, etc. |
+| `report-builder/lang/` | Modulo de reportes: Flexmonster, templates, export | `report-builder/common`, `report-builder/Report`, etc. |
+| `mods/{mod}/lang/` | Cada mod: sus objetos, layouts, acciones, UI custom | `{mod}/common`, `{mod}/{Object}` |
+| `lang/tenants/{tenant}/` de cualquier workspace | Override estatico por tenant, sin pasar por BD | `tenants/{tenant}/{stem}` |
+
+Ya no existe `_source_module`: el namespace publicado (`{workspace}/{stem}`) es la atribucion. Si aparece esa clave en un archivo fuente, el publish la descarta al copiar (`i18n-source-map.mjs:250-252`).
+
+---
+
+## 3. Estructura de archivos en el mod
+
+```
+mods/{mod}/lang/
+├── es/
+│   ├── common.i18n.json         ← Base: traducciones generales del mod
+│   ├── MiObjeto.i18n.json       ← Per-object: override especifico a MiObjeto
+│   └── OtroObjeto.i18n.json     ← Per-object: override especifico a OtroObjeto
+├── en/
+│   ├── common.i18n.json         ← Base ingles
+│   ├── MiObjeto.i18n.json
+│   └── OtroObjeto.i18n.json
+├── pt/
+│   ├── common.i18n.json         ← Base portugues (si aplica)
+│   └── MiObjeto.i18n.json
+└── tenants/{tenant}/            ← Opcional: override estatico por tenant (ver seccion 13)
+    └── es/
+        └── MiObjeto.i18n.json
+```
+
+Ejemplo real: `mods/curriculum-design/lang/es/Activity.i18n.json`.
+
+### Convencion de nombres
+
+| Patron | Alcance | Ejemplo |
+|--------|---------|---------|
+| `lang/{lng}/{stem}.i18n.json` | Archivo del mod para ese idioma | `lang/es/Activity.i18n.json` |
+| `lang/tenants/{tenant}/{lng}/{stem}.i18n.json` | Override estatico por tenant | `lang/tenants/unab/es/Activity.i18n.json` |
+| `{stem}` = `common` | Archivo base (equivalente al viejo archivo sin sufijo `@Object`) | `common.i18n.json` |
+| `{stem}` = nombre de objeto | Override especifico de ese objeto | `Activity.i18n.json` |
+
+- `lng`: es el nombre de la **carpeta**, no del archivo. Codigo de idioma sin pais (`es`, `en`, `pt`); regional solo si es necesario (`es-CL`)
+- `stem`: nombre del archivo (sin el sufijo), PascalCase si es un objeto, `common` si es base
+- El sufijo `.i18n.json` es **obligatorio**. Un archivo `.json` suelto dentro de una carpeta de idioma no se lee: `i18n-source-map.mjs:127-136` lo reporta como error fatal (evita que un archivo de lang comparta nombre con una definicion de objeto, ej. `Event.i18n.json` vs `objects/Event.json`)
+- Un workspace cuyo `lang/` todavia use el patron plano viejo (`{lng}_{COUNTRY}[@{Object}].json`) hace abortar el publish completo (`i18n-source-map.mjs:216-223`)
+
+Los archivos por objeto (`{Object}.i18n.json`) tienen **prioridad** sobre `common.i18n.json` en runtime (ver seccion 9).
+
+### Que locales cubrir
+
+Depende de los tenants que usaran el mod. En uP1:
+
+| Idioma (carpeta `lng/`) | Region por defecto | Uso |
+|------------------------|--------------------|-----|
+| `es` | CL | Principal para clientes hispanohablantes |
+| `en` | CL | Interfaz en ingles |
+| `pt` | BR | Clientes brasileros |
+
+La region por defecto la resuelve el runtime (`suite/plugins/i18n.ts`, `DEFAULT_COUNTRY_BY_LANG`), no el nombre del archivo. Cubrir al menos los idiomas que tus tenants necesitan. Si el mod es `"tenants": ["*"]`, cubrir los 3.
+
+---
+
+## 4. Anatomia de un archivo de traduccion
+
+### Archivo base (`common.i18n.json`)
+
+El archivo base contiene traducciones **generales del mod**, no especificas de un objeto:
+
+```json
+{
+  "object": {
+    "HwAssessment": "Evaluaciones",
+    "HwFactor": "Factores",
+    "HwIntervention": "Intervenciones"
+  },
+  "recordList": {
+    "buttons": {
+      "cancel": "Cancelar",
+      "saving": "Guardando...",
+      "applyBulk": "Aplicar a {{count}} elementos",
+      "applyChanges": "Aplicar Cambios"
+    }
+  },
+  "riskLevel": {
+    "low": "Bajo",
+    "medium": "Medio",
+    "high": "Alto",
+    "critical": "Critico"
+  },
+  "layout": {
+    "hw_assessment_list": { "label": "Todas las Evaluaciones" },
+    "hw_assessment_view": { "label": "Ver Evaluacion" },
+    "hw_assessment_create": { "label": "Crear Evaluacion" },
+    "hw_factor_list": { "label": "Todos los Factores" },
+    "hw_intervention_list": { "label": "Todas las Intervenciones" },
+    "hw_intervention_my_list": { "label": "Mis Intervenciones" }
+  },
+  "engagement": {
+    "actions": {
+      "viewAttendance": "Ver Asistencia",
+      "attendanceModalTitle": "Asistencia: [record.name]"
+    }
+  }
+}
+```
+
+### Archivo por objeto (`Activity.i18n.json`)
+
+El archivo por objeto contiene traducciones **especificas al objeto**: campos, tabs, steps, row actions. Ejemplo real, `mods/curriculum-design/lang/es/Activity.i18n.json`:
+
+```json
+{
+  "layout": {
+    "default_Activity_list": { "label": "Programas de asignatura" },
+    "default_Activity_view": { "label": "Programa de asignatura" }
+  },
+  "column": {
+    "name": "Nombre",
+    "code": "Codigo",
+    "version": "Version",
+    "programLevel": "Nivel",
+    "status": "Estado"
+  },
+  "tabs": {
+    "general": "General",
+    "outcomes": "Resultados de aprendizaje",
+    "bibliography": "Bibliografia"
+  },
+  "enums": {
+    "programLevel": {
+      "Undergraduate": "Pregrado",
+      "Postgraduate": "Postgrado",
+      "ContinuingEducation": "Educacion continua",
+      "TechnicalProfessional": "Tecnico profesional"
+    },
+    "status": {
+      "Draft": "Borrador",
+      "InReview": "En revision",
+      "Approved": "Aprobado",
+      "Active": "Activo",
+      "Deprecated": "Deprecado",
+      "Archived": "Archivado"
+    }
+  }
+}
+```
+
+### Seccion `enums`: traduccion de valores de enum
+
+Un enum de un objeto (ej. `status`, `programLevel`) guarda en BD el valor tecnico (`InReview`, `Undergraduate`). La UI no debe mostrar ese valor crudo: el archivo por objeto define un namespace `enums.{fieldName}.{enumValue}` con el texto visible de cada opcion. El componente resuelve la traduccion con el valor del campo como clave:
+
+```vue
+<span>{{ $t(`enums.status.${record.status}`) }}</span>
+```
+
+Esta seccion no existia en la anatomia original documentada: aparecio con la migracion como el lugar estandar para traducir valores de enum, evitando namespaces custom ad hoc (como el viejo `riskLevel.*`) para el mismo proposito.
+
+### Por que separar base y por objeto
+
+| Criterio | Base (`common.i18n.json`) | Por objeto (`{Object}.i18n.json`) |
+|----------|---------------------------|-------------------------------------|
+| Que va ahi | Nombres de objetos, labels de layouts, UI generica del mod, namespaces custom | Labels de campos/columnas, tabs, steps, row actions, `enums.*` del objeto |
+| Por que | Es compartido entre todos los objetos del mod | Sobreescribe claves especificas del objeto |
+| Prioridad | Menor | Mayor (override, ver seccion 9) |
+| Convencion de RecordList/RecordDetail | Labels de layout, strings reutilizables | `column.*`, `tabs.*`, `steps.*`, `actions.*`, `createModalTitle.*`, `enums.*` |
+
+La separacion evita un archivo monolitico y permite que el Layout Engine resuelva traducciones **por contexto de objeto**.
+
+---
+
+## 5. Categorias de claves
+
+### Claves que el Layout Engine consume automaticamente
+
+| Seccion | Proposito | Consumidor | Ejemplo |
+|---------|-----------|-----------|---------|
+| `column` | Labels de campos y columnas | RecordList (header), RecordDetail (labels) | `"column.studentId": "ID Estudiante"` |
+| `tabs` | Labels de pestanas | RecordDetail con `tabs` config | `"tabs.details": "Detalle"` |
+| `steps` | Labels de pasos del wizard | RecordDetail con `steps` config | `"steps.step1": "Datos Basicos"` |
+| `createModalTitle` | Titulo del modal de creacion | RecordList al abrir modal create | `"createModalTitle.hw_assessment_list": "Crear Nueva Evaluacion"` |
+| `actions` | Labels de row actions | RecordList row actions via `languageTag` | `"actions.createIntervention": "Crear Intervencion"` |
+
+Estas claves se resuelven automaticamente por el Layout Engine sin codigo adicional.
+
+### Claves que el Layout Engine NO consume directamente
+
+| Seccion | Proposito | Como se usa |
+|---------|-----------|------------|
+| `object` | Nombres de objetos para UI | `$t('object.HwAssessment')` en templates |
+| `layout` | Labels de layouts para navegacion/breadcrumbs | Consumido por Suite sidebar y navegacion |
+| `recordList.buttons` | Override de botones genericos del RecordList | Deep merge con traducciones base de layout |
+| Namespaces custom | Strings especificos del dominio (ej: `riskLevel`) | `$t('riskLevel.high')` en componentes custom |
+
+### Resolucion: como el Layout Engine encuentra una traduccion
+
+Cuando RecordList renderiza una columna con `key: "studentId"` en un objeto `HwAssessment`:
+
+```
+1. Buscar en el namespace del objeto (HwAssessment.i18n.json) → "column.studentId"
+   (encontrado: "ID Estudiante")
+   → Usar este valor
+
+2. Si no encontrado → buscar en el namespace base (common.i18n.json) → "column.studentId"
+   (fallback al base, ver seccion 9 para el orden exacto de la cadena)
+
+3. Si no encontrado → mostrar el key como label (ej: "studentId")
+```
+
+---
+
+## 6. Integracion con layouts
+
+### Columnas de RecordList
+
+Las columnas definen un `key` y un `label` de fallback. La traduccion sobreescribe el `label`:
+
+```json
+// config/layouts/hw-assessment-list.json
+"columns": [
+  { "key": "studentId", "label": "Estudiante", "sortable": true },
+  { "key": "riskLevel", "label": "Nivel de Riesgo", "sortable": true }
+]
+```
+
+```json
+// lang/es/HwAssessment.i18n.json
+{
+  "column": {
+    "studentId": "ID Estudiante",
+    "riskLevel": "Nivel de Riesgo"
+  }
+}
+```
+
+**Prioridad:** `column.studentId` del archivo lang > `label` del layout JSON. El `label` del layout actua como fallback si no hay traduccion.
+
+### Tabs y steps de RecordDetail
+
+```json
+// Layout:
+"tabs": {
+  "details": { "label": "Details", "elements": [...] },
+  "factors": { "label": "Factors", "elements": [...] }
+}
+```
+
+```json
+// lang/es/HwAssessment.i18n.json:
+{
+  "tabs": {
+    "details": "Detalle",
+    "factors": "Factores"
+  }
+}
+```
+
+La clave del tab (`"details"`) es el identificador. La traduccion lo resuelve al texto visible.
+
+### createModalTitle
+
+Cuando un RecordList tiene `canCreate: true`, el titulo del modal se resuelve asi:
+
+```json
+// Layout:
+"canCreateLayoutId": "hw_assessment_create",
+"createModalTitle": "hw_assessment_list"
+```
+
+```json
+// lang/es/HwAssessment.i18n.json:
+{
+  "createModalTitle": {
+    "hw_assessment_list": "Crear Nueva Evaluacion"
+  }
+}
+```
+
+La clave es el **name del layout** que origina la accion de crear.
+
+### Row actions con languageTag y modalTitleTag
+
+Los row actions soportan traduccion via dos campos:
+
+```json
+// config/layouts/hw-assessment-list.json
+"rowActions": [
+  {
+    "id": "create-intervention",
+    "label": "Crear Intervencion",
+    "type": "modal",
+    "targetLayoutId": "hw_intervention_create",
+    "targetObjectName": "HwIntervention",
+    "modalTitle": "Crear Intervencion para [record.studentId]",
+    "languageTag": "actions.createIntervention",
+    "modalTitleTag": "actions.createInterventionTitle",
+    "initialDataMapping": { "hwAssessmentId": "record.id" }
+  }
+]
+```
+
+```json
+// lang/es/HwAssessment.i18n.json
+{
+  "actions": {
+    "createIntervention": "Crear Intervencion",
+    "createInterventionTitle": "Crear Intervencion para [record.studentId]"
+  }
+}
+```
+
+| Campo layout | Campo lang | Proposito |
+|-------------|-----------|-----------|
+| `languageTag` | `actions.createIntervention` | Texto del boton de accion |
+| `modalTitleTag` | `actions.createInterventionTitle` | Titulo del modal que abre |
+| `label` | (fallback) | Se usa si no hay `languageTag` o traduccion |
+| `modalTitle` | (fallback) | Se usa si no hay `modalTitleTag` o traduccion |
+
+**Los tags del archivo lang tienen prioridad sobre `label` y `modalTitle` del layout JSON.** Los campos del layout actuan como fallback para desarrollo o si falta traduccion.
+
+### Layout labels (navegacion)
+
+El archivo base define labels para cada layout, usados en breadcrumbs y navegacion:
+
+```json
+// lang/es/common.i18n.json
+{
+  "layout": {
+    "hw_assessment_list": { "label": "Todas las Evaluaciones" },
+    "hw_assessment_view": { "label": "Ver Evaluacion" },
+    "hw_intervention_my_list": { "label": "Mis Intervenciones" }
+  }
+}
+```
+
+La clave es el **name del layout** (el campo `name` en el JSON del layout).
+
+---
+
+## 7. Integracion con componentes Vue
+
+`useI18n()` de `vue-i18n` fue reemplazado por `useTranslation()` de `i18next-vue`. Los templates siguen usando `$t(...)`: lo provee el plugin `I18NextVue` registrado en `suite/plugins/i18n.ts`, no cambia en la sintaxis de template.
+
+### En templates (Composition API)
+
+```vue
+<template>
+  <Heading :level="2">{{ $t('object.HwAssessment') }}</Heading>
+  <Text>{{ $t('enums.status.' + record.status) }}</Text>
+</template>
+```
+
+### En composables
+
+```typescript
+import { useTranslation } from 'i18next-vue'
+
+export function useMiWidget() {
+  const { t } = useTranslation()
+
+  function getStatusLabel(status: string): string {
+    return t(`enums.status.${status}`)
+  }
+
+  return { getStatusLabel }
+}
+```
+
+Layout agrego dos utilidades propias sobre `i18next-vue` para cubrir casos que `vue-i18n` resolvia distinto:
+
+- `layout/src/composables/useI18nextLanguage.ts`: ref reactivo con el idioma base actual (`es`/`en`/`pt`). `i18next.language` por si solo no es reactivo ante un cambio de idioma si el componente no llama a `t()`; este composable expone un ref que si dispara recalculo (util para formateadores de fecha, por ejemplo).
+- `layout/src/modsComponents/ReportListManager/useTranslations.ts`: wrapper `useTranslations()` que envuelve `useTranslation()` de i18next-vue en la forma `{ $t }` que ya usaba el codigo de ReportListManager.
+
+### Regla: nunca hardcodear texto visible
+
+```vue
+<!-- MAL -->
+<Button>Crear Intervencion</Button>
+<span>Estado: {{ status }}</span>
+
+<!-- BIEN -->
+<Button>{{ $t('actions.createIntervention') }}</Button>
+<span>{{ $t('column.status') }}: {{ status }}</span>
+```
+
+### Namespaces custom en componentes de mod
+
+Para traducciones especificas del dominio que no encajan en `column`/`tabs`/`steps`/`actions`, usar namespaces custom en el archivo base:
+
+```json
+// lang/es/common.i18n.json
+{
+  "riskLevel": {
+    "low": "Bajo",
+    "medium": "Medio",
+    "high": "Alto",
+    "critical": "Critico"
+  },
+  "engagement": {
+    "actions": {
+      "viewAttendance": "Ver Asistencia"
+    }
+  }
+}
+```
+
+```vue
+<span :class="badgeClass">{{ $t('riskLevel.' + level) }}</span>
+```
+
+---
+
+## 8. Mecanismo de sync
+
+### Que hace `suite/scripts/publish-i18n.js`
+
+`npm run sync` invoca `publish-i18n.js` (`suite/package.json:12`, `"sync": "npm run sync-styles && node scripts/publish-i18n.js"`). A diferencia del viejo `sync-i18n.js`, este NO hace deep-merge upsert: es una copia **1:1** por archivo fuente.
+
+```
+Un archivo fuente  →  Un namespace publicado
+lang/es/Activity.i18n.json  →  suite/locales-dist/es/curriculum-design/Activity.json
+```
+
+El descubrimiento y el mapeo a namespace viven en `suite/scripts/lib/i18n-source-map.mjs` (compartido con la ruta de dev-serving en vivo). El namespace es `{workspace}/{stem}` o, si el archivo viene de `lang/tenants/{tenant}/`, `tenants/{tenant}/{stem}`.
+
+### Algoritmo
+
+```text
+1. discoverWorkspaces(root)
+   Lee package.json → workspaces, filtra por ignoredMods.
+   Devuelve todo workspace (mod o core) que tenga carpeta lang/.
+
+2. Por cada workspace: usesNewLayout(lang/)?
+   Si NO (solo archivos .json sueltos, patron plano viejo)
+     → error fatal: "lang/ uses the legacy flat-tag layout" (i18n-source-map.mjs:216-223)
+     → el publish ABORTA para todo el monorepo, no solo ese workspace
+   Si SI → leer lang/{lng}/*.i18n.json y lang/tenants/{t}/{lng}/*.i18n.json
+
+3. Por cada archivo .i18n.json encontrado
+   Falta el sufijo .i18n.json?
+     → error fatal (i18n-source-map.mjs:127-136)
+   Construir el namespace: {workspace}/{stem} o tenants/{tenant}/{stem}
+
+4. Detectar colisiones
+   Dos archivos fuente distintos mapean al mismo (lng, namespace)?
+     → ABORTAR: "Collision on {lng}/{ns}" (publish-i18n.js:156-163)
+
+5. Si no hay errores ni colisiones: por cada entrada
+   Leer el JSON, quitar _source_module si aparece (legacy, i18n-source-map.mjs:250-252)
+   Escribir en suite/locales-dist/{lng}/{ns}.json (copia exacta, sin merge)
+
+6. Chequeo de paridad (es/es-CL, pt/pt-BR)
+   Namespace con drift NO presente en el baseline (i18n-parity-baseline.json)?
+     → ABORTAR: "NEW locale parity drift(s)" (publish-i18n.js:229-260)
+   Drift ya conocido en el baseline → tolerado, solo se reporta
+
+7. Escribir manifest.json (namespaces, locales, layerOrder) y limpiar
+   archivos huerfanos de una publicacion anterior
+```
+
+### Deteccion de colisiones (reemplaza el "conflicto de clave hoja" del sync viejo)
+
+Como ya no hay merge, el conflicto no es a nivel de clave: es a nivel de **archivo fuente**. Dos workspaces distintos NO pueden mapear al mismo `(lng, namespace)`:
+
+```
+Mod A: lang/es/common.i18n.json  → namespace "mod-a/common"
+Mod B: lang/es/common.i18n.json  → namespace "mod-b/common"
+→ OK: namespaces distintos, cada mod publica el suyo, no hay colision
+```
+
+La colision solo ocurre si dos archivos fuente resuelven al **mismo** namespace (caso raro: dos entradas del monorepo apuntando al mismo workspace/stem). Al ser namespace = `{workspace}/{stem}`, la colision entre mods practicamente desaparece salvo error de configuracion (ver seccion 12).
+
+### Layout plano legacy: error fatal, no advertencia
+
+Un mod que todavia tenga `lang/es_CL.json` (patron viejo) no se ignora en silencio: hace abortar el publish completo. `mods/hello-world-mod` sigue en este estado (por eso esta en `ignoredMods`: si se activara sin migrar su `lang/`, rompe el sync de todo el monorepo).
+
+### Baseline ratchet de paridad
+
+`suite/scripts/i18n-parity-baseline.json` registra el drift de paridad ya conocido (namespaces con claves distintas entre `es`/`es-CL` o `pt`/`pt-BR`). El publish tolera ese drift preexistente pero aborta si aparece drift **nuevo**. Para aceptar deliberadamente un nuevo drift: `node suite/scripts/publish-i18n.js --update-parity-baseline`.
+
+### Dry run
+
+```bash
+node suite/scripts/publish-i18n.js --dry-run
+node suite/scripts/publish-i18n.js --verbose
+```
+
+### Resultado en suite/locales-dist/
+
+Despues del sync, `suite/locales-dist/` contiene un archivo por `(lng, namespace)`, mas el manifest:
+
+```
+suite/locales-dist/
+├── manifest.json
+├── es/
+│   ├── suite/common.json
+│   ├── layout/RecordList.json
+│   ├── layout/RecordDetail.json
+│   ├── report-builder/common.json
+│   ├── curriculum-design/common.json
+│   ├── curriculum-design/Activity.json
+│   ├── uengagement-up1/Event.json
+│   └── tenants/upu/common.json
+├── en/
+│   └── ...
+└── pt/
+    └── ...
+```
+
+`suite/locales-dist/` (NO `public/`) es deliberado: en dev, los assets estaticos de `public/` opacarian la ruta de servido en vivo (`suite/server/routes/locales/[...path].get.ts`), asi `npm run sync` nunca congela el hot-reload de traducciones en desarrollo. Solo se monta como `publicAssets` en builds de produccion.
+
+---
+
+## 9. Jerarquia de cascada (override)
+
+La intencion se mantiene ("mas especifico gana"), pero el mecanismo ya no es deep-merge de JSON: es una **cadena de lookup de namespaces de i18next**. `suite/utils/i18nBridge.ts` (`buildLevels`, `resolveNamespaces`) arma, para cada contexto de ruta, la lista ordenada de namespaces (de menos a mas especifico) y se la pasa a i18next invertida: `defaultNS` es el namespace mas especifico, `fallbackNS` es el resto en orden de especificidad decreciente, porque i18next devuelve la **primera** coincidencia.
+
+```text
+  Mayor prioridad (mas especifico, se resuelve primero)
+  ▲
+  │  Overrides de tenant en BD (core_Translation, ver seccion 13)
+  │  ┌──────────────────────────────────────────────────────────┐
+  │  │ Object + Layout       {mod}/{Object}-{layoutName}         │
+  │  │ Object specific       {mod}/{Object}  (soporta rt__)      │
+  │  │ Layout name           {mod}/_{layoutName}                 │
+  │  │ Layout type           {mod}/{RecordList|RecordDetail|...} │
+  │  │ Embeddable layouts    Calendar, RecordList, RecordDetail, │
+  │  │                       ChibiList, FormQuestionsEditor,      │
+  │  │                       FeedbackForm (menos el layoutType    │
+  │  │                       actual de la ruta)                  │
+  │  │ Base (common)         {mod}/common                        │
+  │  └──────────────────────────────────────────────────────────┘
+  │  Dentro de cada nivel: layerOrder = core primero (suite, layout,
+  │  report-builder, object-manager), mods despues en orden alfabetico;
+  │  luego tenants/{institution}/{stem} del mismo nivel.
+  │
+  Menor prioridad (base, puede ser sobreescrito)
+```
+
+> **Prioridad:** cada nivel de contexto (base → embeddables → layout type → layout name → objeto → objeto+layout) es mas especifico que el anterior, y dentro de un mismo nivel el tenant gana sobre el mod. Los overrides de tenant en BD ganan sobre todo lo demas, sin importar el nivel.
+
+### En la practica para mods
+
+El archivo `{Object}.i18n.json` de un mod resuelve al namespace `{mod}/{Object}`, que cae en el nivel "Object specific":
+
+```
+mods/curriculum-design/lang/es/Activity.i18n.json   → namespace curriculum-design/Activity (Object specific)
+mods/curriculum-design/lang/es/common.i18n.json     → namespace curriculum-design/common (Base)
+```
+
+Si `curriculum-design/Activity` define `"column.name": "Nombre"` y `curriculum-design/common` tambien define `"column.name": "Denominacion"`, **gana el namespace del objeto** cuando se esta viendo un Activity. Para objetos de RecordType (`rt__X__base`), `buildLevels` deriva el nombre base del objeto (ej. `rt__Bibliography__curricularsection` resuelve tambien contra el namespace `CurricularSection`) ademas del namespace del RT literal.
+
+### Ejemplo de cascada
+
+Un usuario ve un RecordList de Activity:
+
+```
+Buscar "column.name":
+1. Overrides de tenant en BD → (no definido) → sigue
+2. curriculum-design/Activity → "Nombre"  ← ENCONTRADO, usar este
+3. curriculum-design/common → (no se llega a consultar)
+4. bundled/common (catalogo embebido de arranque en frio) → fallback final
+5. Si nada resuelve → i18next muestra la clave como texto
+```
+
+---
+
+## 10. Origenes de traducciones (sin destino unificado)
+
+Con `sync-i18n.js` todo terminaba mergeado en `suite/lang/`. Con `publish-i18n.js` cada workspace publica sus **propios namespaces** bajo `suite/locales-dist/{lng}/{workspace}/{stem}.json`; no hay merge ni archivo compartido que editar. `suite/lang/` (fuente propia de suite) es un origen mas, no el destino.
+
+### Que traduce cada origen
+
+| Origen | Namespaces (ejemplos) | Que contiene |
+|--------|------------------------|-------------|
+| **layout** | `layout/RecordList`, `layout/RecordDetail`, `layout/ChibiList`, `layout/ConfirmationModal`, `layout/OfferingCalendar` | UI generica: botones, filtros, paginacion, mensajes de error, validacion de campos, modales de confirmacion, calendario |
+| **report-builder** | `report-builder/common`, `report-builder/Report`, `report-builder/ReportTemplate` | Modulo de reportes: Flexmonster, templates, export |
+| **mods** | `{mod}/common` (base), `{mod}/{Object}` (por objeto) | Objetos del mod, layouts, acciones, strings del dominio |
+
+### Que ya viene traducido por layout (no necesitas traducir)
+
+El workspace `layout` ya provee el namespace `layout/RecordList` con las claves genericas de esa UI:
+
+- Botones genericos: crear, guardar, cancelar, eliminar, filtros, refresh
+- Paginacion: "Mostrando {from} a {to} de {total} registros"
+- Busqueda: placeholder, sin resultados
+- Filtros: operadores (contiene, igual a, mayor que...), agregar filtro, limpiar
+- Columnas: personalizar, reordenar, restaurar
+- Eliminacion: confirmacion, warning, constraint hints
+- Validacion: campos requeridos, formatos invalidos
+- Errores amigables: red, timeout, permisos, concurrencia, no encontrado
+- Notificaciones: creado, actualizado, eliminado
+- Importacion: dropzone, preview, resultados
+- Edicion inline: cancelar, guardar, aplicar
+
+**No necesitas redefinir estas claves en tu mod** salvo que quieras sobreescribirlas.
+
+### Que SI necesitas traducir en tu mod
+
+- `object.*` (nombres de tus objetos)
+- `column.*` (labels de campos de tus objetos)
+- `tabs.*` (labels de pestanas)
+- `steps.*` (labels de pasos de wizard)
+- `createModalTitle.*` (titulos de modales de creacion)
+- `actions.*` (labels de row actions)
+- `layout.*` (labels de cada layout del mod)
+- Namespaces custom: strings de dominio (ej: niveles de riesgo, estados)
+
+---
+
+## 11. Placeholders dinamicos
+
+### En traducciones de layout: `[record.field]`
+
+Usado en `modalTitleTag` para incluir datos del registro:
+
+```json
+{
+  "actions": {
+    "createInterventionTitle": "Crear Intervencion para [record.studentId]"
+  }
+}
+```
+
+`[record.studentId]` se reemplaza en runtime por el valor del campo `studentId` del registro de la fila.
+
+### En traducciones genericas: `{{variable}}`
+
+Con la migracion a i18next, la interpolacion cambio de `{variable}` (vue-i18n) a `{{variable}}` (i18next). Ejemplo real, `mods/curriculum-design/lang/es/common.i18n.json:6`:
+
+```json
+{
+  "compositeSectionTree": {
+    "title": "Estructura",
+    "summary": "{{total}} en total, {{roots}} de nivel raiz"
+  }
+}
+```
+
+En el template:
+
+```vue
+{{ $t('compositeSectionTree.summary', { total: count, roots: rootCount }) }}
+```
+
+### Pluralizacion: sufijos `_one` / `_other`
+
+El separador `|` de vue-i18n fue reemplazado por el sistema de sufijos de i18next: una clave por cada forma plural. Ejemplo real, `layout/lang/pt/RecordList.i18n.json:41-44`:
+
+```json
+{
+  "recordList": {
+    "info": {
+      "elements_one": "{{count}} elemento",
+      "elements_other": "{{count}} elementos"
+    }
+  }
+}
+```
+
+En el template, una sola llamada resuelve la forma correcta segun `count`:
+
+```vue
+{{ $t('recordList.info.elements', { count: selectedCount }) }}
+```
+
+### `[record.field]` no cambio: no es sintaxis de i18next
+
+El placeholder `[record.field]` de `modalTitleTag` es una sustitucion propia de up1 (`layout/src/utils/resolveModalTitle.ts:24`, un `replace` por regex sobre `\[([^\]]+)\]`), completamente independiente de la libreria de i18n. Por eso sobrevivio identico a la migracion.
+
+### Resumen de formatos
+
+| Formato | Contexto | Ejemplo |
+|---------|----------|---------|
+| `[record.field]` | modalTitleTag en row actions (resolveModalTitle.ts, no es i18next) | `"Factores: [record.studentId]"` |
+| `{{variable}}` | i18next interpolacion | `"Aplicar a {{count}} elementos"` |
+| `clave_one` / `clave_other` | i18next pluralizacion | `"elements_one": "{{count}} elemento"` |
+
+---
+
+## 12. Keys por mod vs keys transversales
+
+### El problema
+
+Cuando multiples mods representan modulos de una misma solucion (ej: Assessment tiene Learning Assurance, Curriculum Mapping, Pathways), es natural que compartan terminologia:
+
+- "Plan de Estudio" puede aparecer en 3 mods distintos
+- "Competencia" puede referirse al mismo concepto en Curriculum y Assessment
+- "Publicar" como accion puede ser identica en varios mods
+
+¿Como evitar duplicar la misma traduccion en N mods? Con el mecanismo de namespace de la migracion, la pregunta cambio de forma: ya no hay riesgo de que el sync aborte, pero tampoco hay merge automatico que junte las traducciones.
+
+### Como funciona hoy: namespace por workspace, sin merge
+
+El namespace publicado es `{workspace}/{stem}` (ver seccion 8). Como el nombre del workspace es parte del namespace, dos mods **nunca** colisionan por definir la misma clave:
+
+```
+Mod A: lang/es/common.i18n.json → namespace mod-a/common → { "object": { "StudyPlan": "Plan de Estudio" } }
+Mod B: lang/es/common.i18n.json → namespace mod-b/common → { "object": { "StudyPlan": "Malla Curricular" } }
+```
+
+Ambos namespaces se publican tal cual, sin merge y sin error. El costo cambio de lugar: ya no es un sync que aborta, es que **cada mod resuelve su propia traduccion** para la misma clave logica segun el contexto de ruta (objeto/layout) en el que este parado el usuario. Si un usuario ve un StudyPlan del Mod A ve "Plan de Estudio"; si ve el equivalente del Mod B ve "Malla Curricular". Ya no hay una colision tecnica que fuerce a resolverlo, pero puede seguir siendo una inconsistencia de producto si el mismo concepto de negocio deberia verse igual en ambos mods.
+
+### Tres escenarios y como resolverlos
+
+#### Escenario 1: Cada mod define su propia clave (caso normal, sin friccion)
+
+Dos mods necesitan `"column.status": "Estado"`. Cada uno lo define en su propio namespace. No hay colision posible porque los namespaces son distintos (`mod-a/common` vs `mod-b/common`).
+
+```
+Mod A: mod-a/common → { "column": { "status": "Estado" } }
+Mod B: mod-b/common → { "column": { "status": "Estado" } }
+→ OK: dos namespaces, cada uno con su copia. Se publican ambos sin conflicto.
+```
+
+**Esto funciona pero genera duplicacion.** Si un dia se decide cambiar "Estado" a "Estatus", hay que cambiarlo en ambos mods; nada te avisa automaticamente de la inconsistencia (a diferencia del sync viejo, que al menos abortaba si los valores divergian).
+
+#### Escenario 2: Mismo concepto, distinto termino entre mods (ya no es un "conflicto" tecnico)
+
+Un mod llama "Nombre" a `column.name` y otro lo llama "Denominacion". Con el mecanismo actual esto **no rompe nada**: cada namespace se publica igual.
+
+```
+Mod A: mod-a/StudyPlan  → { "column": { "name": "Nombre" } }
+Mod B: mod-b/Competency → { "column": { "name": "Denominacion" } }
+→ OK: namespaces distintos, ambos se publican. Nunca hubo colision posible.
+```
+
+El riesgo se traslado de "el sync aborta" a "nadie audito la consistencia de terminologia entre mods". Es responsabilidad de revision de producto, no de una gate tecnica del publish.
+
+#### Escenario 3: Clave compartida intencionalmente (transversal)
+
+Multiples mods de una misma solucion quieren compartir terminologia: "Plan de Estudio", "Competencia", "Publicar".
+
+**Opcion A: Definir en un solo mod "lider" y que los demas lo consuman via namespace explicito**
+
+Si hay un mod principal de la solucion (ej: `learning-assurance`), definir ahi las claves compartidas en su `common.i18n.json`. A diferencia del sync viejo, un mod secundario no "hereda" automaticamente esas claves por estar en el mismo archivo fisico: el componente debe pedir explicitamente el namespace del mod lider (`useTranslation('learning-assurance/common')`) o duplicar la clave en su propio namespace. Ventaja: una sola fuente de verdad si se referencia el namespace correcto. Desventaja: acoplamiento explicito al mod lider (y a que este activo).
+
+**Opcion B: Usar el override de tenant (BD o estatico) como capa compartida**
+
+El override de tenant en BD (`core_Translation`, ver seccion 13) se aplica **por encima de cualquier namespace de mod**, sin importar cual sea. Es la forma mas robusta de unificar terminologia transversal sin depender de que namespace consulta cada mod:
+
+```
+core_Translation: { lng: "es", ns: "learning-assurance/common", key: "object.StudyPlan", value: "Malla Curricular" }
+```
+
+El override de tenant no unifica namespaces entre mods (sigue habiendo un `ns` por fila), pero permite ajustar la terminologia de cada mod de forma centralizada, sin rebuild, para un mismo cliente.
+
+**Opcion C: Crear un workspace dedicado para traducciones compartidas**
+
+Si la solucion tiene 5+ mods que comparten mucha terminologia, se puede crear un workspace (sin ser mod) con su propia carpeta `lang/`, publicando namespaces `shared-assessment-lang/common`:
+
+```
+workspaces/shared-assessment-lang/
+├── package.json          ← @uplanner/shared-assessment-lang
+└── lang/
+    ├── es/common.i18n.json
+    └── en/common.i18n.json
+```
+
+El publish lo descubre automaticamente (`discoverWorkspaces` recorre todo `package.json.workspaces`, no solo mods). Cada mod que quiera esas claves debe consultar explicitamente el namespace `shared-assessment-lang/common`. Ventaja: desacoplado de cualquier mod puntual. Desventaja: un workspace mas que mantener, y sigue requiriendo que cada consumidor apunte al namespace correcto (no hay merge implicito).
+
+### Recomendacion por caso
+
+| Situacion | Estrategia |
+|-----------|-----------|
+| 2-3 mods con poca terminologia compartida | Opcion A: mod lider define, los demas referencian su namespace |
+| 5+ mods con mucha terminologia compartida | Opcion C: workspace dedicado |
+| Terminologia que varia por cliente | Opcion B: override de tenant en BD (o estatico, ver seccion 13) |
+| Claves de UI genericas (botones, errores) | Ya las provee el namespace `layout/*`, no redefinir |
+| Nombres de objetos core (`Person`, `Institution`) | Ya los define el override estatico del tenant (`suite/lang/tenants/{tenant}/`) |
+
+### Que ya es transversal sin esfuerzo adicional
+
+El override estatico por tenant (`suite/lang/tenants/{tenant}/{lng}/common.i18n.json`, namespace publicado `tenants/{tenant}/common`) ya define nombres de **objetos core** de la plataforma y labels de layouts compartidos, cargados con maxima prioridad para todo ese tenant. Ejemplo real, `suite/lang/tenants/upu/es/common.i18n.json`:
+
+```json
+{
+  "platform": { "name": "uPlanner" },
+  "object": {
+    "Institution": "Centros de Apoyo",
+    "Person": "Personas",
+    "Curriculum": "Planes de Estudio",
+    "AcademicProgram": "Programas academicos"
+  },
+  "column": {
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo Electronico",
+    "status": "Estado"
+  }
+}
+```
+
+Este namespace se resuelve para el tenant sin importar que mod este viendo el usuario (ver seccion 9). No necesitas redefinir `"column.firstName"` en tu mod si tu objeto referencia campos comunes cubiertos ahi, aunque a diferencia del sync viejo esto es una capa de override, no un merge silencioso: si tu propio namespace de mod tambien define `column.firstName`, gana tu namespace salvo que exista tambien un override de tenant mas especifico (BD, ver seccion 13).
+
+---
+
+## 13. Override por cliente (tenant)
+
+### El caso de uso
+
+Dos universidades usan el mismo mod, pero nombran las cosas diferente:
+
+| Concepto | Universidad A | Universidad B |
+|----------|--------------|--------------|
+| Plan de estudio | "Malla Curricular" | "Plan de Estudio" |
+| Estudiante | "Alumno" | "Estudiante" |
+| Asignatura | "Ramo" | "Asignatura" |
+| Centro de apoyo | "Oficina de Bienestar" | "Centro de Apoyo al Estudiante" |
+
+El mod define valores por defecto, pero cada cliente necesita sobreescribir algunos sin modificar el mod. La migracion agrego una **segunda capa** de override: ademas del archivo estatico (que ya existia), hay overrides dinamicos guardados en base de datos, sin necesidad de rebuild.
+
+### Dos capas de override, prioridad de mayor a menor
+
+1. **Dinamica, en BD (nueva, Fase 7 de la migracion):** modelo `core_Translation` (`object-manager/objects/core/core_Translation.json`), filas `(lng, ns, key, value)` con constraint unico `[lng, ns, key]`. Servida por `object-manager/src/api/routes/tenantTranslations.js` en `GET /tenants/{tenantId}/{lng}.json`. El plugin `suite/plugins/i18n.ts` (`loadTenantDbOverrides`, lineas 127-152) la carga como namespace sintetico `tenants/{tenant}/__db`, con TTL de 60 segundos, y la pone **por encima de todo lo demas** en la cadena de lookup (linea 181: "Tenant DB overrides sit ABOVE everything else").
+2. **Estatica, en archivo (se mantiene, cambia el formato):** `lang/tenants/{tenant}/{lng}/{stem}.i18n.json` en cualquier workspace (tipicamente `suite/lang/tenants/{tenant}/`), publicada como namespace `tenants/{tenant}/{stem}`. Requiere `npm run sync` y, en produccion, rebuild.
+
+```text
+  Mayor prioridad
+  ▲
+  │  tenants/{tenant}/__db          ← BD (core_Translation), sin rebuild, TTL 60s
+  │  tenants/{tenant}/{stem}        ← archivo estatico, requiere sync + rebuild
+  │  {mod o workspace}/{stem}       ← valor por defecto del mod
+  │
+  Menor prioridad
+```
+
+### Capa dinamica: core_Translation + tenantTranslations.js
+
+`core_Translation` es un objeto core mas (no requiere un mod propio):
+
+```json
+// object-manager/objects/core/core_Translation.json (resumen)
+{
+  "title": "core_Translation",
+  "uniqueConstraints": [["lng", "ns", "key"]],
+  "properties": {
+    "lng": { "description": "Codigo BCP-47 del override (es, en, pt, o regional es-CL)" },
+    "ns":  { "description": "Namespace al que pertenece la clave (ej. suite/common, uengagement-up1/Offering)" },
+    "key": { "description": "Ruta punteada de la clave (ej. object.Offering, recordList.pagination.next)" },
+    "value": { "description": "Texto del override, sintaxis i18next: {{var}} para interpolacion" }
+  }
+}
+```
+
+`tenantTranslations.js` expone dos rutas:
+
+```
+GET /tenants/:tenantId/:lng.json        → todas las filas de ese idioma, expandidas a JSON anidado
+GET /tenants/:tenantId/:lng/*ns         → solo las filas de un namespace puntual
+```
+
+Ambas usan ETag para que el plugin pueda revalidar con `If-None-Match` y recibir 304 mientras no cambien. Si la tabla `core_Translation` todavia no esta migrada en un tenant, el endpoint responde vacio (no error): `suite/plugins/i18n.ts` degrada en silencio a las capas estaticas.
+
+### Capa estatica: archivo por tenant
+
+Vive junto al resto de `lang/`, bajo `tenants/{tenant}/`:
+
+```
+suite/lang/
+└── tenants/
+    └── upu/
+        ├── es/common.i18n.json
+        ├── en/common.i18n.json
+        └── pt/common.i18n.json
+```
+
+Publica al namespace `tenants/upu/common`. Este archivo **si pasa por el publish** (a diferencia de lo que ocurria con `suite/lang/es_CL-upu.json` antes de la migracion, que se mantenia fuera del sync): el descubrimiento de `i18n-source-map.mjs` trata `lang/tenants/` como una rama mas de cualquier workspace.
+
+### Registrar un tenant
+
+No cambio con la migracion: los tenants se registran en `suite/config/tenants.ts`:
+
+```typescript
+export const tenantConfigs: Record<string, TenantConfig> = {
+  'UPU': {
+    tenantId: 'UPU',
+    displayName: 'UPlanner University',
+    country: 'CL',
+  },
+  'UNAB': {
+    tenantId: 'UNAB',
+    displayName: 'Universidad Andres Bello',
+    country: 'CL',
+  },
+};
+```
+
+El pais del tenant participa en `resolveCountry` (`suite/plugins/i18n.ts`) para armar el codigo regional (`es-CL`). La resolucion por defecto sigue siendo: `es→CL`, `en→CL`, `pt→BR`.
+
+### Crear un override estatico por tenant: paso a paso
+
+**1. Crear el archivo en `lang/tenants/{tenant}/{lng}/`:**
+
+```json
+// suite/lang/tenants/unab/es/common.i18n.json
+{
+  "object": {
+    "StudyPlan": "Malla Curricular",
+    "Course": "Ramo",
+    "Institution": "Oficina de Bienestar"
+  },
+  "column": {
+    "studentId": "Matricula"
+  }
+}
+```
+
+**2. (Opcional) Override por objeto para ese tenant:**
+
+```json
+// suite/lang/tenants/unab/es/StudyPlan.i18n.json
+{
+  "column": {
+    "name": "Nombre de Malla",
+    "credits": "Creditos SCT"
+  }
+}
+```
+
+**3. Correr `npm run sync`** (publica el nuevo namespace `tenants/unab/common` / `tenants/unab/StudyPlan`). En desarrollo, la ruta de dev-serving lee directo de `lang/`; en produccion requiere rebuild para que `locales-dist` se regenere.
+
+### Crear un override dinamico (BD): sin rebuild
+
+Se hace insertando filas en `core_Translation` para el tenant (via mutacion GraphQL, no archivo):
+
+```
+lng: "es", ns: "curriculum-design/common", key: "object.StudyPlan", value: "Malla Curricular"
+```
+
+El plugin lo recoge en el proximo fetch (TTL 60s) sin necesidad de sync ni deploy. Es la via recomendada para ajustes terminologicos que el equipo funcional (no de desarrollo) necesita hacer sin depender de un release.
+
+### Ejemplo real: `suite/lang/tenants/upu/es/common.i18n.json`
+
+El tenant UPU (uPlanner University, entorno de desarrollo) tiene:
+
+```json
+{
+  "platform": { "name": "uPlanner" },
+  "app": {
+    "engagement": { "label": "Engagement" }
+  },
+  "object": {
+    "Institution": "Centros de Apoyo",
+    "Person": "Personas",
+    "Curriculum": "Planes de Estudio",
+    "AcademicProgram": "Programas academicos",
+    "Event": "Eventos",
+    "Offering": "Ofertas"
+  },
+  "layout": {
+    "person_list_basic": { "label": "Personas (Basico)", "subSection": "Vistas de Persona" }
+  },
+  "column": {
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo Electronico",
+    "status": "Estado"
+  }
+}
+```
+
+Este archivo demuestra que el override estatico por tenant abarca:
+
+- **Nombre de la plataforma** (`platform.name`)
+- **Nombres de apps** en sidebar (`app.*.label`)
+- **Nombres de objetos** (`object.*`): sobreescribe los defaults
+- **Labels de layouts** (`layout.*.label`): sobreescribe navegacion
+- **Labels de campos** (`column.*`): sobreescribe las columnas
+
+### Flujo completo: mod + override de tenant
+
+```
+1. Mod define valor por defecto:
+   mods/curriculum-design/lang/es/common.i18n.json:
+   { "object": { "StudyPlan": "Plan de Estudio" } }
+   → namespace publicado: curriculum-design/common
+
+2. Override estatico de tenant (opcional, requiere sync + rebuild):
+   suite/lang/tenants/unab/es/common.i18n.json:
+   { "object": { "StudyPlan": "Malla Curricular" } }
+   → namespace publicado: tenants/unab/common (gana sobre curriculum-design/common)
+
+3. Override dinamico en BD (opcional, sin rebuild):
+   core_Translation: (lng: es, ns: curriculum-design/common, key: object.StudyPlan, value: "Plan de Estudios")
+   → namespace sintetico tenants/unab/__db (gana sobre todo lo anterior)
+
+4. Runtime: usuario UNAB ve el valor de la capa mas alta que exista para esa clave.
+   Si solo existe el paso 1, ve "Plan de Estudio".
+```
+
+### Que se puede sobreescribir por tenant
+
+| Elemento | Mecanismo | Ejemplo |
+|----------|-----------|---------|
+| Cualquier clave de cualquier namespace, sin rebuild | Fila en `core_Translation` (lng, ns, key, value) | Ajuste puntual el mismo dia, sin deploy |
+| Todo el tenant, estatico | `lang/tenants/{tenant}/{lng}/common.i18n.json` | Nombres de objetos, apps, campos comunes |
+| Objeto especifico, estatico | `lang/tenants/{tenant}/{lng}/{Object}.i18n.json` | Campos de un objeto para ese tenant |
+
+### Consideraciones
+
+- El override estatico **si pasa por `npm run sync`** ahora (antes vivia fuera del pipeline en `suite/lang/`)
+- El override dinamico (BD) es la via recomendada para cambios que el equipo funcional necesita sin esperar un release; el estatico sigue siendo mejor para overrides que se versionan junto con el mod
+- El mod debe definir **valores por defecto razonables**: el override es para excepciones del cliente
+- Un tenant sin la tabla `core_Translation` migrada no rompe: `tenantTranslations.js` degrada a bundle vacio y el plugin cae a las capas estaticas
+- Existe un modo "Show Keys" en Suite (via `useI18nSettings`, `i18next.changeLanguage('cimode')`) que muestra las claves en vez del texto traducido: util para debugging
+
+---
+
+## 14. Ejemplo completo: curriculum-design
+
+`hello-world-mod` ya no sirve como ejemplo: sigue en el patron plano viejo (`lang/es_CL.json`, `lang/es_CL@HwAssessment.json`), esta en `ignoredMods` precisamente por eso, y activarlo sin migrar su `lang/` haria abortar el publish de todo el monorepo (ver seccion 8). El ejemplo real y vigente es `mods/curriculum-design`.
+
+### Archivos (extracto, formato nuevo)
+
+```
+mods/curriculum-design/lang/
+├── es/
+│   ├── common.i18n.json                              ← Base espanol
+│   ├── Activity.i18n.json                             ← Campos, tabs, enums del objeto Activity
+│   ├── Curriculum.i18n.json
+│   ├── CurricularSection.i18n.json
+│   ├── rt__Session__curricularsection.i18n.json       ← RecordType (ver seccion 9, rtBaseObjectName)
+│   ├── rt__EvaluationComponent__curricularsection.i18n.json
+│   └── ... (14 archivos por objeto/RT en total)
+├── en/
+│   ├── common.i18n.json
+│   └── Offering.i18n.json                             ← cobertura parcial (paridad en construccion)
+└── pt/
+    ├── common.i18n.json
+    ├── Activity.i18n.json
+    └── Offering.i18n.json
+```
+
+El mod tiene 31 archivos `.i18n.json` en total, pero la cobertura entre idiomas **no es simetrica**: `es` cubre 14 stems (todos los objetos y RT), mientras `en`/`pt` cubren solo 2-3. Esto es real drift de paridad, tolerado hoy via el baseline ratchet de `publish-i18n.js` (seccion 8), no un caso ideal a imitar sin revisar.
+
+### Contenido real: `lang/es/Activity.i18n.json`
+
+```json
+{
+  "layout": {
+    "default_Activity_list": { "label": "Programas de asignatura" }
+  },
+  "column": {
+    "name": "Nombre",
+    "code": "Codigo",
+    "programLevel": "Nivel",
+    "status": "Estado"
+  },
+  "tabs": {
+    "general": "General",
+    "outcomes": "Resultados de aprendizaje",
+    "bibliography": "Bibliografia"
+  },
+  "enums": {
+    "programLevel": {
+      "Undergraduate": "Pregrado",
+      "Postgraduate": "Postgrado"
+    },
+    "status": {
+      "Draft": "Borrador",
+      "Active": "Activo",
+      "Archived": "Archivado"
+    }
+  }
+}
+```
+
+### Como se conecta todo
+
+```
+Layout JSON:                     Lang JSON (namespace curriculum-design/Activity):   UI Result:
+─────────────                    ──────────────────────────────────────────────      ─────────
+columns:
+  key: "code"              →     column.code: "Codigo"                        →      Columna muestra "Codigo"
+  key: "programLevel"       →     column.programLevel: "Nivel"                 →      Columna muestra "Nivel"
+
+tabs:
+  "outcomes"                →     tabs.outcomes: "Resultados de aprendizaje"    →      Pestana muestra "Resultados de aprendizaje"
+
+campo enum:
+  record.status = "Active"  →     enums.status.Active: "Activo"                →      Badge muestra "Activo" (no "Active")
+```
+
+---
+
+## 15. Ejemplo en produccion: uengagement-up1
+
+`retention-wellbeing` ya no sirve como ejemplo: el mod ya no tiene carpeta `lang/` (fue reemplazado en la practica por `uengagement-up1`, que si cubre el modulo de engagement con el formato nuevo).
+
+### Archivos (39 total, 3 idiomas, 13 stems por idioma)
+
+```
+mods/uengagement-up1/lang/
+├── es/
+│   ├── common.i18n.json
+│   ├── Event.i18n.json
+│   ├── Offering.i18n.json
+│   ├── Attendance.i18n.json
+│   ├── Student.i18n.json
+│   ├── ServiceLine.i18n.json
+│   ├── OrgUnit.i18n.json
+│   ├── Feedback.i18n.json
+│   ├── Journal.i18n.json
+│   ├── ActivityType.i18n.json
+│   ├── FormTemplate.i18n.json
+│   ├── core_User.i18n.json
+│   └── activity.i18n.json
+├── en/     (mismos 13 stems)
+└── pt/     (mismos 13 stems)
+```
+
+A diferencia de `curriculum-design` (seccion 14), aqui **si hay paridad completa**: los 13 stems existen en los 3 idiomas, `13 stems × 3 idiomas = 39 archivos`.
+
+### Particularidades
+
+**Interpolacion i18next real**, `lang/es/common.i18n.json` (equivalente al viejo namespace custom de calendario):
+
+```json
+{
+  "compositeSectionTree": {
+    "summary": "{{total}} en total, {{roots}} de nivel raiz",
+    "delete": {
+      "message": "Vas a eliminar {{name}} y su contenido en cascada. Esta accion no se puede deshacer.",
+      "cascadeCount": "Se eliminaran {{count}} elemento(s) en total (la seccion y sus hijos)."
+    }
+  },
+  "curriculumMesh": {
+    "editLock": {
+      "message": "El plan esta {{status}}. Solo se pueden editar mallas de planes en {{editable}}."
+    }
+  }
+}
+```
+
+**Nombre de archivo en minuscula (`activity.i18n.json`)**: convive con `Activity.i18n.json` de `curriculum-design`, sin conflicto, porque el namespace incluye el nombre del workspace (`uengagement-up1/activity` vs `curriculum-design/Activity`). No es una convencion recomendada (rompe la simetria PascalCase esperada para stems que representan un objeto), solo una observacion de lo que hay hoy en el mod.
+
+---
+
+## 16. Do's y Don'ts
+
+| DO | DON'T |
+|----|-------|
+| Usar `lang/{lng}/{stem}.i18n.json` (carpeta por idioma, sufijo obligatorio) | Crear `lang/{lng}_{COUNTRY}[@{Object}].json` (patron plano viejo, hace abortar el publish) |
+| Crear `common.i18n.json` + un archivo por objeto, por cada idioma | Meter todo en un solo archivo gigante |
+| Cubrir todos los idiomas que usan tus tenants | Cubrir solo un idioma |
+| Usar `$t('clave')` en templates / `useTranslation()` en composables | Importar `useI18n()` de `vue-i18n` (ya no existe en el stack) |
+| Usar `{{variable}}` y sufijos `_one`/`_other` | Usar `{variable}` o el separador `|` (sintaxis vieja de vue-i18n) |
+| Traducir valores de enum bajo `enums.{field}.{value}` | Mostrar el valor crudo del enum o inventar un namespace custom para lo mismo |
+| Usar `languageTag` y `modalTitleTag` en row actions | Depender solo de `label` y `modalTitle` (no se traducen) |
+| Usar `[record.field]` para datos dinamicos en modalTitleTag | Confundirlo con `{{variable}}` de i18next (son mecanismos distintos) |
+| Verificar el publish con `--dry-run` / `--verbose` si hay dudas | Asumir que el publish funciono sin revisar el log |
+| Correr `--update-parity-baseline` solo cuando el drift nuevo es deliberado | Actualizar el baseline para tapar un drift no revisado |
+| Editar siempre en `mods/{mod}/lang/` | Editar en `suite/locales-dist/` (se regenera en cada sync) |
+| Para overrides de tenant que cambian seguido: usar `core_Translation` (BD) | Pedir un deploy para cada ajuste terminologico de un cliente |
+
+---
+
+## 17. Troubleshooting
+
+| Problema | Causa | Solucion |
+|----------|-------|----------|
+| UI muestra claves en vez de texto | Namespace faltante o publish no ejecutado | Crear el archivo `.i18n.json`, `npm run sync`, reiniciar Suite |
+| Publish aborta con "legacy flat-tag layout detected" | Un workspace todavia tiene `lang/{lng}_{COUNTRY}[@{Object}].json` (patron plano viejo) | Migrar ese workspace a `lang/{lng}/{stem}.i18n.json` (ver seccion 3). Mientras no se migre, mantenerlo en `ignoredMods` |
+| Publish aborta con "is missing the .i18n.json suffix" | Un archivo `.json` dentro de `lang/{lng}/` no tiene el sufijo `.i18n.json` | Renombrar a `{stem}.i18n.json` |
+| Publish aborta con "Collision on {lng}/{ns}" | Dos archivos fuente mapean al mismo `(lng, namespace)` (raro, casi siempre error de configuracion de un workspace) | Revisar que cada workspace publique bajo su propio nombre; namespaces distintos no colisionan |
+| Publish aborta con "NEW locale parity drift(s)" | El PR agrego una clave a un idioma sin agregarla al equivalente regional (es/es-CL, pt/pt-BR) y ese drift no esta en el baseline | Agregar la traduccion faltante, o si es deliberado: `node suite/scripts/publish-i18n.js --update-parity-baseline` |
+| Traduccion no se actualiza despues de cambio | Publish ejecutado pero Suite no reiniciada, o cache de localStorage con el buildHash viejo | Reiniciar Suite dev server; `purgeStaleCache` limpia el localStorage automaticamente al detectar un buildHash nuevo |
+| Namespace no aparece publicado | Mod en `ignoredMods`, o el archivo no tiene el sufijo `.i18n.json` | Remover de `ignoredMods` en `package.json` raiz, o corregir el sufijo |
+| Traduccion por objeto no sobreescribe la base | El namespace del objeto no se esta resolviendo para ese contexto | Verificar el nombre del archivo (`{ObjectName}.i18n.json`, PascalCase exacto al objeto) y el `objectName` de la ruta en `buildLevels` (seccion 9) |
+| Row action muestra `label` en vez de traduccion | `languageTag` no definido o clave incorrecta en lang | Verificar que `languageTag` apunta a una clave existente en `actions.*` del namespace correcto |
+| Modal title no incluye datos del registro | Usando `{{variable}}` en vez de `[record.field]` | Para modal titles usar `[record.field]` (resolveModalTitle.ts), no `{{variable}}` (i18next) |
+| Pluralizacion no funciona | Falta el sufijo `_one`/`_other` en la clave, o se sigue usando el separador `\|` (sintaxis vieja) | Definir `clave_one` y `clave_other` por separado |
+| Overrides de tenant en BD no aparecen | La tabla `core_Translation` no esta migrada para ese tenant, o el TTL de 60s todavia no expiro | Verificar `npx prisma migrate` en ese tenant; el endpoint degrada a bundle vacio sin error si la tabla no existe |
+| Traducciones de layout (paginacion, filtros) no aparecen | El namespace `layout/*` no se resolvio para ese layoutType | Verificar que `layout/lang/` existe, que no esta en `ignoredMods`, y que el `layoutType` de la ruta esta en `EMBEDDABLE_LAYOUT_TYPES` o coincide con el nivel de contexto (seccion 9) |
+
+---
+
+## Historial de cambios
+
+| Fecha | Descripcion |
+|-------|-------------|
+| 2026-04-10 | Documento inicial: guia completa de la capa de lenguaje en mods basada en docs oficiales, codigo del sync, archivos reales de hello-world-mod y retention-wellbeing |
+| 2026-04-10 | Agregadas secciones 12 y 13: keys transversales entre mods (3 escenarios, 3 opciones) y override por cliente/tenant (jerarquia completa del plugin i18n.ts, paso a paso, ejemplo real es_CL-upu.json) |
+| 2026-04-14 | Agregados diagramas Mermaid: flujo end-to-end, algoritmo de sync, jerarquia de cascada (6 niveles), resolucion en runtime (8 niveles) |
+| 2026-07-16 | Reescritura mayor: migracion completa de vue-i18n a i18next + i18next-vue (PR fix/lang-arq, 8-9 jul 2026). Nuevo layout de archivos fuente (`lang/{lng}/{stem}.i18n.json`), pipeline `publish-i18n.js` reemplaza `sync-i18n.js` (copia 1:1 a `suite/locales-dist/`, sin merge), cascada de contexto via lookup chain de namespaces (`i18nBridge.ts`), nueva capa de override de tenant en BD (`core_Translation`) sobre la capa estatica existente. Ejemplos reemplazados: hello-world-mod y retention-wellbeing (obsoletos) por curriculum-design y uengagement-up1 (formato vigente) |

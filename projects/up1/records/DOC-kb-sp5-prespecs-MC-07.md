@@ -1,0 +1,60 @@
+---
+id: DOC-kb-sp5-prespecs-MC-07
+project: up1
+type: doc
+---
+
+# Pre-spec MC-07 — Pestaña "Líneas de formación" (CRUD + integración)
+
+> Borrador de spec + intake para **MC-07** (agrupa C1 + C2 + C3 + C4). Referencia en `sp5/`, no record DKC.
+> **Épica:** C (líneas · FE) · **Tier:** 🅼 Must (borrado/integración 🅲 Could) · **SP:** 5 · **Repo:** `up1/mods/curriculum-design`
+
+---
+
+## 1. Intake
+- **KB:** componente/pestaña en el mod; consume `requirementCategory` (MC-02). Color/ícono con picker (decisión §dec-1, valores de la maqueta).
+- **Necesidad/reuso (DET-32):** RecordList = **reuse** (estándar del mod); modal crear/editar = build sobre el form estándar; guard de borrado = **reuse** del resolver de MC-02 (REQ-09).
+- **Supuestos:** la pestaña "Líneas de formación" se declara en el detail del Curriculum (config del mod).
+- **✅ FLAG-2 (resuelto):** color/ícono se arma con **atoms existentes** (`Icon`, `Select`, `Badge`, `Input`) — `icon` = `Select` de un set curado de `bi-*` (preview con atom `Icon`); `color` = `Select` de tokens de tema / hex (swatch con `Badge`). **Sin componente nuevo complejo.** Pendiente menor: confirmar con Eduardo el **set curado** de íconos/colores. Acota solo al picker; el resto de MC-07 es independiente. Ver `sp5-definicion-de-ready.md`.
+
+## 2. Requisitos (REQ)
+
+### REQ-01 · Ver líneas (RecordList)
+**Certeza:** `confirmed` · **source_ref:** handoff MC-LF-1 + mockup 597–657
+
+**DEBE** mostrar un RecordList con columnas: línea, código, créditos (actual/mín), obligatorias, electivas. Solo lectura fuera de edición.
+
+### REQ-02 · Crear / editar línea
+**Certeza:** `confirmed` · **source_ref:** handoff MC-LF-2 + mockup 658–684 + §dec-1
+
+Modal **DEBE** capturar: nombre, código, créditos mín/máx, etiqueta corta, **color + ícono** (picker "Color e ícono": color = token tema up1/hex, icon = `bi-*`). Validación `minCredits ≤ maxCredits` (FE + BE de MC-02).
+
+### REQ-03 · Eliminar con guard  *(🅲 Could)*
+**Certeza:** `confirmed` · **source_ref:** handoff MC-LF-3
+
+El borrado **DEBE** bloquearse si hay `planEntry` asignados ("reasigna primero") — consume el guard de MC-02.
+
+### REQ-04 · Integración con la malla  *(🅲 Could)*
+**Certeza:** `confirmed` · **source_ref:** handoff MC-LF-4
+
+El selector de línea (MC-06) y los chips/colores (MC-08) **DEBEN** nutrirse de las `requirementCategory` del plan.
+
+## 3. Tasks (con rollback)
+| # | Task | Rollback |
+|---|---|---|
+| T1 | Pestaña + RecordList de líneas (REQ-01) | quitar pestaña |
+| T2 | Modal crear/editar con color+ícono + validación min/max (REQ-02) | quitar modal |
+| T3 | Acción borrar con guard (REQ-03) | revertir |
+| T4 | Cableado selector/chips a requirementCategory (REQ-04) | revertir |
+
+## 4. Test cases
+| TC | REQ | Caso | Esperado |
+|---|---|---|---|
+| TC-01 | REQ-01 | plan con 4 líneas | RecordList lista las 4 con créditos actual/mín |
+| TC-02 | REQ-02 | crear línea min=72, color primary, icon bi-mortarboard | creada con color+ícono |
+| TC-03 | REQ-02 | crear con min=30, max=20 | rechazado |
+| TC-04 | REQ-03 | borrar línea con 1 entry | bloqueado |
+| TC-05 | REQ-04 | crear línea → abrir selector en MC-06 | la nueva línea aparece como opción |
+
+## 5. Dependencias
+- **Depende de:** MC-02 (requirementCategory + guard). **Integra con:** MC-06 (selector), MC-08 (chips/colores).
