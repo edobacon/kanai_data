@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPONE-1756 · Tributacion asignatura-competencia</title>
+<style>
+:root{
+  color-scheme: light;
+  --up1-gray-0: light-dark(#ffffff,#1a1a1a);
+  --up1-gray-50: light-dark(#f6f7f8,#212121);
+  --up1-gray-100: light-dark(#e9ebed,#2c2c2c);
+  --up1-gray-200: light-dark(#d9dde1,#3a3a3a);
+  --up1-gray-300: light-dark(#c5c5c5,#525252);
+  --up1-gray-600: light-dark(#6b7280,#a3a3a3);
+  --up1-gray-700: light-dark(#3f4753,#d4d4d4);
+  --up1-gray-900: light-dark(#1f2733,#fafafa);
+  --pri-50: light-dark(#E7F2F3, rgba(45,212,191,.10));
+  --pri-100: light-dark(#c9e5e7, rgba(45,212,191,.16));
+  --pri: light-dark(#0a808c,#2dd4bf);
+  --pri-600: light-dark(#0b6d78,#14b8a6);
+  --info: light-dark(#21498a,#38bdf8);
+  --info-bg: light-dark(#eef3fb,rgba(56,189,248,.12));
+  --ok: light-dark(#1f8a5b,#22c55e);
+  --ok-bg: light-dark(#eafaf1,rgba(34,197,94,.12));
+  --warn: light-dark(#b45309,#fbbf24);
+  --warn-bg: light-dark(#fff8ec,rgba(245,158,11,.12));
+  --bad: light-dark(#b42318,#ef4444);
+  --bad-bg: light-dark(#fef3f2,rgba(239,68,68,.10));
+  --mut-bg: light-dark(#f1f3f5,rgba(255,255,255,.05));
+  --bg: var(--up1-gray-50); --card: var(--up1-gray-0);
+  --tx: var(--up1-gray-900); --tx2: var(--up1-gray-700); --mut: var(--up1-gray-600);
+  --bd: var(--up1-gray-200);
+  --radius:14px; --radius-sm:9px;
+  --sh: 0 1px 2px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.4)), 0 8px 24px light-dark(rgba(16,24,40,.06),rgba(0,0,0,.5));
+}
+@media (prefers-color-scheme: dark){ :root{ color-scheme: dark; } }
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:34px 22px 80px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pri);background:var(--pri-50);border:1px solid var(--pri-100);padding:5px 12px;border-radius:999px;flex-wrap:wrap}
+h1{font-size:29px;line-height:1.18;margin:16px 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin:0 0 8px}
+.ask{font-size:16.5px;color:var(--tx2);background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--pri);border-radius:var(--radius-sm);padding:14px 16px;margin:20px 0 4px}
+.ask b{color:var(--tx)}
+.phasenote{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:11px 14px;margin-top:10px;font-size:13px;color:var(--tx2)}
+.phasenote b{color:var(--tx)}
+h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:38px 0 14px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:var(--bd)}
+h2 .cnt{font-size:11px;font-weight:700;color:var(--pri);background:var(--pri-50);border:1px solid var(--pri-100);border-radius:999px;padding:1px 9px;text-transform:none;letter-spacing:0}
+h3.blocktitle{font-size:14.5px;font-weight:700;color:var(--tx);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);padding:16px;box-shadow:var(--sh)}
+.panel h3{margin:0 0 12px;font-size:14px;display:flex;align-items:center;gap:8px}
+.pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.pill.now{background:var(--up1-gray-100);color:var(--tx2)}
+.pill.tgt{background:var(--pri-50);color:var(--pri);border:1px solid var(--pri-100)}
+.pill.a{background:var(--info-bg);color:var(--info)}
+.pill.b{background:var(--ok-bg);color:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border:1px solid var(--bd);border-radius:var(--radius);overflow:hidden}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--bd);vertical-align:top}
+th{background:var(--up1-gray-50);font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);font-weight:700}
+tr:last-child td{border-bottom:0}
+.tablewrap{overflow-x:auto;border-radius:var(--radius)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;background:var(--up1-gray-100);padding:1px 6px;border-radius:5px;color:var(--tx)}
+.callout{background:var(--warn-bg);border:1px solid var(--warn);border-left:4px solid var(--warn);border-radius:var(--radius-sm);padding:12px 15px;font-size:13.5px;color:var(--tx2);margin-top:14px}
+.callout b{color:var(--tx)}
+.callout.info{background:var(--info-bg);border-color:var(--info);border-left-color:var(--info)}
+.callout.ok{background:var(--ok-bg);border-color:var(--ok);border-left-color:var(--ok)}
+/* facts / evidencia */
+.facts{display:flex;flex-direction:column;gap:8px}
+.fact{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.fb{flex:0 0 auto;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.fb.ver{background:var(--ok-bg);color:var(--ok)}
+.fb.pen{background:var(--warn-bg);color:var(--warn)}
+.fb.cor{background:var(--bad-bg);color:var(--bad)}
+.fbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.fsrc{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+.fbody i{color:var(--tx);font-style:normal;font-weight:600}
+/* alcance dentro/fuera */
+.scope-wrap{display:flex;flex-direction:column;gap:8px}
+.scope-row{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--tx2)}
+.scope-row .sb{flex:0 0 auto;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px}
+.sb.in{background:var(--ok-bg);color:var(--ok)}
+.sb.out{background:var(--bad-bg);color:var(--bad)}
+/* guide chips */
+.guide{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.gitem{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.gtag{flex:0 0 auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px;white-space:nowrap}
+.gtag.fav{background:light-dark(#eafaf1,rgba(34,197,94,.14));color:var(--ok)}
+.gtag.no{background:light-dark(#fef3f2,rgba(239,68,68,.14));color:var(--bad)}
+.gtag.gate{background:var(--bad);color:#fff}
+.gbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.gsrc{display:block;font-size:11px;color:var(--mut);margin-top:3px}
+/* relacionados */
+.relwrap{display:flex;flex-direction:column;gap:9px}
+.relrow{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:10px 12px}
+.rtag{flex:0 0 118px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);padding-top:1px}
+.rbody{font-size:13px;color:var(--tx2);line-height:1.5}
+.statuschip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.statuschip.backlog{background:var(--up1-gray-100);color:var(--tx2)}
+.statuschip.done{background:var(--ok-bg);color:var(--ok)}
+.foot{margin-top:44px;padding-top:16px;border-top:1px solid var(--bd);font-size:12.5px;color:var(--mut)}
+
+/* ═══════════════ MINI-MOCKUPS (fieles a la maqueta v29) ═══════════════ */
+.mk-frame{border:1px solid var(--bd);border-radius:12px;background:var(--up1-gray-50);padding:12px;overflow-x:auto}
+.mk-cap{font-size:11px;color:var(--mut);margin:6px 2px 0;line-height:1.4}
+.mk-nav{font-size:10.5px;color:var(--mut);margin-bottom:8px}
+.mk-nav b{color:var(--tx)}
+/* pestañas del plan */
+.mk-tabs{display:flex;gap:16px;border-bottom:1px solid var(--bd);margin-bottom:10px;font-size:12px;min-width:460px}
+.mk-tab{padding:6px 0;color:var(--mut);border-bottom:2px solid transparent;white-space:nowrap}
+.mk-tab.on{color:var(--pri);font-weight:700;border-bottom-color:var(--pri)}
+.mk-tab .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--pri);margin-left:4px}
+.mk-tab.ghost{opacity:.45;font-style:italic}
+/* sumbar de indicadores (pestaña tributacion) */
+.mk-sumbar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;min-width:460px}
+.mk-sumstat{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;position:relative;overflow:hidden}
+.mk-sumstat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,var(--pri))}
+.mk-sumstat .l{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--mut)}
+.mk-sumstat .v{display:block;font-size:17px;font-weight:800;color:var(--tx);line-height:1.2}
+.mk-sumstat .v small{font-size:10px;font-weight:500;color:var(--mut)}
+/* kpis del componente de tributacion */
+.mk-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;min-width:460px}
+.mk-kpi{border:1px solid var(--bd);border-radius:8px;padding:7px 10px;background:var(--card)}
+.mk-kpi .l{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--mut)}
+.mk-kpi .v{font-size:15px;font-weight:800;color:var(--tx)}
+.mk-kpi .v span{font-size:11px;font-weight:500;color:var(--mut)}
+.mk-kpi .bar{height:4px;border-radius:99px;background:var(--up1-gray-100);overflow:hidden;margin:3px 0 2px}
+.mk-kpi .bar span{display:block;height:100%;background:var(--pri)}
+.mk-kpi.warn .v{color:var(--warn)}
+/* grilla competencia x nivel */
+.mk-cov{border:1px solid var(--bd);border-radius:10px;overflow:hidden;background:var(--card);min-width:520px}
+.mk-cov-hd,.mk-cov-row{display:grid;grid-template-columns:1.7fr 1fr 1fr 1fr}
+.mk-cov-hd{background:var(--up1-gray-50);border-bottom:1px solid var(--bd)}
+.mk-cov-hd>div{padding:6px 8px;font-size:9.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.03em;border-left:1px solid var(--bd)}
+.mk-cov-hd>div:first-child{border-left:0}
+.mk-cov-row{border-bottom:1px solid var(--bd)}
+.mk-cov-row:last-child{border-bottom:0}
+.mk-cov-row.branch{background:var(--up1-gray-50)}
+.mk-cov-c{padding:7px 8px;display:flex;flex-direction:column;gap:3px}
+.mk-cov-c b{font-size:11.5px}
+.mk-cov-c small{font-size:10px;color:var(--mut)}
+.mk-cov-cell{padding:6px 7px;border-left:1px solid var(--bd);display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;min-height:34px}
+.mk-cov-cell.off{background:var(--up1-gray-50)}
+.mk-cov-na{font-size:9.5px;color:var(--mut);align-self:center;font-style:italic}
+/* fichas / chips CODIGO · NIVEL · CONTRIBUCION */
+.cv-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;border:1px solid transparent;white-space:nowrap}
+.cv-tag.i1{background:var(--up1-gray-100);color:var(--tx2);border-color:var(--bd)}
+.cv-tag.i2{background:light-dark(rgba(33,73,138,.1),rgba(56,189,248,.14));color:var(--info);border-color:light-dark(rgba(33,73,138,.28),rgba(56,189,248,.3))}
+.cv-tag.i3{background:var(--pri-50);color:var(--pri);border-color:var(--pri-100)}
+.tg-lv{font-size:8.5px;font-weight:800;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.08)}
+.tg-k{display:inline-flex;align-items:center;justify-content:center;min-width:13px;height:13px;padding:0 2px;border-radius:3px;font-size:8.5px;font-weight:800}
+.tg-k.d{background:var(--up1-gray-100);color:var(--tx2)}
+.tg-k.e{background:light-dark(rgba(10,128,140,.18),rgba(45,212,191,.22));color:var(--pri)}
+.tg-k.a{background:var(--pri);color:#fff}
+.tg-w{color:var(--bad);font-size:9px}
+/* malla por periodo */
+.mk-malla{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;min-width:520px}
+.mk-col{min-width:150px;flex:1}
+.mk-col-hd{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);padding:4px 2px}
+.mk-card{border:1px solid var(--bd);border-radius:8px;background:var(--card);padding:7px 8px;margin-bottom:6px}
+.mk-card.armed{border-color:var(--pri);background:var(--pri-50)}
+.mk-card .cc{font-size:9.5px;font-weight:700;color:var(--tx2)}
+.mk-card .cn{font-size:11px;color:var(--tx);line-height:1.25}
+.mk-card .ctribs{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;padding-top:5px;border-top:1px dashed var(--bd)}
+.mk-card .cnone{font-size:9.5px;color:var(--warn);margin-top:5px;padding-top:5px;border-top:1px dashed var(--bd)}
+/* panel de detalle */
+.mk-detail{border:1px solid var(--bd);border-radius:10px;background:var(--card);padding:12px 14px;min-width:280px}
+.mk-detail h4{margin:0 0 2px;font-size:13px}
+.mk-detail .sub{margin:0 0 10px;font-size:11px}
+.mk-dfield{margin-bottom:9px}
+.mk-dfield .fl{display:block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);margin-bottom:3px}
+.mk-dfield .fv{font-size:12.5px;color:var(--tx);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mk-rep{font-size:9px;font-weight:700;color:var(--pri);background:var(--pri-50);border-radius:999px;padding:1px 6px}
+.mk-legend{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:10.5px;color:var(--mut);margin-bottom:8px;min-width:460px}
+.mk-legend b{color:var(--tx2)}
+.rowflex{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.rowflex>div{flex:1;min-width:280px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="callout info" style="margin:0 0 22px;">
+    <b>Estado (actualizado 2026-09-01):</b> este explicativo es previo al split. El feature ya se dividio en 5 tickets finalizados (fuente de verdad): sprint = <code>UPONE-1756-alcance-sp10</code> (13) + <code>UPONE-1756-alcance-sp10-delta</code> (8) = CRUD completo, 21 SP; follow-up = <code>UPONE-1756-followup</code> (13) + <code>UPONE-1756-followup-delta</code> (10) + <code>UPONE-1756-followup-delta-2</code> (8). Donde contradiga a esos tickets, mandan los tickets.
+  </div>
+
+  <span class="eyebrow">UPONE-1756 &middot; implement &middot; Epica UPONE-1452 Curriculum Mapping &middot; Asignado: Eduardo Bacon</span>
+  <h1>Tributacion asignatura &harr; competencia</h1>
+  <p class="sub">Que competencias desarrolla o evalua cada asignatura de un plan, en que nivel y con que profundidad. La pantalla se opera desde el registro del plan (Curriculum Design); el objeto y el permiso son de Curriculum Mapping.</p>
+
+  <div class="ask">
+    <b>Que se pide:</b> construir la logica de tributacion asignatura-competencia completa: el objeto al dia, la informacion que la competencia debe declarar para poder validarla, la escritura gobernada (resolver de upsert de conjunto), los indicadores de cobertura con sus dos denominadores, los permisos <code>competencyalignment:*</code>, y la pantalla (tributacion, grilla, malla, ficha y detalle) que se opera desde el registro del plan.
+  </div>
+  <div class="phasenote">
+    <span>&#9888;&#65039;</span>
+    <div><b>Feature grande, no cabe en un ticket:</b> la estimacion daba <b>~34 SP</b>. El split ya esta decidido en <b>5 tickets finalizados</b> (ver banner superior); F1&hellip;F6 describe el analisis original de fases, no el split final. F6 (<code>outcomeAlignment</code>) quedo fuera, cubierto por el follow-up delta 2.</div>
+  </div>
+
+  <h2>Evidencia del caso</h2>
+  <div class="facts">
+    <div class="fact"><span class="fb ver">Verificado</span><div class="fbody">El objeto de la tributacion (<code>CompetencyAlignment</code>) ya existe y es <i>casi correcto</i>. Lo que falta es la escritura gobernada (hoy no hay resolver) y, sobre todo, la informacion en la competencia contra la cual validar.<span class="fsrc">Fuente: <code>objects/CompetencyAlignment.json:11-19,49-57</code>; ausencia de resolver en <code>logic/</code>.</span></div></div>
+    <div class="fact"><span class="fb ver">Verificado</span><div class="fbody"><code>CompetencyNode.json</code> hoy es un arbol desnudo: le faltan el objeto <code>CompetencyNodeDevelopmentLevel</code>, <code>developmentSchemeId</code> y <code>achievementBasis</code>; para R-3 se reusa <code>isHolistic</code> (ya existe a nivel de RecordType), sin crear campo nuevo. Sin esto, R-3 y R-4 no son verificables.<span class="fsrc">Fuente: <code>objects/CompetencyNode.json:38-119</code>; <code>objects/RecordTypes/rt__Competency__competencynode.json:11-17</code>.</span></div></div>
+    <div class="fact"><span class="fb ver">Verificado</span><div class="fbody">La pantalla se opera desde el registro del plan (Curriculum Design es un <code>RecordDetail</code> con tabs), pero el objeto y el permiso son de Curriculum Mapping. Principio: la pantalla no otorga permiso, gobierna el dueno del objeto.<span class="fsrc">Fuente: <code>mods/curriculum-design/config/layouts/default_Curriculum_view.json:14-56</code>.</span></div></div>
+    <div class="fact"><span class="fb cor">Correccion</span><div class="fbody">El explicativo tecnico dejaba como <i>dependencia a levantar</i> que Curriculum Design pudiera consultar una capability de Curriculum Mapping al renderizar. <b>Ya esta resuelto en la plataforma:</b> los permisos se entregan como lista plana sin filtrar por mod, <code>layout</code> expone <code>hasCapability(string)</code>, y un tab se gatea con <code>requiredCapability</code>. Hay precedente en produccion con <code>core_datalog:view</code>. No hay dependencia de plataforma que levantar.<span class="fsrc">Fuente: <code>object-manager/src/graphql/resolvers/user.resolver.js:158-211</code>; <code>layout/src/composables/useRbacPermissions.ts:35</code>; precedente <code>default_Curriculum_view.json:52-53</code>.</span></div></div>
+    <div class="fact"><span class="fb ver">Verificado</span><div class="fbody">El renombre de <code>coverageLevelId</code> a <code>developmentLevelId</code> rompe el guard RC6 (<code>isCoverageSchemeInUse</code>) y sus tests: hay que barrerlo en la misma pasada.<span class="fsrc">Fuente: <code>logic/helpers/schemeUsage.js:67</code>; <code>tests/unit/schemeUsage.test.js:74</code>.</span></div></div>
+    <div class="fact"><span class="fb cor">Correccion</span><div class="fbody">Decision cerrada: <b>no se crea <code>isDirectlyMeasured</code></b> como campo nuevo. R-3 se resuelve como <code>sinHijos OR isHolistic</code> (reusando <code>isHolistic</code>, que ya existe a nivel de RecordType), con "sin hijos" derivado del arbol y el invariante <code>isHolistic=false</code> sin hijos = invalido. El rename cosmetico a <code>isDirectlyMeasured</code> queda para el ticket delta.</div></div>
+    <div class="fact"><span class="fb pen">Pendiente</span><div class="fbody">El registro de eventos es global por <code>(objectType, operation)</code> con warning de "DUPLICATE EVENT ID ... will OVERWRITE". Si curriculum-mapping declara un evento sobre <code>Curriculum</code>/<code>planEntry</code> (para R-8, replicar al versionar) y curriculum-design declara otro, uno pisa al otro. Hoy <code>curriculum-design/events/</code> no existe.<span class="fsrc">Fuente: <code>object-manager/src/events/loaders/eventLoader.js:81-89</code>.</span></div></div>
+    <div class="fact"><span class="fb ver">Frescura</span><div class="fbody"><code>curriculum-mapping</code> en <code>develop</code> @ <code>584499e</code> (limpio); <code>curriculum-design</code> @ <code>8a151e7</code>. <code>capabilities.json</code> ya trae <code>competencynode:adopt</code>/<code>exempt</code> de UPONE-1689, base mas nueva que la que asumia el explicativo tecnico.</div></div>
+  </div>
+
+  <h2>Estado inicial (ahora) vs. estado esperado (entrega)</h2>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill now">Ahora</span> El plan no tiene donde tributar</h3>
+      <div class="mk-frame">
+        <div class="mk-nav">Curriculum Design &nbsp;&rsaquo;&nbsp; Planes de Estudio &nbsp;&rsaquo;&nbsp; <b>Ingenieria Civil Industrial 2026</b></div>
+        <div class="mk-tabs">
+          <span class="mk-tab on">Retos</span>
+          <span class="mk-tab">Resultados de aprendizaje</span>
+          <span class="mk-tab">Historial</span>
+        </div>
+        <div style="min-width:460px;padding:18px;text-align:center;color:var(--mut);font-size:11.5px;border:1px dashed var(--bd);border-radius:8px;">
+          No existe ninguna pestana que muestre que competencias desarrolla o evalua cada asignatura del plan.
+        </div>
+      </div>
+      <div class="mk-cap">No hay lectura ni edicion del mapa de tributacion desde el plan.</div>
+    </div>
+    <div class="panel">
+      <h3><span class="pill tgt">Entrega</span> Pestana Tributacion (solo lectura)</h3>
+      <div class="mk-frame">
+        <div class="mk-nav">Curriculum Design &nbsp;&rsaquo;&nbsp; Planes de Estudio &nbsp;&rsaquo;&nbsp; <b>Ingenieria Civil Industrial 2026</b></div>
+        <div class="mk-tabs">
+          <span class="mk-tab">Retos</span>
+          <span class="mk-tab">Resultados de aprendizaje</span>
+          <span class="mk-tab on">Tributacion <span class="dot"></span></span>
+          <span class="mk-tab">Historial</span>
+        </div>
+        <div class="mk-sumbar">
+          <div class="mk-sumstat" style="--acc:var(--pri)"><span class="l">Desarrollo tributado</span><span class="v">38 <small>de 52 niveles</small></span></div>
+          <div class="mk-sumstat" style="--acc:var(--ok)"><span class="l">Asignaturas que tributan</span><span class="v">21 <small>de 28</small></span></div>
+          <div class="mk-sumstat" style="--acc:var(--warn)"><span class="l">Matrices adoptadas</span><span class="v">2</span></div>
+        </div>
+        <div style="font-size:10.5px;color:var(--mut)">Indicadores de solo lectura + filtro por matriz. Editar el mapa entra al componente de tributacion (boton <code>Tributar</code>).</div>
+      </div>
+      <div class="mk-cap">Capability <code>competencyalignment:view</code> gobierna la pestana; sin ella, el usuario <b>no la ve</b>, no la ve vacia.</div>
+    </div>
+  </div>
+
+  <h2>Como se asigna: dos formas sobre el mismo mapa</h2>
+  <p style="font-size:13px;color:var(--tx2);margin:-4px 0 12px;">El componente de tributacion (boton <code>Tributar</code>) ofrece el mismo mapa desde dos lienzos. El destino define el nivel en el mismo acto de asignar, con el patron "en mano", sin arrastre.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3><span class="pill a">Forma A</span> Grilla competencia &times; nivel</h3>
+      <div class="mk-frame">
+        <div class="mk-legend"><b>Nivel:</b> <span class="tg-lv" style="background:var(--up1-gray-100)">I1</span>Introductorio <span class="tg-lv" style="background:light-dark(rgba(33,73,138,.18),rgba(56,189,248,.22))">I2</span>Intermedio <b style="margin-left:6px">Contribucion:</b> <span class="tg-k d">D</span>Desarrolla <span class="tg-k e">E</span>Evalua <span class="tg-k a">A</span>Ambas</div>
+        <div class="mk-cov">
+          <div class="mk-cov-hd"><div>Competencia</div><div>Introductorio</div><div>Intermedio</div><div>Avanzado</div></div>
+          <div class="mk-cov-row">
+            <div class="mk-cov-c"><b>CG1</b><small>Trabajo en equipo</small></div>
+            <div class="mk-cov-cell">
+              <span class="cv-tag i1">MEC101 <span class="tg-lv">I1</span> <span class="tg-k d">D</span></span>
+            </div>
+            <div class="mk-cov-cell">
+              <span class="cv-tag i2">IND230 <span class="tg-lv">I2</span> <span class="tg-k e">E</span></span>
+            </div>
+            <div class="mk-cov-cell off"><span class="mk-cov-na">no se desarrolla aca</span></div>
+          </div>
+          <div class="mk-cov-row branch">
+            <div class="mk-cov-c"><b>CG2</b><small>Comunicacion efectiva, consolida</small></div>
+            <div class="mk-cov-cell off" style="grid-column:span 3;"><span class="mk-cov-na">consolida a sus subcompetencias, no es destino de tributacion (R-3)</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="mk-cap">La celda es el destino: soltar ahi fija el nivel. Un nivel no declarado por la competencia queda bloqueado y vacio, nunca oculto.</div>
+    </div>
+    <div class="panel">
+      <h3><span class="pill b">Forma B</span> Malla por periodo</h3>
+      <div class="mk-frame">
+        <div class="mk-legend"><b>Nivel:</b> <span class="tg-lv" style="background:var(--up1-gray-100)">I1</span>Introductorio <span class="tg-lv" style="background:light-dark(rgba(33,73,138,.18),rgba(56,189,248,.22))">I2</span>Intermedio <b style="margin-left:6px">Contribucion:</b> <span class="tg-k d">D</span>Desarrolla <span class="tg-k e">E</span>Evalua</div>
+        <div class="mk-malla">
+          <div class="mk-col">
+            <div class="mk-col-hd">Periodo 1</div>
+            <div class="mk-card">
+              <div class="cc">MEC101</div><div class="cn">Introduccion a la Ingenieria</div>
+              <div class="ctribs"><span class="cv-tag i1">CG1 <span class="tg-lv">I1</span> <span class="tg-k d">D</span></span></div>
+            </div>
+            <div class="mk-card"><div class="cc">FIS110</div><div class="cn">Fisica I</div><div class="cnone">&#9888; Sin tributar</div></div>
+          </div>
+          <div class="mk-col">
+            <div class="mk-col-hd">Periodo 4</div>
+            <div class="mk-card armed">
+              <div class="cc">IND230</div><div class="cn">Gestion de Proyectos</div>
+              <div class="ctribs">
+                <span class="cv-tag i2">CG1 <span class="tg-lv">I2</span> <span class="tg-k e">E</span></span>
+                <span class="cv-tag i3">CE4 <span class="tg-lv">I2</span> <span class="tg-k a">A</span> <i class="tg-w">&#9888;</i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mk-cap">La tarjeta de la asignatura es el destino; el nivel se elige junto a la competencia que se toma. La ficha con alerta indica que su grupo de peso no cierra en 100.</div>
+    </div>
+  </div>
+
+  <h2>La ficha y el panel de detalle</h2>
+  <p style="font-size:13px;color:var(--tx2);margin:-4px 0 12px;">Una ficha es una fila de <code>CompetencyAlignment</code>: mismo orden y mismo significado (<code>CODIGO &middot; NIVEL &middot; CONTRIBUCION</code>) en las cuatro vistas (grilla, malla, lectura del plan por asignatura y por competencia). Al hacer clic abre el panel de detalle: desde el plan, sin controles; desde el editor, con ellos.</p>
+  <div class="rowflex">
+    <div class="panel" style="flex:0 0 260px;min-width:240px;">
+      <h3 style="font-size:13px;">La ficha, en sus cuatro lecturas</h3>
+      <div class="mk-frame" style="display:flex;flex-direction:column;gap:8px;min-width:0;">
+        <span class="cv-tag i2" style="align-self:flex-start;">IND230 <span class="tg-lv">I2</span> <span class="tg-k e">E</span></span>
+        <span class="cv-tag i3" style="align-self:flex-start;">CE4 <span class="tg-lv">I2</span> <span class="tg-k a">A</span> <i class="tg-w">&#9888;</i></span>
+        <span class="cv-tag i1" style="align-self:flex-start;">MEC101 <span class="tg-lv">I1</span> <span class="tg-k d">D</span></span>
+      </div>
+      <div class="mk-cap"><code>CODIGO</code> (asignatura o competencia, segun la vista) &middot; <span class="tg-lv" style="background:var(--up1-gray-100)">NIVEL</span> &middot; <span class="tg-k e" style="display:inline-flex;">E</span> <code>CONTRIBUCION</code>. El triangulo marca alerta de peso.</div>
+    </div>
+    <div class="mk-detail">
+      <h4>IND230 &middot; Gestion de Proyectos</h4>
+      <p class="sub" style="color:var(--mut)">tributa a <b style="color:var(--tx)">CE4 &middot; Formula proyectos de mejora</b></p>
+      <div class="mk-dfield">
+        <span class="fl">Nivel de desarrollo</span>
+        <div class="fv"><span class="tg-lv" style="background:light-dark(rgba(33,73,138,.18),rgba(56,189,248,.22))">I2</span> Intermedio <span class="mk-rep">representativo</span></div>
+      </div>
+      <div class="mk-dfield">
+        <span class="fl">Tipo de contribucion</span>
+        <div class="fv"><span class="tg-k a" style="display:inline-flex;">A</span> Ambas: desarrolla y evalua</div>
+      </div>
+      <div class="mk-dfield">
+        <span class="fl">Peso dentro de Intermedio</span>
+        <div class="fv">40% <span style="font-size:10.5px;color:var(--bad);font-weight:700;">3 evaluan &middot; suma 90%</span></div>
+      </div>
+      <div class="mk-dfield">
+        <span class="fl">Matriz de competencia</span>
+        <div class="fv">Competencias Genericas UP1</div>
+      </div>
+    </div>
+  </div>
+  <div class="mk-cap" style="margin-top:6px;">Modelo transaccional: el lienzo y la via masiva actualizan el mapa <b>en memoria</b> y marcan la sesion como sucia; el guardado envia el mapa completo del plan para esa matriz (upsert de conjunto, no altas/bajas por fila).</div>
+
+  <h2>Alcances</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3 style="color:var(--ok);"><i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);"></i> Dentro</h3>
+      <div class="scope-wrap">
+        <div class="scope-row"><span class="sb in">1</span><span>Poner al dia <code>CompetencyAlignment</code>: renombre <code>coverageLevelId</code>&rarr;<code>developmentLevelId</code>, <code>contributionPercentage</code>, <code>planId</code>, requeridos condicionales, indice del grupo de peso.</span></div>
+        <div class="scope-row"><span class="sb in">2</span><span>La competencia declara lo necesario: R-3 via <code>isHolistic</code> (reusado, no campo nuevo), sus niveles (<code>CompetencyNodeDevelopmentLevel</code>), <code>developmentSchemeId</code>/<code>achievementBasis</code> en la matriz.</span></div>
+        <div class="scope-row"><span class="sb in">3</span><span>Escritura gobernada: resolver de upsert de conjunto por (plan, matriz), reglas R-1..R-12 y reparto del peso del eje 1.</span></div>
+        <div class="scope-row"><span class="sb in">4</span><span>Lectura del plan: pestana con indicadores (dos denominadores) y detalle en solo lectura.</span></div>
+        <div class="scope-row"><span class="sb in">5</span><span>El editor: las dos formas (grilla y malla), la via masiva y el guardado global.</span></div>
+        <div class="scope-row"><span class="sb in">6</span><span>Permisos <code>competencyalignment:*</code> cableados a los 4 roles curriculares existentes.</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3 style="color:var(--bad);"><i class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);"></i> Fuera</h3>
+      <div class="scope-wrap">
+        <div class="scope-row"><span class="sb out">&times;</span><span><code>outcomeAlignment</code> (refinamiento a nivel de resultados de aprendizaje) y R-7 con su resguardo: es la fase F6, se opera desde el Programa de Asignatura.</span></div>
+        <div class="scope-row"><span class="sb out">&times;</span><span>El campo <code>contributesToGraduationProfile</code>: retirado del modelo, no se implementa. Su caso lo resuelve <code>achievementBasis = RepresentativeLevel</code>.</span></div>
+        <div class="scope-row"><span class="sb out">&times;</span><span>Modelar las plantillas de perfil como objeto: son solo interfaz.</span></div>
+      </div>
+      <div class="callout info" style="margin-top:14px;">La escritura gobernada revalida siempre lo que la UI ya evita: via masiva, importacion y API no pasan por el lienzo.</div>
+    </div>
+  </div>
+
+  <h2>Particion decidida por fases <span class="cnt">~34 SP</span></h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Fase</th><th>Que entrega</th><th>SP</th><th>Depende de</th></tr></thead>
+    <tbody>
+      <tr><td><code>F1+F2</code></td><td>La competencia declara (R-3 via <code>isHolistic</code> reusado, niveles, <code>developmentSchemeId</code>) + objeto al dia + migracion</td><td><b>8</b></td><td>arranca sin dependencias, bloquea todo lo demas</td></tr>
+      <tr><td><code>F3</code></td><td>Resolver de upsert de conjunto (R-1..R-5, R-10, reparto de peso)</td><td><b>8</b></td><td>F1+F2</td></tr>
+      <tr><td><code>F4</code></td><td>Pestana de lectura del plan (indicadores y sus dos denominadores)</td><td><b>5</b></td><td>F1+F2, F3</td></tr>
+      <tr><td><code>F5</code></td><td>Editor: dos formas, via masiva, guardado global con guardias</td><td><b>13</b></td><td>F3, F4</td></tr>
+      <tr><td><code>F6</code></td><td><code>outcomeAlignment</code> + R-7 (fuera de alcance de este ticket)</td><td style="color:var(--mut)">n/a</td><td>F5</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="font-size:12px;color:var(--mut);margin:10px 0 0;">Calibrar contra UPONE-1689 (entrego 7 mutations de adopcion mas su editor). Split ya ejecutado: 5 tickets finalizados (ver banner superior), fuente de verdad ante cualquier contradiccion con esta tabla.</p>
+
+  <h2>Tickets relacionados directos</h2>
+  <div class="relwrap">
+    <div class="relrow"><span class="rtag">Contenedor</span><div class="rbody"><b>UPONE-1452</b> Epic Curriculum Mapping. <span class="statuschip backlog">Backlog</span></div></div>
+    <div class="relrow"><span class="rtag">Dependencia</span><div class="rbody"><b>UPONE-1755</b> Pestana de Medicion: define el modelo de medicion y los tres ejes que la tributacion consume. <span class="statuschip backlog">Backlog</span></div></div>
+    <div class="relrow"><span class="rtag">Dependencia</span><div class="rbody"><b>UPONE-1753</b> Menus y terminologia: nombres nuevos (<code>developmentLevelId</code>, <code>DevelopmentScheme</code>). <span class="statuschip backlog">Backlog</span></div></div>
+    <div class="relrow"><span class="rtag">Antecedente</span><div class="rbody"><b>UPONE-1689</b> Matriz de competencia: Adopcion y Competencias. Aporta <code>MatrixAdoption</code>, <code>competencynode:adopt</code>/<code>exempt</code>, el shell y las escrituras gobernadas que este ticket sigue. <span class="statuschip done">Resuelto</span></div></div>
+  </div>
+
+  <h2>Reglas y patrones up1 a considerar</h2>
+  <div class="guide">
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Tabla de union escrita por Prisma directo dentro de la mutation gobernada, sin field resolvers en mods.<span class="gsrc">Fuente: precedente <code>objects/CompetencyNodeOwnerUnit.json</code> / <code>ScopeUnit</code>.</span></div></div>
+    <div class="gitem"><span class="gtag fav">A favor</span><div class="gbody">Consulta cross-mod de capability: <code>requiredCapability</code> en el tab del layout + <code>hasCapability</code> en el componente. Mecanismo ya existente en la plataforma.<span class="gsrc">Fuente: <code>default_Curriculum_view.json:52-53</code> (precedente <code>core_datalog:view</code>).</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">Renombrar <code>coverageLevelId</code> sin barrer el guard RC6 y sus tests en la misma pasada.<span class="gsrc">Fuente: <code>logic/helpers/schemeUsage.js:67</code>.</span></div></div>
+    <div class="gitem"><span class="gtag no">Evitar</span><div class="gbody">Declarar el evento de versionado del <code>Curriculum</code>/<code>planEntry</code> sin coordinar con curriculum-design: el registro es global por (objectType, operation) y uno pisa al otro.<span class="gsrc">Fuente: <code>object-manager/src/events/loaders/eventLoader.js:81-89</code>.</span></div></div>
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Validar que el grupo de peso sume 100 es gate de <b>publicacion</b> del plan, no de cada guardado. La tributacion es una sesion de trabajo con el mapa incompleto casi todo el tiempo.</div></div>
+    <div class="gitem"><span class="gtag gate">Gate</span><div class="gbody">Escritura gobernada <code>*Validated</code>, tenant isolation en todas las queries, correr sync y no commitear artefactos de sync/seed.<span class="gsrc">Fuente: <code>CLAUDE.md</code> del mod.</span></div></div>
+  </div>
+
+  <div class="foot">
+    Documento explicativo visual (tablero) &middot; Contrato del ticket: <code>UPONE-1756-detalle.md</code> &middot; Guia de implementacion: <code>UPONE-1756-pre-intake.md</code> &middot; Detalle tecnico code-grounded del PO: <code>UPONE-1756-explicativo.md</code> &middot; Vistas de referencia: maqueta <code>mockup-curriculum-mapping v29</code>.
+  </div>
+</div>
+</body>
+</html>

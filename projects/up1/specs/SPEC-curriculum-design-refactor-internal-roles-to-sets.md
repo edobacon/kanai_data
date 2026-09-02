@@ -2,7 +2,7 @@
 id: SPEC-curriculum-design-refactor-internal-roles-to-sets
 project: up1
 ticket: TICKET-133
-status: draft
+status: approved
 ---
 
 # Migracion de roles internos curriculares a sets por modulo + cableado parcial de vinculos (6 roles)
@@ -11,671 +11,401 @@ status: draft
 
 ## Executive summary — lo que estas aprobando
 
-> *Seccion para revision rapida. El detalle vive en Requirements, Refactor map y Tasks. Si con esto te basta para decidir, ese es el objetivo.*
+> Seccion para revision rapida. El detalle vive en Requirements, en "Reconciliacion sp10" y en Tasks.
 
-**Que se quiere**: hoy los permisos de los 4 roles curriculares (Consultor / Diseñador / Revisor / Autoridad) cuelgan directo del rol via `core_RoleCapability` en el seed de cada mod. Este ticket declara esos permisos como **sets por modulo** (el mecanismo `core_ModRole` que ya existe en core desde UPONE-1353/1354), renombra los 4 roles al prefijo `Learning Assurance - <Rol>`, retira lo que quedo en desuso (un rol huerfano + 2 fixtures), y completa la unica capability que falta para el caso del PO (leer institucion al crear un plan de estudio). El valor no esta en construir nada — el mecanismo esta hecho — sino en **migrar sin que ningun rol pierda un solo permiso efectivo**.
+**Que se quiere**: los permisos de los 4 roles curriculares (Consultor / Diseñador / Revisor / Autoridad Curricular) hoy cuelgan directo del rol via `core_RoleCapability`. Este ticket los migra a **application profiles por modulo** (`core_ModRole`, en `profiles/`), renombra los 4 roles a `Learning Assurance <Rol>` (sin guion), retira lo que quedo en desuso, completa la capability de institucion (caso PO) y **cablea el vinculo rol -> perfil de forma declarativa**. El valor: migrar sin que ningun rol pierda un permiso efectivo.
 
-**Aclaracion de encuadre (Aduana `mal-encuadrado`)**: el titulo Jira dice "Implementar logica de Roles internos", pero el mecanismo ya esta integro en core. Es una **migracion mod-only**; lo unico que va hacia core es un **aviso** (no un cambio). Evidencia: `kb/sp9/UPONE-1615-aduana.md`.
+**Encuadre (Aduana `mal-encuadrado`)**: el mecanismo ya existe integro en core (UPONE-1353/1354). Es migracion mod-only.
 
-**La sutileza que gobierna todo el diseño (ACTUALIZADA 2026-08-26)**: los sets **no inyectan nada en runtime hasta que existe un vinculo** rol→set (`up1_suite_app_role.modRoleId`). Con la resolucion parcial de O1 (regla del PO: `Admin`/`Consultor` -> perfil "Diseñador + Autoridad"), **este sprint SI se crean los vinculos de 6 roles** (Admin, Consultor + los 4 curriculares). Consecuencias que gobiernan el diseño:
+**Mecanismo objetivo (sp10, verificado en codigo; ver "Reconciliacion sp10")**:
+1. **Vinculo declarativo, sin runbook**: `profileRoleMapping` en `config/app.json` + `syncAppProfileMapping`, preservando ownership humano.
+2. **Gate XOR**: el mod deja de declarar directo al `core_Role` las caps que migran al perfil.
+3. **Visibilidad por profile-gating** (`navByRole`, `app.resolver.js:132-141`): visible solo a quien tiene un perfil mapeado; nunca publica.
+4. **Convencion de nombres** (`roleNaming.js`, UPONE-1699): el detector de colisiones fue eliminado (aviso a core obsoleto).
+5. Herencia/dedupe intactas; el **gap de institucion** es el caso a cerrar end-to-end.
 
-1. **La creacion de vinculos privatiza la visibilidad (H9)**: al declarar `roles:[los 6]` en el `app.json` de cada mod, el sync crea las filas y las apps dejan de ser publicas. **Esto SI es un cambio de comportamiento observable** (los 15 roles restantes pierden la vista publica), por eso el ticket ya **NO es zero-behavior-change**: los deltas intencionales pasan a ser TRES — institucion (REQ-ADD-01), nombres de rol (REQ-PRESERVE-02) y **privatizacion de visibilidad** (REQ-VIS-01).
-2. **Frontera codigo vs ops (Learn L2)**: declarar los sets y el array `roles` del app.json es **codigo del mod**. Pero **asignar el set a cada rol (`modRoleId`) NO tiene path de seed/sync**: es una operacion **manual del administrador via la UI de up1-manager**. El ticket entrega un **RUNBOOK** para esa asignacion (REQ-LINK-01); no la ejecuta como PR. `syncAppRoles` crea la fila con `modRoleId` null.
-3. **Convivencia mapa + set**: el mapa rol→capability **NO se retira** (sigue siendo fuente runtime). Cuando el admin asigna el `modRoleId`, el set **tambien** inyecta; el efectivo es `union(mapa, set)` deduplicada. Como el set replica el mapa (curriculares) o es subconjunto de los directos (Admin/Consultor), el efectivo **no cambia** (REQ-CONVIV-01). El retiro del mapa (cut-over) sigue diferido.
-4. **Admin/Consultor y el core**: su set concede ~70-90 caps, pero su techo real sigue siendo "todo" porque el core les **refill** los ~166 directos via `DEFAULT_ROLES` (Learn L1). El cableado del mod queda correcto y future-proof; el estado "solo por set" es un cambio de core, fuera de alcance.
+**Deltas de comportamiento intencionales**: `institution:view` en la base de cd (REQ-ADD-01), nombres de rol (REQ-PRESERVE-02) y visibilidad por profile-gating (REQ-VIS-01).
 
-**Decisiones criticas que necesitan tu OK**:
+**En alcance (mapeo de roles core, regla parcial O1 del PO)**: los **4 roles curriculares + Admin y Consultor**; Admin/Consultor se mapean a su **perfil compuesto** (Diseñador ∪ Autoridad) por modulo (REQ-SET-02), lo que ademas les da la visibilidad de las apps bajo profile-gating (DEC-LOCAL-14).
 
-| # | Decision | Por que importa |
-|---|----------|----------------|
-| 1 | Los sets **conviven** con el mapa rol→cap (que **NO se retira**; cut-over diferido). Sin vinculo (S2-S5) el set es inerte; en **S6 se crean 6 vinculos** (Admin/Consultor + 4 curriculares) y el set inyecta, pero el efectivo **no cambia** por dedup (REQ-CONVIV-01) | Si se retirara el mapa ahora sin vinculos, los 4 roles perderian TODOS sus permisos en runtime — regresion catastrofica. Es el nucleo del zero-behavior-change |
-| 2 | La capability `institution:view` se agrega al **mapa del rol** (`READ_CAPS` de cd), no solo al set | Es la unica via para que el criterio 2 del PO sea verificable runtime EN ESTE TICKET (el set no inyecta sin vinculo). Es la unica adicion intencional al comportamiento |
-| 3 | La composicion de cada set se **deriva** del mapa vivo, no se transcribe a mano, y se valida con un test de equivalencia `base ∪ extension == mapa del rol` | Son ~100 permisos con casing y caps de campo (`<obj>.<campo>:modify`, `<obj>:<rt>.<campo>:modify`); transcribir mal = regresion silenciosa cuando se creen los vinculos |
-| 4 | El renombre usa un **paso idempotente por nombre viejo** en LOS DOS seeds, antes de `ensureRoles` | Los seeds crean roles por nombre; cambiar solo el literal forka (crea 4 nuevos, deja 4 viejos con 120 asignaciones). El orden entre seeds no esta garantizado |
-| 5 | Se agregan **2 sets compuestos** (Diseñador + Autoridad) para Admin/Consultor, modelados **`extends` Autoridad + delta Diseñador** | El vinculo admite un solo set por modulo (unicidad `(appId,roleId)`) y la herencia es de un solo padre (`extendsId`). La union de dos sets hermanos exige un set compuesto. La cadena `Autoridad extends Diseñador` se descarta: romperia la separacion de funciones |
-| 6 | La **privatizacion** se declara via `roles:[los 6]` en el `app.json` de cada mod (codigo); la **asignacion del set** (`modRoleId`) es un **RUNBOOK** de ops manual en up1-manager | No hay path de seed/sync para asignar el set (Learn L2). El array `roles` debe incluir SIEMPRE los 6, o `syncAppRoles` borra filas stale y pierde la asignacion manual del admin |
-| 7 | El mapa rol→cap **NO se retira** aun con vinculos creados (convivencia); Admin/Consultor **conservan sus directos** | Retirar directos es el cut-over (diferido). Para Admin/Consultor ademas es inutil: el core los refill via `DEFAULT_ROLES` (Learn L1); anularlo es cambio de core |
+**Fuera de alcance**: el mapeo de los **8 roles restantes** del catalogo core; sacar Admin/Consultor de `DEFAULT_ROLES` (cambio de core); acotar `offering` del Diseñador (O2, engagement).
 
-**Riesgos principales y como los mitigamos**:
-
-- **El renombre forka y deja 4 roles viejos con 120 asignaciones** → paso de renombre idempotente por nombre viejo en ambos seeds + verificacion HR3 sobre una base que YA tiene los nombres viejos (no solo base limpia): 4 roles, no 8.
-- **La transcripcion de ~100 caps a los sets pierde/agrega un permiso** → derivar del mapa vivo + test de equivalencia estructural `base∪ext == mapa` (count-agnostic) + baseline runtime antes/despues (HR1).
-- **Coordinacion de archivo con UPONE-1619 (TICKET-134)**: ambos tocan `mods/curriculum-design/seed/_data-rbac.js` → secuenciar o rebasar; ejecutarlos en paralelo sobre ese archivo se pisan.
-- **Declarar un set con efecto runtime inesperado** → verificar que sin vinculo (`app_role.modRoleId = null`) la inyeccion no ocurre (`modRoleCapabilities.js:74-83`).
-- **Con vinculos creados, un set que conceda DE MAS es fuga inmediata** (ya no es inocuo como cuando era inerte) → el test de equivalencia estructural (S3.T3) ahora guarda un camino runtime **vivo**, no diferido; debe verificar 0 sobrantes ademas de 0 faltantes.
-- **La privatizacion deja fuera a un rol que hoy entra de verdad** → verificar (S6) que ninguno de los 15 roles no-mapeados tiene alcance curricular legitimo (respaldado por `kb/sp9/UPONE-1615-inventario-de-roles.md`) y **coordinar con UPONE-1616 ANTES** de declarar el array `roles`.
-- **`syncAppRoles` borra filas stale** → el array `roles` del app.json debe incluir los 6 roles; si un admin asigno `modRoleId` a un rol ausente del array, el sync borra su fila.
-
-**Que NO se hace en este ticket** (limites explicitos, ACTUALIZADO 2026-08-26):
-
-- **Asignar el `modRoleId` como codigo**: la asignacion del set a cada rol es ops manual en up1-manager (Learn L2). El ticket entrega el **runbook** (REQ-LINK-01), no un PR que asigne modRoleId.
-- **El mapeo de los 8 roles restantes** del catalogo institucional (4 nuevos + resto de core): O1 solo se resolvio para Admin/Consultor. El resto -> siguiente sprint con las 10 filas.
-- **Retirar el mapa rol→cap** (cut-over a inyeccion por set) y **retirar los directos de Admin/Consultor**: diferido. Para defaults es ademas inutil (refill de core).
-- **Sacar a Admin/Consultor de `DEFAULT_ROLES`** (para que su techo sea el set): cambio de core, cross-cutting. Ticket aparte / coordinar UPONE-1633 (Learn L1).
-- **Acotar el permiso `offering:create/modify` del Diseñador** (O2): requiere acuerdo con engagement. Open question, no task.
-- **Tocar core**: solo un aviso por el punto ciego de la proteccion de nombres (H12).
-
-**Tamano estimado**: **7 sessions** ejecutables. **SP: 8** (re-estimado con la skill calibrada DET-26: ejecucion + investigacion con apoyo del LLM; proxy sin-LLM 11, speedup 4). Las mas riesgosas son S4 (renombre — riesgo de fork), S5 (retiro destructivo) y **S6 (privatizacion observable + vinculos runtime vivos + coordinacion UPONE-1616)**.
-
-**Como vas a saber que funciona**:
-- Vuelco de capabilities efectivas por rol **antes y despues** es identico salvo `institution:view` en los 4 roles de cd (convivencia: el set no cambia el efectivo).
-- Entrando como Diseñador Curricular en UPU, el select de institucion se puebla y se guarda un plan de estudio de punta a punta.
-- Tras el renombre siguen siendo **4 roles** con sus 120 asignaciones, ninguno con nombre viejo.
-- El rol huerfano y los 2 fixtures no existen, y una segunda corrida del sync no los regenera.
-- Tras declarar el array `roles`, las apps curriculares se ven **solo** por los 6 roles; los 15 restantes ya no las ven (y ninguno los necesitaba — verificado contra el inventario).
-- Aplicando el runbook en up1-manager, Admin/Consultor y los 4 curriculares quedan con su set asignado (`modRoleId`), y su permiso efectivo **sigue siendo el mismo** (convivencia + refill de core para Admin/Consultor).
-
----
-
+**Como se sabe que funciona**: matriz automatizada verde (cada perfil concede lo que su rol declara, incl. `institution:view`) + smoke runtime con **rol curricular activo** (Diseñador crea plan end-to-end; Consultor read-only no crea/edita); baseline efectivo antes/despues identico salvo institucion; 4 roles renombrados con 120 asignaciones; huerfano y fixtures no reaparecen; Admin/Consultor conservan las apps en el nav via su compuesto.
 ## Purpose
 
-Migrar la declaracion de permisos de los 4 roles curriculares del acoplamiento directo rol→capability (seed `core_RoleCapability`) hacia el modelo de **sets por modulo** (`core_ModRole` + `core_ModRoleCapability`, mecanismo de core ya existente), en los mods `curriculum-design` y `curriculum-mapping`. La migracion preserva los permisos efectivos por rol en runtime (convivencia: el mapa rol→cap no se retira; los sets, con o sin vinculo, no cambian el efectivo por dedup), agrega la capability faltante para el caso del PO (`institution:view`), renombra los roles al prefijo de familia reutilizando las entidades, retira lo que quedo en desuso, y **cablea parcialmente la capa de vinculos** con la resolucion parcial de O1: declara 2 sets compuestos (Diseñador + Autoridad) para Admin/Consultor, **privatiza la visibilidad** de las dos apps a 6 roles (via `app.json`), y entrega el runbook de asignacion de `modRoleId` (ops manual up1-manager). El comportamiento observable cambia en **tres** deltas intencionales y confirmados: `institution:view` (criterio 2), el nombre visible de los 4 roles, y **la privatizacion de la visibilidad** de las dos apps.
-
+Migrar la declaracion de permisos de los 4 roles curriculares del acoplamiento directo rol -> capability (`core_RoleCapability`) hacia **application profiles por modulo** (`core_ModRole` en `profiles/` de curriculum-design y curriculum-mapping), adoptando el cableado **declarativo** del vinculo (`profileRoleMapping` en `config/app.json`, materializado por `syncAppProfileMapping`) y respetando el **gate XOR**. Preserva los permisos efectivos por rol (equivalencia post-traslado por herencia/dedupe), agrega `institution:view` en la base de cd (caso PO), renombra los roles reutilizando las entidades, retira lo que quedo en desuso, y **privatiza la visibilidad** de las dos apps por profile-gating (`navByRole`). Deltas observables: `institution:view`, nombres de rol, y privatizacion. El mapeo de los roles del core esta resuelto parcial (regla O1 del PO): **en alcance Admin/Consultor -> perfil compuesto** (Diseñador ∪ Autoridad), lo que ademas les preserva la visibilidad; **diferido** solo el mapeo de los 8 roles restantes del catalogo.
 ## Requirements
 
-### REQ-PRESERVE-01: Los permisos efectivos por rol en runtime no cambian
+### REQ-PRESERVE-01 `inferred`
+> Fuente: object-manager/src/services/auth/modRoleCapabilities.js:19-56; baseline de caps efectivas capturado en S1; la excepcion acotada a cd depende de la verificacion de aislamiento por app (precondicion dura de S2).
 
-> **Que cambia**: nada visible para un usuario que ya opera con un rol curricular — sigue teniendo exactamente los mismos permisos despues de la migracion. Lo unico que cambia es DONDE estan declarados (se agregan archivos de set, sin retirar el mapa del rol).
-> **Por que**: es la regla cardinal del refactor. Un rol que pierde un permiso al migrar es una regresion; la red es la comparacion antes/despues del conjunto efectivo, no la convivencia.
+Los permisos efectivos por rol en runtime son identicos al baseline previo, SALVO institution:view en los 4 roles de curriculum-design (REQ-ADD-01), tras la migracion a application profiles: lo que hoy concede el core_Role directo lo concede el perfil mapeado (equivalencia post-traslado por herencia y dedupe).
 
-El sistema MUST preservar, para cada uno de los 4 roles, el conjunto de capabilities efectivas en runtime identico al estado previo, con la unica excepcion de `institution:view` (REQ-ADD-01). El mapa `MOD_CAPABILITIES_BY_ROLE` (`core_RoleCapability`) MUST permanecer como fuente de verdad runtime y NO retirarse en este ticket (cut-over diferido). Esto vale en los dos estados por los que pasa el ticket: **sin vinculo** (S2-S5, el set no inyecta, `modRoleCapabilities.js:74-83` filtra `modRoleId != null`) y **con vinculo** (S6, el set inyecta pero su union con el mapa deduplica al mismo conjunto — REQ-CONVIV-01).
+### REQ-PRESERVE-02 `confirmed`
+> Fuente: DEC-LOCAL-15 (resuelta: quitar el guion); roleNaming.js: isConventionalRoleName (PascalCase espanol, espacios simples); mods/curriculum-design/seed/_data-rbac.js:36-57 ROLE_DEFINITIONS (upsert by name)
 
-**Actor**: system / usuario con rol curricular activo
-**Layers**: backend, database, config
+El renombre de los 4 roles a 'Learning Assurance <Rol>' (sin guion, conforme a roleNaming.js: PascalCase espanol, espacios simples) conserva las 120 asignaciones y deja 4 roles (no 8) al correr sobre una base con los nombres viejos.
 
-<details><summary>Scenarios de validacion</summary>
+### REQ-PRESERVE-03 `confirmed`
+> Fuente: object-manager/src/services/auth/modRoleCapabilities.js:74-108
 
-#### Scenario: paridad antes/despues por rol
-- **GIVEN** el vuelco de capabilities efectivas por rol capturado en S1 (baseline, antes de tocar nada)
-- **WHEN** se completa la migracion (sets declarados, renombre, retiro, institucion agregada)
-- **THEN** el vuelco posterior por rol es identico al baseline, salvo `institution:view` presente en los 4 roles de cd
+Un application profile declarado en profiles/ pero sin profileRoleMapping no tiene ningun efecto runtime: no altera el conjunto efectivo de ningun rol (estado intermedio antes del cableado declarativo).
 
-#### Scenario: un set sin vinculo no inyecta
-- **GIVEN** los sets declarados y materializados por el sync, sin ninguna fila `up1_suite_app_role` con `modRoleId`
-- **WHEN** un usuario opera con un rol curricular activo
-- **THEN** sus capabilities provienen solo del mapa del rol; el set no agrega ni una
+### REQ-CONVIV-01 `inferred`
+> Fuente: object-manager/src/services/auth/modRoleCapabilities.js:19-56; config/app.json (profileRoleMapping) + syncAppProfileMapping; validacion empirica en execute (HR1)
 
-</details>
+Tras el cableado declarativo (profileRoleMapping) y el retiro de las caps directas migradas (gate XOR), el conjunto efectivo por rol es identico al baseline SALVO institution:view en cd: la migracion traslada las capabilities del core_Role al perfil y la herencia+dedupe garantiza equivalencia, sin acumulacion ni perdida.
 
-#### Acceptance
-**El usuario puede verificar que funciona**: entra con cada rol en UPU y ejecuta sus acciones; las que podia antes las puede despues, las que no podia siguen negadas.
+### REQ-PRESERVE-04 `confirmed`
+> Fuente: spec seccion 'Reconciliacion sp10'; mods/curriculum-mapping/tests/unit/rbacRoles.test.js
 
-### REQ-PRESERVE-02: El renombre conserva las 120 asignaciones (4 roles, no 8)
+La suite de RBAC existente pasa verde tras la migracion a application profiles; los tests que se modifiquen (paridad cd/cm, nombres de rol) se tocan solo con intencion documentada en el spec.
 
-> **Que cambia**: los 4 roles pasan a llamarse `Learning Assurance - <Rol>` pero son las MISMAS entidades — las 120 personas asignadas siguen asignadas.
-> **Por que**: los seeds crean roles por nombre; sin un paso de renombre explicito se crean 4 roles nuevos y quedan los 4 viejos con sus asignaciones (fork). El orden entre seeds de mods no esta garantizado.
+### REQ-ADD-01 `confirmed`
+> Fuente: object-manager/src/graphql/resolvers/instance.resolver.js:1708 (listInstances gateado por view); kb/sp8/UPONE-1538-rbac-institution-view-gap.md
 
-El sistema MUST renombrar los 4 roles reutilizando las entidades `core_Role` existentes, mediante un paso idempotente por **nombre viejo** presente en LOS DOS seeds (`curriculum-design` y `curriculum-mapping`) que corra ANTES de `ensureRoles`. Tras el renombre MUST haber exactamente 4 roles curriculares, con sus 120 `core_RoleAssignment` intactas y ninguno con el nombre anterior.
+Los roles de curriculum-design pueden leer institucion (institution:view declarada en el perfil base de cd, no en el mapa del rol por el gate XOR), lo que desbloquea el caso PO end-to-end: crear un plan de estudio con el selector de institucion poblado.
 
-**Actor**: admin (seed)
-**Layers**: backend (seed), database
+### REQ-SET-01 `confirmed`
+> Fuente: spec seccion 'Reconciliacion sp10'; object-manager/src/services/auth/modRoleCapabilities.js:32-56 (resolveModRoleCapabilityNames, cycle guard)
 
-<details><summary>Scenarios de validacion</summary>
+Cada modulo declara un application profile base + extensiones (por rol) cuya union replica el mapa de capabilities del rol; la herencia por extendsId resuelve la union sin duplicar y la composicion es por modulo (no espejo entre cd y cm).
 
-#### Scenario: renombre sobre base con nombres viejos (HR3, el critico)
-- **GIVEN** un tenant cuyo `core_Role` ya tiene los 4 nombres VIEJOS con 30 asignaciones cada uno
-- **WHEN** corre el seed con el paso de renombre
-- **THEN** quedan 4 roles con los nombres NUEVOS, 120 asignaciones conservadas, 0 roles con nombre viejo
+### REQ-SET-02 `confirmed`
+> Fuente: app.resolver.js:132-141 (navByRole / profile-gating); dbSync.js:1481 (syncAppProfileMapping); generateCapabilities.js:331-357 (DEFAULT_ROLES refill, Learn L1); DEC-LOCAL-14
 
-#### Scenario: idempotencia y orden entre mods
-- **GIVEN** los dos seeds con el paso de renombre, corriendo en cualquier orden, y una segunda corrida
-- **WHEN** terminan
-- **THEN** el resultado es el mismo (4 roles, nombres nuevos) sin forkear ni duplicar
+EN ALCANCE (regla parcial de O1 del PO). Declarar los perfiles compuestos (union Diseñador ∪ Autoridad) para Admin/Consultor en cd y cm (extends Autoridad + delta Diseñador, derivado del mapa vivo) y mapearlos via profileRoleMapping. Bajo profile-gating ese mapping da a Admin/Consultor la VISIBILIDAD de las apps curriculares (el refill del core repone capabilities, no visibilidad de app) y el cableado future-proof (cuando el core saque a Admin/Consultor de DEFAULT_ROLES caen al compuesto). Diferido solo el mapeo de los 8 roles restantes del catalogo.
 
-</details>
+### REQ-VIS-01 `confirmed`
+> Fuente: app.resolver.js:132-141 (navByRole); UPONE-1700; UPONE-1616
 
-#### Acceptance
-**El usuario puede verificar que funciona**: en la administracion de roles de UPU aparecen 4 roles `Learning Assurance - ...` con sus asignados; no hay roles con los nombres viejos.
+Privatizar las dos apps por profile-gating (navByRole): visibles solo a quien tiene un perfil mapeado. Conservan visibilidad los 4 roles curriculares y Admin/Consultor (via su perfil compuesto); el resto no las ve; borrar los mappings las oculta. Coordinar con UPONE-1616.
 
-### REQ-PRESERVE-03: Los sets declarados no tienen efecto runtime mientras no existan vinculos (estado S2-S5)
+### REQ-LINK-01 `confirmed`
+> Fuente: dbSync.js:1424-1428 (gate XOR array roles vs profileRoleMapping), dbSync.js:1481 (syncAppProfileMapping), app.resolver.js:132-141 (navByRole)
 
-> **Que cambia**: aparecen `core_ModRole`/`core_ModRoleCapability` materializados por el sync, pero no alteran lo que ve ningun usuario mientras no haya vinculo.
-> **Por que**: el switch de la inyeccion es el vinculo; declarar el set sin vinculo es dato inerte. Esto permite declarar y verificar los sets (S2-S5) antes de crear los vinculos (S6).
+El vinculo rol->perfil se declara en config/app.json (profileRoleMapping) y lo materializa el sync (syncAppProfileMapping, dbSync.js:1481), que crea las filas up1_suite_app_role que dan la visibilidad. Incluye los 4 curriculares -> su perfil por modulo y Admin/Consultor -> compuesto. Respeta el gate XOR (dbSync.js:1424-1428): el app.json declara profileRoleMapping y NO el array `roles` institucional (mutuamente excluyentes). Preserva las asignaciones con ownership humano. Sin runbook manual.
 
-El sistema MUST materializar los sets via sync sin que ello cambie los permisos efectivos de ningun usuario, mientras no exista ninguna fila `up1_suite_app_role` con `modRoleId` apuntando a esos sets. Esta invariante aplica al estado de S2-S5 (los vinculos se crean en S6).
+### REQ-RETIRE-01 `confirmed`
+> Fuente: mods/curriculum-design/profiles/ (fixtures GestorCurricular/LectorCurricular); object-manager/scripts/sync/dbSync.js (syncModRolesForApp); UPONE-1699 (auto-create de roles desde layout eliminado)
 
-<details><summary>Scenarios de validacion</summary>
+Se retiran el core_Role huerfano GestorCurricular y los 2 fixtures (GestorCurricular/LectorCurricular) que hoy ocupan curriculum-design/profiles/, sin regeneracion: dos corridas de sync consecutivas no los recrean.
 
-#### Scenario: Tras declarar los sets + sync sin modRoleId (S2-S5), el vuelco efectivo por rol == estado previo (0 deltas por rol)
+### REQ-DOC-01 `confirmed`
+> Fuente: object-manager/scripts/sync/roleNaming.js; mods/curriculum-design/profiles/, mods/curriculum-mapping/profiles/; object-manager/scripts/sync/dbSync.js (syncAppProfileMapping)
 
-</details>
+Documentar el escenario final consolidado tras la migracion: mapa rol -> application profile -> capabilities por modulo (cd/cm) con perfil base + extensiones; los 4 roles renombrados a 'Learning Assurance <Rol>' (sin guion, conforme a roleNaming.js) con las 120 asignaciones conservadas; el huerfano GestorCurricular y los 2 fixtures retirados; el cableado DECLARATIVO via profileRoleMapping en config/app.json materializado por el sync (sin runbook manual); la privatizacion por profile-gating (navByRole); el gap de institucion resuelto en la base de cd; y la absorcion de las capabilities de UPONE-1619 y UPONE-1633.
 
-**Actor**: system
-**Layers**: backend, database
+### REQ-TEST-01 `confirmed`
+> Fuente: DEC-LOCAL-06; UPONE-1353/1354 (mecanismo de sets en core); up1: object-manager/src/services/auth/modRoleCapabilities.js:32-56
 
-#### Acceptance
-**El usuario puede verificar que funciona**: tras declarar los sets y correr el sync (S2-S5, sin `modRoleId` asignado), el vuelco de permisos efectivos por rol es identico al de antes de declararlos.
+Testing como requisito final: cobertura del camino real del lado del mod (mapping declarativo, renombre sobre base con nombres viejos, gate XOR, equivalencia estructural perfil<->mapa) + la matriz automatizada (REQ-MATRIX-01) + el smoke runtime (REQ-SMOKE-01) + regresion de la suite RBAC verde. La herencia por extendsId y el dedupe son camino de core (UPONE-1353/1354, DEC-LOCAL-06): se verifican por la matriz y la equivalencia estructural, no por unit del resolver desde el mod.
 
-### REQ-CONVIV-01 `inferred`: Con los vinculos creados (S6), el efectivo sigue sin cambiar (convivencia mapa + set)
+### REQ-NOTIFY-01 `confirmed`
+> Fuente: object-manager/scripts/sync/roleNaming.js (isConventionalRoleName / isAppProfileCandidate); UPONE-1699 (eliminacion de validateModRoleNameCollisions); request inmutable (punto ciego de proteccion de nombres, no bloqueante)
 
-> **Que cambia**: en S6 se asignan los `modRoleId` (via runbook), asi que los sets pasan a inyectar. El permiso efectivo de cada rol NO cambia igual, porque el mapa del rol sigue vivo y la inyeccion deduplica.
-> **Por que**: el mapa no se retira (cut-over diferido). El efectivo es `union(mapa, set)`; para los 4 curriculares el set replica el mapa, y para Admin/Consultor el set es subconjunto de sus directos. La union deduplicada es igual al conjunto previo.
+Los nombres de application profiles y roles cumplen la convencion (roleNaming.js: isConventionalRoleName / isAppProfileCandidate), sin referencias residuales al detector eliminado. Ademas se AVISA a core (no bloqueante) que, tras eliminar validateModRoleNameCollisions (UPONE-1699), la deteccion de COLISIONES de nombres quedo sin cobertura (roleNaming reporta formato, no colisiones): el punto ciego del request sigue vigente y se traslada a core reformulado, no se da por cerrado por la eliminacion del detector.
 
-El sistema MUST garantizar que, tras asignar `modRoleId` a las 6 filas, el conjunto de capabilities efectivas de cada uno de los 6 roles sea identico al estado previo al vinculo (salvo `institution:view` ya contemplado). En particular: para los 4 curriculares `union(mapa_rol, set) == mapa_rol` (el set replica el mapa, REQ-SET-01); para Admin/Consultor el set (`Diseñador + Autoridad`) es subconjunto de sus `core_RoleCapability` directos, que ademas el core repone via `DEFAULT_ROLES` (Learn L1). Un set que conceda una capability **fuera** del conjunto previo del rol es una fuga y MUST ser detectado por el test de equivalencia (0 sobrantes, REQ-SET-01).
+### REQ-PROFILE-01 `confirmed`
+> Fuente: mods/curriculum-design/profiles/ (ex roles/); mods/curriculum-mapping/profiles/ (carpeta nueva); mods/curriculum-design/seed/_data-rbac.js
 
-> **Certeza por rol**: `confirmed` para los 4 curriculares (convivencia verificable por el vuelco runtime, S7.T4). Para **Admin/Consultor** es `inferred`-estructural: su convivencia NO es falsable en runtime porque el refill de core (`DEFAULT_ROLES`, Learn L1) ya hace su efectivo "todo"; queda probada estructuralmente por S6.T2 (compuesto == Diseñador ∪ Autoridad) + L1 (directos ⊇ todo) => la inyeccion del compuesto es no-op. No se afirma como hecho runtime (DET-4).
+Autoria real de los application profiles en profiles/ de cada modulo (perfil base + extensiones por rol), migrando hacia los perfiles las capabilities que hoy cuelgan directo de los 4 core_Role, y reemplazando los 2 fixtures (GestorCurricular/LectorCurricular) que hoy ocupan curriculum-design/profiles/. curriculum-mapping debe declarar su propia carpeta profiles/.
 
-**Actor**: usuario con rol activo (los 6 mapeados)
-**Layers**: backend, database
+### REQ-CAPS-01 `confirmed`
+> Fuente: dbSync.js:1424-1428 (XOR sobre array roles, no sobre capabilities), dbSync.js:1481 (syncAppProfileMapping), seeds _data-rbac.js de curriculum-design y curriculum-mapping, UPONE-1619 / UPONE-1633
 
-<details><summary>Scenarios de validacion</summary>
+Absorber en los application profiles las capabilities nuevas de UPONE-1619 (instructionalcomponenttype:*) y UPONE-1633 (competencynode:adopt/exempt) ademas del mapa curricular, decidiendo base vs extension por rol. El cut-over retira del seed las caps directas del core_Role una vez que viven en el perfil (el dedupe por nombre hace inocua la coexistencia transitoria; el estado final limpio no las duplica). El retiro NO lo fuerza el gate XOR (que es sobre el array roles): lo motiva mover la fuente de verdad al perfil; solo requiere orden (declarar el mapping antes de retirar).
 
-#### Scenario: vinculo curricular no cambia el efectivo (dedup)
-- **GIVEN** `Learning Assurance - Diseñador` con su mapa vivo y su set `Curriculum Design - Diseñador` asignado via `modRoleId`
-- **WHEN** el runtime resuelve sus capabilities (`enrichUserWithModRoleCapabilities`)
-- **THEN** el conjunto efectivo es identico al que tenia por el mapa; la inyeccion del set no agrega ni una (dedup por nombre)
+### REQ-MATRIX-01 `confirmed`
+> Fuente: object-manager/src/graphql/resolvers/instance.resolver.js:1708 (gate listInstances); object-manager/src/services/auth/modRoleCapabilities.js:32-56 (resolveModRoleCapabilityNames)
 
-#### Scenario: Admin/Consultor no cambian (set subconjunto + refill de core)
-- **GIVEN** Admin con el set compuesto asignado y sus ~166 directos (repuestos por `DEFAULT_ROLES`)
-- **WHEN** resuelve capabilities
-- **THEN** su efectivo sigue siendo el total; el set compuesto (~70-90) no agrega nada nuevo
+Auditoria de la matriz de permisos como asercion automatizada: para cada application profile, por cada accion que el rol declara, la capability requerida (resuelta contra el gate real del resolver, p.ej. crear plan de estudio requiere institution:view por listInstances) debe estar en el conjunto efectivo del perfil (resolveModRoleCapabilityNames). El test falla si falta una, incluida institution:view. No depende de Admin/Consultor.
 
-</details>
+### REQ-SMOKE-01 `confirmed`
+> Fuente: object-manager/src/services/auth/authChecker.js:118-119 (selectedRole no acumula); object-manager/src/services/auth/generateCapabilities.js:336 (DEFAULT_ROLES refill)
 
-#### Acceptance
-**El usuario puede verificar que funciona**: tras aplicar el runbook en UPU, el vuelco de permisos efectivos por rol es identico al baseline S1 (salvo institucion), con los `modRoleId` ya asignados.
-
-### REQ-PRESERVE-04: La suite de RBAC existente pasa; solo se toca con intencion documentada
-
-> **Que cambia**: los tests `rbacRoles.test.js` de los dos mods siguen verdes; se ajustan unicamente donde la composicion por modulo o el cap de institucion lo obligan, con el nuevo invariante documentado.
-> **Por que**: un test que falla al refactorizar significa que el refactor rompio algo — no que el test este mal. El test de paridad guarda un invariante que la migracion cambia a proposito (composicion por modulo divergira).
-
-El sistema MUST mantener verde `mods/curriculum-design/tests/unit/rbacRoles.test.js` y `mods/curriculum-mapping/tests/unit/rbacRoles.test.js`. Cualquier cambio a esos tests MUST ser intencional (institucion agregada, paridad reformulada por composicion-por-modulo) y documentar el nuevo invariante; NO se relaja un assert para "que pase".
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: Ambas suites rbacRoles.test.js (cd + cm) verdes (X/X passing); cada assert modificado documentado como invariante intencional, sin relajar para pasar
-
-</details>
-
-**Actor**: system (CI)
-**Layers**: backend (tests)
-
-### REQ-ADD-01: Los roles de cd pueden leer institucion (criterio 2 del PO)
-
-> **Que cambia**: un Diseñador Curricular puede elegir la institucion dueña al crear un plan de estudio; hoy el select sale vacio y el guardado se bloquea.
-> **Por que**: crear plan/programa exige la institucion como FK requerida (`Curriculum.json:103`, `AcademicProgram.json`), el select la pide, poblarlo lista instancias y ese listado esta gateado por `institution:view` (`instance.resolver.js:1539`), cap que los roles curriculares no tienen.
-
-El sistema MUST otorgar `institution:view` a los 4 roles curriculares de `curriculum-design`, agregandola al conjunto de lectura compartido (`READ_CAPS`) del mapa del rol para que sea efectiva runtime SIN depender de un vinculo, y declarandola tambien en el set base de cd (fuente de verdad futura). Es la **unica** adicion intencional de comportamiento de este ticket.
-
-**Actor**: usuario con rol curricular activo (empezando por Diseñador)
-**Layers**: backend (seed), config, database
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: caso del PO end-to-end (HR2)
-- **GIVEN** un usuario operando como `Learning Assurance - Diseñador Curricular` en UPU
-- **WHEN** abre la creacion de un plan de estudio
-- **THEN** el select de institucion se puebla y el plan se guarda de punta a punta
-
-#### Scenario: nombre exacto de la capability
-- **GIVEN** el objeto base `Institution` (`object-manager/objects/business/Base/institution.json`) cuya cap `institution:view` se auto-genera (`generateCapabilities.js:117-119`)
-- **WHEN** el seed referencia la cap
-- **THEN** el nombre resuelto contra `core_Capability` es el auto-generado; si no existiera, el reporte del seed lo marca como faltante (no crea fila fantasma)
-
-</details>
-
-#### Acceptance
-**El usuario puede verificar que funciona**: entra como Diseñador en UPU, crea un plan de estudio eligiendo su institucion, y se guarda.
-
-### REQ-SET-01: Cada modulo declara base + extensiones cuya union replica el mapa del rol
-
-> **Que cambia**: aparecen 8 archivos de set (2 bases + 6 extensiones): la base es el set de Consultor, las 3 extensiones heredan de ella con el delta de cada rol. La union resuelta de cada set debe igualar el conjunto de caps que hoy tiene ese rol en ese modulo.
-> **Por que**: es la fuente de verdad futura. Si un set no replica 1:1 el mapa del rol, al crear los vinculos (fase diferida) ese rol perderia o ganaria permisos.
-
-El sistema MUST declarar, por cada mod, una base (`<Modulo en ingles> - Consultor Curricular`) y tres extensiones (`Revisor`/`Diseñador`/`Autoridad`) con `extends` hacia la base, de modo que para cada rol la union resuelta `base ∪ extension` sea **exactamente igual** al conjunto de capabilities que ese rol declara hoy en el mapa de ese modulo (mas `institution:view` en la base de cd). La composicion es **por modulo, no espejo** (D8). Los transversales (`core_datalog:view`, y `core_user.name:view` en cm) se declaran en las dos bases (D5, la inyeccion deduplica por nombre).
-
-**Actor**: system (sync)
-**Layers**: backend (declaracion de mod), database
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: equivalencia estructural (DET-40)
-- **GIVEN** el mapa `MOD_CAPABILITIES_BY_ROLE` vivo de cada mod
-- **WHEN** se resuelve la union `base ∪ extension` de cada set (aplicando el candidato canonico de `capabilityCandidates`)
-- **THEN** el conjunto resuelto por rol es igual al del mapa (mas `institution:view` en cd), sin faltantes ni sobrantes
-
-#### Scenario: herencia sin duplicar
-- **GIVEN** un set de extension con `extends` hacia la base
-- **WHEN** el runtime resuelve sus capabilities (`resolveModRoleCapabilityNames`, `modRoleCapabilities.js:32-56`)
-- **THEN** obtiene la union base+extension una sola vez (dedup por nombre), con guarda de ciclos
-
-#### Scenario: nombres de set no colisionan con nombres de rol
-- **GIVEN** sets `Curriculum Design - <Rol>` y roles `Learning Assurance - <Rol>`
-- **WHEN** el sync materializa
-- **THEN** ningun nombre de set coincide con un nombre de rol (D3, esquiva el punto ciego de la proteccion de nombres)
-
-</details>
-
-#### Acceptance
-**El usuario puede verificar que funciona**: el test de equivalencia estructural pasa (union del set == mapa del rol) y el sync materializa los 8 sets sin colisiones.
-
-### REQ-SET-02: Dos sets compuestos (Diseñador + Autoridad) para Admin/Consultor
-
-> **Que cambia**: se agregan 2 sets mas (uno por modulo): el perfil combinado que reciben Admin y Consultor segun la regla del PO. Total de sets: **10** (8 + 2 compuestos).
-> **Por que**: el vinculo admite un solo set por modulo (unicidad `(appId, roleId)` en `up1_suite_app_role.json`) y la herencia es de un padre (`extendsId` escalar). La union de Diseñador + Autoridad (dos sets hermanos) no cabe en un vinculo ni en la herencia directa: exige un set compuesto.
-
-El sistema MUST declarar, por cada mod, un set compuesto cuyas capabilities resueltas sean la **union exacta de Diseñador ∪ Autoridad** de ese modulo. Se modela con `extends` hacia el set de **Autoridad** + declarando el **delta de Diseñador** (las caps de crear/editar/versionar/clonar que Autoridad no tiene), derivado del mapa vivo. NO se modela como `Autoridad extends Diseñador` (romperia la separacion de funciones del set Autoridad standalone, que hoy no crea — Anexo A). El nombre del compuesto NO debe colisionar con nombres de rol (D3).
-
-**Actor**: system (sync)
-**Layers**: backend (declaracion de mod), database
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: la union resuelta del compuesto == Diseñador ∪ Autoridad
-- **GIVEN** el compuesto con `extends` a Autoridad + delta de Diseñador
-- **WHEN** el runtime resuelve sus capabilities (`resolveModRoleCapabilityNames`)
-- **THEN** el conjunto es exactamente `set_Diseñador ∪ set_Autoridad` de ese modulo, sin faltantes ni sobrantes
-
-#### Scenario: los sets standalone no se alteran
-- **GIVEN** los sets Diseñador y Autoridad existentes
-- **WHEN** se declara el compuesto
-- **THEN** Diseñador y Autoridad conservan su composicion (el compuesto los referencia, no los modifica)
-
-</details>
-
-#### Acceptance
-**El usuario puede verificar que funciona**: el test de equivalencia confirma que el compuesto resuelve la union de los dos perfiles; los sets standalone quedan intactos.
-
-### REQ-VIS-01: Privatizar la visibilidad de las dos apps a los 6 roles (via app.json)
-
-> **Que cambia**: las apps `curriculum-design` y `curriculum-mapping`, hoy visibles para cualquier rol (no declaran roles), pasan a verse SOLO por los 6 roles mapeados (Admin, Consultor + 4 curriculares). Es un cambio observable.
-> **Por que**: al declarar el array `roles` en el `app.json`, `syncAppRoles` crea las filas `up1_suite_app_role` y la app deja de ser publica (H9, `app.resolver.js:120-123`). Es el criterio 1 del ticket para la parte visible.
-
-El sistema MUST declarar el array `roles` con los **6 roles** (Admin, Consultor, y los 4 `Learning Assurance - <Rol>`) en `curriculum-design/config/app.json` y `curriculum-mapping/config/app.json`, de modo que el sync cree las 6 filas (con `modRoleId` null) y privatice la visibilidad. El array MUST incluir SIEMPRE los 6, porque `syncAppRoles` borra las filas stale (roleId `notIn` el array) — omitir un rol al que un admin ya le asigno `modRoleId` borraria esa asignacion (Learn L2). La privatizacion MUST coordinarse con **UPONE-1616 ANTES** de mergear, y MUST verificarse que ninguno de los 15 roles no incluidos tiene alcance curricular legitimo (respaldo: `kb/sp9/UPONE-1615-inventario-de-roles.md`).
-
-**Actor**: usuario / administrador
-**Layers**: config (app.json), backend (sync), database
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: la app se privatiza a los 6
-- **GIVEN** el array `roles` con los 6 declarado en el app.json y el sync corrido
-- **WHEN** un usuario con un rol distinto de los 6 abre el menu
-- **THEN** las apps curriculares NO le aparecen; con uno de los 6, si
-
-#### Scenario: ningun rol legitimo pierde la vista
-- **GIVEN** los 15 roles no incluidos
-- **WHEN** se revisa su alcance curricular contra el inventario
-- **THEN** ninguno tiene caps curriculares propias que justifiquen verlas (todos son 'ninguno' por diseño)
-
-</details>
-
-#### Acceptance
-**El usuario puede verificar que funciona**: en UPU, las dos apps se ven con los 6 roles y no con el resto; el menu de un rol de engagement o antiguo ya no las muestra.
-
-### REQ-LINK-01: Runbook de asignacion de modRoleId (ops manual up1-manager)
-
-> **Que cambia**: se entrega un procedimiento documentado para que un administrador asigne, via la UI de up1-manager, el set (`modRoleId`) a cada una de las 6 filas. NO es un cambio de codigo del mod.
-> **Por que**: asignar `modRoleId` no tiene path de seed/sync (`syncAppRoles` deja null) — es una operacion manual en up1-manager (Learn L2). El ticket no puede ejecutarlo como PR, pero SI debe dejar el procedimiento y verificarlo en UPU.
-
-El sistema (equipo) MUST producir un runbook que documente, paso a paso en up1-manager, la asignacion: `Admin` -> compuesto, `Consultor` -> compuesto, y cada `Learning Assurance - <Rol>` -> su set homonimo por modulo (uno-a-uno), en las dos apps. El runbook MUST incluir: el gotcha de stale-deletion (el array `roles` del app.json debe conservar los 6), la advertencia de que crear el vinculo privatiza (coordinar UPONE-1616), y que Admin/Consultor conservan su acceso total por el refill de core (Learn L1). La verificacion en UPU (S6) aplica el runbook y comprueba el efectivo (REQ-CONVIV-01).
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: Aplicado el runbook en up1-manager, las 6 filas por app (12 en total) quedan con modRoleId != null y el vuelco coincide con baseline (REQ-CONVIV-01)
-
-</details>
-
-**Actor**: administrador (tenant, up1-manager)
-**Layers**: ops / runbook (documentacion), verificacion runtime
-
-#### Acceptance
-**El usuario puede verificar que funciona**: siguiendo el runbook en up1-manager, las 6 filas quedan con su `modRoleId`, y el vuelco de permisos efectivos coincide con el baseline (REQ-CONVIV-01).
-
-### REQ-RETIRE-01: Se retiran el rol huerfano y los 2 fixtures, sin regeneracion
-
-> **Que cambia**: desaparecen el rol `GestorCurricular` (huerfano, auto-creado desde un layout ya corregido) y los 2 sets de fixture (`roles/GestorCurricular.json`, `roles/LectorCurricular.json`). Una segunda corrida del sync no los vuelve a crear.
-> **Por que**: son residuos de las pruebas de RBAC-01; la causa que regeneraba el huerfano ya se corrigio (`e47f793`). Mantenerlos ensucia la lista de roles del tenant.
-
-El sistema MUST retirar los 2 archivos de fixture de `mods/curriculum-design/roles/` (el sync elimina sus `core_ModRole` por stale-deletion, `syncModRolesForApp`) y eliminar el `core_Role` huerfano `GestorCurricular` de forma **guardada** (solo si tiene 0 `core_RoleAssignment` y 0 layouts que lo referencien). Una segunda corrida del sync MUST no regenerar ninguno.
-
-**Actor**: admin (seed / sync)
-**Layers**: backend (seed), database, config (mod files)
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: durabilidad del retiro (HR9)
-- **GIVEN** el huerfano y los 2 fixtures retirados
-- **WHEN** se corre el sync una segunda vez
-- **THEN** ninguno reaparece (el layout que regeneraba el huerfano ya declara `roles: ["Coordinador"]`)
-
-#### Scenario: guarda del borrado destructivo
-- **GIVEN** el `core_Role` `GestorCurricular`
-- **WHEN** el paso de retiro corre
-- **THEN** solo elimina si el rol tiene 0 asignaciones y 0 layouts; si tuviera alguna, se salta y reporta (no borra a ciegas)
-
-</details>
-
-#### Acceptance
-**El usuario puede verificar que funciona**: en UPU no existen `GestorCurricular` (rol) ni los 2 sets de fixture, y tras un segundo sync siguen sin existir.
-
-### REQ-DOC-01: Documentar el escenario final consolidado de roles, sets y permisos tras la migracion: mapa rol->set->capabilities por modulo (cd/cm); los 4 roles renombrados a "Learning Assurance - <Rol>" con las 120 asignaciones conservadas; el rol huerfano GestorCurricular + 2 fixtures retirados; los 10 sets (2 base + 6 extensiones + 2 compuestos Disenador+Autoridad); el caveat del refill de core sobre Admin/Consultor (learn L1); la institucion agregada a la base de cd; los 6 vinculos rol->set y el runbook de asignacion manual de modRoleId (learn L2).
-
-**Fuente**: DET-37 dim1 (cambio observable de RBAC/config) + Request del ticket
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: La doc del escenario final existe y refleja el estado real verificado en runtime (contrastado vs baseline S1).
-
-#### Scenario: La doc lista los 10 sets y el mapa rol->set por modulo sin omitir los 2 compuestos.
-
-</details>
-
-### REQ-TEST-01: Testing como requisito final: cobertura que ejercite el camino real (vinculacion, herencia, deduplicacion, renombre sobre base con nombres viejos) + verificacion runtime de permisos efectivos rol por rol (smoke UPU, DET-36) + regresion de la suite RBAC verde.
-
-**Fuente**: Request del ticket (exige cobertura del camino real y verificacion runtime) + DET-7
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: La suite RBAC corre verde tras los cambios (regresion).
-
-#### Scenario: El renombre sobre una base con los nombres viejos deja 4 roles (no 8) con las 120 asignaciones intactas.
-
-#### Scenario: Los permisos efectivos por rol en runtime no cambian (baseline S1 == post, salvo institucion).
-
-</details>
-
-### REQ-NOTIFY-01: Enviar a team core el aviso del punto ciego de validateModRoleNameCollisions (H12: el guard solo lee config.app.roles, ciego a roles por seed/layout). No bloqueante; el cierre verifica por evidencia que el aviso se envio.
-
-**Fuente**: Request TICKET-133 (item aviso a core) + H12; DOC-sp9-aviso-core-validatemodrolenamecollisions
-
-<details><summary>Scenarios de validacion</summary>
-
-#### Scenario: Queda evidencia registrada (link/ticket/mensaje) de que el aviso se envio a core.
-
-</details>
-
+Smoke runtime en UPU con rol curricular ACTIVO (selector de rol activo; authChecker con selectedRole no acumula otros roles del usuario): cada rol ejecuta sus acciones declaradas; el Disenador crea un plan de estudio end-to-end con el selector de institucion poblado; el rol read-only (Consultor curricular) no puede crear ni editar. Admin y Consultor de core quedan EXCLUIDOS del smoke de scoping porque el core les hace refill de toda capability (DEFAULT_ROLES), lo que daria falso verde.
 ## Refactor map
 
-> El "refactor" reruta la fuente de declaracion de permisos hacia sets, pero NO retira el mapa del rol (el cut-over sigue diferido). Los sets declarados son inertes MIENTRAS no exista vinculo (S2-S5); en S6 se crean los vinculos de 6 roles y los sets pasan a inyectar, pero por convivencia el efectivo no cambia (REQ-CONVIV-01). Lo que SI cambia el comportamiento observable son **tres** deltas intencionales: institucion (REQ-ADD-01), nombres de rol (REQ-PRESERVE-02) y la **privatizacion de la visibilidad** de las dos apps (REQ-VIS-01).
+### Files (mod, en alcance)
+- `mods/curriculum-design/profiles/*.json` y `mods/curriculum-mapping/profiles/*.json`: perfil base + 3 extensiones por rol + **1 perfil compuesto (Diseñador ∪ Autoridad) para Admin/Consultor** por modulo; reemplazan los 2 fixtures de cd.
+- `mods/curriculum-design/seed/_data-rbac.js` y `mods/curriculum-mapping/seed/_data-rbac.js`: (a) quitar del mapa directo las caps que migran (gate XOR); (b) paso de renombre idempotente por nombre viejo; (c) `institution:view` en la base de cd; (d) absorber caps de UPONE-1619/1633 en base vs extension.
+- `config/app.json` de ambos mods: `profileRoleMapping` (4 curriculares -> su perfil; Admin/Consultor -> compuesto) y `navByRole` (profile-gating). No declarar el array `roles` institucional (lo prohibe el XOR).
+- Tests: `rbacRoles.test.js` (cd+cm, paridad reconciliada), test de la matriz de permisos (REQ-MATRIX-01), test de equivalencia perfil<->mapa (REQ-SET-01), test del gate XOR y de ownership humano (REQ-LINK-01), test de nav (REQ-VIS-01).
+- Docs que referencian los nombres de rol.
 
-### Files
+### Mecanismo de core consumido (no se modifica)
+`syncAppProfileMapping` / `validateProfileRoleMappings` (dbSync.js), `resolveModRoleCapabilityNames` (modRoleCapabilities.js), `app.resolver.js` (navByRole), `roleNaming.js`.
 
-| Action | Before | After | Reason |
-|--------|--------|-------|--------|
-| add | — | `mods/curriculum-design/roles/*.json` (1 base + 3 extension sets) | Declarar los sets de cd (fuente de verdad futura, inerte sin vinculo) |
-| add | — | `mods/curriculum-mapping/roles/*.json` (directorio nuevo: 1 base + 3 extension sets) | cm no tiene directorio `roles/`; declarar sus sets por su App |
-| add | — | `mods/curriculum-design/roles/*.json` + `mods/curriculum-mapping/roles/*.json` (1 set compuesto por mod) | REQ-SET-02: perfil Diseñador + Autoridad para Admin/Consultor (extends Autoridad + delta Diseñador) |
-| modify | `mods/curriculum-design/config/app.json` (sin array `roles`) | +`roles: [Admin, Consultor, LA-Consultor, LA-Diseñador, LA-Revisor, LA-Autoridad]` | REQ-VIS-01: privatiza la visibilidad; `syncAppRoles` crea las 6 filas (modRoleId null) |
-| modify | `mods/curriculum-mapping/config/app.json` (sin array `roles`) | +`roles: [los mismos 6]` | REQ-VIS-01: idem cm. El array debe incluir los 6 (stale-deletion, Learn L2) |
-| add (doc/ops) | — | Runbook de asignacion de `modRoleId` en up1-manager | REQ-LINK-01: la asignacion del set NO es codigo del mod (Learn L2); se documenta y se verifica en UPU |
-| remove | `mods/curriculum-design/roles/GestorCurricular.json` | — | Fixture RBAC-01 en desuso (REQ-RETIRE-01) |
-| remove | `mods/curriculum-design/roles/LectorCurricular.json` | — | Fixture RBAC-01 en desuso (REQ-RETIRE-01) |
-| modify | `mods/curriculum-design/seed/_data-rbac.js` | +`institution:view` en `READ_CAPS`; +paso de renombre por nombre viejo; +retiro guardado del huerfano | Criterio 2 + renombre + limpieza. **Mapa `MOD_CAPABILITIES_BY_ROLE` NO se retira** |
-| modify | `mods/curriculum-mapping/seed/_data-rbac.js` | +paso de renombre por nombre viejo (idempotente, cualquier orden) | Renombre coordinado; el mod comparte los roles |
-| modify | `mods/curriculum-design/tests/unit/rbacRoles.test.js` | +assert `institution:view` en los 4 roles; +test equivalencia set↔mapa; +test renombre idempotente | REQ-PRESERVE-04 / REQ-SET-01 / REQ-PRESERVE-02 |
-| modify | `mods/curriculum-mapping/tests/unit/rbacRoles.test.js` | test de paridad reformulado al nuevo invariante (composicion por modulo) + equivalencia set↔mapa | La paridad de roles se conserva; la de composicion diverge a proposito (D8) |
-| modify | 5 documentos que citan los nombres de rol | nombres viejos → `Learning Assurance - <Rol>` | Barrido antes/junto al renombre (identificar los 5 en S1) |
-
-### Exports / API affected
-
-| Export | Current | After | Consumers |
-|--------|---------|-------|-----------|
-| `_internals.MOD_CAPABILITIES_BY_ROLE` (ambos seeds) | mapa rol→caps (lowercase `obj:action`) | igual + `institution:view` en cd; **sigue siendo la fuente runtime** | `rbacRoles.test.js` (ambos mods) |
-| `ROLE_DEFINITIONS[].name` (ambos seeds) | nombres viejos | `Learning Assurance - <Rol>` | `rbacRoles.test.js`, paridad, 5 docs |
-| `ensureCurriculumModRbac` / `ensureMappingModRbac` | crea roles + cablea caps | + paso de renombre previo, idempotente | `seed.js` (entrypoint), tests |
-| Set files `roles/*.json` (formato `{name, description, extends, capabilities:{Target:[actions]}}`) | 2 fixtures en cd | 8 sets reales | `syncModRolesForApp` (`dbSync.js:1245`) |
-
-### Consumer updates required
-
-| Consumer | Current | After |
-|----------|---------|-------|
-| `curriculum-design/tests/unit/rbacRoles.test.js` | `ROLE_NAMES` con nombres viejos; assert Consultor == READ_CAPS | nombres nuevos; READ_CAPS con institucion; nuevos tests de equivalencia y renombre |
-| `curriculum-mapping/tests/unit/rbacRoles.test.js` | compara ambos seeds por igualdad | paridad de roles conservada; composicion por modulo divergente documentada |
-| 5 documentos (identificar en S1) | nombres viejos | nombres nuevos |
-| add (doc) | — | `projects/up1/kb/sp9/UPONE-1615-escenario-final-roles-sets-permisos.md` | Doc del escenario final consolidado (REQ-DOC-01, S7.T5) |
-| add (doc) | — | `projects/up1/kb/sp9/UPONE-1615-runbook-asignacion-modrole.md` | Runbook de asignacion de modRoleId, ops up1-manager (REQ-LINK-01, S7.T2) |
-
-> **Nota DET-40 (transcripcion)**: el mapa del rol usa strings planos lowercase (`academicprogram:view`, `curriculum.status:modify`, `offering.lifecycleStatus:modify`); el formato de set-file agrupa por target con arrays de accion y admite PascalCase (`{ "AcademicProgram": ["view"], "Curriculum.status": ["modify"] }`). El sync canonicaliza (`capabilityCandidates`, `dbSync.js:880-920`: lowercasea objeto/RT, preserva el nombre de campo) y matchea el primer candidato existente. Las caps de campo/RT (`competencynode:matrix.status:modify` en cm; `offering.lifecycleStatus:modify` en cd) requieren expresar el target exacto. **Mitigacion: derivar los sets del mapa vivo, no transcribir a mano.**
-
+### Fuera de alcance de codigo
+- Asignacion manual de `modRoleId` en up1-manager: ya no aplica (el vinculo es declarativo).
+- Mapeo de los **8 roles restantes** del catalogo core (O1 solo resuelto para Admin/Consultor). Los perfiles compuestos Admin/Consultor SI estan en alcance (REQ-SET-02, DEC-LOCAL-14).
+- Sacar Admin/Consultor de `DEFAULT_ROLES` (cambio de core).
 ## Tasks
 
-### Session 1 — Baseline runtime + auditoria por rol (sin cambios de codigo) [tipo: ⚑ fuerte] [tier: T3]
+#### S1.T1 — Capturar el run verde de la suite RBAC (rbacRoles.test.js de cd y cm) como baseline de regresion ANTES de tocar nada, para el before/after de la regresion final de S6. Files: docs/rbac/regresion-baseline.md. Validation: ambas suites verdes con su conteo. Rollback: borrar el doc.
+Contrato: rollback: borrar el doc. Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S1.T1 | Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Sessions` del ticket | REQ-PRESERVE-01, REQ-CONVIV-01 | researcher | — | ticket (baseline), UPU DB (read) | vuelco por los 6 roles capturado, guardado en el ticket | (no aplica) | DET-2, DET-13 | pending | 1 |
-| S1.T2 | Auditar rol por rol: por cada accion que declara, verificar que la capability exista/este asignada; anotar huecos (esperado: solo institucion en cd) Esta auditoria ES el medio de verificacion de REQ-ADD-01 (descubre el hueco de institucion) y REQ-PRESERVE-01 (fija el baseline); no es un entregable aparte. | REQ-ADD-01, REQ-PRESERVE-01 | researcher | S1.T1 | ticket | huecos por rol listados; confirmar que el unico hueco es `institution:view` | (no aplica) | DET-4, DET-5 | pending | 1 |
-| S1.T3 | Inventariar TODAS las referencias a los nombres de rol viejos: (a) documentos (grep); (b) arrays `roles:` de layouts de cd/cm y `app.json` de otros mods (dbSync.js:846-855 re-crea roles desde layout); (c) filtro por rol activo (authChecker.js:116-118). Registrar cada una con path:linea para remediar en S4 | REQ-PRESERVE-02, REQ-RETIRE-01 | researcher | — | ticket | inventario de refs (docs+layouts+app.json+runtime) con path:linea | (no aplica) | DET-16, DET-40 | pending | 1 |
-| S1.T4 | Correr las 2 suites `rbacRoles.test.js` (cd + cm) y registrar el conteo verde como baseline de comportamiento | REQ-PRESERVE-04, REQ-TEST-01 | developer | — | — | `X/X passing` en ambas, guardado en `## Sessions` | (no aplica) | DET-7, DET-13 | pending | 1 |
-| **S1.GATE** | **Gate de sync Session 1 (tier: T3)** — persistir baseline + auditoria en `## Sessions`, decidir continue/iterate | — | reviewer | S1.T1, S1.T2, S1.T3, S1.T4 | ticket | gate persistido + baseline verde + huecos documentados | (no aplica — cierre) | DET-20, DET-23 | pending | 1 |
+#### S1.T2 — Volcado de capabilities efectivas por rol/perfil como baseline previo a tocar nada, corriendo el sync actual y exportando el conjunto resuelto (core_RoleCapability directos + resolveModRoleCapabilityNames) a un artefacto versionado. Files: scripts/rbac/dump-effective-caps.js (nuevo), docs/rbac/baseline-caps-<fecha>.json (nuevo, artefacto de evidencia). Validation: el dump lista los 4 roles curriculares + Admin/Consultor con su conteo de caps y es reproducible (dos corridas consecutivas dan el mismo set).
+Contrato: rollback: Borrar scripts/rbac/dump-effective-caps.js y el artefacto docs/rbac/baseline-caps-<fecha>.json; no hay mutacion de datos ni de seed, el sync se corre read-only sobre el estado vigente.. Status: pending
 
-### Session 2 — Criterio 2 (institucion) + declarar las 2 bases [tipo: auto] [tier: T2]
+#### S1.T3 — Construir la matriz accion->capability por rol para curriculum-design y curriculum-mapping, resolviendo la capability requerida contra el gate real del resolver: p.ej. crear plan de estudio -> institution:view por listInstances (instance.resolver.js:1708). Files: docs/rbac/matriz-accion-capability.md (nuevo). Validation: cada fila de la matriz cita archivo:linea del gate que la exige; no hay accion declarada sin capability resuelta. Rollback: borrar el doc.
+Contrato: rollback: Borrar docs/rbac/matriz-accion-capability.md; tarea puramente documental, sin cambios de codigo ni de datos.. Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S2.T1 | Confirmar el nombre exacto de la cap de institucion (`institution:view`, objeto base `Institution`) contra `core_Capability`/`generateCapabilities.js:117-119` | REQ-ADD-01 | researcher | S1.GATE | — | nombre canonico confirmado | (no aplica) | DET-1, DET-4 | pending | 2 |
-| S2.T2 | Agregar `institution:view` a `READ_CAPS` del seed de cd (efectiva runtime sin vinculo) | REQ-ADD-01 | developer | S2.T1, S2.T6 | `mods/curriculum-design/seed/_data-rbac.js` | sync corre; los 4 roles de cd reciben la cap en `core_RoleCapability` | git revert | DET-5, DET-8, RULE (institution-view-gap) | pending | 2 |
-| S2.T3 | Actualizar `rbacRoles.test.js` de cd para exigir `institution:view` en los 4 roles (assert intencional) | REQ-ADD-01, REQ-PRESERVE-04 | developer | S2.T2 | `mods/curriculum-design/tests/unit/rbacRoles.test.js` | suite verde con el nuevo assert | git revert | DET-7 | pending | 2 |
-| S2.T4 | Declarar la base de cd (`Curriculum Design - Consultor Curricular`) derivada del mapa: `READ_CAPS` + `institution:view` + transversales; y la base de cm (`Curriculum Mapping - Consultor Curricular`) con sus READ_CAPS + transversales | REQ-SET-01 | developer | S2.T2 | `mods/curriculum-design/roles/*.json`, `mods/curriculum-mapping/roles/*.json` (dir nuevo) | sync materializa las 2 bases; caps resueltas == Consultor del mapa (+institucion en cd) | git revert (borrar archivos) | DET-1, DET-2, DET-40 | pending | 2 |
-| S2.T5 | Verificar que declarar las bases NO cambia permisos efectivos (sin vinculo no inyecta): re-vuelco vs baseline S1 | REQ-PRESERVE-03 | reviewer | S2.T4 | UPU DB (read) | vuelco identico al baseline salvo institucion | (no aplica) | DET-13, DET-33 | pending | 2 |
-| S2.T6 | Secuenciar/rebase con UPONE-1619 (mismo mods/curriculum-design/seed/_data-rbac.js): acordar orden de merge o rebase ANTES de tocar el seed (S2.T2). Riesgo alto de secuenciacion. | REQ-PRESERVE-02 | researcher | S1.GATE | ticket / canal UPONE-1619 | orden de merge o rebase acordado con 1619 antes de tocar el seed | n/a (coordinacion) | DET-16 | pending | 2 |
-| **S2.GATE** | **Gate de sync Session 2 (tier: T2)** — persistir, vitest cd verde, decidir continue/iterate | — | reviewer | S2.T1..S2.T6 | ticket | gate persistido + tests verdes | (no aplica — cierre) | DET-20, DET-23 | pending | 2 |
+#### S1.T4 — Cruzar la matriz contra el baseline y marcar los huecos por rol (capability exigida por el gate y ausente del efectivo), incluido institution:view en los 4 roles de cd. Files: docs/rbac/matriz-accion-capability.md (seccion Huecos), docs/rbac/baseline-caps-<fecha>.json (referencia). Validation: la lista de huecos incluye explicitamente institution:view para los 4 roles curriculares y cada hueco queda trazado a la fila de matriz que lo exige.
+Contrato: rollback: Revertir la seccion Huecos de docs/rbac/matriz-accion-capability.md; sin impacto en runtime.. Status: pending
 
-### Session 3 — Declarar las 6 extensiones + herencia + reformular paridad [tipo: auto] [tier: T2]
+#### S1.T5 — Poblar en el cuerpo del ticket el Coverage map (REQ -> test cases) y dejar preparada la tabla de Regresion (suite/comando/before/after/delta) para ambas suites rbacRoles.test.js (cd y cm), con el before capturado. Files: cuerpo del ticket (## Testing). Validation: cada REQ tiene su(s) test case(s) mapeado(s) y la tabla de regresion tiene las filas suite/comando con el before. Rollback: n/a (documental).
+Contrato: rollback: n/a (documental). Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S3.T1 | Declarar las 3 extensiones de cd (Revisor/Diseñador/Autoridad) con `extends` a la base + el delta de cada rol, derivado del mapa | REQ-SET-01 | developer | S2.GATE | `mods/curriculum-design/roles/*.json` | sync materializa; herencia resuelve union sin duplicar | git revert | DET-1, DET-40 | pending | 3 |
-| S3.T2 | Declarar las 3 extensiones de cm con `extends` a su base + delta (ojo caps de campo `competencynode:matrix.status:modify`, 3 segmentos) | REQ-SET-01 | developer | S2.GATE | `mods/curriculum-mapping/roles/*.json` | sync materializa; caps de campo/RT resueltas al candidato canonico correcto | git revert | DET-1, DET-40 | pending | 3 |
-| S3.T3 | Test de equivalencia estructural: por rol/mod, union `base∪extension` resuelta == `MOD_CAPABILITIES_BY_ROLE` (count-agnostic); + assert de no-colision (D3, mitiga H12): ningun nombre de set coincide con un nombre de rol (Admin, Consultor, 4 Learning Assurance) | REQ-SET-01, REQ-PRESERVE-01, REQ-TEST-01 | developer | S3.T1, S3.T2 | ambos `rbacRoles.test.js` | test verde; 0 faltantes/sobrantes por rol | git revert | DET-7, DET-40 | pending | 3 |
-| S3.T4 | Reformular el test de paridad cd↔cm: conservar la paridad de nombres de rol; documentar que la composicion por modulo diverge a proposito (D8) | REQ-PRESERVE-04 | developer | S3.T3 | `mods/curriculum-mapping/tests/unit/rbacRoles.test.js` | suite verde con el nuevo invariante documentado | git revert | DET-7 | pending | 3 |
-| **S3.GATE** | **Gate de sync Session 3 (tier: T2)** — persistir, ambas suites verdes, decidir continue/iterate | — | reviewer | S3.T1..S3.T4 | ticket | gate persistido + tests verdes | (no aplica — cierre) | DET-20, DET-23 | pending | 3 |
+#### S2.T1 — Secuenciar o rebasar con UPONE-1619 (mismo mods/curriculum-design/seed/_data-rbac.js) antes de tocar el seed; acordar orden de merge con el responsable de ese ticket y dejar registro del acuerdo
+Contrato: rollback: n/a coordinacion. Status: pending
 
-### Session 4 — Renombre de los 4 roles + barrido de docs/tests [tipo: ⚑ fuerte] [tier: T3]
+#### S2.T2 — Verificar empiricamente el aislamiento por app del enriquecimiento runtime (modRoleCapabilities.js:74-108) ANTES de comprometer la excepcion de institucion: confirmar si institution:view declarada en el perfil base de cd queda acotada a cd o se filtra al mismo rol operando en cm. Files: test/volcado de efectivo por app. Validation: el efectivo del rol en cm NO incluye institution:view; si el runtime no aisla por app, se reformulan REQ-PRESERVE-01 y REQ-SET-01 y su test case. Rollback: n/a (verificacion).
+Contrato: rollback: n/a (verificacion). Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S4.T1 | Implementar el paso de renombre por nombre viejo (idempotente, guardado) en el seed de cd, ANTES de `ensureRoles`; actualizar `ROLE_DEFINITIONS` a los nombres nuevos | REQ-PRESERVE-02 | developer | S3.GATE | `mods/curriculum-design/seed/_data-rbac.js` | corrida sobre base con nombres viejos → 4 roles renombrados | git revert | DET-8, DET-40 | pending | 4 |
-| S4.T2 | Replicar el paso de renombre en el seed de cm (idempotente en cualquier orden respecto de cd); actualizar `ROLE_DEFINITIONS` | REQ-PRESERVE-02 | developer | S4.T1 | `mods/curriculum-mapping/seed/_data-rbac.js` | corrida en cualquier orden converge a 4 roles nuevos | git revert | DET-8, DET-40 | pending | 4 |
-| S4.T3 | Test de renombre idempotente sobre base con nombres viejos (HR3): 4 roles no 8, 120 asignaciones conservadas, 0 nombres viejos | REQ-PRESERVE-02, REQ-TEST-01 | developer | S4.T2 | ambos `rbacRoles.test.js` | test verde (integration si el mock no cubre el conteo real de roles) | git revert | DET-7, DET-40 | pending | 4 |
-| S4.T4 | Remediar TODAS las referencias del inventario de S1.T3 (docs + assertions de tests + layouts/app.json + runtime) de nombres viejos → nuevos, para que el sync no re-cree roles con nombre viejo | REQ-PRESERVE-02, REQ-RETIRE-01 | developer | S4.T3 | docs + ambos `rbacRoles.test.js` + layouts/app.json de cd/cm | grep de nombres viejos → 0 en repo (docs+codigo); sync no re-crea rol con nombre viejo | git revert | DET-16, DET-40 | pending | 4 |
-| **S4.GATE** | **Gate de sync Session 4 (tier: T3)** — persistir, verificar HR3 sobre base con nombres viejos, decidir continue/iterate | — | reviewer | S4.T1..S4.T4 | ticket | gate persistido + HR3 verificado + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-40 | pending | 4 |
+#### S2.T3 — Declarar los 2 perfiles compuestos (union Diseñador ∪ Autoridad) en cd y cm para Admin/Consultor (extends la extension Autoridad + delta Diseñador, derivado del mapa vivo). DEPENDE de que la extension Autoridad ya este declarada (autoria de perfiles de S2, se ejecuta antes que esta task). Files: mods/curriculum-design/profiles/*.json, mods/curriculum-mapping/profiles/*.json. Validation: la union resuelta del compuesto == Diseñador ∪ Autoridad del modulo, sin faltantes ni sobrantes; los perfiles standalone no se alteran. Rollback: borrar los archivos del compuesto.
+Contrato: rollback: borrar los archivos del compuesto. Status: pending
 
-### Session 5 — Retiro destructivo + verificacion runtime rol por rol + docs + aviso [tipo: ⚑ fuerte] [tier: T3]
+#### S2.T4 — Crear profiles/ en curriculum-design con el perfil base + extensiones por rol (Revisor/Diseñador/Autoridad) via extendsId, migrando las caps que hoy cuelgan del core_Role. Files: mods/curriculum-design/profiles/*.json. Validation: el sync materializa los perfiles y la union base+extension de cada rol coincide con el baseline de caps efectivas de S1, sin duplicar. Rollback: borrar los archivos de profiles/ (los core_Role directos siguen intactos hasta el retiro por gate XOR de S4).
+Contrato: rollback: Borrar los archivos nuevos de mods/curriculum-design/profiles/ y correr el sync: sin perfiles declarados el efectivo vuelve a depender solo de los core_Role directos, que en esta session siguen intactos (el gate XOR se aplica recien en S4.T2).. Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S5.T1 | Retirar los 2 fixtures (`roles/GestorCurricular.json`, `roles/LectorCurricular.json`) y capturar el `core_Role` huerfano (id, nombre, asignaciones, layouts) ANTES del retiro, y agregar el retiro GUARDADO (solo si 0 asignaciones y 0 layouts) al seed de cd | REQ-RETIRE-01 | developer | S4.GATE | `mods/curriculum-design/roles/` (rm), `mods/curriculum-design/seed/_data-rbac.js` | sync elimina los 2 `core_ModRole`; huerfano eliminado si desusado | git revert (archivos del mod) + re-crear el `core_Role` desde la captura previa; el borrado corre SOLO con 0 asignaciones y 0 layouts (guard), por lo que la re-creacion restaura un rol inerte identico (DET-8) | DET-8, DET-40 | pending | 5 |
-| S5.T2 | Correr el sync 2× y confirmar que ni el huerfano ni los fixtures reaparecen (HR9) | REQ-RETIRE-01 | reviewer | S5.T1 | UPU DB (read) | 2ª corrida no regenera nada | (no aplica) | DET-13, DET-33 | pending | 5 |
-| S5.T3 | Verificacion runtime de permisos efectivos rol por rol (smoke UPU) vs baseline S1 (HR1): ningun rol pierde caps; entrar con cada rol y ejecutar sus acciones | REQ-PRESERVE-01 | reviewer | S5.T1 | UPU (runtime) | vuelco por rol == baseline (+institucion en cd); evidencia runtime real | (no aplica) | DET-13, DET-33, DET-36 | pending | 5 |
-| S5.T4 | Caso del PO end-to-end (HR2): entrar como Diseñador, crear un plan de estudio con el select de institucion poblado y guardar | REQ-ADD-01 | reviewer | S5.T3 | UPU (runtime) | plan guardado; evidencia runtime (screenshot/DOM) | (no aplica) | DET-13, DET-36 | pending | 5 |
-| S5.T5 | Actualizar la doc oficial observable (RBAC del mod + los nombres de rol en docs de los dos mods) | REQ-PRESERVE-02 | developer | S5.T1 | `mods/curriculum-design/docs/*`, `mods/curriculum-mapping/docs/*` (los que apliquen) | doc refleja sets + nombres nuevos; sin nombres viejos | git revert | DET-37 | pending | 5 |
-| S5.T6 | Enviar el aviso a core por el punto ciego de la proteccion de nombres (H12, `dbSync.js:1031-1040`) — no bloqueante; registrar el canal usado | REQ-NOTIFY-01 | researcher | — | ticket / canal core | aviso enviado y registrado | (no aplica) | DET-16 | pending | 5 |
-| S5.T7 | Aviso a UPONE-1530 (frontera del MCP): notificar el cambio de nombres de rol y permisos que mueven lo que el MCP expone/valida. | REQ-VIS-01 | researcher | S4.GATE | ticket / canal UPONE-1530 | aviso enviado y registrado | n/a (aviso) | DET-16 | pending | 5 |
-| **S5.GATE** | **Gate de sync Session 5 (tier: T3)** — persistir, regresion completa + smoke UI, HR1/HR2/HR9 verificados con evidencia runtime, decidir continue/iterate | — | reviewer | S5.T1..S5.T7 | ticket | gate persistido + evidencia runtime + tests verdes | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 5 |
+#### S2.T5 — Crear profiles/ en curriculum-mapping con base + extensiones propias del modulo: la composicion se deriva del mapa real de cm, no se copia en espejo desde cd. Files: mods/curriculum-mapping/profiles/*.json (nuevos, carpeta nueva), mods/curriculum-mapping/seed/_data-rbac.js (referencia). Validation: el sync materializa los perfiles de cm y el efectivo por rol coincide con el baseline de cm; una asercion verifica que las composiciones de cd y cm difieren (no son espejo).
+Contrato: rollback: Borrar la carpeta mods/curriculum-mapping/profiles/ y correr el sync; los core_Role directos de cm siguen vigentes en esta session.. Status: pending
 
-### Session 6 — Compuesto + privatizacion + vinculos (6 roles) + verificacion final [tipo: ⚑ fuerte] [tier: T3]
+#### S2.T6 — Declarar institution:view y los transversales (core_datalog:view, core_user.name:view) en el perfil base de cd, y los transversales en la base de cm (dedupe por nombre). Files: perfiles base de cd y cm. Validation: institution:view aparece en el efectivo de los 4 roles de cd y cierra el hueco de institucion marcado en el baseline de S1; los transversales no se duplican. Rollback: quitar las caps agregadas.
+Contrato: rollback: Quitar las lineas de capabilities agregadas en los dos archivos base y correr el sync; el estado previo no tenia institution:view, por lo que se vuelve al hueco conocido sin efecto colateral.. Status: pending
 
-> Capa nueva por la resolucion parcial de O1 (2026-08-26). Depende de que los sets base/extension existan (S3) y del renombre (S4). Introduce el UNICO cambio de comportamiento observable (privatizacion). La asignacion de `modRoleId` es ops (runbook + verificacion en UPU), no codigo.
+#### S2.T7 — Absorber en los application profiles las capabilities nuevas de UPONE-1619 (instructionalcomponenttype:view/create/modify/delete) y UPONE-1633 (competencynode:adopt/exempt), decidiendo por cada una base vs extension segun que rol la necesita. Files: mods/curriculum-design/profiles/*.json, mods/curriculum-mapping/profiles/*.json. Validation: cada capability de 1619/1633 aparece exactamente una vez en el arbol de perfiles del modulo que la usa y el rol que la ejercia antes la conserva en su efectivo.
+Contrato: rollback: Revertir las capabilities agregadas de 1619/1633 en profiles/; siguen cableadas directo al core_Role (el retiro del directo ocurre en S4.T2), por lo que ningun rol pierde acceso.. Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S6.T0 | Confirmar con UPONE-1616 ANTES de tocar el app.json: la privatizacion cierra la visibilidad; alinear evidencia de menu | REQ-VIS-01 | researcher | S5.GATE | ticket / canal UPONE-1616 | coordinacion registrada; OK para privatizar | (no aplica) | DET-16 | pending | 6 |
-| S6.T1 | Declarar el set compuesto (extends Autoridad + delta Diseñador) en cd y en cm, derivado del mapa | REQ-SET-02 | developer | S5.GATE | `mods/curriculum-design/roles/*.json`, `mods/curriculum-mapping/roles/*.json` | sync materializa; union resuelta == Diseñador ∪ Autoridad por mod | git revert (borrar archivos) | DET-1, DET-40 | pending | 6 |
-| S6.T2 | Test de equivalencia del compuesto: union resuelta == `set_Diseñador ∪ set_Autoridad` (0 faltantes/sobrantes) | REQ-SET-02, REQ-CONVIV-01, REQ-TEST-01 | developer | S6.T1 | ambos `rbacRoles.test.js` | test verde | git revert | DET-7, DET-40 | pending | 6 |
-| S6.T3 | Declarar `roles:[los 6]` en el `app.json` de cd y cm; verificar que `syncAppRoles` crea las 6 filas (modRoleId null) y privatiza | REQ-VIS-01 | developer | S6.T0 | `mods/curriculum-design/config/app.json`, `mods/curriculum-mapping/config/app.json` | sync crea 6 filas por app; apps ya no publicas | git revert (quitar array `roles`) | DET-8, DET-40 | pending | 6 |
-| **S6.GATE** | **Gate de sync Session 6 (tier: T3)** — persistir; sets compuestos declarados, test de equivalencia verde, privatizacion declarada (app.json, filas modRoleId null); decidir continue/iterate | — | reviewer | S6.T0..S6.T3 | ticket | gate persistido + tests verdes + privatizacion declarada | (no aplica — cierre) | DET-20, DET-23 | pending | 6 |
-### Session 7 — Ops + verificacion runtime + doc (ejecucion sobre UPU vivo) [tipo: ⚑ fuerte] [tier: T3]
+#### S2.T8 — Ajustar los nombres de los application PROFILES a la convencion (roleNaming.js: isConventionalRoleName / isAppProfileCandidate) y verificar con un test unitario que cada nombre de perfil declarado pasa la convencion, sin residuos de referencias al detector eliminado validateModRoleNameCollisions. Los nombres de ROL se renombran en S3 (no aca). Files: mods/curriculum-design/profiles/*.json, mods/curriculum-mapping/profiles/*.json, test unitario de nombres. Validation: el sync no reporta no-conformidad; el test evalua cada nombre de perfil contra isConventionalRoleName/isAppProfileCandidate. Rollback: revertir los renombres de perfil.
+Contrato: rollback: Revertir los renombres de perfiles a los nombres previos; como estos perfiles se crean en esta misma session y aun no tienen mapping, no hay vinculos que queden colgados.. Status: pending
 
-| # | Task | source_ref | Agent | Depends on | Files | Validation | Rollback | Rules | Status | Session |
-|---|------|-----------|-------|------------|-------|------------|----------|-------|--------|---------|
-| S7.T1 | Verificar privatizacion contra el inventario: los 15 roles no incluidos no tienen alcance curricular legitimo; smoke UPU con un rol fuera de los 6 (no ve las apps) y uno dentro (si) | REQ-VIS-01 | reviewer | S6.T3 | UPU (runtime), `kb/sp9/UPONE-1615-inventario-de-roles.md` | evidencia runtime: menu privatizado correcto; 0 roles legitimos afuera | (no aplica) | DET-13, DET-33, DET-36 | pending | 7 |
-| S7.T2 | Producir el runbook de asignacion de `modRoleId` en up1-manager (Admin/Consultor -> compuesto; 4 curriculares -> su set uno-a-uno; gotcha stale-deletion; nota refill de core) | REQ-LINK-01 | developer | S6.T1 | `projects/up1/kb/sp9/UPONE-1615-runbook-asignacion-modrole.md` | runbook completo, paso a paso, con las 12 asignaciones (6 roles × 2 apps) | (no aplica) | DET-37 | pending | 7 |
-| S7.T3 | Aplicar el runbook en UPU (smoke) y verificar el efectivo con vinculos: vuelco por los 6 roles == baseline S1 (salvo institucion); Admin/Consultor ven y operan; PO end-to-end sigue OK | REQ-CONVIV-01, REQ-LINK-01 | reviewer | S6.T3, S7.T2 | UPU (runtime) | evidencia runtime: modRoleId asignado en las 6 filas; efectivo == baseline; dedup confirmado | revertir asignaciones en up1-manager (set 'No profile') | DET-13, DET-33, DET-36 | pending | 7 |
-| S7.T4 | Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde. | REQ-TEST-01, REQ-CONVIV-01 | reviewer | S7.T3 | UPU (runtime) | evidencia runtime (screenshot/console/DOM): vuelco por rol con vinculo == baseline S1 (salvo institucion) | revertir tests agregados | DET-36, DET-33 | pending | 7 |
-| S7.T5 | Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S7.T2 | REQ-DOC-01 | developer | S7.T2, S7.T3 | `projects/up1/kb/sp9/UPONE-1615-escenario-final-roles-sets-permisos.md` | doc publicada refleja el estado real verificado (vs baseline S1) | git revert de la doc | DET-37 | pending | 7 |
-| S7.T6 | Capturar en el KB de kanai (rule records) las RULE candidatas del ticket: (1) un set (base∪extension) debe replicar el mapa del rol sin sobrantes ni faltantes; (2) el renombre de roles debe ser idempotente por nombre viejo y correr ANTES de ensureRoles. Con what/why/where/when (DET-37 dim2). | REQ-SET-01, REQ-PRESERVE-02 | developer | S7.T3, S7.T5 | `projects/up1/kb/sp9` (rule records de kanai) | 2 RULE capturadas con what/why/where/when | borrar los rule records creados | DET-37 | pending | 7 |
-| **S7.GATE** | **Gate de sync Session 7 (tier: T3)** — persistir; verificacion runtime con vinculos (efectivo == baseline S1), privatizacion verificada, runbook entregado+aplicado, doc del escenario final, RULE capturada; decidir cierre | — | reviewer | S7.T1..S7.T6 | ticket | gate persistido + evidencia runtime + doc + runbook | (no aplica — cierre) | DET-20, DET-23, DET-36 | pending | 7 |
+#### S2.T9 — Coordinar con UPONE-1633 el orden de merge/rebase sobre mods/curriculum-mapping/seed/_data-rbac.js (competencynode:adopt/exempt): el retiro por gate XOR de esas caps directas y la absorcion en el perfil deben acordarse para que 1633 no reponga las directas y rompa el XOR. Validation: acuerdo de orden registrado. Rollback: n/a (coordinacion).
+Contrato: rollback: n/a (coordinacion). Status: pending
 
-## Constraints
+#### S2.T10 — Test de equivalencia estructural (antes del cut-over de S4): la union resuelta base ∪ extension de cada perfil (y del compuesto) == mapa de caps del core_Role en el baseline de S1, sin faltantes ni sobrantes; y cada capability de UPONE-1619/1633 aparece exactamente una vez en el arbol de perfiles del modulo que la usa. Detecta una cap no migrada ANTES del cut-over. Files: mods/curriculum-*/tests/unit/rbacProfiles.test.js. Validation: el test pasa; ninguna cap del baseline falta en el perfil resuelto; caps de 1619/1633 sin duplicar. Rollback: borrar el test.
+Contrato: rollback: borrar el test. Status: pending
 
-- **DET-40 (auditoria de reemplazo)**: la composicion de cada set debe replicar 1:1 el mapa del rol; el renombre debe replicar la identidad del rol viejo (asignaciones por id). Verificado estructuralmente (S3.T3) y runtime (S5.T3).
-- **RULE (institution-view-gap, SP8)**: `kb/sp8/UPONE-1538-rbac-institution-view-gap.md` — la cap de institucion va al conjunto de lectura; el alcance se acota por nodo en el provisioning, no negando la lectura.
-- **up1/CLAUDE.md — Sync**: nunca editar archivos sincronizados; correr `npm run sync` tras cambios de mod; no commitear artefactos de sync/seed. Los seeds `_data-rbac.js` (prefijo `_`) los importa `seed.js`, no los corre el sync como seed independiente.
-- **up1/CLAUDE.md — RBAC/RT**: caps de campo tienen punto en el nombre; caps de RT-field son 3 segmentos (`<base>:<rt>.<campo>:<accion>`). No referenciar DMMF.
-- **DEC (D1-D9, `kb/sp9/UPONE-1615-registro-de-decisiones.md`)**: modelo cerrado por el PO — sets por modulo, renombre en su lugar sin convivencia, base+extension, transversales en las dos bases, institucion en la base de cd, composicion por modulo.
-- **Memoria: sync no es quirurgico / migraciones destructivas coordinan con core** — el retiro del `core_Role` huerfano es destructivo; guardado (0 asignaciones) e idempotente; el drop lo aplica el flujo de sync/seed, no ALTER manual.
+#### S3.T1 — Agregar al seed un paso de renombre idempotente que reutiliza las entidades core_Role existentes (update por nombre viejo -> 'Learning Assurance <Rol>', sin guion) en vez de que ensureRoles upsertee por name y forkee 4 roles nuevos. Files: mods/curriculum-design/seed/_data-rbac.js, mods/curriculum-mapping/seed/_data-rbac.js. Validation: correr el seed dos veces deja los mismos 4 roles con los nombres nuevos, sin duplicados. Rollback: quitar el paso de renombre y ejecutar el update inverso sobre los mismos ids.
+Contrato: rollback: Quitar el paso de renombre del seed y ejecutar el update inverso (nombres nuevos -> nombres viejos) sobre los mismos ids: como se reutilizan entidades, revertir el literal restaura el estado sin tocar asignaciones.. Status: pending
 
-## Dependencies
+#### S3.T2 — Barrido GLOBAL del monorepo de todas las referencias a los 4 nombres viejos de rol, alineandolas a 'Learning Assurance <Rol>' (sin guion): seeds, tests, docs, arrays roles:/config de CUALQUIER mod y filtros por rol activo. Incluye barrer referencias residuales al detector validateModRoleNameCollisions (eliminado, UPONE-1699). El aviso a core NO se barre: se reformula y se conserva (REQ-NOTIFY-01). Depende del paso de renombre de esta sesion. Validation: grep de los 4 literales viejos y de validateModRoleNameCollisions da 0 fuera del paso de renombre; paridad cd/cm verde. Rollback: revertir el commit del barrido.
+Contrato: rollback: Revertir el commit del barrido (cambios solo de literales en seeds, tests y docs, sin efecto sobre datos ya migrados).. Status: pending
 
-| Dependency | Type | Description | Risk |
-|------------|------|-------------|------|
-| UPONE-1353 / UPONE-1354 | internal (satisfecha) | Mecanismo de sets + resolucion de layouts por set (Finalizadas) | Ninguno: ya existe. Sin ellas el ticket no seria posible |
-| UPONE-1619 (TICKET-134) | internal (activa, SP9) | Toca el MISMO `mods/curriculum-design/seed/_data-rbac.js` (declara caps de 2 objetos nuevos, las cablea a estos roles). Spec: `specs/curriculum-design/SPEC-curriculum-design-instructional-component.md` | **Alto de secuenciacion**: ejecutarlos en paralelo sobre ese archivo se pisan. Secuenciar o rebasar; ademas engorda `Consultor` (core) |
-| UPONE-1616 | internal (SP9) | Cierra con evidencia de menu de las apps curriculares; crear vinculos las privatiza | Coordinar ANTES de crear vinculos (fase diferida, no en tasks) |
-| UPONE-1530 | internal (SP9) | El MCP usa permisos del usuario real como frontera; cambian con este ticket | Aviso: nombres de rol y permisos cambian |
+#### S3.T3 — Verificar el renombre sobre una base que ya tiene los nombres viejos: restaurar una copia del store con los 4 roles antiguos y sus 120 asignaciones, correr el seed y contar. Files: scripts/rbac/verify-rename.js (nuevo), mods/curriculum-design/seed/_data-rbac.js (bajo prueba). Validation: tras el seed quedan 4 roles curriculares (no 8), ninguno con nombre viejo, y el conteo de asignaciones sigue en 120; el script falla con exit code distinto de cero si cualquiera de las tres condiciones no se cumple.
+Contrato: rollback: Descartar la base de prueba restaurada y borrar scripts/rbac/verify-rename.js; la verificacion corre sobre copia, nunca sobre el store vivo.. Status: pending
 
-## Risks and mitigations
+#### S4.T1 — Declarar profileRoleMapping en config/app.json de ambos mods (4 curriculares -> su perfil; Admin/Consultor -> compuesto) y navByRole para el profile-gating. navByRole ES una clave declarable en config/app.json del mod (ej. mods/hello-world-mod/config/app.json; se persiste como columna up1_suite_app.navByRole, dbSync.js:717; el resolver la lee en app.resolver.js:127-141). Asegurar que el app.json NO declare el array roles institucional (gate XOR, dbSync.js:1424-1428, mutuamente excluyente con profileRoleMapping). El sync (syncAppProfileMapping, dbSync.js:1481) crea las filas up1_suite_app_role. Files: config/app.json de cd y cm. Validation: sync 2x idempotente; una fila de mapping por rol al perfil correcto; app.json sin array roles; gate XOR pasa. Rollback: git checkout de ambos app.json y re-sync.
+Contrato: rollback: git checkout de mods/curriculum-design/config/app.json y mods/curriculum-mapping/config/app.json, luego re-sync.. Status: pending
 
-| Risk | Probability | Impact | Mitigation |
-|------|------------|--------|------------|
-| Retirar el mapa del rol sin vinculos → regresion total | Baja (mitigado por diseño) | Todos los roles pierden permisos runtime | REQ-PRESERVE-01: el mapa NO se retira. Sin vinculo el set es inerte; con vinculo (S6) el efectivo no cambia por dedup |
-| Con vinculos vivos (S6), un set que concede DE MAS = fuga inmediata | Media | Un rol gana permisos no previstos | Test de equivalencia 0 sobrantes (S3.T3/S6.T2) + verificacion runtime (S7.T4) |
-| Transcribir mal ~100 caps a los sets (casing / caps de campo) | Media | Regresion silenciosa al crear vinculos | Derivar del mapa vivo + test de equivalencia estructural (S3.T3) + baseline runtime (S5.T3) |
-| Renombre ingenuo forka (4 nuevos + 4 viejos con 120 asignaciones) | Media | Perdida de asignaciones / roles duplicados | Paso de renombre por nombre viejo idempotente en ambos seeds + verificacion HR3 sobre base con nombres viejos (S4) |
-| Colision de archivo con UPONE-1619 en `_data-rbac.js` | Media | Bloqueo/pisada de cambios | Secuenciar o rebasar; coordinar antes de tocar el archivo |
-| Borrado destructivo del `core_Role` huerfano sin guarda | Baja | Borrar un rol en uso | Guarda: eliminar solo si 0 asignaciones y 0 layouts; idempotente |
-| Los conteos del analisis (cd base=14) difieren del mapa real (`READ_CAPS`=15) | Confirmada | Sets mal dimensionados si se transcribe por conteo | No confiar en conteos: derivar del mapa + test de equivalencia count-agnostic |
-| Tests mockeados no cazan el conteo real de roles tras el renombre | Media | Fork no detectado por unit | S4.T3 exige verificacion sobre base con nombres viejos (integration si el mock no cubre el conteo) |
+#### S4.T2 — Cut-over: retirar del seed _data-rbac.js de ambos mods las caps directas del core_Role que ya viven en los perfiles (incl. 1619/1633), para que la fuente de verdad sea el perfil. Orden: DESPUES de declarar el profileRoleMapping (S4.T1); la coexistencia transitoria es inocua por el dedupe por nombre. Files: seeds _data-rbac.js de cd y cm. Validation: el efectivo por rol tras el retiro == baseline de caps efectivas de S1 (salvo institution:view en cd), llegando por el perfil; grep de las caps de 1619/1633 en los seeds da 0. Rollback: restaurar las declaraciones directas y correr el seed (revertir en orden inverso: primero este cut-over, luego el mapping si hiciera falta).
+Contrato: rollback: Restaurar las declaraciones directas de capabilities en los seeds _data-rbac.js de cd y cm y correr el seed; revertir en orden inverso (primero el cut-over, luego el mapping si hiciera falta).. Status: pending
 
+#### S4.T3 — Privatizar la visibilidad de ambas apps por profile-gating: declarar navByRole en config/app.json (clave del mod; columna up1_suite_app.navByRole; el resolver deriva isNavScoped en app.resolver.js:127-141). Verificar los dos sentidos: un rol con perfil mapeado ve la app; un rol sin perfil no la ve; borrar los mappings la oculta (no la vuelve publica). Files: config/app.json de ambos mods + test de nav. Validation: nav visible para un rol curricular y para Admin/Consultor; oculto para un rol sin perfil; sin-mappings oculto. Rollback: revertir navByRole en los app.json y re-sync. (La coordinacion con UPONE-1616 la cubre su task propia en S4.)
+Contrato: rollback: git checkout -- los config/app.json de ambos mods y el test de visibilidad, luego re-correr el sync: se vuelve al modelo de visibilidad previo. Riesgo del revert: si los mappings quedan borrados y el gate viejo ya no aplica, las apps podrian quedar ocultas para todos; verificar el nav tras revertir y, si hace falta, restaurar tambien los mappings de S4.T1 en el mismo revert.. Status: pending
+
+#### S4.T4 — Verificar que el cableado declarativo preserva el ownership humano y no altera el efectivo: (a) las filas con ownership humano sobreviven a dos syncs; (b) el efectivo por rol con los mappings == baseline de caps efectivas de S1 salvo institution:view en cd, por dedupe/herencia; (c) un perfil declarado sin profileRoleMapping no altera el efectivo (estado intermedio). Files: test de equivalencia (suite RBAC del mod) + volcado de comparacion contra el baseline. Validation: diff vacio post-cut-over vs baseline (salvo institucion) para los 4 roles; 120 asignaciones; sync 2x sin cambios. Rollback: borrar el test; si el diff no da vacio, restaurar las caps directas del seed.
+Contrato: rollback: Borrar el test de equivalencia y el volcado de comparacion; si el diff no da vacio, restaurar las caps directas en los seeds _data-rbac.js.. Status: pending
+
+#### S4.T5 — Reconciliar el test de paridad cd/cm (rbacRoles.test.js) con el modelo de perfiles: tras el retiro de las caps directas (S4.T2) la comparacion ROLE_DEFINITIONS cd vs cm ya no aplica al mapa amputado; mover la paridad al arbol de profiles/ o actualizar el assert con intencion documentada (REQ-SET-01 exige composicion por modulo, no espejo). Atomico con S4.T1/T2 (mismo PR). Files: mods/curriculum-design/tests/unit/rbacRoles.test.js, mods/curriculum-mapping/tests/unit/rbacRoles.test.js. Validation: el test de paridad refleja el modelo de perfiles (no el mapa directo) y queda verde. Rollback: revertir el test al estado previo.
+Contrato: rollback: revertir el test al estado previo. Status: pending
+
+#### S4.T6 — Mapear Admin y Consultor via profileRoleMapping al perfil compuesto de cada modulo y verificar la visibilidad por profile-gating: la app aparece para Admin/Consultor y para los 4 roles curriculares, y NO para un rol sin perfil. Files: config/app.json de ambos mods; test de nav (app.resolver navByRole). Validation: nav visible para Admin y para un rol curricular; oculto para un rol sin perfil mapeado. Rollback: quitar el mapping de Admin/Consultor.
+Contrato: rollback: quitar el mapping de Admin/Consultor. Status: pending
+
+#### S4.T7 — Coordinar/avisar a UPONE-1616 ANTES de privatizar la visibilidad: crear los profileRoleMapping cambia la evidencia de menu que 1616 observa. Validation: aviso a 1616 registrado antes de mergear la privatizacion. Rollback: n/a (coordinacion).
+Contrato: rollback: n/a (coordinacion). Status: pending
+
+#### S5.T1 — Avisar a UPONE-1530 (frontera del MCP): cambian los nombres de rol y los permisos que el MCP expone/valida; dejar constancia del aviso
+Contrato: rollback: n/a aviso. Status: pending
+
+#### S5.T2 — Retirar el core_Role huerfano GestorCurricular con guarda de borrado destructivo: capturar previamente sus asignaciones y capabilities, abortar el retiro si tiene asignaciones vivas, y recien entonces eliminarlo. Files: scripts/rbac/retire-orphan-role.js (nuevo), docs/rbac/retiro-gestorcurricular-captura.json (evidencia previa). Validation: la captura previa demuestra cero asignaciones vivas; tras el retiro el rol no existe y ningun usuario pierde acceso (diff de efectivo por usuario = vacio).
+Contrato: rollback: Recrear el core_Role desde docs/rbac/retiro-gestorcurricular-captura.json (nombre + capabilities + asignaciones capturadas); la captura previa es la condicion que hace reversible el borrado.. Status: pending
+
+#### S5.T3 — Eliminar los 2 fixtures que hoy ocupan curriculum-design/profiles/ (GestorCurricular.json y LectorCurricular.json, fixtures RBAC-01 de UPONE-1353), reemplazados por los application profiles reales autorados en S2. Files: mods/curriculum-design/profiles/GestorCurricular.json (borrado), mods/curriculum-design/profiles/LectorCurricular.json (borrado). Validation: la carpeta profiles/ de cd contiene solo los perfiles reales (base + extensiones) y el sync corre sin referencias colgadas a los fixtures.
+Contrato: rollback: Restaurar los dos archivos de fixture desde git y correr el sync; son declaraciones en el repo del mod, recuperables sin perdida.. Status: pending
+
+#### S5.T4 — Confirmar la no-regeneracion: correr el sync dos veces consecutivas tras el retiro del huerfano y los fixtures, y verificar que ninguno reaparece (auto-create desde layout eliminado, UPONE-1699). Files: inspeccion de layouts de cd, scripts/rbac/verify-no-regen.js. Validation: tras sync 1 y 2 la consulta por los tres nombres retirados da 0. Rollback: si un nombre reaparece, identificar el layout que lo auto-crea y corregir antes de re-ejecutar el retiro de S5.
+Contrato: rollback: si un nombre reaparece, identificar el layout que lo auto-crea y corregir la referencia antes de re-ejecutar el retiro del huerfano y de los fixtures de esta sesion (S5).. Status: pending
+
+#### S5.T5 — Avisar a core (NO bloqueante) que la deteccion de COLISIONES de nombres quedo sin cobertura tras eliminar validateModRoleNameCollisions (UPONE-1699): roleNaming.js reporta formato, no colisiones, asi que el punto ciego del request sigue vigente y se traslada a core reformulado. Validation: aviso registrado (link/ticket/mensaje a core). Rollback: n/a (aviso).
+Contrato: rollback: n/a (aviso). Status: pending
+
+#### S6.T1 — Verificar REQ-SET-02 (positivo): los 2 perfiles compuestos (union Diseñador ∪ Autoridad) estan declarados en profiles/ de cd y cm y Admin/Consultor estan mapeados a ellos via profileRoleMapping; la union resuelta del compuesto == Diseñador ∪ Autoridad por modulo, y los perfiles standalone (Diseñador, Autoridad) no se alteran. Files: mods/curriculum-design/tests/unit/rbacProfiles.test.js. Validation: el assert pasa (compuesto == union, standalone intactos, Admin/Consultor mapeados al compuesto). Rollback: borrar el assert.
+Contrato: rollback: borrar el assert. Status: pending
+
+#### S6.T2 — Dejar la matriz de permisos como asercion automatizada corriendo verde en CI: por cada application profile, cada accion declarada por el rol debe tener su capability requerida (resuelta contra el gate real del resolver) dentro del efectivo de resolveModRoleCapabilityNames; el test falla si falta alguna, incluida institution:view, y no depende de Admin/Consultor. Files: mods/curriculum-*/tests/unit/permissionMatrix.test.js (nuevo), docs/rbac/matriz-accion-capability.md (fuente de las filas), configuracion de CI del mod. Validation: el test corre en CI y falla de forma demostrable al remover institution:view del perfil base de cd (prueba negativa ejecutada una vez).
+Contrato: rollback: Excluir el test del pipeline y borrar mods/curriculum-*/tests/unit/permissionMatrix.test.js; no modifica perfiles ni datos.. Status: pending
+
+#### S6.T3 — Smoke runtime en UPU con rol curricular ACTIVO seleccionado (authChecker con selectedRole no acumula otros roles del usuario): cada rol ejecuta sus acciones declaradas, el Disenador crea un plan de estudio end-to-end con el selector de institucion poblado, y el rol read-only no puede crear ni editar. Admin y Consultor de core quedan excluidos del smoke de scoping por el refill de DEFAULT_ROLES (darian falso verde). Files: docs/rbac/smoke-runtime-upu.md (guion + evidencia con capturas). Validation: evidencia por rol de accion permitida y accion denegada; el caso PO (crear plan con institucion) queda registrado como exitoso end-to-end.
+Contrato: rollback: Deshacer en UPU los datos creados durante el smoke (el plan de estudio de prueba) y borrar el documento de evidencia; el smoke no altera configuracion de RBAC.. Status: pending
+
+#### S6.T4 — Regresion obligatoria: correr la suite RBAC completa de ambos modulos y del core afectado, comparando resultados antes/despues de la migracion y documentando cada test modificado con su intencion. Files: mods/curriculum-design/tests/**, mods/curriculum-mapping/tests/**, object-manager tests de auth, docs/rbac/regresion-rbac.md (tabla suite/comando/before/after/delta). Validation: la suite queda verde; todo test tocado (paridad cd/cm, nombres de rol) tiene justificacion escrita; cero fallos nuevos respecto del run previo a la migracion.
+Contrato: rollback: Revertir unicamente los tests modificados en esta task a su version previa; si la regresion queda roja, no se avanza: se revierte la session responsable del fallo antes de cerrar.. Status: pending
+
+#### S6.T5 — Documentar el escenario final consolidado (mapa rol -> application profile -> capabilities por modulo con base + extensiones + compuesto; 4 roles renombrados con 120 asignaciones; huerfano y fixtures retirados; cableado declarativo via profileRoleMapping sin runbook; privatizacion por profile-gating; gap de institucion resuelto; absorcion de 1619/1633) y capturar la RULE. Files: docs/rbac/escenario-final-roles-curriculares.md, RULE en el KB. Validation: cada afirmacion traza a un archivo del repo o a la evidencia de verificacion de S6; la RULE queda registrada. Rollback: borrar el doc y retirar la RULE.
+Contrato: rollback: Borrar docs/rbac/escenario-final-roles-curriculares.md y retirar la RULE capturada; documental, sin impacto en codigo ni runtime.. Status: pending
 ## Open questions
 
-- [x] **O1 (RESUELTO PARCIAL — 2026-08-26) — Mapeo de los roles del core hacia los sets.** El PO entrego una regla parcial (catalogo institucional, 2 de 10 filas): `Admin` y `Consultor` -> perfil "Diseñador + Autoridad". Con eso este spec cablea **6 roles** (Admin, Consultor + 4 curriculares): declara los sets compuestos (REQ-SET-02), privatiza via app.json (REQ-VIS-01) y entrega el runbook de asignacion (REQ-LINK-01). Ver S6. Detalle: `tickets/TICKET-133.md` (decisions_log `o1-partial-resolution`, Learns L1/L2).
-- [ ] **O1-REMANENTE (siguiente sprint) — Los 8 roles restantes del catalogo** (4 nuevos + resto de core): mapeo pendiente hasta tener las 10 filas. Al agregarlos, sumar sus roles al array `roles` del app.json + asignar sus `modRoleId`. Algunos pueden necesitar nuevos sets compuestos (Escenario B).
-- [ ] **CUT-OVER (diferido) — Retiro del mapa rol→cap y de los directos.** Con vinculos ya creados, el cut-over pasa a inyeccion-solo-por-set. Para los 4 curriculares es viable (no estan en `DEFAULT_ROLES`). Para Admin/Consultor NO es alcanzable en el mod: el core los refill (Learn L1) — requiere sacarlos de `DEFAULT_ROLES` (ticket de core / UPONE-1633).
-- [ ] **O2 (BLOCKED, coordinacion) — Acotar `offering:create/modify` del Diseñador.** `offering` es objeto compartido cd (silabos) / engagement (ofertas); los nombres de cap no tienen dimension de app, asi que el permiso aplica global. Requiere acuerdo con engagement. Se acota aqui o se re-registra; no es task de este spec.
-
-## Decisions
-
-### DEC-LOCAL-01: Sets inertes + mapa del rol como fuente runtime activa (dos fases)
-> **SUPERSEDED por DEC-LOCAL-05 (2026-08-26)**: O1 se resolvio parcial; S6 crea 6 vinculos (Admin/Consultor + 4 curriculares) + privatiza la visibilidad. La alternativa (b) "crear los vinculos ya" deja de estar bloqueada (se ejecuta parcialmente). El texto original se conserva por inmutabilidad (DET-6).
-- **Contexto**: los sets no inyectan sin vinculo, y los vinculos estan bloqueados (O1). ¿Como migrar sin regresion?
-- **Drivers**: zero behavior change; criterio 2 verificable runtime en este ticket; O1 bloqueado.
-- **Opcion elegida**: declarar los sets como dato inerte (fuente futura) y **conservar** el mapa `MOD_CAPABILITIES_BY_ROLE` como fuente runtime activa. El cut-over (retirar el mapa, inyeccion por set) se difiere con los vinculos.
-- **Alternativas**: (a) retirar el mapa ya → regresion total sin vinculos; descartada. (b) crear los vinculos de la familia ya → privatiza apps y depende de O1/1616; descartada (bloqueada).
-- **Consecuencias**: gana seguridad y verificabilidad; pierde "una sola fuente" temporalmente (aceptable — la dedup por nombre garantiza que no hay conflicto cuando ambos coexistan).
-- **Session**: design.
-
-### DEC-LOCAL-02: `institution:view` en el mapa del rol (no solo en el set)
-- **Contexto**: criterio 2 del PO debe ser verificable runtime en este ticket; el set no inyecta sin vinculo.
-- **Drivers**: DoD exige el flujo del PO end-to-end ahora; O1 bloqueado.
-- **Opcion elegida**: agregar `institution:view` a `READ_CAPS` (mapa del rol, efectivo ya) y tambien declararla en la base de cd (fuente futura). Redundante pero seguro (dedup por nombre).
-- **Alternativas**: solo en el set → no efectiva sin vinculo → criterio 2 no verificable ahora; descartada.
-- **Consecuencias**: era la unica adicion intencional de comportamiento; con el rearmado 2026-08-26 se suma la privatizacion (DEC-LOCAL-05).
-- **Session**: design.
-
-### DEC-LOCAL-03: Set compuesto por herencia (extends Autoridad + delta Diseñador)
-- **Contexto**: Admin/Consultor reciben "Diseñador + Autoridad", union de dos sets hermanos; el vinculo admite un set por modulo y la herencia es de un padre.
-- **Drivers**: regla del PO; unicidad `(appId, roleId)`; `extendsId` escalar; preservar la separacion de funciones de los sets standalone.
-- **Opcion elegida**: declarar un set compuesto que `extends` Autoridad y agrega el delta de Diseñador (crear/editar/versionar/clonar).
-- **Alternativas**: (a) atar dos sets al rol → imposible (unicidad). (b) cadena `Autoridad extends Diseñador` → Autoridad standalone ganaria crear/editar, rompe separacion de funciones; descartada. (c) union plana sin herencia → duplica todo; descartada por mantenibilidad.
-- **Consecuencias**: +2 sets (10 total); el delta duplica ~una docena de caps (comentar en el seed para atarlo a Diseñador).
-- **Session**: design.
-
-### DEC-LOCAL-04: La asignacion de modRoleId es ops (runbook), no codigo del mod
-- **Contexto**: no hay path de seed/sync para asignar el set a un rol; `syncAppRoles` deja `modRoleId` null; la asignacion es manual en up1-manager (Learn L2).
-- **Drivers**: execute_scope del ticket = `mods/curriculum-design|mapping/`; la asignacion escribe datos de tenant, no archivos de mod.
-- **Opcion elegida**: el ticket declara los sets y la privatizacion (codigo) y entrega un runbook para la asignacion (ops), verificandolo en UPU.
-- **Alternativas**: (a) escribir un seed que asigne modRoleId → no existe ese path y seria tocar core/plataforma; descartada. (b) dejar la asignacion sin documentar → el vinculo nunca se materializa; descartada.
-- **Consecuencias**: parte del criterio 1 (la asignacion) se completa fuera del PR, por un admin; el ticket lo deja listo y verificado.
-- **Session**: design.
-
-### DEC-LOCAL-05: Se privatiza la visibilidad este sprint (ya no es zero-behavior-change)
-- **Contexto**: con O1 parcial, se crean vinculos de 6 roles; crear el primer vinculo privatiza (H9).
-- **Drivers**: dar visibilidad y set a Admin/Consultor + curriculares; los 15 restantes no tienen alcance curricular legitimo (inventario).
-- **Opcion elegida**: declarar `roles:[los 6]` en el app.json y privatizar, coordinando con UPONE-1616 antes.
-- **Alternativas**: (a) mantener las apps publicas (cero filas) → no se puede: crear cualquier vinculo privatiza; y sin filas Admin/Consultor no verian tras el cut-over. (b) diferir todo a otro sprint → contradice la decision del dev de dejar el cableado hecho.
-- **Consecuencias**: cambio observable (los 15 pierden la vista publica, intencional); el titular deja de ser zero-behavior-change.
-- **Session**: design (rearmado).
-
-### DEC-LOCAL-06: coverage-scope → smoke+na
-Camino runtime del resolver de sets (resolveModRoleCapabilityNames/enrichUserWithModRoleCapabilities: herencia multinivel, dedup por nombre, guarda de ciclos) es CORE (H1: el ticket consume, no construye), cubierto por sus tests (UPONE-1353/1354). En el mod se verifica por smoke runtime S7.T4 con vinculo presente (DET-36). Unit del resolver desde el mod = N/A: fuera de execute_scope (mods/curriculum-design|mapping/), Aduana mod-only. Cobertura estructural en scope: S3.T3, S6.T2 (equivalencia set<->mapa sobre roles/*.json).
-
-### DEC-LOCAL-07: conviv-admin-consultor → inferred-structural
-La convivencia (efectivo sin cambio) de Admin/Consultor con el set compuesto NO es falsable en runtime: el refill de core (DEFAULT_ROLES, Learn L1) mantiene su efectivo en "todo", asi que el vuelco no puede detectar un cambio. Se degrada esa parte de REQ-CONVIV-01 a inferred y se prueba estructuralmente: S6.T2 (compuesto == Diseñador union Autoridad) + L1 (directos incluyen todo) => inyeccion no-op. Los 4 curriculares siguen confirmed (verificable por vuelco runtime, S7.T4). Se descarta el assert de subconjunto por tautologico (directos = todo por L1) y por rozar execute_scope (core).
-
-### DEC-LOCAL-08: sp-reestimation → estimated=8
-Re-estimacion confirmada con la skill calibrada (DET-26): ejecucion 3 + investigacion 4 (raw 6, con apoyo LLM c_inv 0.8) = 7 -> Fibonacci 8. Proxy sin-LLM 11, llm_speedup 4 (~36%). Coincide con el published. Metodo: heuristic-calibrated. Confirmado por dev/PO.
-
-### DEC-LOCAL-09: privatization-approval → approve
-PO aprueba REQ-VIS-01: privatizar la visibilidad de las 2 apps (cd/cm) a los 6 roles via app.json; 15 roles pierden la vista publica. Cambio observable intencional en un ticket refactor, derivado de O1 parcial (2026-08-26). Confirmado por dev/PO.
-
-## Acceptance checkpoints
-
-- [ ] **Auditoria de capabilities por rol** vs acciones declaradas ejecutada (S1.T2): huecos documentados; es el medio de verificacion de REQ-ADD-01 y REQ-PRESERVE-01.
-
-- [ ] **Funcional**: scenarios de REQ-PRESERVE-01..04, REQ-CONVIV-01, REQ-ADD-01, REQ-SET-01, REQ-SET-02, REQ-VIS-01, REQ-LINK-01, REQ-RETIRE-01 pasan.
-- [ ] **Compuesto (REQ-SET-02)**: la union resuelta del compuesto == Diseñador ∪ Autoridad por modulo; sets standalone intactos.
-- [ ] **Privatizacion (REQ-VIS-01)**: las 2 apps se ven solo por los 6 roles; los 15 restantes no las ven y ninguno las necesitaba (inventario); coordinado con UPONE-1616.
-- [ ] **Convivencia (REQ-CONVIV-01)**: tras asignar modRoleId (runbook en UPU), el efectivo por rol == baseline S1 (salvo institucion); dedup confirmado; 0 sobrantes.
-- [ ] **Runbook (REQ-LINK-01)**: entregado, con las 12 asignaciones, el gotcha de stale-deletion y la nota de refill de core; aplicado y verificado en UPU.
-- [ ] **Tests** (DET-37 dim4): equivalencia set↔mapa, renombre idempotente, paridad reformulada, institucion — todos VERDES; regresion de ambas suites RBAC verde.
-- [ ] **Rules**: naming de caps (objeto sin prefijo, mod con prefijo, RT-field 3 segmentos), tenant isolation, seed idempotente, no editar sincronizados.
-- [ ] **Integration / regresion**: vuelco de permisos efectivos por rol == baseline S1 (salvo institucion); HR1 verificado runtime.
-- [ ] **Runtime (DET-36)**: caso del PO end-to-end con evidencia runtime real (no test file); permisos rol por rol con smoke UPU.
-- [ ] **Docs oficiales** (DET-37 dim1): RBAC del mod + nombres de rol en docs de los dos mods actualizados.
-- [ ] **KB DKC** (DET-37 dim2): RULE candidata (set-declaration debe replicar el mapa; renombre idempotente por nombre viejo) capturada.
-- [ ] **Planning-completeness**: entry registrada (mixed).
-- [ ] **Aviso a core** enviado (H12), y artefactos de sync/seed no commiteados.
-
+- [x] **O1 (RESUELTO PARCIAL) — Mapeo de roles core hacia perfiles.** El PO dio la regla de Admin/Consultor -> compuesto "Diseñador + Autoridad" (2 de 10 filas). Este spec cablea los **4 roles curriculares + Admin/Consultor** (REQ-SET-02 / REQ-LINK-01). Diferido solo el mapeo de los **8 roles restantes**.
+- [x] **NOMBRES (RESUELTA, DEC-LOCAL-15).** `Learning Assurance <Rol>` SIN guion (conforme a `roleNaming.js`).
+- [x] **Visibilidad de Admin/Consultor bajo profile-gating (RESUELTA).** Se cubre mapeandolos a su perfil compuesto (DEC-LOCAL-14).
+- [ ] **Scoping cross-app de `institution:view` (verificar en ejecucion, gate de S2).** La verificacion de aislamiento por app (task de aislamiento de S2, precondicion dura) confirma si el enriquecimiento runtime (`modRoleCapabilities.js:74-108`) acota por app o resuelve la union de las apps activas del rol. Fallback si no aisla: declarar la cap en la extension del rol que la usa (no en la base) o aceptar el alcance ampliado y reformular el test case de PRESERVE-01/SET-01.
+- [ ] **O1-REMANENTE (siguiente sprint) — Los 8 roles restantes del catalogo.**
+- [ ] **CUT-OVER (sp10): ya ocurre para las caps migradas** (gate XOR, DEC-LOCAL-10). Fuera de alcance: sacar Admin/Consultor de `DEFAULT_ROLES` (cambio de core, Learn L1).
+- [ ] **Punto ciego de nombres a core (del request, no bloqueante):** se avisa a core que la deteccion de colisiones quedo sin cobertura tras eliminar `validateModRoleNameCollisions` (UPONE-1699); ver REQ-NOTIFY-01.
+- [ ] **O2 (coordinacion) — Acotar `offering:create/modify` del Diseñador.** Requiere acuerdo con engagement.
 ## Enmiendas (refine_spec)
 
 ### Enmienda 1
 **REQs:**
 
+- REQ-PRESERVE-01 (edit) `inferred`: Los permisos efectivos por rol en runtime son identicos al baseline previo, SALVO institution:view en los 4 roles de curriculum-design (REQ-
+- REQ-NOTIFY-01 (edit) `confirmed`: Los nombres de application profiles y roles cumplen la convencion (roleNaming.js: isConventionalRoleName / isAppProfileCandidate), sin refer
+
+**Tasks agregadas:**
+
+- S4: Coordinar/avisar a UPONE-1616 ANTES de privatizar la visibilidad: crear los profileRoleMapping cambia la evidencia de menu que 1616 observa. Validation: aviso a 1616 registrado antes de mergear la privatizacion. Rollback: n/a (coordinacion). (valida: REQ-VIS-01; rollback: n/a (coordinacion))
+
+**Task ops:**
+
+- edit S5.T4 { rollback="si un nombre reaparece, identificar el layout que lo auto-crea y corregir la referencia antes de re-ejecutar el retiro del huerfano y de los fixtures de esta sesion (S5)." }
+
 ### Enmienda 2
 **REQs:**
+
+- REQ-PRESERVE-01 (edit) `inferred`: Los permisos efectivos por rol en runtime son identicos al baseline previo, SALVO institution:view en los 4 roles de curriculum-design (REQ-
+
+**Tasks agregadas:**
+
+- S5: Avisar a core (NO bloqueante) que la deteccion de COLISIONES de nombres quedo sin cobertura tras eliminar validateModRoleNameCollisions (UPONE-1699): roleNaming.js reporta formato, no colisiones, asi que el punto ciego del request sigue vigente y se traslada a core reformulado. Validation: aviso registrado (link/ticket/mensaje a core). Rollback: n/a (aviso). (valida: REQ-NOTIFY-01; rollback: n/a (aviso))
+
+**Task ops:**
+
+- edit S3.T2 { desc="Barrido GLOBAL del monorepo de todas las referencias a los 4 nombres viejos de rol, alineandolas a 'Learning Assurance <Rol>' (sin guion): seeds, tests, docs, arrays roles:/config de CUALQUIER mod y filtros por rol activo. Incluye barrer referencias residuales al detector validateModRoleNameCollisions (eliminado, UPONE-1699). El aviso a core NO se barre: se reformula y se conserva (REQ-NOTIFY-01). Depende del paso de renombre de esta sesion. Validation: grep de los 4 literales viejos y de validateModRoleNameCollisions da 0 fuera del paso de renombre; paridad cd/cm verde. Rollback: revertir el commit del barrido." }
+- edit S2.T9 { validates=["REQ-CAPS-01","REQ-LINK-01"] }
+- edit S4.T7 { validates=["REQ-VIS-01"] }
 
 ### Enmienda 3
 
 **Task ops:**
 
-- move S5.T7 → S6
-- edit S3.T3 { isTest=true }
-- edit S3.T4 { isTest=true }
-- edit S4.T3 { isTest=true }
-- edit S6.T2 { isTest=true }
-- edit S6.T3 { rollback="Rollback ORDENADO (irreversible respecto de modRoleId): (1) primero revertir en up1-manager las asignaciones de modRoleId hechas en S7.T3 o restaurar desde la captura previa de las 12 asignaciones; (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas up1_suite_app_role con sus modRoleId, que git no restaura." }
+- edit S2.T1 { validates=["REQ-CAPS-01","REQ-LINK-01","REQ-PRESERVE-02"] }
+- edit S5.T1 { validates=["REQ-PRESERVE-02","REQ-VIS-01"] }
 
 ### Enmienda 4
+**REQs:**
+
+- REQ-LINK-01 (edit) `confirmed`: El vinculo rol->perfil se declara en config/app.json (profileRoleMapping) y lo materializa el sync (syncAppProfileMapping, dbSync.js:1481), 
+- REQ-CAPS-01 (edit) `confirmed`: Absorber en los application profiles las capabilities nuevas de UPONE-1619 (instructionalcomponenttype:*) y UPONE-1633 (competencynode:adopt
 
 **Task ops:**
 
-- edit S7.T5 { desc="Escribir la doc del escenario final (roles/sets/permisos) y consolidar el runbook producido en S7.T2" }
-- edit S6.T3 { rollback="Rollback ORDENADO, irreversible respecto de modRoleId: (1) en up1-manager poner en null el modRoleId de las 6 filas up1_suite_app_role (deshace las asignaciones de S7.T3; el pre-estado real es modRoleId null); (2) recien despues git revert del array roles del app.json. Quitar el array antes dispara la stale-deletion (Learn L2) y borra las filas con sus modRoleId, que git no restaura." }
+- edit S4.T1 { desc="Declarar profileRoleMapping en config/app.json de ambos mods (4 curriculares -> su perfil; Admin/Consultor -> compuesto) y navByRole para el profile-gating; asegurar que el app.json NO declare el array `roles` institucional (gate XOR, dbSync.js:1424-1428, mutuamente excluyente con profileRoleMapping). El sync (syncAppProfileMapping) crea las filas up1_suite_app_role. Files: mods/curriculum-design/config/app.json, mods/curriculum-mapping/config/app.json. Validation: sync 2x idempotente; una fila de mapping por rol al perfil correcto; app.json sin array roles; el gate XOR pasa. Rollback: git checkout de ambos app.json y re-sync.", rollback="git checkout de mods/curriculum-design/config/app.json y mods/curriculum-mapping/config/app.json, luego re-sync.", validates=["REQ-LINK-01","REQ-VIS-01"] }
+- edit S4.T2 { desc="Cut-over: retirar del seed _data-rbac.js de ambos mods las caps directas del core_Role que ya viven en los perfiles (incl. 1619/1633), para que la fuente de verdad sea el perfil. Orden: DESPUES de declarar el profileRoleMapping (S4.T1); la coexistencia transitoria es inocua por el dedupe por nombre. Files: seeds _data-rbac.js de cd y cm. Validation: el efectivo por rol tras el retiro == baseline de caps efectivas de S1 (salvo institution:view en cd), llegando por el perfil; grep de las caps de 1619/1633 en los seeds da 0. Rollback: restaurar las declaraciones directas y correr el seed (revertir en orden inverso: primero este cut-over, luego el mapping si hiciera falta).", rollback="Restaurar las declaraciones directas de capabilities en los seeds _data-rbac.js de cd y cm y correr el seed; revertir en orden inverso (primero el cut-over, luego el mapping si hiciera falta).", validates=["REQ-CAPS-01","REQ-CONVIV-01"] }
+- edit S4.T4 { desc="Verificar que el cableado declarativo preserva el ownership humano y no altera el efectivo: (a) las filas con ownership humano sobreviven a dos syncs; (b) el efectivo por rol con los mappings == baseline de caps efectivas de S1 salvo institution:view en cd, por dedupe/herencia; (c) un perfil declarado sin profileRoleMapping no altera el efectivo (estado intermedio). Files: test de equivalencia (suite RBAC del mod) + volcado de comparacion contra el baseline. Validation: diff vacio post-cut-over vs baseline (salvo institucion) para los 4 roles; 120 asignaciones; sync 2x sin cambios. Rollback: borrar el test; si el diff no da vacio, restaurar las caps directas del seed.", rollback="Borrar el test de equivalencia y el volcado de comparacion; si el diff no da vacio, restaurar las caps directas en los seeds _data-rbac.js.", validates=["REQ-LINK-01","REQ-CONVIV-01","REQ-PRESERVE-03","REQ-PRESERVE-01"], isTest=true }
 
 ### Enmienda 5
 
 **Task ops:**
 
-- edit S1.T1 { desc="Volcar el conjunto de capabilities efectivas por los 6 roles (4 curriculares + Admin + Consultor) en UPU (antes de tocar nada) y guardarlo como baseline en `## Sessions` del ticket", validates=["REQ-PRESERVE-01","REQ-CONVIV-01"] }
+- edit S4.T8 { desc="GATE de cierre de S4 (sesion de mayor riesgo: cut-over de caps del core_Role al perfil + privatizacion de visibilidad): profileRoleMapping declarado (4 curriculares -> su perfil; Admin/Consultor -> compuesto) y app.json SIN array roles (gate XOR satisfecho, dbSync.js:1424-1428); caps directas retiradas del seed (cut-over, en orden DESPUES del mapping; la coexistencia transitoria es inocua por dedupe); privatizacion por profile-gating con visibilidad verificada (incl. Admin); paridad cd/cm reconciliada; efectivo por rol == baseline de caps efectivas de S1 salvo institution:view en cd." }
 
 ### Enmienda 6
 
+**Tasks agregadas:**
+
+- S1: Poblar en el cuerpo del ticket el Coverage map (REQ -> test cases) y dejar preparada la tabla de Regresion (suite/comando/before/after/delta) para ambas suites rbacRoles.test.js (cd y cm), con el before capturado. Files: cuerpo del ticket (## Testing). Validation: cada REQ tiene su(s) test case(s) mapeado(s) y la tabla de regresion tiene las filas suite/comando con el before. Rollback: n/a (documental). (valida: REQ-TEST-01; rollback: n/a (documental))
+
 **Task ops:**
 
-- edit S1.T3 { desc="Inventariar TODAS las referencias a los nombres de rol viejos: (a) documentos (grep); (b) arrays roles: de layouts de cd/cm y app.json de otros mods (dbSync.js:846-855 re-crea roles desde layout); (c) filtro por rol activo (authChecker.js:116-118). Registrar cada una con path:linea para remediar en S4", validates=["REQ-PRESERVE-02","REQ-RETIRE-01"] }
-- edit S4.T4 { desc="Remediar TODAS las referencias del inventario de S1.T3 (docs + assertions de tests + layouts/app.json + runtime) de nombres viejos a nuevos, para que el sync no re-cree roles con nombre viejo", validates=["REQ-PRESERVE-02","REQ-RETIRE-01"] }
+- edit S2.T3 { desc="Declarar los 2 perfiles compuestos (union Diseñador ∪ Autoridad) en cd y cm para Admin/Consultor (extends la extension Autoridad + delta Diseñador, derivado del mapa vivo). DEPENDE de que la extension Autoridad ya este declarada (autoria de perfiles de S2, se ejecuta antes que esta task). Files: mods/curriculum-design/profiles/*.json, mods/curriculum-mapping/profiles/*.json. Validation: la union resuelta del compuesto == Diseñador ∪ Autoridad del modulo, sin faltantes ni sobrantes; los perfiles standalone no se alteran. Rollback: borrar los archivos del compuesto." }
+- edit S4.T1 { desc="Declarar profileRoleMapping en config/app.json de ambos mods (4 curriculares -> su perfil; Admin/Consultor -> compuesto) y navByRole para el profile-gating. navByRole ES una clave declarable en config/app.json del mod (ej. mods/hello-world-mod/config/app.json; se persiste como columna up1_suite_app.navByRole, dbSync.js:717; el resolver la lee en app.resolver.js:127-141). Asegurar que el app.json NO declare el array roles institucional (gate XOR, dbSync.js:1424-1428, mutuamente excluyente con profileRoleMapping). El sync (syncAppProfileMapping, dbSync.js:1481) crea las filas up1_suite_app_role. Files: config/app.json de cd y cm. Validation: sync 2x idempotente; una fila de mapping por rol al perfil correcto; app.json sin array roles; gate XOR pasa. Rollback: git checkout de ambos app.json y re-sync." }
+- edit S4.T3 { desc="Privatizar la visibilidad de ambas apps por profile-gating: declarar navByRole en config/app.json (clave del mod; columna up1_suite_app.navByRole; el resolver deriva isNavScoped en app.resolver.js:127-141). Verificar los dos sentidos: un rol con perfil mapeado ve la app; un rol sin perfil no la ve; borrar los mappings la oculta (no la vuelve publica). Files: config/app.json de ambos mods + test de nav. Validation: nav visible para un rol curricular y para Admin/Consultor; oculto para un rol sin perfil; sin-mappings oculto. Rollback: revertir navByRole en los app.json y re-sync. (La coordinacion con UPONE-1616 la cubre su task propia en S4.)" }
 
 ### Enmienda 7
 
+**Tasks agregadas:**
+
+- S2: Test de equivalencia estructural (antes del cut-over de S4): la union resuelta base ∪ extension de cada perfil (y del compuesto) == mapa de caps del core_Role en el baseline de S1, sin faltantes ni sobrantes; y cada capability de UPONE-1619/1633 aparece exactamente una vez en el arbol de perfiles del modulo que la usa. Detecta una cap no migrada ANTES del cut-over. Files: mods/curriculum-*/tests/unit/rbacProfiles.test.js. Validation: el test pasa; ninguna cap del baseline falta en el perfil resuelto; caps de 1619/1633 sin duplicar. Rollback: borrar el test. (valida: REQ-PROFILE-01, REQ-SET-01, REQ-CAPS-01, test; rollback: borrar el test)
+
 **Task ops:**
 
-- edit S7.T4 { desc="Verificacion runtime (DET-36) del camino CON vinculos (inyeccion por set, modRoleId != null): vuelco efectivo por los 6 roles con vinculo == baseline S1 (salvo institucion), evidenciando herencia+dedup en runtime. Evidencia concreta: screenshot/console/DOM del vuelco por rol con vinculo presente. NO es unit del resolver de core (owned by core, UPONE-1353/1354; ver decision coverage-scope); el estado SIN vinculo se cubre en S5. Regresion RBAC verde.", validates=["REQ-TEST-01","REQ-CONVIV-01"], isTest=true }
+- edit S2.T8 { desc="Ajustar los nombres de los application PROFILES a la convencion (roleNaming.js: isConventionalRoleName / isAppProfileCandidate) y verificar con un test unitario que cada nombre de perfil declarado pasa la convencion, sin residuos de referencias al detector eliminado validateModRoleNameCollisions. Los nombres de ROL se renombran en S3 (no aca). Files: mods/curriculum-design/profiles/*.json, mods/curriculum-mapping/profiles/*.json, test unitario de nombres. Validation: el sync no reporta no-conformidad; el test evalua cada nombre de perfil contra isConventionalRoleName/isAppProfileCandidate. Rollback: revertir los renombres de perfil.", isTest=true }
+- edit S2.T10 { validates=["REQ-PROFILE-01","REQ-SET-01","REQ-ADD-01","REQ-CAPS-01","REQ-NOTIFY-01"] }
+- edit S4.T8 { validates=["REQ-LINK-01","REQ-VIS-01","REQ-CONVIV-01","REQ-PRESERVE-01","REQ-CAPS-01"] }
 
-### Enmienda 8
+## Sessions
 
-**Tasks agregadas:**
+### Session 1 · T2 · open
 
-- S6: Capturar en el KB de kanai (rule records) las RULE candidatas del ticket: (1) un set (base∪extension) debe replicar el mapa del rol sin sobrantes ni faltantes; (2) el renombre de roles debe ser idempotente por nombre viejo y correr ANTES de ensureRoles. Con what/why/where/when (DET-37 dim2). (valida: REQ-SET-01, REQ-PRESERVE-02; rollback: borrar los rule records creados)
+**Tasks:**
+- [ ] S1.T1
+- [ ] S1.T2
+- [ ] S1.T3
+- [ ] S1.T4
+- [ ] S1.T5
 
-### Enmienda 9
+**Gate (auto)**: baseline de caps efectivas capturado, run verde de la suite RBAC registrado (before), matriz accion->capability construida y huecos (incl. institution:view) listados.
 
-### Enmienda 10
+### Session 2 · T3 · open
 
-**Tasks agregadas:**
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+- [ ] S2.T4
+- [ ] S2.T5
+- [ ] S2.T6
+- [ ] S2.T7
+- [ ] S2.T8
+- [ ] S2.T9
+- [ ] S2.T10
 
-- S2: Secuenciar/rebase con UPONE-1619 (mismo mods/curriculum-design/seed/_data-rbac.js): acordar orden de merge o rebase ANTES de tocar el seed (S2.T2). Riesgo alto de secuenciacion. (valida: REQ-PRESERVE-02; rollback: n/a (coordinacion))
-- S5: Aviso a UPONE-1530 (frontera del MCP): notificar el cambio de nombres de rol y permisos que mueven lo que el MCP expone/valida. (valida: REQ-VIS-01; rollback: n/a (aviso))
+**Gate (auto)**: perfiles (base + extensiones + compuesto) materializados por el sync en cd y cm; institution:view en la base de cd; verificacion de aislamiento por app superada (precondicion dura de declarar institucion); caps de UPONE-1619/1633 absorbidas; nombres conformes a roleNaming.
+
+### Session 3 · T2 · open
+
+**Tasks:**
+- [ ] S3.T1
+- [ ] S3.T2
+- [ ] S3.T3
+
+**Gate (auto)**: 4 roles renombrados a 'Learning Assurance <Rol>' (sin guion), 120 asignaciones conservadas, 0 roles con nombre viejo (barrido global limpio).
+
+### Session 4 · T3 · open
+
+**Tasks:**
+- [ ] S4.T1
+- [ ] S4.T2
+- [ ] S4.T3
+- [ ] S4.T4
+- [ ] S4.T5
+- [ ] S4.T6
+- [ ] S4.T7
+
+**Gate (strong)**: profileRoleMapping declarado (4 curriculares -> su perfil; Admin/Consultor -> compuesto) y app.json SIN array roles (gate XOR satisfecho, dbSync.js:1424-1428); caps directas retiradas del seed (cut-over, en orden DESPUES del mapping; la coexistencia transitoria es inocua por dedupe); privatizacion por profile-gating con visibilidad verificada (incl. Admin); paridad cd/cm reconciliada; efectivo por rol == baseline de caps efectivas de S1 salvo institution:view en cd.
+
+### Session 5 · T3 · open
+
+**Tasks:**
+- [ ] S5.T1
+- [ ] S5.T2
+- [ ] S5.T3
+- [ ] S5.T4
+- [ ] S5.T5
+
+**Gate (auto)**: huerfano GestorCurricular + 2 fixtures retirados; sync 2x no los regenera.
+
+### Session 6 · T3 · open
+
+**Tasks:**
+- [ ] S6.T1
+- [ ] S6.T2
+- [ ] S6.T3
+- [ ] S6.T4
+- [ ] S6.T5
+
+**Gate (strong)**: matriz automatizada verde + smoke runtime con rol curricular activo (caso PO end-to-end + Consultor read-only) + regresion RBAC verde (before/after) + doc del escenario final + RULE capturada.

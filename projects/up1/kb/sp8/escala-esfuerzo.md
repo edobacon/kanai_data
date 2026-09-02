@@ -1,3 +1,9 @@
+---
+id: DOC-kb-sp8-escala-esfuerzo
+project: up1
+type: doc
+---
+
 # Escala de esfuerzo y sensibilidad
 
 > Dos ejes independientes para medir un ticket con etiquetas legibles, en vez de story points. Reutilizable para futuras mediciones en up1.

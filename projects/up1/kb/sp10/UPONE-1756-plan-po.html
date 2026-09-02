@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tributacion: plan de division</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #f6f8f7;
+    --surface: #ffffff;
+    --surface-2: #eef2f1;
+    --surface-3: #e4e9e8;
+    --text: #1b2624;
+    --text-2: #445351;
+    --muted: #798986;
+    --border: #dbe3e1;
+    --border-strong: #c4d0ce;
+    --accent: #0a808c;
+    --accent-ink: #06565f;
+    --accent-soft: #e3f1f2;
+    --accent-soft-strong: #cde7e9;
+    --warn: #93590f;
+    --warn-bg: #faf0dd;
+    --warn-border: #e3c583;
+    --bad: #a3382a;
+    --bad-bg: #fbeeec;
+    --ok: #276b46;
+    --ok-bg: #e9f5ee;
+    --shadow: 0 1px 2px rgba(20,30,28,.04), 0 10px 30px rgba(20,30,28,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg: #12191a;
+      --surface: #182121;
+      --surface-2: #1e2929;
+      --surface-3: #263231;
+      --text: #eaf2f0;
+      --text-2: #b6c6c3;
+      --muted: #82938f;
+      --border: #2b3838;
+      --border-strong: #3a4948;
+      --accent: #4dc2cc;
+      --accent-ink: #a9e6ea;
+      --accent-soft: rgba(77,194,204,.12);
+      --accent-soft-strong: rgba(77,194,204,.2);
+      --warn: #e0ab55;
+      --warn-bg: rgba(224,171,85,.12);
+      --warn-border: rgba(224,171,85,.4);
+      --bad: #e28277;
+      --bad-bg: rgba(226,130,119,.12);
+      --ok: #7dcba2;
+      --ok-bg: rgba(125,203,162,.12);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #12191a;
+    --surface: #182121;
+    --surface-2: #1e2929;
+    --surface-3: #263231;
+    --text: #eaf2f0;
+    --text-2: #b6c6c3;
+    --muted: #82938f;
+    --border: #2b3838;
+    --border-strong: #3a4948;
+    --accent: #4dc2cc;
+    --accent-ink: #a9e6ea;
+    --accent-soft: rgba(77,194,204,.12);
+    --accent-soft-strong: rgba(77,194,204,.2);
+    --warn: #e0ab55;
+    --warn-bg: rgba(224,171,85,.12);
+    --warn-border: rgba(224,171,85,.4);
+    --bad: #e28277;
+    --bad-bg: rgba(226,130,119,.12);
+    --ok: #7dcba2;
+    --ok-bg: rgba(125,203,162,.12);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page{ max-width: 900px; margin: 0 auto; padding: 48px 24px 100px; }
+
+  h1, h2, h3, h4{ font-family: "Source Serif 4", Georgia, "Times New Roman", serif; color: var(--text); text-wrap: balance; }
+  code, .mono{ font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  /* Header */
+  .eyebrow{
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--accent-ink); background: var(--accent-soft); border: 1px solid var(--accent-soft-strong);
+    padding: 6px 13px; border-radius: 999px;
+  }
+  h1.title{ font-size: 38px; font-weight: 700; line-height: 1.12; margin: 20px 0 8px; letter-spacing: -.01em; }
+  p.subtitle{ font-size: 17px; color: var(--text-2); margin: 0 0 22px; font-family: "Source Serif 4", serif; font-style: italic; }
+
+  .callout{
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: 10px; padding: 15px 18px; font-size: 14.5px; color: var(--text-2); box-shadow: var(--shadow);
+  }
+  .callout b{ color: var(--text); }
+  .callout .num{ font-family: "IBM Plex Mono", monospace; font-weight: 600; color: var(--accent-ink); font-size: 13px; white-space: nowrap; }
+  .callout.gate{ border-left-color: var(--warn); background: var(--warn-bg); border-color: var(--warn-border); color: var(--text-2); }
+  .callout.gate b{ color: var(--text); }
+
+  /* Section rhythm */
+  section{ margin-top: 64px; }
+  .section-label{
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .section-label .idx{ font-family: "IBM Plex Mono", monospace; color: var(--accent-ink); }
+  .section-label::after{ content: ""; flex: 1; height: 1px; background: var(--border); }
+  h2.section-title{ font-size: 25px; margin: 0 0 14px; font-weight: 600; }
+  .lede{ font-size: 15.5px; color: var(--text-2); max-width: 66ch; }
+
+  /* Explanatory two-up (section 2) */
+  .explain-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
+  @media (max-width: 760px){ .explain-grid{ grid-template-columns: 1fr; } }
+  .explain-card{ background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); }
+  .explain-card h3{ font-size: 16.5px; margin: 0 0 10px; }
+  .explain-card p{ font-size: 14px; color: var(--text-2); margin: 0 0 8px; }
+  .explain-card p:last-child{ margin-bottom: 0; }
+  .explain-card .tag{
+    display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500;
+    color: var(--accent-ink); background: var(--accent-soft); border-radius: 6px; padding: 2px 8px; margin-bottom: 10px;
+  }
+
+  /* Ticket map cards (section 3) */
+  .map-list{ display: flex; flex-direction: column; gap: 12px; margin-top: 22px; }
+  .map-card{
+    display: grid; grid-template-columns: 1fr auto auto; gap: 10px 18px; align-items: start;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
+  }
+  .map-card.sprint{ border-color: var(--accent-soft-strong); box-shadow: var(--shadow); }
+  .map-card.followup{ background: var(--surface-2); opacity: .82; }
+  .map-card .name{ display:flex; flex-wrap:wrap; align-items:center; gap: 10px; }
+  .map-card .name a{ font-family: "Source Serif 4", serif; font-size: 17px; font-weight: 600; color: var(--text); text-decoration: none; }
+  .map-card .name a:hover, .map-card .name a:focus-visible{ color: var(--accent-ink); text-decoration: underline; }
+  .map-card .oneline{ grid-column: 1 / -1; font-size: 13.5px; color: var(--text-2); }
+  .map-card .why{ grid-column: 1 / -1; font-size: 13px; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 2px; }
+  .map-card .why b{ color: var(--text-2); font-weight: 600; }
+  .badge{
+    font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px; white-space: nowrap; align-self: start;
+  }
+  .badge.sprint-badge{ background: var(--accent); color: #fff; }
+  .badge.followup-badge{ background: var(--surface-3); color: var(--text-2); border: 1px solid var(--border-strong); }
+  .sp{ font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 500; color: var(--text-2); white-space: nowrap; align-self: start; }
+  .sp b{ color: var(--text); font-size: 15px; }
+  .sensitivity{ font-size: 11.5px; color: var(--muted); }
+
+  /* Deliverable section */
+  .deliverable-box{
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 26px;
+    box-shadow: var(--shadow); margin-top: 20px;
+  }
+  .deliverable-box h3{ font-size: 17px; margin: 0 0 12px; }
+  .deliverable-box ul{ margin: 0; padding-left: 20px; font-size: 14.5px; color: var(--text-2); }
+  .deliverable-box li{ margin-bottom: 6px; }
+  .built-with{ margin-top: 16px; font-size: 13.5px; color: var(--muted); }
+  .built-with code{ background: var(--surface-2); border-radius: 5px; padding: 1px 6px; }
+
+  .cross-cutting{
+    display: flex; gap: 12px; align-items: flex-start; margin-top: 16px;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; font-size: 13.5px; color: var(--text-2);
+  }
+  .cross-cutting b{ color: var(--text); }
+
+  /* Index */
+  .index-box{
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px;
+    box-shadow: var(--shadow); margin-bottom: 32px;
+  }
+  .index-box ol{ margin: 0; padding-left: 20px; columns: 1; }
+  .index-box li{ margin-bottom: 8px; font-size: 14.5px; }
+  .index-box a{ color: var(--text); text-decoration: none; border-bottom: 1px solid var(--border-strong); }
+  .index-box a:hover, .index-box a:focus-visible{ color: var(--accent-ink); border-color: var(--accent); }
+  .index-box .ibadge{ font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-left: 8px; padding: 1px 7px; border-radius: 999px; }
+  .index-box .ibadge.s{ background: var(--accent-soft); color: var(--accent-ink); }
+  .index-box .ibadge.f{ background: var(--surface-3); color: var(--muted); }
+
+  /* Ticket detail */
+  .ticket{
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 30px 32px 34px; margin-bottom: 28px; box-shadow: var(--shadow); scroll-margin-top: 24px;
+  }
+  @media (max-width: 620px){ .ticket{ padding: 22px 18px 26px; } }
+  .ticket-head{ display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: baseline; margin-bottom: 4px; }
+  .ticket-head h3{ font-size: 22px; margin: 0; font-weight: 700; }
+  .ticket-ref{ font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--muted); margin: 0 0 18px; }
+  .ticket-meta{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .meta-chip{ font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text-2); background: var(--surface-2); }
+  .meta-chip.accent{ background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent-soft-strong); }
+
+  .ticket h4.sec{
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-ink);
+    margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .ticket h4.sec:first-of-type{ margin-top: 22px; }
+  .ticket p{ font-size: 14.5px; color: var(--text-2); margin: 0 0 10px; }
+  .ticket blockquote{
+    margin: 10px 0; padding: 10px 14px; background: var(--surface-2); border-left: 3px solid var(--border-strong);
+    border-radius: 0 8px 8px 0; font-size: 13.5px; color: var(--text-2);
+  }
+  .ticket ul.plain, .ticket ol.plain{ font-size: 14.5px; color: var(--text-2); padding-left: 22px; margin: 0 0 10px; }
+  .ticket ul.plain li, .ticket ol.plain li{ margin-bottom: 6px; }
+  .checklist{ list-style: none; padding: 0; margin: 0 0 6px; display: flex; flex-direction: column; gap: 7px; }
+  .checklist li{
+    display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; color: var(--text-2);
+  }
+  .checklist li::before{
+    content: ""; flex: 0 0 auto; width: 15px; height: 15px; margin-top: 2px;
+    border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--surface);
+  }
+  .ticket .tablewrap{ overflow-x: auto; margin: 10px 0 16px; border: 1px solid var(--border); border-radius: 10px; }
+  .ticket table{ width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 480px; }
+  .ticket th, .ticket td{ text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .ticket th{ background: var(--surface-2); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  .ticket tr:last-child td{ border-bottom: 0; }
+  .ticket code{ background: var(--surface-2); border-radius: 5px; padding: 1px 6px; font-size: 12.5px; color: var(--text); }
+  .ticket .note{
+    background: var(--warn-bg); border: 1px solid var(--warn-border); border-radius: 8px; padding: 10px 14px;
+    font-size: 13.5px; color: var(--text-2); margin: 10px 0;
+  }
+  .ticket .note b{ color: var(--text); }
+  .back-to-index{ display: inline-block; margin-top: 6px; font-size: 12.5px; color: var(--muted); text-decoration: none; border-bottom: 1px dashed var(--border-strong); }
+  .back-to-index:hover, .back-to-index:focus-visible{ color: var(--accent-ink); }
+
+  .foot{ margin-top: 70px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+
+  :focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- 1. Encabezado -->
+  <span class="eyebrow">UPONE-1756 · Curriculum Mapping · Epica UPONE-1452</span>
+  <h1 class="title">Tributacion: plan de division y tickets</h1>
+  <p class="subtitle">Para revision y visto bueno del PO</p>
+  <div class="callout">
+    <span class="num">~57 SP</span>
+    <span>Es un feature grande, dividido en <b>6 tickets</b>. Ninguno queda por encima del techo del calibrador de esfuerzo (13 SP).</span>
+  </div>
+
+  <!-- 2. Como se dividio -->
+  <section id="como-se-dividio">
+    <div class="section-label"><span class="idx">02</span> Como se dividio</div>
+    <h2 class="section-title">Dos criterios, no uno arbitrario</h2>
+    <p class="lede">El corte no es un reparto parejo del trabajo: responde a un limite tecnico del proceso de estimacion y a una decision deliberada sobre como construir el modelo de datos.</p>
+    <div class="explain-grid">
+      <div class="explain-card">
+        <span class="tag">Techo del calibrador</span>
+        <h3>Mayor = 13 SP por ticket</h3>
+        <p>El calibrador de esfuerzo del equipo define "Mayor" como el escalon mas alto que un solo ticket puede absorber: 13 puntos. Un feature que pesa mas que eso no se estima en un ticket sobredimensionado: se corta en varios, cada uno dentro del rango calibrado.</p>
+        <p>Tributacion completa pesa aproximadamente 57 SP. Repartido en un solo ticket, quedaria varias veces por encima del techo: invisible para el equipo hasta que ya es tarde, dificil de re-priorizar a mitad de camino. Por eso son 6 tickets, ninguno mayor a 13.</p>
+      </div>
+      <div class="explain-card">
+        <span class="tag">Principio forward-compatible</span>
+        <h3>Cablear una vez, no reestructurar despues</h3>
+        <p>El segundo ticket de este sprint no agrega funcionalidad visible: agrega al modelo de datos los campos que el trabajo futuro va a necesitar (peso de la tributacion, esquema de desarrollo, indicador de nivel representativo), aunque todavia no se usen.</p>
+        <p>Incluye tambien el unico cambio destructivo del feature completo: el renombre de un objeto y un campo. Hacerlo ahora, una sola vez, evita que cada ticket de follow-up tenga que tocar el esquema de datos otra vez. De ahi en mas, todo lo que sigue es aditivo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Mapa de tickets -->
+  <section id="mapa-de-tickets">
+    <div class="section-label"><span class="idx">03</span> Mapa de tickets</div>
+    <h2 class="section-title">Los 6 tickets del feature</h2>
+    <p class="lede">Dos entran a este sprint. Los otros cuatro quedan en follow-up: construyen sobre lo que este sprint deja andando, sin necesidad de tocarlo de nuevo.</p>
+
+    <div class="map-list">
+
+      <div class="map-card sprint">
+        <div class="name"><a href="#t-alcance-sp10">CRUD de tributacion por competencia</a></div>
+        <span class="badge sprint-badge">Este sprint</span>
+        <span class="sp"><b>13</b> SP<br><span class="sensitivity">Mayor · sensibilidad media</span></span>
+        <div class="oneline">El "must" del sprint: asignar, ver, editar, mover y retirar la tributacion de una asignatura contra una competencia, en la grilla, con permisos y validaciones en el servidor.</div>
+        <div class="why"><b>Por que este sprint:</b> es la excepcion de alcance validada por el PO en el planning; entrega un flujo demostrable de punta a punta sobre una matriz ya adoptada.</div>
+      </div>
+
+      <div class="map-card sprint">
+        <div class="name"><a href="#t-alcance-sp10-delta">Cableado del modelo + rename</a></div>
+        <span class="badge sprint-badge">Este sprint</span>
+        <span class="sp"><b>8</b> SP<br><span class="sensitivity">Considerable + menor · sensibilidad media-alta</span></span>
+        <div class="oneline">Agrega al modelo los campos que el follow-up va a necesitar (peso, esquema de desarrollo, nivel representativo) y ejecuta, de una sola vez, el renombre destructivo de un objeto y un campo.</div>
+        <div class="why"><b>Por que este sprint:</b> deja el modelo cableado para que todo el follow-up sea aditivo, sin una segunda migracion destructiva mas adelante. Idealmente se ejecuta junto con el ticket anterior.</div>
+      </div>
+
+      <div class="map-card followup">
+        <div class="name"><a href="#t-followup">Pesos + segunda forma (malla) + via masiva</a></div>
+        <span class="badge followup-badge">Follow-up</span>
+        <span class="sp"><b>13</b> SP<br><span class="sensitivity">Mayor · sensibilidad media</span></span>
+        <div class="oneline">Agrega el peso de cada asignatura dentro de su nivel, el guardado transaccional de conjunto, la asignacion desde la malla por periodo y la via masiva.</div>
+        <div class="why"><b>Por que follow-up:</b> es aditivo sobre el CRUD ya entregado, no bloquea el demo de este sprint. Construye sobre un modelo que ya quedo cableado, sin tocar el esquema de datos otra vez.</div>
+      </div>
+
+      <div class="map-card followup">
+        <div class="name"><a href="#t-followup-delta">Indicadores + versionado</a></div>
+        <span class="badge followup-badge">Follow-up</span>
+        <span class="sp"><b>10</b> SP<br><span class="sensitivity">Considerable + considerable · sensibilidad media</span></span>
+        <div class="oneline">Los indicadores de cobertura con sus dos denominadores, el efecto del esquema de logro sobre esos indicadores, y el versionado del plan (replicar el mapa de tributacion o empezar limpio).</div>
+        <div class="why"><b>Por que follow-up:</b> depende de que el CRUD y los pesos ya existan; no aporta al flujo operativo minimo de este sprint.</div>
+      </div>
+
+      <div class="map-card followup">
+        <div class="name"><a href="#t-followup-delta-2">outcomeAlignment (F6) + retiro con aviso (R-7)</a></div>
+        <span class="badge followup-badge">Follow-up</span>
+        <span class="sp"><b>8</b> SP<br><span class="sensitivity">Mayor · sensibilidad media</span></span>
+        <div class="oneline">El refinamiento de la tributacion a nivel de resultado de aprendizaje, y el retiro que avisa antes de borrar cuando hay resultados de aprendizaje que dependen de la fila.</div>
+        <div class="why"><b>Por que follow-up:</b> F6 ya estaba fuera de alcance del feature base desde el planning original; el retiro con aviso solo tiene sentido una vez que F6 existe.</div>
+      </div>
+
+      <div class="map-card followup">
+        <div class="name"><a href="#t-migracion-niveles">Migracion de niveles (matrices existentes)</a></div>
+        <span class="badge followup-badge">Follow-up · fast-follow</span>
+        <span class="sp"><b>5</b> SP<br><span class="sensitivity">Considerable · sensibilidad alta</span></span>
+        <div class="oneline">Puebla los niveles de desarrollo de las matrices que ya existen (cada competencia hereda todos sus niveles), para que el CRUD del sprint tambien opere sobre los datos ya cargados.</div>
+        <div class="why"><b>Por que fast-follow:</b> sin esta migracion el CRUD entregado anda en matrices nuevas pero no en las existentes (R-4 exige niveles declarados). Conviene priorizarla pegada al sprint, no al fondo del follow-up.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. El entregable de este sprint -->
+  <section id="entregable-de-este-sprint">
+    <div class="section-label"><span class="idx">04</span> El entregable de este sprint</div>
+    <h2 class="section-title">Que queda operativo al terminar</h2>
+    <p class="lede">Con los dos tickets de este sprint, un responsable curricular puede operar el flujo completo de tributacion por competencia sin salir del registro del plan.</p>
+    <div class="deliverable-box">
+      <h3>Flujo operativo: tributacion asignatura por competencia, en grilla</h3>
+      <ul>
+        <li><b>Asignar</b> una asignatura a una celda competencia por nivel, sobre una matriz con adopcion vigente.</li>
+        <li><b>Ver</b> el estado en la grilla, en la ficha resumida y en el panel de detalle.</li>
+        <li><b>Editar</b> el nivel y el tipo de contribucion de una tributacion existente.</li>
+        <li><b>Mover</b> una tributacion de celda sin duplicarla.</li>
+        <li><b>Retirar</b> una tributacion, con confirmacion simple (el aviso por dependientes llega recien en el follow-up, cuando exista F6).</li>
+      </ul>
+      <div class="built-with">Se logra con <code>UPONE-1756-alcance-sp10</code> (el CRUD) y su delta <code>UPONE-1756-alcance-sp10-delta</code> (el modelo cableado y el rename). Los dos tickets del sprint suman <b>21 SP</b> (13 + 8) y, juntos, completan el CRUD.</div>
+    </div>
+<div class="cross-cutting">
+      <span>◆</span>
+      <span><b>Criterio transversal del sprint (MCP):</b> toda regla de negocio (validaciones, reglas R-1 a R-10) vive en el resolver, del lado del servidor. El cliente nunca es la unica linea de defensa: aunque la interfaz no ofrezca una opcion invalida, el servidor la vuelve a comprobar.</span>
+    </div>
+  </section>
+
+  <!-- 5. Detalle completo -->
+  <section id="detalle-completo">
+    <div class="section-label"><span class="idx">05</span> Detalle completo</div>
+    <h2 class="section-title">Los 6 tickets, listos para Jira</h2>
+    <p class="lede">Contenido integro de cada ticket: historia de usuario, alcance, criterios de aceptacion, definition of done, estimacion y decisiones abiertas. Cada seccion puede copiarse directo al ticket correspondiente en Jira.</p>
+
+    <div class="index-box">
+      <ol>
+        <li><a href="#t-alcance-sp10">CRUD de tributacion por competencia</a><span class="ibadge s">Este sprint · 13 SP</span></li>
+        <li><a href="#t-alcance-sp10-delta">Cableado del modelo + rename</a><span class="ibadge s">Este sprint · 8 SP</span></li>
+        <li><a href="#t-followup">Pesos + segunda forma (malla) + via masiva</a><span class="ibadge f">Follow-up · 13 SP</span></li>
+        <li><a href="#t-followup-delta">Indicadores + versionado</a><span class="ibadge f">Follow-up · 10 SP</span></li>
+        <li><a href="#t-followup-delta-2">outcomeAlignment (F6) + retiro con aviso</a><span class="ibadge f">Follow-up · 8 SP</span></li>
+      </ol>
+    </div>
+
+    <!-- ===================== TICKET 1 ===================== -->
+    <article class="ticket" id="t-alcance-sp10">
+      <div class="ticket-head">
+        <h3>CRUD de tributacion por competencia</h3>
+      </div>
+      <p class="ticket-ref">UPONE-1756 · slice: CRUD de tributacion por competencia (grilla)</p>
+      <div class="ticket-meta">
+        <span class="meta-chip accent">Este sprint</span>
+        <span class="meta-chip">13 SP · Mayor</span>
+        <span class="meta-chip">Sensibilidad media</span>
+        <span class="meta-chip">Epica UPONE-1452</span>
+        <span class="meta-chip">Asignado: Eduardo Bacon</span>
+      </div>
+
+      <h4 class="sec">Fuente canonica (PO)</h4>
+      <p>La descripcion en Jira es un enlace a la maqueta de sp10. El alcance de esta version se acota, con acuerdo del equipo, a un <b>corte vertical</b>: un CRUD completo de tributacion <b>por competencia</b> (modo grilla), de punta a punta y gobernado.</p>
+      <blockquote>Curriculum Mapping | Tributacion.</blockquote>
+
+      <h4 class="sec">Historia de usuario</h4>
+      <p>Como responsable curricular, quiero asignar, ver, editar y retirar la tributacion de asignaturas contra competencias en una grilla competencia por nivel, para registrar de punta a punta contra que competencias tributa cada asignatura de un plan, en que nivel y con que tipo de contribucion.</p>
+
+      <h4 class="sec">Objetivo</h4>
+      <p>Entregar un <b>CRUD completo de tributacion por competencia (grilla)</b> sobre una matriz ya adoptada: crear (asignar), leer (grilla, ficha y panel de detalle), editar (nivel, tipo de contribucion, mover) y retirar (delete gobernado), con la escritura gobernada del mod.</p>
+
+      <h4 class="sec">Contexto (para dimensionar)</h4>
+      <ul class="plain">
+        <li>Es el corte vertical del feature grande (~34 SP para este tramo del modelo). Entrega un flujo demostrable de punta a punta, no el feature entero.</li>
+        <li><b>Frontera:</b> <code>todo-mod-only</code> (verificado). La pantalla vive en la vista del plan de Curriculum Design, pero el objeto y el permiso son de Curriculum Mapping; el mecanismo cross-mod de capability ya existe en la plataforma.</li>
+        <li>Verificado sobre <code>curriculum-mapping@584499e</code> y <code>curriculum-design@8a151e7</code>.</li>
+        <li><b>Excepcion de sprint (planning sp10):</b> el sprint prohibe nuevas extensiones salvo validacion explicita; la tributacion fue validada como la excepcion en el planning (reunion de maqueta con el PO Esteban y Francisco). Este ticket es esa excepcion.</li>
+      </ul>
+
+      <h4 class="sec">Alcance</h4>
+      <p><b>Dentro (el CRUD por competencia, grilla):</b></p>
+      <ol class="plain">
+        <li><b>F1 minimo:</b> R-3 (nodo que consolida no es destino) se resuelve como <code>sinHijos OR isHolistic</code>, con "sin hijos" derivado del arbol y el invariante de que un nodo con <code>isHolistic=false</code> y cero hijos es invalido; se reusa <code>isHolistic</code> (ya existe), sin crear <code>isDirectlyMeasured</code> (el rename cosmetico va al ticket delta); objeto nuevo <code>CompetencyNodeDevelopmentLevel</code> (patron <code>CompetencyNodeOwnerUnit</code>/<code>ScopeUnit</code>) para R-4 (niveles declarados).</li>
+        <li><b>F3 acotado:</b> resolver gobernado de asignar, mover y retirar individual (R-1 adopcion vigente, R-2 par unico, R-3 no consolida, R-4 nivel declarado, R-5 tipo obligatorio, R-10 mover actualiza; delete gobernado). Escritura por operacion, no upsert de conjunto.</li>
+        <li><b>F4:</b> pestana Tributacion (lectura) mas ficha <code>CODIGO NIVEL CONTRIBUCION</code> mas panel de detalle.</li>
+        <li><b>F5 parcial:</b> la grilla editable mas panel editable (nivel, tipo) mas accion Retirar.</li>
+        <li><b>Permisos:</b> <code>competencyalignment:view/create/modify/delete</code> declaradas y cableadas a los 4 roles.</li>
+        <li><b>Movido al delta</b> (ticket "Cableado del modelo + rename"): los campos forward-compatible que el flujo aun no usa (<code>contributionPercentage</code>, <code>developmentSchemeId</code>, <code>achievementBasis</code>, <code>isRepresentative</code>, indice de grupo) y el rename destructivo <code>coverageLevelId</code> a <code>developmentLevelId</code> mas objeto <code>CoverageScheme</code> a <code>DevelopmentScheme</code>.</li>
+      </ol>
+      <p><b>Fuera (va al follow-up):</b></p>
+      <ul class="plain">
+        <li>Upsert de conjunto por (plan, matriz) transaccional mas guardado global.</li>
+        <li>Peso del eje 1 (<code>contributionPercentage</code>, grupo, reparto automatico/manual, suma 100 al publicar).</li>
+        <li>Segunda forma (malla por periodo) mas via masiva.</li>
+        <li>Indicadores con sus dos denominadores.</li>
+        <li><code>developmentSchemeId</code> / <code>achievementBasis</code> en la matriz y su efecto en indicadores.</li>
+        <li>Filas fuera de diseno.</li>
+        <li>Retiro con aviso R-7 (resultados de aprendizaje dependientes) y versionado del plan (R-8).</li>
+        <li><code>outcomeAlignment</code> (F6).</li>
+        <li>Migracion de datos existentes.</li>
+      </ul>
+
+      <h4 class="sec">Criterios de aceptacion</h4>
+      <ul class="checklist">
+        <li>Sobre una matriz adoptada, un usuario con permiso asigna una asignatura a una celda competencia por nivel (crear), gobernado.</li>
+        <li>Solo se ofrecen competencias de matrices con adopcion vigente (R-1); no se puede duplicar el par asignatura-competencia (R-2).</li>
+        <li>No se puede tributar a un nodo que consolida (R-3: <code>sinHijos OR isHolistic</code>; un nodo con <code>isHolistic=false</code> y cero hijos es invalido); el nivel debe ser de los declarados por la competencia (R-4).</li>
+        <li>La grilla, la ficha y el panel de detalle leen el estado correctamente.</li>
+        <li>Se puede editar el nivel y el tipo de contribucion, y mover una tributacion de celda (actualiza, no duplica, R-10).</li>
+        <li>Se puede retirar una tributacion (delete gobernado) con confirmacion simple.</li>
+        <li>Un usuario sin <code>competencyalignment:*</code> no ve la pestana ni sus acciones, aunque tenga acceso a Curriculum Design.</li>
+      </ul>
+
+      <h4 class="sec">Definition of Done</h4>
+      <p>Aplica el estandar DoR/DoD del equipo. Ademas:</p>
+      <ul class="checklist">
+        <li>Escritura gobernada: ninguna via (UI, API, MCP) salta R-1 a R-5 y R-10; el resolver revalida.</li>
+        <li>RBAC efectivo verificado en runtime (incluida la consulta cross-mod desde la vista del plan).</li>
+        <li>i18n es/en/pt con paridad; tenant isolation.</li>
+        <li>Tests unit de las reglas del CRUD mas smoke del recorrido asignar/editar/mover/retirar.</li>
+        <li>Artefactos de sync/seed no commiteados.</li>
+        <li><b>Conexion con MCP a nivel de servicios</b> (criterio transversal del sprint, planning sp10): la logica de negocio (validaciones, reglas R-*) vive en el resolver server-side, no exclusivamente en el cliente/front.</li>
+      </ul>
+
+      <h4 class="sec">Tests minimos</h4>
+      <ul class="checklist">
+        <li>Asignar a competencia medible de matriz adoptada: persiste; a no adoptada o a nodo que consolida: bloqueado con motivo.</li>
+        <li>Nivel fuera de los declarados: bloqueado.</li>
+        <li>Mover una ficha de celda: la fila se actualiza (no hay segunda fila).</li>
+        <li>Retirar: la fila se borra; el permiso <code>:delete</code> es requerido.</li>
+        <li>Sin <code>competencyalignment:view</code>: la pestana no aparece.</li>
+      </ul>
+
+      <h4 class="sec">Factores transversales</h4>
+      <ul class="checklist">
+        <li>Permisos (RBAC): aplica (CRUD con las 4 capabilities, cableadas a los roles existentes).</li>
+        <li>Capa de lenguaje (i18n): aplica (pestana, ficha, panel, confirmacion) es/en/pt.</li>
+        <li>Accesibilidad (WCAG): aplica a la grilla y al panel.</li>
+        <li>Convenciones de mod: aplica (escritura gobernada <code>*Validated</code>, tenant isolation, tabla de union por Prisma directo en la mutation, sin field resolvers).</li>
+        <li>Historial (DataLog): evaluar sobre <code>CompetencyAlignment</code>.</li>
+      </ul>
+
+      <h4 class="sec">Frontera core/mod (Aduana)</h4>
+      <p><code>todo-mod-only</code> (heredado, verificado): objeto, resolver, capabilities y tabla de union son del mod; la pantalla agrega un tab en <code>curriculum-design/config/layouts/default_Curriculum_view.json</code> (precedente con <code>requiredCapability</code>), el componente vive en <code>curriculum-mapping/modsComponents/</code>; la consulta cross-mod de capability ya existe en la plataforma. No hay Core Extension.</p>
+
+      <h4 class="sec">Dependencias y precondiciones</h4>
+      <ul class="plain">
+        <li>Matriz con <code>MatrixAdoption</code> vigente para el plan; plan con <code>planEntry</code> cargados (malla previa en curriculum-design).</li>
+        <li>Tab nuevo en la vista del plan (curriculum-design).</li>
+        <li><b>Habilita</b> el ticket follow-up: pesos, segunda forma, indicadores, versionado y outcomeAlignment se construyen sobre este CRUD.</li>
+      </ul>
+
+      <h4 class="sec">Estimacion</h4>
+      <p><code>Esfuerzo: Mayor (13) · Sensibilidad: Media</code>. Es lo que debe alcanzarse este sprint: un flujo de tributacion por competencia operativo de punta a punta (piso e ideal del PO en el planning sp10). Cabe en un ticket base de 13; el cableado forward-compatible y el rename destructivo se separan en el ticket delta (8 SP), idealmente el mismo sprint. Entre los dos tickets del sprint suman 21 SP.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Componente (base)</th><th>Esfuerzo</th><th>SP</th></tr></thead>
+          <tbody>
+            <tr><td>Modelo minimo del flujo: <code>CompetencyAlignment</code> (developmentLevelId, contributionType req/default Develops, planId), <code>CompetencyNodeDevelopmentLevel</code>, capabilities view/create/modify/delete</td><td>Considerable</td><td>4</td></tr>
+            <tr><td>Escritura gobernada mas CRUD por competencia (asignar/editar/mover/retirar; R-1 a R-5, R-10)</td><td>Mayor</td><td>5</td></tr>
+            <tr><td>Vistas: tab en el plan mas grilla mas ficha mas panel de detalle</td><td>Considerable</td><td>4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Total base: 13 SP.</b> El delta (forward-compat + rename) va aparte.</p>
+
+      <h4 class="sec">Decisiones resueltas</h4>
+      <ul class="checklist">
+        <li><b><code>isHolistic</code> vs campo nuevo:</b> <code>isHolistic</code> cubre R-3 (se reusa, existe a nivel de RecordType); el rename a <code>isDirectlyMeasured</code> es cosmetico y va al ticket delta.</li>
+        <li><b>Donde vive el componente:</b> <code>curriculum-mapping/modsComponents/</code>, con el render en la vista del plan.</li>
+      </ul>
+      <h4 class="sec">Decisiones abiertas</h4>
+      <p>Ninguna. Los dos tickets del sprint (13 + 8 = 21 SP) ya van comprometidos dentro del sprint.</p>
+      <div class="note"><b>Deuda explicita (anotar, no cerrar como definitivo):</b> el retiro del slice es un delete simple y es seguro solo porque <code>outcomeAlignment</code> (F6) esta fuera: no hay resultados de aprendizaje que dependan de una tributacion. Cuando entre F6 (en el follow-up), el retiro debe ganar el aviso R-7 (nombrar los resultados de aprendizaje que quedan sin respaldo antes de borrar). No cerrar el retiro como definitivo sin esa salvaguarda.</div>
+<h4 class="sec">Referencias</h4>
+      <p>Feature completo y particion original del alcance. Follow-up: lo diferido de este ticket. Delta del sprint: cableado forward-compatible mas rename. Working copy: <code>curriculum-mapping@584499e</code>, <code>curriculum-design@8a151e7</code>.</p>
+
+      <a class="back-to-index" href="#detalle-completo">Volver al indice</a>
+    </article>
+
+    <!-- ===================== TICKET 2 ===================== -->
+    <article class="ticket" id="t-alcance-sp10-delta">
+      <div class="ticket-head">
+        <h3>Cableado del modelo + rename</h3>
+      </div>
+      <p class="ticket-ref">UPONE-1756 · delta del sprint (cableado forward-compatible + rename destructivo)</p>
+      <div class="ticket-meta">
+        <span class="meta-chip accent">Este sprint</span>
+        <span class="meta-chip">8 SP</span>
+        <span class="meta-chip">Sensibilidad media-alta (por el rename)</span>
+        <span class="meta-chip">Epica UPONE-1452</span>
+        <span class="meta-chip">Asignado: Eduardo Bacon</span>
+      </div>
+
+      <h4 class="sec">Contexto</h4>
+      <p>Delta del ticket base "CRUD de tributacion por competencia" (mismo sprint). Deja el <b>modelo cableado</b> para que el follow-up sea aditivo, y hace el <b>rename destructivo</b> una sola vez. Idealmente el mismo sprint que la base; si la capacidad aprieta, es lo separable sin perder el flujo demostrable.</p>
+
+      <h4 class="sec">Objetivo</h4>
+      <p>Dejar el modelo del feature de tributacion completo (aunque parte no se use todavia) y ejecutar el rename destructivo, para que el follow-up sea puramente aditivo.</p>
+
+      <h4 class="sec">Alcance</h4>
+      <p><b>Dentro:</b></p>
+      <ol class="plain">
+        <li>Campos forward-compatible (aditivos, nullable donde aplica): <code>contributionPercentage</code> en <code>CompetencyAlignment</code> mas indice de grupo <code>(planId, competencyNodeId, developmentLevelId)</code>; <code>developmentSchemeId</code> y <code>achievementBasis</code> en el RecordType Matrix; <code>isRepresentative</code> en <code>CompetencyNodeDevelopmentLevel</code>.</li>
+        <li>Rename destructivo: <code>coverageLevelId</code> a <code>developmentLevelId</code> (barrer el guard RC6 y sus tests en la misma pasada); objeto <code>CoverageScheme</code> a <code>DevelopmentScheme</code>. Coordinar con UPONE-1753 para no renombrar dos veces.</li>
+      </ol>
+      <p><b>Fuera:</b> la logica que consume esos campos (pesos, indicadores) va en el follow-up.</p>
+
+      <h4 class="sec">Criterios de aceptacion</h4>
+      <ul class="checklist">
+        <li>Los campos nuevos existen y migran sin drift; el flujo del ticket base sigue verde.</li>
+        <li>El rename deja el guard RC6 verde (barridos filtro mas tests).</li>
+        <li>El objeto quedo renombrado en objects/lang/layouts/capabilities/tests, sin referencias al nombre viejo.</li>
+      </ul>
+
+      <h4 class="sec">Definition of Done</h4>
+      <p>Aplica el estandar DoR/DoD del equipo. Ademas:</p>
+      <ul class="checklist">
+        <li>Migracion sin drift; sync corrido sin editar archivos sincronizados; artefactos de sync/seed no commiteados.</li>
+        <li><b>Conexion MCP a nivel de servicios</b> (criterio transversal del sprint): los campos y su gobierno quedan del lado del backend, no del cliente.</li>
+      </ul>
+
+      <h4 class="sec">Frontera core/mod (Aduana)</h4>
+      <p><code>todo-mod-only</code>. Sensibilidad alta en el rename (destructivo, migracion y coordinacion con 1753); los campos nuevos son aditivos (sensibilidad baja). Sin Core Extension.</p>
+
+      <h4 class="sec">Estimacion</h4>
+      <p><code>Esfuerzo: Considerable + Menor · Sensibilidad: Media-Alta (por el rename)</code>. Campos forward-compatible (Considerable, ~5) mas rename destructivo (Menor/Alta, ~3). <b>Total: 8 SP.</b> Junto con el ticket base (13 SP), los dos tickets del sprint suman 21 SP.</p>
+
+      <h4 class="sec">Dependencias</h4>
+      <ul class="plain">
+        <li>Se ejecuta junto con el ticket base o inmediatamente despues; el rename se coordina con <b>UPONE-1753</b>.</li>
+        <li><b>Habilita</b> el follow-up: los campos aqui definidos son los que el follow-up consume sin tocar schema.</li>
+      </ul>
+
+      <h4 class="sec">Referencias</h4>
+      <p>Base: CRUD de tributacion por competencia. Feature completo y follow-up: ver tickets siguientes de este documento.</p>
+
+      <a class="back-to-index" href="#detalle-completo">Volver al indice</a>
+    </article>
+
+    <!-- ===================== TICKET 3 ===================== -->
+    <article class="ticket" id="t-followup">
+      <div class="ticket-head">
+        <h3>Pesos + segunda forma (malla) + via masiva</h3>
+      </div>
+      <p class="ticket-ref">UPONE-1756 · follow-up (base): tributacion avanzada, lo diferido del alcance del sprint</p>
+      <div class="ticket-meta">
+        <span class="meta-chip">Follow-up</span>
+        <span class="meta-chip">13 SP · Mayor</span>
+        <span class="meta-chip">Sensibilidad media</span>
+        <span class="meta-chip">Epica UPONE-1452</span>
+        <span class="meta-chip">Asignado: por definir</span>
+        <span class="meta-chip">Referencia externa: por asignar en Jira</span>
+      </div>
+
+      <h4 class="sec">Fuente canonica (PO)</h4>
+      <p>Misma que el ticket base de tributacion (enlace a la maqueta de sp10). Este ticket toma las capacidades del feature que el corte de sprint dejo diferidas.</p>
+
+      <h4 class="sec">Historia de usuario</h4>
+      <p>Como responsable curricular, quiero completar la tributacion con pesos, la asignacion desde la malla y en lote, los indicadores de cobertura, y el manejo seguro de retiro y versionado, para medir el logro de competencias sobre el plan y operar la tributacion a escala.</p>
+
+      <h4 class="sec">Objetivo</h4>
+      <p>Completar el feature de tributacion sobre el CRUD por competencia ya entregado (ticket "CRUD de tributacion por competencia"): agregar el peso del eje 1, el guardado transaccional de conjunto, la segunda forma de asignacion y la via masiva, los indicadores con sus denominadores, el retiro con aviso de dependientes, el versionado del plan, y <code>outcomeAlignment</code>.</p>
+
+      <h4 class="sec">Alcance</h4>
+      <p><b>Dentro (base del follow-up, 13 SP):</b></p>
+      <ol class="plain">
+        <li><b>Escritura de conjunto mas guardado global:</b> upsert de conjunto por (plan, matriz) transaccional (el guardado envia el mapa completo), en vez de escritura por operacion.</li>
+        <li><b>Peso del eje 1:</b> <code>contributionPercentage</code> (ya definido en el ticket "Cableado del modelo + rename") mas reparto automatico/manual con la accion "repartir en partes iguales"; validacion de suma 100 por grupo al publicar el plan (por grupo y su eje).</li>
+        <li><b>Segunda forma (malla por periodo) mas via masiva ("Varias"):</b> reutilizar y ampliar el componente de malla ya existente (intencion explicita del PO en el planning sp10), no construir uno nuevo.</li>
+      </ol>
+      <p><b>En los deltas (mismo feature, tickets aparte):</b></p>
+      <ul class="plain">
+        <li>"Indicadores + versionado" (10 SP): indicadores con sus dos denominadores mas el efecto de <code>achievementBasis</code> y los tres ejes mas filas fuera de diseno mas versionado del plan (R-8), enganchado al flujo de versionado existente (<code>asNewVersion</code>+<code>sourceId</code>), no a un <code>_cloneMap</code> (no existe en codigo).</li>
+        <li>"outcomeAlignment (F6) + retiro con aviso" (8 SP): <code>outcomeAlignment</code> mas retiro con aviso R-7 (depende de F6).</li>
+      </ul>
+      <p><b>Fuera:</b> el CRUD base por competencia (lo entrega el ticket de este sprint); el cableado del modelo y el rename destructivo (van en el delta de este sprint).</p>
+
+      <h4 class="sec">Criterios de aceptacion</h4>
+      <ul class="checklist">
+        <li>El guardado de una matriz en un plan es un upsert de conjunto (no altas/bajas individuales) y es transaccional.</li>
+        <li>En una celda con varias asignaturas que evaluan, se ve y edita el peso por asignatura; la suma del grupo se valida al publicar (grupos que agregan con <code>Max</code> se eximen; criterios y resultados de aprendizaje siempre suman 100).</li>
+        <li>Se puede asignar tambien desde la malla por periodo y en lote por la via masiva.</li>
+        <li>Los indicadores cuentan por celda declarada (no por competencia) y declaran su denominador segun la vista.</li>
+        <li>Con <code>achievementBasis = RepresentativeLevel</code>, el logro y el indicador de "competencias con evaluador" se especializan al nivel representativo.</li>
+        <li>Retirar una tributacion que sostiene resultados de aprendizaje nombra los dependientes y pide confirmacion (R-7).</li>
+        <li>Al versionar el plan, quien tiene permiso de curriculum-mapping elige replicar vs limpio; replicar remapea al <code>planEntry</code> equivalente, conserva <code>developmentLevelId</code> y reporta las filas descartadas (R-8). Sin ese permiso se versiona el plan y la tributacion se replica por default (parametro institucional).</li>
+        <li>Las filas fuera de diseno se muestran marcadas, no se borran solas.</li>
+      </ul>
+
+      <h4 class="sec">Definition of Done</h4>
+      <p>Aplica el estandar DoR/DoD del equipo. Ademas:</p>
+      <ul class="checklist">
+        <li>Escritura gobernada de conjunto sin que ninguna via salte las reglas; validaciones de peso por grupo y su eje.</li>
+        <li>Indicadores verificados contra el listado equivalente filtrado a mano.</li>
+        <li>Retiro con R-7 verificado (nombra dependientes); versionado verificado en runtime (replica y limpio).</li>
+        <li>i18n es/en/pt con paridad; tenant isolation; RBAC efectivo.</li>
+        <li>Migracion de datos sin drift; rename <code>CoverageScheme</code> a <code>DevelopmentScheme</code> coordinado con 1753.</li>
+        <li><b>Conexion con MCP a nivel de servicios</b> (criterio transversal del sprint, planning sp10): la logica de negocio (pesos, validaciones) vive en el resolver server-side, no exclusivamente en el cliente.</li>
+      </ul>
+
+      <h4 class="sec">Frontera core/mod (Aduana)</h4>
+      <p><code>todo-mod-only</code> (heredado). El versionado (R-8) cruza Design hacia Mapping, resuelto sin Core Extension (alternativa A): curriculum-design es dueno del flujo y del evento y lee el permiso de curriculum-mapping por el RBAC existente. El registro de eventos global por <code>(objectType, operation)</code> queda para notificar/auditar, no para decidir.</p>
+
+      <h4 class="sec">Dependencias</h4>
+      <ul class="plain">
+        <li><b>Depende del CRUD ya entregado</b> (ticket "CRUD de tributacion por competencia"): este ticket construye sobre el objeto, resolver base, tabla de union y permisos ya entregados.</li>
+        <li><b>Depende de UPONE-1755</b> (modelo de medicion y los tres ejes que el peso/consolidacion consumen) y <b>UPONE-1753</b> (nombres nuevos).</li>
+        <li>Cross-mod hacia curriculum-design (planEntry, malla, versionado del Curriculum), resuelto por patrones existentes (id pelado, flujo de versionado <code>asNewVersion</code>+<code>sourceId</code>) y la lectura del permiso de curriculum-mapping por RBAC.</li>
+      </ul>
+
+      <h4 class="sec">Estimacion</h4>
+      <p><code>Esfuerzo: Mayor (13) · Sensibilidad: Media</code>. Puramente aditivo (el modelo quedo cableado en el delta de este sprint): no toca schema. Ticket base de 13; el resto en dos deltas.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Componente (base)</th><th>Esfuerzo</th><th>SP</th></tr></thead>
+          <tbody>
+            <tr><td>Pesos del eje 1 mas escritura de conjunto transaccional</td><td>Mayor</td><td>8</td></tr>
+            <tr><td>Segunda forma (malla, ampliando el componente existente) mas via masiva</td><td>Considerable</td><td>5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Total base: 13 SP.</b> Familia follow-up: "Indicadores + versionado" (10), "outcomeAlignment + retiro con aviso" (8) y "Migracion de niveles" (5). Feature completo: 13 + 8 + 13 + 10 + 8 + 5 = <b>57 SP en 6 tickets</b>, ninguno sobre el techo (13).</p>
+
+      <h4 class="sec">Decisiones resueltas</h4>
+      <ul class="checklist">
+        <li><b>Grupo de peso:</b> se deriva (pesos iguales dentro de tolerancia), no se persiste; no hay objeto "grupo".</li>
+        <li><b>Versionado cross-mod (R-8):</b> alternativa A, sin Core Extension. <code>curriculum-design</code> es dueno del flujo de versionado (<code>asNewVersion</code> + <code>sourceId</code>, con el hook <code>inheritRecordTypeExtensionOnVersion</code>, que hoy copia extensiones de RecordType y no toca tributacion; no existe ningun <code>_cloneMap</code>) y del evento, y lee el permiso de <code>curriculum-mapping</code> por el RBAC existente. Versionar el plan requiere <code>curriculum:version</code> (CD); ver la pestana de tributacion requiere <code>competencyalignment:view</code> (CM); elegir replicar vs empezar limpio requiere escritura de CM (<code>competencyalignment:modify</code>/<code>create</code>). Sin permiso de CM: el plan se versiona igual, la pestana no se ve, y la tributacion se replica por default (parametro institucional). Al replicar se conserva <code>developmentLevelId</code>. El evento global queda para notificar y auditar, no para decidir.</li>
+        <li><b>Herencia de niveles:</b> el versionado NO hereda niveles; remapea el <code>planEntry</code> y conserva <code>developmentLevelId</code>. "Hereda todos los niveles" es una regla de la migracion de matrices existentes, no del versionado.</li>
+      </ul>
+      <h4 class="sec">Decisiones resueltas (corte)</h4>
+      <ul class="checklist">
+        <li><b>Corte del feature (cerrado):</b> 6 tickets. F6 y el versionado ya son tickets propios; la migracion de niveles quedo como ticket fast-follow (<code>UPONE-1756-migracion-niveles</code>), con su detalle mas abajo.</li>
+      </ul>
+      <h4 class="sec">Decisiones abiertas</h4>
+      <p>Ninguna a nivel de corte del feature. Las decisiones remanentes viven en el ticket que las tiene.</p>
+
+      <h4 class="sec">Referencias</h4>
+      <p>Corte ya entregado este sprint: ticket "CRUD de tributacion por competencia". Working copy: <code>curriculum-mapping@584499e</code>, <code>curriculum-design@8a151e7</code>.</p>
+
+      <a class="back-to-index" href="#detalle-completo">Volver al indice</a>
+    </article>
+
+    <!-- ===================== TICKET 4 ===================== -->
+    <article class="ticket" id="t-followup-delta">
+      <div class="ticket-head">
+        <h3>Indicadores + versionado</h3>
+      </div>
+      <p class="ticket-ref">UPONE-1756 · delta del follow-up</p>
+      <div class="ticket-meta">
+        <span class="meta-chip">Follow-up</span>
+        <span class="meta-chip">10 SP</span>
+        <span class="meta-chip">Sensibilidad media</span>
+        <span class="meta-chip">Epica UPONE-1452</span>
+        <span class="meta-chip">Asignado: por definir</span>
+        <span class="meta-chip">Referencia externa: por asignar en Jira</span>
+      </div>
+
+      <h4 class="sec">Contexto</h4>
+      <p>Delta del follow-up base ("Pesos + segunda forma + via masiva"). Es aditivo: los campos ya estan definidos en el ticket "Cableado del modelo + rename" de este sprint.</p>
+
+      <h4 class="sec">Objetivo</h4>
+      <p>Los indicadores de cobertura con sus denominadores, y el versionado del plan.</p>
+
+      <h4 class="sec">Alcance</h4>
+      <p><b>Dentro:</b></p>
+      <ol class="plain">
+        <li><b>Indicadores</b> con sus dos denominadores: desarrollo tributado por celda declarada, competencias con evaluador (mas especializacion por nivel representativo), asignaturas sin tributar, filas fuera de diseno; en las dos lecturas (vista del plan y componente), declarando el denominador en cada una.</li>
+        <li><b>Efecto de <code>developmentSchemeId</code>/<code>achievementBasis</code></b> (ya definidos) y los tres ejes de agregacion en los indicadores.</li>
+        <li><b>Filas fuera de diseno:</b> nivel no declarado y colgada de nodo que consolida, con su tratamiento (marcada, no se borra sola) y su indicador propio.</li>
+        <li><b>Versionado del plan (R-8):</b> replicar la tributacion (remapeo del <code>planEntry</code> origen al equivalente, conservando <code>developmentLevelId</code>, reportando filas descartadas) vs empezar limpio. Engancha en el flujo de versionado existente (<code>asNewVersion</code>+<code>sourceId</code>, hook <code>inheritRecordTypeExtensionOnVersion</code>), no en un <code>_cloneMap</code> (no existe). curriculum-design lee el permiso de curriculum-mapping por RBAC (alternativa A); el evento global queda para notificar/auditar, no para decidir.</li>
+      </ol>
+
+      <h4 class="sec">Criterios de aceptacion</h4>
+      <ul class="checklist">
+        <li>Los indicadores cuentan por celda declarada (no por competencia) y declaran su denominador segun la vista.</li>
+        <li>Con <code>achievementBasis = RepresentativeLevel</code>, "competencias con evaluador" se especializa al nivel representativo.</li>
+        <li>Las filas fuera de diseno se muestran marcadas, no se borran solas.</li>
+        <li>Al versionar, quien tiene permiso de escritura de curriculum-mapping elige replicar vs limpio; replicar remapea el <code>planEntry</code> origen al equivalente, conserva <code>developmentLevelId</code> y reporta las filas sin destino. Sin ese permiso se replica por default (parametro institucional).</li>
+      </ul>
+
+      <h4 class="sec">Definition of Done</h4>
+      <p>Aplica el estandar DoR/DoD. Ademas:</p>
+      <ul class="checklist">
+        <li>Indicadores verificados contra el listado equivalente filtrado a mano.</li>
+        <li>Versionado verificado en runtime (replica y limpio).</li>
+        <li><b>Conexion MCP a nivel de servicios:</b> logica en el resolver, no en el cliente.</li>
+      </ul>
+
+      <h4 class="sec">Frontera core/mod (Aduana)</h4>
+      <p><code>todo-mod-only</code>, sin Core Extension (alternativa A): el remapeo corre en el resolver de versionado de curriculum-design (que tiene contexto de usuario) y lee el permiso de curriculum-mapping por el RBAC existente. El registro de eventos global por <code>(objectType, operation)</code> queda para notificar/auditar, no para decidir.</p>
+
+      <h4 class="sec">Estimacion</h4>
+      <p><code>Esfuerzo: Considerable + Considerable · Sensibilidad: Media</code>. Indicadores (~5) mas versionado (~5). <b>Total: 10 SP.</b> Si se planifica junto, evaluar dividir en dos tickets de 5 (indicadores | versionado).</p>
+
+      <h4 class="sec">Dependencias</h4>
+      <p>Sobre el follow-up base ("Pesos + segunda forma + via masiva") y el ticket "Cableado del modelo + rename" (campos ya definidos).</p>
+
+      <h4 class="sec">Referencias</h4>
+      <p>Base: ticket "Pesos + segunda forma (malla) + via masiva".</p>
+
+      <a class="back-to-index" href="#detalle-completo">Volver al indice</a>
+    </article>
+
+    <!-- ===================== TICKET 5 ===================== -->
+    <article class="ticket" id="t-followup-delta-2">
+      <div class="ticket-head">
+        <h3>outcomeAlignment (F6) + retiro con aviso (R-7)</h3>
+      </div>
+      <p class="ticket-ref">UPONE-1756 · delta 2 del follow-up</p>
+      <div class="ticket-meta">
+        <span class="meta-chip">Follow-up</span>
+        <span class="meta-chip">8 SP · Mayor</span>
+        <span class="meta-chip">Sensibilidad media</span>
+        <span class="meta-chip">Epica UPONE-1452</span>
+        <span class="meta-chip">Asignado: por definir</span>
+        <span class="meta-chip">Referencia externa: por asignar en Jira</span>
+      </div>
+
+      <h4 class="sec">Contexto</h4>
+      <p>Ultimo tramo del feature de tributacion: el refinamiento a nivel de resultado de aprendizaje y el retiro seguro que depende de el.</p>
+
+      <h4 class="sec">Objetivo</h4>
+      <p><code>outcomeAlignment</code> (F6) y el retiro con aviso de dependientes (R-7).</p>
+
+      <h4 class="sec">Alcance</h4>
+      <p><b>Dentro:</b></p>
+      <ol class="plain">
+        <li><b><code>outcomeAlignment</code> (F6):</b> refinamiento de la tributacion a nivel de resultado de aprendizaje, operado desde el Programa de Asignatura.</li>
+        <li><b>Retiro con aviso R-7:</b> al retirar una tributacion que sostiene alineaciones de resultados de aprendizaje, nombrarlas y que el usuario decida. Depende de F6 (antes de F6 no hay dependientes; el retiro simple ya va en el ticket "CRUD de tributacion por competencia").</li>
+      </ol>
+
+      <h4 class="sec">Criterios de aceptacion</h4>
+      <ul class="checklist">
+        <li>Existe <code>outcomeAlignment</code> operable desde el Programa de Asignatura.</li>
+        <li>Retirar una tributacion que sostiene resultados de aprendizaje nombra los dependientes y pide confirmacion (R-7).</li>
+      </ul>
+
+      <h4 class="sec">Definition of Done</h4>
+      <p>Aplica el estandar DoR/DoD. Ademas:</p>
+      <ul class="checklist">
+        <li>R-7 verificado (nombra dependientes) en runtime.</li>
+        <li><b>Conexion MCP a nivel de servicios:</b> logica en el resolver, no en el cliente.</li>
+      </ul>
+
+      <h4 class="sec">Frontera core/mod (Aduana)</h4>
+      <p><code>todo-mod-only</code>.</p>
+
+      <h4 class="sec">Estimacion</h4>
+      <p><code>Esfuerzo: Mayor · Sensibilidad: Media</code>. F6 es una capa nueva de refinamiento. <b>Total: 8 SP.</b></p>
+
+      <h4 class="sec">Dependencias</h4>
+      <p>Sobre el follow-up base y su delta de indicadores; el retiro R-7 depende de que exista F6 (este mismo ticket).</p>
+
+      <h4 class="sec">Referencias</h4>
+      <p>Base: ticket "Pesos + segunda forma (malla) + via masiva". El retiro simple ya entregado: ticket "CRUD de tributacion por competencia".</p>
+
+      <a class="back-to-index" href="#detalle-completo">Volver al indice</a>
+    </article>
+
+    <!-- ===================== TICKET 6 ===================== -->
+    <article class="ticket" id="t-migracion-niveles">
+      <div class="ticket-head">
+        <h3>Migracion de niveles (matrices existentes)</h3>
+      </div>
+      <p class="ticket-ref">UPONE-1756 · migracion de datos (fast-follow)</p>
+      <div class="ticket-meta">
+        <span class="meta-chip">Follow-up · fast-follow</span>
+        <span class="meta-chip">5 SP</span>
+        <span class="meta-chip">Considerable · sensibilidad alta</span>
+        <span class="meta-chip">Epica UPONE-1452</span>
+        <span class="meta-chip">Asignado: por definir</span>
+        <span class="meta-chip">Referencia externa: por asignar en Jira</span>
+      </div>
+
+      <h4 class="sec">Contexto</h4>
+      <p>El sprint crea el objeto <code>CompetencyNodeDevelopmentLevel</code> (ticket "CRUD de tributacion por competencia", F1), que declara por competencia sus niveles de desarrollo. Las matrices <b>nuevas</b> los declaran al construirse; las que <b>ya existen</b> quedan con cero niveles declarados porque el objeto no existia. Como R-4 exige que el nivel de una tributacion sea uno de los declarados, <b>sin esta migracion el CRUD del sprint no opera sobre las matrices existentes</b>. Por eso es un fast-follow del sprint, no trabajo de fondo del follow-up.</p>
+
+      <h4 class="sec">Objetivo</h4>
+      <p>Poblar <code>CompetencyNodeDevelopmentLevel</code> para las matrices existentes, haciendo que cada competencia medible herede <b>todos</b> los niveles del <code>developmentScheme</code> de su matriz, de forma idempotente y por tenant.</p>
+
+      <h4 class="sec">Regla de migracion (detalle del PO)</h4>
+      <p>Una competencia que todavia no declara sus tramos hereda <b>todos</b> los del esquema, no solo el ultimo. Quedarse con el ultimo invalidaria toda tributacion ya registrada en tramos anteriores; declarar todos preserva lo cargado y deja que la institucion estreche despues (decision suya, no efecto del cambio).</p>
+
+      <h4 class="sec">Alcance</h4>
+      <p><b>Dentro:</b></p>
+      <ol class="plain">
+        <li>Para cada competencia medible (hoja) de matrices existentes con <code>developmentScheme</code>, crear las filas con <b>todos</b> los niveles del scheme.</li>
+        <li>Idempotencia: correr dos veces no duplica ni pisa declaraciones hechas a mano.</li>
+        <li>Correr por tenant, con tenant isolation.</li>
+        <li>Reportar las matrices existentes sin <code>developmentScheme</code> (no se migran a ciegas).</li>
+      </ol>
+      <p><b>Fuera:</b> estrechar niveles (decision posterior de la institucion); matrices nuevas (declaran al construirse); <code>isRepresentative</code> (ver Decision tomada).</p>
+
+      <h4 class="sec">Criterios de aceptacion</h4>
+      <ul class="checklist">
+        <li>Cada competencia medible de una matriz existente con <code>developmentScheme</code> queda con todos los niveles del scheme declarados.</li>
+        <li>Los nodos que consolidan no quedan con niveles declarados.</li>
+        <li>Correr la migracion dos veces no duplica filas (idempotente).</li>
+        <li>Una tributacion ya registrada sobre un nivel intermedio sigue siendo valida despues de la migracion.</li>
+        <li>Las matrices sin <code>developmentScheme</code> se reportan, no se migran a ciegas.</li>
+        <li>Tras la migracion, una matriz existente permite tributar por competencia (R-4 satisfecho).</li>
+      </ul>
+
+      <h4 class="sec">Definition of Done</h4>
+      <p>Aplica el estandar DoR/DoD. Ademas:</p>
+      <ul class="checklist">
+        <li>Migracion sin drift, idempotente, corrida por tenant con tenant isolation.</li>
+        <li>Verificada en runtime: sobre una matriz existente, el CRUD pasa de no operar a operar (R-4 satisfecho).</li>
+        <li>Reporte de matrices sin <code>developmentScheme</code> entregado.</li>
+        <li>Corre despues del rename <code>CoverageScheme</code> a <code>DevelopmentScheme</code>, sin referencias al nombre viejo.</li>
+      </ul>
+
+      <h4 class="sec">Frontera core/mod (Aduana)</h4>
+      <p><code>todo-mod-only</code>: es dato del propio mod. Sin Core Extension.</p>
+
+      <h4 class="sec">Dependencias</h4>
+      <ul class="plain">
+        <li><b>Depende del sprint:</b> el objeto <code>CompetencyNodeDevelopmentLevel</code> (ticket CRUD, F1) y el rename a <code>DevelopmentScheme</code> (ticket delta). No depende de los pesos ni los indicadores del follow-up.</li>
+        <li><b>Habilita</b> el uso real del CRUD del sprint sobre matrices existentes; conviene priorizarla pegada al sprint.</li>
+      </ul>
+
+      <h4 class="sec">Estimacion</h4>
+      <p><code>Esfuerzo: Considerable (5) · Sensibilidad: Alta</code>. Migracion de datos sobre el tenant vivo (leer el scheme, poblar la tabla por competencia medible, manejar matrices sin scheme, idempotencia, correr por tenant). Sensibilidad alta porque toca datos existentes: heredar solo el ultimo nivel invalidaria tributacion ya cargada. <b>Total: 5 SP.</b></p>
+
+      <h4 class="sec">Decision tomada</h4>
+      <p><code>isRepresentative</code> queda <b>fuera</b> de esta migracion: solo es relevante cuando la matriz usa <code>achievementBasis = RepresentativeLevel</code>, y se fija cuando ese eje se consuma, no al migrar.</p>
+
+      <h4 class="sec">Referencias</h4>
+      <p>Regla de migracion: detalle del PO (seccion 3). Dependencias de sprint: ticket CRUD (objeto) y ticket delta (rename). Working copy: <code>curriculum-mapping@584499e</code>, <code>curriculum-design@8a151e7</code>.</p>
+
+      <a class="back-to-index" href="#detalle-completo">Volver al indice</a>
+    </article>
+
+  </section>
+
+  <!-- 6. Actualizacion -->
+  <section id="actualizacion">
+    <div class="section-label"><span class="idx">06</span> Actualizacion</div>
+    <h2 class="section-title">Que cambio desde la version anterior</h2>
+    <p class="lede">Esta version cierra las decisiones que antes quedaban abiertas o mal ancladas. Los cambios salen de tres fuentes: la revision de planning (comentarios del equipo), la reconciliacion con el detalle del PO, y la verificacion contra el codigo real (<code>curriculum-mapping</code> / <code>curriculum-design</code>). Actualizado 2026-09-01.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Tema</th><th>Version anterior</th><th>Ahora (decidido)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>Versionado del plan (R-8)</b></td>
+            <td>Dependencia de plataforma sin resolver ("quien declara el evento"); quedaba como decision abierta.</td>
+            <td>Alternativa A: curriculum-design es dueno del flujo y del evento y lee el permiso de curriculum-mapping por el RBAC existente, sin Core Extension. Permisos: versionar el plan = <code>curriculum:version</code>; ver = <code>competencyalignment:view</code>; replicar o decidir = escritura de CM. Sin permiso de CM: se versiona el plan, no se ve la pestana, y la tributacion <b>se replica por default</b> (parametro institucional). El evento global queda para notificar/auditar.</td>
+          </tr>
+          <tr>
+            <td><b>Mecanismo de versionado</b></td>
+            <td>Se citaba <code>_cloneMap</code> como codigo real y verificado.</td>
+            <td><code>_cloneMap</code> no existe. El versionado real es el flujo <code>asNewVersion</code>+<code>sourceId</code> con el hook <code>inheritRecordTypeExtensionOnVersion</code>, que hoy copia extensiones de RecordType y no toca tributacion; replicar la tributacion es codigo nuevo enganchado a ese flujo.</td>
+          </tr>
+          <tr>
+            <td><b>Herencia de niveles</b></td>
+            <td>Ubicada dentro del alcance del versionado.</td>
+            <td>El versionado no hereda niveles: remapea el <code>planEntry</code> y conserva <code>developmentLevelId</code>. La regla "hereda todos los niveles, no el ultimo" es de <b>migracion</b> de matrices existentes, no del versionado.</td>
+          </tr>
+          <tr>
+            <td><b>Grupo de peso (eje 1)</b></td>
+            <td>Decision abierta: persistir vs derivar el estado automatico/manual.</td>
+            <td>Se <b>deriva</b> (un grupo es automatico si todos sus pesos son iguales dentro de la tolerancia); no se persiste ni se crea un objeto "grupo".</td>
+          </tr>
+          <tr>
+            <td><b>R-3 / campo del nodo</b></td>
+            <td>Decision abierta: reusar <code>isHolistic</code> o crear un campo nuevo <code>isDirectlyMeasured</code>.</td>
+            <td>Se reusa <code>isHolistic</code> (verificado en codigo, vive a nivel de RecordType). R-3 = <code>sinHijos OR isHolistic</code> con "sin hijos" derivado del arbol, mas el invariante (nodo <code>isHolistic=false</code> con cero hijos = invalido). El rename a <code>isDirectlyMeasured</code> es cosmetico y va al ticket delta.</td>
+          </tr>
+          <tr>
+            <td><b>Ubicacion del componente</b></td>
+            <td>Decision abierta: <code>modsComponents/</code> vs curriculum-design.</td>
+            <td>Cerrado: el objeto y el permiso son de curriculum-mapping; el componente vive en <code>curriculum-mapping/modsComponents/</code> y se renderiza en la vista del plan (patron ya establecido).</td>
+          </tr>
+          <tr>
+            <td><b>Encuadre del sprint</b></td>
+            <td>Un ticket de CRUD mas un ticket de preparacion del modelo.</td>
+            <td>Los <b>dos tickets del sprint suman 21 SP</b> (13 + 8) y juntos <b>completan el CRUD</b>; el forward-compat se mantiene en el sprint para que el follow-up sea aditivo.</td>
+          </tr>
+          <tr>
+            <td><b>Migracion de niveles</b></td>
+            <td>Quedaba como decision abierta ("dimensionar la migracion").</td>
+            <td>Es un <b>ticket propio</b> (<code>UPONE-1756-migracion-niveles</code>, 5 SP, fast-follow), con detalle y estimacion. El feature pasa de 5 a <b>6 tickets</b> (52 a 57 SP).</td>
+          </tr>
+          <tr>
+            <td><b>Decisiones abiertas y gates al PO</b></td>
+            <td>Varias decisiones abiertas en los tickets (capacidad del sprint, cuantos sub-tickets, "confirmar con el PO").</td>
+            <td>Cerradas o convertidas en ticket. Los tickets del sprint quedan <b>sin decisiones abiertas</b> ni gates al PO; el corte del feature quedo definido en 6 tickets.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note"><b>De donde salen estos cambios:</b> comentarios de la revision de planning (criterio MCP server-side, exencion de la extension, reuso de la malla existente), reconciliacion con el detalle del PO, y verificacion contra el codigo real (<code>curriculum-mapping@584499e</code>, <code>curriculum-design@8a151e7</code>).</div>
+  </section>
+
+  <div class="foot">
+    UPONE-1756 · Curriculum Mapping · Epica UPONE-1452. Documento de trabajo para revision del PO, con fuente en la KB del sprint 10. Verificado sobre <code>curriculum-mapping@584499e</code> y <code>curriculum-design@8a151e7</code>.
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>UPONE-1755 · Pestana Medicion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    color-scheme: light dark;
+    --bg: light-dark(#f6f5f2, #16151a);
+    --bg-card: light-dark(#ffffff, #1e1d24);
+    --bg-soft: light-dark(#f0eee9, #24232b);
+    --bg-mock: light-dark(#fbfaf8, #1a191f);
+    --border: light-dark(#e2ddd3, #322f3a);
+    --border-soft: light-dark(#ece8e0, #2a2833);
+    --text: light-dark(#241f1a, #ece8e2);
+    --text-secondary: light-dark(#6b6156, #a39c93);
+    --text-muted: light-dark(#948a7e, #7d7469);
+    --accent: light-dark(#8a4a2c, #e08a5c);
+    --accent-soft: light-dark(#f3e3d6, #3a2c22);
+    --ok: light-dark(#2f6b4f, #6fcf9a);
+    --ok-soft: light-dark(#e3f0e8, #1c2e24);
+    --warn: light-dark(#9a6a1c, #e0b25c);
+    --warn-soft: light-dark(#f5ecd9, #332a17);
+    --danger: light-dark(#a83b3b, #e08080);
+    --danger-soft: light-dark(#f7e2e2, #33201f);
+    --pend: light-dark(#5c5a8a, #a6a3e0);
+    --pend-soft: light-dark(#e6e5f5, #232134);
+    --shadow: light-dark(0 1px 3px rgba(30,25,15,.08), 0 1px 3px rgba(0,0,0,.4));
+    --primary: light-dark(#2a4d6e, #7fb2df);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.55;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:2rem 1.5rem 4rem;}
+
+  /* ---------- encabezado ---------- */
+  .eyebrow{
+    font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--text-muted); font-weight:600; margin-bottom:.5rem;
+  }
+  h1{font-size:1.7rem; margin:0 0 1rem; letter-spacing:-.01em;}
+  h2{font-size:1.2rem; margin:2.5rem 0 1rem; padding-bottom:.5rem; border-bottom:1px solid var(--border);}
+  h3{font-size:.98rem; margin:1.5rem 0 .6rem;}
+  p{margin:.4rem 0;}
+  .callout{
+    background:var(--bg-soft); border:1px solid var(--border); border-left:4px solid var(--accent);
+    border-radius:8px; padding:1rem 1.2rem; font-size:.95rem; color:var(--text);
+  }
+  .callout b{color:var(--accent);}
+
+  /* ---------- badges / chips ---------- */
+  .badge{
+    display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:600;
+    padding:.15rem .55rem; border-radius:99px; white-space:nowrap;
+  }
+  .b-ok{background:var(--ok-soft); color:var(--ok);}
+  .b-warn{background:var(--warn-soft); color:var(--warn);}
+  .b-pend{background:var(--pend-soft); color:var(--pend);}
+  .b-danger{background:var(--danger-soft); color:var(--danger);}
+  .b-neutral{background:var(--bg-soft); color:var(--text-secondary); border:1px solid var(--border);}
+
+  /* ---------- tabla de evidencia ---------- */
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--bg-card);}
+  table{width:100%; border-collapse:collapse; font-size:.86rem; min-width:640px;}
+  th,td{text-align:left; padding:.55rem .75rem; border-bottom:1px solid var(--border-soft); vertical-align:top;}
+  th{background:var(--bg-soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--text-muted); font-weight:700;}
+  tr:last-child td{border-bottom:none;}
+  code{
+    background:var(--bg-soft); border:1px solid var(--border-soft); border-radius:4px;
+    padding:.05rem .35rem; font-size:.82em; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .src{font-size:.78rem; color:var(--text-muted); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+
+  /* ---------- antes / despues ---------- */
+  .side-by-side{display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start;}
+  @media (max-width:820px){ .side-by-side{grid-template-columns:1fr;} }
+  .panel{
+    background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; box-shadow:var(--shadow);
+  }
+  .panel__head{
+    padding:.7rem 1rem; font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+    display:flex; align-items:center; justify-content:space-between; gap:.5rem;
+  }
+  .panel__head.now{background:var(--danger-soft); color:var(--danger);}
+  .panel__head.next{background:var(--ok-soft); color:var(--ok);}
+  .panel__body{padding:1rem;}
+
+  /* ---------- mockup tabs (fiel a la maqueta) ---------- */
+  .mock{background:var(--bg-mock); border:1px solid var(--border-soft); border-radius:8px; padding:.9rem; font-size:.82rem;}
+  .mock-tabs{display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:.8rem; flex-wrap:wrap;}
+  .mock-tab{
+    padding:.45rem .8rem; border:none; background:none; border-bottom:2px solid transparent;
+    color:var(--text-secondary); font-weight:500; font-size:.78rem; position:relative;
+  }
+  .mock-tab.active{border-bottom-color:var(--primary); color:var(--primary); font-weight:700;}
+  .mock-tab.locked{color:var(--text-muted); display:flex; align-items:center; gap:.25rem;}
+  .mock-tab.locked .lock{font-size:.7rem;}
+  .mock-tab.new{color:var(--accent); font-weight:700;}
+  .mock-tab.new.active{border-bottom-color:var(--accent); color:var(--accent);}
+  .mock-field{margin-bottom:.6rem;}
+  .mock-label{font-size:.7rem; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:.2rem;}
+  .mock-input{
+    background:var(--bg-card); border:1px solid var(--border); border-radius:5px;
+    padding:.35rem .55rem; font-size:.78rem; color:var(--text); width:100%;
+  }
+  .mock-help{font-size:.68rem; color:var(--text-muted); display:block; margin-top:.15rem;}
+  .mock-row{display:grid; grid-template-columns:1fr 1fr; gap:.7rem;}
+  @media (max-width:480px){ .mock-row{grid-template-columns:1fr;} }
+  .mock-new{outline:2px dashed var(--accent); outline-offset:2px; border-radius:6px; padding:.4rem; background:var(--accent-soft);}
+  .tpl-row{display:flex; gap:.4rem; flex-wrap:wrap; margin:.5rem 0;}
+  .tpl-btn{
+    border:1px solid var(--border); border-radius:6px; padding:.3rem .5rem; font-size:.68rem;
+    background:var(--bg-card); color:var(--text-secondary); flex:1 1 100px;
+  }
+  .tpl-btn.on{border-color:var(--accent); color:var(--accent); background:var(--accent-soft); font-weight:600;}
+
+  /* ---------- flujo de creacion (4 pasos) ---------- */
+  .steps{display:flex; gap:.8rem; overflow-x:auto; padding:.3rem .1rem 1rem;}
+  .step{
+    flex:1 1 220px; min-width:200px; background:var(--bg-card); border:1px solid var(--border);
+    border-radius:10px; padding:.9rem; position:relative;
+  }
+  .step__n{
+    display:inline-flex; align-items:center; justify-content:center; width:1.5rem; height:1.5rem;
+    border-radius:50%; background:var(--primary); color:light-dark(#fff,#0f1115); font-size:.75rem; font-weight:700; margin-bottom:.5rem;
+  }
+  .step.locked .step__n{background:var(--text-muted);}
+  .step__title{font-weight:700; font-size:.85rem; margin-bottom:.25rem;}
+  .step__desc{font-size:.78rem; color:var(--text-secondary);}
+  .step__gate{
+    margin-top:.5rem; font-size:.68rem; color:var(--warn); background:var(--warn-soft);
+    border-radius:5px; padding:.25rem .45rem; display:inline-block;
+  }
+  .step-arrow{align-self:center; color:var(--text-muted); font-size:1.1rem; flex:0 0 auto; display:flex; align-items:center;}
+  @media (max-width:700px){ .steps{flex-direction:column;} .step-arrow{display:none;} }
+
+  /* ---------- alcance ---------- */
+  .scope-grid{display:grid; grid-template-columns:1fr 1fr; gap:1rem;}
+  @media (max-width:700px){ .scope-grid{grid-template-columns:1fr;} }
+  .scope-card{border-radius:10px; padding:1rem 1.1rem; border:1px solid var(--border);}
+  .scope-card.in{background:var(--ok-soft); border-color:var(--ok);}
+  .scope-card.out{background:var(--bg-soft);}
+  .scope-card h4{margin:0 0 .5rem; font-size:.85rem; text-transform:uppercase; letter-spacing:.03em;}
+  .scope-card.in h4{color:var(--ok);}
+  .scope-card.out h4{color:var(--text-muted);}
+  .scope-card ul{margin:0; padding-left:1.1rem; font-size:.87rem;}
+  .scope-card li{margin-bottom:.35rem;}
+
+  /* ---------- chips reglas ---------- */
+  .rules-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;}
+  @media (max-width:820px){ .rules-grid{grid-template-columns:1fr;} }
+  .rule-col h4{font-size:.8rem; margin:0 0 .6rem; text-transform:uppercase; letter-spacing:.03em;}
+  .rule-col.favor h4{color:var(--ok);}
+  .rule-col.evitar h4{color:var(--danger);}
+  .rule-col.gate h4{color:var(--pend);}
+  .rule-chip{
+    display:block; border-radius:8px; padding:.6rem .7rem; margin-bottom:.6rem; font-size:.82rem;
+    border:1px solid var(--border);
+  }
+  .rule-col.favor .rule-chip{background:var(--ok-soft); border-color:var(--ok);}
+  .rule-col.evitar .rule-chip{background:var(--danger-soft); border-color:var(--danger);}
+  .rule-col.gate .rule-chip{background:var(--pend-soft); border-color:var(--pend);}
+  .rule-chip .src{display:block; margin-top:.3rem;}
+
+  footer{
+    margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--border);
+    font-size:.8rem; color:var(--text-muted);
+  }
+  footer a{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">UPONE-1755 · implement · Epica UPONE-1452 · Francisco Navarro</div>
+  <h1>Curriculum Mapping: la pestana de Medicion y el flujo de creacion</h1>
+  <div class="callout">
+    <b>Que se pide:</b> abrir una <b>cuarta pestana "Medicion"</b> en el shell de la matriz de competencia
+    (hoy General / Adopcion / Competencias) y mover ahi todo lo que responde <i>con que se mide y como se
+    consolida el logro</i>: escala de desempeno, niveles de desarrollo, modelo de medicion y los tres ejes
+    de consolidacion. Eso obliga a decidir el <b>flujo de creacion</b>: la matriz nace con identidad y
+    gobernanza, y la medicion se completa despues, con la pestana bloqueada hasta que exista el id.
+  </div>
+
+  <h2>Evidencia del caso</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Estado</th><th>Hecho</th><th>Fuente</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge b-ok">Verificado</span></td>
+          <td>El shell hoy tiene 3 pestanas: <code>general</code> (save <code>matrixHeader</code>),
+              <code>adopcion</code> (save <code>adoptionScope</code>), <code>competencias</code>
+              (save <code>competencyTree</code>); mas <code>historial</code> solo en vista.</td>
+          <td class="src">UPONE-1755-detalle.md &sect;"Fuente canonica"; explicativo-PO &sect;3</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-ok">Verificado</span></td>
+          <td>La maqueta v29 (sp10) ya declara <code>matrixTabs</code> con las cuatro pestanas en el
+              orden <code>general &middot; adopcion &middot; medicion &middot; competencias</code>.</td>
+          <td class="src">maqueta-diseno-curricular.html:4538-4543</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-ok">Verificado</span></td>
+          <td>El formulario de Medicion en la maqueta trae: escala de desempeno + niveles de desarrollo
+              (dos selects), modelo de medicion (un selector de tres valores, no dos), cobertura de
+              criterios (solo si el modelo es por criterios), y "Consolidacion de logro" con plantillas
+              rapidas + detalle desplegable (base del logro y los tres ejes).</td>
+          <td class="src">maqueta-diseno-curricular.html:1900-2017</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-ok">Verificado</span></td>
+          <td>El boton Guardar del shell se deshabilita con <code>policyBlocking</code> y el tooltip
+              nombra la pestana: "Hay una combinacion invalida en Medicion".</td>
+          <td class="src">maqueta-diseno-curricular.html:1641</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-ok">Verificado</span></td>
+          <td>El contrato de bloqueo por pestana (<code>requiresRecord</code>, motivo visible en vez de
+              esconder la pestana) es del shell real, no de la maqueta: <code>tabs.ts</code> ya lo usa en
+              Adopcion y Competencias hoy.</td>
+          <td class="src">UPONE-1755-detalle.md &sect;"Frontera core/mod"; explicativo-PO &sect;2</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-warn">Pendiente</span></td>
+          <td>Extender el contrato con <code>requiresFields</code> (para que Competencias exija ademas la
+              escala) esta identificado pero no decidido: dos caminos posibles, a firmar con tech lead.</td>
+          <td class="src">UPONE-1755-detalle.md &sect;"Decisiones abiertas"</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-warn">Pendiente</span></td>
+          <td>El flujo de creacion (opcion A/B/C) esta recomendado (A) pero no firmado: es la unica
+              decision de diseno explicita del ticket.</td>
+          <td class="src">UPONE-1755-detalle.md &sect;"Decisiones abiertas"; explicativo-PO &sect;4</td>
+        </tr>
+        <tr>
+          <td><span class="badge b-danger">Contradiccion aparente</span></td>
+          <td>La maqueta v29 ya muestra el flujo "resuelto" (4 pestanas, sin bloqueos visibles), pero el
+              shell real de <code>develop</code> todavia tiene 3. La maqueta es el objetivo visual, no el
+              estado actual del codigo: no confundir "ya esta en la maqueta" con "ya esta implementado".</td>
+          <td class="src">contraste maqueta vs UPONE-1755-detalle.md &sect;"Contexto"</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Estado inicial (AHORA) vs estado esperado (ENTREGA)</h2>
+
+  <h3>a) El shell: de 3 pestanas a 4</h3>
+  <div class="side-by-side">
+    <div class="panel">
+      <div class="panel__head now">Ahora</div>
+      <div class="panel__body">
+        <div class="mock">
+          <div class="mock-tabs">
+            <button class="mock-tab active">Informacion general</button>
+            <button class="mock-tab">Adopcion</button>
+            <button class="mock-tab">Competencias</button>
+          </div>
+          <div class="mock-field"><span class="mock-label">Codigo *</span><div class="mock-input">MC-ICI</div></div>
+          <div class="mock-row">
+            <div class="mock-field"><span class="mock-label">Escala de desempeno</span><div class="mock-input">Escala 100</div></div>
+            <div class="mock-field"><span class="mock-label">Modelo de medicion (2 selects)</span><div class="mock-input">OwnRubric / Criterion</div></div>
+          </div>
+          <span class="mock-help">Escala, niveles, modelo y eje unico viven mezclados con identidad y gobernanza en General.</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel__head next">Entrega</div>
+      <div class="panel__body">
+        <div class="mock">
+          <div class="mock-tabs">
+            <button class="mock-tab active">Informacion general</button>
+            <button class="mock-tab">Adopcion</button>
+            <button class="mock-tab new">Medicion</button>
+            <button class="mock-tab">Competencias</button>
+          </div>
+          <div class="mock-field"><span class="mock-label">Codigo *</span><div class="mock-input">MC-ICI</div></div>
+          <div class="mock-field"><span class="mock-label">Descripcion</span><div class="mock-input">&mdash;</div></div>
+          <div class="mock-field"><span class="mock-label">Tipo de matriz</span><div class="mock-input">Especificas</div></div>
+          <span class="mock-help">General se queda solo con identidad y gobernanza: codigo, nombre, descripcion, tipo, unidades duenas, estado.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>b) El formulario de Medicion (nuevo, fiel a la maqueta v29)</h3>
+  <div class="mock" style="max-width:720px;">
+    <div class="mock-tabs">
+      <button class="mock-tab">Informacion general</button>
+      <button class="mock-tab">Adopcion</button>
+      <button class="mock-tab new active">Medicion</button>
+      <button class="mock-tab">Competencias</button>
+    </div>
+    <div class="mock-row mock-field">
+      <div>
+        <span class="mock-label">Escala de desempeno</span>
+        <div class="mock-input">Escala 100</div>
+        <span class="mock-help">Con que niveles se mide el logro. Unica en la matriz.</span>
+      </div>
+      <div>
+        <span class="mock-label">Niveles de desarrollo</span>
+        <div class="mock-input">Inicial &middot; Intermedio &middot; Avanzado</div>
+        <span class="mock-help">Los tramos de progresion que sus competencias podran declarar.</span>
+      </div>
+    </div>
+    <div class="mock-row mock-field">
+      <div class="mock-new">
+        <span class="mock-label">Modelo de medicion (un selector, 3 valores)</span>
+        <div class="mock-input">Competencias y criterios</div>
+        <span class="mock-help">Detras hay 2 campos (evaluationMode + rubricModel); solo 3 de 4 combinaciones son validas.</span>
+      </div>
+      <div class="mock-new">
+        <span class="mock-label">Cobertura de criterios <i>(solo con modelo por criterios)</i></span>
+        <div class="mock-input">Exige evaluarlos todos</div>
+        <span class="mock-help">requiresAllCriteria: null si el modelo no es Analytic.</span>
+      </div>
+    </div>
+    <div class="mock-field" style="border-top:1px solid var(--border-soft); padding-top:.6rem; margin-top:.6rem;">
+      <span class="mock-label">Consolidacion de logro</span>
+      <div class="tpl-row">
+        <div class="tpl-btn">Estandar</div>
+        <div class="tpl-btn on">Escalonado</div>
+        <div class="tpl-btn">Mejor evidencia</div>
+        <div class="tpl-btn">Personalizada</div>
+      </div>
+      <span class="mock-help">Las plantillas solo pre-llenan los campos de abajo; no se persisten como objeto.</span>
+    </div>
+    <div class="mock-row mock-field mock-new">
+      <div>
+        <span class="mock-label">Base del logro</span>
+        <div class="mock-input">Manda el nivel representativo</div>
+      </div>
+      <div>
+        <span class="mock-label">Entre asignaturas (eje 1)</span>
+        <div class="mock-input">Promedio ponderado</div>
+      </div>
+    </div>
+    <div class="mock-row mock-field mock-new">
+      <div>
+        <span class="mock-label">Entre niveles (eje 2)</span>
+        <div class="mock-input" style="color:var(--text-muted);">&mdash; (apagado: nivel representativo)</div>
+      </div>
+      <div>
+        <span class="mock-label">Entre subcompetencias (eje 3)</span>
+        <div class="mock-input">Maximo</div>
+      </div>
+    </div>
+    <span class="mock-help">Fuente: maqueta-diseno-curricular.html:1900-2017. Los 3 ejes se apagan solos segun la forma del diseno (un nivel unico apaga el eje 2; sin subcompetencias se apaga el eje 3).</span>
+  </div>
+
+  <h3>c) El flujo de creacion en 4 pasos (opcion A recomendada)</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step__n">1</div>
+      <div class="step__title">General</div>
+      <div class="step__desc">Codigo, nombre, tipo, descripcion, unidades duenas. Al guardar <b>crea</b> la matriz y devuelve el id. No navega al listado.</div>
+    </div>
+    <div class="step-arrow">&rarr;</div>
+    <div class="step">
+      <div class="step__n">2</div>
+      <div class="step__title">Medicion</div>
+      <div class="step__desc">Escala, niveles, modelo y consolidacion. Guarda por actualizacion (la matriz ya existe).</div>
+      <span class="step__gate">Bloqueada hasta tener id</span>
+    </div>
+    <div class="step-arrow">&rarr;</div>
+    <div class="step">
+      <div class="step__n">3</div>
+      <div class="step__title">Adopcion</div>
+      <div class="step__desc">Quien la usa: alcance, politica, unidades, adopciones. Sin dependencia de Medicion.</div>
+      <span class="step__gate">Bloqueada hasta tener id</span>
+    </div>
+    <div class="step-arrow">&rarr;</div>
+    <div class="step locked">
+      <div class="step__n">4</div>
+      <div class="step__title">Competencias</div>
+      <div class="step__desc">El arbol y sus rubricas: criterio &times; nivel de desempeno. Sin escala, la rubrica no tiene columnas.</div>
+      <span class="step__gate">Bloqueada hasta tener id + escala</span>
+    </div>
+  </div>
+  <p style="font-size:.85rem; color:var(--text-secondary);">
+    La matriz queda en <b>Borrador y sin escala</b> entre el paso 1 y el 2. Por eso escala y niveles pasan a
+    ser obligatorios <b>para publicar</b>, no para crear; ver decision abierta en la tabla de evidencia.
+  </p>
+
+  <h2>Alcances</h2>
+  <div class="scope-grid">
+    <div class="scope-card in">
+      <h4>Dentro</h4>
+      <ul>
+        <li>Declarar la pestana <code>medicion</code> en los 3 layouts (create/edit/view) y repartir <code>elements</code> entre las 4 pestanas.</li>
+        <li>6 campos nuevos en el record type de la matriz; retiro de <code>aggregationMode</code>; renombre de <code>Criterion</code> a <code>Analytic</code>.</li>
+        <li>Ajustar mutations de create/update y sus validadores a la firma nueva y a las reglas de combinacion.</li>
+        <li>Cerrar el flujo de creacion en 4 pasos, con Medicion como paso que requiere que la matriz exista.</li>
+      </ul>
+    </div>
+    <div class="scope-card out">
+      <h4>Fuera</h4>
+      <ul>
+        <li>Renombre de los catalogos (Escala de desempeno / Niveles de desarrollo): es UPONE-1753.</li>
+        <li>Modelar las plantillas de perfil como objeto: son solo interfaz, no se persisten.</li>
+        <li>Tributacion e indicadores derivados: es UPONE-1756.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Tickets relacionados</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Ticket</th><th>Que es</th><th>Relacion</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td>UPONE-1452</td><td>Epica Curriculum Mapping</td><td>Contenedor</td><td><span class="badge b-neutral">Backlog</span></td></tr>
+        <tr><td>UPONE-1753</td><td>Menus y terminologia</td><td>Dependencia: renombra los catalogos que esta pestana selecciona</td><td><span class="badge b-neutral">Backlog</span></td></tr>
+        <tr><td>UPONE-1756</td><td>Tributacion</td><td>Hermano sp10: consume el modelo de medicion y los 3 ejes</td><td><span class="badge b-neutral">Backlog</span></td></tr>
+        <tr><td>UPONE-1633</td><td>Matriz: Adopcion y Competencias</td><td>Antecedente: construyo el shell y las pestanas que este ticket extiende</td><td><span class="badge b-ok">Finalizada</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Reglas y patrones</h2>
+  <div class="rules-grid">
+    <div class="rule-col favor">
+      <h4>A favor</h4>
+      <div class="rule-chip">Pestanas declaradas en el layout, que despachan por su modo <code>save</code>.<span class="src">modsComponents/CompetencyMatrixShell/tabs.ts</span></div>
+      <div class="rule-chip"><code>requiresRecord</code> bloquea con motivo visible, no esconde la pestana.<span class="src">tabs.ts</span></div>
+      <div class="rule-chip">El bug de Prisma (rama <code>create</code> estatica en updates parciales) ya tiene workaround generalizado: <code>MATRIX_RT_REQUIRED</code>.<span class="src">logic/helpers/validateCompetencyMatrix.js:30-56</span></div>
+    </div>
+    <div class="rule-col evitar">
+      <h4>Evitar</h4>
+      <div class="rule-chip">No usar el submit del core para el header en creacion: su <code>customEndpoint</code> emite <code>instance-created</code> y navega al listado, perdiendo la pantalla justo cuando las otras pestanas se desbloquean.<span class="src">nota de tabs.ts + resolvers</span></div>
+      <div class="rule-chip">No aplicar el modo del eje 1 (entre asignaturas) a la combinacion de criterios dentro de una asignatura: esa siempre se combina por peso, nunca por maximo.<span class="src">explicativo-PO &sect;7</span></div>
+      <div class="rule-chip">No eximir la validacion de pesos "por matriz": es por grupo y su eje. Criterios y RA se validan siempre, aunque los 3 ejes esten en Max.<span class="src">explicativo-PO &sect;7</span></div>
+    </div>
+    <div class="rule-col gate">
+      <h4>Gate</h4>
+      <div class="rule-chip">Escala de desempeno y niveles de desarrollo: obligatorios para <b>publicar</b>, no para crear.<span class="src">UPONE-1755-detalle.md &sect;"Criterios de aceptacion"</span></div>
+      <div class="rule-chip">Escala cualitativa + algun eje en promedio ponderado: bloquea el guardado (ya no es solo aviso).<span class="src">explicativo-PO &sect;7</span></div>
+      <div class="rule-chip">Competencias no opera sin escala definida: la rubrica no tiene columnas.<span class="src">UPONE-1755-detalle.md &sect;"Criterios de aceptacion"</span></div>
+    </div>
+  </div>
+
+  <footer>
+    Detalle exhaustivo (contrato y alcance): <a>UPONE-1755-detalle</a> &middot;
+    Detalle tecnico code-grounded (PO): <a>UPONE-1755-explicativo</a>.
+    Verificado sobre <code>curriculum-mapping</code> en <code>develop</code> @ <code>584499e</code> y la maqueta sp10 v29.
+  </footer>
+
+</div>
+</body>
+</html>

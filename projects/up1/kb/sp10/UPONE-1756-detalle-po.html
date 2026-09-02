@@ -1,0 +1,828 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>Implementar la tributación</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#f7f9f9;
+  --surface:#ffffff;
+  --surface-2:#eef3f3;
+  --ink:#11201f;
+  --ink-2:#42544f;
+  --ink-3:#6d7f7a;
+  --rule:#dde6e5;
+  --rule-soft:#e9f0ef;
+  --accent:#0a808c;
+  --accent-deep:#065962;
+  --accent-wash:rgba(10,128,140,.09);
+  --ok:#1c7a58;      --ok-wash:rgba(28,122,88,.11);
+  --warn:#8a5a00;    --warn-wash:rgba(138,90,0,.12);
+  --gap:#a4302e;     --gap-wash:rgba(164,48,46,.10);
+  --code-bg:#eef3f3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d1615;
+    --surface:#131f1e;
+    --surface-2:#1a2827;
+    --ink:#e8efee;
+    --ink-2:#adc0bc;
+    --ink-3:#7e918d;
+    --rule:#253634;
+    --rule-soft:#1c2b29;
+    --accent:#4fc3cd;
+    --accent-deep:#8ad9e0;
+    --accent-wash:rgba(79,195,205,.13);
+    --ok:#57c79b;      --ok-wash:rgba(87,199,155,.14);
+    --warn:#d9a442;    --warn-wash:rgba(217,164,66,.14);
+    --gap:#e58a86;     --gap-wash:rgba(229,138,134,.14);
+    --code-bg:#1a2827;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1615;
+  --surface:#131f1e;
+  --surface-2:#1a2827;
+  --ink:#e8efee;
+  --ink-2:#adc0bc;
+  --ink-3:#7e918d;
+  --rule:#253634;
+  --rule-soft:#1c2b29;
+  --accent:#4fc3cd;
+  --accent-deep:#8ad9e0;
+  --accent-wash:rgba(79,195,205,.13);
+  --ok:#57c79b;      --ok-wash:rgba(87,199,155,.14);
+  --warn:#d9a442;    --warn-wash:rgba(217,164,66,.14);
+  --gap:#e58a86;     --gap-wash:rgba(229,138,134,.14);
+  --code-bg:#1a2827;
+}
+
+*{ box-sizing:border-box; }
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{ max-width:1180px; margin:0 auto; padding:0 clamp(18px,4vw,44px) 96px;
+  display:grid; grid-template-columns:minmax(0,1fr); gap:0 56px; }
+@media (min-width:1080px){ .wrap{ grid-template-columns:212px minmax(0,1fr); } }
+
+/* ── cabecera ── */
+.masthead{ border-bottom:1px solid var(--rule); padding:56px 0 30px; margin-bottom:44px; }
+.eyebrow{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.72rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 14px; }
+h1{ font-family:"Newsreader", Georgia, serif; font-weight:600; font-size:clamp(2.1rem,4.6vw,3.1rem);
+  line-height:1.08; letter-spacing:-.015em; margin:0 0 16px; text-wrap:balance; }
+.standfirst{ font-family:"Newsreader", Georgia, serif; font-size:1.16rem; line-height:1.55;
+  color:var(--ink-2); max-width:66ch; margin:0 0 26px; }
+.meta{ display:flex; flex-wrap:wrap; gap:6px 26px; font-family:"IBM Plex Mono", monospace;
+  font-size:.74rem; color:var(--ink-3); }
+.meta b{ color:var(--ink-2); font-weight:500; }
+
+/* ── indice lateral ── */
+.toc{ display:none; }
+@media (min-width:1080px){
+  .toc{ display:block; position:sticky; top:0; align-self:start;
+    padding-top:112px; max-height:100vh; overflow-y:auto; }
+}
+.toc__t{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.62rem; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin-bottom:12px; }
+.toc a{ display:flex; gap:9px; padding:5px 0 5px 12px; font-size:.84rem; line-height:1.35;
+  color:var(--ink-2); text-decoration:none; border-left:2px solid var(--rule);
+  transition:color .15s, border-color .15s; }
+.toc a:hover, .toc a:focus-visible{ color:var(--accent); border-left-color:var(--accent); }
+.toc a .n{ font-family:"IBM Plex Mono", monospace; font-size:.7rem; color:var(--ink-3);
+  flex:0 0 auto; padding-top:.15em; }
+/* seccion en pantalla */
+.toc a.on{ color:var(--accent); border-left-color:var(--accent); font-weight:500; }
+.toc a.on .n{ color:var(--accent); }
+
+/* ── secciones ── */
+section{ margin-bottom:60px; scroll-margin-top:20px; }
+h2{ font-family:"Newsreader", Georgia, serif; font-weight:600; font-size:1.72rem; line-height:1.2;
+  letter-spacing:-.01em; margin:0 0 6px; text-wrap:balance; }
+.sec-n{ font-family:"IBM Plex Mono", monospace; font-size:.74rem; color:var(--accent);
+  letter-spacing:.1em; display:block; margin-bottom:8px; }
+h3{ font-size:1rem; font-weight:600; margin:34px 0 10px; letter-spacing:-.005em; }
+h4{ font-size:.82rem; font-weight:600; margin:22px 0 8px; color:var(--ink-2);
+  font-family:"IBM Plex Mono", monospace; letter-spacing:.04em; text-transform:uppercase; }
+p{ margin:0 0 14px; max-width:70ch; }
+.lede{ color:var(--ink-2); max-width:70ch; }
+ul,ol{ margin:0 0 14px; padding-left:20px; max-width:70ch; }
+li{ margin-bottom:5px; }
+a{ color:var(--accent); }
+strong{ font-weight:600; }
+
+code{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:.855em;
+  background:var(--code-bg); padding:.1em .34em; border-radius:2px; }
+pre{ background:var(--code-bg); border:1px solid var(--rule); border-radius:3px; padding:16px 18px;
+  overflow-x:auto; margin:0 0 18px; }
+pre code{ background:none; padding:0; font-size:.82rem; line-height:1.6; }
+
+/* ── tablas ── */
+.tw{ overflow-x:auto; margin:0 0 20px; border:1px solid var(--rule); border-radius:3px; background:var(--surface); }
+table{ border-collapse:collapse; width:100%; font-size:.855rem; min-width:520px; }
+th,td{ text-align:left; padding:9px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:top; }
+thead th{ background:var(--surface-2); font-size:.7rem; font-family:"IBM Plex Mono", monospace;
+  letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:500;
+  border-bottom:1px solid var(--rule); white-space:nowrap; }
+tbody tr:last-child td{ border-bottom:0; }
+td code{ white-space:nowrap; }
+.num{ font-variant-numeric:tabular-nums; text-align:right; }
+
+/* ── chips de estado ── */
+.chip{ display:inline-block; font-family:"IBM Plex Mono", monospace; font-size:.66rem; font-weight:500;
+  letter-spacing:.05em; text-transform:uppercase; padding:.16em .5em; border-radius:2px; white-space:nowrap; }
+.chip.ok{ background:var(--ok-wash); color:var(--ok); }
+.chip.warn{ background:var(--warn-wash); color:var(--warn); }
+.chip.gap{ background:var(--gap-wash); color:var(--gap); }
+.chip.acc{ background:var(--accent-wash); color:var(--accent-deep); }
+
+/* ── nota lateral ── */
+.note{ border-left:2px solid var(--accent); background:var(--surface); padding:14px 18px;
+  margin:0 0 20px; max-width:74ch; }
+.note.warnb{ border-left-color:var(--warn); }
+.note.gapb{ border-left-color:var(--gap); }
+.note p:last-child{ margin-bottom:0; }
+.note-k{ font-family:"IBM Plex Mono", monospace; font-size:.68rem; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-3); display:block; margin-bottom:5px; }
+
+/* ── reglas ── */
+.rule-id{ font-family:"IBM Plex Mono", monospace; font-weight:500; color:var(--accent-deep); white-space:nowrap; }
+
+/* ── fases ── */
+.phases{ display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden; }
+.phase{ background:var(--surface); padding:16px 20px; display:grid; grid-template-columns:76px 1fr; gap:18px; align-items:start; }
+.phase-n{ font-family:"IBM Plex Mono", monospace; font-size:.72rem; color:var(--accent);
+  letter-spacing:.06em; padding-top:.2em; }
+.phase h4{ margin:0 0 5px; text-transform:none; font-family:"IBM Plex Sans", sans-serif;
+  font-size:.95rem; letter-spacing:0; color:var(--ink); }
+.phase p{ margin:0; font-size:.88rem; color:var(--ink-2); max-width:none; }
+
+footer{ border-top:1px solid var(--rule); padding-top:24px; margin-top:64px;
+  font-size:.8rem; color:var(--ink-3); }
+footer p{ max-width:74ch; }
+
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+@media (prefers-reduced-motion:no-preference){ html{ scroll-behavior:smooth; } }
+@media (max-width:640px){
+  .wrap{ padding:0 18px 64px; }
+  .phase{ grid-template-columns:1fr; gap:6px; }
+}
+</style>
+
+<div class="wrap">
+
+
+
+<nav class="toc" aria-label="Secciones">
+  <div class="toc__t">Contenido</div>
+  <a href="#s1"><span class="n">01</span>Punto de partida en el repositorio</a>
+  <a href="#s2"><span class="n">02</span>El objeto de la tributación</a>
+  <a href="#s3"><span class="n">03</span>Lo que falta en CompetencyNode</a>
+  <a href="#s4"><span class="n">04</span>De dónde sale cada dato</a>
+  <a href="#s5"><span class="n">05</span>Reglas de negocio</a>
+  <a href="#s6"><span class="n">06</span>Valores por defecto y validación</a>
+  <a href="#s7"><span class="n">07</span>El peso del eje 1</a>
+  <a href="#s8"><span class="n">08</span>Filas que el modelo no admite</a>
+  <a href="#s9"><span class="n">09</span>Indicadores y denominadores</a>
+  <a href="#s10"><span class="n">10</span>Permisos</a>
+  <a href="#s11"><span class="n">11</span>Contrato con la maqueta</a>
+  <a href="#s12"><span class="n">12</span>Orden de implementación</a>
+</nav>
+
+<main>
+
+<header class="masthead">
+  <p class="eyebrow">uP1 · Curriculum Mapping · UPONE-1452</p>
+  <h1>Implementar la tributación</h1>
+  <p class="standfirst">Qué objetos, qué reglas y qué falta para construir la lógica de tributación asignatura ↔ competencia, contrastada contra lo que el mod <code>curriculum-mapping</code> ya tiene en el repositorio.</p>
+  <div class="meta">
+    <span><b>Maqueta de referencia</b> mockup-curriculum-mapping v29</span>
+    <span><b>Modelo</b> competency-management-proposal v6</span>
+    <span><b>Repo</b> up1/mods/curriculum-mapping</span>
+    <span><b>Actualizado</b> 2026-08-31</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s1">
+  <span class="sec-n">01</span>
+  <h2>Punto de partida en el repositorio</h2>
+  <p class="lede">El mod <code>curriculum-mapping</code> no está vacío: tiene la mayor parte de los objetos creados contra el modelo de la propuesta v5. Lo que sigue no es una implementación desde cero, es un delta.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Archivo</th><th>Estado</th><th>Qué hay que hacerle</th></tr></thead>
+      <tbody>
+        <tr><td><code>objects/CompetencyAlignment.json</code></td><td><span class="chip warn">Cambia</span></td><td>Renombrar un campo, agregar el peso y endurecer requeridos. Ver §2</td></tr>
+        <tr><td><code>objects/CompetencyNode.json</code></td><td><span class="chip gap">Incompleto</span></td><td>Le faltan los campos sin los cuales la tributación no se puede validar. Ver §3</td></tr>
+        <tr><td><code>objects/CoverageScheme.json</code></td><td><span class="chip warn">Renombra</span></td><td>Pasa a <code>DevelopmentScheme</code>. Le faltan sus RecordTypes</td></tr>
+        <tr><td><code>objects/LevelScheme.json</code></td><td><span class="chip warn">Renombra</span></td><td>Pasa a <code>PerformanceScale</code>. No bloquea la tributación</td></tr>
+        <tr><td><code>objects/MatrixAdoption.json</code></td><td><span class="chip ok">Existe</span></td><td>Es la precondición de toda tributación. Sin cambios</td></tr>
+        <tr><td><code>objects/RubricDimension.json</code> · <code>RubricDescriptor.json</code></td><td><span class="chip ok">Existe</span></td><td>Fuera del alcance de este flujo</td></tr>
+        <tr><td><code>objects/CompetencyNodeOwnerUnit</code> · <code>ScopeUnit</code></td><td><span class="chip ok">Existe</span></td><td>Gobierno y alcance de la matriz. Sin cambios</td></tr>
+        <tr><td><code>objects/RecordTypes/</code></td><td><span class="chip warn">Incompleto</span></td><td>Están los de CompetencyNode y LevelScheme. Faltan los de <code>DevelopmentScheme</code></td></tr>
+        <tr><td><code>logic/</code></td><td><span class="chip gap">Falta</span></td><td>Hay resolvers de matriz, árbol, esquemas y adopción. <strong>No hay ninguno de tributación</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="note-k">Lo importante de esta tabla</span>
+    <p>El objeto de la tributación existe y es casi correcto. Lo que no existe es <strong>la escritura gobernada</strong> (no hay resolver) y, sobre todo, <strong>la información en la competencia contra la cual validar</strong>. Esa es la dependencia dura: sin §3, las reglas de §5 no son verificables.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s2">
+  <span class="sec-n">02</span>
+  <h2>El objeto de la tributación</h2>
+  <p class="lede">Estado real de <code>CompetencyAlignment.json</code> y el delta contra lo que el flujo necesita. La primera columna es lo que hay hoy en el repositorio.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Campo hoy</th><th>Queda</th><th>Cambio</th><th>Por qué</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>sourceType</code> <span class="chip acc">enum</span></td>
+          <td><code>sourceType</code></td>
+          <td><span class="chip ok">Igual</span></td>
+          <td><code>planEntry</code> | <code>milestone</code>. Este flujo solo opera <code>planEntry</code></td>
+        </tr>
+        <tr>
+          <td><code>sourceId</code></td>
+          <td><code>sourceId</code></td>
+          <td><span class="chip ok">Igual</span></td>
+          <td>FK polimórfica. Para <code>planEntry</code> apunta a <code>curriculum-design/planEntry</code></td>
+        </tr>
+        <tr>
+          <td><code>competencyNodeId</code></td>
+          <td><code>competencyNodeId</code></td>
+          <td><span class="chip warn">Se restringe</span></td>
+          <td>Solo nodos que se miden. Ver <span class="rule-id">R-3</span></td>
+        </tr>
+        <tr>
+          <td><code>level</code> <span class="chip acc">integer</span></td>
+          <td><code>level</code></td>
+          <td><span class="chip warn">Condicional</span></td>
+          <td>Queda restringido a <code>sourceType = milestone</code>. En <code>planEntry</code> es vestigial: ese rol lo cumple el nivel de desarrollo</td>
+        </tr>
+        <tr>
+          <td><code>coverageLevelId</code></td>
+          <td><code>developmentLevelId</code></td>
+          <td><span class="chip warn">Renombra</span></td>
+          <td>El objeto destino pasa de <code>CoverageScheme</code> a <code>DevelopmentScheme</code>. Y deja de ser analítico: es el eje sobre el que agrega el motor</td>
+        </tr>
+        <tr>
+          <td><code>contributionType</code> <span class="chip acc">nullable</span></td>
+          <td><code>contributionType</code></td>
+          <td><span class="chip warn">Requerido</span></td>
+          <td>Obligatorio cuando <code>sourceType = planEntry</code>, con default <code>Develops</code>. Una tributación sin tipo no dice si produce evidencia</td>
+        </tr>
+        <tr>
+          <td>—</td>
+          <td><code>contributionPercentage</code></td>
+          <td><span class="chip gap">Nuevo</span></td>
+          <td>Peso de la asignatura dentro de su nivel. Ver §7</td>
+        </tr>
+        <tr>
+          <td>—</td>
+          <td><code>planId</code></td>
+          <td><span class="chip gap">Nuevo, denormalizado</span></td>
+          <td>Derivable por <code>planEntry.planId</code>, pero se lee en cada celda y en cada guardado. Ver la nota</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Índices y unicidad</h3>
+  <p>La restricción de unicidad que ya está declarada es exactamente la regla del par único, así que no hay nada que agregar ahí:</p>
+<pre><code>"uniqueConstraints": [["sourceType", "sourceId", "competencyNodeId"]]</code></pre>
+  <p>Los índices actuales son <code>competencyNodeId</code>, <code>coverageLevelId</code> y <code>(sourceType, sourceId)</code>. Hay que agregar el del grupo de peso, que es la consulta más caliente del flujo:</p>
+<pre><code>"indexes": [
+  "competencyNodeId",
+  "developmentLevelId",
+  "sourceType, sourceId",
+  "planId, competencyNodeId, developmentLevelId"   // grupo del eje 1
+]</code></pre>
+
+  <div class="note warnb">
+    <span class="note-k">Sobre denormalizar el plan</span>
+    <p>Hoy el plan no está en el objeto: se llega por <code>sourceId → planEntry.planId</code>. Eso alcanza para leer una fila, pero el flujo consulta permanentemente por <em>plan</em>: el mapa completo del plan, el grupo de peso, los indicadores, y la validación de adopción. Con el plan fuera, cada una de esas consultas arrastra un join a otro mod.</p>
+    <p><strong>La decisión es de quien lo construya</strong>, con el costo a la vista. La recomendación es guardarlo y mantenerlo consistente en el resolver, no dejarlo a cargo del cliente. Si se resuelve por join, el resto de la spec sigue en pie: solo hay que medir qué cuesta esa consulta cuando el plan tiene decenas de asignaturas y varias matrices adoptadas.</p>
+  </div>
+
+  <div class="note gapb">
+    <span class="note-k">Un campo que NO hay que agregar</span>
+    <p>La propuesta v6 introdujo <code>contributesToGraduationProfile</code>, para distinguir la tributación que evidencia el logro del perfil de egreso de la que solo desarrolla. <strong>Se retiró y no debe implementarse.</strong> El motor lo filtraba en el eje 4, donde la competencia ya tiene un solo valor y las mediciones individuales ya se fundieron: ahí no queda nada que filtrar. Y su caso motivador, que solo la práctica profesional evidencie el perfil, ya lo resuelve <code>achievementBasis = RepresentativeLevel</code>.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s3">
+  <span class="sec-n">03</span>
+  <h2>Lo que falta antes, en CompetencyNode</h2>
+  <p class="lede">Esta es la dependencia dura del flujo. <code>CompetencyNode.json</code> hoy es un árbol desnudo: <code>recordType</code>, <code>name</code>, <code>code</code>, <code>description</code>, <code>position</code>, <code>externalId</code>, <code>metadata</code>, <code>parentId</code> y <code>matrixId</code>. Nada más.</p>
+  <p>La tributación no puede validarse contra eso. Necesita saber dos cosas que hoy el objeto no dice: si la competencia se mide o consolida, y en qué tramos se desarrolla.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Qué falta</th><th>Dónde</th><th>Sin esto, qué se rompe</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>isDirectlyMeasured</code> <span class="chip acc">boolean</span></td>
+          <td><code>CompetencyNode</code>, RecordTypes <code>Competency</code> y <code>SubCompetency</code></td>
+          <td>No hay forma de distinguir una competencia que se mide de una que consolida a sus partes. <span class="rule-id">R-3</span> no es verificable, y la maqueta deja tributar donde el modelo no lo admite</td>
+        </tr>
+        <tr>
+          <td><code>CompetencyNodeDevelopmentLevel</code><br><span class="chip acc">tabla de unión</span></td>
+          <td>Objeto nuevo: <code>(competencyNodeId, developmentLevelId, isRepresentative)</code></td>
+          <td>La competencia no declara sus tramos, así que la tributación no tiene universo contra el cual restringirse. <span class="rule-id">R-4</span> y todo el denominador de §9 quedan sin base</td>
+        </tr>
+        <tr>
+          <td><code>developmentSchemeId</code></td>
+          <td><code>CompetencyNode</code>, RecordType <code>Matrix</code></td>
+          <td>No se sabe de qué catálogo salen los niveles de esa matriz</td>
+        </tr>
+        <tr>
+          <td><code>achievementBasis</code> <span class="chip acc">enum</span></td>
+          <td><code>CompetencyNode</code>, RecordType <code>Matrix</code></td>
+          <td><code>Aggregation</code> | <code>RepresentativeLevel</code>. Solo afecta a los indicadores de este flujo, no a la captura. Ver §9</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Reglas sobre los niveles declarados</h4>
+  <ul>
+    <li>Los niveles de una competencia son un subconjunto <strong>no vacío</strong> de los del <code>developmentScheme</code> de su matriz.</li>
+    <li>Un nodo que consolida <strong>no declara niveles</strong>: los declaran sus hojas y él consolida. Al publicar la matriz se valida que ningún nodo rama declare niveles.</li>
+    <li>Con <code>achievementBasis = RepresentativeLevel</code>, exactamente uno de los niveles declarados lleva <code>isRepresentative = true</code>.</li>
+    <li>Una competencia que declara un solo nivel es el caso frecuente, no un borde: apaga el segundo eje de agregación y hace que el nivel de la tributación se resuelva solo.</li>
+  </ul>
+
+  <div class="note warnb">
+    <span class="note-k">Regla de migración</span>
+    <p>Una competencia que todavía no declara sus tramos hereda <strong>todos</strong> los del esquema, no solo el último. Quedarse con el último invalidaría de golpe toda tributación ya registrada en los tramos anteriores. Declarar todo preserva lo cargado y deja que la institución estreche después, que es una decisión suya y no un efecto del cambio.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s4">
+  <span class="sec-n">04</span>
+  <h2>De dónde sale cada dato</h2>
+  <p class="lede">Las cuatro fuentes que el resolver tiene que consultar antes de aceptar una tributación, y el mod al que pertenece cada una.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Dato</th><th>Origen</th><th>Mod</th></tr></thead>
+      <tbody>
+        <tr><td>El plan de la tributación</td><td><code>planEntry.planId → Curriculum</code></td><td>curriculum-design</td></tr>
+        <tr><td>Las asignaturas elegibles</td><td>Entradas de malla del plan, versión vigente</td><td>curriculum-design</td></tr>
+        <tr><td>Las competencias elegibles</td><td>Nodos de matrices con <code>MatrixAdoption</code> vigente para ese plan</td><td>curriculum-mapping</td></tr>
+        <tr><td>Los niveles elegibles</td><td><code>CompetencyNodeDevelopmentLevel</code> de esa competencia</td><td>curriculum-mapping <span class="chip gap">por crear</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="note-k">Frontera entre mods</span>
+    <p>La tributación es de Curriculum Mapping, pero se opera desde el registro del plan, que es de Curriculum Design. En la maqueta el usuario nunca cambia de app: la vista de tributación es un estado más de Curriculum Design y el límite se cruza con una lectura y una navegación interna. La implementación debería respetar eso: <strong>el objeto no cambia de dueño, la pantalla sí vive del lado del plan.</strong></p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s5">
+  <span class="sec-n">05</span>
+  <h2>Reglas de negocio</h2>
+  <p class="lede">Dónde se hace cumplir cada una. Las que dicen <em>resolver</em> no pueden quedar solo en el cliente: la maqueta las respeta, pero la escritura gobernada es la que las garantiza.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Regla</th><th>Se aplica en</th></tr></thead>
+      <tbody>
+        <tr><td class="rule-id">R-1</td><td>Solo se tributan competencias de matrices con <strong>adopción vigente</strong> para el plan del <code>planEntry</code></td><td>UI al ofrecer · resolver al escribir</td></tr>
+        <tr><td class="rule-id">R-2</td><td>El par (asignatura, competencia) es <strong>único</strong>. El selector muestra los existentes marcados y bloqueados en vez de permitir duplicar</td><td>UI · <code>uniqueConstraints</code> <span class="chip ok">ya está</span></td></tr>
+        <tr><td class="rule-id">R-3</td><td><strong>Un nodo que consolida no es destino de tributación.</strong> Su nivel sale de consolidar el de sus hijas, así que no hay nivel donde posicionarla</td><td>UI · resolver</td></tr>
+        <tr><td class="rule-id">R-4</td><td>El nivel de desarrollo debe ser uno de los que <strong>la competencia declaró</strong>. Requerido si declara más de uno; si declara uno solo, se resuelve por defecto</td><td>UI · resolver</td></tr>
+        <tr><td class="rule-id">R-5</td><td>El tipo de contribución es enum fijo y <strong>obligatorio</strong> en <code>planEntry</code>. Nace en <code>Develops</code></td><td>UI · resolver · schema</td></tr>
+        <tr><td class="rule-id">R-6</td><td>Solo <code>Evaluates</code> y <code>Both</code> producen evidencia de logro y participan del peso</td><td>Motor · UI</td></tr>
+        <tr><td class="rule-id">R-7</td><td>Retirar una tributación que sostiene alineaciones de resultados de aprendizaje <strong>no se ejecuta en silencio</strong>: se nombran y el usuario decide</td><td>UI · resolver</td></tr>
+        <tr><td class="rule-id">R-8</td><td>Al versionar el plan, la tributación <strong>no se replica sola: se elige</strong>. Ver abajo</td><td>Resolver de versionado de <code>Curriculum</code></td></tr>
+        <tr><td class="rule-id">R-9</td><td><code>contributionPercentage</code> solo se muestra y se guarda si la institución lo tiene habilitado. Ver §7</td><td>UI · config institucional</td></tr>
+        <tr><td class="rule-id">R-10</td><td>Mover una tributación de nivel <strong>actualiza</strong> la fila, nunca crea una segunda</td><td>UI · resolver</td></tr>
+        <tr><td class="rule-id">R-11</td><td>Todos los criterios de una competencia se evalúan dentro de la asignatura que la tributa. Los criterios <strong>no se tributan uno a uno</strong></td><td>Restricción del modelo</td></tr>
+        <tr><td class="rule-id">R-12</td><td>Una fila que contradice el diseño <strong>se muestra marcada, no se borra sola</strong>. Ver §8</td><td>UI</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>Qué pasa al versionar el plan</h3>
+  <p>La tributación <strong>no se arrastra sola</strong>. Al versionar, quien tenga permiso de tributación elige entre dos caminos:</p>
+  <ul>
+    <li><strong>Replicar el mapa</strong> a la versión nueva.</li>
+    <li><strong>Empezar sin tributación</strong>, dejando la versión nueva vacía.</li>
+  </ul>
+  <p>Es una elección y no una regla fija porque las dos situaciones son reales y opuestas: una versión que solo corrige la bibliografía quiere el mapa intacto, y una que rehace la malla quiere partir limpio. Forzar cualquiera de las dos obliga a deshacer trabajo.</p>
+
+  <div class="note warnb">
+    <span class="note-k">Replicar es remapear, no copiar</span>
+    <p><code>sourceId</code> apunta a un <code>planEntry</code> de la versión anterior. La copia tiene que apuntar al <code>planEntry</code> <strong>equivalente</strong> de la versión nueva, el de la misma actividad. Las filas cuya asignatura ya no está en la malla nueva no tienen a dónde ir: se descartan y <strong>se reporta cuántas</strong>. Es trabajo que se pierde, y quien versiona tiene que enterarse en el momento, no descubrirlo después mirando un indicador que bajó.</p>
+  </div>
+
+  <p>Quien no tiene permiso de tributación no ve la opción y <strong>se replica</strong>. Es el default seguro: perder el mapa entero por omisión es peor que arrastrarlo, y quien no puede tributar tampoco podría reconstruirlo. <em>Este default es una inferencia, no una instrucción recibida: si la institución prefiere lo contrario, es un parámetro y no un cambio de diseño.</em></p>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s6">
+  <span class="sec-n">06</span>
+  <h2>Valores por defecto y validación</h2>
+  <p class="lede">Las reglas de §5 dicen qué tiene que ser cierto. Esta sección dice con qué nace cada campo y qué pasa exactamente cuando algo no se cumple, que es lo que hay que escribir en el resolver.</p>
+
+  <h3>Con qué nace cada campo</h3>
+  <p>Ninguno de estos valores se le pide al usuario al asignar. La captura es un clic, y todo lo demás se resuelve o se hereda.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Campo</th><th>Valor al crear</th><th>De dónde sale</th></tr></thead>
+      <tbody>
+        <tr><td><code>sourceType</code></td><td><code>planEntry</code></td><td>Constante del flujo. El editor no opera hitos</td></tr>
+        <tr><td><code>sourceId</code></td><td>La asignatura del destino</td><td>Contexto de la acción</td></tr>
+        <tr><td><code>competencyNodeId</code></td><td>La competencia del destino</td><td>Contexto de la acción</td></tr>
+        <tr><td><code>planId</code></td><td><code>planEntry.planId</code></td><td><span class="chip acc">Derivado</span> Lo escribe el resolver, nunca el cliente</td></tr>
+        <tr>
+          <td><code>developmentLevelId</code></td>
+          <td>El único que declara la competencia; si declara varios, el del destino</td>
+          <td><span class="chip acc">Se resuelve solo</span> cuando no hay nada que elegir. En la grilla lo da la columna; en la malla, el panel</td>
+        </tr>
+        <tr><td><code>contributionType</code></td><td><code>Develops</code></td><td>Constante. Es lo mínimo que afirma una tributación: que la asignatura aborda la competencia</td></tr>
+        <tr><td><code>contributionPercentage</code></td><td><code>null</code></td><td>Porque nace en <code>Develops</code> y no mide. Ver la transición abajo</td></tr>
+        <tr><td><code>level</code></td><td><code>null</code></td><td>Solo aplica a <code>sourceType = milestone</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Cuando la fila empieza a medir</h4>
+  <p>Pasar de <code>Develops</code> a <code>Evaluates</code> o <code>Both</code> mete la fila al grupo de peso, y ahí el default depende del estado del grupo:</p>
+  <ul>
+    <li>Grupo <strong>automático</strong>: se reparte parejo incluyendo a la nueva.</li>
+    <li>Grupo <strong>manual</strong>: la nueva entra en <code>0</code>, no en vacío. La suma queda visiblemente incompleta en vez de pisar en silencio un reparto que alguien decidió.</li>
+  </ul>
+  <p>Al revés, volver a <code>Develops</code> devuelve el peso a <code>null</code> y recompone el grupo. Lo mismo al mover la fila de nivel: cambia de grupo, así que se recomponen los dos, el que deja y el que recibe.</p>
+
+  <h4>Defaults de la vía masiva</h4>
+  <p>El formulario abre con el nivel en el primero que declara la competencia destino, y el tipo en <code>Develops</code>. Los dos valores rigen para todo lo que se marque, y por eso se piden <strong>antes</strong> de la lista: preguntarlos al final obliga a volver a revisar la selección para saber con qué quedó.</p>
+
+  <h3>Qué se valida, cuándo, y qué pasa</h3>
+  <p>El criterio que ordena la tabla es el del modelo: <strong>avisar donde es inusual, bloquear solo donde es imposible, y nunca dejar pasar algo importante en silencio.</strong></p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Qué se valida</th><th>Cuándo</th><th>Efecto</th><th>Qué ve quien lo hace</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Adopción vigente <span class="rule-id">R-1</span></td>
+          <td>Al ofrecer y al guardar</td>
+          <td><span class="chip gap">Bloquea</span></td>
+          <td>La competencia no aparece en ninguna parte, ni en la búsqueda</td>
+        </tr>
+        <tr>
+          <td>Par único <span class="rule-id">R-2</span></td>
+          <td>Al seleccionar y en la base</td>
+          <td><span class="chip gap">Bloquea</span></td>
+          <td>En la vía masiva, casilla marcada y bloqueada con <em>ya tributa</em>. En el lienzo, el destino dice que ya está</td>
+        </tr>
+        <tr>
+          <td>Nodo que consolida <span class="rule-id">R-3</span></td>
+          <td>Al ofrecer y al guardar</td>
+          <td><span class="chip gap">Bloquea</span></td>
+          <td>La fila entera es inerte y sus celdas dicen <em>consolida</em>. La competencia no se puede tomar en mano ni aparece en la vía masiva</td>
+        </tr>
+        <tr>
+          <td>Nivel declarado <span class="rule-id">R-4</span></td>
+          <td>Al ofrecer y al guardar</td>
+          <td><span class="chip gap">Bloquea</span></td>
+          <td>La celda queda bloqueada y vacía, con <em>no se desarrolla acá</em>. El detalle solo ofrece los niveles declarados</td>
+        </tr>
+        <tr>
+          <td>Peso entre 0 y 100</td>
+          <td>Al escribir</td>
+          <td><span class="chip warn">Acota</span></td>
+          <td>El campo no admite fuera de rango. Dos decimales</td>
+        </tr>
+        <tr>
+          <td>El grupo suma 100</td>
+          <td>Al publicar el plan, <strong>no</strong> en cada guardado</td>
+          <td><span class="chip gap">Bloquea la publicación</span></td>
+          <td>La suma en rojo en la celda y en la ficha, con la acción de repartir en partes iguales</td>
+        </tr>
+        <tr>
+          <td>Fila fuera del diseño</td>
+          <td>Permanente, al renderizar</td>
+          <td><span class="chip warn">Advierte</span></td>
+          <td>Ficha marcada, indicador propio, y el detalle ofrece la salida. <strong>No se borra sola</strong></td>
+        </tr>
+        <tr>
+          <td>Retiro con resultados de aprendizaje dependientes <span class="rule-id">R-7</span></td>
+          <td>Al retirar</td>
+          <td><span class="chip warn">Confirma</span></td>
+          <td>Se nombran los resultados que quedan sin respaldo, y el usuario decide</td>
+        </tr>
+        <tr>
+          <td>Salir con cambios sin guardar</td>
+          <td>Al cambiar de matriz, volver al plan o cerrar la pestaña</td>
+          <td><span class="chip warn">Confirma</span></td>
+          <td>Tres salidas: seguir trabajando, salir sin guardar, o guardar y salir</td>
+        </tr>
+        <tr>
+          <td>Competencia derivada sin resultados de aprendizaje en el plan</td>
+          <td>Al publicar el plan</td>
+          <td><span class="chip warn">Reconocimiento explícito</span></td>
+          <td>Se nombran las competencias que no serán medibles y hay que confirmar. No bloquea, pero no pasa en silencio</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="note-k">Por qué la suma no se valida al guardar</span>
+    <p>La tributación es una sesión de trabajo: se recorren decenas de asignaturas y el mapa está incompleto casi todo el tiempo. Validar el 100 en cada guardado convertiría un estado normal de trabajo en un error. El momento en que sí tiene que estar cerrado es la publicación del plan, que es cuando el mapa pasa a ser una afirmación institucional.</p>
+  </div>
+
+  <div class="note warnb">
+    <span class="note-k">Las tres primeras validaciones se hacen dos veces, a propósito</span>
+    <p>La interfaz no ofrece lo que no corresponde, y aun así el resolver lo vuelve a comprobar. No es redundancia: la vía masiva, un import y la API son entradas que no pasan por el lienzo. La regla vive en el resolver; la interfaz solo evita que el usuario llegue a chocar con ella.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s7">
+  <span class="sec-n">07</span>
+  <h2>El peso del eje 1</h2>
+  <p class="lede">El motor consolida las asignaturas que evalúan una competencia dentro de un mismo nivel de desarrollo. Ese es el grupo, y el modo <code>WeightedAvg</code> pedía un peso que el modelo no definía. <code>contributionPercentage</code> es ese peso.</p>
+
+  <h4>El grupo</h4>
+<pre><code>grupo = (planId, competencyNodeId, developmentLevelId)
+        filtrado a contributionType ∈ {Evaluates, Both}</code></pre>
+  <p>Una asignatura que solo desarrolla no produce medición, así que no se lleva parte del 100 y su peso queda en <code>null</code>. Un nodo que consolida no forma grupo: darle peso sería inventarle un rol en un cálculo que no existe.</p>
+
+  <h4>La regla del reparto</h4>
+  <p><strong>Uniforme mientras nadie lo toque; explícito desde que alguien lo tocó.</strong></p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Estado del grupo</th><th>Al agregar una fila</th><th>Al quitar una</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Automático</strong> (nadie editó un peso)</td><td>Se reparte parejo entre todos. 3 filas a 33,33 pasan a 4 a 25</td><td>Se reparte parejo entre las que quedan</td></tr>
+        <tr><td><strong>Manual</strong> (alguien editó al menos uno)</td><td>La fila nueva entra en <strong>0</strong> y la suma se muestra incompleta</td><td>Las demás quedan igual y la suma baja de 100</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>El grupo nace automático. Basta con editar un peso para que pase a manual, y hay una acción de <em>repartir en partes iguales</em> que lo devuelve a automático. Cambiar el tipo de contribución o mover la fila de nivel la cambia de grupo, así que hay que recomponer los dos: el que deja y el que recibe.</p>
+
+  <div class="note warnb">
+    <span class="note-k">Qué se persiste y qué no</span>
+    <p>Se persiste el <strong>porcentaje de cada fila</strong>. El estado automático/manual del grupo es de interfaz y no se guarda: se puede derivar comparando si todos los pesos del grupo son iguales dentro de la tolerancia. Si se decide persistirlo, es un campo del grupo y no de la fila, y hoy el grupo no tiene objeto propio.</p>
+  </div>
+
+  <h4>Convención numérica</h4>
+  <ul>
+    <li>Porcentaje con 2 decimales, suma 100 dentro del grupo, tolerancia 0,01. Es la misma convención que los otros pesos del modelo.</li>
+    <li>El resto de la división cae en la última fila: 3 filas dan 33,33 / 33,33 / 33,34.</li>
+    <li>La validación de que el grupo suma 100 es <strong>gate de publicación del plan</strong>, no de cada guardado. Durante la sesión de trabajo el mapa puede estar incompleto.</li>
+    <li>Al calcular, el motor renormaliza sobre las filas con evidencia: una asignatura que el estudiante todavía no cursó sale del denominador en vez de contar como 0.</li>
+  </ul>
+
+  <div class="note gapb">
+    <span class="note-k">Lo que este campo NO es</span>
+    <p>El campo viene del legacy (<code>nm_percentage</code> de <code>imp_courses_competencies</code>), donde cuelga del par (nivel, curso), que es exactamente el grano del eje 1. Pero allá se leía como <em>cuánto de la competencia abarca el curso</em>. Acá significa <em>cuánto pesa su medición</em>. Son cosas distintas y la migración tiene que decidir qué hacer con los valores cargados; en la instancia observada venían todos en <code>null</code> y el flag institucional en <code>false</code>, así que probablemente no haya nada que migrar.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s8">
+  <span class="sec-n">08</span>
+  <h2>Filas que el modelo no admite</h2>
+  <p class="lede">Hay dos formas en que una tributación puede contradecir el diseño de su matriz. Las dos aparecen en datos migrados o cuando alguien estrecha la matriz después de tributar, y ninguna se borra sola.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Estado</th><th>Cómo se llega</th><th>Salida que ofrece la interfaz</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Nivel no declarado</strong></td>
+          <td>Alguien desmarcó en la matriz un nivel que ya tenía tributaciones</td>
+          <td>El detalle ofrece los niveles declarados para moverla. Es el camino esperado</td>
+        </tr>
+        <tr>
+          <td><strong>Colgada de un nodo que consolida</strong></td>
+          <td>Dato migrado, o una competencia que se desagregó después</td>
+          <td>No hay nivel al que moverla: se explica y se ofrece retirarla para tributar a la subcompetencia que corresponda</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Tratamiento en la interfaz</h4>
+  <ul>
+    <li>La ficha se marca. La celda del nivel no declarado queda <strong>bloqueada y vacía, nunca oculta</strong>: si se ocultara, cada fila tendría un ancho distinto y se perdería la lectura de progresión, que es el punto del artefacto.</li>
+    <li>Las filas afectadas se cuentan en un indicador propio, que solo aparece cuando hay algo que arreglar.</li>
+    <li>El detalle de una fila colgada de un nodo que consolida <strong>no ofrece nivel, ni contribución, ni peso</strong>: no hay nada que declarar sobre una fila que el modelo no admite.</li>
+  </ul>
+
+  <div class="note">
+    <span class="note-k">Consecuencia para el motor</span>
+    <p>Estas filas no deben entrar al cálculo. Si una fila colgada de un nodo que consolida evaluara, el motor tendría que emitir un logro para un nodo cuyo valor está definido como la consolidación de sus hijas: dos verdades sobre el mismo número.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s9">
+  <span class="sec-n">09</span>
+  <h2>Indicadores y sus denominadores</h2>
+  <p class="lede">El denominador es la parte que más se equivoca. Se escribe acá con precisión porque de él depende que un plan se vea completo o no.</p>
+
+  <h4>Desarrollo tributado</h4>
+<pre><code>celdas   = Σ  sobre competencias medibles de matrices adoptadas
+              |niveles que la competencia declara|
+
+cubiertas = Σ  celdas con al menos una tributación en ese nivel</code></pre>
+  <p>El grano es la <strong>celda declarada</strong>, no la competencia. Una competencia que declara tres tramos y solo tiene quien la introduzca cuenta 1 de 3, no 1 de 1. Ese es el dato que pide acreditación: no si alguien se hace cargo, sino si hay progresión.</p>
+  <p>El conteo por competencia se conserva como lectura secundaria, para no perder el número al que la gente ya estaba acostumbrada.</p>
+
+  <h4>Competencias con evaluador</h4>
+  <p>Una competencia cuenta si alguna de sus tributaciones es <code>Evaluates</code> o <code>Both</code>. Sin este indicador, un plan puede mostrar cobertura completa y no medir nada.</p>
+  <p><strong>Se especializa cuando la matriz define el logro por escalonamiento.</strong> Con <code>achievementBasis = RepresentativeLevel</code> el logro de la competencia <em>es</em> el del nivel representativo, así que una competencia con evaluador en los otros tramos y ninguno ahí no produce logro alguno. El indicador genérico la contaría como buena, y por eso pasa a ser <em>con evaluador en el nivel representativo</em>.</p>
+
+  <h4>Asignaturas sin tributar</h4>
+  <p>Entradas de malla del plan sin ninguna tributación. Se reporta, no se marca como error: hay asignaturas que la institución decide no mapear.</p>
+
+  <h4>Fuera del diseño</h4>
+  <p>Filas de §8. Solo aparece si el conteo es mayor que cero.</p>
+
+  <div class="note warnb">
+    <span class="note-k">Dos alcances, y hay que declararlos</span>
+    <p>Los mismos indicadores existen en dos lugares con denominadores distintos: en la <strong>vista de lectura del plan</strong> abarcan todas las matrices adoptadas, y en el <strong>componente de tributación</strong> solo la matriz en la que se está trabajando. Un indicador que cambia de denominador según dónde se mira, sin decirlo, es peor que no tenerlo.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s10">
+  <span class="sec-n">10</span>
+  <h2>Permisos</h2>
+  <p class="lede">El mod ya tiene <code>capabilities.json</code> con capabilities a nivel de objeto, siguiendo el patrón que dejó UPONE-1454 para <code>levelscheme</code>. La tributación sigue el mismo molde.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Capability</th><th>Riesgo</th><th>Qué habilita</th></tr></thead>
+      <tbody>
+        <tr><td><code>competencyalignment:view</code></td><td><span class="chip ok">low</span></td><td>Ver el mapa de tributación del plan, en sus dos lecturas</td></tr>
+        <tr><td><code>competencyalignment:create</code></td><td><span class="chip warn">medium</span></td><td>Asignar, por lienzo o por vía masiva</td></tr>
+        <tr><td><code>competencyalignment:modify</code></td><td><span class="chip warn">medium</span></td><td>Cambiar nivel, tipo de contribución y peso</td></tr>
+        <tr><td><code>competencyalignment:delete</code></td><td><span class="chip gap">high</span></td><td>Retirar. Arrastra las alineaciones de resultados de aprendizaje que dependían de ella</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Se cablean a los roles curriculares que ya existen, <strong>sin crear roles nuevos</strong>: Consultor Curricular solo lectura; Diseñador Curricular crear, editar y retirar; Revisor y Autoridad lectura más lo que corresponda al ciclo de vida del plan. El <code>_data-rbac.js</code> del mod solo hace <code>attachCapabilitiesToRole</code>.</p>
+
+  <h3>La capability es de curriculum-mapping, aunque la pantalla sea de curriculum-design</h3>
+  <p>Es la misma frontera de §4, ahora del lado de los permisos. La tributación se opera desde el registro del plan, que vive en Curriculum Design, pero el objeto es de Curriculum Mapping y por lo tanto <strong>el permiso también</strong>. Las capabilities se declaran en <code>curriculum-mapping/capabilities.json</code>, junto a las de los esquemas y la matriz.</p>
+  <p>Lo que hace la vista del plan es <strong>consultar</strong> esa capability para decidir qué muestra:</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Qué se muestra en el plan</th><th>Capability que lo gobierna</th></tr></thead>
+      <tbody>
+        <tr><td>La pestaña <em>Tributación</em> y sus indicadores</td><td><code>competencyalignment:view</code></td></tr>
+        <tr><td>El botón <em>Tributar</em> y el editor</td><td><code>competencyalignment:create</code> o <code>:modify</code></td></tr>
+        <tr><td>El detalle en modo lectura</td><td><code>competencyalignment:view</code></td></tr>
+        <tr><td>Los controles del detalle y la x de la ficha</td><td><code>:modify</code> y <code>:delete</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <span class="note-k">El principio, para no volver a discutirlo</span>
+    <p><strong>La pantalla no otorga permiso.</strong> Que una funcionalidad se exprese en una vista de otro mod no la hace de ese mod: gobierna el dueño del objeto. Un usuario con acceso completo a Curriculum Design y sin la capability de Curriculum Mapping <strong>no ve la pestaña</strong>, no la ve vacía.</p>
+    <p>El corolario práctico es que Curriculum Design tiene que poder preguntar por una capability de otro mod al renderizar el registro del plan. Si eso no está resuelto en la plataforma, es una dependencia a levantar antes de la fase 4.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s11">
+  <span class="sec-n">11</span>
+  <h2>Contrato con la maqueta</h2>
+  <p class="lede">Qué elemento de la maqueta corresponde a qué pieza, para que la implementación no tenga que inferirlo.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>En la maqueta</th><th>Qué es</th></tr></thead>
+      <tbody>
+        <tr><td>Pestaña <em>Tributación</em> del plan</td><td>Solo lectura. Indicadores, filtro por matriz y las dos lecturas del mapa</td></tr>
+        <tr><td>Botón <em>Tributar</em></td><td>Entra al editor sin paso intermedio. Sin matriz preseleccionada, muestra un vacío bajo el selector</td></tr>
+        <tr><td>Grilla competencia × nivel</td><td>Forma A. La celda es el destino y define el nivel en el mismo acto de asignar</td></tr>
+        <tr><td>Malla por período</td><td>Forma B. La tarjeta es el destino; el nivel se elige junto a la competencia que se toma</td></tr>
+        <tr><td>Ficha <code>CÓDIGO · NIVEL · CONTRIBUCIÓN</code></td><td>Una fila de <code>CompetencyAlignment</code>. Mismo orden y mismo significado en las cuatro vistas</td></tr>
+        <tr><td>Panel de detalle</td><td>El mismo en lectura y en edición. Desde el plan abre sin controles; desde el editor, con ellos</td></tr>
+        <tr><td>Botón <em>Varias</em></td><td>Vía masiva desde el destino. Primero los dos campos generales, después la lista</td></tr>
+        <tr><td>Aviso de cambios sin guardar</td><td>Guardado global: la tributación es una sesión de trabajo, no una edición por fila</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Modelo transaccional</h4>
+  <p>Las asignaciones del lienzo y del selector masivo <strong>no escriben al instante</strong>. Actualizan el mapa en memoria, alimentan los indicadores en vivo y marcan el estado como sucio. Al guardar se envía el mapa completo del plan para esa matriz. Eso es lo que permite armar la tributación entera y revisarla antes de comprometerla, y es también como funciona el componente legacy.</p>
+  <p>Consecuencia para el resolver: la operación de guardado es un <strong>upsert de conjunto</strong> por (plan, matriz), no una secuencia de altas y bajas individuales.</p>
+</section>
+
+<!-- ══════════════════════════════════════════ -->
+<section id="s12">
+  <span class="sec-n">12</span>
+  <h2>Orden de implementación</h2>
+  <p class="lede">El orden no es negociable en su primer tramo: la tributación se valida contra la declaración de la competencia, así que esa va primero.</p>
+
+  <div class="phases">
+    <div class="phase">
+      <span class="phase-n">F1</span>
+      <div>
+        <h4>La competencia declara</h4>
+        <p><code>isDirectlyMeasured</code> en <code>CompetencyNode</code>, el objeto <code>CompetencyNodeDevelopmentLevel</code>, <code>developmentSchemeId</code> en el RecordType <code>Matrix</code>, y los RecordTypes que le faltan a <code>DevelopmentScheme</code>. Sin esto, nada de lo que sigue es verificable.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="phase-n">F2</span>
+      <div>
+        <h4>El objeto de la tributación al día</h4>
+        <p>Rename de <code>coverageLevelId</code>, <code>contributionPercentage</code>, <code>planId</code>, requeridos condicionales por <code>sourceType</code> e índice del grupo. Migración de las filas existentes.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="phase-n">F3</span>
+      <div>
+        <h4>Escritura gobernada</h4>
+        <p>El resolver que hoy no existe: upsert de conjunto por (plan, matriz), con <span class="rule-id">R-1</span> a <span class="rule-id">R-5</span> y <span class="rule-id">R-10</span>, y el reparto del peso de §7. Es donde vive todo lo que el cliente no puede garantizar.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="phase-n">F4</span>
+      <div>
+        <h4>Lectura del plan</h4>
+        <p>La pestaña con sus indicadores, el filtro por matriz, las dos lecturas y el detalle en solo lectura. Es la mitad que se puede entregar antes de que exista el editor.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="phase-n">F5</span>
+      <div>
+        <h4>El editor</h4>
+        <p>Las dos formas con el patrón en mano, el detalle editable, la vía masiva y el guardado global con sus guardias.</p>
+      </div>
+    </div>
+    <div class="phase">
+      <span class="phase-n">F6</span>
+      <div>
+        <h4>Lo que depende de la tributación</h4>
+        <p><code>outcomeAlignment</code>, que es refinamiento de esta relación y se opera desde el Programa de Asignatura, y <span class="rule-id">R-7</span> con su resguardo.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <p><strong>Trazabilidad.</strong> Estado del repositorio leído de <code>repositories/uP1/up1/mods/curriculum-mapping</code> y <code>curriculum-design</code>. Modelo de dominio en <code>competency-management-proposal_v6.md</code> y <code>matriz-competencia-implementacion_v2.md</code>. Comportamiento de referencia en la maqueta <code>mockup-curriculum-mapping</code>, línea v11 a v29, cuyo registro de decisiones vive en la cabecera del propio archivo.</p>
+  <p>Las reglas y los denominadores de este documento están verificados contra la maqueta corriendo, no solo escritos.</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+/* Marca en el riel la sección que se está leyendo. Sin esto, en un documento de trece
+   secciones el índice dice a dónde ir pero no dónde se está.
+   Se calcula por posición y no por intersección: con una banda de observación, al saltar
+   a una sección la anterior seguía intersectando y el riel marcaba una de menos. */
+(function(){
+  var links = [].slice.call(document.querySelectorAll('.toc a'));
+  if(!links.length) return;
+  var byId = {};
+  links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  var secciones = [].slice.call(document.querySelectorAll('section[id]'));
+  if(!secciones.length) return;
+  var pendiente = false;
+  function pintar(){
+    pendiente = false;
+    var umbral = window.innerHeight * 0.25, activa = secciones[0].id;
+    for(var i=0;i<secciones.length;i++){
+      if(secciones[i].getBoundingClientRect().top <= umbral) activa = secciones[i].id;
+    }
+    links.forEach(function(a){ a.classList.remove('on'); a.removeAttribute('aria-current'); });
+    if(byId[activa]){ byId[activa].classList.add('on'); byId[activa].setAttribute('aria-current','true'); }
+  }
+  function pedir(){ if(!pendiente){ pendiente = true; requestAnimationFrame(pintar); } }
+  addEventListener('scroll', pedir, { passive:true });
+  addEventListener('resize', pedir);
+  pintar();
+})();
+</script>
+
+</body></html>

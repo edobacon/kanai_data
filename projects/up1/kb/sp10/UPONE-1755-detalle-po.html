@@ -1,0 +1,607 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style></head><body>
+<title>UPONE-1755 Pestaña de Medición</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+:root{
+  --paper:#f6f8f8; --card:#ffffff; --ink:#0f1e1d; --ink-soft:#3c4d4c;
+  --label:#5b6b6a; --rule:#dbe4e3; --rule-soft:#eaf0ef;
+  --accent:#0a808c; --accent-soft:#e2f1f2; --accent-line:#a8d4d8;
+  --warn:#8f5106; --warn-soft:#fdf1e0; --warn-line:#e8c893;
+  --ok:#1c6b4a; --ok-soft:#e6f2eb;
+  --code-bg:#eef3f3; --shadow:0 1px 2px rgba(15,30,29,.05), 0 8px 24px -18px rgba(15,30,29,.25);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d1514; --card:#131e1d; --ink:#e7efee; --ink-soft:#b3c4c2;
+    --label:#8fa3a1; --rule:#263634; --rule-soft:#1c2827;
+    --accent:#5cbcc3; --accent-soft:#12292b; --accent-line:#2a5157;
+    --warn:#e0a85a; --warn-soft:#2a2013; --warn-line:#5c4520;
+    --ok:#6cc39a; --ok-soft:#14271f;
+    --code-bg:#182423; --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -18px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1514; --card:#131e1d; --ink:#e7efee; --ink-soft:#b3c4c2;
+  --label:#8fa3a1; --rule:#263634; --rule-soft:#1c2827;
+  --accent:#5cbcc3; --accent-soft:#12292b; --accent-line:#2a5157;
+  --warn:#e0a85a; --warn-soft:#2a2013; --warn-line:#5c4520;
+  --ok:#6cc39a; --ok-soft:#14271f;
+  --code-bg:#182423; --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -18px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:17px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:0 clamp(18px,4vw,48px) 96px;
+  display:grid; grid-template-columns:1fr; gap:0 56px;}
+@media (min-width:1080px){ .wrap{grid-template-columns:210px minmax(0,1fr);} }
+
+/* indice lateral */
+.toc{display:none}
+@media (min-width:1080px){
+  .toc{display:block; position:sticky; top:0; align-self:start; padding-top:132px; max-height:100vh; overflow-y:auto}
+}
+.toc__t{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.62rem; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--label); margin-bottom:12px}
+.toc a{display:block; padding:5px 0; font-size:.86rem; color:var(--ink-soft); text-decoration:none;
+  border-left:2px solid var(--rule); padding-left:12px; transition:color .15s,border-color .15s}
+.toc a:hover,.toc a:focus-visible{color:var(--accent); border-left-color:var(--accent)}
+.toc a .n{font-family:"JetBrains Mono",monospace; font-size:.72rem; color:var(--label); margin-right:6px}
+
+/* encabezado */
+header{padding:76px 0 40px; border-bottom:1px solid var(--rule); margin-bottom:44px}
+.eyebrow{display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  font-family:"JetBrains Mono",monospace; font-size:.7rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--label); margin-bottom:18px}
+.eyebrow a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-line)}
+.eyebrow .sep{width:14px; height:1px; background:var(--rule)}
+h1{font-family:"Bricolage Grotesque","Helvetica Neue",sans-serif; font-weight:800;
+  font-size:clamp(2rem,4.4vw,3.05rem); line-height:1.04; letter-spacing:-.022em;
+  margin:0 0 18px; text-wrap:balance}
+.standfirst{font-size:1.12rem; color:var(--ink-soft); max-width:64ch; margin:0}
+.meta{display:flex; flex-wrap:wrap; gap:0 30px; margin-top:30px;
+  font-family:"JetBrains Mono",monospace; font-size:.74rem}
+.meta div{display:flex; flex-direction:column; gap:3px}
+.meta dt{color:var(--label); font-size:.64rem; letter-spacing:.08em; text-transform:uppercase}
+.meta dd{margin:0; color:var(--ink)}
+
+/* secciones */
+section{padding-top:14px; margin-bottom:56px; scroll-margin-top:24px}
+h2{font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:1.62rem;
+  line-height:1.16; letter-spacing:-.015em; margin:0 0 6px; text-wrap:balance;
+  display:flex; gap:12px; align-items:baseline}
+h2 .n{font-family:"JetBrains Mono",monospace; font-size:.82rem; font-weight:600;
+  color:var(--accent); flex-shrink:0; padding-top:.35em}
+h3{font-family:"Bricolage Grotesque",sans-serif; font-weight:600; font-size:1.06rem;
+  letter-spacing:-.005em; margin:32px 0 8px; color:var(--ink)}
+h4{font-family:"JetBrains Mono",monospace; font-size:.7rem; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--label); margin:26px 0 8px}
+p{margin:0 0 14px; max-width:70ch}
+ul,ol{margin:0 0 14px; padding-left:22px; max-width:70ch}
+li{margin-bottom:7px}
+li::marker{color:var(--accent)}
+strong{font-weight:600}
+a{color:var(--accent)}
+code,kbd{font-family:"JetBrains Mono",ui-monospace,monospace; font-size:.855em;
+  background:var(--code-bg); padding:.1em .34em; border-radius:3px; word-break:break-word}
+
+/* tablas */
+.tw{overflow-x:auto; margin:18px 0 22px; border:1px solid var(--rule); border-radius:8px;
+  background:var(--card); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; min-width:520px; font-size:.9rem;
+  font-family:"Bricolage Grotesque",sans-serif}
+th{text-align:left; font-family:"JetBrains Mono",monospace; font-size:.64rem; font-weight:600;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--label);
+  padding:11px 14px; border-bottom:1px solid var(--rule); white-space:nowrap; background:var(--rule-soft)}
+td{padding:11px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:top; line-height:1.5}
+tr:last-child td{border-bottom:0}
+td code{font-size:.8rem; word-break:normal; overflow-wrap:anywhere}
+.num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+
+/* bloques de codigo */
+pre{margin:16px 0 22px; padding:16px 18px; background:var(--card); border:1px solid var(--rule);
+  border-radius:8px; overflow-x:auto; font-family:"JetBrains Mono",monospace; font-size:.79rem;
+  line-height:1.62; box-shadow:var(--shadow)}
+pre code{background:none; padding:0; font-size:inherit}
+pre .c{color:var(--label)}
+pre .k{color:var(--accent); font-weight:600}
+pre .s{color:var(--warn)}
+pre .del{color:var(--label); text-decoration:line-through}
+
+/* llamados */
+.note{border-left:3px solid var(--accent-line); background:var(--accent-soft);
+  padding:14px 18px; margin:20px 0; border-radius:0 8px 8px 0}
+.note.warn{border-left-color:var(--warn-line); background:var(--warn-soft)}
+.note p:last-child{margin-bottom:0}
+.note__h{font-family:"JetBrains Mono",monospace; font-size:.64rem; font-weight:600;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin-bottom:6px}
+.note.warn .note__h{color:var(--warn)}
+
+/* chips de estado */
+.chip{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:.66rem; font-weight:600;
+  padding:2px 8px; border-radius:999px; white-space:nowrap; letter-spacing:.03em}
+.chip.hay{background:var(--ok-soft); color:var(--ok)}
+.chip.falta{background:var(--warn-soft); color:var(--warn)}
+.chip.na{background:var(--rule-soft); color:var(--label)}
+
+/* pasos de ejecucion */
+.steps{list-style:none; padding:0; margin:20px 0; counter-reset:s; max-width:none}
+.steps li{counter-increment:s; display:grid; grid-template-columns:30px 1fr; gap:0 16px;
+  padding:16px 0; border-top:1px solid var(--rule-soft); margin:0}
+.steps li:first-child{border-top:1px solid var(--rule)}
+.steps li::before{content:counter(s); font-family:"JetBrains Mono",monospace; font-size:.78rem;
+  font-weight:600; color:var(--accent); padding-top:.15em}
+/* el ::before ocupa la columna 1, asi que los parrafos deben fijarse a la 2:
+   sin esto el segundo cae en la columna de 30px y parte una palabra por linea */
+.steps li > p{grid-column:2}
+.steps p{margin:0 0 6px}
+.steps p:last-child{margin-bottom:0}
+.steps .f{font-family:"JetBrains Mono",monospace; font-size:.76rem; color:var(--label)}
+
+footer{border-top:1px solid var(--rule); padding-top:22px; margin-top:12px;
+  font-family:"JetBrains Mono",monospace; font-size:.72rem; color:var(--label)}
+footer p{max-width:74ch}
+:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<nav class="toc" aria-label="Secciones">
+  <div class="toc__t">Contenido</div>
+  <a href="#alcance"><span class="n">1</span>Alcance</a>
+  <a href="#shell"><span class="n">2</span>C&#243;mo funciona el shell</a>
+  <a href="#pestanas"><span class="n">3</span>Hoy y objetivo</a>
+  <a href="#creacion"><span class="n">4</span>El flujo de creaci&#243;n</a>
+  <a href="#impacto"><span class="n">5</span>Impacto por pesta&#241;a</a>
+  <a href="#modelo"><span class="n">6</span>Campos y mutation</a>
+  <a href="#reglas"><span class="n">7</span>Reglas de combinaci&#243;n</a>
+  <a href="#ejecucion"><span class="n">8</span>Orden de ejecuci&#243;n</a>
+</nav>
+
+<main>
+<header>
+  <div class="eyebrow">
+    <a href="https://u-planner.atlassian.net/browse/UPONE-1755">UPONE-1755</a>
+    <span class="sep"></span>
+    <span>&#201;pica UPONE-1452</span>
+    <span class="sep"></span>
+    <span>Historia</span>
+  </div>
+  <h1>La pesta&#241;a de Medici&#243;n y el flujo de creaci&#243;n</h1>
+  <p class="standfirst">Qu&#233; cambia en el shell de la matriz para abrir una cuarta pesta&#241;a, qu&#233;
+  decisi&#243;n hay que tomar sobre el orden de guardado, y c&#243;mo queda cada una de las otras tres.
+  Contrastado contra el shell que ya existe en el repositorio.</p>
+  <dl class="meta">
+    <div><dt>Asignado</dt><dd>Francisco Navarro</dd></div>
+    <div><dt>Componente</dt><dd>CompetencyMatrixShell</dd></div>
+    <div><dt>Layouts</dt><dd>create &#183; edit &#183; view</dd></div>
+    <div><dt>Maqueta</dt><dd>v29</dd></div>
+  </dl>
+</header>
+
+<section id="alcance">
+  <h2><span class="n">1</span>Alcance</h2>
+  <p>La matriz de competencia se edita en un shell propio de tres pesta&#241;as. El ticket abre una
+  <strong>cuarta, Medici&#243;n</strong>, y mueve a ella todo lo que responde <em>con qu&#233; se mide y c&#243;mo se
+  consolida el logro</em>. Eso no es solo mover campos: cambia <strong>qu&#233; se pide para crear una
+  matriz</strong>, y de ah&#237; sale la &#250;nica decisi&#243;n de dise&#241;o del ticket.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Parte</th><th>Qu&#233; implica</th></tr></thead>
+    <tbody>
+      <tr><td><strong>La pesta&#241;a</strong></td><td>Declarar <code>medicion</code> en los tres layouts y repartir los elementos entre las cuatro pesta&#241;as</td></tr>
+      <tr><td><strong>El flujo de creaci&#243;n</strong></td><td>Decidir si la medici&#243;n se pide antes de que la matriz exista o despu&#233;s, y ajustar la mutation en consecuencia</td></tr>
+      <tr><td><strong>Los campos</strong></td><td>Seis campos nuevos en el record type de la matriz, uno retirado, y un valor de enum renombrado</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <div class="note__h">Depende de UPONE-1753</div>
+    <p>El renombre de los cat&#225;logos (<code>LevelScheme</code> &#8594; <code>PerformanceScale</code>,
+    <code>CoverageScheme</code> &#8594; <code>DevelopmentScheme</code>) va en el otro ticket. Este documento
+    usa los <strong>nombres nuevos</strong>, porque la pesta&#241;a Medici&#243;n es donde los dos cat&#225;logos se
+    seleccionan y no tiene sentido construirla con el vocabulario viejo.</p>
+  </div>
+</section>
+
+<section id="shell">
+  <h2><span class="n">2</span>C&#243;mo funciona el shell hoy</h2>
+  <p>Conviene entenderlo antes de repartir pesta&#241;as, porque el shell ya resolvi&#243; los problemas
+  dif&#237;ciles y la soluci&#243;n est&#225; documentada en el c&#243;digo. Las pesta&#241;as <strong>se declaran en el
+  layout</strong>, no en el componente: <code>modsComponents/CompetencyMatrixShell/tabs.ts</code>
+  define el contrato y el elemento <code>matrixShell</code> del schema las recibe.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Propiedad</th><th>Qu&#233; hace</th></tr></thead>
+    <tbody>
+      <tr><td><code>key</code></td><td>Identificador de la pesta&#241;a</td></tr>
+      <tr><td><code>label</code> / <code>labelKey</code></td><td>Etiqueta literal o clave i18n. <code>labelKey</code> gana</td></tr>
+      <tr><td><code>elements</code></td><td>Los nombres de los elementos hermanos del schema que forman su cuerpo</td></tr>
+      <tr><td><code>save</code></td><td>C&#243;mo persiste. Es el discriminante por el que despacha el shell</td></tr>
+      <tr><td><code>requiresRecord</code></td><td>La pesta&#241;a necesita que el registro exista. En creaci&#243;n queda <strong>bloqueada con su motivo</strong>, no escondida</td></tr>
+      <tr><td><code>requiredCapability</code></td><td>Capability para <em>ver</em> la pesta&#241;a. No es la garant&#237;a: el backend rechaza igual</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Los cuatro modos de guardado</h3>
+  <div class="tw"><table>
+    <thead><tr><th><code>save</code></th><th>C&#243;mo persiste</th></tr></thead>
+    <tbody>
+      <tr><td><code>matrixHeader</code></td><td><code>createCompetencyMatrixValidated</code> si no hay registro, <code>updateCompetencyMatrixValidated</code> si ya existe, <strong>por apollo</strong></td></tr>
+      <tr><td><code>adoptionScope</code></td><td><code>setMatrixAdoptionScopeValidated</code>, mutation propia del alcance</td></tr>
+      <tr><td><code>competencyTree</code></td><td><code>upsertCompetencyTreeValidated</code></td></tr>
+      <tr><td><code>form</code></td><td><code>form$.submit()</code> del core, que corre el <code>customEndpoint</code> del layout</td></tr>
+      <tr><td><code>none</code></td><td>La pesta&#241;a persiste por su cuenta: no se dibuja Guardar</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note warn">
+    <div class="note__h">Dos trampas que el shell ya esquiv&#243; &#8212; no volver a pisarlas</div>
+    <p><strong>Por qu&#233; <code>matrixHeader</code> no usa el submit del core.</strong> El
+    <code>customEndpoint</code> del layout hace lo mismo, pero al terminar emite
+    <code>instance-created</code> y la p&#225;gina del suite <strong>navega al listado</strong>. En creaci&#243;n
+    eso es incompatible con el flujo: el id reci&#233;n existe despu&#233;s de guardar, y es justo lo que las
+    otras pesta&#241;as necesitan para desbloquearse. Se perder&#237;a la pantalla en el mismo momento en que se
+    habilitan.</p>
+    <p><strong>Por qu&#233; el alcance tiene su propia mutation.</strong> El <code>updateInstance</code> del
+    core persiste el sat&#233;lite del recordType con un <code>upsert</code>, y Prisma valida su rama
+    <code>create</code> de forma <strong>est&#225;tica</strong> aunque la fila exista. Mandar solo los campos
+    del alcance fallaba con <code>Argument matrixType is missing</code>. Cualquier pesta&#241;a nueva que
+    quiera guardar <em>parcialmente</em> el recordType se topa con lo mismo.</p>
+  </div>
+</section>
+
+<section id="pestanas">
+  <h2><span class="n">3</span>Las pesta&#241;as: hoy y objetivo</h2>
+  <p>El reparto actual, tomado de los layouts:</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Pesta&#241;a</th><th><code>save</code></th><th>Elementos</th></tr></thead>
+    <tbody>
+      <tr><td><code>general</code></td><td><code>matrixHeader</code></td><td><code>code</code> <code>name</code> <code>matrixType</code> <code>levelSchemeId</code> <code>defaultEvaluationMode</code> <code>defaultRubricModel</code> <code>aggregationMode</code> <code>description</code> <code>ownerUnits</code> <span class="chip na">+ status en edit</span></td></tr>
+      <tr><td><code>adopcion</code></td><td><code>adoptionScope</code></td><td><code>adoptionScope</code> <code>adoptionPolicy</code> <code>scopeUnits</code> <code>adoptions</code></td></tr>
+      <tr><td><code>competencias</code></td><td><code>competencyTree</code></td><td><code>competencies</code></td></tr>
+      <tr><td><code>historial</code> <span class="chip na">solo view</span></td><td><code>none</code></td><td><code>historyList</code> &#183; gate <code>core_datalog:view</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>El objetivo: <strong>cuatro campos salen de <code>general</code></strong> y se juntan con seis
+  nuevos en <code>medicion</code>. Informaci&#243;n general se queda con lo que responde <em>qu&#233; es</em> la
+  matriz: identidad y gobernanza.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Pesta&#241;a</th><th>Pregunta que responde</th><th>Elementos</th></tr></thead>
+    <tbody>
+      <tr><td><code>general</code></td><td>Qu&#233; es esta matriz</td><td><code>code</code> <code>name</code> <code>matrixType</code> <code>description</code> <code>ownerUnits</code> <code>status</code></td></tr>
+      <tr><td><code>adopcion</code></td><td>Qui&#233;n la usa</td><td>sin cambios</td></tr>
+      <tr><td><code>medicion</code> <span class="chip falta">nueva</span></td><td>Con qu&#233; se mide y c&#243;mo se consolida</td><td><code>performanceScaleId</code> <code>developmentSchemeId</code> <code>measurementModel</code> <code>requiresAllCriteria</code> <code>achievementBasis</code> y los tres ejes</td></tr>
+      <tr><td><code>competencias</code></td><td>Qu&#233; contiene</td><td>sin cambios en elementos, con una dependencia nueva (&#167;5)</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>El <strong>orden</strong> no es indiferente: Medici&#243;n va antes de Competencias porque el &#225;rbol
+  depende de ella. La r&#250;brica se dibuja como criterio &#215; nivel de desempe&#241;o, y los niveles de desarrollo
+  que una competencia puede declarar son los del cat&#225;logo elegido. Entre Adopci&#243;n y Medici&#243;n no hay
+  dependencia, as&#237; que ah&#237; el orden es de lectura: <code>general &#183; adopcion &#183; medicion &#183;
+  competencias</code>, como en la maqueta.</p>
+</section>
+
+<section id="creacion">
+  <h2><span class="n">4</span>El flujo de creaci&#243;n</h2>
+  <p>Ac&#225; est&#225; la decisi&#243;n del ticket. Hoy la mutation de creaci&#243;n <strong>recibe los cuatro campos de
+  medici&#243;n</strong>, porque viven en <code>general</code> y se guardan con ella:</p>
+
+  <pre><code><span class="c">// default_CompetencyNode_create.json &#8212; customEndpoint, hoy</span>
+"mutation": "createCompetencyMatrixValidated",
+"variables": {
+  "code": ..., "name": ..., "matrixType": ..., "description": ..., "ownerUnits": ...,
+  "levelSchemeId": ...,            <span class="c">// se va a Medici&#243;n</span>
+  "defaultEvaluationMode": ...,    <span class="c">// se va a Medici&#243;n</span>
+  "defaultRubricModel": ...,       <span class="c">// se va a Medici&#243;n</span>
+  "aggregationMode": ...           <span class="c">// se retira (&#167;6)</span>
+}</code></pre>
+
+  <p>Si Medici&#243;n es una pesta&#241;a con <code>save: matrixHeader</code> como <code>general</code>, las dos
+  guardan por la misma mutation, y en <strong>creaci&#243;n</strong> eso obliga a elegir:</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Opci&#243;n</th><th>Qu&#233; pasa en creaci&#243;n</th><th>Costo</th></tr></thead>
+    <tbody>
+      <tr><td><strong>A</strong> &#183; Medici&#243;n con <code>requiresRecord: true</code></td><td>La matriz se crea con identidad y gobernanza. Medici&#243;n se desbloquea con el id, y guarda por <code>updateCompetencyMatrixValidated</code></td><td>La matriz existe un rato <strong>sin escala de desempe&#241;o</strong>: el modelo tiene que permitirlo y la publicaci&#243;n tiene que exigirlo</td></tr>
+      <tr><td><strong>B</strong> &#183; Medici&#243;n sin <code>requiresRecord</code></td><td>Las dos pesta&#241;as se pueden guardar antes de que exista el registro, y la primera en guardar crea la matriz</td><td>La mutation necesita <strong>todos</strong> los campos obligatorios en cualquiera de los dos &#243;rdenes, o falla como fall&#243; el alcance</td></tr>
+      <tr><td><strong>C</strong> &#183; Pedirlo todo en <code>general</code> al crear</td><td>Creaci&#243;n como hoy; Medici&#243;n solo aparece en edici&#243;n y vista</td><td>La creaci&#243;n y la edici&#243;n dejan de tener la misma forma, que es lo que el shell ven&#237;a cuidando</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Recomendaci&#243;n: A</h4>
+  <p>Es la que sigue el patr&#243;n que el shell ya usa dos veces. Adopci&#243;n y Competencias son
+  <code>requiresRecord: true</code> por la misma raz&#243;n &#8212; necesitan el id &#8212; y la decisi&#243;n de
+  <strong>bloquear en vez de esconder</strong> ya est&#225; tomada y justificada en el c&#243;digo: <em>una
+  pesta&#241;a ausente no explica nada, y una bloqueada con su motivo a la vista le dice al usuario que el
+  paso existe y en qu&#233; orden va</em>. Medici&#243;n entra en esa misma familia sin inventar nada.</p>
+
+  <p>La B parece m&#225;s flexible y es la que trae el problema conocido: guardar parcialmente el recordType
+  falla porque Prisma valida la rama <code>create</code> de forma est&#225;tica. Es exactamente el bug que
+  oblig&#243; a darle mutation propia al alcance.</p>
+
+  <div class="note warn">
+    <div class="note__h">La consecuencia de A que hay que aceptar expl&#237;citamente</div>
+    <p>Una matriz reci&#233;n creada queda <strong>en Borrador y sin escala de desempe&#241;o</strong>. Eso exige
+    dos cosas coherentes entre s&#237;:</p>
+    <ul>
+      <li><code>performanceScaleId</code> y <code>developmentSchemeId</code> pasan a ser
+      <strong>obligatorios para publicar</strong>, no para crear. Es el mismo criterio que ya rige los
+      pesos del &#225;rbol: se avisa mientras se edita y se bloquea en la transici&#243;n de estado.</li>
+      <li>La pesta&#241;a <strong>Competencias necesita la escala antes de poder operar</strong>: sin ella la
+      r&#250;brica no tiene columnas. Ver &#167;5.</li>
+    </ul>
+  </div>
+
+  <p>El resultado es un flujo de creaci&#243;n en cuatro pasos, con el mismo orden en que se declaran las
+  pesta&#241;as, y cada paso habilitando el siguiente:</p>
+  <pre><code>1. general      <span class="k">crea la matriz</span>  &#8594;  devuelve el id
+2. medicion     requiere id     &#8594;  define escala, niveles y consolidaci&#243;n
+3. adopcion     requiere id     &#8594;  qui&#233;n la usa
+4. competencias requiere id <span class="k">+ escala</span>  &#8594;  el &#225;rbol y sus r&#250;bricas</code></pre>
+</section>
+
+<section id="impacto">
+  <h2><span class="n">5</span>Impacto por pesta&#241;a</h2>
+
+  <h3>Informaci&#243;n general</h3>
+  <p>Pierde cuatro elementos y se queda con seis. No cambia su <code>save</code>. El efecto secundario
+  bueno es que la creaci&#243;n pide lo m&#237;nimo para que la matriz exista, que es lo que un primer paso
+  deber&#237;a pedir.</p>
+
+  <h3>Medici&#243;n</h3>
+  <p>Nueva, <code>save: matrixHeader</code>, <code>requiresRecord: true</code>. Dos cosas que la
+  maqueta resolvi&#243; y conviene copiar tal cual:</p>
+  <ul>
+    <li><strong>El modelo de medici&#243;n es una sola elecci&#243;n de tres valores</strong>, no dos selects.
+    Detr&#225;s hay dos campos, pero solo tres de sus cuatro combinaciones son v&#225;lidas, as&#237; que pedirlos por
+    separado le hace armar al usuario algo que el dominio ya tiene cerrado.</li>
+    <li><strong>La cobertura de criterios aparece solo con el modelo por criterios.</strong> Es la
+    excepci&#243;n a la convenci&#243;n de dejar los campos que no aplican bloqueados y vac&#237;os, y se justifica
+    porque el campo que decide su aplicabilidad es el de al lado y el valor queda en <code>null</code>.</li>
+  </ul>
+
+  <h3>Competencias</h3>
+  <p><strong>Es la que m&#225;s cambia sin que le muevan un solo elemento.</strong> Hoy se desbloquea con el
+  id; con Medici&#243;n aparte, necesita adem&#225;s que la escala est&#233; definida, porque la grilla de r&#250;brica es
+  criterio &#215; nivel de desempe&#241;o y los niveles de desarrollo que un nodo puede declarar salen del
+  cat&#225;logo elegido.</p>
+  <p>El contrato de pesta&#241;a tiene <code>requiresRecord</code>, pero <strong>no tiene un
+  <code>requiresField</code></strong>. Hay dos caminos y conviene decidirlo con el tech lead:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Camino</th><th>Qu&#233; implica</th></tr></thead>
+    <tbody>
+      <tr><td>Extender el contrato del shell</td><td>Un <code>requiresFields: string[]</code> junto a <code>requiresRecord</code>, con el mismo tratamiento de bloqueo y motivo. Sirve para cualquier dependencia futura entre pesta&#241;as</td></tr>
+      <tr><td>Guardia dentro del editor del &#225;rbol</td><td>El componente muestra su propio estado vac&#237;o si no hay escala. M&#225;s r&#225;pido, pero la pesta&#241;a se ve habilitada y el usuario descubre el bloqueo al entrar</td></tr>
+    </tbody>
+  </table></div>
+  <p>La primera es coherente con lo que el shell ya hace, y es la que deja el motivo visible antes de
+  entrar.</p>
+
+  <h3>Adopci&#243;n</h3>
+  <p>Sin impacto: su mutation y sus campos son independientes de la medici&#243;n. Se menciona para cerrar
+  la revisi&#243;n, no porque haya trabajo.</p>
+
+  <h3>Historial (solo vista)</h3>
+  <p>Sin cambios de declaraci&#243;n. Va a empezar a registrar los campos nuevos, que es lo esperado; vale
+  confirmar que <code>enableDataLog</code> los cubra.</p>
+
+  <h3>Vista</h3>
+  <p>El layout de vista necesita la cuarta pesta&#241;a con <code>save: none</code>, y ah&#237; Medici&#243;n se
+  muestra en solo lectura. Es el layout que m&#225;s f&#225;cil se olvida, porque el trabajo se siente terminado
+  cuando creaci&#243;n y edici&#243;n funcionan.</p>
+</section>
+
+<section id="modelo">
+  <h2><span class="n">6</span>Campos nuevos, retirados y la mutation</h2>
+  <p>Todo esto vive en <code>objects/RecordTypes/rt__Matrix__competencynode.json</code>. Lo que hay
+  hoy son ocho campos; la pesta&#241;a Medici&#243;n necesita seis m&#225;s y retirar uno.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Campo</th><th>Valores</th><th>Estado</th></tr></thead>
+    <tbody>
+      <tr><td><code>performanceScaleId</code></td><td>FK a la escala de desempe&#241;o</td><td><span class="chip hay">existe como levelSchemeId</span></td></tr>
+      <tr><td><code>developmentSchemeId</code></td><td>FK a los niveles de desarrollo</td><td><span class="chip falta">nuevo</span></td></tr>
+      <tr><td><code>defaultEvaluationMode</code></td><td><code>OwnRubric &#183; DerivedFromOutcomes</code></td><td><span class="chip hay">existe</span> &#183; sin el prefijo <code>default</code></td></tr>
+      <tr><td><code>defaultRubricModel</code></td><td><code>Holistic &#183; Analytic</code></td><td><span class="chip hay">existe</span> &#183; hoy dice <code>Criterion</code></td></tr>
+      <tr><td><code>requiresAllCriteria</code></td><td>booleano</td><td><span class="chip falta">nuevo</span></td></tr>
+      <tr><td><code>achievementBasis</code></td><td><code>Aggregation &#183; RepresentativeLevel</code></td><td><span class="chip falta">nuevo</span></td></tr>
+      <tr><td><code>courseAggregationMode</code></td><td><code>WeightedAvg &#183; Max</code></td><td><span class="chip falta">nuevo</span></td></tr>
+      <tr><td><code>developmentLevelAggregationMode</code></td><td><code>WeightedAvg &#183; Max</code>, <code>null</code> con nivel representativo</td><td><span class="chip falta">nuevo</span></td></tr>
+      <tr><td><code>subcompetencyAggregationMode</code></td><td><code>WeightedAvg &#183; Max</code></td><td><span class="chip falta">nuevo</span></td></tr>
+      <tr><td><code>aggregationMode</code></td><td><code>Min &#183; Max &#183; WeightedAvg &#183; Mode &#183; Last</code></td><td><span class="chip falta">se retira</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Por qu&#233; un eje pasa a tres</h4>
+  <p>Una competencia con tres niveles de desarrollo, tributada en varias asignaturas por nivel, produce
+  muchas mediciones de s&#237; misma. Un solo <code>aggregationMode</code> no alcanza para reducirlas: hay
+  que combinar <strong>entre asignaturas del mismo nivel</strong>, despu&#233;s <strong>entre niveles</strong>,
+  y despu&#233;s <strong>entre subcompetencias</strong>. Los tres ejes se apagan solos seg&#250;n la forma del
+  dise&#241;o &#8212; un nivel &#250;nico apaga el segundo, la ausencia de subcompetencias apaga el tercero &#8212; as&#237; que no
+  hay que configurar nada para que eso ocurra.</p>
+  <p>Y los modos bajan de cinco a dos: <code>Mode</code> y <code>Last</code> no ten&#237;an caso
+  institucional. <code>Min</code> s&#237; lo tiene y su retiro es <strong>una consecuencia declarada</strong>:
+  es la regla conjuntiva de acreditaci&#243;n, as&#237; que mientras no est&#233;, una matriz ABET no es
+  representable.</p>
+
+  <div class="note">
+    <div class="note__h">Las plantillas no son modelo</div>
+    <p>Los cuatro perfiles de la maqueta (Est&#225;ndar, Escalonado, Mejor evidencia, Personalizada) son
+    <strong>solo interfaz</strong>: pre-llenan los campos y no se persisten. Se descart&#243; modelarlos como
+    objeto porque un perfil vinculado que cambia recalcular&#237;a los logros de todas las matrices vigentes
+    que lo usan.</p>
+  </div>
+
+  <h4>La mutation cambia de firma</h4>
+  <p>Sacar <code>aggregationMode</code> y agregar seis campos toca
+  <code>createCompetencyMatrixValidated</code> y <code>updateCompetencyMatrixValidated</code>, sus
+  variables en el <code>customEndpoint</code> de los layouts, y los validadores. Si se adopta la opci&#243;n
+  A de &#167;4, la de creaci&#243;n adem&#225;s <strong>deja de recibir los campos de medici&#243;n</strong>: los escribe la
+  de actualizaci&#243;n cuando se guarda la pesta&#241;a.</p>
+</section>
+
+<section id="reglas">
+  <h2><span class="n">7</span>Reglas de combinaci&#243;n</h2>
+  <p>Son las que hay que escribir como validaciones, y la buena noticia es que el espacio es m&#225;s chico
+  de lo que parece: <strong>el modelo de medici&#243;n y la consolidaci&#243;n son ortogonales por
+  construcci&#243;n</strong>. El modelo produce <em>un valor por competencia y por asignatura</em>, y los
+  tres ejes empiezan a operar reci&#233;n a partir de ese valor. Ning&#250;n eje mira c&#243;mo se form&#243; el n&#250;mero.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Modelo de medici&#243;n</th><th>Eje 1 &#183; entre asignaturas</th><th>Base + eje 2 &#183; entre niveles</th><th>Eje 3 &#183; entre subcompetencias</th></tr></thead>
+    <tbody>
+      <tr><td>Competencias</td><td><span class="chip hay">aplica</span></td><td><span class="chip hay">aplica</span></td><td><span class="chip hay">aplica</span></td></tr>
+      <tr><td>Competencias y criterios</td><td><span class="chip hay">aplica</span></td><td><span class="chip hay">aplica</span></td><td><span class="chip hay">aplica</span></td></tr>
+      <tr><td>Competencias y resultados de aprendizaje</td><td><span class="chip hay">aplica</span></td><td><span class="chip hay">aplica</span></td><td><span class="chip hay">aplica</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>Las 3 &#215; 6 combinaciones son legales. <strong>No hay que escribir ninguna regla que proh&#237;ba un
+  modelo con un modo de consolidaci&#243;n</strong>, y conviene saberlo antes de empezar a inventarlas.</p>
+
+  <h3>El modelo de medici&#243;n: tres estados v&#225;lidos de cuatro posibles</h3>
+  <p>Detr&#225;s del selector hay dos campos, y su producto da cuatro combinaciones de las que solo tres
+  significan algo:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Opci&#243;n</th><th><code>evaluationMode</code></th><th><code>rubricModel</code></th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Competencias</td><td><code>OwnRubric</code></td><td><code>Holistic</code></td><td><span class="chip hay">v&#225;lida</span></td></tr>
+      <tr><td>Competencias y criterios</td><td><code>OwnRubric</code></td><td><code>Analytic</code></td><td><span class="chip hay">v&#225;lida</span></td></tr>
+      <tr><td>Competencias y resultados de aprendizaje</td><td><code>DerivedFromOutcomes</code></td><td><code>null</code></td><td><span class="chip hay">v&#225;lida</span></td></tr>
+      <tr><td>&#8212;</td><td><code>DerivedFromOutcomes</code></td><td>cualquier valor</td><td><span class="chip falta">no significa nada</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>Hoy la cuarta se evita <strong>normalizando <code>rubricModel</code> a <code>null</code></strong>
+  cuando el modo no es <code>OwnRubric</code>. Es una regla que hay que recordar en cada escritura, y por
+  eso queda anotada la alternativa: un enum &#250;nico de tres valores la har&#237;a imposible por construcci&#243;n.
+  No es de este ticket, pero si se decide, este es el momento barato.</p>
+
+  <h3>Los tres condicionamientos que s&#237; existen</h3>
+  <p>Ninguno es entre modelo y eje: dos son internos y el tercero es entre la <em>escala</em> y el eje.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Regla</th><th>Cu&#225;ndo</th><th>Comportamiento</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>requiresAllCriteria</code> solo existe con criterios</td>
+        <td><code>rubricModel != Analytic</code></td>
+        <td>El campo <strong>no se muestra</strong> y queda en <code>null</code>. Es del instrumento, no de la consolidaci&#243;n</td>
+      </tr>
+      <tr>
+        <td>La base del logro apaga el eje 2</td>
+        <td><code>achievementBasis = RepresentativeLevel</code></td>
+        <td><code>developmentLevelAggregationMode</code> queda en <code>null</code>. Vale igual en los tres modelos</td>
+      </tr>
+      <tr>
+        <td>Escala cualitativa contra promedio ponderado</td>
+        <td>La escala no tiene n&#250;mero detr&#225;s y alg&#250;n eje est&#225; en <code>WeightedAvg</code></td>
+        <td><strong>Bloquea el guardado.</strong> Antes era un aviso; con los tres ejes rigiendo toda la matriz, ya no hay otra opci&#243;n que ofrecer dentro del mismo eje</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p>Del tercero se sigue una consecuencia pr&#225;ctica: el mensaje puede <strong>nombrar los ejes
+  concretos</strong> que hay que corregir, porque la escala y los ejes viven en la misma pesta&#241;a. Con
+  nivel representativo, el eje 2 no se nombra: no interviene.</p>
+
+  <div class="note warn">
+    <div class="note__h">La trampa: los ejes nunca entran a la asignatura</div>
+    <p>Dentro de una asignatura, los criterios y los RA se combinan <strong>siempre por los pesos
+    declarados</strong>, y eso no es configurable: no existe un &#171;m&#225;ximo entre criterios&#187;. Entonces la
+    plantilla <strong>Mejor evidencia</strong> (<code>Max</code> en los tres ejes) significa <em>la mejor
+    asignatura, el mejor nivel, la mejor subcompetencia</em> &#8212; <strong>no</strong> el mejor criterio.</p>
+    <p>Es f&#225;cil leer &#171;M&#225;ximo&#187; como &#171;se toma lo mejor de todo&#187;, y de ah&#237; sale el error de implementaci&#243;n:
+    aplicar el modo del eje 1 tambi&#233;n a la combinaci&#243;n de criterios.</p>
+  </div>
+
+  <h3>La validaci&#243;n de pesos, por eje y no por matriz</h3>
+  <p>La regla de publicaci&#243;n dice que todo grupo de hermanos cuyo peso <em>se use</em> debe sumar 100, y
+  que un grupo se exime si agrega con <code>Max</code>, porque ah&#237; los pesos no intervienen. Le&#237;da de
+  corrido, invita a un atajo equivocado.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Grupo</th><th>Eje que lo gobierna</th><th>Se exime con <code>Max</code></th></tr></thead>
+    <tbody>
+      <tr><td>Competencias ra&#237;z dentro de la matriz</td><td>Eje 3</td><td><span class="chip hay">s&#237;</span></td></tr>
+      <tr><td>Subcompetencias dentro de su padre</td><td>Eje 3</td><td><span class="chip hay">s&#237;</span></td></tr>
+      <tr><td>Criterios dentro de una hoja</td><td><strong>ninguno</strong></td><td><span class="chip falta">no, siempre se valida</span></td></tr>
+      <tr><td>RA dentro de una competencia derivada</td><td><strong>ninguno</strong></td><td><span class="chip falta">no, siempre se valida</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>Los criterios y los RA no responden a ning&#250;n eje &#8212; se combinan siempre por peso &#8212; as&#237; que
+  <strong>se validan incluso con los tres ejes en <code>Max</code></strong>. Implementar la exenci&#243;n
+  &#171;por matriz&#187; en vez de &#171;por grupo y su eje&#187; deja publicar r&#250;bricas que no suman 100.</p>
+
+  <h3>Qu&#233; se valida al crear y qu&#233; al publicar</h3>
+  <p>Consecuencia directa de la opci&#243;n A de &#167;4: la matriz nace sin medici&#243;n, as&#237; que las reglas del
+  instrumento no pueden ser gates de creaci&#243;n.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Momento</th><th>Qu&#233; se exige</th></tr></thead>
+    <tbody>
+      <tr><td>Al crear</td><td>Identidad y gobernanza. Nada de medici&#243;n</td></tr>
+      <tr><td>Al guardar Medici&#243;n</td><td>Coherencia interna: los condicionamientos de arriba, y el bloqueo de escala cualitativa contra promedio ponderado</td></tr>
+      <tr><td>Al publicar</td><td><code>performanceScaleId</code> y <code>developmentSchemeId</code> presentes, y la suma de pesos de cada grupo seg&#250;n su eje</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ejecucion">
+  <h2><span class="n">8</span>Orden de ejecuci&#243;n</h2>
+  <p>Los campos van antes que la pesta&#241;a: la pesta&#241;a declara elementos que tienen que existir en el
+  schema, y el schema refleja el record type.</p>
+  <ol class="steps">
+    <li>
+      <p><strong>Decidir el flujo de creaci&#243;n</strong> (opci&#243;n A, B o C de &#167;4) y el mecanismo de
+      dependencia de Competencias (&#167;5).</p>
+      <p class="f">Bloquea todo lo dem&#225;s. Son las dos preguntas abiertas del ticket</p>
+    </li>
+    <li>
+      <p><strong>Campos del record type</strong>: los seis nuevos, el retiro de
+      <code>aggregationMode</code>, y el renombre del valor <code>Criterion</code> a
+      <code>Analytic</code>.</p>
+      <p class="f">objects/RecordTypes/rt__Matrix__competencynode.json</p>
+    </li>
+    <li>
+      <p><strong>Mutations y validadores</strong>: firma nueva de create y update, y las reglas de
+      &#167;7 &#8212; los tres condicionamientos, el bloqueo de escala cualitativa, y la validaci&#243;n de pesos
+      <em>por grupo y su eje</em>. La obligatoriedad de los dos cat&#225;logos pasa a ser gate de publicaci&#243;n.</p>
+      <p class="f">logic/** &#183; los validadores del header de la matriz</p>
+    </li>
+    <li>
+      <p><strong>Los tres layouts</strong>: elementos nuevos en el schema, reparto de
+      <code>elements</code> entre las cuatro pesta&#241;as, y <code>customEndpoint</code> ajustado. La vista
+      tambi&#233;n.</p>
+      <p class="f">config/layouts/default_CompetencyNode_{create,edit,view}.json</p>
+    </li>
+    <li>
+      <p><strong>El shell</strong>, si se extiende el contrato con <code>requiresFields</code>, m&#225;s las
+      claves i18n de la pesta&#241;a y de los campos nuevos en los tres idiomas.</p>
+      <p class="f">modsComponents/CompetencyMatrixShell/tabs.ts &#183; lang/{es,en,pt}</p>
+    </li>
+    <li>
+      <p><strong>Verificaci&#243;n del recorrido completo de creaci&#243;n</strong>: crear una matriz desde cero y
+      comprobar que al guardar Informaci&#243;n general <em>no</em> se navega al listado, que las otras tres
+      se desbloquean con el id, que Competencias sigue bloqueada hasta que haya escala, y que la
+      publicaci&#243;n se bloquea sin los dos cat&#225;logos.</p>
+      <p class="f">Es el recorrido donde viven los dos bugs que el shell ya document&#243;</p>
+    </li>
+  </ol>
+</section>
+
+<footer>
+  <p>Preparado sobre el repo <code>curriculum-mapping</code> en <code>develop</code> (&#250;ltimo commit
+  <code>584499e</code>) y la maqueta v29. El contrato del shell, los modos de guardado y las dos trampas
+  de &#167;2 est&#225;n tomados de la documentaci&#243;n del propio c&#243;digo. Los nombres de los cat&#225;logos son los que
+  deja UPONE-1753.</p>
+</footer>
+</main>
+</div>
+
+</body></html>
