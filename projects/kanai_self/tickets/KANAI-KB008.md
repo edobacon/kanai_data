@@ -2,7 +2,7 @@
 id: KANAI-KB008
 project: kanai_self
 type: ticket
-status: open
+status: closed
 work_type: improvement
 module: mcp
 autopilot: manual

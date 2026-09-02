@@ -2,7 +2,7 @@
 id: KANAI-KB008-SPEC
 project: kanai_self
 ticket: KANAI-KB008
-status: draft
+status: approved
 ---
 
 # Presentacion semantica del MCP
