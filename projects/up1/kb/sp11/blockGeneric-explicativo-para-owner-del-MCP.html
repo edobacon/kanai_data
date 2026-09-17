@@ -1,0 +1,1091 @@
+<title>blockGeneric: bloqueo de escritura genérica del MCP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #f4f6f9;
+    --surface: #ffffff;
+    --surface-2: #eef1f6;
+    --ink: #14202c;
+    --muted: #566373;
+    --faint: #7b8797;
+    --border: #dde3ea;
+    --border-strong: #c4ccd6;
+    --accent: #245e9c;
+    --accent-soft: #e6eef7;
+    --block: #b5352c;
+    --block-soft: #f7e6e4;
+    --allow: #1f7a55;
+    --allow-soft: #e2f2ea;
+    --govern: #a9660c;
+    --govern-soft: #f7ecda;
+    --code-bg: #f1f3f7;
+    --shadow: 0 1px 2px rgba(20,32,44,.05), 0 6px 20px rgba(20,32,44,.06);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0d141c;
+      --surface: #141e28;
+      --surface-2: #1a2734;
+      --ink: #e7edf4;
+      --muted: #93a1b2;
+      --faint: #748394;
+      --border: #263340;
+      --border-strong: #35485a;
+      --accent: #6aa6de;
+      --accent-soft: #16283a;
+      --block: #e2796f;
+      --block-soft: #2c1917;
+      --allow: #63c39a;
+      --allow-soft: #12271e;
+      --govern: #d9a760;
+      --govern-soft: #2a2113;
+      --code-bg: #10202e;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0d141c;
+    --surface: #141e28;
+    --surface-2: #1a2734;
+    --ink: #e7edf4;
+    --muted: #93a1b2;
+    --faint: #748394;
+    --border: #263340;
+    --border-strong: #35485a;
+    --accent: #6aa6de;
+    --accent-soft: #16283a;
+    --block: #e2796f;
+    --block-soft: #2c1917;
+    --allow: #63c39a;
+    --allow-soft: #12271e;
+    --govern: #d9a760;
+    --govern-soft: #2a2113;
+    --code-bg: #10202e;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, .mono, .eyebrow, .chip, .tag, .fileline {
+    font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px;
+    padding-block: 48px 72px;
+  }
+
+  /* Header */
+  header.head { margin-bottom: 40px; }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0 0 14px;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0 0 24px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+  .chip.warn { border-color: color-mix(in srgb, var(--govern) 45%, var(--border)); background: var(--govern-soft); color: var(--govern); }
+  .chip.warn b { color: var(--govern); }
+
+  /* Decision box */
+  .ask {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 44px;
+  }
+  .ask .lbl {
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 8px;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .ask p { margin: 0 0 12px; }
+  .ask p:last-child { margin-bottom: 0; }
+  .ask strong { font-weight: 600; }
+
+  /* Sections */
+  section { margin-bottom: 48px; }
+  .snum {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    color: var(--faint);
+    margin-right: 10px;
+  }
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: baseline;
+  }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 15px; }
+  p { margin: 0 0 14px; }
+  a { color: var(--accent); }
+
+  ul.clean { list-style: none; padding: 0; margin: 0 0 14px; display: flex; flex-direction: column; gap: 12px; }
+  ul.clean > li {
+    position: relative;
+    padding-left: 22px;
+  }
+  ul.clean > li::before {
+    content: "";
+    position: absolute;
+    left: 4px; top: 10px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .k { font-weight: 600; }
+
+  code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: .86em;
+    color: var(--ink);
+    word-break: break-word;
+  }
+  .fileline { color: var(--faint); font-size: 12.5px; }
+
+  /* Flow diagram */
+  .flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .flow-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; width: 100%; }
+  .node {
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 0;
+    flex: 1 1 200px;
+    max-width: 260px;
+  }
+  .node .nt { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; color: var(--ink); }
+  .node .nd { font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+  .funnel {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .funnel .nt { color: var(--accent); }
+  .connector { width: 2px; height: 26px; background: var(--border-strong); }
+  .connector.sm { height: 18px; }
+  .split-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--faint);
+    padding: 4px 0;
+    text-align: center;
+  }
+  .outcomes { display: flex; gap: 14px; width: 100%; flex-wrap: wrap; }
+  .outcome {
+    flex: 1 1 220px;
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid;
+  }
+  .outcome.block { background: var(--block-soft); border-color: color-mix(in srgb, var(--block) 40%, var(--border)); }
+  .outcome.allow { background: var(--allow-soft); border-color: color-mix(in srgb, var(--allow) 40%, var(--border)); }
+  .outcome .ohead { font-weight: 600; font-size: 13px; font-family: "IBM Plex Mono", monospace; display: flex; align-items: center; gap: 7px; }
+  .outcome.block .ohead { color: var(--block); }
+  .outcome.allow .ohead { color: var(--allow); }
+  .outcome .od { font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+  .dot.b { background: var(--block); }
+  .dot.a { background: var(--allow); }
+  .caption { font-size: 13px; color: var(--faint); text-align: center; margin-top: 14px; }
+
+  /* Table */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+  thead th {
+    text-align: left;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+  .verdict { font-weight: 600; white-space: nowrap; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+  .verdict.no { color: var(--allow); }
+  .verdict.yes { color: var(--block); }
+
+  /* Scope split */
+  .split2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    background: var(--surface);
+  }
+  .panel h3 { margin: 0 0 12px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .panel.closes h3 { color: var(--allow); }
+  .panel.open h3 { color: var(--govern); }
+  .panel ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 8px; }
+  .panel ul li strong { color: var(--ink); font-weight: 600; }
+
+  /* Lockstep */
+  .lockstep { display: flex; flex-direction: column; gap: 12px; }
+  .repo {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    background: var(--surface);
+  }
+  .repo .status {
+    flex: none;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .repo .status.done { background: var(--allow-soft); color: var(--allow); }
+  .repo .status.todo { background: var(--block-soft); color: var(--block); }
+  .repo .rbody h4 { margin: 0 0 4px; font-size: 15px; font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  .repo .rbody p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  .failmodes {
+    background: var(--block-soft);
+    border: 1px solid color-mix(in srgb, var(--block) 35%, var(--border));
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 18px;
+  }
+  .failmodes .lbl { color: var(--block); font-weight: 600; font-size: 13px; margin: 0 0 10px; font-family: "IBM Plex Mono", monospace; letter-spacing: .04em; text-transform: uppercase; }
+  .failmodes ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; font-size: 14px; }
+  .failmodes ul li strong { font-weight: 600; }
+
+  .checklist { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .checklist li { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; }
+  .checklist .box {
+    flex: none; width: 18px; height: 18px; border: 2px solid var(--accent);
+    border-radius: 4px; margin-top: 2px;
+  }
+
+  .note {
+    font-size: 13.5px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+    margin-top: 8px;
+  }
+  /* Code block */
+  pre.code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  pre.code .cm { color: var(--faint); }
+  pre.code .kw { color: var(--accent); font-weight: 600; }
+
+  /* Collision diagram */
+  .collide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 22px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 0 20px;
+  }
+  .collide .pair { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; width: 100%; }
+  .collide .owner {
+    flex: 1 1 200px; max-width: 280px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px; padding: 11px 14px; text-align: center; background: var(--surface-2);
+  }
+  .collide .owner .on { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; }
+  .collide .owner .od { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .collide .merge {
+    border-color: var(--govern); background: var(--govern-soft); max-width: 460px; width: 100%;
+    border-radius: 8px; padding: 11px 14px; text-align: center; border: 1px solid;
+  }
+  .collide .merge .on { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; color: var(--govern); }
+  .collide .merge .od { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .collide .result { display: flex; gap: 12px; width: 100%; flex-wrap: wrap; }
+  .collide .rcell {
+    flex: 1 1 200px; border-radius: 8px; padding: 11px 14px; border: 1px solid;
+  }
+  .collide .rcell.win { background: var(--allow-soft); border-color: color-mix(in srgb, var(--allow) 38%, var(--border)); }
+  .collide .rcell.lose { background: var(--block-soft); border-color: color-mix(in srgb, var(--block) 38%, var(--border)); }
+  .collide .rcell .rh { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .collide .rcell.win .rh { color: var(--allow); }
+  .collide .rcell.lose .rh { color: var(--block); }
+  .collide .rcell .rd { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Expandable detail */
+  details.expand {
+    border: 1px solid var(--border-strong);
+    border-radius: 11px;
+    background: var(--surface);
+    overflow: hidden;
+    margin: 0 0 8px;
+  }
+  details.expand > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+  details.expand > summary::-webkit-details-marker { display: none; }
+  details.expand > summary .chev {
+    flex: none;
+    width: 20px; height: 20px;
+    border-radius: 5px;
+    border: 1px solid var(--border-strong);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; color: var(--accent);
+    transition: transform .15s ease;
+  }
+  details.expand[open] > summary .chev { transform: rotate(90deg); }
+  details.expand > summary .stitle { flex: 1; }
+  details.expand > summary .shint { font-weight: 400; font-size: 12.5px; color: var(--faint); font-family: "IBM Plex Mono", monospace; }
+  details.expand .ebody { padding: 20px; border-top: 1px solid var(--border); }
+  details.expand .ebody h4 {
+    font-size: 15px; font-weight: 600; margin: 22px 0 8px;
+    display: flex; align-items: baseline; gap: 9px;
+  }
+  details.expand .ebody h4:first-child { margin-top: 0; }
+  details.expand .ebody h4 .hn { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--faint); }
+  details.expand .ebody p { font-size: 14.5px; margin: 0 0 12px; }
+  @media (prefers-reduced-motion: reduce) { details.expand > summary .chev { transition: none; } }
+
+  /* Explanatory callout */
+  .explain {
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+    border-radius: 9px;
+    padding: 14px 18px;
+    margin: 0 0 18px;
+    font-size: 14.5px;
+  }
+  .explain .et {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 6px;
+  }
+  .explain p { margin: 0; color: var(--ink); }
+  .explain p + p { margin-top: 8px; }
+
+  /* Before/after shape */
+  .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+  .ba .col {
+    border-radius: 11px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .ba .col.before { background: var(--block-soft); border-color: color-mix(in srgb, var(--block) 32%, var(--border)); }
+  .ba .col.after { background: var(--allow-soft); border-color: color-mix(in srgb, var(--allow) 32%, var(--border)); }
+  .ba .tag {
+    font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .ba .col.before .tag { color: var(--block); }
+  .ba .col.after .tag { color: var(--allow); }
+  .ba .mini {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 10px;
+  }
+  .ba .mininode {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px; text-align: center;
+    padding: 6px 9px; border-radius: 6px; border: 1px solid var(--border-strong);
+    background: var(--surface-2); width: 100%; line-height: 1.35;
+  }
+  .ba .miniarrow { font-size: 14px; color: var(--faint); line-height: 1; }
+  .ba .col.before .stop { border-color: color-mix(in srgb, var(--block) 45%, var(--border)); color: var(--block); background: var(--block-soft); font-weight: 600; }
+  .ba .col.after .gate { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .ba .verd { font-size: 13px; margin: 0; color: var(--ink); }
+  .ba .verd b { font-weight: 600; }
+  @media (max-width: 560px) { .ba { grid-template-columns: 1fr; } }
+
+  /* Glossary */
+  .glossary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .term {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 14px 16px;
+    background: var(--surface);
+  }
+  .term dt { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600; color: var(--accent); margin: 0 0 5px; }
+  .term dd { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+  @media (max-width: 560px) { .glossary { grid-template-columns: 1fr; } }
+
+  .divider { height: 1px; background: var(--border); border: none; margin: 0 0 48px; }
+  footer { color: var(--faint); font-size: 12.5px; border-top: 1px solid var(--border); padding-top: 18px; }
+  footer b { color: var(--muted); font-weight: 600; }
+
+  @media (max-width: 560px) {
+    .split2 { grid-template-columns: 1fr; }
+    .wrap { padding-block: 32px 56px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="head">
+    <p class="eyebrow">up1 / mcp · sprint 11 · propuesta para aprobación</p>
+    <h1>blockGeneric: cerrar la escritura genérica del MCP</h1>
+    <p class="lede">Un embudo único de escritura que impide que el CRUD genérico del MCP corrompa objetos gobernados salteándose sus reglas de negocio. Contexto completo para revisar, entender y aprobar el merge.</p>
+    <div class="chips">
+      <span class="chip">Repo <b>up1/mcp</b></span>
+      <span class="chip">Rama <b>origin/UPONE-1758</b></span>
+      <span class="chip">Commit <b>5ba9fb6</b></span>
+      <span class="chip">Alcance <b>solo MCP · plataforma intacta</b></span>
+      <span class="chip warn">No mergeada · <b>protege 0 objetos hoy</b></span>
+      <span class="chip warn">Requiere <b>lockstep de 3 repos</b></span>
+    </div>
+  </header>
+
+  <div class="ask">
+    <p class="lbl">Qué se pide</p>
+    <p>Aprobar el merge de este cambio, pero <strong>no solo</strong>: tiene que entrar junto con dos ajustes en otros dos repos (curriculum-mapping y academic-scheduling). Si se mergea aislado, no protege nada y además rompe una herramienta que hoy funciona. Por eso la sección 7 pide liberarlos coordinados.</p>
+    <p>El documento está pensado para leerse de corrido sin conocer el contexto interno de up1. Cada sección explica el concepto antes del detalle técnico, y las referencias <span class="fileline">archivo:línea</span> están para que puedas verificar cada afirmación contra la rama.</p>
+  </div>
+
+  <section>
+    <h2><span class="snum">00</span>Contexto en una página</h2>
+    <p class="sub">Lo mínimo para entender el resto. Si ya conocés la gobernanza de objetos de up1, saltealo.</p>
+
+    <div class="explain">
+      <p class="et">El problema en una frase</p>
+      <p>El MCP tiene una puerta de escritura universal que deja a un agente crear, editar o borrar cualquier dato del sistema directo contra la base, <strong>sin correr las reglas de negocio de ese dato</strong>. Para ciertos objetos que sí tienen reglas obligatorias, esa puerta es un agujero: se los puede dejar en un estado inválido. Este cambio cierra esa puerta para los objetos que lo declaren.</p>
+    </div>
+
+    <p><span class="k">Cómo escribe datos el MCP hoy.</span> Un agente (una IA operando el MCP) tiene dos maneras de modificar datos:</p>
+    <ul class="clean">
+      <li><span class="k">Herramientas de dominio.</span> Tools hechas a medida para una acción concreta (por ejemplo, asignar profesores a una sección). Por dentro pasan por el código del backend que valida las reglas de esa acción. Son seguras.</li>
+      <li><span class="k">El CRUD genérico.</span> Tres tools de propósito general (<code>up1_create_object</code>, <code>up1_update_object</code>, <code>up1_delete_object</code>) que escriben <em>cualquier</em> objeto directo a la base. Son cómodas y potentes, pero no consultan ninguna regla antes de escribir: es la puerta universal.</li>
+    </ul>
+
+    <p><span class="k">Qué es un objeto gobernado.</span> Algunos objetos del sistema tienen reglas de negocio que deben cumplirse siempre (llamadas invariantes): relaciones que no pueden romperse, valores que dependen de otros, jerarquías que deben quedar consistentes. En up1 esas reglas se implementan en mutations especiales del backend (por convención con sufijo <code>*Validated</code>). El problema es que el CRUD genérico no pasa por esas mutations: escribe el objeto crudo y se saltea las reglas.</p>
+
+    <div class="explain">
+      <p class="et">El caso que disparó todo</p>
+      <p>El mod curriculum-mapping tiene 10 objetos con 62 reglas de negocio en total. Todas esas reglas viven en las mutations validadas. Por el CRUD genérico, un agente podía escribir esos 10 objetos ignorando las 62 reglas y dejarlos corruptos. El único freno era el control de permisos (quién puede escribir), no la validez del dato en sí.</p>
+    </div>
+
+    <p><span class="k">Por qué no se resolvía de otra forma.</span> El backend sí permite que un mod valide una escritura genérica, pero por un único punto de enganche que ya está ocupado por otro mod. curriculum-mapping no puede tomarlo sin romper las reglas del otro. Ese cuello de botella se explica en detalle en la sección siguiente; por eso la única forma de que cm se defienda hoy es un bloqueo del lado del MCP.</p>
+
+    <dl class="glossary" style="margin-top:22px">
+      <div class="term"><dt>mod</dt><dd>Módulo funcional de up1 (curriculum-design, curriculum-mapping, academic-scheduling). Cada uno aporta sus objetos, reglas y herramientas.</dd></div>
+      <div class="term"><dt>object-manager</dt><dd>El backend compartido que resuelve el CRUD y ejecuta las reglas. Es el que expone las mutations genéricas.</dd></div>
+      <div class="term"><dt>invariante</dt><dd>Regla de negocio que un objeto debe cumplir siempre para ser válido. Si se rompe, el dato queda inconsistente.</dd></div>
+      <div class="term"><dt>pack de mod</dt><dd>La declaración con la que un mod se registra en el MCP: sus objetos, contratos y tools.</dd></div>
+    </dl>
+
+    <div class="explain" style="margin-top:22px">
+      <p class="et">Alcance: solo el MCP, la plataforma no se toca</p>
+      <p>Todo este paquete vive en el ámbito del MCP. El motor está en el repo del MCP, y las contrapartes de los mods (la declaración de objetos protegidos y el ajuste de la herramienta de reglas) van en sus packs de MCP, no en el backend. La interfaz web, la API, una llamada directa por GraphQL y la edición masiva siguen escribiendo <strong>exactamente igual que hoy</strong>. El backend no se modifica, no requiere migración de datos ni redeploy: lo único que se despliega es el servicio de MCP.</p>
+      <p style="margin-top:8px">Eso es a la vez su fortaleza y su límite. Es un cambio de bajo radio de impacto (no toca el camino de escritura de toda la plataforma, así que no puede romper el CRUD de la web o la API), y por lo mismo no cierra el bypass cross-client. Cerrar eso sí tocaría la plataforma, y es el follow-up de la sección 10.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">01</span>Por qué era necesario</h2>
+    <p class="sub">Hay una regla del proyecto que dice: ninguna vía de escritura (la interfaz web, la API o el MCP) puede saltear una regla de negocio. El MCP era la vía que no la cumplía.</p>
+    <ul class="clean">
+      <li><span class="k">Dónde está el agujero, en concreto.</span> Las tres tools genéricas ejecutan las mutations <code>createInstance</code> / <code>updateInstance</code> / <code>deleteInstance</code> del object-manager sin consultar ningún contrato antes. Se ejecutan de forma incondicional, por fuera del control que sí aplican los mods a sus tools de dominio. <span class="fileline">(mcp-server.js:426 frente a :251)</span></li>
+      <li><span class="k">Qué se podía romper.</span> Los 10 objetos gobernados de curriculum-mapping, con sus 62 reglas, eran escribibles por el genérico salteándose todas esas reglas. Nada validaba el resultado; solo se chequeaba si el usuario tenía permiso.</li>
+      <li><span class="k">Por qué el mod no podía taparlo solo.</span> El único mecanismo de autodefensa (el override del genérico) ya está ocupado por otro mod. curriculum-mapping no tenía cómo protegerse sin un bloqueo del lado del MCP. Y el mismo hueco existía para otros objetos de cualquier mod.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="snum">02</span>Por qué el mod no podía protegerse solo</h2>
+    <p class="sub">Esta es la razón de fondo por la que hizo falta un bloqueo del lado del MCP. No es un capricho: el backend, tal como está hoy, no le deja a curriculum-mapping poner sus reglas sin romper las de otro mod.</p>
+
+    <div class="explain">
+      <p class="et">La idea en una frase</p>
+      <p>El backend tiene un solo lugar donde un mod puede meterse a validar una escritura genérica, y ese lugar ya está ocupado. No es que dos mods peleen por las mismas reglas: es que hay un único gancho y solo cabe uno.</p>
+    </div>
+
+    <p><span class="k">Hay un solo resolver genérico para todos los objetos.</span> En el backend, el CRUD genérico no es un resolver por tipo de objeto. Es un único campo por operación, y el tipo de objeto viaja como argumento:</p>
+    <pre class="code">createInstance(objectType, data)
+updateInstance(objectType, id, data)
+deleteInstance(objectType, id)</pre>
+    <p>Ese mismo <code>createInstance</code> atiende a un nodo de competencias, a una modalidad y a cualquier otro objeto. Hay uno solo en todo el servidor.</p>
+
+    <p><span class="k">Un mod "gobierna" reescribiendo ese campo.</span> Para correr reglas de negocio en una escritura genérica, un mod redefine ese campo con un patrón de validar y delegar: si el objeto es suyo, valida; si no, lo deja pasar al genérico sin tocarlo.</p>
+    <pre class="code"><span class="cm">// override que instala un mod sobre el campo único</span>
+Mutation.createInstance = (objectType, data) =&gt; {
+  <span class="kw">if</span> (esUnoDeMisObjetos(objectType)) {
+    validarMisReglas(data)            <span class="cm">// reglas de ESTE mod</span>
+  }
+  <span class="kw">return</span> genericCreateInstance(objectType, data)  <span class="cm">// el resto pasa sin tocar</span>
+}</pre>
+
+    <div class="explain">
+      <p class="et">Punto clave: cd y cm NO comparten reglas</p>
+      <p>El override de curriculum-design valida los objetos de cd (modalidades, planes, categorías de requisito, etc.) y deja pasar todo lo demás. El de curriculum-mapping validaría los objetos de cm (nodos de competencia, escalas, niveles) y dejaría pasar el resto. Gobiernan objetos distintos: para una escritura dada, a lo sumo a uno le importa. Entre ellos no hay conflicto de reglas. El conflicto es de espacio: los dos necesitan ocupar el mismo gancho único.</p>
+    </div>
+
+    <p><span class="k">El problema: la fusión se queda con una sola función y tira la otra.</span> Los resolvers de los mods se combinan por nombre de campo, no como una lista encadenada. Lo verifiqué en el código real (<span class="fileline">object-manager/src/graphql/resolverIndex.js</span>): cada archivo hace <code>Object.assign(mutations, ...)</code> <span class="fileline">(:50-56)</span> y al final se esparcen todos con <code>...dynamicResolvers.mutations</code> <span class="fileline">(:122)</span>. Como <code>createInstance</code> es una sola clave, <strong>gana el último que se carga y el otro desaparece</strong>, sin error ni advertencia. El orden lo decide el recorrido alfabético de carpetas, que ni siquiera está garantizado.</p>
+
+    <div class="collide">
+      <div class="pair">
+        <div class="owner">
+          <div class="on">override de cd</div>
+          <div class="od">valida objetos de cd</div>
+        </div>
+        <div class="owner">
+          <div class="on">override de cm</div>
+          <div class="od">valida objetos de cm</div>
+        </div>
+      </div>
+      <div class="connector"></div>
+      <div class="merge">
+        <div class="on">fusión por clave (Object.assign)</div>
+        <div class="od">createInstance es una sola clave: se queda con una función, tira la otra</div>
+      </div>
+      <div class="connector"></div>
+      <div class="result">
+        <div class="rcell win">
+          <div class="rh"><span class="dot a"></span>El que gana</div>
+          <div class="rd">sus objetos sí se validan.</div>
+        </div>
+        <div class="rcell lose">
+          <div class="rh"><span class="dot b"></span>El que pierde</div>
+          <div class="rd">su función ya no existe. Sus objetos pasan por el override del otro, que no conoce sus reglas, y se escriben sin validar. En silencio.</div>
+        </div>
+      </div>
+    </div>
+
+    <p><span class="k">Esto ya pasó de verdad.</span> curriculum-mapping intentó instalar su propio guardia (commit <code>7972381</code>, archivo <code>genericWriteGuard.resolver.js</code>). Al ganar el campo, mató en silencio los overrides de curriculum-design, así que se <strong>revirtió un día después</strong> (<code>068ec91</code>). Hoy el dueño de los tres campos es cd, y cm quedó sin forma de protegerse en el backend.</p>
+
+    <p><span class="k">Por eso tu intuición es la correcta.</span> Lo deseable es que ninguno sobreescriba al otro y que cada uno aplique lo suyo. El diseño actual no permite esa convivencia: es todo o nada sobre un campo único, y siempre hay un conjunto de objetos que se queda sin sus reglas. Hay dos salidas:</p>
+    <ul class="clean">
+      <li><span class="k">Que convivan de verdad (arreglo de fondo, del lado de core).</span> Convertir ese campo único en una lista de interceptores que corren en cadena: cd valida lo de cd, cm valida lo de cm, nadie pisa a nadie. Es la propuesta de interceptores componibles, y le toca al equipo de object-manager.</li>
+      <li><span class="k">Mientras tanto, la palanca del lado del MCP.</span> Como cm no puede protegerse en el backend sin romper a cd, se le da un bloqueo desde el MCP. Eso es lo que este documento pide aprobar.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="snum">03</span>Antes y después</h2>
+    <p class="sub">La forma del sistema cambió: de una puerta que escribía directo, a un embudo con un chequeo en el medio. Primero el contraste, después el detalle del nuevo camino.</p>
+
+    <div class="ba">
+      <div class="col before">
+        <span class="tag"><span class="dot b"></span>Antes</span>
+        <div class="mini">
+          <div class="mininode">up1_create / update / delete_object</div>
+          <div class="miniarrow">↓</div>
+          <div class="mininode">createInstance / updateInstance / deleteInstance</div>
+          <div class="miniarrow">↓</div>
+          <div class="mininode stop">escribe directo en el backend, sin chequear reglas</div>
+        </div>
+        <p class="verd">Las mutations eran públicas y cualquier tool podía usarlas. Un objeto gobernado se escribía <b>salteándose sus reglas de negocio</b>. Único freno: los permisos.</p>
+      </div>
+      <div class="col after">
+        <span class="tag"><span class="dot a"></span>Después</span>
+        <div class="mini">
+          <div class="mininode">las 3 puertas de escritura</div>
+          <div class="miniarrow">↓</div>
+          <div class="mininode gate">up1.write → chequeo de objetos gobernados</div>
+          <div class="miniarrow">↓</div>
+          <div class="mininode">bloquea si está protegido · escribe si no</div>
+        </div>
+        <p class="verd">Todo pasa por un punto único. Un objeto declarado como protegido <b>no puede corromperse por la puerta genérica</b>. El resto se escribe igual que antes.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;margin:26px 0 4px;font-weight:600">Qué pasaba, caso por caso</h3>
+    <div class="tablewrap" style="margin-top:12px">
+      <table>
+        <thead>
+          <tr><th>Situación</th><th>Antes</th><th>Después</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Un agente edita un objeto gobernado (por ejemplo un nodo de competencias) con up1_update_object</td>
+            <td>Se escribía directo, salteándose las 62 reglas. El objeto podía quedar inválido o con la jerarquía rota.</td>
+            <td class="verdict yes" style="white-space:normal;font-weight:400;color:var(--ink)">Se bloquea con un mensaje de negocio que explica por qué. Para ese cambio hay que usar la tool de dominio válida.</td>
+          </tr>
+          <tr>
+            <td>El agente nombra el mismo objeto con un alias o con otras mayúsculas para esquivar el control</td>
+            <td>El nombre alternativo pasaba igual. En una prueba, 10 de 15 intentos de evasión funcionaban así.</td>
+            <td>El chequeo normaliza el nombre antes de buscar, así que el alias también queda bloqueado.</td>
+          </tr>
+          <tr>
+            <td>Borrado de un objeto gobernado con up1_delete_object</td>
+            <td>Se borraba sin validar el impacto sobre las reglas ni las dependencias.</td>
+            <td>Se bloquea antes de borrar (segundo punto de control).</td>
+          </tr>
+          <tr>
+            <td>Escritura de un objeto sin reglas (por ejemplo un escenario de planificación)</td>
+            <td>Se escribía.</td>
+            <td class="verdict no" style="white-space:normal;font-weight:400;color:var(--ink)">Se escribe igual. Cero cambio para todo lo no protegido.</td>
+          </tr>
+          <tr>
+            <td>Qué te protegía realmente</td>
+            <td>Solo los permisos: miraban <em>quién</em> escribe, nunca <em>si el dato queda válido</em>.</td>
+            <td>Siguen los permisos, y ahora además se valida la regla de negocio del objeto.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="explain" style="background:var(--block-soft);border-color:color-mix(in srgb, var(--block) 30%, var(--border));margin-top:26px">
+      <p class="et" style="color:var(--block)">Un caso real: el mapa de competencias</p>
+      <p>Tres de los 10 objetos protegidos de curriculum-mapping son <code>CompetencyNode</code> (los nodos del árbol de competencias), <code>PerformanceScale</code> (las escalas de desempeño) y <code>DevelopmentLevel</code> (los niveles de desarrollo). No son datos sueltos: forman un árbol y una matriz que tienen que quedar consistentes entre sí. Todas las reglas que garantizan esa consistencia (parte de las 62) viven en las mutations validadas del mod.</p>
+      <p style="margin-top:8px"><b>Antes:</b> un agente podía llamar <code>up1_update_object</code> sobre un <code>CompetencyNode</code> y escribirlo por la puerta genérica. Como esa puerta no corre las validaciones del mod, el nodo podía quedar, por ejemplo, colgando de un padre que no corresponde, o con un nivel o una escala que no cierran con el resto del árbol. Nada lo frenaba salvo que el usuario no tuviera permiso; si tenía permiso, el dato quedaba corrupto y el mod ni se enteraba.</p>
+      <p style="margin-top:8px"><b>Después:</b> como el mod declara esos objetos como protegidos, ese mismo <code>up1_update_object</code> se bloquea con un mensaje que indica que esa edición debe hacerse por la vía validada. La única forma de tocar el árbol de competencias vuelve a ser la que respeta las reglas.</p>
+    </div>
+
+    <h3 style="font-size:16px;margin:30px 0 4px;font-weight:600">El nuevo camino en detalle</h3>
+    <div class="explain" style="margin-top:12px">
+      <p class="et">Cómo leer el diagrama</p>
+      <p>Todas las formas de escribir convergen en una función única, <code>up1.write(...)</code>, que es la que decide. Si alguien intenta esquivarla escribiendo el texto de la mutation a mano, un guardia previo lo rechaza y le dice que use <code>up1.write</code>. Ya adentro, se consulta si el objeto que se quiere escribir está en la lista de objetos gobernados; si lo está, se bloquea; si no, se escribe normal.</p>
+    </div>
+
+    <div class="flow">
+      <div class="flow-row">
+        <div class="node">
+          <div class="nt">up1_create / update / delete_object</div>
+          <div class="nd">fichas genéricas</div>
+        </div>
+        <div class="node">
+          <div class="nt">up1_delete_object</div>
+          <div class="nd">borrado con impacto</div>
+        </div>
+        <div class="node">
+          <div class="nt">Tool propia de un mod</div>
+          <div class="nd">que por dentro usa las genéricas (ej. as_set_rule_value)</div>
+        </div>
+      </div>
+
+      <div class="connector"></div>
+      <div class="split-label">¿intenta emitir el texto crudo de la mutation?</div>
+
+      <div class="node" style="max-width:420px">
+        <div class="nt">Guard sintáctico en request()</div>
+        <div class="nd">rechaza cualquier query que matchee <code>createInstance(</code> / <code>updateInstance(</code> / <code>deleteInstance(</code>. Error dirigido al programador: usa up1.write(...)</div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div class="node funnel" style="max-width:420px">
+        <div class="nt">up1.write(operation, variables, ctx)</div>
+        <div class="nd">única vía legítima de escritura genérica</div>
+      </div>
+
+      <div class="connector"></div>
+
+      <div class="node" style="max-width:420px">
+        <div class="nt">assertGenericWriteAllowed(objectType, operation)</div>
+        <div class="nd">consulta el índice global de objetos gobernados (canonicaliza casing y alias antes de buscar)</div>
+      </div>
+
+      <div class="connector sm"></div>
+      <div class="split-label">¿el objeto está gobernado para esa operación?</div>
+
+      <div class="outcomes">
+        <div class="outcome block">
+          <div class="ohead"><span class="dot b"></span>Sí · se bloquea</div>
+          <div class="od"><code>BlockedGenericWriteError</code> (code <code>GENERIC_WRITE_BLOCKED</code>) con mensaje de negocio del mod. No llega a la red.</div>
+        </div>
+        <div class="outcome allow">
+          <div class="ohead"><span class="dot a"></span>No · escribe</div>
+          <div class="od">emite la mutation al object-manager. Comportamiento idéntico al de hoy para todo objeto no gobernado.</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Falla cerrado: si el índice de objetos gobernados no se puede construir, toda escritura genérica se rechaza.</p>
+  </section>
+
+  <section>
+    <h2><span class="snum">04</span>Qué se hizo, pieza por pieza</h2>
+    <p class="sub">Todo verificado leyendo la rama. Se agregaron 4 archivos: la lógica del bloqueo (<code>src/contracts/generic-write-block.js</code>, 356 líneas), un script de chequeo (<code>scripts/validate-governed-objects.js</code>, 117) y dos suites de test (767 y 167 líneas). A continuación, cada pieza con qué hace y por qué.</p>
+    <ul class="clean">
+      <li><span class="k">El embudo.</span> En la capa que habla con el backend (<code>src/graphql-client.js</code>), las tres mutations genéricas dejaron de ser públicas: antes cualquier parte del código podía importarlas y usarlas; ahora quedan privadas dentro del módulo. Así la única forma de escribir pasa a ser la función controlada. <span class="fileline">(:156-179)</span></li>
+      <li><span class="k">El guardia contra atajos.</span> La función que manda cualquier consulta al backend (<code>request()</code>) ahora inspecciona el texto: si detecta que alguien armó a mano una de las tres mutations para esquivar el embudo, lo rechaza con un error que le dice al programador que use la vía correcta. <span class="fileline">(:45-58)</span></li>
+      <li><span class="k">La vía única.</span> <code>write(operation, variables, ctx)</code> es ahora el único camino de escritura. Valida la operación y, antes de mandar nada al backend, pregunta al chequeo si ese objeto puede escribirse por el genérico. <span class="fileline">(:70-81)</span></li>
+      <li><span class="k">La lista de objetos protegidos.</span> Al arrancar, el MCP arma un índice con todos los objetos que los mods declararon como gobernados. Es un índice global del proceso, no de la sesión: un objeto protegido lo está siempre, incluso si su mod no está activo en esa sesión. Dos mods que protejan el mismo objeto se combinan en vez de pisarse. <span class="fileline">(generic-write-block.js:246-282)</span></li>
+      <li><span class="k">Reconocer el objeto aunque venga con otro nombre.</span> El backend acepta varios nombres que apuntan al mismo dato real (por diferencias de mayúsculas o por alias de tipo <code>ext__&lt;cliente&gt;__&lt;base&gt;</code> y <code>rt__&lt;recordType&gt;__&lt;base&gt;</code>). El chequeo normaliza todos esos nombres antes de buscar en la lista. Sin esto, el bloqueo se esquivaba fácil: en una prueba, 10 de 15 intentos de evasión pasaban simplemente nombrando el objeto de otra manera. <span class="fileline">(:83-116)</span></li>
+      <li><span class="k">Tapadas las tres puertas.</span> El chequeo se cableó en los tres lugares por donde puede salir una escritura genérica: las fichas genéricas, el borrado con impacto, y el mecanismo por el que un mod agrega una tool propia. Este último se cerró quitando las mutations del contexto que reciben los mods, así ni siquiera desde ahí se puede emitir una escritura cruda. <span class="fileline">(mods/index.js:54, register-declarative-tools.js:164-170, delete-with-impact.js:49, mcp-server.js:223-228)</span></li>
+      <li><span class="k">Cómo declara un mod que un objeto está protegido.</span> El mod agrega en su pack un mapa <code>governedObjects</code> (por objeto y operación, con el mensaje de negocio que verá quien intente escribir) o el equivalente dentro de un contrato. Si un objeto se quiere dejar abierto a propósito, se marca con una escotilla explícita (<code>genericWriteAllowed</code>). La forma de esa declaración se valida al construir, no en runtime.</li>
+      <li><span class="k">Un chequeo que evita olvidos.</span> El script <code>validate-governed-objects.js</code> obliga a que, si un mod decide proteger algo, tome una decisión explícita sobre TODOS sus objetos (protegido o abierto). Reporta los que quedaron sin decidir, los contradictorios y los que ya no existen. Así nadie protege la mitad y deja la otra mitad abierta por descuido.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="snum">05</span>Por qué se hizo así y no de otra forma</h2>
+    <ul class="clean">
+      <li><span class="k">El chequeo va en el punto por donde pasa todo, no en una de las puertas.</span> Poniéndolo en la función de escritura común quedan cubiertas las tres formas de escribir de una sola vez. El plan inicial proponía chequear solo en una de ellas, y eso dejaba las otras dos abiertas.</li>
+      <li><span class="k">El guardia mira el texto, y no tiene lista de excepciones.</span> La razón es que un bloqueo que se puede saltear agregando código normal no sirve de nada. Si hubiera una lista de excepciones, alguien podría anotarse en ella. Al inspeccionar el texto y no admitir excepciones, la única salida legítima es la vía controlada.</li>
+      <li><span class="k">Reconocer los alias es imprescindible, no un lujo.</span> Como el backend acepta varios nombres para el mismo dato, si el bloqueo no los normaliza, se esquiva con solo escribir el nombre alternativo. Ya se comprobó que ese atajo funcionaba.</li>
+      <li><span class="k">Falla cerrado y es opcional por objeto.</span> Falla cerrado (ante la duda, no escribe) porque es el camino de escritura: es preferible frenar una escritura a permitir una inválida. Es opcional por objeto porque el MCP no puede adivinar qué objetos tienen reglas (esa información vive en el backend), y dejarlo opcional es lo único que no cambia el comportamiento de lo que ya funciona.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="snum">06</span>Cómo afecta a los mods</h2>
+    <p class="sub">La conclusión primero: ninguna herramienta que hoy funciona cambia de comportamiento. El bloqueo solo toca la puerta genérica, no las tools de dominio.</p>
+
+    <div class="explain">
+      <p class="et">Cómo leer la tabla</p>
+      <p>Lo que determina si una tool se ve afectada es <em>cómo escribe</em>, no qué objeto toca. Las que escriben por su propia mutation de dominio no se enteran del cambio. Solo se afectan las que usan la puerta genérica: las tres tools genéricas (a propósito) y un único caso especial, <code>as_set_rule_value</code>, que por dentro usa las genéricas y por eso hay que migrarla.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Flujo (tool)</th><th>Vía real</th><th>¿Lo afecta el bloqueo?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>up1_create_object / up1_update_object</td><td>Genérica</td><td class="verdict yes">Sí, por diseño</td></tr>
+          <tr><td>up1_delete_object</td><td>Genérica (a mano)</td><td class="verdict yes">Sí, 2.º punto</td></tr>
+          <tr><td>cd_create_formtemplate_for_activity</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>cd_add_plan_entries_batch</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>cd_remove_plan_entries_batch</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>as_set_section_instructors</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>as_set_section_resources</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>as_set_section_timeblocks</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>as_run_scenario</td><td>Dominio</td><td class="verdict no">No</td></tr>
+          <tr><td>as_set_rule_value</td><td>Upsert a mano con genéricas</td><td class="verdict yes">Sí, migrar</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="clean" style="margin-top:20px">
+      <li><span class="k">curriculum-design.</span> Escribe todo por mutation propia. Cero cambio de comportamiento.</li>
+      <li><span class="k">academic-scheduling.</span> Sus 4 tools de escritura usan mutation propia y no se tocan. La excepción es <code>as_set_rule_value</code>, que hace un upsert a mano con las genéricas: debe migrar a <code>up1.write(...)</code> (unas 4 líneas). Sin esa migración, la tool revienta en runtime al mergear porque las constantes dejan de viajar por el contexto.</li>
+      <li><span class="k">curriculum-mapping.</span> Es read-only por MCP; su única vía de escritura de sus objetos era el genérico crudo, que es justo lo que el bloqueo cierra. No hay tool de dominio que se rompa porque no existe ninguna. Debe declarar <code>governedObjects</code> de sus 10 objetos para quedar protegido.</li>
+      <li><span class="k">El resto.</span> Cero impacto por opt-in. Objetos abiertos a propósito (Scenario, ScenarioSection) y cualquier objeto sin contrato no se tocan salvo declaración explícita.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="snum">07</span>Qué cierra y qué no</h2>
+    <p class="sub">Es importante ser honesto sobre el alcance para no vender un cierre que no es. Esto tapa la puerta del MCP, que es la que estaba abierta a un agente. No es el cierre total del problema, y el propio código lo dice explícito (<span class="fileline">generic-write-block.js:23-26</span>).</p>
+
+    <div class="explain">
+      <p class="et">Por qué no cierra todo</p>
+      <p>El mismo objeto se puede escribir por otras vías que no pasan por el MCP: la edición masiva de la interfaz web y una llamada directa al backend por GraphQL. Esas siguen usando las mutations genéricas por su cuenta. Cerrarlas para siempre exige subir la regla al backend mismo (que valide siempre, venga de donde venga la escritura). Este cambio es la capa de defensa del lado del MCP, no el reemplazo de esa solución de fondo.</p>
+    </div>
+    <div class="split2">
+      <div class="panel closes">
+        <h3><span class="dot a"></span>Cierra</h3>
+        <ul>
+          <li>El vector de escritura del MCP para cualquier objeto gobernado que se declare. Un agente por MCP <strong>ya no puede corromper esos objetos por el CRUD genérico</strong>.</li>
+          <li>Le da a curriculum-mapping su <strong>única palanca de auto-gobierno</strong> (no puede hacerlo por resolver).</li>
+        </ul>
+      </div>
+      <div class="panel open">
+        <h3><span class="dot" style="background:var(--govern)"></span>No cierra</h3>
+        <ul>
+          <li>El bypass cross-client: el <strong>bulk-edit genérico del core</strong> y un <strong>GraphQL directo</strong> siguen llamando <code>updateInstance</code> sin pasar por aquí.</li>
+          <li>El cierre integral es escalar el invariante al resolver genérico del object-manager (N3) o el mecanismo de interceptores componibles (propuesta a core, sp11).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="snum">08</span>Qué falta para mergear</h2>
+    <p class="sub">Este es el punto más importante para la decisión. El motor ya está en la rama, pero por sí solo no protege ningún objeto: necesita que los mods declaren qué proteger y que se ajuste la tool que usa las genéricas por dentro. Las tres piezas tienen que entrar juntas.</p>
+
+    <div class="explain">
+      <p class="et">Por qué juntas</p>
+      <p>Si entra solo el motor, no hay nada declarado como protegido, así que no bloquea nada: da una falsa sensación de cierre. Si entra el motor y la declaración de curriculum-mapping pero falta el ajuste de academic-scheduling, la tool <code>as_set_rule_value</code> se rompe porque las mutations que usaba ya no le llegan. Por eso el pedido es liberarlas coordinadas, no una por una.</p>
+    </div>
+    <div class="lockstep">
+      <div class="repo">
+        <span class="status done">pusheado</span>
+        <div class="rbody">
+          <h4>up1/mcp · origin/UPONE-1758</h4>
+          <p>El motor de bloqueo. Ya está en la rama. El test <code>curriculum-mapping-pack.test.mjs</code> ya falla porque falta la declaración de cm.</p>
+        </div>
+      </div>
+      <div class="repo">
+        <span class="status todo">falta push</span>
+        <div class="rbody">
+          <h4>curriculum-mapping</h4>
+          <p>Declarar <code>governedObjects</code> de sus 10 objetos. No existe en ninguna rama del submódulo todavía. Es el ticket de cm (Camino 1).</p>
+        </div>
+      </div>
+      <div class="repo">
+        <span class="status todo">falta push</span>
+        <div class="rbody">
+          <h4>academic-scheduling</h4>
+          <p>Migrar <code>as_set_rule_value</code> de <code>up1.request(CREATE/UPDATE_INSTANCE, ...)</code> a <code>up1.write(...)</code>. Unas 4 líneas, menos de 1 SP. Sin esto la tool revienta al mergear.</p>
+        </div>
+      </div>
+      <div class="repo">
+        <span class="status todo">sincronizar</span>
+        <div class="rbody">
+          <h4>curriculum-design</h4>
+          <p>Sincronizar al runtime sus fixes ya cerrados (Activity / Offering, commit <code>a70c3ab</code>).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="failmodes">
+      <p class="lbl">Modos de falla si NO se mergean juntas</p>
+      <ul>
+        <li><strong>MCP solo:</strong> bloquea cero objetos, falsa sensación de cierre.</li>
+        <li><strong>MCP + cm sin as:</strong> rompe <code>as_set_rule_value</code> en runtime.</li>
+        <li><strong>Un mod sin MCP:</strong> <code>up1.write</code> no existe, rompe al revés.</li>
+      </ul>
+    </div>
+
+    <p style="margin-top:26px" class="k">Mitigación antes de aprobar</p>
+    <ul class="checklist">
+      <li><span class="box"></span>Pushear las piezas de cm y as a ramas (idealmente <code>UPONE-1758</code> en cada repo).</li>
+      <li><span class="box"></span>Mergear coordinado o con gate de despliegue que las libere juntas.</li>
+      <li><span class="box"></span>Correr <code>npm run sync</code> más la suite completa en un checkout limpio (el reporte de prueba original dependía del estado local del dev, no versionado).</li>
+      <li><span class="box"></span>Cablear <code>validate-governed-objects.js</code> como gate de PR. Hoy solo corre en el build de Docker al pushear a develop/staging/master (<code>.woodpecker/build.yml</code>): un PR que rompa la completitud pasa verde y recién rompe el build integrado.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="snum">09</span>Un detalle de documentación a corregir</h2>
+    <p>Hay un archivo de patrones del propio repo (<code>up1/mcp/.ai/PATTERNS.md:39</code>) que todavía afirma que filtrar dinámicamente las tools genéricas por tipo de objeto es un problema separado sin resolver. Esta rama justamente lo resolvió para el caso de escritura, pero no actualizó ese texto. Conviene corregirlo al mergear para que la doc no contradiga al código.</p>
+  </section>
+
+  <section>
+    <h2><span class="snum">10</span>Follow-up: lo que falta para cerrar el caso del todo</h2>
+    <p class="sub">Este cambio resuelve el problema por el lado del MCP, pero no es el cierre integral. Vale la pena dejar claro qué alcanza a cubrir hoy, qué queda abierto, y qué haría falta para cerrarlo de verdad, porque esa segunda parte necesita una decisión y un análisis aparte.</p>
+
+    <p><span class="k">Qué queda cubierto con lo que aprobamos ahora.</span> Con blockGeneric mergeado (y su lockstep de tres repos), un agente que opere por el MCP ya no puede corromper un objeto gobernado por la puerta genérica. curriculum-mapping obtiene su única palanca de auto-protección, y los mods pueden seguir construyendo sus herramientas de MCP declarando qué objetos proteger. Para el vector que nos preocupaba (un agente escribiendo por el MCP) el caso queda tapado.</p>
+
+    <p><span class="k">Qué queda abierto.</span> El mismo objeto todavía se puede escribir por vías que no pasan por el MCP: la edición masiva de la interfaz web y una llamada directa al backend por GraphQL. Esas siguen usando las mutations genéricas por su cuenta, y hoy lo único que las frena es el control de permisos (quién puede escribir), que no valida si el dato queda consistente. Es una vulnerabilidad acotada y con mitigación (permisos), pero real: por esas puertas, un objeto gobernado todavía puede quedar inválido.</p>
+
+    <div class="explain">
+      <p class="et">Confirmación importante: esto NO frena a los mods</p>
+      <p>Que el cierre de fondo quede pendiente <strong>no bloquea el avance de ningún mod en su implementación de MCP</strong>. El camino con el que curriculum-mapping se pone al día (construir sus herramientas de dominio y declarar sus objetos protegidos) es de alcance mod, no toca el core ni el motor del MCP. Los mods pueden seguir trabajando con normalidad. Lo único que permanece pendiente es cerrar la vulnerabilidad cross-client, que hoy se considera riesgo asumido mediante permisos.</p>
+    </div>
+
+    <p><span class="k">Qué haría falta para cerrarlo de verdad.</span> El cierre integral es un cambio del lado del backend (object-manager): convertir el campo único de escritura en una cadena de interceptores componibles, como se explicó en la sección 2. Con eso, la regla de negocio se aplica venga la escritura de donde venga (interfaz web, API, GraphQL directo, MCP, edición masiva), y de paso se destraba la colisión del gancho único que hoy impide que curriculum-design y curriculum-mapping convivan. Es el arreglo de raíz.</p>
+
+    <p><span class="k">Por qué importa igual, aunque no sea urgente.</span> Mientras no exista, quedan dos costos abiertos: la vulnerabilidad cross-client sigue en pie (un actor interno por la edición masiva, o una llamada directa por GraphQL, puede dejar un objeto gobernado inválido), y curriculum-design sigue atado al slot único como deuda estructural. blockGeneric es la mitigación inmediata; el cambio en core es la solución que hace que esa mitigación deje de ser necesaria.</p>
+
+    <p><span class="k">Qué requiere ese follow-up.</span> No es continuación directa de este ticket ni depende de él: este se puede aprobar y mergear ahora, y el de core avanza por separado. Pero es una pieza más grande y más sensible (toca el camino de escritura de todos los objetos de todos los mods, del orden de 5 a 8 puntos), así que exige el sign-off del equipo de object-manager. Y la decisión previa (si conviene priorizarlo ahora o seguir cubriendo el cross-client con permisos por un tiempo) necesita el análisis del owner del MCP junto con el PO, porque es una decisión sobre la postura de seguridad del sistema, no un detalle de implementación. Este documento deja el caso planteado para ese análisis.</p>
+
+    <div class="split2" style="margin-top:22px">
+      <div class="panel closes">
+        <h3><span class="dot a"></span>Ahora (blockGeneric)</h3>
+        <ul>
+          <li>Cierra el vector del MCP para objetos gobernados.</li>
+          <li>Da a curriculum-mapping su palanca de auto-protección.</li>
+          <li><strong>No frena a ningún mod:</strong> el avance por MCP sigue su curso.</li>
+        </ul>
+      </div>
+      <div class="panel open">
+        <h3><span class="dot" style="background:var(--govern)"></span>Follow-up (core)</h3>
+        <ul>
+          <li>Cierra el cross-client (web, API, GraphQL directo, edición masiva).</li>
+          <li>Destraba la colisión del gancho único (cd y cm conviven).</li>
+          <li><strong>Requiere</strong> sign-off de object-manager y la decisión del owner del MCP con el PO.</li>
+        </ul>
+      </div>
+    </div>
+
+    <details class="expand" style="margin-top:24px">
+      <summary>
+        <span class="chev">&#8250;</span>
+        <span class="stitle">Detalle técnico completo del follow-up (para evaluación)</span>
+        <span class="shint">propuesta a core</span>
+      </summary>
+      <div class="ebody">
+        <p style="margin-top:0;color:var(--muted)">Este es el detalle de la propuesta de interceptores componibles en el backend (object-manager). Se incluye acá para que el owner del MCP pueda evaluar el fondo desde este mismo documento, sin saltar a otro. Todo lo que sigue está anclado al código real (archivo:línea). La decisión y el sign-off son del equipo de object-manager; esto es material de evaluación, no una implementación aprobada.</p>
+
+        <h4><span class="hn">1</span>El problema que resuelve</h4>
+        <p>Hoy <code>Mutation.createInstance / updateInstance / deleteInstance</code> tiene un solo dueño en todo el server. Un mod puede override el campo entero; si dos mods lo overridean, el segundo pisa al primero sin error ni advertencia, y ningún test lo detecta (cada mod prueba sobre su propio árbol de git). Es la colisión de la sección 2, llevada a su raíz.</p>
+        <p>Evidencia verificada: el merge de resolvers es por <code>Object.assign</code> y spread, no por lista (<span class="fileline">object-manager/src/graphql/resolverIndex.js:50-56</span> y <span class="fileline">:122</span>). Como <code>createInstance</code> es una sola clave, gana el último que la escribe. El orden lo decide <code>fs.readdirSync</code> (alfabético en la práctica, no garantizado). curriculum-design registra los tres campos (create en <code>sectionValidation.resolver.js:317</code>, update en <code>polymorphicUpdate.resolver.js:731</code>, delete en <code>requirementCategoryDelete.resolver.js:104</code>), todos validar-y-delegar. curriculum-mapping intentó su propio guard (commit <code>7972381</code>) y lo revirtió un día después (<code>068ec91</code>) porque mataba en silencio los overrides de cd.</p>
+
+        <h4><span class="hn">2</span>Qué existe hoy como enganche y por qué no alcanza</h4>
+        <p>Dentro del genérico (<code>instance.resolver.js</code>), después de auth y antes del write, ya corren <code>core_ObjectValidation</code> y <code>enforceEnumTransitions</code> (<span class="fileline">instance.resolver.js:5546-5559, 5572</span>). Pero son reglas declarativas (leídas de una tabla), no lógica JS arbitraria de un mod, y no pueden rechazar ni reemplazar la escritura completa: el guard de cm necesitaba rechazar, no solo validar campos. Sirven para ubicar el punto donde iría el hook, no como el mecanismo. Dato a favor: el core ya usa composición de decoradores por función en otro nivel (<code>withEventPublish</code> / <code>withObjectAuth</code> / <code>withDataLog</code> anidados, <span class="fileline">instance.resolver.js:4131-4132, 5024-5025, 5221-5222</span>), así que un mecanismo de interceptores en lista encaja con un patrón que el core ya conoce.</p>
+
+        <h4><span class="hn">3</span>Diseño propuesto</h4>
+        <p><strong>A. Registro (nuevo, aditivo).</strong> Una estructura <code>(objectType | '*', operation) → Array&lt;interceptor&gt;</code>, donde cada interceptor es <code>{ modId, phase: 'before', handler }</code>. Un archivo nuevo del core (por ejemplo <code>src/graphql/resolvers/writeInterceptors.js</code>) exporta <code>registerWriteInterceptor(objectType, operation, handler)</code>. Cada mod se auto-registra al importarse, pero acumulando en una lista en vez de asignar una clave.</p>
+        <p><strong>B. Componedor.</strong> <code>runInterceptors(objectType, operation, args, context)</code> busca los interceptores de <code>(objectType, operation)</code> más los de wildcard <code>('*', operation)</code>, los corre en orden (registro o prioridad explícita para determinismo entre mods), y corta si uno rechaza (equivale al throw de un override completo). Falla cerrado: un error no capturado bloquea el write, igual que hoy un throw de un override.</p>
+        <p><strong>C. Punto de invocación en el genérico.</strong> En cada uno de los tres resolvers, en la posición que hoy usa <code>core_ObjectValidation</code> (después de auth, antes del write): create en el handler que arranca en <span class="fileline">instance.resolver.js:4131</span> tras validar objectType; update donde hoy corre <code>core_ObjectValidation</code> (<span class="fileline">5540-5559</span>); delete antes de la cascada (<span class="fileline">5024-5025</span>). Cambio mínimo real: para un MVP no hace falta tocar <code>resolverIndex.js</code>. El registro vive en un archivo nuevo importado por <code>instance.resolver.js</code>, y cada mod llama <code>registerWriteInterceptor(...)</code> al cargar. Sin interceptores registrados, el comportamiento es idéntico byte a byte al de hoy (passthrough total).</p>
+
+        <h4><span class="hn">4</span>El flujo de una escritura, con interceptores</h4>
+        <pre class="code">up1_update_object / web / API / GraphQL directo / edición masiva
+        &#8595;
+   Mutation.updateInstance  <span class="cm">(el genérico, punto único de todos los clientes)</span>
+        &#8595;
+   auth  &#8594;  runInterceptors(objectType, 'update', args, ctx)
+        &#8595;
+   &#9500; interceptor de cd  <span class="cm">(valida si es objeto de cd)</span>
+   &#9500; interceptor de cm  <span class="cm">(valida si es objeto de cm)</span>
+   &#9492; ...                <span class="cm">(cada mod aporta el suyo, en cadena)</span>
+        &#8595;
+   ¿alguno rechazó?  &#8594; Sí: se corta, no se escribe
+        &#8595; No
+   escribe en la base</pre>
+        <p>Diferencia clave con blockGeneric: acá el chequeo está en el genérico del backend, así que se aplica a <strong>todos</strong> los clientes (web, API, GraphQL directo, MCP, edición masiva), no solo al MCP. Y como es una lista, cd valida lo de cd y cm lo de cm sin pisarse.</p>
+
+        <h4><span class="hn">5</span>Aditividad: cómo no choca con lo que hacen cd ni cm</h4>
+        <p>Este es el corazón de la propuesta, y tiene dos decisiones de diseño abiertas que el equipo de core debe resolver antes de implementar:</p>
+        <p><strong>(a) Convivencia con el override total de cd.</strong> Un override total del campo (lo que cd hace hoy) bypassea el genérico entero: si cd sigue dueño del campo, los interceptores ni se ejecutan para esos objetos. Opciones: cd migra gradualmente sus reglas a interceptores puntuales (gana que el genérico las corra todas); o, mientras no migre, el override de cd llama <code>runInterceptors(...)</code> en su primera línea antes de delegar. La migración de cd es opcional y posterior; nada de cd se rompe si no migra.</p>
+        <p><strong>(b) Las mutations validadas de cm llaman al genérico como función JS.</strong> Las <code>*Validated</code> de cm invocan <code>generic.createInstance(...)</code> como función importada (<span class="fileline">competencyMatrix-create.resolver.js:242</span>), no como campo GraphQL, así que nunca pasan por el merge de <code>resolverIndex.js</code>. Si los interceptores corren dentro de esa función, las validadas de cm empezarían a disparar también los interceptores de otros mods sobre los mismos objetos. Puede ser deseable (más gobernanza) o romper el supuesto "mis validadas ya validaron todo". Es el mayor riesgo de choque y merece decisión explícita. Mitigación natural: el mecanismo es opt-in por <code>(objectType, operation)</code>; como hoy ningún mod registra interceptores sobre los objetos de cm, cm no se ve afectado hasta que alguien lo haga a propósito.</p>
+        <p><strong>(c) Nada existente se toca.</strong> Las validadas de cm y los overrides de cd siguen funcionando igual. El mecanismo solo agrega un punto de composición.</p>
+
+        <h4><span class="hn">6</span>Testing y sensibilidad</h4>
+        <p>Sensibilidad alta: es el camino común de escritura de todos los objetos de todos los mods. Un bug ahí no se limita a un mod, y como ya demostró el caso cd/cm, un fallo silencioso no lo detecta ningún test de mod individual. Testing requerido: tests del componedor (orden determinístico, corto-circuito en el primer rechazo, aislamiento del error, passthrough byte-idéntico sin interceptores); regresión de todos los overrides de cd; suite completa de object-manager + cd + cm en checkout limpio. Falta además un test de integración a nivel object-manager que ejercite el merge real de <code>resolverIndex.js</code> con los mods sincronizados: hoy no existe para el escenario cross-mod, y es justo el que habría cazado el caso cd/cm.</p>
+
+        <h4><span class="hn">7</span>Qué resuelve y qué no</h4>
+        <p>Resuelve: gobernanza cross-client real (web, API, GraphQL directo, MCP, edición masiva) sobre cualquier objeto con interceptor registrado; destraba el slot único que hoy ata a cd; habilita que cm gobierne sus objetos sin depender solo del MCP. Con esto, el genérico del MCP queda 1:1 para los objetos simples sin necesidad de herramientas a medida. No resuelve por sí solo: las operaciones compuestas de cm (árbol, matriz, adopción) siguen necesitando herramientas de dominio (una escritura de árbol no es una fila genérica).</p>
+
+        <h4><span class="hn">8</span>Esfuerzo y reversibilidad</h4>
+        <p>Mecanismo (registro + componedor + 3 puntos de invocación + tests del componedor): del orden de 5 a 8 puntos de core. La migración opcional de cd más su regresión es adicional y se puede diferir. Alta sensibilidad, reversibilidad baja-media (cambio estructural): revertir implica volver al slot único. Conviene pasarlo por la calibración de estimación del proyecto.</p>
+
+        <h4><span class="hn">9</span>Notas de verificación abiertas para el equipo de core</h4>
+        <p>El orden de <code>fs.readdirSync</code> no está garantizado por spec; el mecanismo no debe depender de él para el determinismo entre mods (usar prioridad explícita si hace falta orden). La doc <code>mods/curriculum-design/docs/patterns/resolver-override.md</code> cita líneas de <code>resolverIndex.js</code> desactualizadas; usar las verificadas acá. No se verificó el repo fuente de curriculum-design (solo su copia sincronizada dentro de object-manager); reconfirmar archivo:línea del mod si se citan en el reporte final a core.</p>
+      </div>
+    </details>
+
+  </section>
+
+  <section>
+    <h2><span class="snum">A</span>Anexo: el arreglo pedido a academic-scheduling</h2>
+    <p class="sub">Por qué la migración de la herramienta <code>as_set_rule_value</code> y este fix no pueden ir separados. No es coordinación por prolijidad: este fix reemplaza el canal de escritura que esa herramienta usa, así que cambiar el canal y migrar a su único usuario son las dos mitades de un mismo cambio.</p>
+
+    <div class="explain">
+      <p class="et">Qué se pide, en una línea</p>
+      <p>Que academic-scheduling cambie <code>as_set_rule_value</code> para que escriba por la nueva vía <code>up1.write(...)</code> en lugar de las mutations genéricas que hoy recibe por el contexto. Son unas 4 líneas, y es obligatorio: sin ese cambio, al mergear este fix la herramienta se rompe.</p>
+    </div>
+
+    <p><span class="k">Qué usa hoy esa herramienta.</span> <code>as_set_rule_value</code> hace un upsert a mano (busca la fila y, según exista o no, la crea o la edita). Para escribir usa las constantes de las mutations genéricas que le llegan por el contexto: <code>ctx.CREATE_INSTANCE</code> y <code>ctx.UPDATE_INSTANCE</code>. Ese es el canal viejo.</p>
+
+    <p><span class="k">Qué hace este fix con ese canal.</span> Para que el bloqueo no se pueda esquivar, blockGeneric hace dos movimientos a la vez: <strong>cierra el canal viejo</strong> (saca esas constantes del contexto que reciben los mods, así ningún código puede armar una escritura cruda por su cuenta) y <strong>abre el canal nuevo</strong> (<code>up1.write(...)</code> como única vía). Después del fix, el canal que usaba <code>as_set_rule_value</code> ya no existe, y en su lugar hay uno nuevo.</p>
+
+    <h3 style="font-size:16px;margin:26px 0 4px;font-weight:600">Por qué no puede vivir uno solo</h3>
+    <p class="sub" style="margin-bottom:14px">Cada pieza asume el estado de la otra. Separadas, el sistema queda roto en runtime en cualquiera de los dos órdenes.</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Qué se mergea</th><th>Qué pasa</th><th>Resultado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Solo el motor (blockGeneric), sin migrar as</td>
+            <td>El canal viejo desapareció, pero la herramienta lo sigue usando. <code>ctx.CREATE_INSTANCE</code> llega vacío y termina llamando a algo indefinido.</td>
+            <td class="verdict yes" style="white-space:normal;font-weight:400;color:var(--ink)">Revienta en runtime apenas alguien ejecuta la herramienta.</td>
+          </tr>
+          <tr>
+            <td>Solo la migración de as, sin el motor</td>
+            <td>La herramienta pasa a llamar <code>up1.write(...)</code>, pero esa función todavía no existe en el MCP actual (la crea este fix).</td>
+            <td class="verdict yes" style="white-space:normal;font-weight:400;color:var(--ink)">Revienta al revés: <code>up1.write</code> no está definido.</td>
+          </tr>
+          <tr>
+            <td>Los dos juntos</td>
+            <td>La herramienta llama <code>up1.write</code>, que existe; el canal viejo queda cerrado.</td>
+            <td class="verdict no" style="white-space:normal;font-weight:400;color:var(--ink)">Funciona. Es el único orden sano.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="explain" style="margin-top:22px">
+      <p class="et">Por qué no se resuelve con un "puente" para no tocar as</p>
+      <p>La salida obvia sería que el motor mantenga el canal viejo por compatibilidad, así no hay que migrar la herramienta. Se evaluó y se descartó, porque reabre exactamente el agujero que el fix vino a cerrar: si las constantes siguen disponibles, cualquier código futuro puede volver a armar una escritura cruda y saltarse el chequeo. Un bloqueo que se esquiva dejando abierto el canal viejo no sirve. Por eso el diseño cierra el canal viejo, y eso obliga a migrar a su único usuario.</p>
+    </div>
+
+    <div class="explain" style="margin-top:22px">
+      <p class="et">De qué depende esta migración, y de qué no</p>
+      <p>La migración de <code>as_set_rule_value</code> depende <strong>del fix del MCP, no del cambio en core</strong>. La nueva vía <code>up1.write(...)</code> se define en la capa de transporte del propio MCP (<span class="fileline">up1/mcp/src/graphql-client.js</span>): la crea este fix, no object-manager. La herramienta recibe todo lo que usa por su contexto, que arma el MCP, y no importa nada del backend. El cambio en core (los interceptores componibles, sección 10) no juega ningún papel en habilitar esta migración: es un follow-up independiente. Verificado contra el código real.</p>
+    </div>
+
+    <p style="margin-top:18px"><span class="k">Un matiz, para no confundirlo con el bloqueo.</span> El objeto que toca esta herramienta (<code>RuleSetRule</code>) <strong>no</strong> está declarado como gobernado, así que el chequeo no lo bloquea a propósito. La herramienta se comporta igual que antes; lo único que cambia es el canal interno por el que escribe. La migración es de baja sensibilidad, local a un archivo del mod, reversible, y del orden de 4 líneas.</p>
+
+    <hr class="divider" style="margin-top:40px;margin-bottom:0">
+  </section>
+
+  <footer>
+    <p><b>Fuentes.</b> Documentos de KB sp11 (reporte del fix, solicitud a academic-scheduling, decisión de camino para cm) y sp10 (PLAN / VEREDICTO / REVISIÓN de blockGenericMutation, análisis de impacto sobre flujos). Todas las referencias archivo:línea están verificadas contra la rama <b>origin/UPONE-1758</b>, commit <b>5ba9fb6</b>. Re-fetchear antes de tomar los file:line como definitivos si la rama base avanzó.</p>
+  </footer>
+
+</div>

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "run_id": "review-pr61-UPONE-1757",
+  "ts_start": "2026-09-10T18:35:00Z",
+  "ts_end": "2026-09-10T18:48:00Z",
+  "wall_clock_s": 538,
+  "project_id": "up1",
+  "mode": "A",
+  "shadow": true,
+  "target": {
+    "pr_url": "https://bitbucket.org/uplanner/curriculum-design/pull-requests/61",
+    "repos": ["uplanner/curriculum-design"],
+    "branch": "feat/UPONE-1757-curriculum-design-migracion-server-side",
+    "refs": [{ "repo": "uplanner/curriculum-design", "head_sha": "4b9b892624b1", "base_branch": "develop", "base_sha": "b56734044a29" }]
+  },
+  "external_ref": "UPONE-1757",
+  "internal_ticket": "TICKET-145",
+  "topology": "amplio",
+  "heavy_reasoning_lanes": ["curriculum-design:seguridad-xss", "curriculum-design:invariantes-dominio"],
+  "needs_code_tracing": true,
+  "topology_rationale": "1 modulo pero 2 ejes de razonamiento pesado independientes (sanitizacion HTML/XSS vs invariantes de dominio planEntry) -> fan-out por lane + externo (Jira+KB) + sintesis con re-verify",
+  "diffstat": { "files": 44, "lines_added": 5303, "lines_deleted": 91, "repos": 1, "deletes": false, "deps": false, "i18n": false, "vue": false },
+  "roles": [
+    { "role": "reason", "model": "opus",   "tokens": 148671, "duration_s": 370 },
+    { "role": "reason", "model": "opus",   "tokens": 149365, "duration_s": 243 },
+    { "role": "ext",    "model": "sonnet", "tokens": 126156, "duration_s": 99 },
+    { "role": "verify", "model": "opus",   "tokens": 102340, "duration_s": 168 }
+  ],
+  "totals": { "tokens_total": 526532, "tokens_by_model": { "opus": 400376, "sonnet": 126156 } },
+  "estimate": { "real_min": 9.0 },
+  "phases_run": ["F0","F1","F2","F3","F4","V"],
+  "phases_skipped": ["F1.5","F2.6","F2.7"],
+  "findings": { "S0": 1, "S1": 2, "S2": 3, "S3": 2, "consulta": 4, "ok": 17 },
+  "verdict": "iterar",
+  "guard_mode": "soft",
+  "notes": [
+    "Review real (shadow, NO posteado). Sintesis + reconciliacion hecha por el coordinador inline (no subagente synth aparte).",
+    "S0 de alcance: el PR entrega la migracion server-side COMPLETA bajo UPONE-1757, cuyo AC declara 'NO migra codigo productivo' (es diagnostico/spike); confirmado por lectura del ticket.",
+    "S1 XSS (comilla desbalanceada evade el regex TAG_TOKEN) SOSTENIDO por re-verify (reproducido en node); mitigado en render por sanitizeHtmlSafe client-side (DOMParser); sube a S0 si hay consumer cross-repo que renderice content sin ese sanitizador (no descartable con bb.sh sin grep remoto).",
+    "S1 trazabilidad: el fix XSS aterriza bajo UPONE-1757 pese a que el AC dice 'ticket aparte'.",
+    "S2 x3: TOCTOU unicidad (parcial REQ-12), guards fuera de $transaction (TOCTOU cross-request no documentado), tests no cubren parser-differential.",
+    "OK verificados con rigor: twins evaluateRequirementTree/moveRenumber fieles al cliente, move atomico, guards en todas las vias + RBAC restituido, bypass control-char cerrado de verdad, atributos on* removidos por construccion.",
+    "Suite integration usa prisma mockeado: races d1/d2 por trazado estatico, falta smoke concurrente real."
+  ]
+}

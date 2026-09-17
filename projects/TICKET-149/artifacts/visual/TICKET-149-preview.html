@@ -1,0 +1,2188 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>TICKET-149 — Preview de maqueta: Tributación (peso eje 1, batch, vía masiva, por malla)</title>
+<style>
+/* ============================================================
+   TOKENS DEL DESIGN SYSTEM up1 (subconjunto usado en esta página)
+   Prefijo --up1-*; unificación light/dark con light-dark().
+   Dark mode: clase .theme-dark en <html> (nunca [data-theme] ni .dark)
+   ============================================================ */
+:root {
+  color-scheme: light;
+
+  /* Paleta primaria (marca teal) */
+  --up1-color-primary-50:  #E7F2F3;
+  --up1-color-primary-100: #B6D9DC;
+  --up1-color-primary-200: #7FC4CA;
+  --up1-color-primary-300: #47AEB8;
+  --up1-color-primary-500: #0a808c;
+  --up1-color-primary-600: #12717b;
+  --up1-color-primary-700: #16626b;
+  --up1-color-primary-800: #17545b;
+  --up1-color-primary-900: #17464c;
+  --up1-color-primary-950: #16393d;
+  --up1-color-primary-rgb: 10, 128, 140;
+
+  --up1-color-primary-hover:  var(--up1-color-primary-600);
+  --up1-color-primary-active: var(--up1-color-primary-700);
+  --up1-color-primary-light:  var(--up1-color-primary-50);
+
+  /* Escala neutra (grises sin tinte azul) */
+  --up1-color-neutral-0:   #ffffff;
+  --up1-color-neutral-50:  #fafafa;
+  --up1-color-neutral-100: #f5f5f5;
+  --up1-color-neutral-200: #e5e5e5;
+  --up1-color-neutral-300: #d4d4d4;
+  --up1-color-neutral-400: #a3a3a3;
+  --up1-color-neutral-500: #737373;
+  --up1-color-neutral-600: #525252;
+  --up1-color-neutral-700: #404040;
+  --up1-color-neutral-800: #262626;
+  --up1-color-neutral-900: #171717;
+  --up1-color-neutral-950: #0a0a0a;
+
+  /* Semánticos */
+  --up1-color-success: #1a7f4b;
+  --up1-color-success-light: #e6f4ec;
+  --up1-color-warning: #a8630a;
+  --up1-color-warning-light: #fdf3e3;
+  --up1-color-danger: #b3261e;
+  --up1-color-danger-light: #fdecea;
+  --up1-color-info: #0a5f8c;
+  --up1-color-info-light: #e8f2f8;
+
+  /* Superficies y texto */
+  --up1-bg-body:     var(--up1-color-neutral-50);
+  --up1-bg-surface:  var(--up1-color-neutral-0);
+  --up1-bg-subtle:   var(--up1-color-neutral-100);
+  --up1-bg-muted:    var(--up1-color-neutral-200);
+  --up1-text-body:      var(--up1-color-neutral-900);
+  --up1-text-secondary: var(--up1-color-neutral-600);
+  --up1-text-muted:     var(--up1-color-neutral-500);
+  --up1-text-inverse:   var(--up1-color-neutral-0);
+  --up1-text-link:      var(--up1-color-primary-600);
+  --up1-border-color:        var(--up1-color-neutral-200);
+  --up1-border-color-strong: var(--up1-color-neutral-300);
+
+  /* Tipografía (Inter) */
+  --up1-font-family-base: Inter, "Helvetica Neue", Arial, system-ui, sans-serif;
+  --up1-font-size-xs:   0.75rem;
+  --up1-font-size-sm:   0.8125rem;
+  --up1-font-size-base: 0.875rem;
+  --up1-font-size-md:   1rem;
+  --up1-font-size-lg:   1.125rem;
+  --up1-font-size-xl:   1.375rem;
+  --up1-font-weight-regular: 400;
+  --up1-font-weight-medium:  500;
+  --up1-font-weight-semibold:600;
+  --up1-font-weight-bold:    700;
+  --up1-line-height-base: 1.5;
+
+  /* Espaciado (compatible Bootstrap) */
+  --up1-space-1: 0.25rem;
+  --up1-space-2: 0.5rem;
+  --up1-space-3: 0.75rem;
+  --up1-space-4: 1rem;
+  --up1-space-5: 1.5rem;
+  --up1-space-6: 2rem;
+  --up1-space-7: 3rem;
+
+  /* Radios y bordes */
+  --up1-radius-sm: 0.25rem;
+  --up1-radius-md: 0.375rem;
+  --up1-radius-lg: 0.5rem;
+  --up1-radius-xl: 0.75rem;
+  --up1-radius-pill: 999px;
+  --up1-border-width-1: 1px;
+  --up1-border-width-2: 2px;
+
+  /* Sombras */
+  --up1-shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+  --up1-shadow-md: 0 2px 8px rgba(0,0,0,.08);
+  --up1-shadow-lg: 0 8px 24px rgba(0,0,0,.14);
+
+  /* Foco visible (patrón transversal obligatorio) */
+  --up1-focus-ring: 0 0 0 3px rgba(var(--up1-color-primary-rgb), .35);
+
+  /* Badge customColor (única vía declarada por el DS para color de badge) */
+  --up1-badge-type-neutral-bg:   var(--up1-color-neutral-100);
+  --up1-badge-type-neutral-fg:   var(--up1-color-neutral-700);
+  --up1-badge-type-primary-bg:   var(--up1-color-primary-50);
+  --up1-badge-type-primary-fg:   var(--up1-color-primary-900);
+  --up1-badge-type-success-bg:   var(--up1-color-success-light);
+  --up1-badge-type-success-fg:   var(--up1-color-success);
+  --up1-badge-type-warning-bg:   var(--up1-color-warning-light);
+  --up1-badge-type-warning-fg:   var(--up1-color-warning);
+  --up1-badge-type-danger-bg:    var(--up1-color-danger-light);
+  --up1-badge-type-danger-fg:    var(--up1-color-danger);
+
+  /* --- Marcado de DELTA (solo de esta página de verificación, no del DS) --- */
+  --kn-delta: #7b2ea8;
+  --kn-delta-bg: #f6ecfb;
+  --kn-delta-border: #d9b6ec;
+}
+
+html.theme-dark {
+  color-scheme: dark;
+  --up1-bg-body:    var(--up1-color-neutral-950);
+  --up1-bg-surface: var(--up1-color-neutral-900);
+  --up1-bg-subtle:  var(--up1-color-neutral-800);
+  --up1-bg-muted:   var(--up1-color-neutral-700);
+  --up1-text-body:      var(--up1-color-neutral-100);
+  --up1-text-secondary: var(--up1-color-neutral-400);
+  --up1-text-muted:     var(--up1-color-neutral-500);
+  --up1-text-link:      var(--up1-color-primary-300);
+  --up1-border-color:        var(--up1-color-neutral-700);
+  --up1-border-color-strong: var(--up1-color-neutral-600);
+  --up1-color-primary-light: var(--up1-color-primary-800);
+  --up1-badge-type-neutral-bg: var(--up1-color-neutral-800);
+  --up1-badge-type-neutral-fg: var(--up1-color-neutral-300);
+  --up1-badge-type-primary-bg: var(--up1-color-primary-800);
+  --up1-badge-type-primary-fg: var(--up1-color-primary-100);
+  --up1-color-success-light: #11331f;
+  --up1-color-warning-light: #3a2708;
+  --up1-color-danger-light:  #3a1210;
+  --up1-color-info-light:    #0d2733;
+  --kn-delta: #d6a7f0;
+  --kn-delta-bg: #2a1733;
+  --kn-delta-border: #5c3673;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--up1-font-family-base);
+  font-size: var(--up1-font-size-base);
+  line-height: var(--up1-line-height-base);
+  color: var(--up1-text-body);
+  background: var(--up1-bg-body);
+}
+:focus-visible { outline: none; box-shadow: var(--up1-focus-ring); border-radius: var(--up1-radius-sm); }
+h1,h2,h3,h4 { margin: 0; font-weight: var(--up1-font-weight-semibold); }
+p { margin: 0; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--up1-font-size-xs);
+       background: var(--up1-bg-subtle); padding: 1px 5px; border-radius: var(--up1-radius-sm); }
+
+.kn-page { max-width: 1240px; margin: 0 auto; padding: var(--up1-space-5) var(--up1-space-5) var(--up1-space-7); }
+
+/* Cabecera de la página de verificación */
+.kn-head {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--up1-bg-surface);
+  border-bottom: var(--up1-border-width-1) solid var(--up1-border-color);
+  box-shadow: var(--up1-shadow-sm);
+}
+.kn-head-inner { max-width: 1240px; margin: 0 auto; padding: var(--up1-space-3) var(--up1-space-5);
+  display: flex; align-items: center; gap: var(--up1-space-3); flex-wrap: wrap; }
+.kn-head h1 { font-size: var(--up1-font-size-md); }
+.kn-head .kn-sub { color: var(--up1-text-secondary); font-size: var(--up1-font-size-xs); }
+.kn-head-spacer { flex: 1 1 auto; }
+
+/* Secciones de la página */
+.kn-section { margin-top: var(--up1-space-7); }
+.kn-section > h2 {
+  font-size: var(--up1-font-size-xl);
+  padding-bottom: var(--up1-space-2);
+  border-bottom: var(--up1-border-width-2) solid var(--up1-color-primary-500);
+  display: flex; align-items: baseline; gap: var(--up1-space-3); flex-wrap: wrap;
+}
+.kn-section > h2 .kn-reqs { font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-regular);
+  color: var(--up1-text-secondary); }
+.kn-note { color: var(--up1-text-secondary); font-size: var(--up1-font-size-sm); margin-top: var(--up1-space-2); }
+
+.kn-case { margin-top: var(--up1-space-5); }
+.kn-case > h3 { font-size: var(--up1-font-size-md); margin-bottom: var(--up1-space-1); }
+.kn-case > .kn-case-desc { color: var(--up1-text-secondary); font-size: var(--up1-font-size-sm);
+  margin-bottom: var(--up1-space-3); }
+
+/* Marco de "captura" para cada vista */
+.kn-frame {
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  border-radius: var(--up1-radius-lg);
+  background: var(--up1-bg-surface);
+  overflow: hidden;
+  box-shadow: var(--up1-shadow-sm);
+}
+.kn-frame-bar {
+  display: flex; align-items: center; gap: var(--up1-space-2);
+  padding: var(--up1-space-2) var(--up1-space-3);
+  background: var(--up1-bg-subtle);
+  border-bottom: var(--up1-border-width-1) solid var(--up1-border-color);
+  font-size: var(--up1-font-size-xs); color: var(--up1-text-secondary);
+}
+.kn-frame-body { padding: var(--up1-space-4); }
+
+/* Marca de DELTA */
+.kn-delta-mark {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: var(--up1-font-weight-bold); letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--kn-delta); background: var(--kn-delta-bg);
+  border: var(--up1-border-width-1) solid var(--kn-delta-border);
+  border-radius: var(--up1-radius-pill);
+  padding: 1px 7px; white-space: nowrap;
+}
+.kn-delta-box {
+  position: relative;
+  outline: var(--up1-border-width-2) dashed var(--kn-delta);
+  outline-offset: 3px;
+  border-radius: var(--up1-radius-md);
+}
+.kn-delta-tag {
+  position: absolute; top: -10px; right: 6px; z-index: 5;
+}
+
+/* ============================================================
+   COMPONENTES DEL DS (atoms / molecules) usados en las vistas
+   ============================================================ */
+
+/* Button (@atoms/Button) */
+.up1-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--up1-space-2);
+  font-family: inherit; font-size: var(--up1-font-size-base); font-weight: var(--up1-font-weight-medium);
+  line-height: 1.25; padding: 0.4375rem var(--up1-space-3);
+  border-radius: var(--up1-radius-md); border: var(--up1-border-width-1) solid transparent;
+  cursor: pointer; background: transparent; color: var(--up1-text-body);
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+.up1-btn:focus-visible { box-shadow: var(--up1-focus-ring); }
+.up1-btn--primary { background: var(--up1-color-primary-500); color: var(--up1-text-inverse); }
+.up1-btn--primary:hover { background: var(--up1-color-primary-hover); }
+.up1-btn--secondary { background: var(--up1-bg-surface); color: var(--up1-text-body);
+  border-color: var(--up1-border-color-strong); }
+.up1-btn--secondary:hover { background: var(--up1-bg-subtle); }
+.up1-btn--ghost { color: var(--up1-text-link); }
+.up1-btn--ghost:hover { background: var(--up1-color-primary-light); }
+.up1-btn--danger-ghost { color: var(--up1-color-danger); }
+.up1-btn--danger-ghost:hover { background: var(--up1-color-danger-light); }
+.up1-btn--sm { font-size: var(--up1-font-size-xs); padding: 0.25rem var(--up1-space-2); }
+.up1-btn[disabled], .up1-btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+
+/* Badge (@atoms/Badge, customColor vía --up1-badge-type-*) */
+.up1-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-medium);
+  padding: 1px var(--up1-space-2); border-radius: var(--up1-radius-pill);
+  background: var(--up1-badge-type-neutral-bg); color: var(--up1-badge-type-neutral-fg);
+  white-space: nowrap;
+}
+.up1-badge--primary { background: var(--up1-badge-type-primary-bg); color: var(--up1-badge-type-primary-fg); }
+.up1-badge--success { background: var(--up1-badge-type-success-bg); color: var(--up1-badge-type-success-fg); }
+.up1-badge--warning { background: var(--up1-badge-type-warning-bg); color: var(--up1-badge-type-warning-fg); }
+.up1-badge--danger  { background: var(--up1-badge-type-danger-bg);  color: var(--up1-badge-type-danger-fg); }
+
+/* Input (@atoms/Input) */
+.up1-input {
+  font-family: inherit; font-size: var(--up1-font-size-base); color: var(--up1-text-body);
+  background: var(--up1-bg-surface);
+  border: var(--up1-border-width-1) solid var(--up1-border-color-strong);
+  border-radius: var(--up1-radius-md); padding: 0.375rem var(--up1-space-3); width: 100%;
+}
+.up1-input:focus { outline: none; border-color: var(--up1-color-primary-500); box-shadow: var(--up1-focus-ring); }
+.up1-input--invalid { border-color: var(--up1-color-danger); }
+.up1-label { display: block; font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-semibold);
+  color: var(--up1-text-secondary); text-transform: uppercase; letter-spacing: .03em;
+  margin-bottom: var(--up1-space-1); }
+.up1-help { font-size: var(--up1-font-size-xs); color: var(--up1-text-secondary); margin-top: var(--up1-space-1); }
+.up1-help--error { color: var(--up1-color-danger); }
+
+/* Select (@atoms/Select) */
+.up1-select {
+  font-family: inherit; font-size: var(--up1-font-size-base); color: var(--up1-text-body);
+  background: var(--up1-bg-surface);
+  border: var(--up1-border-width-1) solid var(--up1-border-color-strong);
+  border-radius: var(--up1-radius-md); padding: 0.375rem var(--up1-space-3); width: 100%;
+}
+
+/* SegmentedControl (@molecules/SegmentedControl) */
+.up1-segmented {
+  display: inline-flex; background: var(--up1-bg-subtle); padding: 2px;
+  border-radius: var(--up1-radius-md); border: var(--up1-border-width-1) solid var(--up1-border-color);
+  gap: 2px; flex-wrap: wrap;
+}
+.up1-segmented__item {
+  font-family: inherit; font-size: var(--up1-font-size-sm); font-weight: var(--up1-font-weight-medium);
+  padding: 0.25rem var(--up1-space-3); border-radius: var(--up1-radius-sm);
+  border: none; background: transparent; color: var(--up1-text-secondary); cursor: pointer;
+}
+.up1-segmented__item[aria-selected="true"] {
+  background: var(--up1-bg-surface); color: var(--up1-color-primary-700);
+  box-shadow: var(--up1-shadow-sm);
+}
+.up1-segmented__item[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* Tabs (@molecules/Tabs) */
+.up1-tabs { display: flex; gap: var(--up1-space-4); border-bottom: var(--up1-border-width-1) solid var(--up1-border-color); }
+.up1-tab { padding: var(--up1-space-2) 0; font-size: var(--up1-font-size-base);
+  color: var(--up1-text-secondary); border-bottom: var(--up1-border-width-2) solid transparent;
+  background: none; border-top: 0; border-left: 0; border-right: 0; cursor: pointer; font-family: inherit; }
+.up1-tab[aria-selected="true"] { color: var(--up1-color-primary-700);
+  border-bottom-color: var(--up1-color-primary-500); font-weight: var(--up1-font-weight-semibold); }
+
+/* Card (@atoms/Card) */
+.up1-card {
+  background: var(--up1-bg-surface);
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  border-radius: var(--up1-radius-lg);
+  box-shadow: var(--up1-shadow-sm);
+}
+
+/* Table (@molecules/Table) */
+.up1-table { width: 100%; border-collapse: collapse; font-size: var(--up1-font-size-sm); }
+.up1-table th, .up1-table td {
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  padding: var(--up1-space-2) var(--up1-space-3); text-align: left; vertical-align: top;
+}
+.up1-table thead th { background: var(--up1-bg-subtle); font-weight: var(--up1-font-weight-semibold);
+  color: var(--up1-text-secondary); font-size: var(--up1-font-size-xs); text-transform: uppercase; letter-spacing: .03em; }
+
+/* Modal (@molecules/Modal, v-model:open) */
+.up1-modal {
+  background: var(--up1-bg-surface);
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  border-radius: var(--up1-radius-xl);
+  box-shadow: var(--up1-shadow-lg);
+  width: 100%; max-width: 520px; overflow: hidden;
+}
+.up1-modal__header { padding: var(--up1-space-4); border-bottom: var(--up1-border-width-1) solid var(--up1-border-color); }
+.up1-modal__body { padding: var(--up1-space-4); display: grid; gap: var(--up1-space-4); }
+.up1-modal__footer {
+  padding: var(--up1-space-3) var(--up1-space-4);
+  border-top: var(--up1-border-width-1) solid var(--up1-border-color);
+  background: var(--up1-bg-subtle);
+  display: flex; align-items: center; gap: var(--up1-space-2);
+}
+.up1-modal__footer .kn-grow { flex: 1 1 auto; }
+.up1-modal-scrim { background: rgba(0,0,0,.12); padding: var(--up1-space-5); border-radius: var(--up1-radius-lg);
+  display: flex; justify-content: center; }
+
+/* Alert (@molecules/Alert) */
+.up1-alert {
+  display: flex; gap: var(--up1-space-2); align-items: flex-start;
+  padding: var(--up1-space-3); border-radius: var(--up1-radius-md);
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  background: var(--up1-bg-subtle); font-size: var(--up1-font-size-sm);
+}
+.up1-alert--danger  { background: var(--up1-color-danger-light);  border-color: var(--up1-color-danger);  color: var(--up1-color-danger); }
+.up1-alert--warning { background: var(--up1-color-warning-light); border-color: var(--up1-color-warning); color: var(--up1-color-warning); }
+.up1-alert--success { background: var(--up1-color-success-light); border-color: var(--up1-color-success); color: var(--up1-color-success); }
+.up1-alert--info    { background: var(--up1-color-info-light);    border-color: var(--up1-color-info);    color: var(--up1-color-info); }
+
+/* EmptyState (@molecules/EmptyState) */
+.up1-empty {
+  text-align: center; padding: var(--up1-space-6) var(--up1-space-4);
+  color: var(--up1-text-secondary);
+}
+.up1-empty__title { font-weight: var(--up1-font-weight-semibold); color: var(--up1-text-body);
+  font-size: var(--up1-font-size-md); margin-bottom: var(--up1-space-1); }
+
+/* Skeleton (@atoms/Skeleton) — patrón de loading */
+.up1-skeleton { background: var(--up1-bg-muted); border-radius: var(--up1-radius-sm);
+  height: 12px; animation: up1-pulse 1.4s ease-in-out infinite; }
+@keyframes up1-pulse { 0%,100% { opacity: 1 } 50% { opacity: .5 } }
+
+/* Checkbox (@atoms/Checkbox) */
+.up1-check { display: inline-flex; align-items: center; gap: var(--up1-space-2); font-size: var(--up1-font-size-sm); }
+.up1-check input { width: 15px; height: 15px; accent-color: var(--up1-color-primary-500); }
+
+/* ============================================================
+   DELTA — componentes/patrones NUEVOS que propone este ticket.
+   Nombres prefijados kn-delta-* para que se lea que NO son del DS.
+   ============================================================ */
+
+/* [DELTA component] AssignSlot "+ Asignar acá" */
+.kn-delta-assign-slot {
+  display: flex; align-items: center; justify-content: center; gap: var(--up1-space-1);
+  width: 100%; min-height: 34px;
+  font-family: inherit; font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-medium);
+  color: var(--up1-color-primary-700);
+  background: var(--up1-color-primary-light);
+  /* [DELTA token] borde discontinuo de superficie de destino: no hay token de border-style en el DS */
+  border: var(--up1-border-width-1) dashed var(--up1-color-primary-300);
+  border-radius: var(--up1-radius-md);
+  cursor: pointer;
+}
+.kn-delta-assign-slot:hover { background: var(--up1-color-primary-100); }
+.kn-delta-assign-slot:focus-visible { box-shadow: var(--up1-focus-ring); }
+.kn-delta-assign-slot--idle {
+  color: var(--up1-text-muted); background: transparent;
+  border-color: var(--up1-border-color); opacity: .55; cursor: not-allowed;
+}
+
+/* [DELTA component] InHandPanelCard (chip EN MANO + selector de nivel) */
+.kn-delta-inhand {
+  background: var(--up1-color-primary-light);
+  border: var(--up1-border-width-1) solid var(--up1-color-primary-300);
+  border-radius: var(--up1-radius-md);
+  padding: var(--up1-space-3);
+  display: grid; gap: var(--up1-space-2);
+}
+.kn-delta-inhand__chip {
+  display: flex; align-items: center; gap: var(--up1-space-2);
+  font-size: var(--up1-font-size-sm); font-weight: var(--up1-font-weight-semibold);
+  color: var(--up1-color-primary-900);
+}
+.kn-delta-inhand__kicker { font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  font-weight: var(--up1-font-weight-bold); color: var(--up1-color-primary-700); }
+.kn-delta-inhand__x {
+  margin-left: auto; border: none; background: transparent; cursor: pointer;
+  color: var(--up1-color-primary-700); font-size: var(--up1-font-size-md); line-height: 1;
+  padding: 0 var(--up1-space-1); font-family: inherit;
+}
+
+/* [DELTA component] AlignmentWeightField (input con sufijo % + badge + indicador) */
+.kn-delta-weight {
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  border-radius: var(--up1-radius-md);
+  padding: var(--up1-space-3);
+  display: grid; gap: var(--up1-space-2);
+  background: var(--up1-bg-surface);
+}
+.kn-delta-weight__head { display: flex; align-items: center; gap: var(--up1-space-2); flex-wrap: wrap; }
+.kn-delta-weight__title { font-size: var(--up1-font-size-sm); font-weight: var(--up1-font-weight-semibold); }
+.kn-delta-weight__row { display: flex; align-items: center; gap: var(--up1-space-2); flex-wrap: wrap; }
+.kn-delta-weight__control { display: flex; align-items: stretch; max-width: 148px; }
+.kn-delta-weight__control .up1-input {
+  border-top-right-radius: 0; border-bottom-right-radius: 0; text-align: right;
+}
+.kn-delta-weight__suffix {
+  display: inline-flex; align-items: center; padding: 0 var(--up1-space-3);
+  background: var(--up1-bg-subtle); color: var(--up1-text-secondary);
+  border: var(--up1-border-width-1) solid var(--up1-border-color-strong); border-left: 0;
+  border-radius: 0 var(--up1-radius-md) var(--up1-radius-md) 0;
+  font-size: var(--up1-font-size-sm);
+}
+.kn-delta-weight__hint { font-size: var(--up1-font-size-xs); }
+.kn-delta-weight__hint--ok   { color: var(--up1-color-success); }
+.kn-delta-weight__hint--warn { color: var(--up1-color-warning); }
+.kn-delta-weight__hint--err  { color: var(--up1-color-danger); }
+
+/* [DELTA component] BulkEntryButton "Varias" — reusa el look de Button ghost sm */
+.kn-delta-bulk { border: var(--up1-border-width-1) dashed var(--up1-border-color-strong); }
+
+/* [DELTA token] escala de dominio nivel (I/R/M) y tipo (D/E/A) — sin nombre válido en el DS */
+.kn-delta-chip-level, .kn-delta-chip-kind {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: var(--up1-font-weight-bold); letter-spacing: .03em;
+  padding: 1px 6px; border-radius: var(--up1-radius-pill);
+  border: var(--up1-border-width-1) solid transparent; white-space: nowrap;
+}
+.kn-delta-chip-level--I { background: #e8eff7; color: #1f4a73; border-color: #b9cfe3; }
+.kn-delta-chip-level--R { background: #eceaf8; color: #3d3480; border-color: #c6c0e8; }
+.kn-delta-chip-level--M { background: #f3e9f5; color: #63296e; border-color: #ddc2e2; }
+.kn-delta-chip-kind--D  { background: #eef3ea; color: #3c5c2c; border-color: #cbdcc0; }
+.kn-delta-chip-kind--E  { background: #fbf0e3; color: #7a4a10; border-color: #e9cfa8; }
+.kn-delta-chip-kind--A  { background: #e6f1f2; color: #16545b; border-color: #b4d6da; }
+html.theme-dark .kn-delta-chip-level--I { background:#1b2a38; color:#a8cae8; border-color:#31506d; }
+html.theme-dark .kn-delta-chip-level--R { background:#231f38; color:#bdb5e8; border-color:#453c70; }
+html.theme-dark .kn-delta-chip-level--M { background:#301f33; color:#dcaee4; border-color:#5b3a60; }
+html.theme-dark .kn-delta-chip-kind--D  { background:#1e2718; color:#b6cfa4; border-color:#3d5230; }
+html.theme-dark .kn-delta-chip-kind--E  { background:#33250f; color:#e6c18a; border-color:#63491f; }
+html.theme-dark .kn-delta-chip-kind--A  { background:#12303233; color:#9ccfd4; border-color:#2f5a5f; }
+
+/* [DELTA pattern] Barra de sesión del editor (Guardar / Descartar) */
+.kn-delta-session-bar {
+  display: flex; align-items: center; gap: var(--up1-space-3); flex-wrap: wrap;
+  padding: var(--up1-space-3) var(--up1-space-4);
+  background: var(--up1-bg-subtle);
+  border-bottom: var(--up1-border-width-1) solid var(--up1-border-color);
+}
+.kn-delta-session-bar .kn-grow { flex: 1 1 auto; }
+
+/* [DELTA pattern] Tablero por período con scroll horizontal (redibujado en cm, M-26) */
+.kn-delta-mesh-board {
+  display: flex; gap: var(--up1-space-3); overflow-x: auto; padding-bottom: var(--up1-space-2);
+}
+.kn-delta-mesh-col { flex: 0 0 236px; display: grid; gap: var(--up1-space-2); align-content: start; }
+.kn-delta-mesh-col__head {
+  font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-bold);
+  text-transform: uppercase; letter-spacing: .05em; color: var(--up1-text-secondary);
+  padding-bottom: var(--up1-space-1);
+  border-bottom: var(--up1-border-width-2) solid var(--up1-border-color);
+}
+.kn-delta-subject-card {
+  background: var(--up1-bg-surface);
+  /* [DELTA token] superficie de destino con borde discontinuo */
+  border: var(--up1-border-width-1) dashed var(--up1-border-color-strong);
+  border-radius: var(--up1-radius-lg);
+  padding: var(--up1-space-3); display: grid; gap: var(--up1-space-2);
+}
+.kn-delta-subject-card__code { font-size: var(--up1-font-size-xs); color: var(--up1-text-muted); }
+.kn-delta-subject-card__name { font-size: var(--up1-font-size-sm); font-weight: var(--up1-font-weight-semibold); }
+.kn-delta-subject-card__tribs { display: grid; gap: var(--up1-space-1); }
+.kn-delta-trib-chip {
+  display: flex; align-items: center; gap: var(--up1-space-1); flex-wrap: wrap;
+  background: var(--up1-bg-subtle); border-radius: var(--up1-radius-sm);
+  padding: 2px var(--up1-space-2); font-size: var(--up1-font-size-xs);
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  cursor: pointer;
+}
+.kn-delta-subject-card__foot { display: flex; align-items: center; gap: var(--up1-space-2); }
+
+/* [DELTA view-state] confirmación efímera en línea dentro de la card */
+.kn-delta-inline-confirm {
+  display: flex; align-items: center; gap: var(--up1-space-1);
+  font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-medium);
+  color: var(--up1-color-success); background: var(--up1-color-success-light);
+  border-radius: var(--up1-radius-sm); padding: 2px var(--up1-space-2);
+}
+
+/* [DELTA component] Modal de vía masiva agrupado por período */
+.kn-delta-bulk-list { max-height: 268px; overflow-y: auto;
+  border: var(--up1-border-width-1) solid var(--up1-border-color); border-radius: var(--up1-radius-md); }
+.kn-delta-bulk-group__head {
+  display: flex; align-items: center; gap: var(--up1-space-2);
+  padding: var(--up1-space-2) var(--up1-space-3);
+  background: var(--up1-bg-subtle);
+  border-bottom: var(--up1-border-width-1) solid var(--up1-border-color);
+  font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-semibold);
+  text-transform: uppercase; letter-spacing: .04em; color: var(--up1-text-secondary);
+  position: sticky; top: 0;
+}
+.kn-delta-bulk-row {
+  display: flex; align-items: center; gap: var(--up1-space-2);
+  padding: var(--up1-space-2) var(--up1-space-3);
+  border-bottom: var(--up1-border-width-1) solid var(--up1-border-color);
+  font-size: var(--up1-font-size-sm);
+}
+.kn-delta-bulk-row:last-child { border-bottom: 0; }
+.kn-delta-bulk-row--taken { color: var(--up1-text-muted); background: var(--up1-bg-subtle); }
+.kn-delta-bulk-row .kn-grow { flex: 1 1 auto; }
+
+/* Grillas auxiliares de layout */
+.kn-editor { display: grid; grid-template-columns: 252px 1fr; gap: 0; }
+.kn-editor__side {
+  border-right: var(--up1-border-width-1) solid var(--up1-border-color);
+  padding: var(--up1-space-3); display: grid; gap: var(--up1-space-3); align-content: start;
+  background: var(--up1-bg-surface);
+}
+.kn-editor__main { padding: var(--up1-space-3); min-width: 0; }
+.kn-panel-title { font-size: var(--up1-font-size-xs); font-weight: var(--up1-font-weight-bold);
+  text-transform: uppercase; letter-spacing: .05em; color: var(--up1-text-secondary); }
+.kn-panel-list { display: grid; gap: var(--up1-space-1); }
+.kn-panel-item {
+  display: flex; align-items: center; gap: var(--up1-space-2);
+  padding: var(--up1-space-2); border-radius: var(--up1-radius-md);
+  border: var(--up1-border-width-1) solid var(--up1-border-color);
+  background: var(--up1-bg-surface); font-size: var(--up1-font-size-sm);
+  cursor: pointer; text-align: left; font-family: inherit; color: var(--up1-text-body); width: 100%;
+}
+.kn-panel-item:hover { background: var(--up1-bg-subtle); }
+.kn-panel-item[aria-pressed="true"] {
+  background: var(--up1-color-primary-light); border-color: var(--up1-color-primary-300);
+  color: var(--up1-color-primary-900); font-weight: var(--up1-font-weight-semibold);
+}
+.kn-panel-item__code { color: var(--up1-text-muted); font-size: var(--up1-font-size-xs); }
+
+.kn-row { display: flex; align-items: center; gap: var(--up1-space-2); flex-wrap: wrap; }
+.kn-stack { display: grid; gap: var(--up1-space-3); }
+.kn-grow { flex: 1 1 auto; }
+.kn-muted { color: var(--up1-text-secondary); }
+.kn-xs { font-size: var(--up1-font-size-xs); }
+
+/* Tabla de tributación (CompetencyAlignmentGridTable) */
+.kn-grid-cell { display: grid; gap: var(--up1-space-1); min-width: 168px; }
+
+/* Tabla del DELTA */
+.kn-delta-table td:first-child { white-space: nowrap; }
+
+@media (max-width: 900px) {
+  .kn-editor { grid-template-columns: 1fr; }
+  .kn-editor__side { border-right: 0; border-bottom: var(--up1-border-width-1) solid var(--up1-border-color); }
+}
+</style>
+</head>
+<body>
+
+<header class="kn-head">
+  <div class="kn-head-inner">
+    <div>
+      <h1>TICKET-149 — Tributación: peso del eje 1, guardado en conjunto, vía masiva y vista por malla</h1>
+      <div class="kn-sub">Preview de verificación de diseño · módulo <code>curriculum-mapping</code> · DS up1</div>
+    </div>
+    <div class="kn-head-spacer"></div>
+    <span class="kn-delta-mark">■ Delta = nuevo respecto del DS</span>
+    <button type="button" class="up1-btn up1-btn--secondary up1-btn--sm"
+            onclick="document.documentElement.classList.toggle('theme-dark')">Alternar dark mode</button>
+  </div>
+</header>
+
+<main class="kn-page">
+
+<!-- KSEC:ds -->
+<section class="kn-section" id="ds">
+  <h2>Sistema de diseño <span class="kn-reqs">Tokens, componentes y patrones del DS up1 usados en este preview</span></h2>
+  <p class="kn-note">
+    Todo lo de esta sección existe ya en el DS up1 (tokens <code>--up1-*</code> del paquete <code>layout</code>,
+    componentes de <code>layout/src/components</code> bajo Atomic Design). Lo que este ticket agrega está aparte,
+    en la sección <a href="#delta">DELTA</a>, y va marcado con el contorno violeta punteado a lo largo de las vistas.
+  </p>
+
+  <div class="kn-case">
+    <h3>Paleta</h3>
+    <div class="kn-frame"><div class="kn-frame-body">
+      <table class="up1-table">
+        <thead><tr><th>Token</th><th>Valor</th><th>Muestra</th><th>Uso en este preview</th></tr></thead>
+        <tbody>
+          <tr><td><code>--up1-color-primary-500</code></td><td>#0a808c</td>
+              <td><span style="display:inline-block;width:56px;height:18px;border-radius:4px;background:var(--up1-color-primary-500)"></span></td>
+              <td>Botón primario (Guardar, Tributar), borde de input en foco</td></tr>
+          <tr><td><code>--up1-color-primary-600</code></td><td>#12717b</td>
+              <td><span style="display:inline-block;width:56px;height:18px;border-radius:4px;background:var(--up1-color-primary-600)"></span></td>
+              <td>Hover de primario y <code>--up1-text-link</code></td></tr>
+          <tr><td><code>--up1-color-primary-700</code></td><td>#16626b</td>
+              <td><span style="display:inline-block;width:56px;height:18px;border-radius:4px;background:var(--up1-color-primary-700)"></span></td>
+              <td>Pestaña activa, texto del slot de destino</td></tr>
+          <tr><td><code>--up1-color-primary-50</code> / <code>--up1-color-primary-light</code></td><td>#E7F2F3</td>
+              <td><span style="display:inline-block;width:56px;height:18px;border-radius:4px;border:1px solid var(--up1-border-color);background:var(--up1-color-primary-50)"></span></td>
+              <td>Fondo del elemento en mano y del slot activo</td></tr>
+          <tr><td><code>--up1-color-primary-300</code></td><td>#47AEB8</td>
+              <td><span style="display:inline-block;width:56px;height:18px;border-radius:4px;background:var(--up1-color-primary-300)"></span></td>
+              <td>Borde del destino disponible</td></tr>
+          <tr><td><code>--up1-color-primary-800</code> / <code>-900</code></td><td>#17545b / #17464c</td>
+              <td><span style="display:inline-block;width:28px;height:18px;border-radius:4px 0 0 4px;background:var(--up1-color-primary-800)"></span><span style="display:inline-block;width:28px;height:18px;border-radius:0 4px 4px 0;background:var(--up1-color-primary-900)"></span></td>
+              <td>Seleccionado en dark mode / texto sobre tinte primario</td></tr>
+          <tr><td>Escala neutra <code>--up1-color-neutral-0…950</code></td><td>#ffffff … #0a0a0a</td>
+              <td>
+                <span style="display:inline-block;width:18px;height:18px;background:var(--up1-color-neutral-100)"></span><span style="display:inline-block;width:18px;height:18px;background:var(--up1-color-neutral-200)"></span><span style="display:inline-block;width:18px;height:18px;background:var(--up1-color-neutral-400)"></span><span style="display:inline-block;width:18px;height:18px;background:var(--up1-color-neutral-600)"></span><span style="display:inline-block;width:18px;height:18px;background:var(--up1-color-neutral-900)"></span>
+              </td>
+              <td>Superficies, bordes, texto secundario (grises sin tinte azul)</td></tr>
+          <tr><td>Semánticos <code>--up1-color-success / warning / danger / info</code></td><td>—</td>
+              <td>
+                <span style="display:inline-block;width:28px;height:18px;background:var(--up1-color-success)"></span><span style="display:inline-block;width:28px;height:18px;background:var(--up1-color-warning)"></span><span style="display:inline-block;width:28px;height:18px;background:var(--up1-color-danger)"></span><span style="display:inline-block;width:28px;height:18px;background:var(--up1-color-info)"></span>
+              </td>
+              <td>Indicador de suma del grupo, errores de validación del peso, resultado parcial de la vía masiva</td></tr>
+          <tr><td><code>--up1-badge-type-*</code></td><td>—</td>
+              <td><span class="up1-badge">neutral</span> <span class="up1-badge up1-badge--primary">primary</span> <span class="up1-badge up1-badge--success">success</span></td>
+              <td>Única vía declarada por el DS para el color de <code>Badge</code> (<code>customColor</code>)</td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Tipografía, espaciado, radios y foco</h3>
+    <div class="kn-frame"><div class="kn-frame-body kn-stack">
+      <div>
+        <div class="up1-label">Familia: <code>--up1-font-family-base</code> = Inter</div>
+        <div style="font-size:var(--up1-font-size-xl);font-weight:var(--up1-font-weight-semibold)">xl 1.375rem · semibold — título de vista</div>
+        <div style="font-size:var(--up1-font-size-lg)">lg 1.125rem — encabezado del modal</div>
+        <div style="font-size:var(--up1-font-size-md)">md 1rem — título de sección</div>
+        <div style="font-size:var(--up1-font-size-base)">base 0.875rem — cuerpo</div>
+        <div style="font-size:var(--up1-font-size-sm)">sm 0.8125rem — celdas de tabla</div>
+        <div style="font-size:var(--up1-font-size-xs)" class="kn-muted">xs 0.75rem — glosas, contadores, códigos</div>
+      </div>
+      <div class="kn-row">
+        <span class="kn-xs kn-muted">Espaciado:</span>
+        <span style="display:inline-block;height:14px;width:var(--up1-space-1);background:var(--up1-color-primary-300)"></span><span class="kn-xs">1</span>
+        <span style="display:inline-block;height:14px;width:var(--up1-space-2);background:var(--up1-color-primary-300)"></span><span class="kn-xs">2</span>
+        <span style="display:inline-block;height:14px;width:var(--up1-space-3);background:var(--up1-color-primary-300)"></span><span class="kn-xs">3</span>
+        <span style="display:inline-block;height:14px;width:var(--up1-space-4);background:var(--up1-color-primary-300)"></span><span class="kn-xs">4</span>
+        <span style="display:inline-block;height:14px;width:var(--up1-space-5);background:var(--up1-color-primary-300)"></span><span class="kn-xs">5</span>
+      </div>
+      <div class="kn-row">
+        <span class="kn-xs kn-muted">Radios:</span>
+        <span style="display:inline-block;width:52px;height:24px;background:var(--up1-bg-muted);border-radius:var(--up1-radius-sm)"></span><span class="kn-xs">sm</span>
+        <span style="display:inline-block;width:52px;height:24px;background:var(--up1-bg-muted);border-radius:var(--up1-radius-md)"></span><span class="kn-xs">md</span>
+        <span style="display:inline-block;width:52px;height:24px;background:var(--up1-bg-muted);border-radius:var(--up1-radius-lg)"></span><span class="kn-xs">lg</span>
+        <span style="display:inline-block;width:52px;height:24px;background:var(--up1-bg-muted);border-radius:var(--up1-radius-pill)"></span><span class="kn-xs">pill</span>
+      </div>
+      <div class="kn-row">
+        <span class="kn-xs kn-muted">Foco visible (<code>--up1-focus-ring</code>) — patrón transversal obligatorio:</span>
+        <button class="up1-btn up1-btn--secondary" style="box-shadow:var(--up1-focus-ring)">Botón con foco</button>
+        <input class="up1-input" style="max-width:180px;border-color:var(--up1-color-primary-500);box-shadow:var(--up1-focus-ring)" value="Input con foco">
+      </div>
+    </div></div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Componentes del DS reutilizados</h3>
+    <p class="kn-case-desc">
+      REQ-15 exige extender lo existente en <code>modsComponents/CompetencyAlignmentGrid/</code>
+      (<code>CompetencyAlignmentGridTable</code>, <code>CompetencyAlignmentDetailModal</code>, <code>PlanSubjectsPanel</code>)
+      sin componentes paralelos. Estos son los átomos/moléculas del DS sobre los que se apoyan.
+    </p>
+    <div class="kn-frame"><div class="kn-frame-body kn-stack">
+      <div class="kn-row">
+        <span class="kn-xs kn-muted" style="width:120px">Button</span>
+        <button class="up1-btn up1-btn--primary">Primary</button>
+        <button class="up1-btn up1-btn--secondary">Secondary</button>
+        <button class="up1-btn up1-btn--ghost">Ghost</button>
+        <button class="up1-btn up1-btn--danger-ghost">Retirar tributación</button>
+        <button class="up1-btn up1-btn--primary" disabled>Disabled</button>
+      </div>
+      <div class="kn-row">
+        <span class="kn-xs kn-muted" style="width:120px">Badge</span>
+        <span class="up1-badge">neutral</span>
+        <span class="up1-badge up1-badge--primary">primary</span>
+        <span class="up1-badge up1-badge--success">success</span>
+        <span class="up1-badge up1-badge--warning">warning</span>
+        <span class="up1-badge up1-badge--danger">danger</span>
+      </div>
+      <div class="kn-row">
+        <span class="kn-xs kn-muted" style="width:120px">SegmentedControl</span>
+        <div class="up1-segmented" role="tablist">
+          <button class="up1-segmented__item" role="tab" aria-selected="true">Introduce</button>
+          <button class="up1-segmented__item" role="tab" aria-selected="false">Reinforce</button>
+          <button class="up1-segmented__item" role="tab" aria-selected="false" disabled>Master</button>
+        </div>
+      </div>
+      <div class="kn-row">
+        <span class="kn-xs kn-muted" style="width:120px">Tabs</span>
+        <div class="up1-tabs" style="flex:1 1 auto">
+          <button class="up1-tab" aria-selected="false">Estructura</button>
+          <button class="up1-tab" aria-selected="true">Tributación</button>
+          <button class="up1-tab" aria-selected="false">Indicadores</button>
+        </div>
+      </div>
+      <div class="kn-row" style="align-items:flex-start">
+        <span class="kn-xs kn-muted" style="width:120px">Input / Select</span>
+        <div style="max-width:200px"><label class="up1-label">Input</label><input class="up1-input" value="33.33"></div>
+        <div style="max-width:220px"><label class="up1-label">Select</label>
+          <select class="up1-select"><option>Matriz de Egreso 2024</option></select></div>
+      </div>
+      <div class="kn-row" style="align-items:flex-start">
+        <span class="kn-xs kn-muted" style="width:120px">Alert</span>
+        <div class="kn-grow kn-stack">
+          <div class="up1-alert up1-alert--info">Info</div>
+          <div class="up1-alert up1-alert--success">Success</div>
+          <div class="up1-alert up1-alert--warning">Warning</div>
+          <div class="up1-alert up1-alert--danger">Danger</div>
+        </div>
+      </div>
+      <div class="kn-row" style="align-items:flex-start">
+        <span class="kn-xs kn-muted" style="width:120px">EmptyState / Skeleton</span>
+        <div class="kn-grow" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--up1-space-3)">
+          <div class="up1-card"><div class="up1-empty">
+            <div class="up1-empty__title">Sin resultados</div>
+            <div class="kn-xs">Patrón transversal de estado vacío.</div>
+          </div></div>
+          <div class="up1-card" style="padding:var(--up1-space-3);display:grid;gap:var(--up1-space-2)">
+            <div class="up1-skeleton" style="width:60%"></div>
+            <div class="up1-skeleton" style="width:90%"></div>
+            <div class="up1-skeleton" style="width:75%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="kn-row"><span class="kn-xs kn-muted" style="width:120px">Table</span>
+        <span class="kn-xs">Usada tal cual por <code>CompetencyAlignmentGridTable</code> (vista por competencia).</span></div>
+      <div class="kn-row"><span class="kn-xs kn-muted" style="width:120px">Modal</span>
+        <span class="kn-xs"><code>@molecules/Modal</code> con <code>v-model:open</code>, base de <code>CompetencyAlignmentDetailModal</code> (REQ-09) y del modal de vía masiva (REQ-07).</span></div>
+    </div></div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Patrones transversales obligatorios</h3>
+    <div class="kn-frame"><div class="kn-frame-body">
+      <table class="up1-table">
+        <thead><tr><th>Patrón</th><th>Cómo se aplica en este ticket</th></tr></thead>
+        <tbody>
+          <tr><td>Estado vacío</td><td>Matriz sin competencias adoptadas, plan sin asignaturas por período, vía masiva sin candidatas.</td></tr>
+          <tr><td>Estado de error</td><td>Peso inválido por fila (fuera de [0,100] o &gt;2 decimales, REQ-03) y fallo del batch transaccional (todo o nada, REQ-01).</td></tr>
+          <tr><td>Loading</td><td><code>Skeleton</code> mientras carga <code>alignmentView.resolver.js</code> y mientras el batch está en vuelo.</td></tr>
+          <tr><td>Foco visible</td><td><code>--up1-focus-ring</code> en todo control accionable, incluido el destino "+ Asignar acá".</td></tr>
+          <tr><td>Dark mode</td><td>Clase <code>theme-dark</code> en <code>&lt;html&gt;</code> + <code>color-scheme</code>; todos los tokens redefinidos. Probá el botón de la cabecera.</td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</section>
+<!-- /KSEC:ds -->
+
+<!-- KSEC:v-1 -->
+<section class="kn-section" id="v-1">
+  <h2>Vista 1 — Pestaña "Tributación" del plan (solo lectura)
+    <span class="kn-reqs">REQ-10 · REQ-14 (a) · alcance 6 del request</span></h2>
+  <p class="kn-note">
+    Superficie de solo lectura. El fix del ticket: <strong>no muestra el selector de asignatura</strong> en ninguno de
+    sus dos modos, y su barra de acciones (botón "Tributar") no se mezcla con la grilla. No monta panel de selección
+    ni ningún componente del editor (REQ-14).
+  </p>
+
+  <div class="kn-case">
+    <h3>Caso A — Modo "Por asignatura", con datos</h3>
+    <p class="kn-case-desc">Estado por defecto al entrar a la pestaña.</p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Plan de estudio · Ingeniería Civil Industrial 2024 · pestaña Tributación (solo lectura)</div>
+      <div class="kn-frame-body kn-stack">
+        <div class="up1-tabs">
+          <button class="up1-tab" aria-selected="false">Estructura</button>
+          <button class="up1-tab" aria-selected="true">Tributación</button>
+          <button class="up1-tab" aria-selected="false">Indicadores</button>
+        </div>
+
+        <div class="kn-row">
+          <div class="up1-segmented" role="tablist" aria-label="Modo de vista">
+            <button class="up1-segmented__item" role="tab" aria-selected="true">Por asignatura</button>
+            <button class="up1-segmented__item" role="tab" aria-selected="false">Por competencia</button>
+          </div>
+          <span class="kn-xs kn-muted">Matriz: Matriz de Egreso 2024</span>
+          <div class="kn-grow"></div>
+          <button class="up1-btn up1-btn--primary">Tributar</button>
+        </div>
+        <p class="kn-xs kn-muted">
+          Sin selector de asignatura: la lista completa se muestra en la tabla. El selector pertenece solo al editor (REQ-10).
+        </p>
+
+        <table class="up1-table">
+          <thead>
+            <tr><th style="width:26%">Asignatura</th><th>Competencia</th><th style="width:13%">Nivel</th><th style="width:16%">Tipo</th><th style="width:10%">Peso</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div><strong>MAT-1201</strong></div><div class="kn-xs kn-muted">Cálculo I</div></td>
+              <td>Razonamiento cuantitativo</td>
+              <td><span class="kn-delta-chip-level kn-delta-chip-level--I">I</span> Introduce</td>
+              <td><span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span> Desarrolla</td>
+              <td class="kn-muted">—</td>
+            </tr>
+            <tr>
+              <td><div><strong>ING-2310</strong></div><div class="kn-xs kn-muted">Diseño de Procesos</div></td>
+              <td>Razonamiento cuantitativo</td>
+              <td><span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> Reinforce</td>
+              <td><span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> Evalúa</td>
+              <td>60,00 %</td>
+            </tr>
+            <tr>
+              <td><div><strong>ING-3450</strong></div><div class="kn-xs kn-muted">Proyecto Integrador</div></td>
+              <td>Razonamiento cuantitativo</td>
+              <td><span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> Reinforce</td>
+              <td><span class="kn-delta-chip-kind kn-delta-chip-kind--A">A</span> Ambas</td>
+              <td>40,00 %</td>
+            </tr>
+            <tr>
+              <td><div><strong>FIL-1100</strong></div><div class="kn-xs kn-muted">Ética Profesional</div></td>
+              <td>Compromiso ético</td>
+              <td><span class="kn-delta-chip-level kn-delta-chip-level--M">M</span> Master</td>
+              <td><span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> Evalúa</td>
+              <td>100,00 %</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso B — Modo "Por competencia", con datos y una fila fuera de diseño</h3>
+    <p class="kn-case-desc">
+      Mismo encabezado, misma ausencia de selector. Las filas "fuera de diseño" se muestran marcadas (R-12: se marcan, no se borran);
+      el batch del editor tampoco las retira (REQ-02).
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Pestaña Tributación · modo Por competencia</div>
+      <div class="kn-frame-body kn-stack">
+        <div class="kn-row">
+          <div class="up1-segmented" role="tablist" aria-label="Modo de vista">
+            <button class="up1-segmented__item" role="tab" aria-selected="false">Por asignatura</button>
+            <button class="up1-segmented__item" role="tab" aria-selected="true">Por competencia</button>
+          </div>
+          <div class="kn-grow"></div>
+          <button class="up1-btn up1-btn--primary">Tributar</button>
+        </div>
+
+        <table class="up1-table">
+          <thead>
+            <tr><th style="width:24%">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Razonamiento cuantitativo</strong><div class="kn-xs kn-muted">RC</div></td>
+              <td><div class="kn-grid-cell">
+                <span class="kn-delta-trib-chip">MAT-1201 <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span></span>
+              </div></td>
+              <td><div class="kn-grid-cell">
+                <span class="kn-delta-trib-chip">ING-2310 <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">60,00 %</span></span>
+                <span class="kn-delta-trib-chip">ING-3450 <span class="kn-delta-chip-kind kn-delta-chip-kind--A">A</span> <span class="up1-badge">40,00 %</span></span>
+              </div></td>
+              <td class="kn-muted kn-xs">Sin tributación</td>
+            </tr>
+            <tr>
+              <td><strong>Compromiso ético</strong><div class="kn-xs kn-muted">CE</div></td>
+              <td class="kn-muted kn-xs">Sin tributación</td>
+              <td><div class="kn-grid-cell">
+                <span class="kn-delta-trib-chip" style="border-color:var(--up1-color-warning);background:var(--up1-color-warning-light)">
+                  HIS-2200 <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span>
+                  <span class="up1-badge up1-badge--warning">Fuera de diseño</span>
+                </span>
+              </div></td>
+              <td><div class="kn-grid-cell">
+                <span class="kn-delta-trib-chip">FIL-1100 <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">100,00 %</span></span>
+              </div></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="up1-alert up1-alert--warning">
+          <span>La tributación de <strong>HIS-2200</strong> quedó fuera del diseño vigente del plan. Se conserva y se marca; el guardado del editor no la retira (R-12 / REQ-02).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso C — Estados: vacío, carga y error</h3>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Estados transversales de la pestaña de solo lectura</div>
+      <div class="kn-frame-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--up1-space-3)">
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="kn-xs up1-label">Vacío</div>
+          <div class="up1-empty">
+            <div class="up1-empty__title">Este plan todavía no tiene tributaciones</div>
+            <div class="kn-xs">Abrí el editor para asociar asignaturas a las competencias de la matriz.</div>
+            <div style="margin-top:var(--up1-space-3)"><button class="up1-btn up1-btn--primary">Tributar</button></div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="kn-xs up1-label">Loading</div>
+          <div style="display:grid;gap:var(--up1-space-2);margin-top:var(--up1-space-3)">
+            <div class="up1-skeleton" style="width:45%"></div>
+            <div class="up1-skeleton" style="height:28px"></div>
+            <div class="up1-skeleton" style="height:28px"></div>
+            <div class="up1-skeleton" style="height:28px;width:80%"></div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="kn-xs up1-label">Error</div>
+          <div class="up1-alert up1-alert--danger" style="margin-top:var(--up1-space-3)">
+            <span>No se pudo cargar la tributación del plan. Reintentá en unos instantes.</span>
+          </div>
+          <div style="margin-top:var(--up1-space-3)"><button class="up1-btn up1-btn--secondary up1-btn--sm">Reintentar</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:v-1 -->
+
+<!-- KSEC:v-2 -->
+<section class="kn-section" id="v-2">
+  <h2>Vista 2 — Editor de tributación, modo "Por competencia"
+    <span class="kn-reqs">REQ-11 · REQ-13 · REQ-14 (b) · REQ-16 · REQ-01 (guardado)</span></h2>
+  <p class="kn-note">
+    Pantalla que abre "Tributar": panel de selección (<code>PlanSubjectsPanel</code>) +
+    <code>CompetencyAlignmentGridTable</code> + <code>CompetencyAlignmentDetailModal</code>. La asignación es
+    <strong>selección lateral + click en "+ Asignar acá"</strong>, nunca arrastre (REQ-16: la tabla y las cards no declaran
+    <code>draggable</code> ni <code>dragstart/dragover/drop</code>, y no hay equivalente por teclado). El guardado es el
+    batch transaccional de <code>(planId, matriz)</code> (REQ-01), la misma vía que el modo por malla (REQ-11).
+  </p>
+
+  <div class="kn-case">
+    <h3>Caso A — Sin nada en mano (destino atenuado)</h3>
+    <p class="kn-case-desc">REQ-16 (c): sin elemento en mano el "+" queda atenuado y el shell avisa qué falta elegir.</p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Editor de tributación · Matriz de Egreso 2024 · modo Por competencia</div>
+
+      <div class="kn-delta-box" style="margin:var(--up1-space-3);position:relative">
+        <span class="kn-delta-mark kn-delta-tag">Delta · patrón: barra de sesión</span>
+        <div class="kn-delta-session-bar" style="border-radius:var(--up1-radius-md)">
+          <div>
+            <div style="font-weight:var(--up1-font-weight-semibold)">Tributación · Ingeniería Civil Industrial 2024</div>
+            <div class="kn-xs kn-muted">Matriz de Egreso 2024</div>
+          </div>
+          <div class="kn-grow"></div>
+          <span class="up1-badge">Sin cambios</span>
+          <button class="up1-btn up1-btn--secondary" disabled>Descartar</button>
+          <button class="up1-btn up1-btn--primary" disabled>Guardar</button>
+        </div>
+      </div>
+
+      <div class="kn-row" style="padding:0 var(--up1-space-3) var(--up1-space-2)">
+        <div class="up1-segmented" role="tablist" aria-label="Modo del editor">
+          <button class="up1-segmented__item" role="tab" aria-selected="true">Por competencia</button>
+          <button class="up1-segmented__item" role="tab" aria-selected="false">Por malla</button>
+        </div>
+        <div class="kn-grow"></div>
+        <div class="up1-alert up1-alert--info kn-xs" style="padding:var(--up1-space-1) var(--up1-space-3)">
+          Seleccioná una asignatura del panel para poder asignarla.
+        </div>
+      </div>
+
+      <div class="kn-editor">
+        <aside class="kn-editor__side">
+          <div class="kn-panel-title">Asignaturas del plan</div>
+          <input class="up1-input" placeholder="Buscar asignatura">
+          <div class="kn-panel-list">
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">MAT-1201</span> Cálculo I</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">FIS-1300</span> Física General</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">ING-2310</span> Diseño de Procesos</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">ING-3450</span> Proyecto Integrador</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">FIL-1100</span> Ética Profesional</button>
+          </div>
+          <p class="kn-xs kn-muted">Elegí una asignatura: queda en mano y se asigna con un click en el destino.</p>
+        </aside>
+
+        <div class="kn-editor__main">
+          <table class="up1-table">
+            <thead><tr><th style="width:22%">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Razonamiento cuantitativo</strong>
+                  <div style="margin-top:var(--up1-space-2)">
+                    <span class="kn-delta-mark">Delta</span>
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk" style="margin-top:4px">Varias</button>
+                  </div>
+                </td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip">MAT-1201 <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span></span>
+                  <div class="kn-delta-box"><span class="kn-delta-mark kn-delta-tag">Delta</span>
+                    <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                  </div>
+                </div></td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip">ING-2310 <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">60,00 %</span></span>
+                  <span class="kn-delta-trib-chip">ING-3450 <span class="kn-delta-chip-kind kn-delta-chip-kind--A">A</span> <span class="up1-badge">40,00 %</span></span>
+                  <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                </div></td>
+                <td><div class="kn-grid-cell">
+                  <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><strong>Compromiso ético</strong>
+                  <div class="kn-xs kn-muted">Solo declara Reinforce y Master</div>
+                  <div style="margin-top:var(--up1-space-2)">
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                  </div>
+                </td>
+                <td class="kn-xs kn-muted">La competencia no declara este nivel</td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip" style="border-color:var(--up1-color-warning);background:var(--up1-color-warning-light)">
+                    HIS-2200 <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span>
+                    <span class="up1-badge up1-badge--warning">Fuera de diseño</span>
+                  </span>
+                  <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                </div></td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip">FIL-1100 <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">100,00 %</span></span>
+                  <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso B — Con una asignatura en mano (destinos activos) y cambios sin guardar</h3>
+    <p class="kn-case-desc">
+      REQ-16 (a) y (b): la asignatura elegida queda en mano con el chip "EN MANO · &lt;elemento&gt;" y una "x" para soltarla
+      (un click sobre el ítem ya elegido también la suelta); cada destino válido muestra "+ Asignar acá".
+      La barra de sesión pasa a estado con cambios pendientes.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Editor · Por competencia · elemento en mano: ING-2310</div>
+
+      <div class="kn-delta-box" style="margin:var(--up1-space-3);position:relative">
+        <span class="kn-delta-mark kn-delta-tag">Delta · patrón: barra de sesión</span>
+        <div class="kn-delta-session-bar" style="border-radius:var(--up1-radius-md)">
+          <div>
+            <div style="font-weight:var(--up1-font-weight-semibold)">Tributación · Ingeniería Civil Industrial 2024</div>
+            <div class="kn-xs kn-muted">Matriz de Egreso 2024</div>
+          </div>
+          <div class="kn-grow"></div>
+          <span class="up1-badge up1-badge--warning">3 cambios sin guardar</span>
+          <button class="up1-btn up1-btn--secondary">Descartar</button>
+          <button class="up1-btn up1-btn--primary">Guardar</button>
+        </div>
+      </div>
+
+      <div class="kn-row" style="padding:0 var(--up1-space-3) var(--up1-space-2)">
+        <div class="up1-segmented" role="tablist" aria-label="Modo del editor">
+          <button class="up1-segmented__item" role="tab" aria-selected="true">Por competencia</button>
+          <button class="up1-segmented__item" role="tab" aria-selected="false">Por malla</button>
+        </div>
+      </div>
+
+      <div class="kn-editor">
+        <aside class="kn-editor__side">
+          <div class="kn-panel-title">Asignaturas del plan</div>
+
+          <div class="kn-delta-box" style="position:relative">
+            <span class="kn-delta-mark kn-delta-tag">Delta</span>
+            <div class="kn-delta-inhand">
+              <div class="kn-delta-inhand__kicker">En mano</div>
+              <div class="kn-delta-inhand__chip">
+                ING-2310 · Diseño de Procesos
+                <button type="button" class="kn-delta-inhand__x" aria-label="Soltar elemento">×</button>
+              </div>
+            </div>
+          </div>
+
+          <input class="up1-input" placeholder="Buscar asignatura">
+          <div class="kn-panel-list">
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">MAT-1201</span> Cálculo I</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">FIS-1300</span> Física General</button>
+            <button type="button" class="kn-panel-item" aria-pressed="true"><span class="kn-panel-item__code">ING-2310</span> Diseño de Procesos</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">ING-3450</span> Proyecto Integrador</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">FIL-1100</span> Ética Profesional</button>
+          </div>
+        </aside>
+
+        <div class="kn-editor__main">
+          <table class="up1-table">
+            <thead><tr><th style="width:22%">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Razonamiento cuantitativo</strong>
+                  <div style="margin-top:var(--up1-space-2)"><button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button></div>
+                </td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip">MAT-1201 <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span></span>
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                </div></td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip" style="border-color:var(--up1-color-primary-300)">
+                    ING-2310 <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">60,00 %</span>
+                  </span>
+                  <span class="kn-delta-trib-chip">ING-3450 <span class="kn-delta-chip-kind kn-delta-chip-kind--A">A</span> <span class="up1-badge">40,00 %</span></span>
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                </div></td>
+                <td><div class="kn-grid-cell">
+                  <button type="button" class="kn-delta-assign-slot" style="box-shadow:var(--up1-focus-ring)">+ Asignar acá</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td><strong>Compromiso ético</strong>
+                  <div style="margin-top:var(--up1-space-2)"><button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button></div>
+                </td>
+                <td class="kn-xs kn-muted">La competencia no declara este nivel</td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip" style="border-color:var(--up1-color-warning);background:var(--up1-color-warning-light)">
+                    HIS-2200 <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span>
+                    <span class="up1-badge up1-badge--warning">Fuera de diseño</span>
+                  </span>
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                </div></td>
+                <td><div class="kn-grid-cell">
+                  <span class="kn-delta-trib-chip">FIL-1100 <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">100,00 %</span></span>
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso C — Estados del guardado en conjunto (REQ-01, REQ-02)</h3>
+    <p class="kn-case-desc">
+      Todo o nada: el batch reemplaza el conjunto de <code>(planId, matriz)</code> en una transacción, con una sola entrada
+      de historial. Si una fila falla una regla R-1..R-5/R-10, no se guarda nada.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Barra de sesión · estados</div>
+      <div class="kn-frame-body kn-stack">
+        <div>
+          <div class="up1-label">Guardando (loading)</div>
+          <div class="kn-delta-session-bar" style="border-radius:var(--up1-radius-md);border:var(--up1-border-width-1) solid var(--up1-border-color)">
+            <div class="up1-skeleton" style="width:220px"></div>
+            <div class="kn-grow"></div>
+            <span class="up1-badge">Guardando la matriz…</span>
+            <button class="up1-btn up1-btn--secondary" disabled>Descartar</button>
+            <button class="up1-btn up1-btn--primary" disabled>Guardar</button>
+          </div>
+        </div>
+        <div>
+          <div class="up1-label">Guardado correcto</div>
+          <div class="up1-alert up1-alert--success">
+            <span>Se guardó la tributación de <strong>Matriz de Egreso 2024</strong>: 3 altas, 1 modificación, 1 retiro. Quedó una sola entrada en el historial del plan.</span>
+          </div>
+        </div>
+        <div>
+          <div class="up1-label">Error del batch (no se guardó nada)</div>
+          <div class="up1-alert up1-alert--danger" style="display:block">
+            <div><strong>No se guardó ningún cambio.</strong> La transacción se revirtió completa por estas filas:</div>
+            <ul style="margin:var(--up1-space-2) 0 0;padding-left:var(--up1-space-5)">
+              <li>ING-3450 · Razonamiento cuantitativo · Reinforce — el peso 105 está fuera del rango permitido (0 a 100).</li>
+              <li>FIS-1300 · Compromiso ético · Introduce — la competencia no declara el nivel Introduce.</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div class="up1-label">Alcance del retiro</div>
+          <div class="up1-alert up1-alert--info">
+            <span>El guardado solo afecta a las competencias de <strong>Matriz de Egreso 2024</strong>. No toca las tributaciones de otras matrices adoptadas por el plan ni las marcadas como fuera de diseño (REQ-02).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso D — Estados vacíos del editor</h3>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Editor · sin datos</div>
+      <div class="kn-frame-body" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--up1-space-3)">
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Panel de selección sin asignaturas</div>
+          <div class="up1-empty">
+            <div class="up1-empty__title">El plan no tiene asignaturas</div>
+            <div class="kn-xs">Agregá asignaturas al plan antes de tributar.</div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Matriz sin competencias</div>
+          <div class="up1-empty">
+            <div class="up1-empty__title">La matriz adoptada no tiene competencias</div>
+            <div class="kn-xs">No hay destinos donde asignar.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:v-2 -->
+
+<!-- KSEC:v-3 -->
+<section class="kn-section" id="v-3">
+  <h2>Vista 3 — Editor de tributación, modo "Por malla"
+    <span class="kn-reqs">REQ-08 · REQ-11 · REQ-13 · REQ-16 · REQ-17 · alcance 5 del request</span></h2>
+  <p class="kn-note">
+    Espejo del modo por competencia: el panel lateral es <strong>"Competencias de la matriz"</strong> y lo que queda en mano
+    es una <strong>competencia</strong>, acompañada del selector "Nivel de desarrollo con que se va a asignar" (REQ-17).
+    Las asignaturas del plan se dibujan como cards agrupadas por período y ordenadas por <code>position</code>, con los datos de
+    <code>planEntry</code> que ya trae <code>alignmentView.resolver.js</code>: sin importar componentes ni el objeto
+    <code>CurriculumMesh</code> de curriculum-design (M-26). La asignación es la de REQ-16; "Varias" es el camino aparte a la
+    vía masiva (REQ-07). Ambos modos producen el mismo payload de batch (REQ-11).
+  </p>
+
+  <div class="kn-case">
+    <h3>Caso A — Sin competencia en mano</h3>
+    <p class="kn-case-desc">Los destinos no ofrecen el "+" activo; el shell avisa qué falta elegir (REQ-16 c).</p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Editor · modo Por malla · nada en mano</div>
+
+      <div class="kn-row" style="padding:var(--up1-space-3) var(--up1-space-3) var(--up1-space-2)">
+        <div class="up1-segmented" role="tablist" aria-label="Modo del editor">
+          <button class="up1-segmented__item" role="tab" aria-selected="false">Por competencia</button>
+          <button class="up1-segmented__item" role="tab" aria-selected="true">Por malla</button>
+        </div>
+        <div class="kn-grow"></div>
+        <div class="up1-alert up1-alert--info kn-xs" style="padding:var(--up1-space-1) var(--up1-space-3)">
+          Seleccioná una competencia del panel para poder asignarla.
+        </div>
+      </div>
+
+      <div class="kn-editor">
+        <aside class="kn-editor__side">
+          <div class="kn-panel-title">Competencias de la matriz</div>
+          <div class="kn-panel-list">
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">RC</span> Razonamiento cuantitativo</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">CE</span> Compromiso ético</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">CO</span> Comunicación efectiva</button>
+          </div>
+          <p class="kn-xs kn-muted">Elegí una competencia: queda en mano junto con el nivel con que se va a asignar.</p>
+        </aside>
+
+        <div class="kn-editor__main">
+          <div class="kn-delta-box" style="position:relative;padding:var(--up1-space-2)">
+            <span class="kn-delta-mark kn-delta-tag">Delta · patrón: tablero por período</span>
+            <div class="kn-delta-mesh-board">
+              <div class="kn-delta-mesh-col">
+                <div class="kn-delta-mesh-col__head">Período 1</div>
+                <div class="kn-delta-subject-card">
+                  <div class="kn-delta-subject-card__code">MAT-1201</div>
+                  <div class="kn-delta-subject-card__name">Cálculo I</div>
+                  <div class="kn-delta-subject-card__tribs">
+                    <span class="kn-delta-trib-chip">RC <span class="kn-delta-chip-level kn-delta-chip-level--I">I</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span></span>
+                  </div>
+                  <div class="kn-delta-subject-card__foot">
+                    <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                  </div>
+                </div>
+                <div class="kn-delta-subject-card">
+                  <div class="kn-delta-subject-card__code">FIS-1300</div>
+                  <div class="kn-delta-subject-card__name">Física General</div>
+                  <div class="kn-xs kn-muted">Sin tributaciones</div>
+                  <div class="kn-delta-subject-card__foot">
+                    <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                  </div>
+                </div>
+              </div>
+              <div class="kn-delta-mesh-col">
+                <div class="kn-delta-mesh-col__head">Período 2</div>
+                <div class="kn-delta-subject-card">
+                  <div class="kn-delta-subject-card__code">FIL-1100</div>
+                  <div class="kn-delta-subject-card__name">Ética Profesional</div>
+                  <div class="kn-delta-subject-card__tribs">
+                    <span class="kn-delta-trib-chip">CE <span class="kn-delta-chip-level kn-delta-chip-level--M">M</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">100,00 %</span></span>
+                  </div>
+                  <div class="kn-delta-subject-card__foot">
+                    <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                  </div>
+                </div>
+              </div>
+              <div class="kn-delta-mesh-col">
+                <div class="kn-delta-mesh-col__head">Período 5</div>
+                <div class="kn-delta-subject-card">
+                  <div class="kn-delta-subject-card__code">ING-2310</div>
+                  <div class="kn-delta-subject-card__name">Diseño de Procesos</div>
+                  <div class="kn-delta-subject-card__tribs">
+                    <span class="kn-delta-trib-chip">RC <span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">60,00 %</span></span>
+                  </div>
+                  <div class="kn-delta-subject-card__foot">
+                    <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                  </div>
+                </div>
+              </div>
+              <div class="kn-delta-mesh-col">
+                <div class="kn-delta-mesh-col__head">Período 8</div>
+                <div class="kn-delta-subject-card">
+                  <div class="kn-delta-subject-card__code">ING-3450</div>
+                  <div class="kn-delta-subject-card__name">Proyecto Integrador</div>
+                  <div class="kn-delta-subject-card__tribs">
+                    <span class="kn-delta-trib-chip">RC <span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--A">A</span> <span class="up1-badge">40,00 %</span></span>
+                  </div>
+                  <div class="kn-delta-subject-card__foot">
+                    <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá</button>
+                    <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="kn-xs kn-muted" style="margin-top:var(--up1-space-2)">
+            Columnas por período con scroll horizontal; dentro de cada columna, las asignaturas van ordenadas por <code>position</code>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso B — Competencia en mano, destino activo y confirmación tras asignar</h3>
+    <p class="kn-case-desc">
+      REQ-17: chip "EN MANO · &lt;competencia&gt;" con "x" para soltarla y selector de nivel; tras asignar, la card queda con su
+      chip de tributación más una confirmación visible.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Editor · Por malla · en mano: CE · Compromiso ético (nivel Reinforce)</div>
+
+      <div class="kn-delta-session-bar" style="margin:var(--up1-space-3);border-radius:var(--up1-radius-md);border:var(--up1-border-width-1) solid var(--up1-border-color)">
+        <div style="font-weight:var(--up1-font-weight-semibold)">Tributación · Ingeniería Civil Industrial 2024</div>
+        <div class="kn-grow"></div>
+        <span class="up1-badge up1-badge--warning">1 cambio sin guardar</span>
+        <button class="up1-btn up1-btn--secondary">Descartar</button>
+        <button class="up1-btn up1-btn--primary">Guardar</button>
+      </div>
+
+      <div class="kn-editor">
+        <aside class="kn-editor__side">
+          <div class="kn-panel-title">Competencias de la matriz</div>
+
+          <div class="kn-delta-box" style="position:relative">
+            <span class="kn-delta-mark kn-delta-tag">Delta</span>
+            <div class="kn-delta-inhand">
+              <div class="kn-delta-inhand__kicker">En mano</div>
+              <div class="kn-delta-inhand__chip">
+                CE · Compromiso ético
+                <button type="button" class="kn-delta-inhand__x" aria-label="Soltar competencia">×</button>
+              </div>
+              <div>
+                <label class="up1-label">Nivel de desarrollo con que se va a asignar</label>
+                <select class="up1-select">
+                  <option>Reinforce</option>
+                  <option>Master</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="kn-panel-list">
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">RC</span> Razonamiento cuantitativo</button>
+            <button type="button" class="kn-panel-item" aria-pressed="true"><span class="kn-panel-item__code">CE</span> Compromiso ético</button>
+            <button type="button" class="kn-panel-item" aria-pressed="false"><span class="kn-panel-item__code">CO</span> Comunicación efectiva</button>
+          </div>
+        </aside>
+
+        <div class="kn-editor__main">
+          <div class="kn-delta-mesh-board">
+            <div class="kn-delta-mesh-col">
+              <div class="kn-delta-mesh-col__head">Período 1</div>
+              <div class="kn-delta-subject-card">
+                <div class="kn-delta-subject-card__code">MAT-1201</div>
+                <div class="kn-delta-subject-card__name">Cálculo I</div>
+                <div class="kn-delta-subject-card__tribs">
+                  <span class="kn-delta-trib-chip">RC <span class="kn-delta-chip-level kn-delta-chip-level--I">I</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span></span>
+                </div>
+                <div class="kn-delta-subject-card__foot">
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                  <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                </div>
+              </div>
+              <div class="kn-delta-subject-card" style="border-style:solid;border-color:var(--up1-color-primary-300)">
+                <div class="kn-delta-subject-card__code">FIS-1300</div>
+                <div class="kn-delta-subject-card__name">Física General</div>
+                <div class="kn-delta-subject-card__tribs">
+                  <span class="kn-delta-trib-chip" style="border-color:var(--up1-color-primary-300);background:var(--up1-color-primary-light)">
+                    CE <span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span>
+                  </span>
+                </div>
+                <div class="kn-delta-box" style="position:relative">
+                  <span class="kn-delta-mark kn-delta-tag">Delta</span>
+                  <div class="kn-delta-inline-confirm">✓ Tributación agregada</div>
+                </div>
+                <div class="kn-delta-subject-card__foot">
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                  <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                </div>
+              </div>
+            </div>
+            <div class="kn-delta-mesh-col">
+              <div class="kn-delta-mesh-col__head">Período 2</div>
+              <div class="kn-delta-subject-card">
+                <div class="kn-delta-subject-card__code">FIL-1100</div>
+                <div class="kn-delta-subject-card__name">Ética Profesional</div>
+                <div class="kn-delta-subject-card__tribs">
+                  <span class="kn-delta-trib-chip">CE <span class="kn-delta-chip-level kn-delta-chip-level--M">M</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">100,00 %</span></span>
+                </div>
+                <div class="kn-delta-subject-card__foot">
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                  <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                </div>
+              </div>
+            </div>
+            <div class="kn-delta-mesh-col">
+              <div class="kn-delta-mesh-col__head">Período 5</div>
+              <div class="kn-delta-subject-card">
+                <div class="kn-delta-subject-card__code">ING-2310</div>
+                <div class="kn-delta-subject-card__name">Diseño de Procesos</div>
+                <div class="kn-delta-subject-card__tribs">
+                  <span class="kn-delta-trib-chip">RC <span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> <span class="up1-badge">60,00 %</span></span>
+                </div>
+                <div class="kn-delta-subject-card__foot">
+                  <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+                  <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso C — Estados: vacío, carga y error</h3>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Modo Por malla · estados</div>
+      <div class="kn-frame-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--up1-space-3)">
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Vacío</div>
+          <div class="up1-empty">
+            <div class="up1-empty__title">El plan no tiene asignaturas por período</div>
+            <div class="kn-xs">Sin entradas de plan no hay cards que dibujar.</div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Loading</div>
+          <div class="kn-delta-mesh-board" style="margin-top:var(--up1-space-3)">
+            <div class="kn-delta-mesh-col" style="flex-basis:150px">
+              <div class="up1-skeleton" style="width:60%"></div>
+              <div class="up1-skeleton" style="height:66px"></div>
+              <div class="up1-skeleton" style="height:66px"></div>
+            </div>
+            <div class="kn-delta-mesh-col" style="flex-basis:150px">
+              <div class="up1-skeleton" style="width:60%"></div>
+              <div class="up1-skeleton" style="height:66px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Error al asignar</div>
+          <div class="up1-alert up1-alert--danger" style="margin-top:var(--up1-space-3)">
+            <span><strong>FIS-1300</strong> ya tributa a Compromiso ético en Reinforce. No se agregó una segunda vez.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:v-3 -->
+
+<!-- KSEC:v-4 -->
+<section class="kn-section" id="v-4">
+  <h2>Vista 4 — CompetencyAlignmentDetailModal
+    <span class="kn-reqs">REQ-09 · REQ-05 · REQ-06 · REQ-03 · REQ-04</span></h2>
+  <p class="kn-note">
+    El modal <strong>ya existente</strong> en <code>modsComponents/CompetencyAlignmentGrid/</code>, sobre
+    <code>@molecules/Modal</code> con <code>v-model:open</code>, que este ticket <strong>extiende sin rediseñar</strong>
+    (REQ-15). Dos estados resultantes: solo lectura y edición. No hay panel lateral de detalle ni componente paralelo;
+    la acción "Repartir en partes iguales" vive dentro del modal, no en un panel (REQ-05).
+  </p>
+
+  <div class="kn-case">
+    <h3>Caso A — Estado (a): solo lectura</h3>
+    <p class="kn-case-desc">Nivel y tipo como TEXTO, con la glosa del tipo; pie con "Editar en tributación" + "Listo".</p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">CompetencyAlignmentDetailModal · solo lectura</div>
+      <div class="kn-frame-body up1-modal-scrim">
+        <div class="up1-modal">
+          <div class="up1-modal__header">
+            <div style="font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)">ING-2310 · Diseño de Procesos</div>
+            <div class="kn-xs kn-muted">tributa a Razonamiento cuantitativo</div>
+          </div>
+          <div class="up1-modal__body">
+            <div>
+              <div class="up1-label">Nivel de desarrollo</div>
+              <div>Reinforce</div>
+            </div>
+            <div>
+              <div class="up1-label">Tipo de contribución</div>
+              <div>Evalúa</div>
+              <div class="up1-help">La mide y genera evidencia de logro</div>
+            </div>
+            <div>
+              <div class="up1-label">Matriz de competencia</div>
+              <div>Matriz de Egreso 2024</div>
+            </div>
+          </div>
+          <div class="up1-modal__footer">
+            <button class="up1-btn up1-btn--ghost">Editar en tributación</button>
+            <div class="kn-grow"></div>
+            <button class="up1-btn up1-btn--primary">Listo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso B — Estado (b): edición, fila que pesa, grupo en reparto automático</h3>
+    <p class="kn-case-desc">
+      Segmentado de nivel limitado a los niveles que la competencia declara (Master deshabilitado en este caso) y
+      segmentado de tipo. El bloque "Peso dentro de &lt;nivel&gt;" con input + sufijo %, badge "REPARTO AUTOMÁTICO"
+      (derivado, REQ-06), indicador "&lt;N&gt; evalúa · suma &lt;S&gt;%" y la acción "Repartir en partes iguales"
+      (client-side, <code>weights.ts</code>, G-6). Pie: "Retirar tributación" a la izquierda, "Listo" a la derecha.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">CompetencyAlignmentDetailModal · edición · grupo (plan, Razonamiento cuantitativo, Reinforce)</div>
+      <div class="kn-frame-body up1-modal-scrim">
+        <div class="up1-modal">
+          <div class="up1-modal__header">
+            <div style="font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)">ING-2310 · Diseño de Procesos</div>
+            <div class="kn-xs kn-muted">tributa a Razonamiento cuantitativo</div>
+          </div>
+          <div class="up1-modal__body">
+            <div>
+              <div class="up1-label">Nivel de desarrollo</div>
+              <div class="up1-segmented" role="tablist">
+                <button class="up1-segmented__item" role="tab" aria-selected="false">Introduce</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="true">Reinforce</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="false" disabled>Master</button>
+              </div>
+              <div class="up1-help">La competencia no declara el nivel Master.</div>
+            </div>
+            <div>
+              <div class="up1-label">Tipo de contribución</div>
+              <div class="up1-segmented" role="tablist">
+                <button class="up1-segmented__item" role="tab" aria-selected="false">Desarrolla</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="true">Evalúa</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="false">Ambas</button>
+              </div>
+              <div class="up1-help">La mide y genera evidencia de logro</div>
+            </div>
+
+            <div class="kn-delta-box" style="position:relative">
+              <span class="kn-delta-mark kn-delta-tag">Delta · AlignmentWeightField</span>
+              <div class="kn-delta-weight">
+                <div class="kn-delta-weight__head">
+                  <span class="kn-delta-weight__title">Peso dentro de Reinforce</span>
+                  <span class="up1-badge up1-badge--success">Reparto automático</span>
+                </div>
+                <div class="kn-delta-weight__row">
+                  <div class="kn-delta-weight__control">
+                    <input class="up1-input" value="50" inputmode="decimal" aria-label="Peso dentro de Reinforce">
+                    <span class="kn-delta-weight__suffix">%</span>
+                  </div>
+                  <button class="up1-btn up1-btn--ghost up1-btn--sm">Repartir en partes iguales</button>
+                </div>
+                <div class="kn-delta-weight__hint kn-delta-weight__hint--ok">2 evalúa · suma 100%</div>
+              </div>
+            </div>
+          </div>
+          <div class="up1-modal__footer">
+            <button class="up1-btn up1-btn--danger-ghost">Retirar tributación</button>
+            <div class="kn-grow"></div>
+            <button class="up1-btn up1-btn--primary">Listo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso C — Edición, fila "Desarrolla": no pesa (R-6 / REQ-04)</h3>
+    <p class="kn-case-desc">
+      Solo <em>Evalúa</em> y <em>Ambas</em> admiten peso. Con <em>Desarrolla</em> el bloque de peso no ofrece input y el valor
+      queda en <code>null</code>.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">CompetencyAlignmentDetailModal · edición · tipo Desarrolla</div>
+      <div class="kn-frame-body up1-modal-scrim">
+        <div class="up1-modal">
+          <div class="up1-modal__header">
+            <div style="font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)">MAT-1201 · Cálculo I</div>
+            <div class="kn-xs kn-muted">tributa a Razonamiento cuantitativo</div>
+          </div>
+          <div class="up1-modal__body">
+            <div>
+              <div class="up1-label">Nivel de desarrollo</div>
+              <div class="up1-segmented" role="tablist">
+                <button class="up1-segmented__item" role="tab" aria-selected="true">Introduce</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="false">Reinforce</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="false" disabled>Master</button>
+              </div>
+            </div>
+            <div>
+              <div class="up1-label">Tipo de contribución</div>
+              <div class="up1-segmented" role="tablist">
+                <button class="up1-segmented__item" role="tab" aria-selected="true">Desarrolla</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="false">Evalúa</button>
+                <button class="up1-segmented__item" role="tab" aria-selected="false">Ambas</button>
+              </div>
+              <div class="up1-help">La forma, pero no la mide</div>
+            </div>
+
+            <div class="kn-delta-box" style="position:relative">
+              <span class="kn-delta-mark kn-delta-tag">Delta · AlignmentWeightField</span>
+              <div class="kn-delta-weight">
+                <div class="kn-delta-weight__head">
+                  <span class="kn-delta-weight__title">Peso dentro de Introduce</span>
+                </div>
+                <div class="kn-delta-weight__hint kn-muted">
+                  Las tributaciones de tipo Desarrolla no llevan peso. Cambiá el tipo a Evalúa o Ambas para asignarlo.
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="up1-modal__footer">
+            <button class="up1-btn up1-btn--danger-ghost">Retirar tributación</button>
+            <div class="kn-grow"></div>
+            <button class="up1-btn up1-btn--primary">Listo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso D — Estados del bloque de peso</h3>
+    <p class="kn-case-desc">
+      Estados del mismo <em>AlignmentWeightField</em>: automático, manual, suma corta, suma excedida, valor inválido y grupo de una sola fila.
+      El estado automático/manual es <strong>derivado</strong> de los pesos actuales, no persistido (REQ-06).
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">AlignmentWeightField · matriz de estados</div>
+      <div class="kn-frame-body" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--up1-space-4)">
+
+        <div class="kn-delta-box" style="position:relative">
+          <span class="kn-delta-mark kn-delta-tag">Delta</span>
+          <div class="kn-delta-weight">
+            <div class="up1-label">Automático · suma 100</div>
+            <div class="kn-delta-weight__head">
+              <span class="kn-delta-weight__title">Peso dentro de Reinforce</span>
+              <span class="up1-badge up1-badge--success">Reparto automático</span>
+            </div>
+            <div class="kn-delta-weight__row">
+              <div class="kn-delta-weight__control"><input class="up1-input" value="33.33"><span class="kn-delta-weight__suffix">%</span></div>
+              <button class="up1-btn up1-btn--ghost up1-btn--sm">Repartir en partes iguales</button>
+            </div>
+            <div class="kn-delta-weight__hint kn-delta-weight__hint--ok">3 evalúa · suma 100%</div>
+            <div class="kn-xs kn-muted">El residuo se ajusta para que la suma dé 100 con 2 decimales (33,33 / 33,33 / 33,34).</div>
+          </div>
+        </div>
+
+        <div class="kn-delta-box" style="position:relative">
+          <span class="kn-delta-mark kn-delta-tag">Delta</span>
+          <div class="kn-delta-weight">
+            <div class="up1-label">Manual · suma 100</div>
+            <div class="kn-delta-weight__head">
+              <span class="kn-delta-weight__title">Peso dentro de Reinforce</span>
+              <span class="up1-badge">Reparto manual</span>
+            </div>
+            <div class="kn-delta-weight__row">
+              <div class="kn-delta-weight__control"><input class="up1-input" value="60"><span class="kn-delta-weight__suffix">%</span></div>
+              <button class="up1-btn up1-btn--ghost up1-btn--sm">Repartir en partes iguales</button>
+            </div>
+            <div class="kn-delta-weight__hint kn-delta-weight__hint--ok">2 evalúa · suma 100%</div>
+          </div>
+        </div>
+
+        <div class="kn-delta-box" style="position:relative">
+          <span class="kn-delta-mark kn-delta-tag">Delta</span>
+          <div class="kn-delta-weight">
+            <div class="up1-label">Manual · suma menor a 100</div>
+            <div class="kn-delta-weight__head">
+              <span class="kn-delta-weight__title">Peso dentro de Reinforce</span>
+              <span class="up1-badge">Reparto manual</span>
+            </div>
+            <div class="kn-delta-weight__row">
+              <div class="kn-delta-weight__control"><input class="up1-input" value="40"><span class="kn-delta-weight__suffix">%</span></div>
+              <button class="up1-btn up1-btn--ghost up1-btn--sm">Repartir en partes iguales</button>
+            </div>
+            <div class="kn-delta-weight__hint kn-delta-weight__hint--warn">2 evalúa · suma 70% (faltan 30%)</div>
+          </div>
+        </div>
+
+        <div class="kn-delta-box" style="position:relative">
+          <span class="kn-delta-mark kn-delta-tag">Delta</span>
+          <div class="kn-delta-weight">
+            <div class="up1-label">Manual · suma mayor a 100</div>
+            <div class="kn-delta-weight__head">
+              <span class="kn-delta-weight__title">Peso dentro de Reinforce</span>
+              <span class="up1-badge">Reparto manual</span>
+            </div>
+            <div class="kn-delta-weight__row">
+              <div class="kn-delta-weight__control"><input class="up1-input" value="80"><span class="kn-delta-weight__suffix">%</span></div>
+              <button class="up1-btn up1-btn--ghost up1-btn--sm">Repartir en partes iguales</button>
+            </div>
+            <div class="kn-delta-weight__hint kn-delta-weight__hint--warn">2 evalúa · suma 120% (se excede en 20%)</div>
+          </div>
+        </div>
+
+        <div class="kn-delta-box" style="position:relative">
+          <span class="kn-delta-mark kn-delta-tag">Delta</span>
+          <div class="kn-delta-weight">
+            <div class="up1-label">Error de validación de la fila (REQ-03)</div>
+            <div class="kn-delta-weight__head">
+              <span class="kn-delta-weight__title">Peso dentro de Reinforce</span>
+            </div>
+            <div class="kn-delta-weight__row">
+              <div class="kn-delta-weight__control"><input class="up1-input up1-input--invalid" value="105.456" aria-invalid="true"><span class="kn-delta-weight__suffix">%</span></div>
+            </div>
+            <div class="kn-delta-weight__hint kn-delta-weight__hint--err">
+              El peso debe estar entre 0 y 100, con hasta 2 decimales.
+            </div>
+          </div>
+        </div>
+
+        <div class="kn-delta-box" style="position:relative">
+          <span class="kn-delta-mark kn-delta-tag">Delta</span>
+          <div class="kn-delta-weight">
+            <div class="up1-label">Grupo de una sola fila</div>
+            <div class="kn-delta-weight__head">
+              <span class="kn-delta-weight__title">Peso dentro de Master</span>
+              <span class="up1-badge up1-badge--success">Reparto automático</span>
+            </div>
+            <div class="kn-delta-weight__row">
+              <div class="kn-delta-weight__control"><input class="up1-input" value="100"><span class="kn-delta-weight__suffix">%</span></div>
+              <button class="up1-btn up1-btn--ghost up1-btn--sm">Repartir en partes iguales</button>
+            </div>
+            <div class="kn-delta-weight__hint kn-delta-weight__hint--ok">1 evalúa · suma 100%</div>
+          </div>
+        </div>
+
+      </div>
+      <div class="kn-frame-body" style="padding-top:0">
+        <div class="up1-alert up1-alert--info">
+          <span>La validación de "suma 100 al publicar el plan" (D1) es cross-mod hacia curriculum-design y queda <strong>fuera de alcance</strong> de este ticket: acá el desvío se informa, no bloquea el guardado.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:v-4 -->
+
+<!-- KSEC:v-5 -->
+<section class="kn-section" id="v-5">
+  <h2>Vista 5 — Vía masiva (acción "Varias")
+    <span class="kn-reqs">REQ-07 · alcance 4 del request · AD-12</span></h2>
+  <p class="kn-note">
+    Camino aparte del mecanismo individual de REQ-16. Aplica un destino (nivel + tipo) a varias asignaturas en una sola
+    transacción, con el trabajo troceado en el backend (patrón <code>matrixAdoption</code>), y devuelve el detalle de las
+    aplicadas y de las <strong>salteadas con su motivo</strong> (duplicado existente, fuera de la matriz, regla R-1..R-5/R-10 no cumplida).
+    Se abre desde "Varias" de la card (modo por malla) o de la fila de competencia (modo por competencia).
+  </p>
+
+  <div class="kn-case">
+    <h3>Caso A — Selección múltiple agrupada por período</h3>
+    <p class="kn-case-desc">
+      Encabezado de grupo con checkbox y contador, acciones "Todos/Ninguno", filas "Ya tributa" no seleccionables, y contador
+      "&lt;N&gt; seleccionada(s)" en el pie.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Modal de vía masiva · destino: Compromiso ético · Reinforce</div>
+      <div class="kn-frame-body up1-modal-scrim">
+        <div class="kn-delta-box" style="position:relative;width:100%;max-width:520px">
+          <span class="kn-delta-mark kn-delta-tag">Delta · modal agrupado por período</span>
+          <div class="up1-modal">
+            <div class="up1-modal__header">
+              <div style="font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)">Agregar asignaturas</div>
+              <div class="kn-xs kn-muted">tributarán a Compromiso ético</div>
+            </div>
+            <div class="up1-modal__body">
+              <div class="kn-row">
+                <div style="flex:1 1 140px">
+                  <label class="up1-label">Nivel de desarrollo</label>
+                  <select class="up1-select"><option>Reinforce</option><option>Master</option></select>
+                </div>
+                <div style="flex:1 1 140px">
+                  <label class="up1-label">Tipo de contribución</label>
+                  <select class="up1-select"><option>Evalúa</option><option>Desarrolla</option><option>Ambas</option></select>
+                </div>
+              </div>
+
+              <div>
+                <div class="kn-row" style="margin-bottom:var(--up1-space-2)">
+                  <input class="up1-input" placeholder="Buscar asignatura" style="flex:1 1 180px">
+                  <button class="up1-btn up1-btn--ghost up1-btn--sm">Todos</button>
+                  <button class="up1-btn up1-btn--ghost up1-btn--sm">Ninguno</button>
+                </div>
+
+                <div class="kn-delta-bulk-list">
+                  <div class="kn-delta-bulk-group__head">
+                    <label class="up1-check"><input type="checkbox" checked></label>
+                    <span class="kn-grow">Período 1</span><span>2 de 2</span>
+                  </div>
+                  <div class="kn-delta-bulk-row">
+                    <label class="up1-check"><input type="checkbox" checked></label>
+                    <span class="kn-grow"><strong>MAT-1201</strong> · Cálculo I</span>
+                  </div>
+                  <div class="kn-delta-bulk-row">
+                    <label class="up1-check"><input type="checkbox" checked></label>
+                    <span class="kn-grow"><strong>FIS-1300</strong> · Física General</span>
+                  </div>
+
+                  <div class="kn-delta-bulk-group__head">
+                    <label class="up1-check"><input type="checkbox"></label>
+                    <span class="kn-grow">Período 2</span><span>0 de 1</span>
+                  </div>
+                  <div class="kn-delta-bulk-row kn-delta-bulk-row--taken">
+                    <label class="up1-check"><input type="checkbox" disabled></label>
+                    <span class="kn-grow"><strong>FIL-1100</strong> · Ética Profesional</span>
+                    <span class="up1-badge">Ya tributa</span>
+                  </div>
+
+                  <div class="kn-delta-bulk-group__head">
+                    <label class="up1-check"><input type="checkbox"></label>
+                    <span class="kn-grow">Período 5</span><span>1 de 2</span>
+                  </div>
+                  <div class="kn-delta-bulk-row">
+                    <label class="up1-check"><input type="checkbox" checked></label>
+                    <span class="kn-grow"><strong>ING-2310</strong> · Diseño de Procesos</span>
+                  </div>
+                  <div class="kn-delta-bulk-row">
+                    <label class="up1-check"><input type="checkbox"></label>
+                    <span class="kn-grow"><strong>ING-3450</strong> · Proyecto Integrador</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="up1-modal__footer">
+              <span class="kn-xs kn-muted">3 seleccionadas</span>
+              <div class="kn-grow"></div>
+              <button class="up1-btn up1-btn--secondary">Cancelar</button>
+              <button class="up1-btn up1-btn--primary">Asociar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso B — Resultado parcial: aplicadas y salteadas</h3>
+    <p class="kn-case-desc">
+      El troceo del backend devuelve el detalle por asignatura. La superficie que lo informa es <strong>delta</strong>:
+      la maqueta cierra el modal con "Asociar" y no reserva lugar para este reporte.
+    </p>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Vía masiva · resultado</div>
+      <div class="kn-frame-body up1-modal-scrim">
+        <div class="kn-delta-box" style="position:relative;width:100%;max-width:520px">
+          <span class="kn-delta-mark kn-delta-tag">Delta · resultado parcial</span>
+          <div class="up1-modal">
+            <div class="up1-modal__header">
+              <div style="font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)">Resultado de la asociación</div>
+              <div class="kn-xs kn-muted">Compromiso ético · Reinforce · Evalúa</div>
+            </div>
+            <div class="up1-modal__body">
+              <div class="up1-alert up1-alert--success">
+                <span><strong>5 asignaturas</strong> quedaron asociadas.</span>
+              </div>
+              <div>
+                <div class="up1-label">3 salteadas</div>
+                <table class="up1-table">
+                  <thead><tr><th>Asignatura</th><th>Motivo</th></tr></thead>
+                  <tbody>
+                    <tr><td>FIL-1100 · Ética Profesional</td><td>Ya tributa a esta competencia en este nivel</td></tr>
+                    <tr><td>HIS-2200 · Historia del Pensamiento</td><td>No pertenece a la matriz seleccionada</td></tr>
+                    <tr><td>FIS-1300 · Física General</td><td>La competencia no declara el nivel Reinforce</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="up1-modal__footer">
+              <div class="kn-grow"></div>
+              <button class="up1-btn up1-btn--primary">Listo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Caso C — Estados: vacío, aplicando y error total</h3>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Vía masiva · estados</div>
+      <div class="kn-frame-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--up1-space-3)">
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Vacío</div>
+          <div class="up1-empty">
+            <div class="up1-empty__title">No hay asignaturas para asociar</div>
+            <div class="kn-xs">Todas las asignaturas del plan ya tributan a esta competencia en este nivel.</div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Aplicando (troceado)</div>
+          <div style="display:grid;gap:var(--up1-space-2);margin-top:var(--up1-space-3)">
+            <div class="up1-skeleton" style="height:24px"></div>
+            <div class="up1-skeleton" style="height:24px;width:85%"></div>
+            <div class="kn-xs kn-muted">Aplicando el destino a 24 asignaturas…</div>
+          </div>
+        </div>
+        <div class="up1-card" style="padding:var(--up1-space-3)">
+          <div class="up1-label">Error total</div>
+          <div class="up1-alert up1-alert--danger" style="margin-top:var(--up1-space-3)">
+            <span><strong>No se asoció ninguna asignatura.</strong> La transacción se revirtió completa. Reintentá o revisá el destino elegido.</span>
+          </div>
+          <div style="margin-top:var(--up1-space-3)"><button class="up1-btn up1-btn--secondary up1-btn--sm">Reintentar</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:v-5 -->
+
+<!-- KSEC:delta -->
+<section class="kn-section" id="delta">
+  <h2>DELTA — lo nuevo que propone este ticket respecto del design system</h2>
+  <p class="kn-note">
+    Todo lo listado acá aparece marcado en las vistas de arriba con el contorno violeta punteado y la etiqueta
+    <span class="kn-delta-mark">Delta</span>. Son componentes, tokens, patrones o estados de vista que <strong>no existen
+    en el DS up1</strong> y que la implementación de este ticket tiene que resolver: o se aportan al DS, o se declaran
+    locales del módulo <code>curriculum-mapping</code>. Los nombres <code>kn-delta-*</code> del CSS de este preview son
+    andamiaje de verificación, no nombres del DS.
+  </p>
+
+  <div class="kn-frame">
+    <div class="kn-frame-bar">Tabla de deltas · 14 ítems</div>
+    <div class="kn-frame-body">
+      <table class="up1-table kn-delta-table">
+        <thead>
+          <tr><th>Tipo</th><th style="width:22%">Delta</th><th>Por qué no lo cubre el DS</th><th style="width:14%">Dónde se ve</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="up1-badge up1-badge--primary">component</span></td>
+            <td><strong>AssignSlot</strong> — "+ Asignar acá"</td>
+            <td>Slot de destino dentro de la card de asignatura (por malla) y de la celda competencia × nivel (por competencia), dibujado como área punteada con "+". No hay atom ni molecule equivalente; el <code>Button</code> actual no cubre el destino-contenedor ni su estado atenuado.</td>
+            <td><a href="#v-2">Vista 2</a>, <a href="#v-3">Vista 3</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--primary">component</span></td>
+            <td><strong>InHandPanelCard</strong> — bloque "EN MANO"</td>
+            <td>Tarjeta del panel lateral con el elemento tomado, el selector "Nivel de desarrollo con que se va a asignar" y la "x" para soltarlo. El DS no declara ningún componente de selección persistente en panel lateral.</td>
+            <td><a href="#v-2">Vista 2 B</a>, <a href="#v-3">Vista 3 B</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--primary">component</span></td>
+            <td><strong>AlignmentWeightField</strong> — "Peso dentro de &lt;nivel&gt;"</td>
+            <td>Input numérico con sufijo "%" adosado + badge "REPARTO AUTOMÁTICO" + leyenda "N evalúa · suma 100%" en una sola superficie. El <code>Input</code> del DS no soporta sufijo/addon ni agrupación con badge e indicador.</td>
+            <td><a href="#v-4">Vista 4 B/C/D</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--primary">component</span></td>
+            <td><strong>BulkEntryButton</strong> — "Varias"</td>
+            <td>Disparador de la vía masiva embebido al pie de cada card de asignatura y de cada fila de competencia. El DS tiene <code>ActionMenu</code> y <code>ActionToolbar</code>, pero ninguno cubre esta acción secundaria dentro de la tarjeta.</td>
+            <td><a href="#v-2">Vista 2</a>, <a href="#v-3">Vista 3</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--primary">component</span></td>
+            <td><strong>Modal de vía masiva agrupado por período</strong></td>
+            <td>Lista con encabezado de grupo por período (checkbox de grupo + contador), acciones "Todos/Ninguno", filas "Ya tributa" no seleccionables y contador "N seleccionada(s)" en el pie. <code>MultiSelectPickerModal</code> del DS no declara agrupación, checkbox de grupo ni filas ya-asignadas.</td>
+            <td><a href="#v-5">Vista 5 A</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--warning">token</span></td>
+            <td><strong>Escala de dominio</strong> para nivel (I/R/M) y tipo de contribución (D/E/A)</td>
+            <td>Los chips de la maqueta usan un color propio por nivel y por tipo. El DS solo expone <code>--up1-badge-type-*</code> para <code>Badge customColor</code> y no declara tokens de esta escala de dominio: hoy no hay nombre válido para pintarlos. Los colores usados acá son provisorios.</td>
+            <td><a href="#v-1">Vista 1</a>, <a href="#v-2">Vista 2</a>, <a href="#v-3">Vista 3</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--warning">token</span></td>
+            <td><strong>Borde discontinuo de superficie de destino</strong></td>
+            <td>Las cards de asignatura del modo por malla y el slot "+" se dibujan con borde punteado/discontinuo. El DS solo declara anchos (<code>--up1-border-width-*</code>) y radios; no hay token de estilo de borde ni de "superficie de destino".</td>
+            <td><a href="#v-2">Vista 2</a>, <a href="#v-3">Vista 3</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge">pattern</span></td>
+            <td><strong>Tablero de asignaturas por período con scroll horizontal dentro de cm</strong></td>
+            <td>La vista por malla replica el scaffold de columnas por período de <code>CurriculumMesh</code> (cd), pero M-26 prohíbe el import cross-mod y el DS no lo expone como componente reusable: hay que redibujarlo en <code>curriculum-mapping</code>.</td>
+            <td><a href="#v-3">Vista 3</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge">pattern</span></td>
+            <td><strong>Barra de sesión del editor</strong> (Guardar / Descartar con cambios pendientes)</td>
+            <td>La cabecera trata el editor como una sesión con cambios acumulados. El DS solo declara "botón en estado de guardado"; no hay patrón para sesión con descarte ni para el aviso de cambios sin guardar al salir.</td>
+            <td><a href="#v-2">Vista 2</a>, <a href="#v-3">Vista 3 B</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge">pattern</span></td>
+            <td><strong>Asignación por selección lateral + click</strong> (dos pasos, sin drag and drop)</td>
+            <td>Mecanismo tomar-en-mano → "+ Asignar acá" espejado en los dos modos (REQ-16). No figura entre los patrones transversales del DS, que no cubre selección persistente ni afordancia de destino.</td>
+            <td><a href="#v-2">Vista 2</a>, <a href="#v-3">Vista 3</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--success">view-state</span></td>
+            <td><strong>Sin elemento en mano</strong></td>
+            <td>En la captura del modo por malla inactivo el "+" no aparece; con elemento en mano aparece en cada card. Falta declarar el estado atenuado del destino y el aviso del shell ("seleccioná una asignatura/competencia") como estado de vista.</td>
+            <td><a href="#v-2">Vista 2 A</a>, <a href="#v-3">Vista 3 A</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--success">view-state</span></td>
+            <td><strong>Confirmación efímera tras asignar</strong></td>
+            <td>La card asignada muestra una barra verde de confirmación bajo el chip recién creado. El DS solo declara <code>Alert</code> y <code>NotificationBanner</code>; no hay estado de feedback efímero en línea dentro de una tarjeta.</td>
+            <td><a href="#v-3">Vista 3 B</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--success">view-state</span></td>
+            <td><strong>Resultado parcial de la vía masiva</strong> (filas salteadas)</td>
+            <td>El modal de la maqueta cierra con "Asociar" y no reserva lugar para informar cuáles asignaturas se saltearon y por qué, que es justamente lo que el troceo del backend devuelve (REQ-07).</td>
+            <td><a href="#v-5">Vista 5 B</a></td>
+          </tr>
+          <tr>
+            <td><span class="up1-badge up1-badge--success">view-state</span></td>
+            <td><strong>Grupo de peso con suma distinta de 100</strong></td>
+            <td>La maqueta solo muestra el indicador en verde ("1 evalúa · suma 100%"). Falta el estado del mismo indicador cuando la suma del grupo no llega o excede 100, y el del peso en modo manual frente a "REPARTO AUTOMÁTICO".</td>
+            <td><a href="#v-4">Vista 4 D</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="kn-case">
+    <h3>Muestrario aislado de los deltas de componente y token</h3>
+    <div class="kn-frame">
+      <div class="kn-frame-bar">Delta · piezas sueltas</div>
+      <div class="kn-frame-body" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--up1-space-4)">
+        <div>
+          <div class="up1-label">AssignSlot · activo / atenuado</div>
+          <div class="kn-delta-box" style="position:relative;display:grid;gap:var(--up1-space-2);padding:var(--up1-space-2)">
+            <span class="kn-delta-mark kn-delta-tag">Delta</span>
+            <button type="button" class="kn-delta-assign-slot">+ Asignar acá</button>
+            <button type="button" class="kn-delta-assign-slot" style="box-shadow:var(--up1-focus-ring)">+ Asignar acá (foco)</button>
+            <button type="button" class="kn-delta-assign-slot kn-delta-assign-slot--idle" aria-disabled="true">+ Asignar acá (sin nada en mano)</button>
+          </div>
+        </div>
+        <div>
+          <div class="up1-label">Chips de dominio sin token en el DS</div>
+          <div class="kn-delta-box" style="position:relative;padding:var(--up1-space-3)">
+            <span class="kn-delta-mark kn-delta-tag">Delta</span>
+            <div class="kn-row">
+              <span class="kn-delta-chip-level kn-delta-chip-level--I">I</span> Introduce
+              <span class="kn-delta-chip-level kn-delta-chip-level--R">R</span> Reinforce
+              <span class="kn-delta-chip-level kn-delta-chip-level--M">M</span> Master
+            </div>
+            <div class="kn-row" style="margin-top:var(--up1-space-2)">
+              <span class="kn-delta-chip-kind kn-delta-chip-kind--D">D</span> Desarrolla
+              <span class="kn-delta-chip-kind kn-delta-chip-kind--E">E</span> Evalúa
+              <span class="kn-delta-chip-kind kn-delta-chip-kind--A">A</span> Ambas
+            </div>
+            <p class="kn-xs kn-muted" style="margin-top:var(--up1-space-2)">
+              Colores provisorios: sin token del DS que los nombre. Alternativa sin delta: usar <code>Badge</code> neutro con la letra, perdiendo la distinción cromática de la maqueta.
+            </p>
+          </div>
+        </div>
+        <div>
+          <div class="up1-label">InHandPanelCard</div>
+          <div class="kn-delta-box" style="position:relative">
+            <span class="kn-delta-mark kn-delta-tag">Delta</span>
+            <div class="kn-delta-inhand">
+              <div class="kn-delta-inhand__kicker">En mano</div>
+              <div class="kn-delta-inhand__chip">CE · Compromiso ético
+                <button type="button" class="kn-delta-inhand__x" aria-label="Soltar">×</button></div>
+              <div><label class="up1-label">Nivel de desarrollo con que se va a asignar</label>
+                <select class="up1-select"><option>Reinforce</option></select></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="up1-label">BulkEntryButton + confirmación efímera</div>
+          <div class="kn-delta-box" style="position:relative;padding:var(--up1-space-3);display:grid;gap:var(--up1-space-2);justify-items:start">
+            <span class="kn-delta-mark kn-delta-tag">Delta</span>
+            <button class="up1-btn up1-btn--secondary up1-btn--sm kn-delta-bulk">Varias</button>
+            <div class="kn-delta-inline-confirm">✓ Tributación agregada</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:delta -->
+
+<!-- KSEC:scope -->
+<section class="kn-section" id="scope">
+  <h2>Fuera de alcance — no se dibuja en este preview</h2>
+  <p class="kn-note">
+    Lo siguiente no tiene REQ que lo respalde en este ticket. Si la maqueta lo muestra, quedó deliberadamente omitido.
+  </p>
+  <div class="kn-frame">
+    <div class="kn-frame-bar">Exclusiones declaradas por el request</div>
+    <div class="kn-frame-body">
+      <table class="up1-table">
+        <thead><tr><th style="width:38%">Queda fuera</th><th>Dónde vive</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Validación "suma 100 al publicar el plan" (D1)</td>
+            <td>Cross-mod hacia <code>curriculum-design</code>, ticket aparte (guard de suma al publicar el plan). Acá el desvío de suma se informa en el indicador del grupo, pero <strong>no bloquea</strong> el guardado.</td>
+          </tr>
+          <tr><td>Indicadores y versionado del plan</td><td>UPONE-1771</td></tr>
+          <tr><td><code>outcomeAlignment</code> y retiro con aviso</td><td>UPONE-1772</td></tr>
+          <tr><td>Migración de niveles</td><td>UPONE-1773</td></tr>
+          <tr>
+            <td>R-9 — gate del peso por institución</td>
+            <td>Legacy, no aplica en up1: el único parámetro de tenant del módulo es <code>cm.displayDecimals</code>. No hay superficie de configuración que dibujar.</td>
+          </tr>
+          <tr>
+            <td>Import del objeto <code>CurriculumMesh</code> de curriculum-design en la vista por malla</td>
+            <td>Prohibido por M-26: la vista por malla se dibuja solo con los datos de <code>planEntry</code> (<code>period</code> / <code>position</code>) que ya trae <code>alignmentView.resolver.js</code>.</td>
+          </tr>
+          <tr>
+            <td>Arrastrar y soltar (drag and drop) y equivalente por teclado de la asignación</td>
+            <td>Explícitamente excluido por REQ-16: el único mecanismo es selección lateral + click. Ninguna vista de este preview declara <code>draggable</code> ni handlers de arrastre.</td>
+          </tr>
+          <tr>
+            <td>Panel lateral de detalle de tributación / <code>CompetencyLevelGrid</code> / <code>DetailSidePanel</code></td>
+            <td>Prohibidos por REQ-15: el detalle vive en el <code>CompetencyAlignmentDetailModal</code> existente y la acción "Repartir en partes iguales" va dentro del modal (REQ-05), no en un panel.</td>
+          </tr>
+          <tr>
+            <td>Test de paridad MCP sobre <code>contributionPercentage</code> (REQ-12)</td>
+            <td>Está en alcance del ticket, pero es trabajo de test sin superficie de interfaz: no hay nada que dibujar acá.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+<!-- /KSEC:scope -->
+
+</main>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-intake — TICKET-143 · Tributación por competencia (CRUD grilla)</title>
+<!-- ticket: TICKET-143 · kind: intake · project: up1 · generated: 2026-09-04 -->
+</head>
+<body>
+<h1>Tributación por competencia (CRUD grilla) — UPONE-1756</h1>
+
+<div class="panel">
+<p><b>TL;DR.</b> CRUD de tributación <b>por competencia</b> (grilla competencia × nivel de desarrollo) sobre una matriz <b>ya adoptada</b>, con escritura gobernada. Módulo <code>curriculum-mapping</code>, frontera <b>todo-mod-only</b> (sin Core Extension). Autoridad visual: maqueta 2197e9c9. Es el corte base de la épica UPONE-1452; los demás follow-up (1769/1770/1771/1772/1773) construyen sobre este.</p>
+<p><b>Qué hay que tener presente para arrancar:</b> el modelo ya existe casi entero (este ticket agrega <code>planId</code>, las capabilities y todo el camino de escritura + UI); las reglas van en el resolver, no solo en la UI; la interacción es <b>selección lateral + click</b> (sin drag) y la escritura es <b>por operación</b> (sin barra de guardado).</p>
+</div>
+
+<h2>Modelo de objetos (existe vs agrega este ticket)</h2>
+<ul>
+<li><code>CompetencyAlignment</code>: existe (inerte). Este ticket le agrega <code>planId</code> denormalizado (derivado de <code>planEntry.planId</code>, nunca del cliente) y le da resolver + UI.</li>
+<li><code>CompetencyNodeDevelopmentLevel</code>, <code>MatrixAdoption</code>, <code>CompetencyNode</code> (con <code>isHolistic</code>): existen; se leen para R-4 / R-1 / R-3.</li>
+<li>Capabilities <code>competencyalignment:view/create/modify/delete</code>: nuevas, cableadas a los 4 roles curriculares.</li>
+</ul>
+
+<h2>Reglas server-side (en el resolver)</h2>
+<ul>
+<li>R-1: adopción vigente de la matriz para el plan del planEntry.</li>
+<li>R-2: par (asignatura, competencia) único.</li>
+<li>R-3: destino válido = <code>sinHijos OR isHolistic</code> (sin hijos derivado del árbol); invariante: <code>isHolistic=false</code> con cero hijos es inválido.</li>
+<li>R-4: el nivel debe ser uno de los declarados por la competencia (contra <code>CompetencyNodeDevelopmentLevel</code>).</li>
+<li>R-5: <code>contributionType</code> obligatorio, default <code>Develops</code>.</li>
+<li>R-10: mover actualiza la fila existente, nunca crea una segunda (conserva el id).</li>
+</ul>
+
+<h2>Interacción (fiel a la maqueta)</h2>
+<ul>
+<li>Panel lateral "Asignaturas del plan": los <code>planEntry</code> del plan con su contador de tributaciones, búsqueda y filtros Todas / Con tributación / Sin tributar; se pone una asignatura "EN MANO".</li>
+<li>Asignar / mover: con la asignatura en mano, "+ Asignar acá" en la celda (competencia × nivel). Si ya estaba en otra celda de esa competencia, se mueve (R-10). <b>Sin drag.</b></li>
+<li>Columnas = niveles declarados (Introduce / Reinforce / Master). Celdas con chips (× para quitar); el chip lleva su nivel y contribución en el <code>aria-label</code>.</li>
+<li>Expandir/contraer la competencia abre su tabla de detalle (Código / Asignatura / Período / Cobertura=developmentLevel / Contribución=contributionType), editable por fila. No hay panel de detalle aparte.</li>
+<li>Escritura POR OPERACIÓN: cada asignar/editar/mover/retirar persiste al instante; <b>sin</b> barra global Guardar/Descartar.</li>
+</ul>
+
+<h2>Fuera de alcance (verificado contra tickets futuros)</h2>
+<ul>
+<li>Peso / <code>contributionPercentage</code>, vía masiva "Varias" y guardado de conjunto (barra Guardar/Descartar + aviso de cambios) → UPONE-1770.</li>
+<li>Indicadores, incluido el badge "SIN EVALUADOR" → UPONE-1771.</li>
+<li>outcomeAlignment y retiro con aviso R-7 → UPONE-1772. Migración de niveles → UPONE-1773. Rename <code>coverageLevelId</code>/<code>CoverageScheme</code> → UPONE-1769.</li>
+</ul>
+
+<h2>Deuda explícita</h2>
+<p>El retiro es delete simple, seguro solo mientras F6 (outcomeAlignment) no exista. Al entrar UPONE-1772 debe ganar el aviso R-7 (nombrar los resultados de aprendizaje dependientes antes de borrar). No cerrar el retiro como definitivo sin esa salvaguarda.</p>
+</body>
+</html>

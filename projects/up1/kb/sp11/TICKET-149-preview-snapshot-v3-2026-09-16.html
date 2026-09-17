@@ -1,0 +1,1537 @@
+<!doctype html>
+<html lang="es" class="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TICKET-149 · Tributación: peso del eje 1, guardado en conjunto, vía masiva y vista por malla</title>
+<style>
+/* ===========================================================
+   TOKENS up1 (--up1-*)
+   Paleta primaria: valores literales del Design System up1.
+   Escala neutra y alias semánticos: nombres de la convención del DS
+   (prefijo --up1-*), a confirmar contra layout/theme-tokens.css.
+   Dark mode: clase .theme-dark en <html> + color-scheme (nunca [data-theme] ni .dark)
+   =========================================================== */
+:root{
+  color-scheme: light;
+
+  /* Primaria (DS up1, autoridad de valores) */
+  --up1-color-primary-50:#E7F2F3;
+  --up1-color-primary-100:#B6D9DC;
+  --up1-color-primary-200:#7FC4CA;
+  --up1-color-primary-300:#47AEB8;
+  --up1-color-primary-500:#0a808c;
+  --up1-color-primary-600:#12717b;
+  --up1-color-primary-700:#16626b;
+  --up1-color-primary-800:#17545b;
+  --up1-color-primary-900:#17464c;
+  --up1-color-primary-950:#16393d;
+  --up1-color-primary-rgb:10,128,140;
+  --up1-color-primary-hover:var(--up1-color-primary-600);
+  --up1-color-primary-active:var(--up1-color-primary-700);
+  --up1-color-primary-light:var(--up1-color-primary-50);
+
+  /* Neutros (escala gris neutra, sin tinte azul) */
+  --up1-color-gray-50:#FAFAFA;
+  --up1-color-gray-100:#F4F4F5;
+  --up1-color-gray-200:#E5E5E5;
+  --up1-color-gray-300:#D4D4D4;
+  --up1-color-gray-400:#A3A3A3;
+  --up1-color-gray-500:#737373;
+  --up1-color-gray-600:#525252;
+  --up1-color-gray-700:#404040;
+  --up1-color-gray-800:#262626;
+  --up1-color-gray-900:#171717;
+
+  /* Estado (familias declaradas por el DS) */
+  --up1-color-danger-50:#FEF2F2;
+  --up1-color-danger-500:#DC2626;
+  --up1-color-danger-700:#991B1B;
+  --up1-color-warning-50:#FFFBEB;
+  --up1-color-warning-500:#D97706;
+  --up1-color-warning-700:#92400E;
+  --up1-color-success-50:#ECFDF5;
+  --up1-color-success-500:#059669;
+  --up1-color-success-700:#065F46;
+
+  /* Alias semánticos */
+  --up1-bg-body:#FFFFFF;
+  --up1-bg-surface:var(--up1-color-gray-50);
+  --up1-bg-subtle:var(--up1-color-gray-100);
+  --up1-text-body:var(--up1-color-gray-900);
+  --up1-text-muted:var(--up1-color-gray-500);
+  --up1-text-link:var(--up1-color-primary-600);
+  --up1-border-color:var(--up1-color-gray-200);
+  --up1-border-strong:var(--up1-color-gray-300);
+
+  /* Tipografía */
+  --up1-font-family-base:"Inter","Inter var",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --up1-font-size-xs:.6875rem;
+  --up1-font-size-sm:.8125rem;
+  --up1-font-size-base:.875rem;
+  --up1-font-size-lg:1rem;
+  --up1-font-size-xl:1.25rem;
+  --up1-font-size-2xl:1.5rem;
+  --up1-font-weight-regular:400;
+  --up1-font-weight-medium:500;
+  --up1-font-weight-semibold:600;
+  --up1-line-height-base:1.5;
+
+  /* Radios / espaciado / sombras (compatibles Bootstrap) */
+  --up1-radius-sm:.25rem;
+  --up1-radius-md:.375rem;
+  --up1-radius-lg:.5rem;
+  --up1-radius-pill:999px;
+  --up1-space-1:.25rem;
+  --up1-space-2:.5rem;
+  --up1-space-3:.75rem;
+  --up1-space-4:1rem;
+  --up1-space-5:1.5rem;
+  --up1-space-6:2rem;
+  --up1-shadow-sm:0 1px 2px rgba(0,0,0,.06);
+  --up1-shadow-md:0 4px 12px rgba(0,0,0,.10);
+  --up1-shadow-lg:0 12px 32px rgba(0,0,0,.18);
+  --up1-focus-ring:0 0 0 3px rgba(var(--up1-color-primary-rgb),.35);
+}
+html.theme-dark{
+  color-scheme: dark;
+  --up1-bg-body:#121212;
+  --up1-bg-surface:#1B1B1B;
+  --up1-bg-subtle:#232323;
+  --up1-text-body:var(--up1-color-gray-100);
+  --up1-text-muted:var(--up1-color-gray-400);
+  --up1-text-link:var(--up1-color-primary-300);
+  --up1-border-color:#323232;
+  --up1-border-strong:#414141;
+  --up1-color-primary-light:var(--up1-color-primary-800);
+  --up1-color-danger-50:#2A1616;
+  --up1-color-warning-50:#2A2113;
+  --up1-color-success-50:#12241C;
+  --up1-shadow-sm:0 1px 2px rgba(0,0,0,.5);
+  --up1-shadow-md:0 4px 12px rgba(0,0,0,.55);
+  --up1-shadow-lg:0 12px 32px rgba(0,0,0,.65);
+}
+@media (prefers-color-scheme: dark){
+  html:not(.theme-light):not(.theme-dark){
+    color-scheme: dark;
+    --up1-bg-body:#121212; --up1-bg-surface:#1B1B1B; --up1-bg-subtle:#232323;
+    --up1-text-body:#F4F4F5; --up1-text-muted:#A3A3A3; --up1-text-link:#47AEB8;
+    --up1-border-color:#323232; --up1-border-strong:#414141;
+    --up1-color-primary-light:#17545b;
+    --up1-color-danger-50:#2A1616; --up1-color-warning-50:#2A2113; --up1-color-success-50:#12241C;
+  }
+}
+
+/* ============ base ============ */
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--up1-bg-body);color:var(--up1-text-body);
+  font-family:var(--up1-font-family-base);font-size:var(--up1-font-size-base);
+  line-height:var(--up1-line-height-base);-webkit-font-smoothing:antialiased;
+}
+a{color:var(--up1-text-link);text-decoration:none}
+a:hover{color:var(--up1-color-primary-700);text-decoration:underline}
+:focus-visible{outline:2px solid var(--up1-color-primary-500);outline-offset:2px;border-radius:var(--up1-radius-sm)}
+h1,h2,h3,h4{margin:0;font-weight:var(--up1-font-weight-semibold);letter-spacing:-.01em}
+p{margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding:0 var(--up1-space-5) var(--up1-space-6)}
+
+/* ============ page chrome ============ */
+.page-head{
+  position:sticky;top:0;z-index:40;background:var(--up1-bg-body);
+  border-bottom:1px solid var(--up1-border-color);
+}
+.page-head .inner{max-width:1240px;margin:0 auto;padding:var(--up1-space-4) var(--up1-space-5);
+  display:flex;gap:var(--up1-space-4);align-items:center;flex-wrap:wrap}
+.page-head h1{font-size:var(--up1-font-size-lg)}
+.page-head .sub{font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)}
+.spacer{flex:1}
+.toc{display:flex;gap:var(--up1-space-2);flex-wrap:wrap;padding:0 0 var(--up1-space-3)}
+.toc a{
+  font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.06em;
+  padding:var(--up1-space-1) var(--up1-space-3);border:1px solid var(--up1-border-color);
+  border-radius:var(--up1-radius-pill);color:var(--up1-text-muted);background:var(--up1-bg-surface)
+}
+.toc a:hover{text-decoration:none;color:var(--up1-color-primary-600);border-color:var(--up1-color-primary-300)}
+
+section.block{margin-top:var(--up1-space-6)}
+.block-title{display:flex;align-items:baseline;gap:var(--up1-space-3);margin-bottom:var(--up1-space-2)}
+.block-title h2{font-size:var(--up1-font-size-xl)}
+.block-title .hint{font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)}
+.rule{height:1px;background:var(--up1-border-color);margin:var(--up1-space-3) 0 var(--up1-space-5)}
+
+/* ============ specimen frame ============ */
+.spec{margin-bottom:var(--up1-space-6)}
+.spec-head{display:flex;align-items:center;gap:var(--up1-space-3);flex-wrap:wrap;margin-bottom:var(--up1-space-2)}
+.spec-head h3{font-size:var(--up1-font-size-lg)}
+.spec-head .desc{font-size:var(--up1-font-size-sm);color:var(--up1-text-muted);flex-basis:100%}
+.frame{
+  border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);
+  background:var(--up1-bg-body);overflow:hidden;box-shadow:var(--up1-shadow-sm)
+}
+.frame + .frame{margin-top:var(--up1-space-4)}
+.frame-label{
+  font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.07em;
+  color:var(--up1-text-muted);background:var(--up1-bg-surface);
+  padding:var(--up1-space-2) var(--up1-space-4);border-bottom:1px solid var(--up1-border-color);
+  display:flex;gap:var(--up1-space-2);align-items:center;flex-wrap:wrap
+}
+.frame-body{padding:var(--up1-space-4)}
+.frame-body.flush{padding:0}
+
+/* ============ átomos DS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:var(--up1-space-2);
+  font:inherit;font-weight:var(--up1-font-weight-medium);font-size:var(--up1-font-size-sm);
+  padding:.4375rem .875rem;border-radius:var(--up1-radius-md);border:1px solid transparent;
+  cursor:pointer;background:transparent;color:var(--up1-text-body);line-height:1.3
+}
+.btn-primary{background:var(--up1-color-primary-500);color:#fff}
+.btn-primary:hover{background:var(--up1-color-primary-hover)}
+.btn-primary:active{background:var(--up1-color-primary-active)}
+.btn-secondary{background:var(--up1-bg-body);border-color:var(--up1-border-strong);color:var(--up1-text-body)}
+.btn-secondary:hover{border-color:var(--up1-color-primary-500);color:var(--up1-color-primary-600)}
+.btn-ghost{color:var(--up1-text-link);padding-inline:var(--up1-space-2)}
+.btn-ghost:hover{background:var(--up1-color-primary-light)}
+.btn-danger-ghost{color:var(--up1-color-danger-500);padding-inline:var(--up1-space-2)}
+.btn-danger-ghost:hover{background:var(--up1-color-danger-50)}
+.btn-sm{font-size:var(--up1-font-size-xs);padding:.25rem .5rem}
+.btn[disabled],.btn.is-disabled{opacity:.45;cursor:not-allowed}
+
+.badge{
+  display:inline-flex;align-items:center;gap:.25rem;font-size:var(--up1-font-size-xs);
+  font-weight:var(--up1-font-weight-medium);padding:.125rem .5rem;border-radius:var(--up1-radius-pill);
+  background:var(--up1-color-primary-light);color:var(--up1-color-primary-900);white-space:nowrap
+}
+html.theme-dark .badge{color:var(--up1-color-primary-100)}
+.badge-neutral{background:var(--up1-bg-subtle);color:var(--up1-text-muted)}
+.badge-outline{background:transparent;border:1px solid var(--up1-border-strong);color:var(--up1-text-muted)}
+.badge-danger{background:var(--up1-color-danger-50);color:var(--up1-color-danger-700)}
+.badge-warning{background:var(--up1-color-warning-50);color:var(--up1-color-warning-700)}
+.badge-success{background:var(--up1-color-success-50);color:var(--up1-color-success-700)}
+html.theme-dark .badge-danger{color:#FCA5A5}
+html.theme-dark .badge-warning{color:#FCD34D}
+html.theme-dark .badge-success{color:#6EE7B7}
+
+.chip{
+  display:inline-flex;align-items:center;gap:var(--up1-space-2);
+  border:1px solid var(--up1-border-color);background:var(--up1-bg-body);
+  border-radius:var(--up1-radius-md);padding:.25rem .5rem;font-size:var(--up1-font-size-sm)
+}
+.chip-hand{
+  border-color:var(--up1-color-primary-500);background:var(--up1-color-primary-light);
+  color:var(--up1-color-primary-900);font-weight:var(--up1-font-weight-medium)
+}
+html.theme-dark .chip-hand{color:var(--up1-color-primary-100)}
+.chip-x{
+  border:0;background:transparent;cursor:pointer;color:inherit;opacity:.7;
+  font-size:var(--up1-font-size-sm);line-height:1;padding:0 2px
+}
+.chip-x:hover{opacity:1}
+
+.input{
+  font:inherit;font-size:var(--up1-font-size-sm);color:var(--up1-text-body);
+  background:var(--up1-bg-body);border:1px solid var(--up1-border-strong);
+  border-radius:var(--up1-radius-md);padding:.375rem .5rem
+}
+.input:focus{outline:none;border-color:var(--up1-color-primary-500);box-shadow:var(--up1-focus-ring)}
+.input-group{display:inline-flex;align-items:stretch}
+.input-group .input{border-top-right-radius:0;border-bottom-right-radius:0;width:6rem;text-align:right}
+.input-suffix{
+  display:inline-flex;align-items:center;padding:0 .5rem;font-size:var(--up1-font-size-sm);
+  color:var(--up1-text-muted);background:var(--up1-bg-subtle);
+  border:1px solid var(--up1-border-strong);border-left:0;
+  border-radius:0 var(--up1-radius-md) var(--up1-radius-md) 0
+}
+.input.is-invalid{border-color:var(--up1-color-danger-500)}
+.input.is-invalid + .input-suffix{border-color:var(--up1-color-danger-500)}
+.field-error{display:block;margin-top:var(--up1-space-1);font-size:var(--up1-font-size-xs);color:var(--up1-color-danger-500)}
+.label{display:block;font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.06em;
+  color:var(--up1-text-muted);margin-bottom:var(--up1-space-2);font-weight:var(--up1-font-weight-medium)}
+
+.segmented{display:inline-flex;border:1px solid var(--up1-border-strong);border-radius:var(--up1-radius-md);overflow:hidden}
+.segmented button{
+  font:inherit;font-size:var(--up1-font-size-sm);padding:.375rem .75rem;border:0;cursor:pointer;
+  background:var(--up1-bg-body);color:var(--up1-text-body);border-right:1px solid var(--up1-border-color)
+}
+.segmented button:last-child{border-right:0}
+.segmented button[aria-pressed="true"]{background:var(--up1-color-primary-500);color:#fff}
+.segmented button[disabled]{opacity:.4;cursor:not-allowed}
+
+.select{
+  font:inherit;font-size:var(--up1-font-size-sm);padding:.375rem 1.75rem .375rem .5rem;
+  border:1px solid var(--up1-border-strong);border-radius:var(--up1-radius-md);
+  background:var(--up1-bg-body) ;color:var(--up1-text-body);appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat
+}
+.check{display:flex;align-items:center;gap:var(--up1-space-2);font-size:var(--up1-font-size-sm)}
+.check input{accent-color:var(--up1-color-primary-500);width:15px;height:15px}
+
+/* ============ patrones transversales ============ */
+.empty-state{
+  text-align:center;padding:var(--up1-space-6) var(--up1-space-4);color:var(--up1-text-muted)
+}
+.empty-state .es-title{color:var(--up1-text-body);font-weight:var(--up1-font-weight-semibold);margin-bottom:var(--up1-space-1)}
+.empty-state .es-icon{
+  width:40px;height:40px;border-radius:var(--up1-radius-pill);margin:0 auto var(--up1-space-3);
+  background:var(--up1-bg-subtle);display:flex;align-items:center;justify-content:center;color:var(--up1-text-muted)
+}
+.alert{
+  display:flex;gap:var(--up1-space-3);align-items:flex-start;padding:var(--up1-space-3);
+  border-radius:var(--up1-radius-md);font-size:var(--up1-font-size-sm);border:1px solid transparent
+}
+.alert-danger{background:var(--up1-color-danger-50);border-color:var(--up1-color-danger-500);color:var(--up1-color-danger-700)}
+.alert-warning{background:var(--up1-color-warning-50);border-color:var(--up1-color-warning-500);color:var(--up1-color-warning-700)}
+.alert-success{background:var(--up1-color-success-50);border-color:var(--up1-color-success-500);color:var(--up1-color-success-700)}
+html.theme-dark .alert-danger{color:#FCA5A5}
+html.theme-dark .alert-warning{color:#FCD34D}
+html.theme-dark .alert-success{color:#6EE7B7}
+.alert .a-title{font-weight:var(--up1-font-weight-semibold);display:block;margin-bottom:2px}
+.skeleton{
+  background:linear-gradient(90deg,var(--up1-bg-subtle) 25%,var(--up1-bg-surface) 37%,var(--up1-bg-subtle) 63%);
+  background-size:400% 100%;animation:sk 1.4s ease infinite;border-radius:var(--up1-radius-sm);height:12px
+}
+@keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+@media (prefers-reduced-motion: reduce){.skeleton{animation:none}}
+.spinner{
+  width:14px;height:14px;border-radius:50%;border:2px solid var(--up1-color-primary-200);
+  border-top-color:var(--up1-color-primary-500);display:inline-block;animation:sp .8s linear infinite
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ============ app shell simulado ============ */
+.app{background:var(--up1-bg-body)}
+.app-bar{
+  display:flex;align-items:center;gap:var(--up1-space-3);flex-wrap:wrap;
+  padding:var(--up1-space-3) var(--up1-space-4);border-bottom:1px solid var(--up1-border-color);
+  background:var(--up1-bg-body)
+}
+.app-bar .crumb{font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)}
+.app-bar .title{font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)}
+.tabs{display:flex;gap:var(--up1-space-4);padding:0 var(--up1-space-4);border-bottom:1px solid var(--up1-border-color);background:var(--up1-bg-body)}
+.tabs .tab{
+  font-size:var(--up1-font-size-sm);padding:var(--up1-space-3) 0;color:var(--up1-text-muted);
+  border-bottom:2px solid transparent;cursor:pointer;background:transparent;border-top:0;border-left:0;border-right:0;font-family:inherit
+}
+.tabs .tab[aria-selected="true"]{color:var(--up1-color-primary-600);border-bottom-color:var(--up1-color-primary-500);font-weight:var(--up1-font-weight-medium)}
+.toolbar{
+  display:flex;align-items:center;gap:var(--up1-space-3);flex-wrap:wrap;
+  padding:var(--up1-space-3) var(--up1-space-4);background:var(--up1-bg-surface);
+  border-bottom:1px solid var(--up1-border-color)
+}
+
+/* ============ grid de tributación ============ */
+.gridtable-scroll{overflow-x:auto}
+table.gridtable{width:100%;border-collapse:collapse;font-size:var(--up1-font-size-sm);min-width:760px}
+table.gridtable th,table.gridtable td{border:1px solid var(--up1-border-color);vertical-align:top;padding:var(--up1-space-2)}
+table.gridtable thead th{
+  background:var(--up1-bg-surface);text-align:left;font-weight:var(--up1-font-weight-semibold);
+  font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--up1-text-muted);
+  position:sticky;top:0
+}
+table.gridtable thead th.is-sorted{background:var(--up1-color-primary-light)}
+table.gridtable td.cell{min-width:190px}
+table.gridtable th.rowhead{background:var(--up1-bg-body);width:250px;font-weight:var(--up1-font-weight-medium);color:var(--up1-text-body);text-transform:none;letter-spacing:0;font-size:var(--up1-font-size-sm)}
+.rowhead .code{display:block;font-size:var(--up1-font-size-xs);color:var(--up1-text-muted);font-weight:var(--up1-font-weight-regular)}
+.cell-stack{display:flex;flex-direction:column;gap:var(--up1-space-2)}
+.trib{
+  display:flex;align-items:center;gap:var(--up1-space-2);flex-wrap:wrap;
+  border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);
+  padding:.25rem .375rem;background:var(--up1-bg-body);cursor:pointer
+}
+.trib:hover{border-color:var(--up1-color-primary-300);background:var(--up1-color-primary-light)}
+.trib .code{font-weight:var(--up1-font-weight-medium);font-size:var(--up1-font-size-xs)}
+.trib .name{color:var(--up1-text-muted);font-size:var(--up1-font-size-xs);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trib.is-outside{border-style:dashed;border-color:var(--up1-color-warning-500);background:var(--up1-color-warning-50)}
+.cell-sum{
+  display:flex;justify-content:space-between;align-items:center;gap:var(--up1-space-2);
+  font-size:var(--up1-font-size-xs);color:var(--up1-text-muted);
+  border-top:1px dashed var(--up1-border-color);padding-top:var(--up1-space-2)
+}
+.cell-sum.is-invalid{color:var(--up1-color-danger-500)}
+.drop{
+  display:inline-flex;align-items:center;gap:var(--up1-space-1);font-size:var(--up1-font-size-xs);
+  border:1px dashed var(--up1-color-primary-300);color:var(--up1-color-primary-600);
+  background:transparent;border-radius:var(--up1-radius-md);padding:.25rem .5rem;cursor:pointer;font-family:inherit
+}
+.drop:hover{background:var(--up1-color-primary-light)}
+.drop.is-disabled{border-color:var(--up1-border-color);color:var(--up1-text-muted);opacity:.5;cursor:not-allowed}
+
+/* ============ layout editor: panel + contenido ============ */
+.editor{display:grid;grid-template-columns:270px 1fr;min-height:340px}
+@media (max-width:860px){.editor{grid-template-columns:1fr}}
+.side{border-right:1px solid var(--up1-border-color);background:var(--up1-bg-surface);padding:var(--up1-space-3)}
+.side h4{font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--up1-text-muted);margin-bottom:var(--up1-space-2)}
+.side-list{display:flex;flex-direction:column;gap:var(--up1-space-1);margin-top:var(--up1-space-2)}
+.side-item{
+  display:flex;align-items:center;gap:var(--up1-space-2);text-align:left;width:100%;font-family:inherit;
+  font-size:var(--up1-font-size-sm);padding:var(--up1-space-2);border-radius:var(--up1-radius-md);
+  border:1px solid transparent;background:var(--up1-bg-body);cursor:pointer;color:var(--up1-text-body)
+}
+.side-item:hover{border-color:var(--up1-border-strong)}
+.side-item[aria-pressed="true"]{border-color:var(--up1-color-primary-500);background:var(--up1-color-primary-light);color:var(--up1-color-primary-900)}
+html.theme-dark .side-item[aria-pressed="true"]{color:var(--up1-color-primary-100)}
+.side-item .code{font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)}
+.side-item[aria-pressed="true"] .code{color:inherit;opacity:.8}
+.main-pane{min-width:0}
+.hand-bar{
+  display:flex;align-items:center;gap:var(--up1-space-3);flex-wrap:wrap;
+  padding:var(--up1-space-2) var(--up1-space-4);border-bottom:1px solid var(--up1-border-color);
+  background:var(--up1-bg-body);font-size:var(--up1-font-size-sm)
+}
+
+/* ============ vista por malla ============ */
+.mesh{padding:var(--up1-space-4);display:flex;flex-direction:column;gap:var(--up1-space-5)}
+.period h5{font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--up1-text-muted);margin-bottom:var(--up1-space-2)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:var(--up1-space-3)}
+.card{
+  border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-lg);background:var(--up1-bg-body);
+  padding:var(--up1-space-3);display:flex;flex-direction:column;gap:var(--up1-space-2)
+}
+.card.is-target{border-color:var(--up1-color-primary-300)}
+.card .c-code{font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)}
+.card .c-name{font-weight:var(--up1-font-weight-medium);font-size:var(--up1-font-size-sm)}
+.card .c-tribs{display:flex;flex-direction:column;gap:var(--up1-space-1)}
+.card .c-actions{display:flex;gap:var(--up1-space-2);align-items:center;margin-top:auto;padding-top:var(--up1-space-2);border-top:1px solid var(--up1-border-color)}
+
+/* ============ modal ============ */
+.modal-backdrop{
+  background:rgba(23,23,23,.45);padding:var(--up1-space-5);
+  display:flex;justify-content:center
+}
+.modal{
+  width:100%;max-width:520px;background:var(--up1-bg-body);border-radius:var(--up1-radius-lg);
+  box-shadow:var(--up1-shadow-lg);border:1px solid var(--up1-border-color);overflow:hidden
+}
+.modal-head{padding:var(--up1-space-4);border-bottom:1px solid var(--up1-border-color)}
+.modal-head .m-title{font-size:var(--up1-font-size-lg);font-weight:var(--up1-font-weight-semibold)}
+.modal-head .m-sub{font-size:var(--up1-font-size-sm);color:var(--up1-text-muted);margin-top:2px}
+.modal-body{padding:var(--up1-space-4);display:flex;flex-direction:column;gap:var(--up1-space-4)}
+.modal-foot{
+  padding:var(--up1-space-3) var(--up1-space-4);border-top:1px solid var(--up1-border-color);
+  display:flex;align-items:center;gap:var(--up1-space-2);background:var(--up1-bg-surface)
+}
+.def .d-label{font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--up1-text-muted)}
+.def .d-value{font-size:var(--up1-font-size-base)}
+.def .d-gloss{font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)}
+.weight-box{
+  border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);
+  background:var(--up1-bg-surface);padding:var(--up1-space-3);display:flex;flex-direction:column;gap:var(--up1-space-3)
+}
+.weight-box .wb-head{display:flex;align-items:center;gap:var(--up1-space-2);flex-wrap:wrap}
+.weight-box .wb-meta{font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)}
+.weight-box .wb-row{display:flex;align-items:flex-start;gap:var(--up1-space-3);flex-wrap:wrap}
+
+/* ============ tabla de resultado (vía masiva) ============ */
+table.plain{width:100%;border-collapse:collapse;font-size:var(--up1-font-size-sm)}
+table.plain th,table.plain td{text-align:left;padding:var(--up1-space-2);border-bottom:1px solid var(--up1-border-color)}
+table.plain th{font-size:var(--up1-font-size-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--up1-text-muted)}
+
+/* ============ swatches / tokens ============ */
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--up1-space-3)}
+.sw{border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);overflow:hidden;background:var(--up1-bg-body)}
+.sw .chipcolor{height:44px}
+.sw .meta{padding:var(--up1-space-2);font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)}
+.sw .meta b{display:block;color:var(--up1-text-body);font-weight:var(--up1-font-weight-medium);font-size:var(--up1-font-size-xs);word-break:break-all}
+.kv{display:grid;grid-template-columns:minmax(180px,auto) 1fr;gap:var(--up1-space-2) var(--up1-space-4);font-size:var(--up1-font-size-sm)}
+.kv dt{color:var(--up1-text-muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--up1-font-size-xs)}
+.kv dd{margin:0}
+code.tok{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--up1-font-size-xs);
+  background:var(--up1-bg-subtle);padding:1px 5px;border-radius:var(--up1-radius-sm)}
+
+/* ============ anotaciones de maqueta / delta ============ */
+.note{
+  margin-top:var(--up1-space-3);border-left:3px solid var(--up1-color-primary-500);
+  background:var(--up1-bg-surface);padding:var(--up1-space-2) var(--up1-space-3);
+  font-size:var(--up1-font-size-sm);color:var(--up1-text-muted);border-radius:0 var(--up1-radius-md) var(--up1-radius-md) 0
+}
+.note b{color:var(--up1-text-body)}
+.reqs{display:flex;gap:var(--up1-space-1);flex-wrap:wrap}
+.req{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--up1-font-size-xs);
+  border:1px solid var(--up1-color-primary-300);color:var(--up1-color-primary-700);
+  background:var(--up1-color-primary-light);border-radius:var(--up1-radius-sm);padding:0 .3rem
+}
+html.theme-dark .req{color:var(--up1-color-primary-100)}
+.delta-box{
+  border:2px dashed var(--up1-color-warning-500);border-radius:var(--up1-radius-lg);
+  background:var(--up1-color-warning-50);padding:var(--up1-space-5)
+}
+.delta-box h3{color:var(--up1-color-warning-700);font-size:var(--up1-font-size-lg);margin-bottom:var(--up1-space-2)}
+html.theme-dark .delta-box h3{color:#FCD34D}
+.delta-box p{font-size:var(--up1-font-size-sm);color:var(--up1-text-body)}
+.delta-tag{
+  display:inline-flex;align-items:center;gap:.3rem;font-size:var(--up1-font-size-xs);
+  font-weight:var(--up1-font-weight-semibold);text-transform:uppercase;letter-spacing:.06em;
+  background:var(--up1-color-warning-500);color:#fff;border-radius:var(--up1-radius-sm);padding:.1rem .4rem
+}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:var(--up1-space-4)}
+@media (max-width:900px){.two-col{grid-template-columns:1fr}}
+.stack-3{display:flex;flex-direction:column;gap:var(--up1-space-3)}
+.row{display:flex;gap:var(--up1-space-3);align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<header class="page-head">
+  <div class="inner">
+    <div>
+      <h1>TICKET-149 · Tributación: peso del eje 1, guardado en conjunto, vía masiva y vista por malla</h1>
+      <div class="sub">Preview de verificación · mod <b>curriculum-mapping</b> · Design System up1 · componentes de <code class="tok">modsComponents/CompetencyAlignmentGrid/</code></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn btn-secondary" id="themeToggle" type="button" aria-pressed="false">Dark mode</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Índice del preview">
+    <a href="#ds">1 · Sistema de diseño</a>
+    <a href="#v1">2.1 · Pestaña Tributación (solo lectura)</a>
+    <a href="#v2">2.2 · Editor · Por competencia</a>
+    <a href="#v3">2.3 · Editor · Por malla</a>
+    <a href="#v4">2.4 · Modal detalle (lectura)</a>
+    <a href="#v5">2.5 · Modal detalle (edición + peso)</a>
+    <a href="#v6">2.6 · Vía masiva "Varias"</a>
+    <a href="#v7">2.7 · Guardado transaccional</a>
+    <a href="#estados">2.8 · Estados transversales</a>
+    <a href="#delta">3 · Delta</a>
+  </nav>
+
+  <!-- ==================================================================
+       1 · SISTEMA DE DISEÑO
+       ================================================================== -->
+  <section class="block" id="ds">
+    <div class="block-title">
+      <h2>1 · Sistema de diseño</h2>
+      <span class="hint">Tokens <code class="tok">--up1-*</code> y patrones usados en este preview. No se introduce ningún token, clase ni componente fuera del DS.</span>
+    </div>
+    <div class="rule"></div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Paleta primaria (marca teal)</h3>
+        <span class="desc">Valores literales del DS up1 (paquete <code class="tok">layout</code>, autoridad de valores).</span>
+      </div>
+      <div class="frame"><div class="frame-body">
+        <div class="sw-grid">
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-50)"></div><div class="meta"><b>--up1-color-primary-50</b>#E7F2F3 · fondo seleccionado</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-100)"></div><div class="meta"><b>--up1-color-primary-100</b>#B6D9DC</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-200)"></div><div class="meta"><b>--up1-color-primary-200</b>#7FC4CA</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-300)"></div><div class="meta"><b>--up1-color-primary-300</b>#47AEB8</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-500)"></div><div class="meta"><b>--up1-color-primary-500</b>#0a808c · botón primario, borde foco</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-600)"></div><div class="meta"><b>--up1-color-primary-600</b>#12717b · hover, link</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-700)"></div><div class="meta"><b>--up1-color-primary-700</b>#16626b · activo</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-800)"></div><div class="meta"><b>--up1-color-primary-800</b>#17545b · seleccionado en dark</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-900)"></div><div class="meta"><b>--up1-color-primary-900</b>#17464c · texto sobre tinte</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-primary-950)"></div><div class="meta"><b>--up1-color-primary-950</b>#16393d</div></div>
+        </div>
+        <div class="note"><b>Alias usados:</b> <code class="tok">--up1-color-primary-hover</code> (600), <code class="tok">--up1-color-primary-active</code> (700), <code class="tok">--up1-color-primary-light</code> (50), <code class="tok">--up1-text-link</code> (600), <code class="tok">--up1-color-primary-rgb</code> para el anillo de foco.</div>
+      </div></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Neutros, estado y alias semánticos</h3>
+        <span class="desc">Escala gris neutra (sin tinte azul) y familias de estado del DS. Los hex exactos de neutros y de estado se toman del paquete <code class="tok">layout</code>; acá se muestran como referencia visual, no se redefinen en el mod.</span>
+      </div>
+      <div class="frame"><div class="frame-body">
+        <div class="sw-grid">
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-gray-50);border-bottom:1px solid var(--up1-border-color)"></div><div class="meta"><b>--up1-color-gray-50</b>superficie</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-gray-100)"></div><div class="meta"><b>--up1-color-gray-100</b>fondo sutil</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-gray-200)"></div><div class="meta"><b>--up1-color-gray-200</b>borde</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-gray-300)"></div><div class="meta"><b>--up1-color-gray-300</b>borde fuerte</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-gray-500)"></div><div class="meta"><b>--up1-color-gray-500</b>texto atenuado</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-gray-900)"></div><div class="meta"><b>--up1-color-gray-900</b>texto base</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-danger-500)"></div><div class="meta"><b>--up1-color-danger-500</b>error de validación</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-warning-500)"></div><div class="meta"><b>--up1-color-warning-500</b>fuera de diseño (R-12), salteadas</div></div>
+          <div class="sw"><div class="chipcolor" style="background:var(--up1-color-success-500)"></div><div class="meta"><b>--up1-color-success-500</b>confirmación de asignación</div></div>
+        </div>
+        <div class="note"><b>Verificar en implementación:</b> los nombres exactos de los alias semánticos (<code class="tok">--up1-bg-body</code>, <code class="tok">--up1-bg-surface</code>, <code class="tok">--up1-text-body</code>, <code class="tok">--up1-text-muted</code>, <code class="tok">--up1-border-color</code>) deben resolverse contra <code class="tok">suite/css/1-theme/theme-tokens.css</code>; el mod no declara tokens propios. Si alguno no existiera con ese nombre, es un hallazgo a reportar, no un token a inventar.</div>
+      </div></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Tipografía, radios, espaciado, foco</h3></div>
+      <div class="frame"><div class="frame-body">
+        <dl class="kv">
+          <dt>--up1-font-family-base</dt><dd>Inter · <span style="font-size:var(--up1-font-size-2xl);font-weight:600">Peso dentro de Introduce</span></dd>
+          <dt>--up1-font-size-xl / lg / base / sm / xs</dt><dd><span style="font-size:var(--up1-font-size-xl)">Título</span> · <span style="font-size:var(--up1-font-size-lg)">Subtítulo</span> · <span style="font-size:var(--up1-font-size-base)">Cuerpo</span> · <span style="font-size:var(--up1-font-size-sm)">Secundario</span> · <span style="font-size:var(--up1-font-size-xs)">Meta</span></dd>
+          <dt>--up1-radius-sm / md / lg / pill</dt><dd class="row">
+            <span style="display:inline-block;width:38px;height:24px;background:var(--up1-bg-subtle);border-radius:var(--up1-radius-sm)"></span>
+            <span style="display:inline-block;width:38px;height:24px;background:var(--up1-bg-subtle);border-radius:var(--up1-radius-md)"></span>
+            <span style="display:inline-block;width:38px;height:24px;background:var(--up1-bg-subtle);border-radius:var(--up1-radius-lg)"></span>
+            <span style="display:inline-block;width:38px;height:24px;background:var(--up1-bg-subtle);border-radius:var(--up1-radius-pill)"></span>
+          </dd>
+          <dt>--up1-space-1 … 6</dt><dd>4 · 8 · 12 · 16 · 24 · 32 px (compatibles Bootstrap)</dd>
+          <dt>--up1-shadow-sm / md / lg</dt><dd>tarjeta · popover · modal</dd>
+          <dt>--up1-focus-ring</dt><dd class="row"><button class="btn btn-secondary" style="box-shadow:var(--up1-focus-ring);border-color:var(--up1-color-primary-500)">Foco visible</button> <span class="hint" style="font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">todo control interactivo lo expone con <code class="tok">:focus-visible</code></span></dd>
+          <dt>dark mode</dt><dd>clase <code class="tok">theme-dark</code> en <code class="tok">&lt;html&gt;</code> + <code class="tok">color-scheme</code>. Nunca <code class="tok">[data-theme]</code> ni <code class="tok">.dark</code>.</dd>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Átomos y moléculas usados</h3>
+        <span class="desc">Todos existentes. No se crea ningún componente nuevo.</span>
+      </div>
+      <div class="frame"><div class="frame-body stack-3">
+        <div class="row">
+          <button class="btn btn-primary">Tributar</button>
+          <button class="btn btn-secondary">Cancelar</button>
+          <button class="btn btn-ghost">Editar en tributación</button>
+          <button class="btn btn-danger-ghost">Retirar tributación</button>
+          <button class="btn btn-secondary btn-sm">Varias</button>
+          <button class="btn btn-primary" disabled>Guardar</button>
+        </div>
+        <div class="row">
+          <span class="badge">REPARTO AUTOMÁTICO</span>
+          <span class="badge badge-neutral">Desarrolla</span>
+          <span class="badge badge-outline">Introduce</span>
+          <span class="badge badge-warning">Fuera de diseño</span>
+          <span class="badge badge-danger">Salteada</span>
+          <span class="badge badge-success">Asignada</span>
+        </div>
+        <div class="row">
+          <span class="chip chip-hand">EN MANO · MAT-101 Cálculo I <button class="chip-x" aria-label="Soltar">✕</button></span>
+          <span class="segmented" role="group" aria-label="Nivel de desarrollo">
+            <button type="button" aria-pressed="true">Introduce</button>
+            <button type="button" aria-pressed="false">Reinforce</button>
+            <button type="button" aria-pressed="false">Master</button>
+          </span>
+          <span class="input-group"><input class="input" value="33.34" aria-label="Peso"><span class="input-suffix">%</span></span>
+          <select class="select" aria-label="Nivel de desarrollo con que se va a asignar"><option>Introduce</option><option>Reinforce</option><option>Master</option></select>
+        </div>
+        <dl class="kv">
+          <dt>Modal</dt><dd><code class="tok">@molecules/Modal</code> con <code class="tok">v-model:open</code>, usado por <code class="tok">CompetencyAlignmentDetailModal</code> (se extiende, no se rediseña).</dd>
+          <dt>Grilla</dt><dd><code class="tok">CompetencyAlignmentGridTable</code>, la misma en los dos modos del editor (REQ-11).</dd>
+          <dt>Panel de selección</dt><dd><code class="tok">PlanSubjectsPanel</code> (modo por competencia) y panel "COMPETENCIAS DE LA MATRIZ" del mismo componente de grilla (modo por malla).</dd>
+        </dl>
+        <div class="note"><b>Prohibidos por REQ-15:</b> <code class="tok">CompetencyLevelGrid</code> y cualquier <code class="tok">DetailSidePanel</code> de tributación. El detalle vive siempre en el modal.</div>
+      </div></div>
+    </div>
+
+    <div class="spec">
+      <div class="spec-head"><h3>Patrones transversales obligatorios</h3></div>
+      <div class="frame"><div class="frame-body two-col">
+        <div>
+          <div class="label">Estado vacío</div>
+          <div class="empty-state" style="border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md)">
+            <div class="es-icon">◻</div>
+            <div class="es-title">Sin tributaciones</div>
+            <div>Esta matriz no tiene asignaturas tributando todavía.</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">Loading</div>
+          <div style="border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:var(--up1-space-3);display:flex;flex-direction:column;gap:var(--up1-space-2)">
+            <div class="skeleton" style="width:55%"></div>
+            <div class="skeleton" style="width:85%"></div>
+            <div class="skeleton" style="width:70%"></div>
+            <div class="row" style="color:var(--up1-text-muted);font-size:var(--up1-font-size-xs);margin-top:var(--up1-space-2)"><span class="spinner"></span> Cargando tributación del plan</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">Estado de error</div>
+          <div class="alert alert-danger"><span>⚠</span><span><span class="a-title">No se pudo guardar la matriz</span>La operación es todo o nada: no se aplicó ningún cambio. Reintenta.</span></div>
+        </div>
+        <div>
+          <div class="label">Foco visible / dark mode</div>
+          <div style="border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:var(--up1-space-3)" class="row">
+            <button class="btn btn-primary">Tabulá hasta acá</button>
+            <span style="font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">Anillo <code class="tok">--up1-focus-ring</code>; el tema se conmuta con el botón del encabezado.</span>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================
+       2 · VISTAS
+       ================================================================== -->
+  <section class="block" id="vistas">
+    <div class="block-title">
+      <h2>2 · Vistas, casos y estados</h2>
+      <span class="hint">Dos superficies separadas (REQ-14): la pestaña de solo lectura y el editor. Ningún componente de una se monta en la otra.</span>
+    </div>
+    <div class="rule"></div>
+
+    <!-- ============ V1 ============ -->
+    <div class="spec" id="v1">
+      <div class="spec-head">
+        <h3>2.1 · Pestaña "Tributación" del plan (solo lectura)</h3>
+        <div class="reqs"><span class="req">REQ-10</span><span class="req">REQ-14</span></div>
+        <span class="desc">Superficie de consulta. Dos modos (por asignatura / por competencia), botón "Tributar" que abre el editor y barra de acciones separada de la grilla.</span>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso A · modo "Por competencia" con datos</div>
+        <div class="frame-body flush">
+          <div class="app">
+            <div class="app-bar">
+              <div>
+                <div class="crumb">Diseño curricular / Planes de estudio</div>
+                <div class="title">Ingeniería Civil Industrial · Plan 2024</div>
+              </div>
+              <div class="spacer"></div>
+              <button class="btn btn-primary" type="button">Tributar</button>
+            </div>
+            <div class="tabs" role="tablist">
+              <button class="tab" role="tab" aria-selected="false">Estructura</button>
+              <button class="tab" role="tab" aria-selected="false">Asignaturas</button>
+              <button class="tab" role="tab" aria-selected="true">Tributación</button>
+              <button class="tab" role="tab" aria-selected="false">Indicadores</button>
+            </div>
+            <div class="toolbar">
+              <span class="segmented" role="group" aria-label="Modo de vista">
+                <button type="button" aria-pressed="false">Por asignatura</button>
+                <button type="button" aria-pressed="true">Por competencia</button>
+              </span>
+              <select class="select" aria-label="Matriz de competencia"><option>Matriz de competencias genéricas 2024</option><option>Matriz disciplinar Ingeniería</option></select>
+              <div class="spacer"></div>
+              <span class="badge badge-neutral">Solo lectura</span>
+            </div>
+            <div class="gridtable-scroll">
+              <table class="gridtable">
+                <thead>
+                  <tr>
+                    <th class="rowhead is-sorted">Competencia</th>
+                    <th>Introduce</th><th>Reinforce</th><th>Master</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th class="rowhead">Resolución de problemas de ingeniería<span class="code">CG-01</span></th>
+                    <td class="cell"><div class="cell-stack">
+                      <span class="trib"><span class="code">MAT-101</span><span class="name">Cálculo I</span><span class="badge badge-neutral">Desarrolla</span></span>
+                      <span class="trib"><span class="code">FIS-110</span><span class="name">Física I</span><span class="badge">Evalúa</span><span class="badge badge-outline">40%</span></span>
+                      <span class="trib"><span class="code">QUI-100</span><span class="name">Química General</span><span class="badge">Ambas</span><span class="badge badge-outline">60%</span></span>
+                      <span class="cell-sum"><span>2 evalúa · suma 100%</span><span class="badge">REPARTO AUTOMÁTICO</span></span>
+                    </div></td>
+                    <td class="cell"><div class="cell-stack">
+                      <span class="trib"><span class="code">ICI-220</span><span class="name">Investigación Operativa</span><span class="badge">Evalúa</span><span class="badge badge-outline">100%</span></span>
+                      <span class="cell-sum"><span>1 evalúa · suma 100%</span></span>
+                    </div></td>
+                    <td class="cell"><span style="font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">Sin tributaciones</span></td>
+                  </tr>
+                  <tr>
+                    <th class="rowhead">Comunicación efectiva<span class="code">CG-02</span></th>
+                    <td class="cell"><div class="cell-stack">
+                      <span class="trib"><span class="code">COM-105</span><span class="name">Taller de Comunicación</span><span class="badge">Ambas</span><span class="badge badge-outline">100%</span></span>
+                      <span class="cell-sum"><span>1 evalúa · suma 100%</span></span>
+                    </div></td>
+                    <td class="cell"><div class="cell-stack">
+                      <span class="trib is-outside"><span class="code">ADM-310</span><span class="name">Gestión de Proyectos</span><span class="badge badge-warning">Fuera de diseño</span></span>
+                      <span class="cell-sum"><span>0 evalúa · suma 0%</span></span>
+                    </div></td>
+                    <td class="cell"><span style="font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">Sin tributaciones</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Fix de UI (alcance 6, REQ-10):</b> en esta superficie <b>ya no aparece el selector de asignatura</b>, ni en el modo "Por asignatura" ni en "Por competencia". La barra de acciones (modo, matriz, "Tributar") queda arriba, separada de la grilla; el selector pertenece solo al editor.
+        <br><b>R-12:</b> la fila "fuera de diseño" se <b>marca</b> con badge de advertencia y borde punteado; nunca se borra desde el batch.
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso B · modo "Por asignatura"</div>
+        <div class="frame-body flush">
+          <div class="app">
+            <div class="toolbar">
+              <span class="segmented" role="group" aria-label="Modo de vista">
+                <button type="button" aria-pressed="true">Por asignatura</button>
+                <button type="button" aria-pressed="false">Por competencia</button>
+              </span>
+              <select class="select" aria-label="Matriz de competencia"><option>Matriz de competencias genéricas 2024</option></select>
+              <div class="spacer"></div>
+              <button class="btn btn-primary" type="button">Tributar</button>
+            </div>
+            <div class="gridtable-scroll">
+              <table class="gridtable">
+                <thead><tr><th class="rowhead">Asignatura</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <th class="rowhead">Cálculo I<span class="code">MAT-101 · Período 1</span></th>
+                    <td class="cell"><span class="trib"><span class="code">CG-01</span><span class="name">Resolución de problemas</span><span class="badge badge-neutral">Desarrolla</span></span></td>
+                    <td class="cell"></td><td class="cell"></td>
+                  </tr>
+                  <tr>
+                    <th class="rowhead">Física I<span class="code">FIS-110 · Período 1</span></th>
+                    <td class="cell"><span class="trib"><span class="code">CG-01</span><span class="name">Resolución de problemas</span><span class="badge">Evalúa</span><span class="badge badge-outline">40%</span></span></td>
+                    <td class="cell"></td><td class="cell"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado vacío · el plan no tiene matriz adoptada</div>
+        <div class="frame-body flush">
+          <div class="app">
+            <div class="toolbar">
+              <span class="segmented" role="group" aria-label="Modo de vista">
+                <button type="button" aria-pressed="false" disabled>Por asignatura</button>
+                <button type="button" aria-pressed="true" disabled>Por competencia</button>
+              </span>
+              <div class="spacer"></div>
+              <button class="btn btn-primary" type="button" disabled>Tributar</button>
+            </div>
+            <div class="empty-state">
+              <div class="es-icon">◻</div>
+              <div class="es-title">El plan todavía no adopta una matriz de competencias</div>
+              <div>Adopta una matriz en la pestaña "Estructura" para poder registrar tributación.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado de error · falla la carga de la vista</div>
+        <div class="frame-body">
+          <div class="alert alert-danger"><span>⚠</span><span><span class="a-title">No se pudo cargar la tributación del plan</span>Reintenta la carga. Si persiste, informa al administrador del módulo.</span></div>
+          <div class="row" style="margin-top:var(--up1-space-3)"><button class="btn btn-secondary" type="button">Reintentar</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V2 ============ -->
+    <div class="spec" id="v2">
+      <div class="spec-head">
+        <h3>2.2 · Editor · modo "Por competencia"</h3>
+        <div class="reqs"><span class="req">REQ-11</span><span class="req">REQ-13</span><span class="req">REQ-14</span><span class="req">REQ-15</span><span class="req">REQ-16</span></div>
+        <span class="desc">Panel de selección <code class="tok">PlanSubjectsPanel</code> + <code class="tok">CompetencyAlignmentGridTable</code>. Asignación por selección lateral + click, sin arrastre.</span>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso A · con una asignatura EN MANO (destinos válidos activos)</div>
+        <div class="frame-body flush">
+          <div class="app">
+            <div class="app-bar">
+              <div>
+                <div class="crumb">Plan 2024 / Tributación</div>
+                <div class="title">Editor de tributación</div>
+              </div>
+              <div class="spacer"></div>
+              <span class="segmented" role="group" aria-label="Vista del editor">
+                <button type="button" aria-pressed="true">Por competencia</button>
+                <button type="button" aria-pressed="false">Por malla</button>
+              </span>
+              <button class="btn btn-secondary" type="button">Cancelar</button>
+              <button class="btn btn-primary" type="button">Guardar</button>
+            </div>
+            <div class="editor">
+              <aside class="side">
+                <h4>Asignaturas del plan</h4>
+                <input class="input" style="width:100%" placeholder="Buscar asignatura" aria-label="Buscar asignatura">
+                <div class="side-list">
+                  <button class="side-item" type="button" aria-pressed="false"><span>Cálculo I<span class="code" style="display:block">MAT-101 · P1</span></span></button>
+                  <button class="side-item" type="button" aria-pressed="true"><span>Física I<span class="code" style="display:block">FIS-110 · P1</span></span></button>
+                  <button class="side-item" type="button" aria-pressed="false"><span>Química General<span class="code" style="display:block">QUI-100 · P1</span></span></button>
+                  <button class="side-item" type="button" aria-pressed="false"><span>Investigación Operativa<span class="code" style="display:block">ICI-220 · P4</span></span></button>
+                </div>
+              </aside>
+              <div class="main-pane">
+                <div class="hand-bar">
+                  <span class="chip chip-hand">EN MANO · FIS-110 Física I <button class="chip-x" type="button" aria-label="Soltar">✕</button></span>
+                  <span style="color:var(--up1-text-muted);font-size:var(--up1-font-size-xs)">Haz click en "+ Asignar acá" sobre el destino. Un click sobre la asignatura ya elegida también la suelta.</span>
+                </div>
+                <div class="gridtable-scroll">
+                  <table class="gridtable">
+                    <thead><tr><th class="rowhead">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+                    <tbody>
+                      <tr>
+                        <th class="rowhead">Resolución de problemas de ingeniería<span class="code">CG-01 · Introduce, Reinforce</span></th>
+                        <td class="cell"><div class="cell-stack">
+                          <span class="trib"><span class="code">MAT-101</span><span class="name">Cálculo I</span><span class="badge badge-neutral">Desarrolla</span></span>
+                          <span class="trib"><span class="code">QUI-100</span><span class="name">Química General</span><span class="badge">Ambas</span><span class="badge badge-outline">100%</span></span>
+                          <span class="cell-sum"><span>1 evalúa · suma 100%</span><span class="badge">REPARTO AUTOMÁTICO</span></span>
+                          <button class="drop" type="button">+ Asignar acá</button>
+                        </div></td>
+                        <td class="cell"><div class="cell-stack">
+                          <span class="trib"><span class="code">ICI-220</span><span class="name">Investigación Operativa</span><span class="badge">Evalúa</span><span class="badge badge-outline">100%</span></span>
+                          <span class="cell-sum"><span>1 evalúa · suma 100%</span></span>
+                          <button class="drop" type="button">+ Asignar acá</button>
+                        </div></td>
+                        <td class="cell"><div class="cell-stack">
+                          <span style="font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">La competencia no declara Master</span>
+                          <button class="drop is-disabled" type="button" disabled>+ Asignar acá</button>
+                        </div></td>
+                      </tr>
+                      <tr>
+                        <th class="rowhead">Comunicación efectiva<span class="code">CG-02 · Introduce, Reinforce, Master</span></th>
+                        <td class="cell"><div class="cell-stack">
+                          <span class="trib"><span class="code">COM-105</span><span class="name">Taller de Comunicación</span><span class="badge">Ambas</span><span class="badge badge-outline">100%</span></span>
+                          <span class="cell-sum"><span>1 evalúa · suma 100%</span></span>
+                          <button class="drop" type="button">+ Asignar acá</button>
+                        </div></td>
+                        <td class="cell"><div class="cell-stack">
+                          <span class="trib is-outside"><span class="code">ADM-310</span><span class="name">Gestión de Proyectos</span><span class="badge badge-warning">Fuera de diseño</span></span>
+                          <button class="drop" type="button">+ Asignar acá</button>
+                        </div></td>
+                        <td class="cell"><div class="cell-stack"><button class="drop" type="button">+ Asignar acá</button></div></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso B · estado de selección vacío (nada en mano)</div>
+        <div class="frame-body flush">
+          <div class="app">
+            <div class="editor">
+              <aside class="side">
+                <h4>Asignaturas del plan</h4>
+                <div class="side-list">
+                  <button class="side-item" type="button" aria-pressed="false"><span>Cálculo I<span class="code" style="display:block">MAT-101 · P1</span></span></button>
+                  <button class="side-item" type="button" aria-pressed="false"><span>Física I<span class="code" style="display:block">FIS-110 · P1</span></span></button>
+                </div>
+              </aside>
+              <div class="main-pane">
+                <div class="hand-bar">
+                  <span class="badge badge-neutral">SIN NADA EN MANO</span>
+                  <span style="color:var(--up1-text-muted);font-size:var(--up1-font-size-xs)">Selecciona una asignatura en el panel para poder asignarla.</span>
+                </div>
+                <div style="padding:var(--up1-space-3)">
+                  <div class="alert alert-warning"><span>ℹ</span><span><span class="a-title">Selecciona una asignatura</span>Los destinos quedan atenuados hasta que haya un elemento en mano.</span></div>
+                </div>
+                <div class="gridtable-scroll">
+                  <table class="gridtable">
+                    <thead><tr><th class="rowhead">Competencia</th><th>Introduce</th><th>Reinforce</th></tr></thead>
+                    <tbody>
+                      <tr>
+                        <th class="rowhead">Resolución de problemas de ingeniería<span class="code">CG-01</span></th>
+                        <td class="cell"><div class="cell-stack">
+                          <span class="trib"><span class="code">MAT-101</span><span class="name">Cálculo I</span><span class="badge badge-neutral">Desarrolla</span></span>
+                          <button class="drop is-disabled" type="button" disabled>+ Asignar acá</button>
+                        </div></td>
+                        <td class="cell"><div class="cell-stack"><button class="drop is-disabled" type="button" disabled>+ Asignar acá</button></div></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>REQ-16 (regla única, sin drag):</b> ni la grilla ni las cards declaran <code class="tok">draggable</code> ni handlers <code class="tok">dragstart/dragover/drop</code>, y no existe un equivalente por teclado. La asignación es siempre selección lateral + click en "+ Asignar acá".
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado vacío · matriz sin competencias visibles / plan sin asignaturas</div>
+        <div class="frame-body flush">
+          <div class="app"><div class="editor">
+            <aside class="side">
+              <h4>Asignaturas del plan</h4>
+              <div class="empty-state" style="padding:var(--up1-space-5) var(--up1-space-2)">
+                <div class="es-title" style="font-size:var(--up1-font-size-sm)">Sin asignaturas</div>
+                <div style="font-size:var(--up1-font-size-xs)">El plan no tiene asignaturas cargadas.</div>
+              </div>
+            </aside>
+            <div class="main-pane">
+              <div class="empty-state">
+                <div class="es-icon">◻</div>
+                <div class="es-title">Nada para tributar todavía</div>
+                <div>Carga asignaturas en el plan para empezar a registrar tributación.</div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V3 ============ -->
+    <div class="spec" id="v3">
+      <div class="spec-head">
+        <h3>2.3 · Editor · modo "Por malla"</h3>
+        <div class="reqs"><span class="req">REQ-08</span><span class="req">REQ-11</span><span class="req">REQ-13</span><span class="req">REQ-17</span><span class="req">REQ-16</span></div>
+        <span class="desc">Espejo del modo por competencia: lo que queda en mano es una COMPETENCIA, con el selector de nivel. Cards de asignatura agrupadas por período y ordenadas por <code class="tok">position</code>, sobre los datos de <code class="tok">planEntry</code> que ya trae <code class="tok">alignmentView.resolver.js</code>. Sin importar componentes ni <code class="tok">CurriculumMesh</code> de curriculum-design (M-26).</span>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso A · competencia EN MANO + nivel elegido, con confirmación de asignación</div>
+        <div class="frame-body flush">
+          <div class="app">
+            <div class="app-bar">
+              <div><div class="crumb">Plan 2024 / Tributación</div><div class="title">Editor de tributación</div></div>
+              <div class="spacer"></div>
+              <span class="segmented" role="group" aria-label="Vista del editor">
+                <button type="button" aria-pressed="false">Por competencia</button>
+                <button type="button" aria-pressed="true">Por malla</button>
+              </span>
+              <button class="btn btn-secondary" type="button">Cancelar</button>
+              <button class="btn btn-primary" type="button">Guardar</button>
+            </div>
+            <div class="editor">
+              <aside class="side">
+                <h4>Competencias de la matriz</h4>
+                <div class="side-list">
+                  <button class="side-item" type="button" aria-pressed="true"><span>Resolución de problemas de ingeniería<span class="code" style="display:block">CG-01</span></span></button>
+                  <button class="side-item" type="button" aria-pressed="false"><span>Comunicación efectiva<span class="code" style="display:block">CG-02</span></span></button>
+                  <button class="side-item" type="button" aria-pressed="false"><span>Trabajo en equipo<span class="code" style="display:block">CG-03</span></span></button>
+                </div>
+                <div style="margin-top:var(--up1-space-4)">
+                  <label class="label" for="lvlsel">Nivel de desarrollo con que se va a asignar</label>
+                  <select class="select" id="lvlsel" style="width:100%"><option>Introduce</option><option>Reinforce</option><option>Master</option></select>
+                </div>
+              </aside>
+              <div class="main-pane">
+                <div class="hand-bar">
+                  <span class="chip chip-hand">EN MANO · CG-01 Resolución de problemas <button class="chip-x" type="button" aria-label="Soltar">✕</button></span>
+                  <span class="badge badge-outline">Introduce</span>
+                  <div class="spacer"></div>
+                  <span class="badge badge-success">FIS-110 asignada</span>
+                </div>
+                <div class="mesh">
+                  <div class="period">
+                    <h5>Período 1</h5>
+                    <div class="cards">
+                      <article class="card is-target">
+                        <div><div class="c-code">MAT-101</div><div class="c-name">Cálculo I</div></div>
+                        <div class="c-tribs">
+                          <span class="trib"><span class="code">CG-01</span><span class="name">Introduce</span><span class="badge badge-neutral">Desarrolla</span></span>
+                        </div>
+                        <div class="c-actions"><button class="drop" type="button">+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                      </article>
+                      <article class="card is-target">
+                        <div><div class="c-code">FIS-110</div><div class="c-name">Física I</div></div>
+                        <div class="c-tribs">
+                          <span class="trib"><span class="code">CG-01</span><span class="name">Introduce</span><span class="badge">Evalúa</span><span class="badge badge-outline">40%</span></span>
+                          <span class="badge badge-success">Asignada</span>
+                        </div>
+                        <div class="c-actions"><button class="drop" type="button">+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                      </article>
+                      <article class="card is-target">
+                        <div><div class="c-code">QUI-100</div><div class="c-name">Química General</div></div>
+                        <div class="c-tribs">
+                          <span class="trib"><span class="code">CG-01</span><span class="name">Introduce</span><span class="badge">Ambas</span><span class="badge badge-outline">60%</span></span>
+                        </div>
+                        <div class="c-actions"><button class="drop" type="button">+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                      </article>
+                    </div>
+                  </div>
+                  <div class="period">
+                    <h5>Período 2</h5>
+                    <div class="cards">
+                      <article class="card is-target">
+                        <div><div class="c-code">MAT-201</div><div class="c-name">Cálculo II</div></div>
+                        <div class="c-tribs"><span style="font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">Sin tributaciones</span></div>
+                        <div class="c-actions"><button class="drop" type="button">+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                      </article>
+                      <article class="card is-target">
+                        <div><div class="c-code">COM-105</div><div class="c-name">Taller de Comunicación</div></div>
+                        <div class="c-tribs"><span class="trib"><span class="code">CG-02</span><span class="name">Introduce</span><span class="badge">Ambas</span><span class="badge badge-outline">100%</span></span></div>
+                        <div class="c-actions"><button class="drop" type="button">+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso B · sin nada en mano: destino atenuado + aviso del shell</div>
+        <div class="frame-body flush">
+          <div class="app"><div class="main-pane">
+            <div class="hand-bar">
+              <span class="badge badge-neutral">SIN NADA EN MANO</span>
+              <span style="color:var(--up1-text-muted);font-size:var(--up1-font-size-xs)">Selecciona una competencia en el panel para poder asignarla.</span>
+            </div>
+            <div class="mesh">
+              <div class="period">
+                <h5>Período 1</h5>
+                <div class="cards">
+                  <article class="card">
+                    <div><div class="c-code">MAT-101</div><div class="c-name">Cálculo I</div></div>
+                    <div class="c-tribs"><span class="trib"><span class="code">CG-01</span><span class="name">Introduce</span><span class="badge badge-neutral">Desarrolla</span></span></div>
+                    <div class="c-actions"><button class="drop is-disabled" type="button" disabled>+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                  </article>
+                  <article class="card">
+                    <div><div class="c-code">FIS-110</div><div class="c-name">Física I</div></div>
+                    <div class="c-tribs"><span class="trib"><span class="code">CG-01</span><span class="name">Introduce</span><span class="badge">Evalúa</span><span class="badge badge-outline">40%</span></span></div>
+                    <div class="c-actions"><button class="drop is-disabled" type="button" disabled>+ Asignar acá</button><div class="spacer"></div><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado vacío · el plan no tiene asignaturas con período</div>
+        <div class="frame-body">
+          <div class="empty-state">
+            <div class="es-icon">◻</div>
+            <div class="es-title">No hay asignaturas para dibujar la malla</div>
+            <div>La vista por malla agrupa por período y ordena por posición; sin esos datos usa la vista por competencia.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V4 ============ -->
+    <div class="spec" id="v4">
+      <div class="spec-head">
+        <h3>2.4 · CompetencyAlignmentDetailModal · estado SOLO LECTURA</h3>
+        <div class="reqs"><span class="req">REQ-09</span><span class="req">REQ-15</span></div>
+        <span class="desc">Modal existente de <code class="tok">@molecules</code> con <code class="tok">v-model:open</code>, extendido sin rediseñar. No hay panel lateral de detalle ni componente paralelo.</span>
+      </div>
+      <div class="frame">
+        <div class="frame-label">Caso · lectura de una tributación</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle de tributación">
+              <div class="modal-head">
+                <div class="m-title">FIS-110 · Física I</div>
+                <div class="m-sub">tributa a Resolución de problemas de ingeniería</div>
+              </div>
+              <div class="modal-body">
+                <div class="def"><div class="d-label">Nivel de desarrollo</div><div class="d-value">Introduce</div></div>
+                <div class="def">
+                  <div class="d-label">Tipo de contribución</div>
+                  <div class="d-value">Evalúa</div>
+                  <div class="d-gloss">La mide y genera evidencia de logro</div>
+                </div>
+                <div class="def"><div class="d-label">Matriz de competencia</div><div class="d-value">Matriz de competencias genéricas 2024</div></div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn btn-ghost" type="button">Editar en tributación</button>
+                <div class="spacer"></div>
+                <button class="btn btn-primary" type="button">Listo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note"><b>Glosas fijas del tipo:</b> "Desarrolla" · <i>La forma, pero no la mide</i>; "Evalúa" · <i>La mide y genera evidencia de logro</i>; "Ambas" muestra ambas. En solo lectura, nivel y tipo son TEXTO, no controles.</div>
+    </div>
+
+    <!-- ============ V5 ============ -->
+    <div class="spec" id="v5">
+      <div class="spec-head">
+        <h3>2.5 · CompetencyAlignmentDetailModal · estado EDICIÓN y bloque de peso</h3>
+        <div class="reqs"><span class="req">REQ-03</span><span class="req">REQ-04</span><span class="req">REQ-05</span><span class="req">REQ-06</span><span class="req">REQ-09</span></div>
+        <span class="desc">Segmentados para nivel y tipo, bloque "Peso dentro de &lt;nivel&gt;" con input y sufijo %, badge de estado derivado, indicador del grupo y "Repartir en partes iguales". La acción no vive en un panel lateral.</span>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso A · fila que pesa (Evalúa) · grupo en REPARTO AUTOMÁTICO</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Editar tributación">
+              <div class="modal-head">
+                <div class="m-title">FIS-110 · Física I</div>
+                <div class="m-sub">tributa a Resolución de problemas de ingeniería</div>
+              </div>
+              <div class="modal-body">
+                <div>
+                  <span class="label">Nivel de desarrollo</span>
+                  <span class="segmented" role="group" aria-label="Nivel de desarrollo">
+                    <button type="button" aria-pressed="true">Introduce</button>
+                    <button type="button" aria-pressed="false">Reinforce</button>
+                    <button type="button" aria-pressed="false" disabled title="La competencia no declara este nivel">Master</button>
+                  </span>
+                  <span style="display:block;margin-top:var(--up1-space-1);font-size:var(--up1-font-size-xs);color:var(--up1-text-muted)">Limitado a los niveles que la competencia declara.</span>
+                </div>
+                <div>
+                  <span class="label">Tipo de contribución</span>
+                  <span class="segmented" role="group" aria-label="Tipo de contribución">
+                    <button type="button" aria-pressed="false">Desarrolla</button>
+                    <button type="button" aria-pressed="true">Evalúa</button>
+                    <button type="button" aria-pressed="false">Ambas</button>
+                  </span>
+                  <span style="display:block;margin-top:var(--up1-space-1);font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)">La mide y genera evidencia de logro</span>
+                </div>
+                <div class="weight-box">
+                  <div class="wb-head">
+                    <strong style="font-size:var(--up1-font-size-sm)">Peso dentro de Introduce</strong>
+                    <span class="badge">REPARTO AUTOMÁTICO</span>
+                  </div>
+                  <div class="wb-row">
+                    <span class="input-group"><input class="input" value="33.33" aria-label="Peso dentro de Introduce"><span class="input-suffix">%</span></span>
+                    <button class="btn btn-secondary" type="button">Repartir en partes iguales</button>
+                  </div>
+                  <div class="wb-meta">3 evalúa · suma 100%</div>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn btn-danger-ghost" type="button">Retirar tributación</button>
+                <div class="spacer"></div>
+                <button class="btn btn-primary" type="button">Listo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso B · grupo con pesos editados a mano (estado derivado: sin badge automático) · suma distinta de 100</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Editar tributación">
+              <div class="modal-head">
+                <div class="m-title">QUI-100 · Química General</div>
+                <div class="m-sub">tributa a Resolución de problemas de ingeniería</div>
+              </div>
+              <div class="modal-body">
+                <div>
+                  <span class="label">Tipo de contribución</span>
+                  <span class="segmented" role="group" aria-label="Tipo de contribución">
+                    <button type="button" aria-pressed="false">Desarrolla</button>
+                    <button type="button" aria-pressed="false">Evalúa</button>
+                    <button type="button" aria-pressed="true">Ambas</button>
+                  </span>
+                  <span style="display:block;margin-top:var(--up1-space-1);font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)">La forma, pero no la mide · La mide y genera evidencia de logro</span>
+                </div>
+                <div class="weight-box">
+                  <div class="wb-head"><strong style="font-size:var(--up1-font-size-sm)">Peso dentro de Introduce</strong></div>
+                  <div class="wb-row">
+                    <span class="input-group"><input class="input" value="55" aria-label="Peso dentro de Introduce"><span class="input-suffix">%</span></span>
+                    <button class="btn btn-secondary" type="button">Repartir en partes iguales</button>
+                  </div>
+                  <div class="wb-meta" style="color:var(--up1-color-warning-700)">3 evalúa · suma 95%</div>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn btn-danger-ghost" type="button">Retirar tributación</button>
+                <div class="spacer"></div>
+                <button class="btn btn-primary" type="button">Listo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso C · fila "Desarrolla": no pesa (R-6) · el bloque de peso no ofrece input</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Editar tributación">
+              <div class="modal-head">
+                <div class="m-title">MAT-101 · Cálculo I</div>
+                <div class="m-sub">tributa a Resolución de problemas de ingeniería</div>
+              </div>
+              <div class="modal-body">
+                <div>
+                  <span class="label">Tipo de contribución</span>
+                  <span class="segmented" role="group" aria-label="Tipo de contribución">
+                    <button type="button" aria-pressed="true">Desarrolla</button>
+                    <button type="button" aria-pressed="false">Evalúa</button>
+                    <button type="button" aria-pressed="false">Ambas</button>
+                  </span>
+                  <span style="display:block;margin-top:var(--up1-space-1);font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)">La forma, pero no la mide</span>
+                </div>
+                <div class="weight-box">
+                  <div class="wb-head"><strong style="font-size:var(--up1-font-size-sm)">Peso dentro de Introduce</strong><span class="badge badge-neutral">NO PESA</span></div>
+                  <div class="wb-meta">Solo las tributaciones "Evalúa" o "Ambas" llevan peso. Esta fila queda sin peso.</div>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn btn-danger-ghost" type="button">Retirar tributación</button>
+                <div class="spacer"></div>
+                <button class="btn btn-primary" type="button">Listo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado de error · peso inválido (rango y precisión)</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Editar tributación">
+              <div class="modal-head">
+                <div class="m-title">FIS-110 · Física I</div>
+                <div class="m-sub">tributa a Resolución de problemas de ingeniería</div>
+              </div>
+              <div class="modal-body">
+                <div class="weight-box">
+                  <div class="wb-head"><strong style="font-size:var(--up1-font-size-sm)">Peso dentro de Introduce</strong></div>
+                  <div class="wb-row">
+                    <span>
+                      <span class="input-group"><input class="input is-invalid" value="120.555" aria-invalid="true" aria-describedby="werr" aria-label="Peso dentro de Introduce"><span class="input-suffix">%</span></span>
+                      <span class="field-error" id="werr">Ingresa un porcentaje entre 0 y 100, con hasta 2 decimales.</span>
+                    </span>
+                    <button class="btn btn-secondary" type="button">Repartir en partes iguales</button>
+                  </div>
+                  <div class="wb-meta">3 evalúa · suma 186.56%</div>
+                </div>
+                <div class="alert alert-danger"><span>⚠</span><span><span class="a-title">Hay un peso inválido</span>Corrige el valor para poder guardar la matriz.</span></div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn btn-danger-ghost" type="button">Retirar tributación</button>
+                <div class="spacer"></div>
+                <button class="btn btn-primary" type="button" disabled>Listo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Estado derivado (REQ-06):</b> el badge "REPARTO AUTOMÁTICO" aparece cuando los pesos actuales del grupo <code class="tok">(planId, competencyNodeId, developmentLevelId)</code> coinciden con el reparto en partes iguales; en cualquier otro caso el badge no se muestra. No se persiste campo ni objeto nuevo.
+        <br><b>Reparto (REQ-05, G-6):</b> "Repartir en partes iguales" distribuye 100 entre las filas que pesan, client-side en <code class="tok">weights.ts</code>, con 2 decimales y ajuste de residuo para que la suma dé 100.
+        <br><b>Validación (REQ-03):</b> porcentaje en [0,100], máximo 2 decimales, transportado como string y persistido sin truncar, reusando <code class="tok">isValidWeight</code> / <code class="tok">hasWeightPrecision</code>.
+        <br><b>Fuera de alcance:</b> el guard de "suma 100 al publicar el plan" (D1) es cross-mod y va en ticket aparte; acá la suma distinta de 100 se informa, no bloquea el guardado.
+      </div>
+    </div>
+
+    <!-- ============ V6 ============ -->
+    <div class="spec" id="v6">
+      <div class="spec-head">
+        <h3>2.6 · Vía masiva "Varias"</h3>
+        <div class="reqs"><span class="req">REQ-07</span></div>
+        <span class="desc">Camino aparte del mecanismo individual: aplica un destino (nivel + tipo) a varias asignaturas en una sola transacción, con troceo en el backend (AD-12), y reporta aplicadas y salteadas con motivo.</span>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Paso 1 · elegir destino y asignaturas</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Aplicar a varias asignaturas">
+              <div class="modal-head">
+                <div class="m-title">Aplicar a varias asignaturas</div>
+                <div class="m-sub">CG-01 · Resolución de problemas de ingeniería</div>
+              </div>
+              <div class="modal-body">
+                <div>
+                  <span class="label">Nivel de desarrollo</span>
+                  <span class="segmented" role="group" aria-label="Nivel de desarrollo">
+                    <button type="button" aria-pressed="true">Introduce</button>
+                    <button type="button" aria-pressed="false">Reinforce</button>
+                    <button type="button" aria-pressed="false" disabled>Master</button>
+                  </span>
+                </div>
+                <div>
+                  <span class="label">Tipo de contribución</span>
+                  <span class="segmented" role="group" aria-label="Tipo de contribución">
+                    <button type="button" aria-pressed="false">Desarrolla</button>
+                    <button type="button" aria-pressed="true">Evalúa</button>
+                    <button type="button" aria-pressed="false">Ambas</button>
+                  </span>
+                </div>
+                <div>
+                  <span class="label">Asignaturas (4 seleccionadas)</span>
+                  <div class="stack-3" style="max-height:170px;overflow:auto;border:1px solid var(--up1-border-color);border-radius:var(--up1-radius-md);padding:var(--up1-space-3);gap:var(--up1-space-2)">
+                    <label class="check"><input type="checkbox" checked> MAT-101 · Cálculo I <span class="badge badge-neutral">P1</span></label>
+                    <label class="check"><input type="checkbox" checked> FIS-110 · Física I <span class="badge badge-neutral">P1</span></label>
+                    <label class="check"><input type="checkbox" checked> QUI-100 · Química General <span class="badge badge-neutral">P1</span></label>
+                    <label class="check"><input type="checkbox" checked> ICI-220 · Investigación Operativa <span class="badge badge-neutral">P4</span></label>
+                    <label class="check"><input type="checkbox"> COM-105 · Taller de Comunicación <span class="badge badge-neutral">P2</span></label>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn btn-secondary" type="button">Cancelar</button>
+                <div class="spacer"></div>
+                <button class="btn btn-primary" type="button">Aplicar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Paso 2 · aplicando (loading, trabajo troceado en el backend)</div>
+        <div class="frame-body">
+          <div class="row"><span class="spinner"></span><span style="font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)">Aplicando destino a 4 asignaturas…</span></div>
+          <div class="stack-3" style="margin-top:var(--up1-space-3)">
+            <div class="skeleton" style="width:70%"></div>
+            <div class="skeleton" style="width:45%"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Paso 3 · resultado con salteadas y su motivo</div>
+        <div class="frame-body flush">
+          <div class="modal-backdrop">
+            <div class="modal" role="dialog" aria-modal="true" aria-label="Resultado de la aplicación masiva">
+              <div class="modal-head">
+                <div class="m-title">Resultado</div>
+                <div class="m-sub">CG-01 · Introduce · Evalúa</div>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-success"><span>✓</span><span><span class="a-title">2 asignaturas aplicadas</span>Se aplicaron en una sola transacción.</span></div>
+                <div>
+                  <span class="label">Aplicadas</span>
+                  <table class="plain">
+                    <tbody>
+                      <tr><td>MAT-101 · Cálculo I</td><td style="text-align:right"><span class="badge badge-success">Aplicada</span></td></tr>
+                      <tr><td>QUI-100 · Química General</td><td style="text-align:right"><span class="badge badge-success">Aplicada</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <span class="label">Salteadas</span>
+                  <table class="plain">
+                    <thead><tr><th>Asignatura</th><th>Motivo</th></tr></thead>
+                    <tbody>
+                      <tr><td>FIS-110 · Física I</td><td><span class="badge badge-warning">Ya tributa en ese destino</span></td></tr>
+                      <tr><td>ICI-220 · Investigación Operativa</td><td><span class="badge badge-warning">Fuera de la matriz</span></td></tr>
+                      <tr><td>ADM-310 · Gestión de Proyectos</td><td><span class="badge badge-danger">No cumple una regla de tributación</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="modal-foot"><div class="spacer"></div><button class="btn btn-primary" type="button">Listo</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado de error · falla la aplicación masiva</div>
+        <div class="frame-body">
+          <div class="alert alert-danger"><span>⚠</span><span><span class="a-title">No se aplicó ninguna asignatura</span>La operación es transaccional: ningún destino quedó aplicado. Reintenta.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ V7 ============ -->
+    <div class="spec" id="v7">
+      <div class="spec-head">
+        <h3>2.7 · Guardado de conjunto (upsert transaccional)</h3>
+        <div class="reqs"><span class="req">REQ-01</span><span class="req">REQ-02</span><span class="req">REQ-11</span></div>
+        <span class="desc">Las dos vistas del editor producen el mismo payload de batch para <code class="tok">(planId, matriz)</code> y se guardan con la misma mutación gobernada.</span>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso A · barra de acciones con cambios pendientes</div>
+        <div class="frame-body">
+          <div class="row">
+            <span class="badge badge-warning">3 cambios sin guardar</span>
+            <span style="font-size:var(--up1-font-size-sm);color:var(--up1-text-muted)">Se reenvía el conjunto completo de la matriz cargada: lo que no viene, se retira dentro de ese alcance.</span>
+            <div class="spacer"></div>
+            <button class="btn btn-secondary" type="button">Cancelar</button>
+            <button class="btn btn-primary" type="button">Guardar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso B · guardando</div>
+        <div class="frame-body">
+          <div class="row">
+            <div class="spacer"></div>
+            <button class="btn btn-secondary" type="button" disabled>Cancelar</button>
+            <button class="btn btn-primary" type="button" disabled><span class="spinner" style="border-color:rgba(255,255,255,.4);border-top-color:#fff"></span> Guardando</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Caso C · guardado correcto</div>
+        <div class="frame-body">
+          <div class="alert alert-success"><span>✓</span><span><span class="a-title">Tributación guardada</span>Se registró una sola entrada de historial para la matriz.</span></div>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame-label">Estado de error · el batch falla (todo o nada)</div>
+        <div class="frame-body">
+          <div class="alert alert-danger"><span>⚠</span><span><span class="a-title">No se pudo guardar la tributación de la matriz</span>No se aplicó ningún cambio: el guardado es todo o nada. Revisa las filas marcadas y reintenta.</span></div>
+          <div class="row" style="margin-top:var(--up1-space-3)"><button class="btn btn-secondary" type="button">Reintentar</button><button class="btn btn-ghost" type="button">Ver filas con error</button></div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Alcance del retiro (REQ-02):</b> <code class="tok">CompetencyAlignment</code> no tiene columna <code class="tok">matrixId</code>; el alcance es <code class="tok">planId</code> + <code class="tok">competencyNodeId</code> perteneciente a las competencias de la matriz enviada. El batch nunca retira tributaciones de otras matrices adoptadas por el mismo plan, ni las filas "fuera de diseño" (R-12).
+        <br><b>Sin efecto visual:</b> el test de paridad MCP para <code class="tok">contributionPercentage</code> (REQ-12) no tiene superficie de UI; se declara acá solo para trazabilidad.
+      </div>
+    </div>
+
+    <!-- ============ Estados transversales ============ -->
+    <div class="spec" id="estados">
+      <div class="spec-head">
+        <h3>2.8 · Resumen de estados cubiertos</h3>
+        <span class="desc">Cada vista expone los patrones obligatorios del DS.</span>
+      </div>
+      <div class="frame"><div class="frame-body">
+        <table class="plain">
+          <thead><tr><th>Vista</th><th>Vacío</th><th>Selección</th><th>Error</th><th>Loading</th></tr></thead>
+          <tbody>
+            <tr><td>Pestaña "Tributación" (lectura)</td><td>Sin matriz adoptada · celda sin tributaciones</td><td>No aplica (no hay elemento en mano ni selector)</td><td>Falla de carga</td><td>Skeleton de grilla</td></tr>
+            <tr><td>Editor · por competencia</td><td>Plan sin asignaturas</td><td>Chip EN MANO · sin nada en mano con "+" atenuado</td><td>Falla del batch</td><td>Skeleton de grilla</td></tr>
+            <tr><td>Editor · por malla</td><td>Sin asignaturas con período</td><td>Chip EN MANO de competencia + nivel</td><td>Falla del batch</td><td>Skeleton de cards</td></tr>
+            <tr><td>Modal de detalle</td><td>Grupo sin filas que pesen</td><td>Segmentados nivel/tipo</td><td>Peso inválido (rango/precisión)</td><td>No aplica</td></tr>
+            <tr><td>Vía masiva</td><td>Ninguna asignatura seleccionada</td><td>Checkboxes del listado</td><td>Falla de la transacción · salteadas con motivo</td><td>Aplicando…</td></tr>
+          </tbody>
+        </table>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================
+       3 · DELTA
+       ================================================================== -->
+  <section class="block" id="delta">
+    <div class="block-title">
+      <h2>3 · Delta respecto del Design System</h2>
+      <span class="hint">Lo NUEVO que este ticket propone frente al DS del proyecto.</span>
+    </div>
+    <div class="rule"></div>
+
+    <div class="delta-box">
+      <span class="delta-tag">Delta</span>
+      <h3 style="margin-top:var(--up1-space-2)">Sin delta: el ticket se cubre con el Design System existente</h3>
+      <p>
+        Todas las superficies de este ticket se arman con tokens <code class="tok">--up1-*</code> ya declarados y con componentes ya presentes en
+        <code class="tok">curriculum-mapping/modsComponents/CompetencyAlignmentGrid/</code>:
+        <code class="tok">CompetencyAlignmentGridTable</code>, <code class="tok">CompetencyAlignmentDetailModal</code> (sobre <code class="tok">Modal</code> de <code class="tok">@molecules</code>, <code class="tok">v-model:open</code>) y <code class="tok">PlanSubjectsPanel</code>.
+        No se introduce ningún token, clase ni componente nuevo.
+      </p>
+      <p style="margin-top:var(--up1-space-3)">
+        <b>Lo que este ticket agrega es composición y estado, no vocabulario visual:</b>
+      </p>
+      <ul style="margin:var(--up1-space-2) 0 0;padding-left:1.1rem;font-size:var(--up1-font-size-sm)">
+        <li>Bloque "Peso dentro de &lt;nivel&gt;" dentro del modal en edición (input con sufijo % + badge + indicador del grupo + acción de reparto), armado con átomos existentes.</li>
+        <li>Modo "Por malla" del editor: cards de asignatura por período, con los mismos átomos de card y chip del DS, sin componente de grilla nuevo.</li>
+        <li>Diálogo de vía masiva, con el mismo <code class="tok">Modal</code>, checkboxes y tabla del DS.</li>
+        <li>Quita del selector de asignatura en la vista solo lectura: es una <b>eliminación</b>, no un patrón nuevo.</li>
+      </ul>
+      <p style="margin-top:var(--up1-space-3)">
+        <b>Prohibiciones explícitas que la maqueta respeta:</b> no existe panel lateral de detalle ni componente paralelo (<code class="tok">CompetencyLevelGrid</code>, <code class="tok">DetailSidePanel</code>); no hay arrastre ni equivalente por teclado (REQ-16); no se importa <code class="tok">CurriculumMesh</code> ni componentes de curriculum-design (M-26).
+      </p>
+      <p style="margin-top:var(--up1-space-3)">
+        <b>Hallazgo a verificar, no delta:</b> los nombres exactos de los alias semánticos de neutros y de las familias de estado (<code class="tok">danger</code> / <code class="tok">warning</code> / <code class="tok">success</code>) deben resolverse contra los tokens publicados por <code class="tok">layout</code> / <code class="tok">theme-tokens.css</code>. Si alguno no existiera con ese nombre, se reporta como carencia del DS; no se inventa en el mod.
+      </p>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('themeToggle');
+  var root = document.documentElement;
+  btn.addEventListener('click', function(){
+    var dark = root.classList.toggle('theme-dark');
+    root.classList.toggle('theme-light', !dark);
+    btn.setAttribute('aria-pressed', String(dark));
+    btn.textContent = dark ? 'Light mode' : 'Dark mode';
+  });
+})();
+</script>
+</body>
+</html>

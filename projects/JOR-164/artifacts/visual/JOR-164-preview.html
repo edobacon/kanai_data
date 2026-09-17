@@ -1,0 +1,1058 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOR-164 — Maqueta: Paginación server-side + filtros en listados de items</title>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --border:#dfe3e8;
+    --border-strong:#c4cad2;
+    --text:#1f2430;
+    --text-muted:#66707f;
+    --text-faint:#8a93a1;
+    --primary:#1f5fd6;
+    --primary-weak:#e8f0fe;
+    --danger:#c0392b;
+    --danger-weak:#fdecea;
+    --warn:#8a6100;
+    --warn-weak:#fff6e0;
+    --ok:#1e7a45;
+    --ok-weak:#e7f5ec;
+    --radius:6px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;
+    line-height:1.45;
+  }
+
+  /* ---------- Chrome de la maqueta (no es parte del producto) ---------- */
+  .mockup-header{
+    background:#1f2430;color:#fff;padding:18px 24px;
+  }
+  .mockup-header h1{margin:0 0 4px;font-size:18px;font-weight:600}
+  .mockup-header p{margin:0;color:#b9c0cc;font-size:13px}
+  .mockup-nav{
+    background:#2b3140;padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px;
+    position:sticky;top:0;z-index:50;
+  }
+  .mockup-nav a{
+    color:#d6dbe4;text-decoration:none;font-size:12px;
+    border:1px solid #444c5e;border-radius:999px;padding:4px 12px;
+  }
+  .mockup-nav a:hover{background:#3a4256;color:#fff}
+  .wrap{max-width:1240px;margin:0 auto;padding:24px}
+  .screen{margin-bottom:44px}
+  .screen-label{
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px;
+  }
+  .screen-label h2{margin:0;font-size:16px;font-weight:600}
+  .screen-label .path{font-family:var(--mono);font-size:11px;color:var(--text-muted)}
+  .screen-label .reqs{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+  .req{
+    font-family:var(--mono);font-size:10px;background:#e4e8ef;color:#495468;
+    border-radius:3px;padding:2px 6px;
+  }
+  .note{
+    background:#eef1f6;border-left:3px solid var(--border-strong);
+    padding:8px 12px;font-size:12px;color:var(--text-muted);margin:0 0 12px;
+  }
+  .state-caption{
+    font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-faint);margin:18px 0 6px;font-weight:600;
+  }
+
+  /* ---------- Superficie de app ---------- */
+  .app{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .app-bar{
+    padding:14px 18px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .app-bar h3{margin:0;font-size:15px;font-weight:600}
+  .app-bar .sub{font-size:12px;color:var(--text-muted)}
+  .app-bar .spacer{flex:1}
+  .app-body{padding:18px}
+  .section-title{
+    font-size:13px;font-weight:600;margin:0 0 10px;color:var(--text);
+  }
+
+  /* ---------- Controles ---------- */
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;
+    border:1px solid var(--border-strong);background:#fff;color:var(--text);
+    border-radius:var(--radius);padding:6px 12px;font-size:13px;cursor:default;
+    font-family:inherit;
+  }
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--primary)}
+  .btn.sm{padding:4px 9px;font-size:12px}
+  .btn[disabled],.btn.is-disabled{opacity:.45}
+  .input,.select{
+    border:1px solid var(--border-strong);border-radius:var(--radius);
+    padding:6px 9px;font-size:13px;font-family:inherit;background:#fff;color:var(--text);
+    width:100%;
+  }
+  .input::placeholder{color:var(--text-faint)}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12px;color:var(--text-muted);font-weight:500}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13px}
+  .grid-filters{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;
+  }
+  .grid-gen{
+    display:grid;grid-template-columns:1.2fr 1fr .8fr auto;gap:12px;align-items:end;
+  }
+
+  /* ---------- Tabla ---------- */
+  .table-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:760px}
+  th,td{
+    text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);
+    font-size:13px;vertical-align:middle;
+  }
+  thead th{
+    background:#f7f8fa;font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--text-muted);font-weight:600;white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr.selected{background:var(--primary-weak)}
+  td.num{font-family:var(--mono);font-size:12px}
+  .col-check{width:38px}
+  .badge{
+    display:inline-block;font-size:11px;border-radius:3px;padding:1px 7px;
+    background:#eef1f6;color:var(--text-muted);
+  }
+  .badge.oferta{background:var(--ok-weak);color:var(--ok)}
+
+  /* Filas de filtro por columna dentro del thead */
+  thead tr.filter-row th{
+    background:#fff;padding:8px 12px;text-transform:none;letter-spacing:0;
+  }
+
+  /* ---------- Paginación ---------- */
+  .pagination{
+    display:flex;align-items:center;gap:10px;padding:12px 2px 0;flex-wrap:wrap;
+  }
+  .pagination .info{font-size:12px;color:var(--text-muted)}
+  .pagination .pages{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .pagination .page-of{font-size:12px;color:var(--text-muted);padding:0 4px}
+
+  /* ---------- Estados ---------- */
+  .state{
+    padding:38px 20px;text-align:center;color:var(--text-muted);
+  }
+  .state .title{font-size:14px;color:var(--text);font-weight:600;margin-bottom:4px}
+  .state .desc{font-size:13px;max-width:460px;margin:0 auto}
+  .state .actions{margin-top:14px;display:flex;gap:8px;justify-content:center}
+  .alert{
+    border-radius:var(--radius);padding:10px 14px;font-size:13px;margin-bottom:14px;
+    border:1px solid transparent;
+  }
+  .alert.error{background:var(--danger-weak);border-color:#f2c3bd;color:var(--danger)}
+  .alert.warn{background:var(--warn-weak);border-color:#f0dcae;color:var(--warn)}
+  .alert.info{background:var(--primary-weak);border-color:#c6d9f8;color:#164a9f}
+  .alert .t{font-weight:600;display:block;margin-bottom:2px}
+
+  /* Skeleton */
+  .sk{background:#e9ecf1;border-radius:3px;height:11px;display:block}
+  .sk.w-40{width:40%}.sk.w-60{width:60%}.sk.w-80{width:80%}.sk.w-25{width:25%}
+  .sk.box{height:16px;width:16px;border-radius:3px}
+
+  /* Toast */
+  .toast{
+    display:inline-flex;align-items:flex-start;gap:10px;
+    background:#2b3140;color:#fff;border-radius:var(--radius);
+    padding:10px 14px;font-size:13px;max-width:420px;
+  }
+  .toast.err{background:#7d2018}
+  .toast .x{opacity:.6}
+  .toast-strike{position:relative;opacity:.55}
+  .toast-strike::after{
+    content:"";position:absolute;left:6px;right:6px;top:50%;height:2px;background:#fff;
+  }
+
+  /* Chips de selección */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;background:#eef1f6;
+    border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:12px;
+  }
+  .chip .x{color:var(--text-faint)}
+  .selection-bar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    background:#f7f8fa;border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px 14px;margin-bottom:14px;font-size:13px;
+  }
+  .selection-bar strong{font-weight:600}
+  .selection-bar .spacer{flex:1}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:900px){
+    .grid-filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-gen{grid-template-columns:1fr}
+    .two-col{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-header">
+  <h1>JOR-164 — Paginación server-side + filtros en los listados de items</h1>
+  <p>Maqueta de verificación visual. Vistas afectadas, estados (vacío / carga / error) y textos visibles. Sin lógica: todo es estático.</p>
+</div>
+
+<nav class="mockup-nav">
+  <a href="#pagination">1. Pagination (fix base)</a>
+  <a href="#crear">2. Crear catálogo — picker server-side</a>
+  <a href="#crear-estados">3. Crear catálogo — estados</a>
+  <a href="#editar">4. Editar catálogo — hidratación por IDs</a>
+  <a href="#generar">5. Generar desde catálogo</a>
+  <a href="#generar-estados">6. Generar desde catálogo — estados</a>
+  <a href="#verificados">7. Sin cambio visual</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- ============================================================ -->
+  <!-- 1. PAGINATION -->
+  <!-- ============================================================ -->
+  <section class="screen" id="pagination">
+    <div class="screen-label">
+      <h2>1. Componente Pagination</h2>
+      <span class="path">front/jormat-front/src/components/ui/pagination/pagination.tsx</span>
+      <span class="reqs"><span class="req">REQ-01</span></span>
+    </div>
+    <p class="note">
+      Sin cambio visual: la API pública (page / pageCount / onPageChange) y el aspecto se conservan.
+      El cambio es <code>type="button"</code> en los 3 botones, para que dentro de un <code>&lt;form&gt;</code>
+      paginar no dispare el submit. Se maqueta el antes/después del efecto observable (el toast).
+    </p>
+
+    <div class="app">
+      <div class="app-body">
+        <div class="state-caption">Control, estado normal (página 3 de 136)</div>
+        <div class="pagination">
+          <span class="info">Mostrando 21–30 de 13.575 items</span>
+          <div class="pages">
+            <button class="btn sm">« Anterior</button>
+            <span class="page-of">Página 3 de 136</span>
+            <button class="btn sm">Siguiente »</button>
+          </div>
+        </div>
+
+        <div class="state-caption">Primera página (Anterior deshabilitado)</div>
+        <div class="pagination">
+          <span class="info">Mostrando 1–10 de 13.575 items</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 1 de 136</span>
+            <button class="btn sm">Siguiente »</button>
+          </div>
+        </div>
+
+        <div class="state-caption">Última página (Siguiente deshabilitado)</div>
+        <div class="pagination">
+          <span class="info">Mostrando 13.571–13.575 de 13.575 items</span>
+          <div class="pages">
+            <button class="btn sm">« Anterior</button>
+            <span class="page-of">Página 136 de 136</span>
+            <button class="btn sm is-disabled" disabled>Siguiente »</button>
+          </div>
+        </div>
+
+        <div class="state-caption">Una sola página (ambos deshabilitados)</div>
+        <div class="pagination">
+          <span class="info">Mostrando 1–4 de 4 items</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 1 de 1</span>
+            <button class="btn sm is-disabled" disabled>Siguiente »</button>
+          </div>
+        </div>
+
+        <div class="state-caption">Efecto observable del fix</div>
+        <div class="two-col">
+          <div>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px">
+              Antes: paginar dentro del form disparaba el submit.
+            </p>
+            <div class="toast err">
+              <span>⚠</span>
+              <div><strong>Agrega al menos un item al catálogo</strong></div>
+              <span class="x">✕</span>
+            </div>
+          </div>
+          <div>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 8px">
+              Después: paginar no muestra ningún toast.
+            </p>
+            <div class="toast err toast-strike">
+              <span>⚠</span>
+              <div><strong>Agrega al menos un item al catálogo</strong></div>
+              <span class="x">✕</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. CREAR CATALOGO -->
+  <!-- ============================================================ -->
+  <section class="screen" id="crear">
+    <div class="screen-label">
+      <h2>2. Crear catálogo — picker de items server-side</h2>
+      <span class="path">front/jormat-front/src/.../CrearCatalogoView + ItemsPickerTable</span>
+      <span class="reqs">
+        <span class="req">REQ-09</span><span class="req">REQ-11</span>
+        <span class="req">REQ-08</span><span class="req">REQ-14</span>
+      </span>
+    </div>
+    <p class="note">
+      La tabla pasa a ser controlada: recibe los items de la página vigente, <code>total</code>,
+      <code>page</code>, <code>pageCount</code>, los filtros y los callbacks. Ya no filtra ni pagina en
+      cliente. Se conservan los 4 filtros por columna (número / descripción / referencias / marca) y la
+      selección acumulada sobrevive al cambio de página y de filtros.
+    </p>
+
+    <div class="app">
+      <div class="app-bar">
+        <h3>Crear catálogo</h3>
+        <span class="sub">Los items seleccionados se guardan por ID</span>
+        <span class="spacer"></span>
+        <button class="btn">Cancelar</button>
+        <button class="btn primary">Guardar catálogo</button>
+      </div>
+
+      <div class="app-body">
+        <!-- Datos del catálogo -->
+        <p class="section-title">Datos del catálogo</p>
+        <div class="grid-gen" style="margin-bottom:22px">
+          <div class="field">
+            <label for="c-nombre">Nombre</label>
+            <input id="c-nombre" class="input" value="Catálogo primavera 2026">
+          </div>
+          <div class="field">
+            <label for="c-desc">Descripción</label>
+            <input id="c-desc" class="input" value="Selección de repuestos en oferta">
+          </div>
+          <div class="field">
+            <label for="c-estado">Estado</label>
+            <select id="c-estado" class="select"><option>Activo</option><option>Inactivo</option></select>
+          </div>
+          <div></div>
+        </div>
+
+        <!-- Generar catálogo (filtros server-side) -->
+        <p class="section-title">Generar catálogo</p>
+        <p style="font-size:12px;color:var(--text-muted);margin:0 0 10px">
+          Aplica los filtros en el servidor y selecciona todos los items que coincidan.
+        </p>
+        <div class="grid-gen" style="margin-bottom:22px">
+          <div class="field">
+            <label for="g-marca">Marca</label>
+            <input id="g-marca" class="input" value="Bosch">
+          </div>
+          <div class="field">
+            <label for="g-prov">Proveedores</label>
+            <select id="g-prov" class="select">
+              <option>Todos los proveedores</option>
+              <option selected>Distribuidora Norte</option>
+              <option>Repuestos del Sur</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>&nbsp;</label>
+            <label class="checkline" style="height:33px">
+              <input type="checkbox" checked> Solo items en oferta
+            </label>
+          </div>
+          <div><button class="btn primary">Generar catálogo</button></div>
+        </div>
+
+        <!-- Barra de selección -->
+        <div class="selection-bar">
+          <span><strong>3 items seleccionados</strong> en total</span>
+          <span style="color:var(--text-muted)">·</span>
+          <span style="color:var(--text-muted)">2 de esta página</span>
+          <span class="spacer"></span>
+          <button class="btn sm">Ver selección</button>
+          <button class="btn sm ghost">Limpiar selección</button>
+        </div>
+
+        <!-- Tabla -->
+        <p class="section-title">Items disponibles</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox"></th>
+                <th>Número</th>
+                <th>Descripción</th>
+                <th>Referencias</th>
+                <th>Marca</th>
+                <th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input" placeholder="Filtrar número" value="A-11"></th>
+                <th><input class="input" placeholder="Filtrar descripción"></th>
+                <th><input class="input" placeholder="Filtrar referencias"></th>
+                <th><input class="input" placeholder="Filtrar marca" value="Bosch"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">A-1104-22</td>
+                <td>Filtro de aceite motor 1.6</td>
+                <td class="num">OEM-90915, W712/52</td>
+                <td>Bosch</td>
+                <td><span class="badge oferta">En oferta</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">A-1107-08</td>
+                <td>Filtro de aire cabina carbón activado</td>
+                <td class="num">CUK-2440</td>
+                <td>Bosch</td>
+                <td><span class="badge">—</span></td>
+              </tr>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">A-1112-30</td>
+                <td>Pastillas de freno delanteras cerámicas</td>
+                <td class="num">BP-1187, D1210</td>
+                <td>Bosch</td>
+                <td><span class="badge oferta">En oferta</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">A-1119-05</td>
+                <td>Bujía de encendido iridio</td>
+                <td class="num">FR7NII33X</td>
+                <td>Bosch</td>
+                <td><span class="badge">—</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">A-1123-41</td>
+                <td>Correa de distribución dentada</td>
+                <td class="num">CT1028, 1987949095</td>
+                <td>Bosch</td>
+                <td><span class="badge oferta">En oferta</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span class="info">Mostrando 21–25 de 148 items</span>
+          <div class="pages">
+            <button class="btn sm">« Anterior</button>
+            <span class="page-of">Página 3 de 30</span>
+            <button class="btn sm">Siguiente »</button>
+          </div>
+        </div>
+
+        <p style="font-size:12px;color:var(--text-muted);margin:14px 0 0">
+          La selección se conserva al cambiar de página o de filtros.
+        </p>
+        <div class="chips">
+          <span class="chip">A-1104-22 <span class="x">✕</span></span>
+          <span class="chip">A-1112-30 <span class="x">✕</span></span>
+          <span class="chip">B-0431-77 <span class="x">✕</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. CREAR CATALOGO - ESTADOS -->
+  <!-- ============================================================ -->
+  <section class="screen" id="crear-estados">
+    <div class="screen-label">
+      <h2>3. Crear catálogo — estados de la tabla</h2>
+      <span class="path">ItemsPickerTable</span>
+      <span class="reqs"><span class="req">REQ-09</span><span class="req">REQ-11</span></span>
+    </div>
+
+    <div class="state-caption">Carga — página vigente pedida al servidor</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input" placeholder="Filtrar número" disabled></th>
+                <th><input class="input" placeholder="Filtrar descripción" disabled></th>
+                <th><input class="input" placeholder="Filtrar referencias" disabled></th>
+                <th><input class="input" placeholder="Filtrar marca" disabled></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-80"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-25"></span></td></tr>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-80"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-25"></span></td></tr>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-25"></span></td></tr>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-80"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-25"></span></td></tr>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-25"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">Cargando items…</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 3</span>
+            <button class="btn sm is-disabled" disabled>Siguiente »</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Vacío — sin resultados para los filtros aplicados</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox"></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input" placeholder="Filtrar número" value="ZZZ-999"></th>
+                <th><input class="input" placeholder="Filtrar descripción"></th>
+                <th><input class="input" placeholder="Filtrar referencias"></th>
+                <th><input class="input" placeholder="Filtrar marca" value="Bosch"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6">
+                  <div class="state">
+                    <div class="title">No hay items que coincidan con los filtros</div>
+                    <div class="desc">Prueba con otro número, descripción, referencia o marca.</div>
+                    <div class="actions"><button class="btn sm">Limpiar filtros</button></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">0 items</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 1 de 1</span>
+            <button class="btn sm is-disabled" disabled>Siguiente »</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Vacío — catálogo sin items disponibles (sin filtros)</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6">
+                  <div class="state">
+                    <div class="title">No hay items en el inventario</div>
+                    <div class="desc">Carga items en el inventario para poder armar un catálogo.</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Error — falló la carga de la página</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="alert error">
+          <span class="t">No se pudieron cargar los items</span>
+          Ocurrió un error al consultar el inventario. Vuelve a intentarlo.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6">
+                  <div class="state">
+                    <div class="title">Error al cargar los items</div>
+                    <div class="desc">La selección actual (3 items) se conserva.</div>
+                    <div class="actions"><button class="btn sm">Reintentar</button></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">"Generar catálogo" — resultado y caso sin coincidencias</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="alert info">
+          <span class="t">Se agregaron 148 items a la selección</span>
+          Filtros aplicados: marca "Bosch", proveedor "Distribuidora Norte", solo items en oferta.
+        </div>
+        <div class="alert warn">
+          <span class="t">Ningún item coincide con los filtros</span>
+          No se agregó ningún item a la selección. Ajusta marca, proveedores u oferta.
+        </div>
+        <div class="state-caption" style="margin-top:6px">Toast de validación al guardar (se mantiene, solo al guardar)</div>
+        <div class="toast err">
+          <span>⚠</span>
+          <div><strong>Agrega al menos un item al catálogo</strong></div>
+          <span class="x">✕</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. EDITAR CATALOGO -->
+  <!-- ============================================================ -->
+  <section class="screen" id="editar">
+    <div class="screen-label">
+      <h2>4. Editar catálogo — hidratación de la selección por IDs</h2>
+      <span class="path">CrearCatalogoView (modo edición) · useItemsByIds</span>
+      <span class="reqs"><span class="req">REQ-10</span><span class="req">REQ-11</span><span class="req">REQ-06</span></span>
+    </div>
+    <p class="note">
+      El catálogo guarda solo IDs. Al editar, la selección se resuelve con <code>useItemsByIds</code>
+      (lotes de 100), no cargando el universo de items. La tabla de items sigue siendo server-side.
+    </p>
+
+    <div class="state-caption">Carga — resolviendo la selección guardada</div>
+    <div class="app">
+      <div class="app-bar">
+        <h3>Editar catálogo</h3>
+        <span class="sub">Catálogo primavera 2026</span>
+        <span class="spacer"></span>
+        <button class="btn">Cancelar</button>
+        <button class="btn primary is-disabled" disabled>Guardar catálogo</button>
+      </div>
+      <div class="app-body">
+        <div class="selection-bar">
+          <span>Cargando los items guardados en este catálogo…</span>
+          <span class="spacer"></span>
+          <span style="color:var(--text-muted)">240 de 340 resueltos</span>
+        </div>
+        <div class="chips">
+          <span class="chip"><span class="sk w-80" style="width:78px"></span></span>
+          <span class="chip"><span class="sk w-80" style="width:64px"></span></span>
+          <span class="chip"><span class="sk w-80" style="width:90px"></span></span>
+          <span class="chip"><span class="sk w-80" style="width:70px"></span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Cargado — selección hidratada</div>
+    <div class="app">
+      <div class="app-bar">
+        <h3>Editar catálogo</h3>
+        <span class="sub">Catálogo primavera 2026</span>
+        <span class="spacer"></span>
+        <button class="btn">Cancelar</button>
+        <button class="btn primary">Guardar catálogo</button>
+      </div>
+      <div class="app-body">
+        <div class="selection-bar">
+          <span><strong>340 items seleccionados</strong> en total</span>
+          <span style="color:var(--text-muted)">·</span>
+          <span style="color:var(--text-muted)">4 de esta página</span>
+          <span class="spacer"></span>
+          <button class="btn sm">Ver selección</button>
+          <button class="btn sm ghost">Limpiar selección</button>
+        </div>
+        <div class="chips" style="margin-bottom:14px">
+          <span class="chip">A-1104-22 <span class="x">✕</span></span>
+          <span class="chip">A-1112-30 <span class="x">✕</span></span>
+          <span class="chip">B-0431-77 <span class="x">✕</span></span>
+          <span class="chip">C-2290-14 <span class="x">✕</span></span>
+          <span class="chip" style="background:#fff">y 336 más</span>
+        </div>
+
+        <p class="section-title">Items disponibles</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox"></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input" placeholder="Filtrar número"></th>
+                <th><input class="input" placeholder="Filtrar descripción"></th>
+                <th><input class="input" placeholder="Filtrar referencias"></th>
+                <th><input class="input" placeholder="Filtrar marca"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">A-1104-22</td>
+                <td>Filtro de aceite motor 1.6</td>
+                <td class="num">OEM-90915, W712/52</td>
+                <td>Bosch</td>
+                <td><span class="badge oferta">En oferta</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">A-0032-11</td>
+                <td>Amortiguador trasero gas</td>
+                <td class="num">SH-4410</td>
+                <td>Monroe</td>
+                <td><span class="badge">—</span></td>
+              </tr>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">B-0431-77</td>
+                <td>Batería 12V 65Ah</td>
+                <td class="num">S4-005</td>
+                <td>Varta</td>
+                <td><span class="badge">—</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">Mostrando 1–3 de 13.575 items</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 1 de 1.358</span>
+            <button class="btn sm">Siguiente »</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Error — no se pudo resolver la selección guardada</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="alert error">
+          <span class="t">No se pudieron cargar los items del catálogo</span>
+          No se pudo resolver la selección guardada. Reintenta antes de guardar, o guardarás un catálogo incompleto.
+        </div>
+        <div class="selection-bar">
+          <span>Selección sin resolver</span>
+          <span class="spacer"></span>
+          <button class="btn sm">Reintentar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Vacío — el catálogo guardado no tiene items</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="selection-bar">
+          <span>Este catálogo no tiene items todavía. Selecciónalos en la tabla o usa "Generar catálogo".</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 5. GENERAR DESDE CATALOGO -->
+  <!-- ============================================================ -->
+  <section class="screen" id="generar">
+    <div class="screen-label">
+      <h2>5. Generar desde catálogo</h2>
+      <span class="path">front/jormat-front/src/.../GenerarDesdeCatalogoView</span>
+      <span class="reqs"><span class="req">REQ-12</span><span class="req">REQ-10</span><span class="req">REQ-14</span></span>
+    </div>
+    <p class="note">
+      Los items del catálogo se resuelven por IDs (lotes de 100). El filtrado se hace en cliente sobre ese
+      subconjunto acotado, reutilizando <code>filterCatalogItems</code>. <strong>Desaparece el aviso de
+      truncado</strong> ("Se muestran solo los primeros N items…"): ya no existe carga masiva ni recorte.
+    </p>
+
+    <div class="app">
+      <div class="app-bar">
+        <h3>Generar desde catálogo</h3>
+        <span class="sub">Catálogo primavera 2026 · 340 items</span>
+        <span class="spacer"></span>
+        <button class="btn">Cancelar</button>
+        <button class="btn primary">Generar</button>
+      </div>
+      <div class="app-body">
+        <p class="section-title">Filtrar dentro del catálogo</p>
+        <div class="grid-filters" style="margin-bottom:16px">
+          <div class="field"><label for="f-num">Número</label><input id="f-num" class="input" placeholder="Filtrar número"></div>
+          <div class="field"><label for="f-desc">Descripción</label><input id="f-desc" class="input" placeholder="Filtrar descripción" value="filtro"></div>
+          <div class="field"><label for="f-ref">Referencias</label><input id="f-ref" class="input" placeholder="Filtrar referencias"></div>
+          <div class="field"><label for="f-marca">Marca</label><input id="f-marca" class="input" placeholder="Filtrar marca"></div>
+        </div>
+
+        <div class="selection-bar">
+          <span><strong>12 items seleccionados</strong> de 340 del catálogo</span>
+          <span class="spacer"></span>
+          <button class="btn sm">Seleccionar todos los visibles</button>
+          <button class="btn sm ghost">Limpiar selección</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox"></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">A-1104-22</td>
+                <td>Filtro de aceite motor 1.6</td>
+                <td class="num">OEM-90915</td>
+                <td>Bosch</td>
+                <td><input class="input" style="width:74px" value="2"></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">A-1107-08</td>
+                <td>Filtro de aire cabina carbón activado</td>
+                <td class="num">CUK-2440</td>
+                <td>Bosch</td>
+                <td><input class="input" style="width:74px" value="1"></td>
+              </tr>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">C-2290-14</td>
+                <td>Filtro de combustible en línea</td>
+                <td class="num">WK-820/1</td>
+                <td>Mann</td>
+                <td><input class="input" style="width:74px" value="4"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span class="info">Mostrando 1–3 de 27 items filtrados (de 340 del catálogo)</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 1 de 9</span>
+            <button class="btn sm">Siguiente »</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 6. GENERAR DESDE CATALOGO - ESTADOS -->
+  <!-- ============================================================ -->
+  <section class="screen" id="generar-estados">
+    <div class="screen-label">
+      <h2>6. Generar desde catálogo — estados</h2>
+      <span class="path">GenerarDesdeCatalogoView</span>
+      <span class="reqs"><span class="req">REQ-12</span></span>
+    </div>
+
+    <div class="state-caption">Carga — resolviendo los items del catálogo por lotes</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="alert info">
+          <span class="t">Cargando los items del catálogo</span>
+          Resolviendo 340 items… 200 de 340.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-80"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-40"></span></td></tr>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-80"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-40"></span></td></tr>
+              <tr><td><span class="sk box"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-40"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-60"></span></td><td><span class="sk w-40"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Vacío — el filtro no encuentra items dentro del catálogo</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="grid-filters" style="margin-bottom:16px">
+          <div class="field"><label>Número</label><input class="input" value="XX-000"></div>
+          <div class="field"><label>Descripción</label><input class="input" placeholder="Filtrar descripción"></div>
+          <div class="field"><label>Referencias</label><input class="input" placeholder="Filtrar referencias"></div>
+          <div class="field"><label>Marca</label><input class="input" placeholder="Filtrar marca"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6">
+                  <div class="state">
+                    <div class="title">Ningún item del catálogo coincide con los filtros</div>
+                    <div class="desc">El catálogo tiene 340 items. Ajusta los filtros para verlos.</div>
+                    <div class="actions"><button class="btn sm">Limpiar filtros</button></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Vacío — el catálogo no tiene items</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="6">
+                  <div class="state">
+                    <div class="title">Este catálogo no tiene items</div>
+                    <div class="desc">Edita el catálogo y agrega items para poder generar desde él.</div>
+                    <div class="actions"><button class="btn sm">Ir al catálogo</button></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Error — falló la resolución por IDs</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="alert error">
+          <span class="t">No se pudieron cargar los items del catálogo</span>
+          Ocurrió un error al resolver los items. Vuelve a intentarlo.
+        </div>
+        <div class="state">
+          <div class="actions"><button class="btn sm">Reintentar</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-caption">Se elimina — aviso de truncado (ya no aparece en ningún estado)</div>
+    <div class="app">
+      <div class="app-body">
+        <div class="alert warn" style="opacity:.5;text-decoration:line-through">
+          <span class="t">Se muestran solo los primeros 500 items del catálogo</span>
+          Refina la búsqueda para ver el resto.
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin:0">
+          Este aviso y su lógica de recorte se eliminan: la carga por IDs trae el catálogo completo en lotes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 7. SIN CAMBIO VISUAL -->
+  <!-- ============================================================ -->
+  <section class="screen" id="verificados">
+    <div class="screen-label">
+      <h2>7. Vistas sin cambio visual (solo verificación)</h2>
+      <span class="reqs"><span class="req">REQ-01</span><span class="req">REQ-14</span></span>
+    </div>
+    <p class="note">
+      <strong>ItemSearchPanel</strong> (builder de facturas): ya es server-side. Solo se verifica que paginar
+      dentro del form no dispare el submit. <strong>ItemsListView</strong> (inventario): ya es server-side;
+      es el patrón de referencia. Ninguna de las dos cambia de aspecto ni de textos.
+    </p>
+    <div class="app">
+      <div class="app-bar">
+        <h3>Buscar item (builder de facturas)</h3>
+        <span class="sub">Sin cambios · paginación verificada</span>
+      </div>
+      <div class="app-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Número</th><th>Descripción</th><th>Marca</th><th>Precio</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="num">A-1104-22</td><td>Filtro de aceite motor 1.6</td><td>Bosch</td><td class="num">$ 12.400</td>
+                <td><button class="btn sm">Agregar</button></td>
+              </tr>
+              <tr>
+                <td class="num">B-0431-77</td><td>Batería 12V 65Ah</td><td>Varta</td><td class="num">$ 148.900</td>
+                <td><button class="btn sm">Agregar</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">Mostrando 1–2 de 13.575 items</span>
+          <div class="pages">
+            <button class="btn sm is-disabled" disabled>« Anterior</button>
+            <span class="page-of">Página 1 de 1.358</span>
+            <button class="btn sm">Siguiente »</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

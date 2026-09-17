@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-close TICKET-147 / UPONE-1848: los mods no crean core_Role</title>
+<!-- ticket: TICKET-147 · kind: close · project: up1 · generated: 2026-09-11 -->
+</head>
+<body>
+<h1>Los mods no crean core_Role: roles curriculares solo como perfil (UPONE-1848)</h1>
+
+<div class="panel tldr" data-dkc-block="tldr">
+<strong>Qué quedó resuelto:</strong> curriculum-design y curriculum-mapping dejaron de crear <code>core_Role</code>. Los 4 roles curriculares quedan solo como perfil (<code>core_ModRole</code>) que materializa el sync desde <code>profiles/*.json</code>; la identidad asignable pasa a Admin/Consultor vía el perfil compuesto "Disenador Autoridad". Verificado en vivo: 0 capabilities perdidas, los curriculares no se crean en core ni siquiera tras un reseed completo. Entregado en PRs cd #62 y cm #32 (core no se tocó).
+</div>
+
+<h2>Qué se hizo</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li>Eliminado <code>seed/_data-rbac.js</code> y su cableado en <code>seed/seed.js</code> en ambos mods (cd usaba <code>createMany</code>, cm <code>upsert</code>).</li>
+<li><code>config/app.json:profileRoleMapping</code> reducido al único compuesto <code>&lt;Mod&gt; Disenador Autoridad -&gt; [Admin, Consultor]</code>; se quitaron las 4 líneas granulares perfil -&gt; rol curricular.</li>
+<li>Tests repuntados al efectivo por perfil vía el nuevo helper <code>scripts/rbac/profileEffective.js</code>; agregado test de outcome; removido <code>verify-rename.js</code> (cd); docs alineados.</li>
+</ul>
+</div>
+
+<h2>El mecanismo clave (a recordar)</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+<p>Los <code>core_ModRole</code> (perfiles) los crea el <strong>SYNC</strong> desde <code>mods/&lt;mod&gt;/profiles/*.json</code> (<code>syncModRolesForApp</code> en object-manager/scripts/sync/dbSync.js), INDEPENDIENTE del seed. Por eso borrar el seed no pierde perfiles. La identidad asignable son los institucionales que up1 core ya crea (<code>prisma/seed/up1/minimal/core-rbac.js</code>): Admin/Consultor. Los 4 perfiles granulares quedan "dormidos" (existen como core_ModRole, sin core_Role espejo ni mapeo directo).</p>
+</div>
+<div class="invariant" data-dkc-block="invariant">
+<strong>Invariante:</strong> el efectivo de capabilities por perfil es idéntico antes y después (diff vacío contra el baseline). <code>profileEffective.js</code> replica el runtime (flatten <code>&lt;target&gt;:&lt;action&gt;</code> = <code>expandRoleCapabilityRefs</code>; herencia por <code>extends</code>+dedupe = <code>resolveModRoleCapabilityNames</code>). Fiel mientras los targets de los profiles se mantengan canónicos (lowercase).
+</div>
+
+<h2>Cómo se verificó</h2>
+<table class="comparison-table" data-dkc-block="comparison-table">
+<thead><tr><th>Verificación</th><th>Resultado</th></tr></thead>
+<tbody>
+<tr><td>Preservación (REQ-PRESERVE-01)</td><td>efectivo por perfil == baseline, diff VACÍO, 0 caps perdidas (cd y cm, incl. tributación SoD de cm)</td></tr>
+<tr><td>Outcome en vivo (reset+seed+sync UPU)</td><td>core_Role sin los 4 curriculares (13 roles), core_ModRole=23 (10 curriculares intactos); un reseed completo tampoco los recrea</td></tr>
+<tr><td>Suites</td><td>cd 71/1 skip, cm 74/0 fail</td></tr>
+<tr><td>Review kn-dredd (cd #62, cm #32)</td><td>aprobable-con-observaciones, sin S0/S1; findings de doc/id-interno corregidos</td></tr>
+</tbody>
+</table>
+
+<h2>Decisiones</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li>Lo curricular se rutea por el compuesto Admin/Consultor, NO por Coordinador/Gestor (roles académicos genéricos, no curriculares). Se acepta perder la asignación granular por persona.</li>
+<li>Los 4 perfiles quedan dormidos a la espera de que up1 defina, si alguna vez, un rol institucional curricular propio.</li>
+<li>Alineado con la decisión del KB <code>DOC-kb-sp10-deuda-rbac-mods-solo-perfil-no-crear-core-role</code> y con <code>RULE-curriculum-design-052</code>.</li>
+</ul>
+</div>
+
+<h2>Aprendizajes y follow-ups</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li><strong>uengagement-up1 sigue creando sus core_Role -eng</strong>: mismo anti-patrón, cleanup aparte si se aplica la dirección de forma transversal.</li>
+<li><strong>Tenants ya poblados</strong>: si un usuario tiene asignado un core_Role curricular, el rebuild lo orfana; requiere cleanup por tenant (DELETE de asignaciones, como las 108 filas de UPONE-1615).</li>
+<li><strong>Post-reset UPU no se recrea sola</strong> (UPONE-1761): crear Organization (uPlanner) + Institution (uPlanner University / UPU-MAIN) y <code>seed:mod cd/cm UPU --reseed</code>.</li>
+<li><strong>Traza Jira</strong>: el AC de UPONE-1848 es el versionado del baseline RBAC; este trabajo es el follow-up "los mods no crean core_Role", conviene enlazar los PRs en el ticket.</li>
+</ul>
+</div>
+
+<pre class="code" data-dkc-block="code"><code># Recrear UPU tras un reset (dev-run):
+#   crear Organization uPlanner + Institution UPU-MAIN (via prisma)
+npm run seed:mod curriculum-design UPU -- --reseed
+npm run seed:mod curriculum-mapping UPU -- --reseed</code></pre>
+</body>
+</html>

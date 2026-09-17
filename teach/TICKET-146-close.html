@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-close · UPONE-1769 · Cableado de tributación</title>
+<!-- ticket: TICKET-146 · kind: close · project: up1 · generated: 2026-09-10 -->
+</head>
+<body>
+<h1>Cierre UPONE-1769: cableado de tributación (3 agregados de schema)</h1>
+
+<div class="panel" data-dkc-block="tldr">
+<strong>TL;DR.</strong> Se dejaron cableados 3 agregados de schema aditivos y nullable en curriculum-mapping (mod-only): <code>contributionPercentage</code> (string) e índice de grupo en <code>CompetencyAlignment</code>, e <code>isRepresentative</code> (boolean) en <code>CompetencyNodeDevelopmentLevel</code>. Migración limpia (2 ADD COLUMN + 1 CREATE INDEX), suite verde, PR #31 abierto contra develop. Sin lógica que consuma los campos (eso es follow-up UPONE-1770).
+</div>
+
+<h2>Qué se hizo</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+<ul>
+<li><code>contributionPercentage</code> en CompetencyAlignment: string, nullable. String a propósito (decisión D-imp-1 del mod) para no truncar decimales.</li>
+<li>Índice de grupo <code>(planId, competencyNodeId, developmentLevelId)</code>: no único, aditivo; conserva el índice individual de <code>planId</code>.</li>
+<li><code>isRepresentative</code> en CompetencyNodeDevelopmentLevel: boolean, nullable. Objeto reusado.</li>
+<li>i18n en es/en/pt, test nuevo con casos concretos, y doc de referencia del objeto actualizada.</li>
+</ul>
+</div>
+
+<h2>Cómo se verificó</h2>
+<div class="callout" data-dkc-block="callout">
+Suite del mod: 2303 tests verdes (+10 nuevos que prueban nullable, decimal preservado en string, true/false sin colapsar a null, y tripleta duplicada permitida por índice no único). Typecheck y build de storybook OK. Migración generada y aplicada sin drift: exactamente 2 ADD COLUMN nullable + 1 CREATE INDEX, sin drops ni renames; el CRUD de tributación de UPONE-1756 siguió verde. Review de kn-dredd: aprobable; su única observación (doc de referencia contradecía el campo) se corrigió en el commit 4c6b815.
+</div>
+
+<h2>Decisiones</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li>Tipo <strong>string</strong> (no number) para contributionPercentage, por D-imp-1, para preservar decimales.</li>
+<li>Punto de partida: develop con UPONE-1756 ya mergeado (PR #29), rama propia UPONE-1769.</li>
+<li>Naming del FK de Matrix: quedó <code>developmentLevelId</code> apuntando al Scheme; coexiste con el de CompetencyAlignment que apunta a un Level. No se usó developmentLevelSchemeId.</li>
+<li>Queda abierta (PO/lead): plegar estos agregados dentro de 1756 vs mantener 1769 como ticket propio.</li>
+</ul>
+</div>
+
+<h2>Aprendizajes</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li>Follow-up UPONE-1770: la escritura gobernada (<code>*Validated</code>) todavía no incluye <code>contributionPercentage</code> en WRITABLE_FIELDS; hoy es solo schema y se descarta en silencio si un cliente lo manda. Cablearlo al reparto de pesos allí.</li>
+<li>Reset de la DB dev: requiere reseed de UPU + <code>UP1_SEED_RESEED=true npm run sync:layouts</code> para restaurar el acceso de Admin/Consultor a cd/cm (el profileRoleMapping tiene gate de una sola corrida).</li>
+</ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-close TICKET-148 - Cerrar huecos del CRUD generico en cd</title>
+<!-- ticket: TICKET-148 · kind: close · project: up1 · generated: 2026-09-11 -->
+</head>
+<body>
+<h1>TICKET-148 - Cerrar dos huecos del CRUD generico en curriculum-design</h1>
+
+<div class="tldr" data-dkc-block="tldr">
+  <strong>Que quedo resuelto:</strong> dos huecos N1 donde una regla de negocio vivia solo en una mutation de dominio y el <code>createInstance</code> generico la salteaba, ahora cerrados en el override de create del mod, sin tocar el modelo de datos. Activity ya no se puede crear "ya publicada" por el generico, y Offering (Syllabus) valida recordType=Course y unicidad de code por el camino generico igual que por su mutation propia. 10 test cases verdes, suite del mod 2054 sin fallos, gate de sesion aprobado.
+</div>
+
+<h2>Que se hizo</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+  <ul>
+    <li><strong>Activity CREATE (REQ-01):</strong> dispatch <code>objectType==='Activity'</code> en <code>validateSectionCreate</code> que fuerza <code>data.status='Draft'</code> in-place en el create. Publicar queda como transicion exclusiva de <code>updateInstance</code>, donde <code>assertActivityEvaluationsOnPublish</code> ya corre.</li>
+    <li><strong>Offering CREATE (REQ-02):</strong> helper puro nuevo <code>logic/helpers/offeringGuard.js</code> (<code>assertActivityIsCourse</code> + <code>assertOfferingCodeUnique</code>) consumido por <code>createSyllabusOffering</code> y por un nuevo dispatch <code>objectType==='Offering'</code> scoped a <code>recordType==='Syllabus'</code> en <code>validateSectionCreate</code>.</li>
+  </ul>
+</div>
+
+<h2>Como se verifico</h2>
+<div class="callout" data-dkc-block="callout">
+  10 test cases con evidencia de pass: REQ-01 TC-1..4 (Active forzado a Draft, Draft explicito, sin status nace Draft, guard de update intacto con arbol valido e invalido) y REQ-02 TC-1..6 (no-Course rechazado, duplicado con formato Prisma, happy path, unicidad scoped por el par, y las dos regresiones de contrato). Suite unit del mod: 2054 corridos, 0 fallidos. Baseline S1.T1 intacto. ESLint limpio en los 5 archivos. Gate de sesion: aprobado (dual-judge sobre codigo real + typecheck/tests).
+</div>
+
+<h2>Decisiones</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li><strong>Scope a Syllabus:</strong> <code>validateSectionCreate</code> corre para TODO Offering; el check "activityId debe ser Course" se acoto a <code>recordType==='Syllabus'</code> para no romper los ServiceOffer de engagement (Activity recordType='Service'). Alternativa descartada: gatear por presencia de activityId (insuficiente).</li>
+    <li><strong>Mensaje por caller:</strong> el helper detecta el duplicado una vez; el camino generico usa un mensaje que TERMINA en <code>Unique constraint failed on the fields: (`code`)</code> (RULE-curriculum-design-005, para el friendly-error del OM) y <code>createSyllabusOffering</code> conserva su mensaje historico.</li>
+    <li><strong>Sin tocar el modelo de datos:</strong> la unicidad de code se chequea por lookup del par en el resolver, no por <code>@@unique</code>. Ventana de carrera teorica bajo concurrencia asumida, coherente con el resto de las reglas de resolver de cd sin backstop de DB.</li>
+  </ul>
+</div>
+
+<h2>Aprendizajes reutilizables</h2>
+<div class="invariant" data-dkc-block="invariant">
+  <strong>Patron para cerrar un hueco N1 en cd:</strong> <code>sectionValidation.resolver.js</code> es el UNICO override de <code>createInstance</code> del mod. Extraer la regla de la mutation de dominio a un helper puro y engancharla como un dispatch por <code>objectType</code> (scoped al <code>recordType</code> exacto) dentro de <code>validateSectionCreate</code>; nunca en un resolver paralelo (el merge de resolvers es de un solo dueño y el paralelo queda muerto sin error). Cubre todos los clientes GraphQL (MCP, Suite, API) sin tocar el modelo de datos.
+</div>
+<div class="concept-card" data-dkc-block="concept-card">
+  <strong>Forzar un default en create:</strong> mutar <code>data.status</code> in-place (patron de <code>sanitizeCustomSectionContent</code>) cierra el bypass de "crear ya publicado" sin cambiar <code>objects/activity.json</code>. Checks compartidos entre camino de dominio y generico; mensajes user-facing por-caller.
+</div>
+
+<h2>Follow-ups fuera de alcance</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li>No se corrio <code>npm run sync</code> (propaga al core workspace, algunas fases requieren DB): follow-up de deploy antes de integracion/runtime.</li>
+    <li>Confirmar con PO si CurricularLink e InstructionalComponentType necesitan reglas propias.</li>
+    <li>Actualizar docs de integridad (<code>server-side-integrity.md</code>, <code>mcp-object-contract.md</code>, desactualizados 2026-06-19) para reflejar estos cierres.</li>
+  </ul>
+</div>
+</body>
+</html>

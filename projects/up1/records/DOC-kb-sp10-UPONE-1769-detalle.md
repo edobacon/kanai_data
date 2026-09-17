@@ -98,7 +98,7 @@ Aplica el estandar DoR/DoD del equipo (regla del proyecto, `get_rules`). Ademas:
 
 ## Estimacion
 
-**8 Story Points (publicado).** El peso venia casi todo del rename destructivo (sensibilidad media-alta). Verificado que el rename ya lo ejecuta UPONE-1753 (PR #23): si 1769 se reduce a los campos aditivos (sensibilidad baja), la estimacion baja a **~3 SP**. Ver Decisiones abiertas (re-estimar).
+**8 Story Points (publicado).** El peso venia casi todo del rename destructivo (sensibilidad media-alta). Verificado que el rename ya lo ejecuta UPONE-1753 (PR #23): si 1769 se reduce a los campos aditivos (sensibilidad baja), la estimacion baja a **~3 SP**. Ver Decisiones abiertas (re-estimar). **Actualizacion 2026-09-14 (ver Addendum): los tres campos aditivos ya estan en `develop`, o sea 1769 quedo efectivamente ejecutado; la estimacion es historica.**
 
 ## Decisiones abiertas
 
@@ -130,3 +130,80 @@ Aplica el estandar DoR/DoD del equipo (regla del proyecto, `get_rules`). Ademas:
 - PR que cubre los renames: https://bitbucket.org/uplanner/curriculum-mapping/pull-requests/23 (UPONE-1753).
 - Fuentes del PO: maqueta (`2197e9c9`), detalle tecnico (`28f19a04`), plan de particion (`af80b782`).
 - Working copy: `curriculum-mapping@develop` + PR #23.
+
+---
+
+## Addendum (2026-09-09): re-evaluacion del plan contra los cambios reales de 1756
+
+> Anexo, no reemplaza el contrato de arriba. Motivo: revisar el plan de cableado de 1769 contra lo efectivamente construido en 1756 en local. **El plan cambia sustancialmente: la mayor parte del cableado ya esta hecho.**
+>
+> **CORRECCION 2026-09-14 (ver Addendum-2 al final):** los tres agregados que este addendum daba por PENDIENTE (`contributionPercentage`, indice de grupo compuesto, `isRepresentative`) **ya estan en `develop`**. Leer la tabla de abajo junto con el Addendum-2, que es el estado vigente. Se conserva este texto como registro de la foto del 2026-09-09.
+
+### Que se revisó (evidencia)
+
+- **curriculum-mapping**, rama `feat/UPONE-1756-curriculum-mapping-tributacion-crud-por` @ `812b31a` (working tree limpio; los cambios de 1756 estan commiteados, no sin guardar).
+- **develop** de referencia: `origin/develop @ c00be1f` (posterior al watermark `584499e` del analisis de sp9).
+- Lectura directa de `objects/CompetencyAlignment.json`, `objects/CompetencyNodeDevelopmentLevel.json`, `objects/RecordTypes/rt__Matrix__competencynode.json` y grep de campos en HEAD.
+
+### Estado item por item del alcance original de 1769
+
+> **Nota (2026-09-14):** las tres filas marcadas PENDIENTE abajo ya pasaron a HECHO. Ver Addendum-2.
+
+| Item planeado en 1769 | Estado real (2026-09-09) | Estado vigente (2026-09-14) | Evidencia |
+|---|---|---|---|
+| Renames (`CoverageScheme→DevelopmentLevel`, `LevelScheme→PerformanceScale`, `coverageLevelId→developmentLevelId`, barrido RC6) | **HECHO y en develop** | HECHO | En `origin/develop` ya existen `objects/DevelopmentLevel.json`, `objects/PerformanceScale.json`, layouts `default_PerformanceScale_*`, `tests/integration/catalog-rename.test.ts`. Confirma el re-scope: los renames NO son de 1769. |
+| `planId` en CompetencyAlignment + índice | **HECHO por 1756** (en la rama, sin mergear) | HECHO (en develop) | `objects/CompetencyAlignment.json`: `planId` (nullable, denormalizado, derivado siempre de `planEntry.planId` por REQ-01) e índice `planId`. |
+| `developmentLevelId` (FK del catálogo de desarrollo) en el RecordType Matrix | **HECHO** | HECHO | `rt__Matrix__competencynode.json:20-27` referencia `DevelopmentLevel` (fila Scheme). Ver nota de naming abajo. |
+| `achievementBasis` en Matrix | **HECHO** | HECHO | `rt__Matrix__competencynode.json:92,208`; cableado en `validateCompetencyMatrix.js` y `competencyMatrixHistory.js`. (Lo trajo el modelo de medición, 1755.) |
+| Objeto `CompetencyNodeDevelopmentLevel` | **EXISTE** (en develop) | HECHO | `objects/CompetencyNodeDevelopmentLevel.json`; referenciado por `alignmentRules.js`, `competencyTree-upsert.resolver.js`, `nodeDevelopmentLevels.js`. |
+| `contributionPercentage` en CompetencyAlignment | **PENDIENTE** (2026-09-09) | **HECHO (2026-09-14)** | Existe en `objects/CompetencyAlignment.json:73` (string, nullable). |
+| Índice de grupo `(planId, competencyNodeId, developmentLevelId)` | **PENDIENTE** (2026-09-09) | **HECHO (2026-09-14)** | Declarado en `objects/CompetencyAlignment.json:16` (`indexes`). |
+| `isRepresentative` en `CompetencyNodeDevelopmentLevel` | **PENDIENTE** (2026-09-09) | **HECHO (2026-09-14)** | Declarado en `objects/CompetencyNodeDevelopmentLevel.json:33` (boolean, nullable). |
+
+### Conclusión: qué debe cambiar en el plan de 1769
+
+> **Superada por el Addendum-2 (2026-09-14).** Al 2026-09-09 el alcance de 1769 se reducia a tres agregados de schema aditivos (`contributionPercentage`, indice de grupo, `isRepresentative`). Hoy los tres estan en `develop`, asi que ese alcance residual **quedo ejecutado**. Se conserva el texto original abajo como registro.
+
+El alcance de 1769 se **reduce a tres agregados de schema aditivos**, todos `todo-mod-only`, sin rename y sin cross-mod:
+
+1. **`contributionPercentage`** en `CompetencyAlignment` (numérico, nullable; el peso del eje 1 que consume el follow-up 1770).
+2. **Índice de grupo** `(planId, competencyNodeId, developmentLevelId)` en `CompetencyAlignment`.
+3. **`isRepresentative`** (booleano, nullable) en `CompetencyNodeDevelopmentLevel`.
+
+Todo lo demás del contrato original (renames + `planId` + FK/`achievementBasis` de Matrix + creación del objeto CNDL) **ya está hecho** en develop o en la rama de 1756.
+
+### Impacto en estimación, dependencias y decisiones abiertas
+
+- **Estimación:** de los 8 SP publicados (y el ~3 ya propuesto por el re-scope de renames) baja a **~1 SP**: son tres campos/índice declarativos sin lógica. Confirmar con PO/lead.
+- **Dependencia dura sobre 1756 (nueva):** la rama de 1756 está **sin mergear**. `planId` y el índice de grupo (que lo usa) solo quedan firmes cuando 1756 mergee. Opción a evaluar: **plegar estos tres agregados dentro de 1756** (que aún no cerró) en lugar de mantener 1769 como ticket propio, dado lo mínimo que quedó. Decisión de PO/lead.
+- **Decisión abierta "naming del FK de Matrix" → CERRADA en código:** el campo quedó como **`developmentLevelId`** en `rt__Matrix__competencynode.json`, apuntando a la fila `Scheme` de `DevelopmentLevel`, y **coexiste** con `CompetencyAlignment.developmentLevelId` (que apunta a un `Level`). No se usó `developmentLevelSchemeId`. Actualizar la Decisión abierta correspondiente.
+- **Decisión abierta "corrección de nombre `DevelopmentScheme`" → CONFIRMADA:** el código es `DevelopmentLevel`/`PerformanceScale`. Coherente con la nota de no reintroducir `DevelopmentScheme` (decisión N-1 de 1753, PR #23 ya en develop).
+- **`isRepresentative`:** su dependencia (objeto CNDL) ya existe; se puede agregar sin esperar nada más.
+
+### Verificación mínima para cuando se ejecute (sea 1769 o dentro de 1756)
+
+- [ ] Los tres agregados migran sin drift; `sync`/`codegen` sin drift; artefactos de sync no commiteados.
+- [ ] El CRUD de tributación de 1756 sigue verde tras agregarlos.
+- [ ] Ningún rename se re-ejecuta (ya viven en develop).
+- [ ] `contributionPercentage` nace nullable y sin lógica que lo consuma (el reparto de pesos es follow-up 1770).
+
+> Watermark de esta re-evaluación: `curriculum-mapping` rama 1756 @ `812b31a`, `origin/develop` @ `c00be1f`.
+
+---
+
+## Addendum-2 (2026-09-14): los tres agregados ya estan en develop
+
+> Correccion del Addendum anterior. Verificado directamente contra `curriculum-mapping@develop` el 2026-09-14 (surgio al detallar UPONE-1770, que consume `contributionPercentage`). Los tres agregados que el Addendum del 2026-09-09 daba por PENDIENTE **ya existen en el codigo**. 1769, en su alcance residual de campos aditivos, quedo **efectivamente ejecutado**.
+
+| Agregado | Estado 2026-09-09 | Estado 2026-09-14 | Evidencia (`curriculum-mapping@develop`) |
+|---|---|---|---|
+| `contributionPercentage` en `CompetencyAlignment` | PENDIENTE | **HECHO** | `objects/CompetencyAlignment.json:73` (string, nullable) |
+| Indice de grupo `(planId, competencyNodeId, developmentLevelId)` | PENDIENTE | **HECHO** | `objects/CompetencyAlignment.json:16` (bloque `indexes`) |
+| `isRepresentative` en `CompetencyNodeDevelopmentLevel` | PENDIENTE | **HECHO** | `objects/CompetencyNodeDevelopmentLevel.json:33` (boolean, nullable) |
+
+### Consecuencias
+
+- **Alcance de 1769:** su parte residual (los tres agregados) ya no esta pendiente. No queda schema por cablear del lado de 1769; el follow-up 1770 encuentra el modelo listo.
+- **Estimacion:** el "~1 SP" del Addendum es historico. No hay trabajo aditivo restante atribuible a 1769.
+- **Para 1770:** la premisa "el peso ya existe en el modelo, falta gobernarlo" es correcta. Lo unico pendiente para gobernar el peso es agregar `contributionPercentage` a `WRITABLE_FIELDS` (`logic/helpers/validateCompetencyAlignment.js`), que es trabajo de 1770, no de 1769. Ver `UPONE-1770-detalle` (en sp11).
+- **Decision abierta "plegar dentro de 1756":** ya es irrelevante como trabajo pendiente (los agregados estan); queda solo como nota de por que 1769 casi no tuvo alcance propio.

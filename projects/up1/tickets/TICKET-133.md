@@ -2,7 +2,7 @@
 id: TICKET-133
 project: up1
 type: ticket
-status: open
+status: closed
 work_type: refactor
 external: UPONE-1615
 module: curriculum-design
@@ -51,7 +51,7 @@ Migracion mod-only (Aduana `mal-encuadrado`): el mecanismo ya existe en core (UP
 ### Environment
 | Campo | Valor |
 |-------|-------|
-| Branch | rama del mod para el PR (curriculum-design/mapping); coordinar rebase con UPONE-1619/1633 sobre `_data-rbac.js` |
+| Branch | rama del mod (curriculum-design/mapping) desde develop. UPONE-1619 y UPONE-1633 estan Finalizados y mergeados en develop: sus cambios sobre `_data-rbac.js` ya estan presentes, no hay rebase que coordinar |
 | Base branch | develop |
 | DB state | (a) estado vigente del store del proyecto para el baseline read-only de caps efectivas (S1); (b) **copia** del store con los 4 roles curriculares en sus **nombres viejos** y sus 120 `core_RoleAssignment` para verificar el renombre en S3 (sobre copia, nunca el vivo) |
 | Services | sync del mod (`syncAppProfileMapping` / seed); UPU operable con **selector de rol activo** para el smoke runtime de S6 |
@@ -107,3 +107,18 @@ Migracion mod-only (Aduana `mal-encuadrado`): el mecanismo ya existe en core (UP
 |-------|---------|--------|-------|-------|
 
 ## Summary
+
+## Plan de sessions
+
+6 sesiones. Cada una tiene su **gate de verificación de cierre** declarado como **criterio de la sesión** (dato de sesión, tipo auto/strong), no como una task aparte. El detalle (tasks, validations, rollbacks) vive en el spec (`## Tasks`).
+
+| # | Objetivo | Tier |
+|---|----------|------|
+| S1 | Baseline + matriz de auditoria: caps efectivas por rol + run verde de la suite RBAC (before) + matriz accion->capability (gate real, `instance.resolver.js:1708`) + huecos. Gate de cierre | T2 |
+| S2 | Autoria de perfiles: `profiles/` (base + extensiones + **compuesto Admin/Consultor**) en cd y cm; `institution:view` en la base de cd; absorber caps de 1619/1633; convencion de nombres. **La verificacion de aislamiento por app es precondicion dura de declarar institucion**. Gate de cierre | T3 |
+| S3 | Renombre de los 4 roles a `Learning Assurance <Rol>` (sin guion, conforme a `roleNaming.js`) sobre base con nombres viejos; barrido GLOBAL del monorepo. Gate de cierre | T2 |
+| S4 | Cableado declarativo (`profileRoleMapping`, incl. Admin/Consultor -> compuesto) + gate XOR + privatizacion por profile-gating (visibilidad verificada, incl. Admin) + reconciliar paridad cd/cm. **Cambio atomico, gate fuerte** | T3 |
+| S5 | Retiro del huerfano `GestorCurricular` + 2 fixtures; sync 2x confirma no-regeneracion. Gate de cierre | T3 |
+| S6 | Verificacion final: matriz automatizada verde + smoke runtime con rol curricular activo (caso PO + Consultor read-only) + regresion RBAC (before/after) + verificacion de REQ-SET-02 (compuestos + mapeo) + doc del escenario final. Gate final | T3 |
+
+**Coordinacion (actualizada):** todos los tickets asociados estan Finalizados y mergeados en develop; no queda coordinacion externa viva. UPONE-1619 (cd) y UPONE-1633 (cm) cerrados: sus caps sobre `_data-rbac.js` ya estan en develop, S2 solo las **absorbe** en los perfiles (REQ-CAPS-01), sin secuenciacion ni rebase. UPONE-1616 cerrado: S4 solo **verifica no-regresion** del orden de menu al privatizar. UPONE-1530 cerrado: el aviso de frontera del MCP quedo sin objeto. Diferido: mapeo del resto del catalogo institucional (solo Admin/Consultor -> compuesto por ahora, DEC-LOCAL-14).

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-close · UPONE-1757 · Migración server-side de invariantes de malla</title>
+<!-- ticket: TICKET-145 · kind: close · project: up1 · generated: 2026-09-10 -->
+</head>
+<body>
+<h1>UPONE-1757 — Migración server-side de invariantes de malla de Curriculum Design (camino A)</h1>
+
+<div class="tldr" data-dkc-block="tldr">
+<strong>Qué quedó resuelto:</strong> los 8 invariantes de la malla que vivían solo en el cliente ahora se aplican server-side en los overrides que ya corren para cada objeto (create/update/delete, single y batch) + la mutation <code>movePlanEntry</code>, valiendo por cualquier vía (UI, CRUD genérico, MCP). Camino A puro (objetos en N0 ⇒ <code>blockGenericMutation</code> innecesario). Suite 2019 pass / 0 fail; PR #61 abierto. Único bloqueante del review (bypass XSS del sanitizador) cerrado en server y cliente.
+</div>
+
+<h2>Qué se hizo (resultado)</h2>
+<div class="comparison-table" data-dkc-block="comparison-table">
+<table>
+<thead><tr><th>Caso</th><th>Invariante</th><th>Dónde vive server-side</th></tr></thead>
+<tbody>
+<tr><td>A-CD-1</td><td>Editar planEntry solo con plan Draft</td><td>planEntryPlanStatusGuard.js (fail-closed)</td></tr>
+<tr><td>A-CD-2</td><td>Unicidad (planId, activityId)</td><td>planEntryUniquenessGuard.js (aplicativa, sin constraint)</td></tr>
+<tr><td>A-CD-4</td><td>Electiva exige bloque; crédito no negativo</td><td>planEntryShapeGuard.js</td></tr>
+<tr><td>A-CD-3</td><td>Borrado seguro (árbol Y/O sin aplanar)</td><td>planEntryDeletionRequirementGuard.js + twin evaluador</td></tr>
+<tr><td>A-CD-5</td><td>Move con renumerado atómico 0-based</td><td>planEntry-move.resolver.js (mutation dedicada)</td></tr>
+<tr><td>A-CD-6</td><td>Sanitización XSS de CustomSection</td><td>htmlSanitizer.js (write del resolver)</td></tr>
+<tr><td>A-CD-7</td><td>progression con malla no vacía por path rt</td><td>polymorphicUpdate.resolver.js (branch rt__Plan__curriculum)</td></tr>
+<tr><td>A-CD-8</td><td>RBAC de objeto en crear sílabo</td><td>syllabus-offering.resolver.js (withObjectAuth)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Cómo se verificó</h2>
+<div class="callout" data-dkc-block="callout">
+Suite del mod <strong>2019 pass / 0 fail / 1 skip</strong> (profileBaselineEquivalence preexistente); <code>vue-tsc --noEmit</code> verde; MCP e2e verde. Matriz cross-client REQ-10 <strong>18/18</strong> (las 3 vías rechazan con el mismo code de dominio). Los 4 gates de sesión aprobados por el juez. Review kn-dredd (modo B local): aprobable-con-observaciones, único bloqueante corregido. Frontera de diff: sin cambios de esquema/migraciones, sin tocar mcp/object-manager.
+</div>
+
+<h2>Decisiones</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li><strong>Camino A puro</strong>: invariantes en el override existente, no <code>blockGenericMutation</code> (camino B) — con el objeto en N0 el motor genérico ya pasa por el gate; cd no coordina con UPONE-1758.</li>
+<li><strong>Solo-lógica (REQ-12)</strong>: cero cambios de esquema; unicidad e índice de move diferidos como hallazgo de modelo (KB sp10).</li>
+<li><strong>Ampliación de alcance (opción B del dev)</strong>: se blindó también el sanitizador client-side por paridad de seguridad — enmienda a REQ-13 registrada como Adenda 1 al request.</li>
+</ul>
+</div>
+
+<h2>Aprendizajes</h2>
+<div class="invariant" data-dkc-block="invariant">
+<strong>Denylist regex para href es inseguro.</strong> <code>/^\s*(javascript|data):/i</code> se elude ofuscando el esquema con control chars vía entidad numérica (<code>java&amp;#9;script:</code>) y no cubre <code>vbscript:</code>/<code>file:</code>. Regla: usar <strong>allowlist de esquemas</strong> (http/https/mailto + relativas/anclas) normalizando <code>[\x00-\x20]</code> antes de evaluar. Aplica a AMBAS capas: blindar solo el server no alcanza si el cliente es la defensa primaria del render.
+</div>
+<div class="concept-card" data-dkc-block="concept-card">
+<strong>Twin JS de lógica TS.</strong> <code>logic/</code> corre en object-manager (Node plano, sin transpile TS): no puede importar los <code>.logic.ts</code>. Se replica en twin JS (patrón buildRequirementTree.js/.ts) — vigilar drift. Además: la electividad se DERIVA de <code>blockId != null</code> (no hay flag persistido), y la unicidad/renumerado sin constraint dejan ventana de carrera bajo Read Committed (documentado, endurecimiento diferido).
+</div>
+
+<h2>Cómo retomar</h2>
+<div class="callout" data-dkc-block="callout">
+Rama <code>feat/UPONE-1757-curriculum-design-migracion-server-side</code>, PR #61 (Bitbucket → develop). Tests: <code>npm test</code> en <code>mods/curriculum-design</code>. Docs: <code>docs/reference/graphql-mutations.md</code> (#8), <code>error-codes.md</code>, <code>plan-entry-object.md</code>. Pendiente organizacional: avisar al PO (Esteban Cortes) que 1757 pasó de spike a ejecución real.
+</div>
+</body>
+</html>

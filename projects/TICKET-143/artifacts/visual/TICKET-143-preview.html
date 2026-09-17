@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TICKET-143 — Tributación por competencia (CRUD en grilla)</title>
+<style>
+  :root{
+    --bg:#f4f6f9;
+    --surface:#ffffff;
+    --surface-alt:#f8fafc;
+    --border:#dfe4ec;
+    --border-strong:#c4ccda;
+    --text:#1b2333;
+    --text-soft:#5a6577;
+    --text-mute:#8a93a5;
+    --brand:#2f5fd0;
+    --brand-soft:#e8eefc;
+    --brand-dark:#1f4099;
+    --ok:#1c7d55;
+    --ok-soft:#e3f5ec;
+    --warn:#a8620a;
+    --warn-soft:#fdf1e0;
+    --danger:#b3261e;
+    --danger-soft:#fdecea;
+    --muted-soft:#eef1f6;
+    --radius:8px;
+    --shadow:0 1px 2px rgba(20,30,50,.06),0 4px 12px rgba(20,30,50,.05);
+    font-size:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.45;
+  }
+  h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em}
+  p{margin:0}
+  button{font:inherit;color:inherit;cursor:pointer}
+  table{border-collapse:collapse;width:100%}
+
+  /* ===== Cintillo de maqueta ===== */
+  .mockbar{
+    background:#101828;color:#e6ebf5;padding:10px 20px;
+    display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;font-size:12px;
+  }
+  .mockbar strong{color:#fff;font-size:13px}
+  .mockbar span{color:#98a4b8}
+
+  .page{max-width:1440px;margin:0 auto;padding:20px}
+  .section-note{
+    margin:34px 0 12px;padding:10px 14px;border-left:3px solid var(--brand);
+    background:var(--brand-soft);border-radius:0 var(--radius) var(--radius) 0;
+  }
+  .section-note h2{font-size:14px}
+  .section-note p{font-size:12px;color:var(--text-soft);margin-top:3px}
+
+  /* ===== Chrome de la vista del plan ===== */
+  .app{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .crumbs{padding:12px 18px 0;font-size:12px;color:var(--text-mute)}
+  .crumbs a{color:var(--text-mute);text-decoration:none}
+  .plan-head{padding:6px 18px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .plan-head h1{font-size:19px}
+  .plan-head .meta{font-size:12px;color:var(--text-soft);margin-top:2px}
+  .tabs{display:flex;gap:2px;padding:14px 18px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tab{
+    padding:9px 14px;font-size:13px;color:var(--text-soft);background:none;border:none;
+    border-bottom:2px solid transparent;border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .tab:hover{background:var(--surface-alt)}
+  .tab[aria-selected="true"]{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+  .tab .new{
+    display:inline-block;margin-left:6px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;
+    background:var(--brand);color:#fff;border-radius:3px;padding:1px 5px;vertical-align:1px;
+  }
+  .body{padding:18px}
+
+  /* ===== Barra de matriz ===== */
+  .matrixbar{
+    display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;
+    padding:12px 14px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);
+  }
+  .field{display:flex;flex-direction:column;gap:4px;min-width:280px}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mute);font-weight:600}
+  select,input[type=search],input[type=text]{
+    font:inherit;padding:7px 9px;border:1px solid var(--border-strong);border-radius:6px;background:#fff;color:var(--text);
+  }
+  select:disabled,input:disabled{background:var(--muted-soft);color:var(--text-mute)}
+  .matrixbar .grow{flex:1}
+  .adoption{font-size:12px;color:var(--text-soft);display:flex;gap:8px;align-items:center}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:999px;white-space:nowrap}
+  .badge.ok{background:var(--ok-soft);color:var(--ok)}
+  .badge.mute{background:var(--muted-soft);color:var(--text-mute)}
+  .badge.warn{background:var(--warn-soft);color:var(--warn)}
+  .badge.brand{background:var(--brand-soft);color:var(--brand-dark)}
+  .badge.danger{background:var(--danger-soft);color:var(--danger)}
+
+  /* ===== Estados vacíos / carga / error ===== */
+  .state{
+    margin-top:16px;padding:44px 24px;text-align:center;border:1px dashed var(--border-strong);
+    border-radius:var(--radius);background:var(--surface-alt);
+  }
+  .state .glyph{font-size:26px;color:var(--text-mute);margin-bottom:10px}
+  .state h3{font-size:15px}
+  .state p{margin-top:6px;font-size:13px;color:var(--text-soft);max-width:520px;margin-left:auto;margin-right:auto}
+  .state.error{background:var(--danger-soft);border-color:#f0c2be;border-style:solid}
+  .state.error h3{color:var(--danger)}
+
+  /* ===== Skeleton ===== */
+  .sk{background:linear-gradient(90deg,#e9edf3 25%,#f3f6fa 50%,#e9edf3 75%);background-size:400% 100%;border-radius:5px;height:12px;display:block}
+  .sk.lg{height:18px}
+  .sk.row{height:44px;border-radius:6px}
+
+  /* ===== Layout del mapa ===== */
+  .map{display:grid;grid-template-columns:302px 1fr;gap:16px;margin-top:16px;align-items:start}
+
+  /* Panel asignaturas */
+  .aside{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  .aside header{padding:12px 12px 10px;border-bottom:1px solid var(--border)}
+  .aside header h3{font-size:13px}
+  .aside header p{font-size:11.5px;color:var(--text-mute);margin-top:2px}
+  .aside .search{padding:10px 12px 0}
+  .aside .search input{width:100%}
+  .filters{display:flex;gap:6px;padding:10px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+  .chipbtn{
+    font-size:11.5px;padding:4px 10px;border-radius:999px;border:1px solid var(--border-strong);
+    background:#fff;color:var(--text-soft);
+  }
+  .chipbtn[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+  .subj-list{list-style:none;margin:0;padding:6px;max-height:520px;overflow:auto}
+  .subj{
+    width:100%;text-align:left;display:flex;flex-direction:column;gap:5px;
+    padding:9px 10px;border:1px solid transparent;border-radius:6px;background:none;
+  }
+  .subj:hover{background:var(--surface-alt)}
+  .subj .code{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--text-mute)}
+  .subj .name{font-size:12.5px;line-height:1.3}
+  .subj[aria-pressed="true"]{background:var(--brand-soft);border-color:var(--brand);}
+  .subj[aria-pressed="true"] .code{color:var(--brand-dark)}
+  .inhand-flag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand-dark)}
+
+  /* Barra "en mano" */
+  .inhand{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    padding:10px 14px;border:1px solid var(--brand);background:var(--brand-soft);
+    border-radius:var(--radius);margin-bottom:12px;
+  }
+  .inhand .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--brand-dark);font-weight:700}
+  .inhand .val{font-size:13px;font-weight:600}
+  .inhand .hint{font-size:12px;color:var(--text-soft)}
+  .linkbtn{background:none;border:none;color:var(--brand-dark);font-size:12px;text-decoration:underline;padding:0}
+  .inhand.idle{background:var(--surface-alt);border-color:var(--border);border-style:dashed}
+  .inhand.idle .lbl{color:var(--text-mute)}
+
+  /* Grilla */
+  .gridwrap{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden}
+  .gridwrap .scroll{overflow-x:auto}
+  table.grid{min-width:820px}
+  table.grid th,table.grid td{border-bottom:1px solid var(--border);vertical-align:top;text-align:left}
+  table.grid thead th{
+    background:var(--surface-alt);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-mute);padding:9px 12px;border-bottom:1px solid var(--border-strong);white-space:nowrap;
+  }
+  table.grid thead th.comp{width:290px}
+  .comp-cell{padding:11px 12px}
+  .comp-toggle{display:flex;gap:8px;align-items:flex-start;background:none;border:none;padding:0;text-align:left;width:100%}
+  .caret{color:var(--text-mute);font-size:11px;line-height:1.5;width:12px;flex:none}
+  .comp-code{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--text-mute)}
+  .comp-name{font-size:13px;font-weight:600}
+  .comp-sub{font-size:11.5px;color:var(--text-mute);margin-top:3px}
+  .cell{padding:9px 10px;border-left:1px solid var(--border)}
+  .cell.dim{background:repeating-linear-gradient(135deg,#fbfcfe,#fbfcfe 7px,#f2f4f8 7px,#f2f4f8 14px)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;background:var(--brand-soft);color:var(--brand-dark);
+    border:1px solid #cfdcf8;border-radius:999px;padding:3px 5px 3px 9px;font-size:11.5px;font-weight:600;
+  }
+  .chip .x{
+    border:none;background:none;color:var(--brand-dark);font-size:12px;line-height:1;padding:2px 4px;border-radius:50%;
+  }
+  .chip .x:hover{background:#d5e0f8}
+  .chip.ro{background:var(--muted-soft);color:var(--text-soft);border-color:var(--border)}
+  .assign{
+    margin-top:7px;font-size:11.5px;padding:4px 9px;border-radius:6px;
+    border:1px dashed var(--brand);background:#fff;color:var(--brand-dark);font-weight:600;
+  }
+  .assign:hover{background:var(--brand-soft)}
+  .assign[disabled]{border-color:var(--border-strong);color:var(--text-mute);background:var(--muted-soft);cursor:not-allowed;border-style:dashed}
+  .cellnote{margin-top:6px;font-size:11px;color:var(--text-mute)}
+  .empty-cell{font-size:11.5px;color:var(--text-mute)}
+
+  .rowlock{
+    padding:10px 12px;font-size:12px;color:var(--warn);background:var(--warn-soft);
+    border-left:1px solid var(--border);
+  }
+
+  /* Tabla de detalle expandida */
+  .detail-row td{background:var(--surface-alt);padding:0;border-left:none}
+  .detail-inner{padding:12px 14px 16px}
+  .detail-inner h4{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mute)}
+  table.detail{margin-top:9px;background:#fff;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  table.detail th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mute);padding:8px 10px;background:var(--surface-alt);text-align:left;border-bottom:1px solid var(--border)}
+  table.detail td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:12.5px}
+  table.detail tr:last-child td{border-bottom:none}
+  table.detail select{padding:4px 6px;font-size:12px}
+  .rowmsg{font-size:11px;color:var(--ok);margin-top:3px}
+  .rowmsg.err{color:var(--danger)}
+  .del{border:1px solid var(--border-strong);background:#fff;border-radius:6px;font-size:11.5px;padding:4px 9px;color:var(--danger)}
+
+  /* Toast / rechazo de regla */
+  .toasts{position:static;display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .toast{
+    display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:var(--radius);
+    border:1px solid var(--border);background:#fff;box-shadow:var(--shadow);font-size:12.5px;max-width:640px;
+  }
+  .toast .ic{font-weight:700;line-height:1.3}
+  .toast.ok{border-color:#bfe5d2;background:var(--ok-soft)}
+  .toast.ok .ic{color:var(--ok)}
+  .toast.err{border-color:#f0c2be;background:var(--danger-soft)}
+  .toast.err .ic{color:var(--danger)}
+  .toast .rule{font-size:10.5px;font-weight:700;letter-spacing:.05em;color:var(--text-mute);display:block;margin-bottom:2px}
+
+  .legend{margin-top:12px;display:flex;gap:18px;flex-wrap:wrap;font-size:11.5px;color:var(--text-mute)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:12px;height:12px;border-radius:3px;border:1px solid var(--border-strong);display:inline-block}
+  .swatch.dimsw{background:repeating-linear-gradient(135deg,#fbfcfe,#fbfcfe 5px,#f2f4f8 5px,#f2f4f8 10px)}
+  .swatch.chipsw{background:var(--brand-soft);border-color:#cfdcf8}
+
+  .a11y-note{margin-top:10px;font-size:11.5px;color:var(--text-mute)}
+  .a11y-note code{background:var(--muted-soft);padding:1px 5px;border-radius:4px;font-size:11px}
+
+  .readonly-banner{
+    display:flex;gap:10px;align-items:center;padding:9px 13px;border-radius:var(--radius);
+    background:var(--muted-soft);border:1px solid var(--border);font-size:12.5px;color:var(--text-soft);margin-bottom:12px;
+  }
+  .grid-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .grid-toolbar .count{font-size:12px;color:var(--text-soft)}
+  .outbtn{border:1px solid var(--border-strong);background:#fff;border-radius:6px;padding:6px 11px;font-size:12px}
+  .footnote{margin-top:26px;padding:14px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;font-size:12px;color:var(--text-soft)}
+  .footnote h4{font-size:12px;margin-bottom:6px;color:var(--text)}
+  .footnote ul{margin:0;padding-left:18px}
+  .footnote li{margin:3px 0}
+</style>
+</head>
+<body>
+
+<div class="mockbar">
+  <strong>TICKET-143 · Maqueta de verificación</strong>
+  <span>Curriculum Mapping — Tributación · CRUD por competencia (grilla)</span>
+  <span>Alcance efectivo: Adenda 1 + Adenda 2 · autoridad visual maqueta 2197e9c9</span>
+  <span>Estática: los estados se muestran uno debajo del otro, no hay interacción real.</span>
+</div>
+
+<div class="page">
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>1 · Tab visible sin adopción de matriz (REQ-11, REQ-12)</h2>
+  <p>El tab se muestra por capability <code>competencyalignment:view</code>, no por existencia de adopción. Sin adopción vigente, el estado vacío vive DENTRO del tab.</p>
+</div>
+
+<div class="app">
+  <div class="crumbs"><a href="#">Diseño curricular</a> › <a href="#">Planes de estudio</a> › Ingeniería Civil Industrial 2026</div>
+  <div class="plan-head">
+    <div>
+      <h1>Ingeniería Civil Industrial — Plan 2026</h1>
+      <p class="meta">Código PLAN-ICI-2026 · Vigente · 52 asignaturas</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="false">Ficha</button>
+    <button class="tab" role="tab" aria-selected="false">Malla</button>
+    <button class="tab" role="tab" aria-selected="false">Asignaturas</button>
+    <button class="tab" role="tab" aria-selected="true">Tributación <span class="new">Nuevo</span></button>
+    <button class="tab" role="tab" aria-selected="false">Perfil de egreso</button>
+  </div>
+  <div class="body">
+    <div class="matrixbar">
+      <div class="field grow">
+        <label for="mx1">Matriz de competencia</label>
+        <select id="mx1" disabled>
+          <option>Sin matrices adoptadas</option>
+        </select>
+      </div>
+      <div class="adoption"><span class="badge mute">Sin adopción</span> Este plan no registra adopciones vigentes.</div>
+    </div>
+
+    <div class="state">
+      <div class="glyph">▦</div>
+      <h3>Este plan no ha adoptado ninguna matriz de competencia</h3>
+      <p>La adopción de matrices se gestiona fuera de esta vista. Cuando el plan adopte una matriz, podrás tributar sus asignaturas contra las competencias desde aquí.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>2 · Con adopción, sin matriz seleccionada (REQ-12)</h2>
+  <p>Segundo estado vacío literal. El selector ya ofrece las matrices adoptadas; el panel de asignaturas todavía no se dibuja porque no hay competencias que mostrar.</p>
+</div>
+
+<div class="app">
+  <div class="crumbs"><a href="#">Diseño curricular</a> › <a href="#">Planes de estudio</a> › Ingeniería Civil Industrial 2026</div>
+  <div class="plan-head">
+    <div>
+      <h1>Ingeniería Civil Industrial — Plan 2026</h1>
+      <p class="meta">Código PLAN-ICI-2026 · Vigente · 52 asignaturas</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="false">Ficha</button>
+    <button class="tab" role="tab" aria-selected="false">Malla</button>
+    <button class="tab" role="tab" aria-selected="false">Asignaturas</button>
+    <button class="tab" role="tab" aria-selected="true">Tributación</button>
+    <button class="tab" role="tab" aria-selected="false">Perfil de egreso</button>
+  </div>
+  <div class="body">
+    <div class="matrixbar">
+      <div class="field grow">
+        <label for="mx2">Matriz de competencia</label>
+        <select id="mx2">
+          <option selected>Elige una matriz…</option>
+          <option>Competencias genéricas institucionales 2025</option>
+          <option>Competencias específicas Ingeniería Industrial 2024</option>
+        </select>
+      </div>
+      <div class="adoption"><span class="badge ok">2 adopciones vigentes</span></div>
+    </div>
+
+    <div class="state">
+      <div class="glyph">▤</div>
+      <h3>Elige una matriz de competencia arriba para empezar a tributar</h3>
+      <p>Cada matriz adoptada tiene sus propias competencias y niveles de desarrollo. La grilla se arma con las competencias de la matriz seleccionada.</p>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>3 · Estado de carga de la grilla</h2>
+  <p>Mientras se resuelven competencias, niveles declarados (CompetencyNodeDevelopmentLevel), planEntry del plan y sus tributaciones.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="matrixbar">
+      <div class="field grow">
+        <label for="mx3">Matriz de competencia</label>
+        <select id="mx3"><option selected>Competencias genéricas institucionales 2025</option></select>
+      </div>
+      <div class="adoption"><span class="badge ok">Adopción vigente</span></div>
+    </div>
+
+    <div class="map">
+      <div class="aside">
+        <header>
+          <h3>Asignaturas del plan</h3>
+          <p>Cargando…</p>
+        </header>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:9px" aria-hidden="true">
+          <span class="sk lg"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+        </div>
+      </div>
+      <div class="gridwrap">
+        <div style="padding:16px;display:flex;flex-direction:column;gap:12px" aria-hidden="true">
+          <span class="sk lg" style="width:40%"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+          <span class="sk row"></span>
+        </div>
+        <p style="padding:0 16px 16px;font-size:12px;color:var(--text-mute)" role="status">Cargando la matriz de tributación…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>4 · Vista principal — grilla competencia × nivel, con asignatura en mano (REQ-13, REQ-14, REQ-15, REQ-08)</h2>
+  <p>Interacción: selección lateral + click en "+ Asignar acá". Sin arrastre. Escritura por operación: no hay barra Guardar/Descartar (REQ-17).</p>
+</div>
+
+<div class="app">
+  <div class="crumbs"><a href="#">Diseño curricular</a> › <a href="#">Planes de estudio</a> › Ingeniería Civil Industrial 2026</div>
+  <div class="plan-head">
+    <div>
+      <h1>Ingeniería Civil Industrial — Plan 2026</h1>
+      <p class="meta">Código PLAN-ICI-2026 · Vigente · 52 asignaturas</p>
+    </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="false">Ficha</button>
+    <button class="tab" role="tab" aria-selected="false">Malla</button>
+    <button class="tab" role="tab" aria-selected="false">Asignaturas</button>
+    <button class="tab" role="tab" aria-selected="true">Tributación</button>
+    <button class="tab" role="tab" aria-selected="false">Perfil de egreso</button>
+  </div>
+  <div class="body">
+
+    <div class="matrixbar">
+      <div class="field grow">
+        <label for="mx4">Matriz de competencia</label>
+        <select id="mx4">
+          <option selected>Competencias genéricas institucionales 2025</option>
+          <option>Competencias específicas Ingeniería Industrial 2024</option>
+        </select>
+      </div>
+      <div class="adoption"><span class="badge ok">Adopción vigente</span> desde 01-03-2026</div>
+    </div>
+
+    <div class="map">
+
+      <!-- ======= Panel lateral ======= -->
+      <aside class="aside">
+        <header>
+          <h3>Asignaturas del plan</h3>
+          <p>52 asignaturas · elige una para dejarla en mano</p>
+        </header>
+        <div class="search">
+          <label class="sr-only" for="q4" style="position:absolute;left:-9999px">Buscar asignatura</label>
+          <input id="q4" type="search" placeholder="Buscar por código o nombre…">
+        </div>
+        <div class="filters" role="group" aria-label="Filtros de asignaturas">
+          <button class="chipbtn" aria-pressed="true">Todas</button>
+          <button class="chipbtn" aria-pressed="false">Con tributación</button>
+          <button class="chipbtn" aria-pressed="false">Sin tributar</button>
+        </div>
+        <ul class="subj-list">
+          <li>
+            <button class="subj" aria-pressed="true">
+              <span class="code">MAT101</span>
+              <span class="name">Cálculo I</span>
+              <span><span class="badge brand">2 TRIBUTACIÓN(ES)</span> <span class="inhand-flag">· En mano</span></span>
+            </button>
+          </li>
+          <li>
+            <button class="subj" aria-pressed="false">
+              <span class="code">FIS110</span>
+              <span class="name">Física General</span>
+              <span class="badge brand">1 TRIBUTACIÓN(ES)</span>
+            </button>
+          </li>
+          <li>
+            <button class="subj" aria-pressed="false">
+              <span class="code">ICI205</span>
+              <span class="name">Investigación de Operaciones</span>
+              <span class="badge brand">3 TRIBUTACIÓN(ES)</span>
+            </button>
+          </li>
+          <li>
+            <button class="subj" aria-pressed="false">
+              <span class="code">COM120</span>
+              <span class="name">Comunicación Efectiva</span>
+              <span class="badge mute">SIN TRIBUTAR</span>
+            </button>
+          </li>
+          <li>
+            <button class="subj" aria-pressed="false">
+              <span class="code">ETI300</span>
+              <span class="name">Ética Profesional</span>
+              <span class="badge mute">SIN TRIBUTAR</span>
+            </button>
+          </li>
+          <li>
+            <button class="subj" aria-pressed="false">
+              <span class="code">ICI410</span>
+              <span class="name">Gestión de Proyectos</span>
+              <span class="badge brand">1 TRIBUTACIÓN(ES)</span>
+            </button>
+          </li>
+          <li>
+            <button class="subj" aria-pressed="false">
+              <span class="code">ICI480</span>
+              <span class="name">Taller de Integración</span>
+              <span class="badge mute">SIN TRIBUTAR</span>
+            </button>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- ======= Grilla ======= -->
+      <div>
+        <div class="inhand">
+          <span class="lbl">En mano</span>
+          <span class="val">MAT101 — Cálculo I</span>
+          <span class="hint">Haz click en “+ Asignar acá” en la celda del nivel donde tributa. Si ya tributa a esa competencia en otro nivel, la tributación se mueve.</span>
+          <button class="linkbtn">Soltar</button>
+        </div>
+
+        <div class="grid-toolbar">
+          <span class="count">4 competencias · 7 tributaciones en este plan</span>
+          <button class="outbtn">Contraer todo</button>
+        </div>
+
+        <div class="gridwrap">
+          <div class="scroll">
+            <table class="grid">
+              <thead>
+                <tr>
+                  <th class="comp">Competencia</th>
+                  <th>Introduce</th>
+                  <th>Reinforce</th>
+                  <th>Master</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                <!-- Competencia 1: con tributaciones, contraída -->
+                <tr>
+                  <td class="comp-cell">
+                    <button class="comp-toggle" aria-expanded="false">
+                      <span class="caret">▸</span>
+                      <span>
+                        <span class="comp-code">CG-01</span><br>
+                        <span class="comp-name">Pensamiento crítico</span>
+                        <span class="comp-sub">Nodo terminal · 3 niveles declarados · 2 tributaciones</span>
+                      </span>
+                    </button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips">
+                      <span class="chip">FIS110
+                        <button class="x" aria-label="Quitar tributación de Pensamiento crítico en FIS110">×</button>
+                      </span>
+                    </div>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips">
+                      <span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Pensamiento crítico en MAT101: Develops, nivel Reinforce">MAT101
+                        <button class="x" aria-label="Quitar tributación de Pensamiento crítico en MAT101">×</button>
+                      </span>
+                    </div>
+                    <button class="assign">+ Asignar acá</button>
+                    <p class="cellnote">MAT101 ya tributa acá.</p>
+                  </td>
+                  <td class="cell">
+                    <p class="empty-cell">Sin tributaciones</p>
+                    <button class="assign">+ Asignar acá</button>
+                    <p class="cellnote">Asignar acá mueve MAT101 desde Reinforce.</p>
+                  </td>
+                </tr>
+
+                <!-- Competencia 2: expandida con tabla de detalle -->
+                <tr>
+                  <td class="comp-cell">
+                    <button class="comp-toggle" aria-expanded="true">
+                      <span class="caret">▾</span>
+                      <span>
+                        <span class="comp-code">CG-02</span><br>
+                        <span class="comp-name">Trabajo en equipo</span>
+                        <span class="comp-sub">Nodo terminal · 3 niveles declarados · 3 tributaciones</span>
+                      </span>
+                    </button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips">
+                      <span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Trabajo en equipo en ICI205: Develops, nivel Introduce">ICI205
+                        <button class="x" aria-label="Quitar tributación de Trabajo en equipo en ICI205">×</button>
+                      </span>
+                      <span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Trabajo en equipo en ICI410: Introduces, nivel Introduce">ICI410
+                        <button class="x" aria-label="Quitar tributación de Trabajo en equipo en ICI410">×</button>
+                      </span>
+                    </div>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <p class="empty-cell">Sin tributaciones</p>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips">
+                      <span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Trabajo en equipo en ICI480: Masters, nivel Master">ICI480
+                        <button class="x" aria-label="Quitar tributación de Trabajo en equipo en ICI480">×</button>
+                      </span>
+                    </div>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                </tr>
+                <tr class="detail-row">
+                  <td colspan="4">
+                    <div class="detail-inner">
+                      <h4>Detalle de CG-02 · Trabajo en equipo</h4>
+                      <table class="detail">
+                        <thead>
+                          <tr>
+                            <th style="width:90px">Código</th>
+                            <th>Asignatura</th>
+                            <th style="width:110px">Período</th>
+                            <th style="width:170px">Cobertura</th>
+                            <th style="width:190px">Contribución</th>
+                            <th style="width:110px"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>ICI205</td>
+                            <td>Investigación de Operaciones</td>
+                            <td>Semestre 4</td>
+                            <td>
+                              <select aria-label="Cobertura de ICI205 en Trabajo en equipo">
+                                <option selected>Introduce</option>
+                                <option>Reinforce</option>
+                                <option>Master</option>
+                              </select>
+                            </td>
+                            <td>
+                              <select aria-label="Contribución de ICI205 en Trabajo en equipo">
+                                <option selected>Develops</option>
+                                <option>Introduces</option>
+                                <option>Masters</option>
+                              </select>
+                            </td>
+                            <td><button class="del">Retirar</button></td>
+                          </tr>
+                          <tr>
+                            <td>ICI410</td>
+                            <td>Gestión de Proyectos</td>
+                            <td>Semestre 7</td>
+                            <td>
+                              <select aria-label="Cobertura de ICI410 en Trabajo en equipo">
+                                <option selected>Introduce</option>
+                                <option>Reinforce</option>
+                                <option>Master</option>
+                              </select>
+                              <p class="rowmsg">Guardado</p>
+                            </td>
+                            <td>
+                              <select aria-label="Contribución de ICI410 en Trabajo en equipo">
+                                <option>Develops</option>
+                                <option selected>Introduces</option>
+                                <option>Masters</option>
+                              </select>
+                            </td>
+                            <td><button class="del">Retirar</button></td>
+                          </tr>
+                          <tr>
+                            <td>ICI480</td>
+                            <td>Taller de Integración</td>
+                            <td>Semestre 9</td>
+                            <td>
+                              <select aria-label="Cobertura de ICI480 en Trabajo en equipo">
+                                <option>Introduce</option>
+                                <option>Reinforce</option>
+                                <option selected>Master</option>
+                              </select>
+                            </td>
+                            <td>
+                              <select aria-label="Contribución de ICI480 en Trabajo en equipo">
+                                <option>Develops</option>
+                                <option>Introduces</option>
+                                <option selected>Masters</option>
+                              </select>
+                            </td>
+                            <td><button class="del">Retirar</button></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <p class="a11y-note">Cobertura y Contribución se editan por fila y persisten al instante. No hay panel ni drawer de detalle separado por tributación.</p>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Competencia 3: consolida, no es destino (R-3) -->
+                <tr>
+                  <td class="comp-cell">
+                    <button class="comp-toggle" aria-expanded="false" disabled style="cursor:default">
+                      <span class="caret">▸</span>
+                      <span>
+                        <span class="comp-code">CG-03</span><br>
+                        <span class="comp-name">Responsabilidad social</span>
+                        <span class="comp-sub">Consolida 3 subcompetencias · no es destino de tributación</span>
+                      </span>
+                    </button>
+                  </td>
+                  <td colspan="3" class="rowlock">
+                    Esta competencia consolida a sus hijas y no es holística: no admite tributación directa. Tributa en sus subcompetencias.
+                  </td>
+                </tr>
+
+                <!-- Competencia 3.1 hija -->
+                <tr>
+                  <td class="comp-cell" style="padding-left:30px">
+                    <button class="comp-toggle" aria-expanded="false">
+                      <span class="caret">▸</span>
+                      <span>
+                        <span class="comp-code">CG-03.1</span><br>
+                        <span class="comp-name">Compromiso ético</span>
+                        <span class="comp-sub">Nodo terminal · 2 niveles declarados · 1 tributación</span>
+                      </span>
+                    </button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips">
+                      <span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Compromiso ético en ETI300: Develops, nivel Introduce">ETI300
+                        <button class="x" aria-label="Quitar tributación de Compromiso ético en ETI300">×</button>
+                      </span>
+                    </div>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <p class="empty-cell">Sin tributaciones</p>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell dim">
+                    <p class="empty-cell">Nivel no declarado</p>
+                    <button class="assign" disabled>+ Asignar acá</button>
+                    <p class="cellnote">Esta competencia declara Introduce y Reinforce.</p>
+                  </td>
+                </tr>
+
+                <!-- Competencia 4: holística con hijos (sí es destino) -->
+                <tr>
+                  <td class="comp-cell">
+                    <button class="comp-toggle" aria-expanded="false">
+                      <span class="caret">▸</span>
+                      <span>
+                        <span class="comp-code">CG-04</span><br>
+                        <span class="comp-name">Comunicación profesional</span>
+                        <span class="comp-sub">Holística con 2 subcompetencias · admite tributación directa · 1 tributación</span>
+                      </span>
+                    </button>
+                  </td>
+                  <td class="cell">
+                    <p class="empty-cell">Sin tributaciones</p>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips">
+                      <span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Comunicación profesional en COM120: Develops, nivel Reinforce">COM120
+                        <button class="x" aria-label="Quitar tributación de Comunicación profesional en COM120">×</button>
+                      </span>
+                    </div>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <p class="empty-cell">Sin tributaciones</p>
+                    <button class="assign">+ Asignar acá</button>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span><span class="swatch chipsw"></span> Chip de tributación (× retira)</span>
+          <span><span class="swatch dimsw"></span> Nivel no declarado por la competencia</span>
+          <span><span class="swatch" style="background:var(--warn-soft);border-color:#e8cfa6"></span> Nodo que consolida: no es destino</span>
+        </div>
+
+        <p class="a11y-note">El chip es la vista compacta y expone competencia, código, contribución y nivel en su <code>aria-label</code>, con el formato del ejemplo: “Ver detalle de Pensamiento crítico en MAT101: Develops, nivel Reinforce”.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>5 · Sin asignatura en mano</h2>
+  <p>Estado inicial de la grilla: los “+ Asignar acá” están deshabilitados hasta elegir una asignatura en el panel lateral.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="map">
+      <aside class="aside">
+        <header>
+          <h3>Asignaturas del plan</h3>
+          <p>52 asignaturas · elige una para dejarla en mano</p>
+        </header>
+        <div class="search"><input type="search" placeholder="Buscar por código o nombre…" aria-label="Buscar asignatura"></div>
+        <div class="filters" role="group" aria-label="Filtros de asignaturas">
+          <button class="chipbtn" aria-pressed="true">Todas</button>
+          <button class="chipbtn" aria-pressed="false">Con tributación</button>
+          <button class="chipbtn" aria-pressed="false">Sin tributar</button>
+        </div>
+        <ul class="subj-list">
+          <li><button class="subj"><span class="code">MAT101</span><span class="name">Cálculo I</span><span class="badge brand">2 TRIBUTACIÓN(ES)</span></button></li>
+          <li><button class="subj"><span class="code">FIS110</span><span class="name">Física General</span><span class="badge brand">1 TRIBUTACIÓN(ES)</span></button></li>
+          <li><button class="subj"><span class="code">COM120</span><span class="name">Comunicación Efectiva</span><span class="badge mute">SIN TRIBUTAR</span></button></li>
+        </ul>
+      </aside>
+      <div>
+        <div class="inhand idle">
+          <span class="lbl">Ninguna asignatura en mano</span>
+          <span class="hint">Elige una asignatura del panel izquierdo para poder asignarla en una celda.</span>
+        </div>
+        <div class="gridwrap">
+          <div class="scroll">
+            <table class="grid">
+              <thead>
+                <tr><th class="comp">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="comp-cell">
+                    <button class="comp-toggle" aria-expanded="false"><span class="caret">▸</span>
+                      <span><span class="comp-code">CG-01</span><br><span class="comp-name">Pensamiento crítico</span>
+                      <span class="comp-sub">Nodo terminal · 3 niveles declarados</span></span>
+                    </button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips"><span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Pensamiento crítico en FIS110: Introduces, nivel Introduce">FIS110<button class="x" aria-label="Quitar tributación de Pensamiento crítico en FIS110">×</button></span></div>
+                    <button class="assign" disabled>+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <div class="chips"><span class="chip" role="button" tabindex="0" aria-label="Ver detalle de Pensamiento crítico en MAT101: Develops, nivel Reinforce">MAT101<button class="x" aria-label="Quitar tributación de Pensamiento crítico en MAT101">×</button></span></div>
+                    <button class="assign" disabled>+ Asignar acá</button>
+                  </td>
+                  <td class="cell">
+                    <p class="empty-cell">Sin tributaciones</p>
+                    <button class="assign" disabled>+ Asignar acá</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="a11y-note">Los chips se pueden retirar sin tener asignatura en mano; solo asignar requiere selección previa.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>6 · Grilla sin ninguna tributación aún</h2>
+  <p>Matriz seleccionada, competencias visibles, cero tributaciones en el plan.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="map">
+      <aside class="aside">
+        <header><h3>Asignaturas del plan</h3><p>52 asignaturas · ninguna tributa todavía</p></header>
+        <div class="search"><input type="search" placeholder="Buscar por código o nombre…" aria-label="Buscar asignatura"></div>
+        <div class="filters" role="group" aria-label="Filtros de asignaturas">
+          <button class="chipbtn" aria-pressed="false">Todas</button>
+          <button class="chipbtn" aria-pressed="true">Con tributación</button>
+          <button class="chipbtn" aria-pressed="false">Sin tributar</button>
+        </div>
+        <div style="padding:26px 16px;text-align:center">
+          <p style="font-size:12.5px;color:var(--text-soft)">Ninguna asignatura tiene tributaciones con este filtro.</p>
+          <button class="linkbtn" style="margin-top:8px">Ver todas</button>
+        </div>
+      </aside>
+      <div>
+        <div class="inhand idle">
+          <span class="lbl">Ninguna asignatura en mano</span>
+          <span class="hint">Elige una asignatura del panel izquierdo para empezar.</span>
+        </div>
+        <div class="gridwrap">
+          <div class="scroll">
+            <table class="grid">
+              <thead><tr><th class="comp">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="comp-cell"><button class="comp-toggle" aria-expanded="false"><span class="caret">▸</span><span><span class="comp-code">CG-01</span><br><span class="comp-name">Pensamiento crítico</span><span class="comp-sub">Sin tributaciones</span></span></button></td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign" disabled>+ Asignar acá</button></td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign" disabled>+ Asignar acá</button></td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign" disabled>+ Asignar acá</button></td>
+                </tr>
+                <tr>
+                  <td class="comp-cell"><button class="comp-toggle" aria-expanded="false"><span class="caret">▸</span><span><span class="comp-code">CG-02</span><br><span class="comp-name">Trabajo en equipo</span><span class="comp-sub">Sin tributaciones</span></span></button></td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign" disabled>+ Asignar acá</button></td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign" disabled>+ Asignar acá</button></td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign" disabled>+ Asignar acá</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>7 · Detalle expandido sin filas</h2>
+  <p>Una competencia sin tributaciones que se expande.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="gridwrap">
+      <div class="scroll">
+        <table class="grid">
+          <thead><tr><th class="comp">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="comp-cell"><button class="comp-toggle" aria-expanded="true"><span class="caret">▾</span><span><span class="comp-code">CG-05</span><br><span class="comp-name">Emprendimiento</span><span class="comp-sub">Nodo terminal · 3 niveles declarados · 0 tributaciones</span></span></button></td>
+              <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign">+ Asignar acá</button></td>
+              <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign">+ Asignar acá</button></td>
+              <td class="cell"><p class="empty-cell">Sin tributaciones</p><button class="assign">+ Asignar acá</button></td>
+            </tr>
+            <tr class="detail-row">
+              <td colspan="4">
+                <div class="detail-inner">
+                  <h4>Detalle de CG-05 · Emprendimiento</h4>
+                  <div style="margin-top:9px;padding:22px;text-align:center;background:#fff;border:1px dashed var(--border-strong);border-radius:6px">
+                    <p style="font-size:13px;color:var(--text-soft)">Esta competencia todavía no tiene asignaturas tributando.</p>
+                    <p style="font-size:12px;color:var(--text-mute);margin-top:4px">Elige una asignatura en el panel y usa “+ Asignar acá” en el nivel que corresponda.</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>8 · Solo lectura (REQ-17)</h2>
+  <p>Sin capability de escritura: indicador “Solo lectura”, sin “+ Asignar acá”, sin × en los chips, sin selects editables ni Retirar. La supresión es conveniencia de UI; la autoridad sigue siendo server-side.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="readonly-banner">
+      <span class="badge mute">Solo lectura</span>
+      No tienes permiso para modificar la tributación de este plan. Puedes consultar la grilla y el detalle de cada competencia.
+    </div>
+
+    <div class="map">
+      <aside class="aside">
+        <header><h3>Asignaturas del plan</h3><p>52 asignaturas · consulta</p></header>
+        <div class="search"><input type="search" placeholder="Buscar por código o nombre…" aria-label="Buscar asignatura"></div>
+        <div class="filters" role="group" aria-label="Filtros de asignaturas">
+          <button class="chipbtn" aria-pressed="true">Todas</button>
+          <button class="chipbtn" aria-pressed="false">Con tributación</button>
+          <button class="chipbtn" aria-pressed="false">Sin tributar</button>
+        </div>
+        <ul class="subj-list">
+          <li><button class="subj"><span class="code">MAT101</span><span class="name">Cálculo I</span><span class="badge brand">2 TRIBUTACIÓN(ES)</span></button></li>
+          <li><button class="subj"><span class="code">FIS110</span><span class="name">Física General</span><span class="badge brand">1 TRIBUTACIÓN(ES)</span></button></li>
+          <li><button class="subj"><span class="code">COM120</span><span class="name">Comunicación Efectiva</span><span class="badge mute">SIN TRIBUTAR</span></button></li>
+        </ul>
+      </aside>
+      <div>
+        <div class="gridwrap">
+          <div class="scroll">
+            <table class="grid">
+              <thead><tr><th class="comp">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="comp-cell"><button class="comp-toggle" aria-expanded="true"><span class="caret">▾</span><span><span class="comp-code">CG-01</span><br><span class="comp-name">Pensamiento crítico</span><span class="comp-sub">Nodo terminal · 2 tributaciones</span></span></button></td>
+                  <td class="cell">
+                    <div class="chips"><span class="chip ro" role="button" tabindex="0" aria-label="Ver detalle de Pensamiento crítico en FIS110: Introduces, nivel Introduce">FIS110</span></div>
+                  </td>
+                  <td class="cell">
+                    <div class="chips"><span class="chip ro" role="button" tabindex="0" aria-label="Ver detalle de Pensamiento crítico en MAT101: Develops, nivel Reinforce">MAT101</span></div>
+                  </td>
+                  <td class="cell"><p class="empty-cell">Sin tributaciones</p></td>
+                </tr>
+                <tr class="detail-row">
+                  <td colspan="4">
+                    <div class="detail-inner">
+                      <h4>Detalle de CG-01 · Pensamiento crítico</h4>
+                      <table class="detail">
+                        <thead><tr><th style="width:90px">Código</th><th>Asignatura</th><th style="width:110px">Período</th><th style="width:140px">Cobertura</th><th style="width:150px">Contribución</th></tr></thead>
+                        <tbody>
+                          <tr><td>FIS110</td><td>Física General</td><td>Semestre 2</td><td>Introduce</td><td>Introduces</td></tr>
+                          <tr><td>MAT101</td><td>Cálculo I</td><td>Semestre 1</td><td>Reinforce</td><td>Develops</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>9 · Confirmaciones y rechazos por regla (REQ-03 a REQ-08)</h2>
+  <p>Cada operación persiste al instante; el resultado se informa en línea. Los rechazos vienen del resolver gobernado: el mismo texto llega por UI, API o MCP.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="toasts">
+      <div class="toast ok"><span class="ic">✓</span><div><strong>Tributación asignada.</strong> MAT101 tributa a Pensamiento crítico en nivel Reinforce con contribución Develops.</div></div>
+      <div class="toast ok"><span class="ic">✓</span><div><strong>Tributación movida.</strong> MAT101 pasó de Reinforce a Master en Pensamiento crítico. Se actualizó la tributación existente.</div></div>
+      <div class="toast ok"><span class="ic">✓</span><div><strong>Tributación retirada.</strong> Se eliminó la tributación de ETI300 en Compromiso ético.</div></div>
+      <div class="toast ok"><span class="ic">✓</span><div><strong>Cambio guardado.</strong> Contribución de ICI410 en Trabajo en equipo: Introduces.</div></div>
+
+      <div class="toast err"><span class="ic">✕</span><div><span class="rule">R-1 · Adopción</span><strong>No se pudo asignar.</strong> La matriz de esta competencia no tiene adopción vigente para el plan de la asignatura. Revisa la adopción antes de tributar.</div></div>
+      <div class="toast err"><span class="ic">✕</span><div><span class="rule">R-2 · Par único</span><strong>No se pudo asignar.</strong> MAT101 ya tributa a Pensamiento crítico. Una asignatura tributa una sola vez por competencia; para cambiar el nivel usa la celda de destino y se moverá.</div></div>
+      <div class="toast err"><span class="ic">✕</span><div><span class="rule">R-3 · Destino inválido</span><strong>No se pudo asignar.</strong> Responsabilidad social consolida a sus subcompetencias y no es holística: no admite tributación directa.</div></div>
+      <div class="toast err"><span class="ic">✕</span><div><span class="rule">R-4 · Nivel declarado</span><strong>No se pudo guardar.</strong> Master no es un nivel de desarrollo declarado por Compromiso ético. Niveles válidos: Introduce, Reinforce.</div></div>
+      <div class="toast err"><span class="ic">✕</span><div><span class="rule">R-5 · Contribución</span><strong>No se pudo guardar.</strong> La contribución es obligatoria y debe ser uno de los valores válidos. Se mantuvo el valor anterior.</div></div>
+      <div class="toast err"><span class="ic">✕</span><div><span class="rule">Permiso</span><strong>No se pudo guardar.</strong> No tienes la capability necesaria para esta operación sobre la tributación.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="section-note">
+  <h2>10 · Errores de carga y matriz inválida (REQ-05, invariante)</h2>
+  <p>Fallo al cargar la grilla, y el reporte del invariante: nodo con isHolistic falso y cero hijos.</p>
+</div>
+
+<div class="app">
+  <div class="body">
+    <div class="matrixbar">
+      <div class="field grow">
+        <label for="mx10">Matriz de competencia</label>
+        <select id="mx10"><option selected>Competencias genéricas institucionales 2025</option></select>
+      </div>
+      <div class="adoption"><span class="badge ok">Adopción vigente</span></div>
+    </div>
+
+    <div class="state error">
+      <div class="glyph" style="color:var(--danger)">⚠</div>
+      <h3>No se pudo cargar la tributación</h3>
+      <p>Ocurrió un error al obtener las competencias y sus tributaciones. Vuelve a intentarlo; si persiste, avisa al administrador.</p>
+      <p style="margin-top:12px"><button class="outbtn">Reintentar</button></p>
+    </div>
+
+    <div style="margin-top:16px" class="gridwrap">
+      <div class="scroll">
+        <table class="grid">
+          <thead><tr><th class="comp">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="comp-cell">
+                <button class="comp-toggle" aria-expanded="false" disabled style="cursor:default"><span class="caret">▸</span>
+                  <span><span class="comp-code">CG-06</span><br><span class="comp-name">Sustentabilidad</span>
+                  <span class="comp-sub"><span class="badge danger">Matriz inválida</span></span></span>
+                </button>
+              </td>
+              <td colspan="3" style="padding:10px 12px;background:var(--danger-soft);color:var(--danger);font-size:12px;border-left:1px solid var(--border)">
+                Este nodo no es holístico y no tiene subcompetencias: la matriz es inválida en este punto y el nodo no admite tributación. Corrige la matriz de competencia.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================== -->
+<div class="footnote">
+  <h4>Notas de verificación (divergencias y decisiones de la maqueta)</h4>
+  <ul>
+    <li><strong>Sin barra Guardar/Descartar</strong>: escritura por operación (REQ-17). El guardado de conjunto es UPONE-1770.</li>
+    <li><strong>Sin arrastre</strong>: el mecanismo es selección lateral (“en mano”) + click en “+ Asignar acá” (REQ-14).</li>
+    <li><strong>Sin panel/drawer de detalle</strong>: el detalle vive en la tabla de la competencia expandida más el <code>aria-label</code> del chip (REQ-15, REQ-16). El request original menciona un “panel de detalle”; la Adenda 1 lo supersede.</li>
+    <li><strong>Columnas por competencia</strong>: la cabecera muestra la unión de niveles de la matriz; cada fila deshabilita los niveles que su competencia no declara (celda rayada, R-4).</li>
+    <li><strong>Move implícito</strong>: asignar en otra celda de una competencia ya tributada por la asignatura en mano mueve la fila (R-10). La celda lo anticipa con la nota “Asignar acá mueve … desde …”.</li>
+    <li><strong>Retiro</strong>: delete simple, sin aviso de dependencias (REQ-09, deuda explícita hasta UPONE-1772).</li>
+    <li><strong>Fuera de la maqueta</strong>: Peso/contributionPercentage, vía masiva “Varias”, indicador “SIN EVALUADOR”, gestión de adopción y panel de Medición.</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

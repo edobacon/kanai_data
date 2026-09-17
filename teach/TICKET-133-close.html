@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach close - Roles curriculares a application profiles · TICKET-133</title>
+<!--
+  metadata · ticket: TICKET-133 · kind: close · project: up1 · generated: 2026-09-03
+  Externo: UPONE-1615 · refactor RBAC mod-only · SP ejecutados: 6 sessions
+-->
+<style>
+  :root { --bg:#0c0a09; --panel:#1c1917; --border:#44403c; --amber:#f59e0b; --text:#e7e5e4; --muted:#a8a29e; --green:#22c55e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.55; }
+  main { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.5rem; border-bottom:2px solid var(--amber); padding-bottom:.5rem; }
+  h2 { font-size: 1.15rem; color:var(--amber); margin-top:2rem; }
+  code, pre { font-family: SFMono-Regular,Menlo,Consolas,monospace; }
+  code { background:var(--panel); padding:.1rem .35rem; border-radius:4px; font-size:.85em; }
+  pre { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto; font-size:.82rem; }
+  table { border-collapse: collapse; width:100%; margin:.75rem 0; font-size:.88rem; }
+  th, td { border:1px solid var(--border); padding:.45rem .6rem; text-align:left; vertical-align:top; }
+  th { background:var(--panel); color:var(--amber); }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:1rem 1.25rem; margin:1rem 0; }
+  .ok { color:var(--green); font-weight:600; }
+  .muted { color:var(--muted); }
+  ul { padding-left:1.25rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Roles curriculares: de permisos del rol a application profiles</h1>
+<p class="muted">TICKET-133 · UPONE-1615 · refactor RBAC mod-only · Cerrado 2026-09-03 · 6 sessions · PRs: curriculum-design #58, curriculum-mapping #26</p>
+
+<div class="panel">
+<strong>Que quedo resuelto.</strong> Los permisos de los 4 roles curriculares (curriculum-design y curriculum-mapping) dejaron de colgar directo del rol y pasaron a <strong>application profiles por modulo</strong> (base + extensiones + compuesto). Los 4 roles se renombraron a <code>Learning Assurance &lt;Rol&gt; Curricular</code> preservando sus 120 asignaciones, se privatizo la visibilidad de las apps por profile-gating, y se completo <code>institution:view</code> para desbloquear crear plan de estudio. El mecanismo de perfiles ya existia en el core: esto fue una <strong>migracion</strong>, no una construccion; el peso estuvo en verificar que ningun rol pierde permisos.
+</div>
+
+<h2>Que se hizo</h2>
+<table>
+<tr><th>Pieza</th><th>Cambio</th></tr>
+<tr><td>Perfiles (<code>profiles/</code>)</td><td>base + 3 extensiones por rol + compuesto (Disenador union Autoridad) en cada mod, reemplazando 2 fixtures</td></tr>
+<tr><td>Rename</td><td>4 roles a <code>Learning Assurance &lt;Rol&gt; Curricular</code>, UPDATE in-place, id y 120 asignaciones intactas</td></tr>
+<tr><td>Cut-over del seed (<code>_data-rbac.js</code>)</td><td>se retiran las caps directas; fuente de verdad al perfil; absorbe caps de UPONE-1619 (cd) y UPONE-1633 (cm)</td></tr>
+<tr><td>Cableado (<code>config/app.json</code>)</td><td><code>profileRoleMapping</code> + <code>navByRole</code>, materializado por el sync, sin runbook manual</td></tr>
+<tr><td>Institucion</td><td><code>institution:view</code> en el perfil base de cd (caso PO: crear plan con selector poblado)</td></tr>
+<tr><td>Retiro</td><td>rol huerfano <code>GestorCurricular</code> + 2 fixtures, con script guardado y verificador de no-regeneracion</td></tr>
+</table>
+
+<h2>Como se verifico</h2>
+<ul>
+<li><span class="ok">Suites</span>: verdes en cd y cm (rbacRoles, rbacProfiles, permissionMatrix con prueba negativa de <code>institution:view</code>, profileBaselineEquivalence, integration reconciliados). Regresion sin fallos nuevos.</li>
+<li><span class="ok">Equivalencia</span>: efectivo por rol == baseline S1 con la unica diferencia esperada <code>institution:view</code> en los 4 roles de cd; el compuesto resuelve exacto a Disenador union Autoridad (sin escalada).</li>
+<li><span class="ok">Runtime</span> (UPU, tenant real): smoke rol por rol con bypass clerk_test. Visibilidad por profile-gating, menu en el orden/labels de 1616, caso PO (Disenador crea plan con institucion), y least-privilege confirmado contra el efectivo materializado en la DB.</li>
+<li><span class="ok">Review</span>: kn-dredd sobre la rama, aprobable con observaciones (todas resueltas o trazadas).</li>
+</ul>
+
+<h2>Learn que dejaron la ejecucion y el smoke</h2>
+<div class="panel">
+<strong>1. Nombre de rol sin guion.</strong> La convencion del sync (<code>roleNaming.js:19</code>, <code>CONVENTIONAL_ROLE_NAME</code>) solo admite palabras PascalCase espanol separadas por un unico espacio; el guion no pasa <code>isConventionalRoleName</code>. El AC de Jira pedia con guion: quedo superseded.
+</div>
+<div class="panel">
+<strong>2. Orden seed a sync (el bug que destapo el smoke).</strong> El rename de roles debe PRECEDER al 1er sync del <code>profileRoleMapping</code>: <code>syncAppProfileMapping</code> resuelve el rol por nombre y el run-once gate por fingerprint congela un mapeo parcial si en ese 1er sync los roles aun tienen el nombre viejo, dejando a los 4 roles curriculares sin ver la app. Workaround: <code>UP1_SEED_RESEED=true pnpm sync</code>. Es de core (<code>dbSync</code>); ver <code>RULE-curriculum-design-052</code> y la nota en kb/sp10.
+</div>
+<div class="panel">
+<strong>3. DEFAULT_ROLES.</strong> El core repone TODA capability nueva a Admin/Consultor/Colaborador (<code>generateCapabilities.js:331-357</code>), asi que mapearlos a un perfil acotado no reduce su efectivo. Se los mapea al compuesto por visibilidad y future-proofing, y se los excluye del smoke de scoping. Ver <code>BUG-curriculum-design-019</code>.
+</div>
+
+<h2>Donde vive la evidencia</h2>
+<ul>
+<li>Docs en el repo: <code>docs/rbac/</code> (matriz-accion-capability, escenario-final, smoke-runtime-upu, regresion-rbac, decisiones-y-evidencia) en curriculum-design; espejo en cm.</li>
+<li>KB del proyecto: <code>RULE-curriculum-design-052</code>, <code>BUG-curriculum-design-019</code>, y 3 notas en <code>kb/sp10</code> (colisiones de nombres, run-once gate del profileRoleMapping, test de core del profile-gating descartado por alcance mod-only).</li>
+</ul>
+
+<h2>Pendiente fuera del codigo</h2>
+<ul>
+<li>Avisar al PO que el AC de Jira (naming con guion; "Consultor sin vinculo") quedo superseded por la decision sp10.</li>
+<li>Merge de los PRs #58 (cd) y #26 (cm) tras review.</li>
+<li>Fix del run-once gate y de DEFAULT_ROLES en core (elevados como notas/bug a plataforma).</li>
+</ul>
+
+</main>
+</body>
+</html>

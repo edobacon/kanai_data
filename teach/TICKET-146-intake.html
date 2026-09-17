@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-intake · UPONE-1769 · Cableado de tributación</title>
+<!-- ticket: TICKET-146 · kind: intake · project: up1 · generated: 2026-09-10 -->
+</head>
+<body>
+<h1>Cableado de tributación (UPONE-1769): 3 agregados de schema, mod-only</h1>
+
+<div class="panel" data-dkc-block="tldr">
+<strong>TL;DR.</strong> Ticket puro de schema, aditivo y mod-only en <code>curriculum-mapping</code>. Se declaran 3 cosas nullable en JSON de objeto: <code>contributionPercentage</code> e índice de grupo en <code>CompetencyAlignment</code>, e <code>isRepresentative</code> en <code>CompetencyNodeDevelopmentLevel</code>. No se escribe lógica que los consuma (eso es follow-up UPONE-1770), no se re-ejecuta ningún rename, no cambia interfaz ni comportamiento.
+</div>
+
+<h2>Punto de partida y precondición</h2>
+<div class="callout" data-dkc-block="callout">
+Base = <strong>develop con UPONE-1756 ya mergeado</strong> (PR #29), en rama propia <code>feat/UPONE-1769-...</code> (nunca la rama de 1756). Verificado en develop: existen <code>planId</code> + su índice individual y el objeto <code>CompetencyNodeDevelopmentLevel</code>, y los renames de 1753 (<code>developmentLevelId</code>, catálogos <code>DevelopmentLevel</code>/<code>PerformanceScale</code>) ya están. Si algo de eso faltara, <strong>frenar y reportar</strong>, no crearlo.
+</div>
+
+<h2>Invariantes del mod que no se pueden violar</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li><strong>RULE-mods-001:</strong> jamás commitear los artefactos que genera <code>npm run sync</code>/codegen en core (object-manager, layout, suite). Solo el mod fuente entra al commit.</li>
+<li><strong>RULE-mods-003:</strong> tras editar los JSON del mod, correr <code>npm run sync</code> + codegen y verificar idempotencia (segunda corrida sin drift).</li>
+<li><strong>RULE-mods-017:</strong> <code>required[]</code> es unión append-only; los 3 agregados van nullable y NO se agregan a <code>required</code>.</li>
+<li><strong>RULE-mods-018:</strong> <code>description</code> orientada al usuario final (sin notas técnicas ni ids de ticket) + key de i18n en <code>lang/</code>.</li>
+</ul>
+</div>
+
+<h2>Migración esperada</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+La migración debe contener exclusivamente <code>ADD COLUMN</code> nullable x2 (<code>contributionPercentage</code>, <code>isRepresentative</code>) y <code>CREATE INDEX</code> x1 (índice de grupo <code>(planId, competencyNodeId, developmentLevelId)</code>, no único, conservando el índice individual de <code>planId</code>). Ningún <code>DROP</code>, ningún rename. Al terminar, el CRUD de tributación de 1756 debe seguir verde.
+</div>
+
+<h2>Fuera de alcance</h2>
+<div class="callout" data-dkc-block="callout">
+El reparto de pesos y los indicadores (que consumen <code>contributionPercentage</code>) son follow-up UPONE-1770. El <code>isRepresentative</code> local de <code>ConsolidationBlock/trace.ts</code> no se toca ni se cablea aquí.
+</div>
+</body>
+</html>

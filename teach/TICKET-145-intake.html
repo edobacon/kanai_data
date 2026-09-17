@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-intake TICKET-145: migracion server-side de Curriculum Design</title>
+<!-- teach ticket: TICKET-145 · kind: intake · project: up1 · external: UPONE-1757 · generated: 2026-09-10 -->
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1c2330}
+h1{font-size:1.5rem;border-bottom:2px solid #d8dee9;padding-bottom:.3rem}
+h2{font-size:1.15rem;margin-top:1.8rem;color:#243b53}
+code{background:#f0f3f7;padding:.1rem .35rem;border-radius:4px;font-size:.9em}
+.panel{background:#f0f6ff;border-left:4px solid #2f6fed;padding:.8rem 1rem;border-radius:6px;margin:1rem 0}
+table{border-collapse:collapse;width:100%;margin:.8rem 0;font-size:.92rem}
+th,td{border:1px solid #d8dee9;padding:.4rem .5rem;text-align:left;vertical-align:top}
+th{background:#f0f3f7}
+ul{margin:.4rem 0}
+</style>
+</head>
+<body>
+<h1>Migracion server-side de invariantes de Curriculum Design (camino A)</h1>
+
+<div class="panel">
+<strong>Que quedo definido:</strong> este ticket ejecuta la migracion real de los invariantes de malla de Curriculum Design que hoy viven solo en el cliente, escalandolos al resolver del mod (camino A / N3), con validacion por pruebas fase a fase. NO es el diagnostico de 1757: implementa el plan <code>sp10/UPONE-1757-plan-validacion-server-side</code>. La divergencia de alcance con Jira (1757 es diagnostico) esta asumida y anotada en el request; pendiente avisar al PO (Esteban Cortes).
+</div>
+
+<h2>Principios que hay que entender antes de disenar</h2>
+<ul>
+<li><strong>El invariante solo es real donde todo write pasa:</strong> el override de <code>createInstance</code>/<code>updateInstance</code>/delete del mod. Un resolver <code>*Validated</code> paralelo lo puentea el generico; una regla client-side la saltea cualquier cliente no-frontend. Objetivo N3 (regla en el override) implica objeto en N0 implica <code>blockGenericMutation</code> innecesario.</li>
+<li><strong>No borrar la logica client-side (<code>.logic.ts</code>):</strong> queda como pre-check de UX (feedback inmediato). Se agrega el enforcement server-side, no se reemplaza la UX.</li>
+<li><strong>La garantia nueva se prueba con bypass cross-client:</strong> cada regla migrada debe rechazar por las tres vias (UI, generico <code>updateInstance</code>/<code>deleteInstance</code> con alias <code>RecordType</code>, y <code>up1_*_object</code> del MCP). Si el generico pasa, la regla quedo esquivable: mover al override o declarar camino B.</li>
+<li><strong>No-regresion = comportamiento del usuario intacto:</strong> contra el baseline de F0, las operaciones legitimas siguen funcionando y las que la UI ya bloqueaba siguen bloqueadas (ahora respaldadas por backend, como aviso, no error de carga).</li>
+</ul>
+
+<h2>Casos y orden de fases</h2>
+<table>
+<tr><th>Fase</th><th>Casos</th><th>Que se endurece</th></tr>
+<tr><td>F0</td><td>preparacion</td><td>watermark, gate de clasificacion A/C, submodulo cd, ambientes, login test, baseline de regresion</td></tr>
+<tr><td>F1</td><td>A-CD-1/2/4</td><td>estado (plan Draft), unicidad (planId, activityId), forma (electiva exige bloque, credito no negativo) en el override de planEntry (<code>planEntry-batch:90-135</code> y single)</td></tr>
+<tr><td>F2</td><td>A-CD-3</td><td>borrado seguro en <code>deletePlanEntriesBatch</code> (allow/cascade/block)</td></tr>
+<tr><td>F3</td><td>A-CD-5</td><td><code>movePlanEntry</code> con renumerado atomico transaccional (depende de F1)</td></tr>
+<tr><td>F4</td><td>A-CD-6</td><td>sanitizacion HTML de CustomSection en el write (whitelist; bloquear <code>javascript:</code>/<code>data:</code>). Cierra XSS por API</td></tr>
+<tr><td>F5</td><td>A-CD-7 R0, A-CD-8 R1</td><td>extender guard de progression al path <code>rt__Plan__curriculum</code>; agregar <code>withObjectAuth</code> en <code>createSyllabusOffering</code></td></tr>
+<tr><td>F6</td><td>cierre</td><td>veredicto <code>blockGenericMutation</code> por objeto (N0 esperado); Core Extensions registrados para core</td></tr>
+</table>
+
+<h2>Gate de clasificacion en F0 (decision del dev)</h2>
+<p>Antes de migrar, decidir A vs C para los ambiguos: <code>prereqCheck</code>, <code>meshPrereqScan</code>, <code>deriveLevel</code>, <code>guidedAdd</code>, <code>editEntryModal</code>, <code>blockSelect</code>. Criterio de desempate: saltada la regla, corrompe el dato implica A (entra a una fase); solo efecto de interfaz implica C (queda en cliente, se documenta el motivo).</p>
+
+<h2>Como probar (ambientes y capas)</h2>
+<p>Backend/object-manager <code>:4000</code>, front suite <code>:3000</code>, MCP online <code>:4100</code>. Login de test: <code>eduardo.bacon+clerk_test@uplanner.com</code> + OTP <code>424242</code> (UPU exige membresia). Materializar el submodulo <code>mods/curriculum-design</code> antes de ejecutar. Watermark: revisar solo commits posteriores a <code>curriculum-design@8a151e7</code>; si una regla ya migro, reclasificar antes de tocarla (H1).</p>
+<p>Capas de test por fase: unit del guard (valores concretos) + integracion del resolver (single y batch) + bypass cross-client (las 3 vias) + regresion server-side existente (<code>planEntry-batch</code>) + regresion de comportamiento (baseline F0) + harness E2E del MCP (read-back + 4 fronteras).</p>
+
+<h2>Riesgos a vigilar</h2>
+<ul>
+<li><strong>A-CD-2:</strong> cambiar la semantica de unicidad puede rechazar datos existentes de UPU; confirmar semantica y correr contra datos reales antes del <code>@@unique</code>.</li>
+<li><strong>A-CD-5:</strong> colisiones de renumerado bajo concurrencia; transaccion + unicidad de F1.</li>
+<li><strong>Clasificacion:</strong> una regla A tratada como C (o al reves) agrega friccion o deja una brecha; el gate de F0 lo mitiga.</li>
+</ul>
+
+<h2>Fuera de alcance (no confundir)</h2>
+<p>Camino B (<code>blockGenericMutation</code>, fichas, <code>registerExtra</code>) salvo que F0 lo exija (coordinar con UPONE-1758); Core Extensions (<code>requiresComment</code>, enum <code>RecordType</code>) que van a core; exponer la malla por MCP como superficie nueva.</p>
+
+<h2>Referencias</h2>
+<p>Plan de ejecucion: <code>sp10/UPONE-1757-plan-validacion-server-side</code>. Contrato: <code>sp10/UPONE-1757-detalle</code>, <code>sp10/UPONE-1757-pre-intake</code>. Dominio: <code>sp9/ANALISIS-backend-vs-client-cd-cm-endurecimiento-mcp</code>, <code>sp9/PLAN-migracion-cd-cm-al-mcp-online</code>, <code>sp9/PLAN-integracion-elric-mcp-por-capas</code>. Regla: <code>RULE-server-side-logic-mcp-ready</code>.</p>
+
+</body>
+</html>

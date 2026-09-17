@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-close UPONE-1756: Tributación (CompetencyAlignment)</title>
+<!-- ticket: TICKET-143 · kind: close · project: up1 · generated: 2026-09-09 -->
+</head>
+<body>
+<h1>Cierre de UPONE-1756 / TICKET-143: Tributación (CompetencyAlignment), CRUD por competencia</h1>
+
+<div class="panel">
+<p><b>TL;DR.</b> Quedó entregado el objeto gobernado <code>CompetencyAlignment</code> (la tributación) con su CRUD por operación (asignar / editar / mover / retirar) y la vista de Tributación del plan (grilla, panel de asignaturas, modal, resumen, glosario, modo ver/editar). Mod-only en curriculum-mapping, con solo el tab y el gate RBAC en curriculum-design. Verificado: 2291 tests en verde, fidelidad visual completa (smoke de componente + revisión humana) y review de Dredd aprobable con las 2 observaciones resueltas. Deudas de alcance acotadas a sus follow-ups (1770 / 1771 / 1772).</p>
+</div>
+
+<h2>Qué se hizo (resultado)</h2>
+<ul>
+<li>Objeto <code>CompetencyAlignment</code> con <b>planId denormalizado</b> derivado server-side de planEntry.planId (REQ-01); el valor del cliente se descarta (no está en WRITABLE_FIELDS).</li>
+<li>Resolver gobernado con <b>R-1..R-5 y R-10</b> corriendo dentro de la transacción y antes de escribir: R-1 adopción vigente, R-2 par único, R-3 destino válido (sin hijas o holístico), R-4 nivel declarado, R-5 contributionType obligatorio (default Develops), R-10 mover actualiza la fila (nunca crea otra).</li>
+<li><b>RBAC por operación (SoD)</b>: view a los 4 roles curriculares, create/modify al Diseñador, delete a la Autoridad; la capability se chequea antes de tocar la DB.</li>
+<li>Vista completa: grilla competencia x nivel, panel lateral de asignaturas con contador, modal de detalle, 3 tarjetas de resumen, glosario y modo ver/editar integrado con up1.</li>
+<li>Frontera mod-only: objeto, resolver, capabilities y tabla de unión en curriculum-mapping; en curriculum-design solo el tab en los 2 layouts (patrón requiredCapability) y la ampliación del gate RBAC baseline. Sin Core Extension.</li>
+<li>Doc de contrato: docs/reference/competencyalignment-object.md (creada al cierre, formato de sus hermanas).</li>
+</ul>
+
+<h2>Cómo se verificó</h2>
+<ul>
+<li>Suite de curriculum-mapping en verde: <b>2291 tests pass</b>, typecheck 0, lint 0, con aserciones concretas de reglas, paridad, i18n y componente.</li>
+<li>Fidelidad visual (11 casos de maqueta): 9 verificados por smoke de componente determinista (montan el componente real y asertan textos, estructura y geometría) y 2 (look nativo up1, alto de fila en píxeles) por revisión visual humana.</li>
+<li>Review de Dredd (kn-dredd, modo local): veredicto aprobable con observaciones, cero bloqueantes y cero bugs de comportamiento. Las 2 observaciones se resolvieron antes del cierre: doc de referencia del objeto (S2) e ids internos de regla quitados de los comentarios (S3).</li>
+</ul>
+
+<h2>Decisiones y deudas aceptadas</h2>
+<ul>
+<li><b>Retiro exige R-1</b>: el delete corre R-1 y capability, con un seam marcado. La relajación de R-1 para limpiar tributaciones huérfanas cuando la adopción venció, más el aviso R-7 de dependientes, se difieren a <b>UPONE-1772</b>.</li>
+<li><b>La vía CRUD genérica del core (MCP de up1) saltea el gobierno</b>: la garantía hoy es por la vía gobernada; bloquear la genérica es plataforma. Deuda aceptada, documentada como grupo GAP en competencyAlignmentParity.test.js. Follow-up: <b>UPONE-1771</b> (o Core Extension). Mitigación: no otorgar caps de escritura fuera de los roles curriculares.</li>
+<li><b>Fuera de alcance por diseño</b>: peso/contributionPercentage, barra Guardar de conjunto y vía masiva a UPONE-1770; dashboard de indicadores, R-12 y versionado a UPONE-1771; rename coverageLevelId/CoverageScheme a UPONE-1769.</li>
+</ul>
+
+<h2>Aprendizajes</h2>
+<ul>
+<li>El resolver gobernado (mutations *Validated) es la única vía con garantías: toda escritura nueva de tributación debe pasar por ahí, no por el CRUD genérico. El no-bypass de plataforma es convención, no enforcement, hasta que lo cubra un ticket de plataforma.</li>
+<li>Los 5 tests rojos de curriculum-design (profileBaselineEquivalence) son <b>preexistentes</b>, drift RBAC de <b>UPONE-1615</b> (competencynodedevelopmentlevel:view ausente del snapshot baseline), ajenos a 1756. Corrección al owner de 1615; no se tocó para no enmascarar el drift.</li>
+<li>Convención del mod confirmada: cada objeto gobernado lleva su docs/reference/objeto-object.md. Ahora la cumplen los 4 objetos; conviene volverla regla explícita del KB.</li>
+<li>Si entra UPONE-1772, el retiro cambia (relajación de R-1 + aviso R-7): respetar el seam ya marcado en deleteCompetencyAlignment.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,1343 @@
+<!doctype html>
+<html lang="es" class="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TICKET-149 · Tributación — preview de diseño</title>
+<style>
+/* ============================================================
+   TOKENS DEL DESIGN SYSTEM up1 (declarados en DS-up1-md)
+   Prefijo --up1-*, unificación light/dark con light-dark().
+   Dark mode SOLO con la clase theme-dark en <html> + color-scheme.
+   ============================================================ */
+:root{
+  color-scheme: light;
+
+  /* Paleta primaria (teal de marca) — valores del DS */
+  --up1-color-primary-50:#E7F2F3;
+  --up1-color-primary-100:#B6D9DC;
+  --up1-color-primary-200:#7FC4CA;
+  --up1-color-primary-300:#47AEB8;
+  --up1-color-primary-500:#0a808c;
+  --up1-color-primary-600:#12717b;
+  --up1-color-primary-700:#16626b;
+  --up1-color-primary-800:#17545b;
+  --up1-color-primary-900:#17464c;
+  --up1-color-primary-950:#16393d;
+  --up1-color-primary-rgb:10,128,140;
+
+  /* Alias semánticos declarados en el DS */
+  --up1-color-primary-hover:var(--up1-color-primary-600);
+  --up1-color-primary-active:var(--up1-color-primary-700);
+  --up1-color-primary-light:var(--up1-color-primary-50);
+  --up1-text-link:var(--up1-color-primary-600);
+}
+html.theme-dark{ color-scheme: dark; }
+html.theme-dark{
+  --up1-color-primary-light:var(--up1-color-primary-800);
+  --up1-text-link:var(--up1-color-primary-300);
+}
+
+/* ------------------------------------------------------------
+   ALIAS LOCALES DEL PREVIEW (pv-*) — NO son tokens del DS.
+   El extracto del DS recibido llega truncado en la escala de
+   grises neutra, así que los neutrales, el rojo de error y el
+   ámbar de aviso se resuelven acá como alias del preview y NO
+   como nombres de token nuevos. Ver "Carencias" en el DELTA.
+   ------------------------------------------------------------ */
+:root{
+  --pv-bg-body:        light-dark(#f7f7f8, #17181a);
+  --pv-bg-surface:     light-dark(#ffffff, #202225);
+  --pv-bg-subtle:      light-dark(#f2f2f3, #26282b);
+  --pv-border:         light-dark(#dededf, #343639);
+  --pv-border-strong:  light-dark(#c4c4c6, #46484c);
+  --pv-text:           light-dark(#1d1e20, #ececed);
+  --pv-text-muted:     light-dark(#67686c, #a3a4a8);
+  --pv-text-faint:     light-dark(#8c8d91, #7d7e82);
+  --pv-danger:         light-dark(#b3261e, #f2857e);
+  --pv-danger-bg:      light-dark(#fdecea, #3a1b19);
+  --pv-warn:           light-dark(#8a5a00, #f0c164);
+  --pv-warn-bg:        light-dark(#fdf3e0, #3a2f18);
+  --pv-ok:             light-dark(#1d6b45, #74d0a1);
+  --pv-ok-bg:          light-dark(#e9f6ef, #163023);
+
+  --pv-radius-sm:.25rem;
+  --pv-radius:.375rem;   /* radio Bootstrap-compatible del DS */
+  --pv-radius-lg:.5rem;
+  --pv-shadow: 0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.06);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size:14px; line-height:1.5;
+  background:var(--pv-bg-body); color:var(--pv-text);
+}
+:focus-visible{ outline:2px solid var(--up1-color-primary-500); outline-offset:2px; border-radius:2px; }
+
+/* ---------- Chrome del documento de verificación ---------- */
+.doc{max-width:1180px;margin:0 auto;padding:24px 20px 96px}
+.doc-head{
+  border:1px solid var(--pv-border);background:var(--pv-bg-surface);
+  border-radius:var(--pv-radius-lg);padding:20px 22px;box-shadow:var(--pv-shadow);
+  border-top:4px solid var(--up1-color-primary-500);
+}
+.doc-head h1{margin:0 0 4px;font-size:20px;letter-spacing:-.01em}
+.doc-head p{margin:0;color:var(--pv-text-muted)}
+.doc-nav{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0}
+.doc-nav a{
+  font-size:12px;text-decoration:none;color:var(--up1-text-link);
+  border:1px solid var(--pv-border);border-radius:100px;padding:3px 10px;background:var(--pv-bg-surface);
+}
+.doc-nav a:hover{border-color:var(--up1-color-primary-300)}
+
+h2.sec{font-size:16px;margin:40px 0 4px;letter-spacing:-.01em}
+h2.sec .n{color:var(--pv-text-faint);font-weight:500;margin-right:8px}
+p.sec-sub{margin:0 0 16px;color:var(--pv-text-muted);max-width:80ch}
+
+.card{
+  background:var(--pv-bg-surface);border:1px solid var(--pv-border);
+  border-radius:var(--pv-radius-lg);box-shadow:var(--pv-shadow);margin:0 0 18px;overflow:hidden;
+}
+.card > header{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:11px 16px;border-bottom:1px solid var(--pv-border);background:var(--pv-bg-subtle);
+}
+.card > header h3{margin:0;font-size:13px;font-weight:600}
+.card > header .reqs{display:flex;gap:4px;flex-wrap:wrap}
+.card .body{padding:16px}
+.note{
+  font-size:12px;color:var(--pv-text-muted);border-left:3px solid var(--pv-border-strong);
+  padding:6px 0 6px 10px;margin:12px 0 0;max-width:86ch;
+}
+.note.warn{border-left-color:var(--pv-warn);color:var(--pv-warn)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+
+/* etiquetas de trazabilidad */
+.req{
+  font-size:10px;font-weight:600;letter-spacing:.03em;
+  background:var(--up1-color-primary-light);color:light-dark(var(--up1-color-primary-900),var(--up1-color-primary-100));
+  border:1px solid light-dark(var(--up1-color-primary-100),var(--up1-color-primary-700));
+  border-radius:100px;padding:2px 7px;white-space:nowrap;
+}
+.state-tag{
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--pv-text-faint);border:1px dashed var(--pv-border-strong);
+  border-radius:var(--pv-radius-sm);padding:2px 6px;
+}
+
+/* ============================================================
+   COMPONENTES DEL DS REUSADOS (átomos / moléculas de layout)
+   ============================================================ */
+.btn{
+  font:inherit;font-size:13px;font-weight:500;cursor:pointer;
+  border-radius:var(--pv-radius);padding:6px 12px;border:1px solid transparent;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn-primary{background:var(--up1-color-primary-500);color:#fff}
+.btn-primary:hover{background:var(--up1-color-primary-hover)}
+.btn-primary:active{background:var(--up1-color-primary-active)}
+.btn-secondary{background:var(--pv-bg-surface);color:var(--pv-text);border-color:var(--pv-border-strong)}
+.btn-secondary:hover{border-color:var(--up1-color-primary-500);color:var(--up1-color-primary-600)}
+.btn-ghost{background:transparent;color:var(--up1-text-link)}
+.btn-ghost:hover{background:var(--up1-color-primary-light)}
+.btn-danger{background:transparent;color:var(--pv-danger);border-color:var(--pv-border-strong)}
+.btn-danger:hover{background:var(--pv-danger-bg);border-color:var(--pv-danger)}
+.btn[disabled],.btn.is-disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{font-size:12px;padding:3px 8px}
+
+.badge{
+  font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+  border-radius:100px;padding:2px 8px;display:inline-flex;align-items:center;gap:4px;
+  background:var(--up1-color-primary-500);color:#fff;
+}
+.badge-soft{background:var(--up1-color-primary-light);color:light-dark(var(--up1-color-primary-900),var(--up1-color-primary-100))}
+.badge-neutral{background:var(--pv-bg-subtle);color:var(--pv-text-muted);border:1px solid var(--pv-border)}
+.badge-warn{background:var(--pv-warn-bg);color:var(--pv-warn);border:1px solid var(--pv-warn)}
+.badge-ok{background:var(--pv-ok-bg);color:var(--pv-ok);border:1px solid var(--pv-ok)}
+.badge-danger{background:var(--pv-danger-bg);color:var(--pv-danger);border:1px solid var(--pv-danger)}
+
+/* control segmentado */
+.seg{display:inline-flex;border:1px solid var(--pv-border-strong);border-radius:var(--pv-radius);overflow:hidden}
+.seg button{
+  font:inherit;font-size:12px;background:var(--pv-bg-surface);color:var(--pv-text);
+  border:0;border-right:1px solid var(--pv-border);padding:5px 12px;cursor:pointer;
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--up1-color-primary-500);color:#fff}
+.seg button[disabled]{opacity:.4;cursor:not-allowed}
+
+/* input */
+.field{display:flex;flex-direction:column;gap:4px}
+.field > label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--pv-text-muted)}
+.input-group{display:inline-flex;align-items:stretch;border:1px solid var(--pv-border-strong);border-radius:var(--pv-radius);background:var(--pv-bg-surface);max-width:150px}
+.input-group input{
+  font:inherit;border:0;background:transparent;color:var(--pv-text);
+  padding:6px 8px;width:100%;min-width:0;text-align:right;
+}
+.input-group input:focus{outline:none}
+.input-group:focus-within{border-color:var(--up1-color-primary-500);box-shadow:0 0 0 3px rgba(var(--up1-color-primary-rgb),.15)}
+.input-group .suffix{
+  display:flex;align-items:center;padding:0 9px;color:var(--pv-text-muted);
+  background:var(--pv-bg-subtle);border-left:1px solid var(--pv-border);font-size:12px;
+}
+.input-group.is-invalid{border-color:var(--pv-danger)}
+.input-group.is-invalid:focus-within{box-shadow:0 0 0 3px rgba(179,38,30,.15)}
+select.input{
+  font:inherit;font-size:13px;padding:6px 8px;border-radius:var(--pv-radius);
+  border:1px solid var(--pv-border-strong);background:var(--pv-bg-surface);color:var(--pv-text);
+}
+.err-msg{font-size:12px;color:var(--pv-danger);display:flex;gap:5px;align-items:flex-start}
+
+/* patrones transversales obligatorios */
+.empty-state{
+  text-align:center;padding:30px 20px;color:var(--pv-text-muted);
+  border:1px dashed var(--pv-border-strong);border-radius:var(--pv-radius);background:var(--pv-bg-subtle);
+}
+.empty-state strong{display:block;color:var(--pv-text);font-size:13px;margin-bottom:4px}
+.alert{display:flex;gap:10px;padding:10px 12px;border-radius:var(--pv-radius);font-size:13px;align-items:flex-start}
+.alert-danger{background:var(--pv-danger-bg);color:var(--pv-danger);border:1px solid var(--pv-danger)}
+.alert-warn{background:var(--pv-warn-bg);color:var(--pv-warn);border:1px solid var(--pv-warn)}
+.alert-ok{background:var(--pv-ok-bg);color:var(--pv-ok);border:1px solid var(--pv-ok)}
+.alert-info{background:var(--up1-color-primary-light);color:light-dark(var(--up1-color-primary-900),var(--up1-color-primary-100));border:1px solid light-dark(var(--up1-color-primary-100),var(--up1-color-primary-700))}
+.skeleton{
+  background:linear-gradient(90deg,var(--pv-bg-subtle) 25%,var(--pv-border) 50%,var(--pv-bg-subtle) 75%);
+  background-size:400% 100%;border-radius:var(--pv-radius-sm);height:12px;
+}
+.spinner{
+  width:14px;height:14px;border-radius:50%;border:2px solid rgba(var(--up1-color-primary-rgb),.25);
+  border-top-color:var(--up1-color-primary-500);display:inline-block;
+}
+
+/* ============================================================
+   LAYOUT DE LAS PANTALLAS MAQUETADAS
+   ============================================================ */
+.screen{border:1px solid var(--pv-border);border-radius:var(--pv-radius);overflow:hidden;background:var(--pv-bg-surface)}
+.screen-topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 14px;border-bottom:1px solid var(--pv-border);
+}
+.crumb{font-size:12px;color:var(--pv-text-muted)}
+.crumb b{color:var(--pv-text);font-weight:600}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--pv-border);padding:0 14px;background:var(--pv-bg-subtle)}
+.tabs button{
+  font:inherit;font-size:13px;background:transparent;border:0;cursor:pointer;color:var(--pv-text-muted);
+  padding:9px 12px;border-bottom:2px solid transparent;
+}
+.tabs button[aria-selected="true"]{color:var(--up1-color-primary-600);border-bottom-color:var(--up1-color-primary-500);font-weight:600}
+.actionbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:10px 14px;border-bottom:1px solid var(--pv-border);background:var(--pv-bg-surface);
+}
+.editor-layout{display:grid;grid-template-columns:232px 1fr;min-height:340px}
+@media (max-width:820px){.editor-layout{grid-template-columns:1fr}}
+.side-panel{border-right:1px solid var(--pv-border);background:var(--pv-bg-subtle);padding:12px}
+.side-panel h4{
+  margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pv-text-muted);
+}
+.pick-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.pick-list li{
+  border:1px solid var(--pv-border);border-radius:var(--pv-radius);background:var(--pv-bg-surface);
+  padding:7px 9px;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;
+}
+.pick-list li:hover{border-color:var(--up1-color-primary-300)}
+.pick-list li[aria-selected="true"]{
+  background:var(--up1-color-primary-light);border-color:var(--up1-color-primary-500);font-weight:600;
+}
+.pick-list .code{color:var(--pv-text-muted);font-weight:500}
+.inhand{
+  display:flex;align-items:center;gap:6px;background:var(--up1-color-primary-500);color:#fff;
+  border-radius:100px;padding:3px 4px 3px 10px;font-size:11px;font-weight:600;letter-spacing:.02em;
+}
+.inhand .x{
+  border:0;background:rgba(255,255,255,.22);color:#fff;border-radius:50%;width:16px;height:16px;
+  line-height:1;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.panel-canvas{padding:14px;overflow-x:auto}
+
+/* CompetencyAlignmentGridTable */
+table.cag{border-collapse:separate;border-spacing:0;width:100%;min-width:660px;font-size:12px}
+table.cag th, table.cag td{border:1px solid var(--pv-border);padding:8px;vertical-align:top}
+table.cag thead th{
+  background:var(--pv-bg-subtle);font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--pv-text-muted);text-align:left;font-weight:700;
+}
+table.cag thead th.is-sorted{background:var(--up1-color-primary-light)}
+table.cag td.cell{min-width:180px;background:var(--pv-bg-surface)}
+table.cag th.rowhead{background:var(--pv-bg-surface);width:210px;font-weight:600;color:var(--pv-text);text-transform:none;letter-spacing:0;font-size:12px}
+table.cag th.rowhead small{display:block;color:var(--pv-text-muted);font-weight:400}
+td.cell.is-target{background:var(--up1-color-primary-light);border-color:var(--up1-color-primary-300)}
+td.cell.is-blocked{background:var(--pv-bg-subtle)}
+
+.chip-trib{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  border:1px solid var(--pv-border);border-radius:var(--pv-radius);background:var(--pv-bg-surface);
+  padding:5px 7px;margin-bottom:5px;cursor:pointer;
+}
+.chip-trib:hover{border-color:var(--up1-color-primary-500)}
+.chip-trib .subj{font-weight:600}
+.chip-trib .w{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;color:var(--up1-color-primary-600)}
+.chip-trib .w.none{color:var(--pv-text-faint);font-weight:400}
+.chip-trib.is-outside{border-color:var(--pv-warn);background:var(--pv-warn-bg)}
+.cell-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.cell-sum{
+  display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--pv-text-muted);
+  border-top:1px dashed var(--pv-border);margin-top:6px;padding-top:5px;
+}
+.cell-sum.is-invalid{color:var(--pv-danger)}
+
+/* modo por malla */
+.period{margin-bottom:16px}
+.period > h5{
+  margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pv-text-muted);
+  display:flex;align-items:center;gap:8px;
+}
+.period > h5::after{content:"";flex:1;height:1px;background:var(--pv-border)}
+.subject-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.subject-card{border:1px solid var(--pv-border);border-radius:var(--pv-radius);background:var(--pv-bg-surface);padding:10px}
+.subject-card.is-target{border-color:var(--up1-color-primary-500);box-shadow:0 0 0 3px rgba(var(--up1-color-primary-rgb),.12)}
+.subject-card header{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:7px}
+.subject-card .sc-code{font-size:11px;color:var(--pv-text-muted);font-variant-numeric:tabular-nums}
+.subject-card .sc-name{font-weight:600;font-size:13px;line-height:1.25}
+.subject-card .sc-pos{font-size:10px;color:var(--pv-text-faint)}
+.subject-card footer{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+
+/* modal */
+.modal-scrim{background:rgba(0,0,0,.35);padding:22px;border-radius:var(--pv-radius)}
+.modal{
+  background:var(--pv-bg-surface);border-radius:var(--pv-radius-lg);box-shadow:0 12px 40px rgba(0,0,0,.28);
+  max-width:520px;margin:0 auto;overflow:hidden;border:1px solid var(--pv-border);
+}
+.modal > header{padding:14px 16px 12px;border-bottom:1px solid var(--pv-border)}
+.modal > header h4{margin:0;font-size:15px}
+.modal > header p{margin:3px 0 0;font-size:12px;color:var(--pv-text-muted)}
+.modal .content{padding:16px;display:flex;flex-direction:column;gap:14px}
+.modal > footer{
+  padding:12px 16px;border-top:1px solid var(--pv-border);background:var(--pv-bg-subtle);
+  display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;
+}
+.ro-row{display:flex;flex-direction:column;gap:2px}
+.ro-row .k{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--pv-text-muted)}
+.ro-row .v{font-size:13px}
+.ro-row .gloss{font-size:12px;color:var(--pv-text-muted);font-style:italic}
+.weight-block{
+  border:1px solid var(--pv-border);border-radius:var(--pv-radius);padding:12px;background:var(--pv-bg-subtle);
+  display:flex;flex-direction:column;gap:10px;
+}
+.weight-block > .wb-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.weight-block > .wb-head .t{font-size:12px;font-weight:700}
+.wb-meter{font-size:12px;color:var(--pv-text-muted);font-variant-numeric:tabular-nums}
+.wb-meter b{color:var(--pv-text)}
+
+/* tabla de resultado de vía masiva */
+table.result{width:100%;border-collapse:collapse;font-size:12px}
+table.result th,table.result td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--pv-border);vertical-align:top}
+table.result th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--pv-text-muted)}
+.check-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;max-height:168px;overflow:auto}
+.check-list li{display:flex;gap:8px;align-items:center;font-size:12px;border:1px solid var(--pv-border);border-radius:var(--pv-radius);padding:5px 8px}
+
+/* swatches DS */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px}
+.sw{border:1px solid var(--pv-border);border-radius:var(--pv-radius);overflow:hidden;font-size:11px;background:var(--pv-bg-surface)}
+.sw .chipc{height:40px}
+.sw .meta{padding:6px 8px}
+.sw code{font-size:10px;color:var(--pv-text-muted);word-break:break-all}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12px;align-items:baseline}
+.kv dt{color:var(--pv-text-muted)}
+.kv dd{margin:0}
+ul.tight{margin:6px 0 0;padding-left:18px;font-size:13px}
+ul.tight li{margin-bottom:3px}
+code.inline{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--pv-bg-subtle);border:1px solid var(--pv-border);border-radius:3px;padding:0 4px}
+
+/* DELTA */
+.delta-box{
+  border:2px dashed var(--up1-color-primary-500);border-radius:var(--pv-radius-lg);
+  background:var(--up1-color-primary-light);padding:18px;
+}
+.delta-box h3{margin:0 0 6px;font-size:15px;color:light-dark(var(--up1-color-primary-900),var(--up1-color-primary-100))}
+.delta-box p{margin:0;color:light-dark(var(--up1-color-primary-900),var(--up1-color-primary-100));max-width:86ch}
+.theme-toggle{position:sticky;top:0;z-index:5;display:flex;justify-content:flex-end;padding:8px 0 0}
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="theme-toggle">
+    <button class="btn btn-secondary btn-sm" id="tt" type="button">Alternar dark mode (<code class="inline">theme-dark</code>)</button>
+  </div>
+
+  <header class="doc-head">
+    <h1>TICKET-149 · Tributación — peso del eje 1, guardado en conjunto, vía masiva y vista por malla</h1>
+    <p>Preview de verificación. Alcance definido por los REQ-01..REQ-17 del spec. Módulo <code class="inline">curriculum-mapping</code>, componentes de <code class="inline">modsComponents/CompetencyAlignmentGrid/</code>.</p>
+    <nav class="doc-nav">
+      <a href="#ds">1 · Sistema de diseño</a>
+      <a href="#v1">2.1 · Pestaña Tributación (solo lectura)</a>
+      <a href="#v2">2.2 · Editor — por competencia</a>
+      <a href="#v3">2.3 · Editor — por malla</a>
+      <a href="#v4">2.4 · Modal — solo lectura</a>
+      <a href="#v5">2.5 · Modal — edición y peso</a>
+      <a href="#v6">2.6 · Vía masiva “Varias”</a>
+      <a href="#v7">2.7 · Guardado de conjunto</a>
+      <a href="#delta">3 · Delta</a>
+      <a href="#nosup">4 · REQ sin superficie</a>
+    </nav>
+  </header>
+
+  <div class="alert alert-warn" style="margin-top:18px">
+    <div>
+      <b>Fidelidad visual:</b> la maqueta de UPONE-1770 está declarada como imagen y la captura no llegó a este preview.
+      El layout de abajo se deriva del spec y de los componentes que ya existen en <code class="inline">modsComponents/CompetencyAlignmentGrid/</code>;
+      cualquier detalle de composición debe contrastarse contra las 10 capturas del KB antes de cerrar el diseño.
+      No se dibujó ninguna affordance que no esté respaldada por un REQ.
+    </div>
+  </div>
+
+  <!-- =========================================================
+       1 · SISTEMA DE DISEÑO
+       ========================================================= -->
+  <h2 class="sec" id="ds"><span class="n">1</span>Sistema de diseño</h2>
+  <p class="sec-sub">Tokens, patrones y componentes efectivamente usados en las vistas de abajo. Todo sale del DS de up1 (<code class="inline">--up1-*</code>, unificación light/dark con <code class="inline">light-dark()</code>, dark mode con la clase <code class="inline">theme-dark</code> en <code class="inline">&lt;html&gt;</code>) o de componentes ya existentes del módulo.</p>
+
+  <div class="card">
+    <header><h3>Paleta primaria (teal de marca)</h3><span class="state-tag">tokens del DS</span></header>
+    <div class="body">
+      <div class="swatches">
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-50)"></div><div class="meta"><b>primary-50</b><br><code>--up1-color-primary-50</code><br>#E7F2F3 · fondo seleccionado</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-100)"></div><div class="meta"><b>primary-100</b><br><code>--up1-color-primary-100</code><br>#B6D9DC</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-200)"></div><div class="meta"><b>primary-200</b><br><code>--up1-color-primary-200</code><br>#7FC4CA</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-300)"></div><div class="meta"><b>primary-300</b><br><code>--up1-color-primary-300</code><br>#47AEB8</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-500)"></div><div class="meta"><b>primary-500</b><br><code>--up1-color-primary-500</code><br>#0a808c · botón primario, foco, badge</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-600)"></div><div class="meta"><b>primary-600</b><br><code>--up1-color-primary-600</code><br>#12717b · hover y link</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-700)"></div><div class="meta"><b>primary-700</b><br><code>--up1-color-primary-700</code><br>#16626b · activo</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-800)"></div><div class="meta"><b>primary-800</b><br><code>--up1-color-primary-800</code><br>#17545b · seleccionado en dark</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-900)"></div><div class="meta"><b>primary-900</b><br><code>--up1-color-primary-900</code><br>#17464c · texto sobre tinte</div></div>
+        <div class="sw"><div class="chipc" style="background:var(--up1-color-primary-950)"></div><div class="meta"><b>primary-950</b><br><code>--up1-color-primary-950</code><br>#16393d</div></div>
+      </div>
+      <div class="note">
+        Alias semánticos usados: <code class="inline">--up1-color-primary-hover</code> (600), <code class="inline">--up1-color-primary-active</code> (700),
+        <code class="inline">--up1-color-primary-light</code> (50 en light / 800 en dark), <code class="inline">--up1-text-link</code> (600),
+        <code class="inline">--up1-color-primary-rgb</code> para los halos de foco.
+      </div>
+      <div class="note warn">
+        <b>Carencia declarada:</b> el extracto del DS que recibió este preview llega truncado en la escala de grises neutra, el rojo de error y el ámbar de aviso.
+        Esos valores se resuelven acá como alias locales del preview (<code class="inline">--pv-*</code>) y <b>no</b> como nombres de token nuevos.
+        Antes de implementar hay que mapearlos a los tokens reales de <code class="inline">suite/css/1-theme/theme-tokens.css</code>. No se inventó ningún <code class="inline">--up1-*</code> que no esté en el DS.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Tipografía, radios y espaciado</h3></header>
+      <div class="body">
+        <dl class="kv">
+          <dt>Familia</dt><dd>Inter (fallback al system stack)</dd>
+          <dt>Base</dt><dd>14px / 1.5</dd>
+          <dt>Título de vista</dt><dd>16px, peso 600, <code class="inline">letter-spacing -.01em</code></dd>
+          <dt>Etiqueta de campo</dt><dd>11px, peso 600, mayúsculas, <code class="inline">letter-spacing .04em</code></dd>
+          <dt>Radio</dt><dd>.25rem / .375rem / .5rem (compatible Bootstrap)</dd>
+          <dt>Números</dt><dd><code class="inline">font-variant-numeric: tabular-nums</code> en pesos y sumas</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Componentes reusados (sin componentes paralelos)</h3><span class="req">REQ-15</span></header>
+      <div class="body">
+        <ul class="tight">
+          <li><code class="inline">CompetencyAlignmentGridTable</code> — grilla, en los dos modos del editor.</li>
+          <li><code class="inline">CompetencyAlignmentDetailModal</code> — detalle, extendido (no rediseñado).</li>
+          <li><code class="inline">PlanSubjectsPanel</code> — panel lateral del modo por competencia.</li>
+          <li><code class="inline">Modal</code> de <code class="inline">@molecules</code> (<code class="inline">v-model:open</code>) como base del detalle y de la vía masiva.</li>
+          <li>Átomos del DS: botón (primario / secundario / ghost / peligro), badge, control segmentado, input con sufijo, select, card, alert.</li>
+        </ul>
+        <div class="note">No se introduce <code class="inline">CompetencyLevelGrid</code> ni un <code class="inline">DetailSidePanel</code> de tributación.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <header><h3>Patrones transversales obligatorios</h3><span class="state-tag">vacío · error · loading · foco · dark</span></header>
+    <div class="body">
+      <div class="grid2">
+        <div>
+          <div class="field" style="margin-bottom:10px"><label>Estado vacío</label>
+            <div class="empty-state"><strong>Esta matriz todavía no tiene tributaciones</strong>Elige una asignatura en el panel y haz click en “+ Asignar acá”.</div>
+          </div>
+          <div class="field" style="margin-bottom:10px"><label>Estado de error</label>
+            <div class="alert alert-danger"><span>⚠</span><div>No se pudo guardar. No se aplicó ningún cambio.</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="field" style="margin-bottom:10px"><label>Loading</label>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="skeleton" style="width:60%"></div>
+              <div class="skeleton" style="width:90%"></div>
+              <div class="skeleton" style="width:75%"></div>
+              <div style="display:flex;gap:8px;align-items:center;color:var(--pv-text-muted);font-size:12px"><span class="spinner"></span> Guardando conjunto…</div>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:10px"><label>Foco visible</label>
+            <button class="btn btn-secondary btn-sm" type="button">Haz Tab hasta acá para ver el anillo de foco</button>
+          </div>
+          <div class="field"><label>Dark mode</label>
+            <div style="font-size:12px;color:var(--pv-text-muted)">Clase <code class="inline">theme-dark</code> en <code class="inline">&lt;html&gt;</code> + <code class="inline">color-scheme</code>. Nunca <code class="inline">[data-theme]</code> ni <code class="inline">.dark</code>. Usa el botón del encabezado para verificar cada vista.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       2 · VISTAS EN ALCANCE
+       ========================================================= -->
+  <h2 class="sec"><span class="n">2</span>Vistas en alcance</h2>
+  <p class="sec-sub">Solo las superficies que respalda un REQ. Solo lectura y edición son dos superficies distintas y ningún componente de una se monta en la otra (REQ-14).</p>
+
+  <!-- 2.1 -->
+  <h2 class="sec" id="v1" style="font-size:14px"><span class="n">2.1</span>Pestaña “Tributación” del plan — solo lectura</h2>
+  <p class="sec-sub">Dos modos (por asignatura y por competencia). <b>Sin selector de asignatura en ninguno</b> y sin panel de selección; la barra de acciones no se mezcla con la grilla.</p>
+
+  <div class="card">
+    <header>
+      <h3>Caso A · modo “Por asignatura”, con datos</h3>
+      <div class="reqs"><span class="req">REQ-10</span><span class="req">REQ-14</span></div>
+    </header>
+    <div class="body">
+      <div class="screen">
+        <div class="screen-topbar">
+          <div class="crumb">Planes de estudio · <b>Ingeniería Civil Industrial — Plan 2025</b></div>
+          <span class="badge-neutral badge">Solo lectura</span>
+        </div>
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="false">General</button>
+          <button role="tab" aria-selected="false">Malla</button>
+          <button role="tab" aria-selected="true">Tributación</button>
+        </div>
+        <div class="actionbar">
+          <div class="seg" role="group" aria-label="Modo de vista">
+            <button type="button" aria-pressed="true">Por asignatura</button>
+            <button type="button" aria-pressed="false">Por competencia</button>
+          </div>
+          <button class="btn btn-primary" type="button">Tributar</button>
+        </div>
+        <div class="panel-canvas">
+          <table class="cag">
+            <thead>
+              <tr>
+                <th class="rowhead">Asignatura</th>
+                <th>Competencia</th>
+                <th>Nivel de desarrollo</th>
+                <th>Tipo de contribución</th>
+                <th>Peso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th class="rowhead">ICI-201 <small>Termodinámica Aplicada</small></th>
+                <td>C1 · Modelar sistemas de ingeniería</td><td>Reinforce</td><td>Evalúa</td><td style="font-variant-numeric:tabular-nums">60,00 %</td>
+              </tr>
+              <tr>
+                <th class="rowhead">ICI-204 <small>Mecánica de Fluidos</small></th>
+                <td>C1 · Modelar sistemas de ingeniería</td><td>Reinforce</td><td>Ambas</td><td style="font-variant-numeric:tabular-nums">40,00 %</td>
+              </tr>
+              <tr>
+                <th class="rowhead">ICI-110 <small>Introducción a la Ingeniería</small></th>
+                <td>C1 · Modelar sistemas de ingeniería</td><td>Introduce</td><td>Desarrolla</td><td style="color:var(--pv-text-faint)">— sin peso</td>
+              </tr>
+              <tr>
+                <th class="rowhead">ICI-330 <small>Gestión de Proyectos</small></th>
+                <td>C2 · Comunicar resultados técnicos</td><td>Master</td><td>Evalúa</td><td style="font-variant-numeric:tabular-nums">100,00 %</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note">
+        <b>Fix de UI (REQ-10):</b> donde antes había un selector de asignatura sobre la tabla, ahora no hay ninguno. El selector pertenece solo al editor.
+        “— sin peso” es la representación de <code class="inline">contributionPercentage = null</code> en una fila <i>Desarrolla</i> (R-6, REQ-04): no es un vacío a completar.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Caso B · modo “Por competencia”</h3><div class="reqs"><span class="req">REQ-10</span></div></header>
+      <div class="body">
+        <div class="screen">
+          <div class="actionbar">
+            <div class="seg" role="group" aria-label="Modo de vista">
+              <button type="button" aria-pressed="false">Por asignatura</button>
+              <button type="button" aria-pressed="true">Por competencia</button>
+            </div>
+            <button class="btn btn-primary" type="button">Tributar</button>
+          </div>
+          <div class="panel-canvas">
+            <table class="cag">
+              <thead><tr><th class="rowhead">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th class="rowhead">C1 <small>Modelar sistemas de ingeniería</small></th>
+                  <td class="cell"><div class="chip-trib"><span class="subj">ICI-110</span><span class="badge badge-neutral">Desarrolla</span><span class="w none">—</span></div></td>
+                  <td class="cell">
+                    <div class="chip-trib"><span class="subj">ICI-201</span><span class="badge badge-soft">Evalúa</span><span class="w">60,00%</span></div>
+                    <div class="chip-trib"><span class="subj">ICI-204</span><span class="badge badge-soft">Ambas</span><span class="w">40,00%</span></div>
+                  </td>
+                  <td class="cell"></td>
+                </tr>
+                <tr>
+                  <th class="rowhead">C2 <small>Comunicar resultados técnicos</small></th>
+                  <td class="cell"></td><td class="cell"></td>
+                  <td class="cell"><div class="chip-trib"><span class="subj">ICI-330</span><span class="badge badge-soft">Evalúa</span><span class="w">100,00%</span></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="note">Sin “+ Asignar acá” ni “Varias”: son acciones del editor. Los chips no abren edición desde acá.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Caso C · estado vacío</h3><div class="reqs"><span class="req">REQ-10</span></div><span class="state-tag">vacío</span></header>
+      <div class="body">
+        <div class="screen">
+          <div class="actionbar">
+            <div class="seg" role="group" aria-label="Modo de vista">
+              <button type="button" aria-pressed="true">Por asignatura</button>
+              <button type="button" aria-pressed="false">Por competencia</button>
+            </div>
+            <button class="btn btn-primary" type="button">Tributar</button>
+          </div>
+          <div class="panel-canvas">
+            <div class="empty-state">
+              <strong>Este plan todavía no tiene tributaciones</strong>
+              Usa “Tributar” para abrir el editor y asignar competencias a las asignaturas del plan.
+            </div>
+          </div>
+        </div>
+        <div class="note">El estado vacío no ofrece atajos de edición fuera del botón “Tributar”: la superficie sigue siendo de solo lectura.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.2 -->
+  <h2 class="sec" id="v2" style="font-size:14px"><span class="n">2.2</span>Editor — modo “Por competencia”</h2>
+  <p class="sec-sub">Panel <code class="inline">PlanSubjectsPanel</code> + <code class="inline">CompetencyAlignmentGridTable</code>. Asignación por <b>selección lateral + click</b>, nunca por arrastre (REQ-16). Celda = grupo de peso <code class="inline">(planId, competencyNodeId, developmentLevelId)</code>.</p>
+
+  <div class="card">
+    <header>
+      <h3>Caso A · nada en mano — el “+” queda atenuado y el shell avisa</h3>
+      <div class="reqs"><span class="req">REQ-11</span><span class="req">REQ-13</span><span class="req">REQ-16</span></div>
+      <span class="state-tag">selección · vacía</span>
+    </header>
+    <div class="body">
+      <div class="screen">
+        <div class="screen-topbar">
+          <div class="crumb">Editor de tributación · <b>Matriz “Perfil de egreso 2025”</b></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="seg" role="group" aria-label="Vista del editor">
+              <button type="button" aria-pressed="true">Por competencia</button>
+              <button type="button" aria-pressed="false">Por malla</button>
+            </div>
+            <button class="btn btn-secondary btn-sm" type="button">Cancelar</button>
+            <button class="btn btn-primary btn-sm" type="button" disabled>Guardar</button>
+          </div>
+        </div>
+        <div class="alert alert-info" style="border-radius:0;border-left:0;border-right:0;border-top:0">
+          <span>i</span><div>Selecciona una asignatura del panel para poder asignarla.</div>
+        </div>
+        <div class="editor-layout">
+          <aside class="side-panel">
+            <h4>Asignaturas del plan</h4>
+            <ul class="pick-list" role="listbox" aria-label="Asignaturas del plan">
+              <li role="option" aria-selected="false"><span>Introducción a la Ingeniería</span><span class="code">ICI-110</span></li>
+              <li role="option" aria-selected="false"><span>Termodinámica Aplicada</span><span class="code">ICI-201</span></li>
+              <li role="option" aria-selected="false"><span>Mecánica de Fluidos</span><span class="code">ICI-204</span></li>
+              <li role="option" aria-selected="false"><span>Gestión de Proyectos</span><span class="code">ICI-330</span></li>
+            </ul>
+          </aside>
+          <div class="panel-canvas">
+            <table class="cag">
+              <thead><tr><th class="rowhead">Competencia</th><th>Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th class="rowhead">C1 <small>Modelar sistemas de ingeniería</small></th>
+                  <td class="cell">
+                    <div class="chip-trib"><span class="subj">ICI-110</span><span class="badge badge-neutral">Desarrolla</span><span class="w none">—</span></div>
+                    <div class="cell-actions">
+                      <button class="btn btn-ghost btn-sm is-disabled" type="button" aria-disabled="true">+ Asignar acá</button>
+                      <button class="btn btn-secondary btn-sm" type="button">Varias</button>
+                    </div>
+                  </td>
+                  <td class="cell">
+                    <div class="chip-trib"><span class="subj">ICI-201</span><span class="badge badge-soft">Evalúa</span><span class="w">60,00%</span></div>
+                    <div class="chip-trib"><span class="subj">ICI-204</span><span class="badge badge-soft">Ambas</span><span class="w">40,00%</span></div>
+                    <div class="cell-sum"><span>2 evalúa</span><span>suma <b>100,00%</b></span></div>
+                    <div class="cell-actions">
+                      <button class="btn btn-ghost btn-sm is-disabled" type="button" aria-disabled="true">+ Asignar acá</button>
+                      <button class="btn btn-secondary btn-sm" type="button">Varias</button>
+                    </div>
+                  </td>
+                  <td class="cell">
+                    <div class="cell-actions">
+                      <button class="btn btn-ghost btn-sm is-disabled" type="button" aria-disabled="true">+ Asignar acá</button>
+                      <button class="btn btn-secondary btn-sm" type="button">Varias</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="note">
+        Sin nada en mano: “+ Asignar acá” atenuado (<code class="inline">aria-disabled</code>) y aviso del shell. La grilla no declara <code class="inline">draggable</code> ni handlers <code class="inline">dragstart/dragover/drop</code>, y no hay equivalente por teclado (REQ-16).
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <h3>Caso B · con una asignatura en mano — destinos habilitados</h3>
+      <div class="reqs"><span class="req">REQ-13</span><span class="req">REQ-16</span><span class="req">REQ-04</span></div>
+      <span class="state-tag">selección · activa</span>
+    </header>
+    <div class="body">
+      <div class="screen">
+        <div class="screen-topbar">
+          <div class="crumb">Editor de tributación · <b>Matriz “Perfil de egreso 2025”</b></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="inhand">EN MANO · ICI-330 Gestión de Proyectos <button class="x" type="button" aria-label="Soltar">×</button></span>
+            <button class="btn btn-primary btn-sm" type="button">Guardar</button>
+          </div>
+        </div>
+        <div class="editor-layout">
+          <aside class="side-panel">
+            <h4>Asignaturas del plan</h4>
+            <ul class="pick-list" role="listbox" aria-label="Asignaturas del plan">
+              <li role="option" aria-selected="false"><span>Introducción a la Ingeniería</span><span class="code">ICI-110</span></li>
+              <li role="option" aria-selected="false"><span>Termodinámica Aplicada</span><span class="code">ICI-201</span></li>
+              <li role="option" aria-selected="false"><span>Mecánica de Fluidos</span><span class="code">ICI-204</span></li>
+              <li role="option" aria-selected="true"><span>Gestión de Proyectos</span><span class="code">ICI-330</span></li>
+            </ul>
+            <div class="note" style="margin-top:10px">Un click sobre la asignatura ya elegida también la suelta.</div>
+          </aside>
+          <div class="panel-canvas">
+            <table class="cag">
+              <thead><tr><th class="rowhead">Competencia</th><th class="is-sorted">Introduce</th><th>Reinforce</th><th>Master</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th class="rowhead">C1 <small>Modelar sistemas de ingeniería</small></th>
+                  <td class="cell is-target">
+                    <div class="chip-trib"><span class="subj">ICI-110</span><span class="badge badge-neutral">Desarrolla</span><span class="w none">—</span></div>
+                    <div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                  </td>
+                  <td class="cell is-target">
+                    <div class="chip-trib"><span class="subj">ICI-201</span><span class="badge badge-soft">Evalúa</span><span class="w">60,00%</span></div>
+                    <div class="chip-trib"><span class="subj">ICI-204</span><span class="badge badge-soft">Ambas</span><span class="w">40,00%</span></div>
+                    <div class="cell-sum"><span>2 evalúa</span><span>suma <b>100,00%</b></span></div>
+                    <div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                  </td>
+                  <td class="cell is-target">
+                    <div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                  </td>
+                </tr>
+                <tr>
+                  <th class="rowhead">C2 <small>Comunicar resultados técnicos</small></th>
+                  <td class="cell is-blocked">
+                    <span class="badge badge-neutral">Nivel no declarado</span>
+                    <div class="note" style="margin-top:6px;border:0;padding:0">La competencia no declara este nivel.</div>
+                  </td>
+                  <td class="cell is-target"><div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div></td>
+                  <td class="cell is-target">
+                    <div class="chip-trib"><span class="subj">ICI-330</span><span class="badge badge-soft">Evalúa</span><span class="w">100,00%</span></div>
+                    <div class="cell-sum"><span>1 evalúa</span><span>suma <b>100,00%</b></span></div>
+                    <div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="note">
+        El destino no válido (nivel que la competencia no declara) no ofrece “+ Asignar acá”. El indicador “<i>N</i> evalúa · suma <i>S</i>%” de la celda es el mismo grupo que el bloque de peso del modal (REQ-05).
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <header>
+      <h3>Caso C · fila “fuera de diseño” y grupo con suma distinta de 100</h3>
+      <div class="reqs"><span class="req">REQ-02</span><span class="req">REQ-05</span></div>
+      <span class="state-tag">error · aviso</span>
+    </header>
+    <div class="body">
+      <div class="panel-canvas" style="padding:0">
+        <table class="cag">
+          <thead><tr><th class="rowhead">Competencia</th><th>Reinforce</th><th>Master</th></tr></thead>
+          <tbody>
+            <tr>
+              <th class="rowhead">C3 <small>Trabajar en equipos multidisciplinarios</small></th>
+              <td class="cell">
+                <div class="chip-trib"><span class="subj">ICI-215</span><span class="badge badge-soft">Evalúa</span><span class="w">70,00%</span></div>
+                <div class="chip-trib"><span class="subj">ICI-260</span><span class="badge badge-soft">Ambas</span><span class="w">20,00%</span></div>
+                <div class="cell-sum is-invalid"><span>2 evalúa</span><span>suma <b>90,00%</b></span></div>
+                <div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+              </td>
+              <td class="cell">
+                <div class="chip-trib is-outside">
+                  <span class="subj">ICI-902</span><span class="badge badge-warn">Fuera de diseño</span><span class="w">100,00%</span>
+                </div>
+                <div class="cell-actions"><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note warn">
+        <b>R-12 / REQ-02:</b> la fila “fuera de diseño” se <b>marca</b>, no se borra, y el batch nunca la retira. Tampoco toca las tributaciones de otras matrices adoptadas por el mismo plan.
+      </div>
+      <div class="note">
+        <b>Fuera de alcance:</b> la suma 90,00% se muestra como señal, pero la validación “suma 100 al publicar el plan” (D1) es cross-mod hacia curriculum-design y es un ticket aparte. Acá no bloquea el guardado.
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.3 -->
+  <h2 class="sec" id="v3" style="font-size:14px"><span class="n">2.3</span>Editor — modo “Por malla”</h2>
+  <p class="sec-sub">Espejo del modo por competencia respecto de <b>qué</b> queda en mano: acá se pone en mano una <b>competencia</b>. Cards de asignaturas agrupadas por período y ordenadas por <code class="inline">position</code>, con los datos de <code class="inline">planEntry</code> que ya trae <code class="inline">alignmentView.resolver.js</code>. No se importa <code class="inline">CurriculumMesh</code> ni componentes de curriculum-design (M-26).</p>
+
+  <div class="card">
+    <header>
+      <h3>Caso A · competencia en mano + nivel de asignación</h3>
+      <div class="reqs"><span class="req">REQ-08</span><span class="req">REQ-13</span><span class="req">REQ-17</span><span class="req">REQ-16</span><span class="req">REQ-07</span></div>
+    </header>
+    <div class="body">
+      <div class="screen">
+        <div class="screen-topbar">
+          <div class="crumb">Editor de tributación · <b>Matriz “Perfil de egreso 2025”</b></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="seg" role="group" aria-label="Vista del editor">
+              <button type="button" aria-pressed="false">Por competencia</button>
+              <button type="button" aria-pressed="true">Por malla</button>
+            </div>
+            <span class="inhand">EN MANO · C1 Modelar sistemas de ingeniería <button class="x" type="button" aria-label="Soltar">×</button></span>
+            <button class="btn btn-primary btn-sm" type="button">Guardar</button>
+          </div>
+        </div>
+        <div class="editor-layout">
+          <aside class="side-panel">
+            <h4>Competencias de la matriz</h4>
+            <ul class="pick-list" role="listbox" aria-label="Competencias de la matriz">
+              <li role="option" aria-selected="true"><span>Modelar sistemas de ingeniería</span><span class="code">C1</span></li>
+              <li role="option" aria-selected="false"><span>Comunicar resultados técnicos</span><span class="code">C2</span></li>
+              <li role="option" aria-selected="false"><span>Trabajar en equipos multidisciplinarios</span><span class="code">C3</span></li>
+            </ul>
+            <div class="field" style="margin-top:12px">
+              <label for="lvl">Nivel de desarrollo con que se va a asignar</label>
+              <select class="input" id="lvl">
+                <option>Introduce</option>
+                <option selected>Reinforce</option>
+                <option>Master</option>
+              </select>
+            </div>
+          </aside>
+          <div class="panel-canvas">
+            <div class="period">
+              <h5>Período 1</h5>
+              <div class="subject-cards">
+                <article class="subject-card is-target">
+                  <header><div><div class="sc-code">ICI-110</div><div class="sc-name">Introducción a la Ingeniería</div></div><span class="sc-pos">pos. 1</span></header>
+                  <div class="chip-trib"><span class="subj">C1</span><span class="badge badge-neutral">Introduce · Desarrolla</span><span class="w none">—</span></div>
+                  <footer><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></footer>
+                </article>
+                <article class="subject-card is-target">
+                  <header><div><div class="sc-code">MAT-101</div><div class="sc-name">Cálculo I</div></div><span class="sc-pos">pos. 2</span></header>
+                  <div class="empty-state" style="padding:12px 8px;font-size:12px">Sin tributaciones</div>
+                  <footer><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></footer>
+                </article>
+              </div>
+            </div>
+            <div class="period">
+              <h5>Período 2</h5>
+              <div class="subject-cards">
+                <article class="subject-card is-target">
+                  <header><div><div class="sc-code">ICI-201</div><div class="sc-name">Termodinámica Aplicada</div></div><span class="sc-pos">pos. 1</span></header>
+                  <div class="chip-trib"><span class="subj">C1</span><span class="badge badge-soft">Reinforce · Evalúa</span><span class="w">60,00%</span></div>
+                  <div class="alert alert-ok" style="margin-top:6px;font-size:12px"><span>✓</span><div>Tributación asignada</div></div>
+                  <footer><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></footer>
+                </article>
+                <article class="subject-card is-target">
+                  <header><div><div class="sc-code">ICI-204</div><div class="sc-name">Mecánica de Fluidos</div></div><span class="sc-pos">pos. 2</span></header>
+                  <div class="chip-trib"><span class="subj">C1</span><span class="badge badge-soft">Reinforce · Ambas</span><span class="w">40,00%</span></div>
+                  <div class="chip-trib"><span class="subj">C3</span><span class="badge badge-neutral">Introduce · Desarrolla</span><span class="w none">—</span></div>
+                  <footer><button class="btn btn-ghost btn-sm" type="button">+ Asignar acá</button><button class="btn btn-secondary btn-sm" type="button">Varias</button></footer>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note">
+        Tras asignar, la card queda con su chip de tributación <b>más</b> una confirmación visible (REQ-17). “Varias” es un camino aparte hacia la vía masiva (REQ-07), no el mecanismo individual.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Caso B · nada en mano</h3><div class="reqs"><span class="req">REQ-16</span></div><span class="state-tag">selección vacía</span></header>
+      <div class="body">
+        <div class="alert alert-info" style="margin-bottom:10px"><span>i</span><div>Selecciona una competencia para poder asignarla.</div></div>
+        <div class="subject-cards">
+          <article class="subject-card">
+            <header><div><div class="sc-code">ICI-201</div><div class="sc-name">Termodinámica Aplicada</div></div><span class="sc-pos">pos. 1</span></header>
+            <div class="chip-trib"><span class="subj">C1</span><span class="badge badge-soft">Reinforce · Evalúa</span><span class="w">60,00%</span></div>
+            <footer>
+              <button class="btn btn-ghost btn-sm is-disabled" type="button" aria-disabled="true">+ Asignar acá</button>
+              <button class="btn btn-secondary btn-sm" type="button">Varias</button>
+            </footer>
+          </article>
+        </div>
+        <div class="note">Las cards tampoco declaran <code class="inline">draggable</code> ni handlers de arrastre (REQ-16).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Caso C · período sin asignaturas</h3><div class="reqs"><span class="req">REQ-08</span></div><span class="state-tag">vacío</span></header>
+      <div class="body">
+        <div class="period">
+          <h5>Período 9</h5>
+          <div class="empty-state"><strong>Este período no tiene asignaturas en el plan</strong>Las asignaturas se administran en la malla del plan.</div>
+        </div>
+        <div class="note">El estado vacío no invita a crear asignaturas: esa superficie es de curriculum-design y está fuera de alcance.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.4 -->
+  <h2 class="sec" id="v4" style="font-size:14px"><span class="n">2.4</span><code class="inline">CompetencyAlignmentDetailModal</code> — solo lectura</h2>
+  <p class="sec-sub">El mismo componente ya existente, extendido. No hay panel lateral de detalle ni componente paralelo (REQ-15).</p>
+
+  <div class="card">
+    <header><h3>Estado (a) · solo lectura</h3><div class="reqs"><span class="req">REQ-09</span></div></header>
+    <div class="body">
+      <div class="modal-scrim">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m1t">
+          <header>
+            <h4 id="m1t">ICI-201 · Termodinámica Aplicada</h4>
+            <p>tributa a <b>C1 · Modelar sistemas de ingeniería</b></p>
+          </header>
+          <div class="content">
+            <div class="ro-row"><span class="k">Nivel de desarrollo</span><span class="v">Reinforce</span></div>
+            <div class="ro-row">
+              <span class="k">Tipo de contribución</span>
+              <span class="v">Evalúa</span>
+              <span class="gloss">La mide y genera evidencia de logro</span>
+            </div>
+            <div class="ro-row"><span class="k">Matriz de competencia</span><span class="v">Perfil de egreso 2025</span></div>
+          </div>
+          <footer>
+            <button class="btn btn-ghost" type="button">Editar en tributación</button>
+            <button class="btn btn-primary" type="button">Listo</button>
+          </footer>
+        </div>
+      </div>
+      <div class="note">
+        Nivel y tipo como <b>texto</b> (no controles). La glosa de “Desarrolla” es “La forma, pero no la mide”; la de “Ambas”, ambas frases.
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.5 -->
+  <h2 class="sec" id="v5" style="font-size:14px"><span class="n">2.5</span><code class="inline">CompetencyAlignmentDetailModal</code> — edición y bloque de peso</h2>
+  <p class="sec-sub">Segmentados para nivel y tipo, bloque “Peso dentro de &lt;nivel&gt;”, estado del grupo <b>derivado</b> y reparto en partes iguales client-side (<code class="inline">weights.ts</code>, G-6). La acción no vive en un panel lateral.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Caso A · Evalúa, grupo en reparto automático</h3><div class="reqs"><span class="req">REQ-09</span><span class="req">REQ-05</span><span class="req">REQ-06</span></div></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m2t">
+            <header>
+              <h4 id="m2t">ICI-201 · Termodinámica Aplicada</h4>
+              <p>tributa a <b>C1 · Modelar sistemas de ingeniería</b></p>
+            </header>
+            <div class="content">
+              <div class="field">
+                <label>Nivel de desarrollo</label>
+                <div class="seg" role="group" aria-label="Nivel de desarrollo">
+                  <button type="button" aria-pressed="false">Introduce</button>
+                  <button type="button" aria-pressed="true">Reinforce</button>
+                  <button type="button" aria-pressed="false" disabled title="La competencia no declara este nivel">Master</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Tipo de contribución</label>
+                <div class="seg" role="group" aria-label="Tipo de contribución">
+                  <button type="button" aria-pressed="false">Desarrolla</button>
+                  <button type="button" aria-pressed="true">Evalúa</button>
+                  <button type="button" aria-pressed="false">Ambas</button>
+                </div>
+                <span class="ro-row"><span class="gloss">La mide y genera evidencia de logro</span></span>
+              </div>
+              <div class="weight-block">
+                <div class="wb-head">
+                  <span class="t">Peso dentro de Reinforce</span>
+                  <span class="badge">Reparto automático</span>
+                </div>
+                <div class="input-group">
+                  <input type="text" value="50,00" inputmode="decimal" aria-label="Peso dentro de Reinforce">
+                  <span class="suffix">%</span>
+                </div>
+                <div class="wb-head">
+                  <span class="wb-meter"><b>2</b> evalúa · suma <b>100,00%</b></span>
+                  <button class="btn btn-secondary btn-sm" type="button">Repartir en partes iguales</button>
+                </div>
+              </div>
+            </div>
+            <footer>
+              <button class="btn btn-danger" type="button">Retirar tributación</button>
+              <button class="btn btn-primary" type="button">Listo</button>
+            </footer>
+          </div>
+        </div>
+        <div class="note">
+          El badge “REPARTO AUTOMÁTICO” se <b>deriva</b> en runtime: los pesos actuales coinciden con el reparto en partes iguales del grupo <code class="inline">(planId, competencyNodeId, developmentLevelId)</code>. No se persiste: sin campo, objeto ni columna nueva (REQ-06).
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Caso B · grupo en reparto manual + residuo</h3><div class="reqs"><span class="req">REQ-05</span><span class="req">REQ-06</span></div></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header>
+              <h4>ICI-215 · Taller de Integración</h4>
+              <p>tributa a <b>C3 · Trabajar en equipos multidisciplinarios</b></p>
+            </header>
+            <div class="content">
+              <div class="weight-block">
+                <div class="wb-head">
+                  <span class="t">Peso dentro de Reinforce</span>
+                  <span class="badge badge-neutral">Reparto manual</span>
+                </div>
+                <div class="input-group"><input type="text" value="70,00" inputmode="decimal" aria-label="Peso dentro de Reinforce"><span class="suffix">%</span></div>
+                <div class="wb-head">
+                  <span class="wb-meter"><b>2</b> evalúa · suma <b>90,00%</b></span>
+                  <button class="btn btn-secondary btn-sm" type="button">Repartir en partes iguales</button>
+                </div>
+              </div>
+              <div class="alert alert-info">
+                <span>i</span>
+                <div>Con 3 filas que pesan, el reparto deja <b>33,33 / 33,33 / 33,34</b>: el residuo se ajusta en la última para que la suma dé 100 con 2 decimales.</div>
+              </div>
+            </div>
+            <footer>
+              <button class="btn btn-danger" type="button">Retirar tributación</button>
+              <button class="btn btn-primary" type="button">Listo</button>
+            </footer>
+          </div>
+        </div>
+        <div class="note">“Reparto manual” es el complemento derivado: cualquier combinación de pesos que no coincida con el reparto en partes iguales.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Caso C · Desarrolla — no pesa (R-6)</h3><div class="reqs"><span class="req">REQ-04</span></div></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header><h4>ICI-110 · Introducción a la Ingeniería</h4><p>tributa a <b>C1 · Modelar sistemas de ingeniería</b></p></header>
+            <div class="content">
+              <div class="field">
+                <label>Tipo de contribución</label>
+                <div class="seg" role="group" aria-label="Tipo de contribución">
+                  <button type="button" aria-pressed="true">Desarrolla</button>
+                  <button type="button" aria-pressed="false">Evalúa</button>
+                  <button type="button" aria-pressed="false">Ambas</button>
+                </div>
+                <span class="ro-row"><span class="gloss">La forma, pero no la mide</span></span>
+              </div>
+              <div class="weight-block" style="opacity:.6">
+                <div class="wb-head"><span class="t">Peso dentro de Introduce</span><span class="badge badge-neutral">No pesa</span></div>
+                <div class="input-group"><input type="text" value="" placeholder="—" disabled aria-label="Peso dentro de Introduce"><span class="suffix">%</span></div>
+                <div class="wb-meter">Solo las filas <b>Evalúa</b> o <b>Ambas</b> admiten peso.</div>
+              </div>
+            </div>
+            <footer><button class="btn btn-danger" type="button">Retirar tributación</button><button class="btn btn-primary" type="button">Listo</button></footer>
+          </div>
+        </div>
+        <div class="note">El peso queda en <code class="inline">null</code>, no en 0. Cambiar el tipo a Evalúa/Ambas habilita el input y recalcula el estado derivado del grupo.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Caso D · error de validación del peso</h3><div class="reqs"><span class="req">REQ-03</span></div><span class="state-tag">error</span></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header><h4>ICI-204 · Mecánica de Fluidos</h4><p>tributa a <b>C1 · Modelar sistemas de ingeniería</b></p></header>
+            <div class="content">
+              <div class="weight-block">
+                <div class="wb-head"><span class="t">Peso dentro de Reinforce</span><span class="badge badge-neutral">Reparto manual</span></div>
+                <div class="input-group is-invalid"><input type="text" value="120,5" aria-invalid="true" aria-describedby="e1" inputmode="decimal"><span class="suffix">%</span></div>
+                <div class="err-msg" id="e1"><span>⚠</span><span>El peso debe estar entre 0 y 100.</span></div>
+              </div>
+              <div class="weight-block">
+                <div class="wb-head"><span class="t">Peso dentro de Master</span><span class="badge badge-neutral">Reparto manual</span></div>
+                <div class="input-group is-invalid"><input type="text" value="33,333" aria-invalid="true" aria-describedby="e2" inputmode="decimal"><span class="suffix">%</span></div>
+                <div class="err-msg" id="e2"><span>⚠</span><span>Máximo 2 decimales.</span></div>
+              </div>
+              <div class="alert alert-danger"><span>⚠</span><div>Corrige los pesos marcados para poder guardar.</div></div>
+            </div>
+            <footer><button class="btn btn-danger" type="button">Retirar tributación</button><button class="btn btn-primary" type="button" disabled>Listo</button></footer>
+          </div>
+        </div>
+        <div class="note">
+          Transporte como <b>string</b>, sin truncar; el criterio de precisión es el ya vigente en el módulo (<code class="inline">isValidWeight</code> / <code class="inline">hasWeightPrecision</code>), no uno nuevo.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.6 -->
+  <h2 class="sec" id="v6" style="font-size:14px"><span class="n">2.6</span>Vía masiva — acción “Varias”</h2>
+  <p class="sec-sub">Aplica un destino (nivel + tipo) a varias asignaturas en <b>una</b> transacción, con troceo en el backend (AD-12, patrón <code class="inline">matrixAdoption</code>), y devuelve el detalle de aplicadas y salteadas con su motivo. Camino aparte del mecanismo individual de REQ-16.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Paso 1 · destino y selección</h3><div class="reqs"><span class="req">REQ-07</span></div></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header><h4>Aplicar a varias asignaturas</h4><p>Destino: <b>C1 · Modelar sistemas de ingeniería</b></p></header>
+            <div class="content">
+              <div class="field">
+                <label>Nivel de desarrollo</label>
+                <div class="seg" role="group" aria-label="Nivel de desarrollo">
+                  <button type="button" aria-pressed="false">Introduce</button>
+                  <button type="button" aria-pressed="true">Reinforce</button>
+                  <button type="button" aria-pressed="false" disabled>Master</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Tipo de contribución</label>
+                <div class="seg" role="group" aria-label="Tipo de contribución">
+                  <button type="button" aria-pressed="false">Desarrolla</button>
+                  <button type="button" aria-pressed="true">Evalúa</button>
+                  <button type="button" aria-pressed="false">Ambas</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Asignaturas (4 seleccionadas)</label>
+                <ul class="check-list">
+                  <li><input type="checkbox" checked> <b>ICI-201</b> Termodinámica Aplicada</li>
+                  <li><input type="checkbox" checked> <b>ICI-204</b> Mecánica de Fluidos</li>
+                  <li><input type="checkbox" checked> <b>ICI-215</b> Taller de Integración</li>
+                  <li><input type="checkbox" checked> <b>MAT-101</b> Cálculo I</li>
+                  <li><input type="checkbox"> <b>ICI-330</b> Gestión de Proyectos</li>
+                </ul>
+              </div>
+            </div>
+            <footer>
+              <button class="btn btn-secondary" type="button">Cancelar</button>
+              <button class="btn btn-primary" type="button">Aplicar a 4 asignaturas</button>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Paso 2 · resultado (aplicadas y salteadas)</h3><div class="reqs"><span class="req">REQ-07</span></div><span class="state-tag">resultado parcial</span></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header><h4>Resultado de la aplicación</h4><p>2 aplicadas · 2 salteadas</p></header>
+            <div class="content">
+              <div class="alert alert-ok"><span>✓</span><div>Se aplicaron 2 tributaciones en una sola transacción.</div></div>
+              <table class="result">
+                <thead><tr><th>Asignatura</th><th>Estado</th><th>Motivo</th></tr></thead>
+                <tbody>
+                  <tr><td><b>ICI-201</b> Termodinámica Aplicada</td><td><span class="badge badge-ok">Aplicada</span></td><td>—</td></tr>
+                  <tr><td><b>ICI-215</b> Taller de Integración</td><td><span class="badge badge-ok">Aplicada</span></td><td>—</td></tr>
+                  <tr><td><b>ICI-204</b> Mecánica de Fluidos</td><td><span class="badge badge-warn">Salteada</span></td><td>Ya tiene esta tributación (duplicado existente)</td></tr>
+                  <tr><td><b>MAT-101</b> Cálculo I</td><td><span class="badge badge-warn">Salteada</span></td><td>Fuera de la matriz</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <footer><span></span><button class="btn btn-primary" type="button">Listo</button></footer>
+          </div>
+        </div>
+        <div class="note">Motivos previstos: duplicado existente, fuera de la matriz, regla R-1..R-5/R-10 no cumplida.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <header><h3>Estado · aplicando (troceo)</h3><span class="state-tag">loading</span></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header><h4>Aplicando a varias asignaturas</h4><p>No cierres esta ventana.</p></header>
+            <div class="content">
+              <div style="display:flex;gap:8px;align-items:center;color:var(--pv-text-muted)"><span class="spinner"></span> Procesando 4 asignaturas…</div>
+              <div class="skeleton" style="width:100%"></div>
+              <div class="skeleton" style="width:70%"></div>
+            </div>
+            <footer><span></span><button class="btn btn-primary" type="button" disabled>Listo</button></footer>
+          </div>
+        </div>
+        <div class="note">El troceo es del backend (AD-12); la UI muestra una sola operación.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <header><h3>Estado · error total</h3><span class="state-tag">error</span></header>
+      <div class="body">
+        <div class="modal-scrim">
+          <div class="modal" role="dialog" aria-modal="true">
+            <header><h4>No se aplicó ninguna tributación</h4></header>
+            <div class="content">
+              <div class="alert alert-danger"><span>⚠</span><div>La operación falló y se revirtió por completo. Ninguna de las 4 asignaturas quedó modificada.</div></div>
+            </div>
+            <footer><button class="btn btn-secondary" type="button">Cerrar</button><button class="btn btn-primary" type="button">Reintentar</button></footer>
+          </div>
+        </div>
+        <div class="note">Todo o nada: una transacción única, sin estados intermedios visibles.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2.7 -->
+  <h2 class="sec" id="v7" style="font-size:14px"><span class="n">2.7</span>Guardado de conjunto — barra del editor</h2>
+  <p class="sec-sub">Las dos vistas del editor producen el <b>mismo</b> payload de batch para <code class="inline">(planId, matriz)</code> y se guardan con la misma mutación gobernada. Upsert de conjunto transaccional, todo o nada, una sola entrada de historial.</p>
+
+  <div class="card">
+    <header><h3>Estados de la barra de guardado</h3><div class="reqs"><span class="req">REQ-01</span><span class="req">REQ-02</span><span class="req">REQ-11</span></div></header>
+    <div class="body">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="actionbar" style="border:1px solid var(--pv-border);border-radius:var(--pv-radius)">
+          <span class="state-tag">sin cambios</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:var(--pv-text-muted)">Sin cambios pendientes</span>
+            <button class="btn btn-secondary btn-sm" type="button">Cancelar</button>
+            <button class="btn btn-primary btn-sm" type="button" disabled>Guardar</button>
+          </div>
+        </div>
+
+        <div class="actionbar" style="border:1px solid var(--pv-border);border-radius:var(--pv-radius)">
+          <span class="state-tag">con cambios</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="badge badge-soft">7 cambios pendientes</span>
+            <span style="font-size:12px;color:var(--pv-text-muted)">4 nuevas · 2 modificadas · 1 retirada</span>
+            <button class="btn btn-secondary btn-sm" type="button">Cancelar</button>
+            <button class="btn btn-primary btn-sm" type="button">Guardar</button>
+          </div>
+        </div>
+
+        <div class="actionbar" style="border:1px solid var(--pv-border);border-radius:var(--pv-radius)">
+          <span class="state-tag">guardando</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:var(--pv-text-muted);display:flex;gap:6px;align-items:center"><span class="spinner"></span> Guardando conjunto…</span>
+            <button class="btn btn-secondary btn-sm" type="button" disabled>Cancelar</button>
+            <button class="btn btn-primary btn-sm" type="button" disabled>Guardar</button>
+          </div>
+        </div>
+
+        <div class="alert alert-ok"><span>✓</span><div>Tributación guardada. Se registró <b>una sola entrada</b> en el historial del plan.</div></div>
+
+        <div class="alert alert-danger">
+          <span>⚠</span>
+          <div>
+            <b>No se guardó la tributación.</b> La operación se revirtió por completo: ninguna fila quedó modificada.<br>
+            <span style="font-size:12px">ICI-215 · Reinforce · Evalúa — la competencia no declara ese nivel (R-3).</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Scope de retiro (REQ-02):</b> el batch retira solo las tributaciones del scope <code class="inline">planId</code> + <code class="inline">competencyNodeId ∈ competencias de la matriz</code> que no vinieron en el envío.
+        <code class="inline">CompetencyAlignment</code> no tiene columna <code class="inline">matrixId</code>. Nunca toca otras matrices adoptadas por el mismo plan ni las filas “fuera de diseño”.
+        El cliente reenvía el conjunto completo del <code class="inline">(planId, matriz)</code> cargado (la vista no pagina).
+      </div>
+      <div class="note">
+        <b>RBAC (REQ-01):</b> sin los tres permisos (create + modify + delete) el editor no se abre y la pestaña queda en solo lectura con “Tributar” oculto. No se delega en el CRUD generic.
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       3 · DELTA
+       ========================================================= -->
+  <h2 class="sec" id="delta"><span class="n">3</span>Delta respecto del design system</h2>
+
+  <div class="delta-box">
+    <h3>■ SIN DELTA — el ticket se cubre con el design system existente</h3>
+    <p>
+      Ninguna vista de arriba introduce un token, una clase o un componente nuevo respecto del DS de up1 ni de
+      <code class="inline">modsComponents/CompetencyAlignmentGrid/</code>. Todo se resuelve con componentes ya existentes:
+      <code class="inline">CompetencyAlignmentGridTable</code>, <code class="inline">CompetencyAlignmentDetailModal</code>,
+      <code class="inline">PlanSubjectsPanel</code> y el <code class="inline">Modal</code> de <code class="inline">@molecules</code>,
+      más átomos del DS (botón, badge, segmentado, input con sufijo, select, alert, card).
+      El bloque de peso, el chip “EN MANO”, la acción “+ Asignar acá” y la vía masiva son <b>composiciones</b> de esos átomos dentro de los componentes existentes,
+      no piezas nuevas del sistema.
+    </p>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <header><h3>Carencias a resolver antes de implementar (no son delta de diseño, son huecos de insumo)</h3><span class="state-tag">verificar</span></header>
+    <div class="body">
+      <ul class="tight">
+        <li><b>Maqueta no disponible en este preview.</b> Las 10 capturas de <i>UPONE-1770 — referencias visuales de la maqueta</i> no llegaron. El layout de arriba se derivó del spec y de los componentes existentes: contrastar composición, orden de campos y microcopy contra las capturas.</li>
+        <li><b>Tokens neutrales / semánticos de estado.</b> El extracto del DS recibido llega truncado antes de la escala de grises, el rojo de error y el ámbar de aviso. Acá se usaron alias locales <code class="inline">--pv-*</code>, explícitamente marcados; hay que mapearlos a los tokens reales de <code class="inline">theme-tokens.css</code> y no crear nombres nuevos.</li>
+        <li><b>Separador decimal de la UI.</b> El preview muestra coma (60,00 %); el transporte del valor es string con punto. El formato visible debe respetar <code class="inline">cm.displayDecimals</code>, el único parámetro de tenant del mod.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       4 · SIN SUPERFICIE VISUAL
+       ========================================================= -->
+  <h2 class="sec" id="nosup"><span class="n">4</span>REQ en alcance sin superficie visual</h2>
+  <div class="card">
+    <div class="body">
+      <ul class="tight">
+        <li><span class="req">REQ-12</span> Test de paridad MCP extendido para cubrir <code class="inline">contributionPercentage</code>. Documenta que la vía genérica todavía lo permite; el cierre real es de los tickets de MCP de cm (patrón <code class="inline">blockGenericMutation</code>).</li>
+        <li><span class="req">REQ-03</span> (parte backend) <code class="inline">contributionPercentage</code> en <code class="inline">WRITABLE_FIELDS</code> de <code class="inline">logic/helpers/validateCompetencyAlignment.js</code>, reusando <code class="inline">isValidWeight</code> / <code class="inline">hasWeightPrecision</code>.</li>
+        <li><span class="req">REQ-01</span> / <span class="req">REQ-02</span> (parte backend) Resolver de upsert de conjunto en <code class="inline">runInTransaction</code>, <code class="inline">planId</code> derivado server-side, R-1..R-5/R-10 por fila, RBAC propio.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <header><h3>Explícitamente NO dibujado (fuera de alcance del ticket)</h3></header>
+    <div class="body">
+      <ul class="tight">
+        <li>Validación “la suma da 100 al publicar el plan” (D1): cross-mod hacia curriculum-design, ticket aparte. La suma se muestra como señal, no como bloqueo.</li>
+        <li>Indicadores y versionado del plan (UPONE-1771).</li>
+        <li><code class="inline">outcomeAlignment</code> y retiro con aviso (UPONE-1772).</li>
+        <li>Migración de niveles (UPONE-1773).</li>
+        <li>R-9, gate del peso por institución: legacy, no aplica en up1.</li>
+        <li>Cualquier importación de <code class="inline">CurriculumMesh</code> o de componentes de curriculum-design (M-26).</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById('tt').addEventListener('click', function () {
+    document.documentElement.classList.toggle('theme-dark');
+  });
+</script>
+</body>
+</html>

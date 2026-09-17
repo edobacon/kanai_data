@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOR-165 — Maqueta: Paginación server-side + filtros en listados de items</title>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --border:#e2e5ea;
+    --border-strong:#cfd4dc;
+    --text:#1c2230;
+    --text-muted:#616a7d;
+    --text-faint:#8a93a5;
+    --primary:#1f5fd8;
+    --primary-soft:#e8f0fe;
+    --danger:#b3261e;
+    --danger-soft:#fdecea;
+    --warn:#8a6100;
+    --warn-soft:#fff5e0;
+    --ok:#186c3b;
+    --ok-soft:#e6f4ec;
+    --radius:8px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45}
+  a{color:var(--primary)}
+
+  /* ---------- Chrome de la maqueta (no es parte del producto) ---------- */
+  .mock-header{background:#111726;color:#fff;padding:20px 28px}
+  .mock-header h1{margin:0 0 6px;font-size:18px;letter-spacing:.2px}
+  .mock-header p{margin:0;color:#a9b2c6;font-size:13px;max-width:960px}
+  .mock-nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .mock-nav a{background:#1e2740;color:#cdd6e8;text-decoration:none;padding:6px 10px;border-radius:6px;font-size:12px;border:1px solid #2c3category}
+  .mock-nav a{border:1px solid #2c3653}
+  .mock-nav a:hover{background:#2a3552;color:#fff}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+  .section{margin:0 0 44px}
+  .section-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+  .section-title h2{margin:0;font-size:16px}
+  .section-title .path{font-family:var(--mono);font-size:12px;color:var(--text-muted)}
+  .section-desc{margin:0 0 14px;color:var(--text-muted);font-size:13px;max-width:900px}
+  .reqs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+  .req{font-family:var(--mono);font-size:11px;background:var(--primary-soft);color:#17458f;border:1px solid #c9dcfb;border-radius:999px;padding:2px 8px}
+
+  .state-label{display:flex;align-items:center;gap:8px;margin:22px 0 8px;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+  .state-label::after{content:"";flex:1;height:1px;background:var(--border)}
+
+  /* ---------- Superficie de app ---------- */
+  .app{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .app-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .app-head h3{margin:0 0 3px;font-size:15px}
+  .app-head p{margin:0;color:var(--text-muted);font-size:12.5px}
+  .app-body{padding:18px}
+
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12px;font-weight:600;color:var(--text-muted)}
+  .input,.select{border:1px solid var(--border-strong);border-radius:6px;padding:7px 9px;font-size:13px;background:#fff;color:var(--text);font-family:inherit;width:100%}
+  .input::placeholder{color:#aab1c0}
+  .input.sm{padding:5px 7px;font-size:12px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);background:#fff;color:var(--text);border-radius:6px;padding:7px 12px;font-size:13px;font-family:inherit;cursor:default}
+  .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn-ghost{border-color:transparent;background:transparent;color:var(--text-muted)}
+  .btn[disabled],.btn.is-disabled{opacity:.45}
+  .btn.sm{padding:4px 9px;font-size:12px}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+  thead th{background:#fafbfc;font-size:12px;color:var(--text-muted);font-weight:600;white-space:nowrap}
+  tr.selected td{background:#f5f9ff}
+  .col-check{width:38px}
+  .filter-row th{background:#fff;padding:6px 10px 10px;border-bottom:1px solid var(--border)}
+  .num{font-family:var(--mono);font-size:12.5px}
+  .table-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+  .table-scroll table{min-width:820px}
+
+  .tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid var(--border-strong);color:var(--text-muted);background:#fafbfc}
+  .tag.ok{background:var(--ok-soft);border-color:#bfe0cc;color:var(--ok)}
+  .tag.off{background:#f2f3f5}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-soft);border:1px solid #c9dcfb;color:#17458f;border-radius:999px;padding:3px 6px 3px 10px;font-size:12px}
+  .chip button{border:0;background:#c9dcfb;color:#17458f;border-radius:50%;width:16px;height:16px;line-height:1;font-size:11px;cursor:default;padding:0}
+
+  /* Paginación */
+  .pagination{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 2px 2px;flex-wrap:wrap}
+  .pagination .info{font-size:12.5px;color:var(--text-muted)}
+  .pagination .controls{display:flex;align-items:center;gap:8px}
+  .pagination .page-ind{font-size:12.5px;color:var(--text-muted);min-width:104px;text-align:center}
+
+  .banner{border-radius:6px;padding:10px 12px;font-size:13px;border:1px solid}
+  .banner.info{background:var(--primary-soft);border-color:#c9dcfb;color:#17458f}
+  .banner.warn{background:var(--warn-soft);border-color:#f0dcae;color:var(--warn)}
+  .banner.error{background:var(--danger-soft);border-color:#f3c6c2;color:var(--danger)}
+  .banner.ok{background:var(--ok-soft);border-color:#bfe0cc;color:var(--ok)}
+  .banner + .banner{margin-top:10px}
+
+  .empty{padding:44px 20px;text-align:center;color:var(--text-muted)}
+  .empty strong{display:block;color:var(--text);font-size:14px;margin-bottom:5px}
+  .empty p{margin:0 0 14px;font-size:13px}
+
+  /* Skeleton */
+  .sk{background:linear-gradient(90deg,#eceef2 25%,#f5f6f8 50%,#eceef2 75%);background-size:400% 100%;border-radius:4px;height:11px;display:block}
+  .sk.w20{width:20%}.sk.w35{width:35%}.sk.w50{width:50%}.sk.w60{width:60%}.sk.w80{width:80%}.sk.w90{width:90%}
+  .sk-box{height:34px;border-radius:6px}
+
+  /* Toast */
+  .toast{display:inline-flex;align-items:flex-start;gap:9px;max-width:420px;background:#1c2230;color:#fff;border-radius:8px;padding:11px 14px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  .toast .dot{width:8px;height:8px;border-radius:50%;background:#f2a33c;margin-top:5px;flex:0 0 auto}
+  .toast.error .dot{background:#ff6f61}
+  .toast-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .toast-caption{font-size:12px;color:var(--text-muted);max-width:340px}
+  .strike{text-decoration:line-through;opacity:.6}
+
+  .note{font-size:12px;color:var(--text-faint);margin:8px 0 0}
+  .kbd{font-family:var(--mono);font-size:11.5px;background:#eef0f4;border:1px solid var(--border-strong);border-radius:4px;padding:1px 5px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:900px){.split,.grid-3,.grid-2{grid-template-columns:1fr}}
+
+  .sticky-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 18px;border-top:1px solid var(--border);background:#fafbfc;flex-wrap:wrap}
+  .sticky-bar .sel{font-size:13px;color:var(--text-muted)}
+  .sticky-bar .sel b{color:var(--text)}
+</style>
+</head>
+<body>
+
+<header class="mock-header">
+  <h1>JOR-165 — Paginación server-side + filtros en los listados de items del catálogo</h1>
+  <p>Maqueta estática de verificación visual. Cubre las vistas y componentes afectados: control de paginación, tabla de selección de items (server-side), builder de catálogo y generación desde catálogo. Incluye estados de carga, vacío, error y sin resultados. Sin scripts ni dependencias externas: los controles no son funcionales.</p>
+  <nav class="mock-nav">
+    <a href="#pagination">1. Pagination (fix type=button)</a>
+    <a href="#picker">2. ItemsPickerTable server-side</a>
+    <a href="#crear">3. CrearCatalogoView</a>
+    <a href="#crear-estados">4. CrearCatalogoView — estados</a>
+    <a href="#editar">5. Editar catálogo (hidratación por ids)</a>
+    <a href="#generar">6. GenerarDesdeCatalogoView</a>
+    <a href="#generar-estados">7. GenerarDesdeCatalogo — estados</a>
+    <a href="#no-tocar">8. Vistas no modificadas</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <!-- ============================================================ -->
+  <!-- 1. PAGINATION -->
+  <!-- ============================================================ -->
+  <section class="section" id="pagination">
+    <div class="section-title">
+      <h2>1. Control de paginación</h2>
+      <span class="path">ui/pagination/pagination.tsx</span>
+    </div>
+    <p class="section-desc">Los 3 botones fijan <span class="kbd">type="button"</span>. Visualmente no cambia nada: mismo layout, mismas etiquetas y mismos estados deshabilitados. Lo que cambia es que dentro de un <span class="kbd">&lt;form&gt;</span> ya no dispara submit.</p>
+    <div class="reqs"><span class="req">REQ-01</span></div>
+
+    <div class="state-label">Estado normal — página intermedia</div>
+    <div class="app"><div class="app-body">
+      <div class="pagination">
+        <span class="info">Mostrando 21–40 de 13.575 items</span>
+        <div class="controls">
+          <button class="btn sm">Anterior</button>
+          <span class="page-ind">Página 2 de 679</span>
+          <button class="btn sm">Siguiente</button>
+          <button class="btn sm">Última</button>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="state-label">Primera página — “Anterior” deshabilitado</div>
+    <div class="app"><div class="app-body">
+      <div class="pagination">
+        <span class="info">Mostrando 1–20 de 13.575 items</span>
+        <div class="controls">
+          <button class="btn sm is-disabled" disabled>Anterior</button>
+          <span class="page-ind">Página 1 de 679</span>
+          <button class="btn sm">Siguiente</button>
+          <button class="btn sm">Última</button>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="state-label">Última página — “Siguiente” y “Última” deshabilitados</div>
+    <div class="app"><div class="app-body">
+      <div class="pagination">
+        <span class="info">Mostrando 13.561–13.575 de 13.575 items</span>
+        <div class="controls">
+          <button class="btn sm">Anterior</button>
+          <span class="page-ind">Página 679 de 679</span>
+          <button class="btn sm is-disabled" disabled>Siguiente</button>
+          <button class="btn sm is-disabled" disabled>Última</button>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="state-label">Una sola página — controles inertes</div>
+    <div class="app"><div class="app-body">
+      <div class="pagination">
+        <span class="info">Mostrando 1–7 de 7 items</span>
+        <div class="controls">
+          <button class="btn sm is-disabled" disabled>Anterior</button>
+          <span class="page-ind">Página 1 de 1</span>
+          <button class="btn sm is-disabled" disabled>Siguiente</button>
+          <button class="btn sm is-disabled" disabled>Última</button>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="state-label">Comportamiento del bug corregido</div>
+    <div class="app"><div class="app-body">
+      <div class="toast-row">
+        <div>
+          <div class="toast error"><span class="dot"></span><span><b>Antes:</b> al paginar dentro del formulario del builder aparecía “Agrega al menos un item al catálogo”.</span></div>
+          <p class="toast-caption strike">Agrega al menos un item al catálogo</p>
+        </div>
+        <div>
+          <div class="banner ok"><b>Después:</b> paginar no muestra ningún toast. El toast solo aparece al presionar “Guardar catálogo” sin items seleccionados.</div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. ITEMS PICKER TABLE -->
+  <!-- ============================================================ -->
+  <section class="section" id="picker">
+    <div class="section-title">
+      <h2>2. Tabla de selección de items (controlada, server-side)</h2>
+      <span class="path">components/.../ItemsPickerTable</span>
+    </div>
+    <p class="section-desc">Recibe los items de la página vigente, <span class="kbd">total</span>, <span class="kbd">page</span>, <span class="kbd">pageCount</span>, los valores de los 4 filtros por columna y sus callbacks. No filtra ni pagina en cliente. La selección se acumula entre páginas y se muestra siempre, aunque los items seleccionados no estén en la página visible.</p>
+    <div class="reqs"><span class="req">REQ-09</span><span class="req">REQ-13</span></div>
+
+    <div class="state-label">Con datos — página 2, selección acumulada de páginas anteriores</div>
+    <div class="app">
+      <div class="app-head">
+        <div>
+          <h3>Items disponibles</h3>
+          <p>Selecciona los items que formarán parte del catálogo. La selección se conserva al cambiar de página.</p>
+        </div>
+        <span class="tag">13.575 items en total</span>
+      </div>
+      <div class="app-body">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" aria-label="Seleccionar todos los de esta página"></th>
+                <th>Número</th>
+                <th>Descripción</th>
+                <th>Referencias</th>
+                <th>Marca</th>
+                <th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input sm" placeholder="Filtrar número" value="15"></th>
+                <th><input class="input sm" placeholder="Filtrar descripción" value="filtro"></th>
+                <th><input class="input sm" placeholder="Filtrar referencias"></th>
+                <th><input class="input sm" placeholder="Filtrar marca"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">15024</td>
+                <td>Filtro de aceite motor 1.6</td>
+                <td class="num">FA-1560 · 9871-A</td>
+                <td>Bosch</td>
+                <td><span class="tag ok">Sí</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">15031</td>
+                <td>Filtro de aire deportivo</td>
+                <td class="num">FAI-2210</td>
+                <td>Mann</td>
+                <td><span class="tag off">No</span></td>
+              </tr>
+              <tr class="selected">
+                <td><input type="checkbox" checked></td>
+                <td class="num">15047</td>
+                <td>Filtro de combustible diésel</td>
+                <td class="num">FC-8890 · 4412-C</td>
+                <td>Mahle</td>
+                <td><span class="tag ok">Sí</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">15052</td>
+                <td>Filtro de cabina con carbón activado</td>
+                <td class="num">FCA-3301</td>
+                <td>Bosch</td>
+                <td><span class="tag off">No</span></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox"></td>
+                <td class="num">15068</td>
+                <td>Filtro hidráulico de dirección</td>
+                <td class="num">FH-7120</td>
+                <td>Fram</td>
+                <td><span class="tag off">No</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span class="info">Mostrando 21–25 de 148 items filtrados</span>
+          <div class="controls">
+            <button class="btn sm">Anterior</button>
+            <span class="page-ind">Página 2 de 30</span>
+            <button class="btn sm">Siguiente</button>
+            <button class="btn sm">Última</button>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>12 items seleccionados</b> · 2 en esta página, 10 en otras páginas</span>
+        <button class="btn sm btn-ghost">Limpiar selección</button>
+      </div>
+    </div>
+    <p class="note">Nota de verificación: el contador de selección no depende de la página visible; refleja el acumulado. El texto “de 148 items filtrados” usa el <span class="kbd">total</span> del server, no la longitud del array local.</p>
+
+    <div class="state-label">Cargando página (skeleton) — filtros y selección permanecen visibles</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Items disponibles</h3><p>Cargando resultados…</p></div>
+        <span class="tag">Cargando…</span>
+      </div>
+      <div class="app-body">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input sm" placeholder="Filtrar número" value="15"></th>
+                <th><input class="input sm" placeholder="Filtrar descripción" value="filtro"></th>
+                <th><input class="input sm" placeholder="Filtrar referencias"></th>
+                <th><input class="input sm" placeholder="Filtrar marca"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w90"></span></td><td><span class="sk w50"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w50"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w50"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w90"></span></td><td><span class="sk w35"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w50"></span></td><td><span class="sk w60"></span></td><td><span class="sk w50"></span></td><td><span class="sk w50"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">Cargando página 3…</span>
+          <div class="controls">
+            <button class="btn sm is-disabled" disabled>Anterior</button>
+            <span class="page-ind">Página 3 de 30</span>
+            <button class="btn sm is-disabled" disabled>Siguiente</button>
+            <button class="btn sm is-disabled" disabled>Última</button>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>12 items seleccionados</b></span>
+        <button class="btn sm btn-ghost">Limpiar selección</button>
+      </div>
+    </div>
+
+    <div class="state-label">Sin resultados para los filtros aplicados</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Items disponibles</h3><p>Selecciona los items que formarán parte del catálogo.</p></div>
+        <span class="tag">0 resultados</span>
+      </div>
+      <div class="app-body">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" disabled></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input sm" placeholder="Filtrar número" value="99999"></th>
+                <th><input class="input sm" placeholder="Filtrar descripción" value="turbocompresor"></th>
+                <th><input class="input sm" placeholder="Filtrar referencias"></th>
+                <th><input class="input sm" placeholder="Filtrar marca"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="6">
+                <div class="empty">
+                  <strong>Ningún item coincide con los filtros</strong>
+                  <p>Ajusta o limpia los filtros de las columnas para ver más resultados.</p>
+                  <button class="btn sm">Limpiar filtros</button>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">Mostrando 0 de 0 items</span>
+          <div class="controls">
+            <button class="btn sm is-disabled" disabled>Anterior</button>
+            <span class="page-ind">Página 1 de 1</span>
+            <button class="btn sm is-disabled" disabled>Siguiente</button>
+            <button class="btn sm is-disabled" disabled>Última</button>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>12 items seleccionados</b> · ninguno visible con estos filtros</span>
+        <button class="btn sm btn-ghost">Limpiar selección</button>
+      </div>
+    </div>
+    <p class="note">La selección acumulada sobrevive a un filtro que no devuelve nada: el usuario puede limpiar filtros y seguir viendo sus 12 items marcados.</p>
+
+    <div class="state-label">Error al cargar la página</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Items disponibles</h3><p>No se pudieron cargar los items.</p></div>
+      </div>
+      <div class="app-body">
+        <div class="banner error">No se pudieron cargar los items. Verifica tu conexión e inténtalo nuevamente.</div>
+        <div class="empty">
+          <strong>Error al cargar los items</strong>
+          <p>La solicitud al servidor falló. Puedes reintentar sin perder la selección actual.</p>
+          <button class="btn sm btn-primary">Reintentar</button>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>12 items seleccionados</b> · se conservan</span>
+        <button class="btn sm btn-ghost">Limpiar selección</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. CREAR CATALOGO -->
+  <!-- ============================================================ -->
+  <section class="section" id="crear">
+    <div class="section-title">
+      <h2>3. Crear catálogo — vista completa</h2>
+      <span class="path">views/.../CrearCatalogoView</span>
+    </div>
+    <p class="section-desc">La vista consume <span class="kbd">useItems({ page, limit, ...filtros })</span>. Los filtros de la cabecera (marca, oferta, proveedores) y los 4 filtros por columna viajan como parámetros al server y resetean la página a 1. El formulario envuelve todo; paginar ya no dispara submit.</p>
+    <div class="reqs"><span class="req">REQ-01</span><span class="req">REQ-07</span><span class="req">REQ-09</span><span class="req">REQ-10</span><span class="req">REQ-13</span></div>
+
+    <div class="app">
+      <div class="app-head">
+        <div>
+          <h3>Crear catálogo</h3>
+          <p>Define los datos del catálogo y selecciona los items que lo componen.</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn">Cancelar</button>
+          <button class="btn btn-primary">Guardar catálogo</button>
+        </div>
+      </div>
+
+      <div class="app-body">
+        <!-- Datos del catálogo -->
+        <div class="grid-3" style="margin-bottom:20px">
+          <div class="field">
+            <label for="cat-nombre">Nombre del catálogo</label>
+            <input id="cat-nombre" class="input" value="Catálogo primavera 2026">
+          </div>
+          <div class="field">
+            <label for="cat-desc">Descripción</label>
+            <input id="cat-desc" class="input" placeholder="Descripción opcional">
+          </div>
+          <div class="field">
+            <label for="cat-estado">Estado</label>
+            <select id="cat-estado" class="select"><option>Activo</option><option>Inactivo</option></select>
+          </div>
+        </div>
+
+        <!-- Generar catálogo: filtros de cabecera -->
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:18px;background:#fafbfc">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <strong style="font-size:13.5px">Generar catálogo</strong>
+            <span style="font-size:12px;color:var(--text-muted)">Los filtros se aplican en el servidor y vuelven a la página 1.</span>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="f-marca">Marca</label>
+              <select id="f-marca" class="select"><option>Bosch</option><option>Todas las marcas</option></select>
+            </div>
+            <div class="field">
+              <label for="f-prov">Proveedores</label>
+              <select id="f-prov" class="select"><option>2 seleccionados</option></select>
+            </div>
+            <div class="field">
+              <label for="f-oferta">Oferta</label>
+              <select id="f-oferta" class="select"><option>Solo items en oferta</option><option>Todos</option></select>
+            </div>
+          </div>
+          <div class="chips" style="margin-top:12px">
+            <span style="font-size:12px;color:var(--text-muted)">Filtros activos:</span>
+            <span class="chip">Marca: Bosch <button aria-label="Quitar filtro marca">×</button></span>
+            <span class="chip">Proveedor: Repuestos del Sur <button aria-label="Quitar proveedor">×</button></span>
+            <span class="chip">Proveedor: Importadora Andes <button aria-label="Quitar proveedor">×</button></span>
+            <span class="chip">En oferta <button aria-label="Quitar filtro oferta">×</button></span>
+            <span class="chip">Descripción: “filtro” <button aria-label="Quitar filtro descripción">×</button></span>
+            <button class="btn sm btn-ghost">Limpiar todo</button>
+          </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox" aria-label="Seleccionar todos los de esta página"></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th>
+              </tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input sm" placeholder="Filtrar número"></th>
+                <th><input class="input sm" placeholder="Filtrar descripción" value="filtro"></th>
+                <th><input class="input sm" placeholder="Filtrar referencias"></th>
+                <th><input class="input sm" placeholder="Filtrar marca" value="Bosch"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">15024</td><td>Filtro de aceite motor 1.6</td><td class="num">FA-1560 · 9871-A</td><td>Bosch</td><td><span class="tag ok">Sí</span></td></tr>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">15052</td><td>Filtro de cabina con carbón activado</td><td class="num">FCA-3301</td><td>Bosch</td><td><span class="tag ok">Sí</span></td></tr>
+              <tr><td><input type="checkbox"></td><td class="num">15110</td><td>Filtro de aceite motor 2.0 turbo</td><td class="num">FA-1602</td><td>Bosch</td><td><span class="tag ok">Sí</span></td></tr>
+              <tr><td><input type="checkbox"></td><td class="num">15187</td><td>Filtro de combustible inyección directa</td><td class="num">FC-9014 · 3320-B</td><td>Bosch</td><td><span class="tag ok">Sí</span></td></tr>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">15203</td><td>Filtro de aire alto flujo</td><td class="num">FAI-7788</td><td>Bosch</td><td><span class="tag ok">Sí</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span class="info">Mostrando 1–5 de 96 items filtrados</span>
+          <div class="controls">
+            <button class="btn sm is-disabled" disabled>Anterior</button>
+            <span class="page-ind">Página 1 de 20</span>
+            <button class="btn sm">Siguiente</button>
+            <button class="btn sm">Última</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky-bar">
+        <span class="sel"><b>3 items seleccionados</b> para este catálogo</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm btn-ghost">Limpiar selección</button>
+          <button class="btn sm btn-primary">Guardar catálogo</button>
+        </div>
+      </div>
+    </div>
+    <p class="note">El payload de guardado no cambia: se envía la lista de ids seleccionados acumulados, independientemente de la página o los filtros vigentes.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. CREAR CATALOGO — ESTADOS -->
+  <!-- ============================================================ -->
+  <section class="section" id="crear-estados">
+    <div class="section-title"><h2>4. Crear catálogo — estados</h2></div>
+    <div class="reqs"><span class="req">REQ-01</span><span class="req">REQ-10</span></div>
+
+    <div class="state-label">Carga inicial de la vista</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Crear catálogo</h3><p>Cargando items…</p></div>
+        <div style="display:flex;gap:8px"><button class="btn">Cancelar</button><button class="btn btn-primary is-disabled" disabled>Guardar catálogo</button></div>
+      </div>
+      <div class="app-body">
+        <div class="grid-3" style="margin-bottom:20px">
+          <div class="field"><label>Nombre del catálogo</label><span class="sk sk-box"></span></div>
+          <div class="field"><label>Descripción</label><span class="sk sk-box"></span></div>
+          <div class="field"><label>Estado</label><span class="sk sk-box"></span></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th class="col-check"></th><th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th></tr></thead>
+            <tbody>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w90"></span></td><td><span class="sk w50"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w50"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w50"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w50"></span></td><td><span class="sk w90"></span></td><td><span class="sk w50"></span></td><td><span class="sk w50"></span></td><td><span class="sk w35"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination"><span class="info">Cargando items…</span></div>
+      </div>
+    </div>
+
+    <div class="state-label">Catálogo vacío de items — intento de guardado</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Crear catálogo</h3><p>Define los datos del catálogo y selecciona los items que lo componen.</p></div>
+        <div style="display:flex;gap:8px"><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar catálogo</button></div>
+      </div>
+      <div class="app-body">
+        <div class="banner warn">Aún no seleccionaste items. Marca al menos uno para poder guardar el catálogo.</div>
+        <div style="margin-top:16px" class="toast-row">
+          <div>
+            <div class="toast"><span class="dot"></span><span>Agrega al menos un item al catálogo</span></div>
+            <p class="toast-caption">Este toast solo debe aparecer al presionar “Guardar catálogo” sin selección. Nunca al paginar, filtrar o cambiar de página.</p>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>0 items seleccionados</b></span>
+        <button class="btn sm btn-primary">Guardar catálogo</button>
+      </div>
+    </div>
+
+    <div class="state-label">Sin items en el sistema (base vacía)</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Crear catálogo</h3><p>No hay items disponibles.</p></div></div>
+      <div class="app-body">
+        <div class="empty">
+          <strong>No hay items registrados</strong>
+          <p>Carga items en el inventario para poder armar un catálogo.</p>
+          <button class="btn sm">Ir a inventario</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-label">Error del servidor al listar items</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Crear catálogo</h3><p>No se pudieron cargar los items.</p></div></div>
+      <div class="app-body">
+        <div class="banner error">No se pudieron cargar los items. Inténtalo nuevamente en unos segundos.</div>
+        <div class="empty">
+          <strong>Error al cargar los items</strong>
+          <p>Los datos del catálogo que ya completaste se conservan.</p>
+          <button class="btn sm btn-primary">Reintentar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 5. EDITAR CATALOGO -->
+  <!-- ============================================================ -->
+  <section class="section" id="editar">
+    <div class="section-title">
+      <h2>5. Editar catálogo — hidratación de la selección por ids</h2>
+      <span class="path">CrearCatalogoView (modo edición) · useItemsByIds</span>
+    </div>
+    <p class="section-desc">Al abrir un catálogo existente, la selección se hidrata con un único <span class="kbd">POST /items/by-ids</span> que lleva todos los ids en el body. No se lotea por longitud de URL y no se carga el universo de items.</p>
+    <div class="reqs"><span class="req">REQ-05</span><span class="req">REQ-08</span><span class="req">REQ-10</span><span class="req">REQ-13</span></div>
+
+    <div class="state-label">Hidratando la selección existente</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Editar catálogo · Catálogo primavera 2026</h3><p>Recuperando los items del catálogo…</p></div>
+        <div style="display:flex;gap:8px"><button class="btn">Cancelar</button><button class="btn btn-primary is-disabled" disabled>Guardar cambios</button></div>
+      </div>
+      <div class="app-body">
+        <div class="banner info">Recuperando los 96 items del catálogo…</div>
+        <div class="table-scroll" style="margin-top:14px">
+          <table>
+            <thead><tr><th class="col-check"></th><th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th></tr></thead>
+            <tbody>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w90"></span></td><td><span class="sk w50"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w50"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w50"></span></td><td><span class="sk w35"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sticky-bar"><span class="sel">Cargando selección…</span></div>
+    </div>
+
+    <div class="state-label">Selección hidratada</div>
+    <div class="app">
+      <div class="app-head">
+        <div><h3>Editar catálogo · Catálogo primavera 2026</h3><p>Agrega o quita items. La selección existente ya está aplicada.</p></div>
+        <div style="display:flex;gap:8px"><button class="btn">Cancelar</button><button class="btn btn-primary">Guardar cambios</button></div>
+      </div>
+      <div class="app-body">
+        <div class="banner ok">96 items del catálogo cargados y marcados en la selección.</div>
+        <div class="table-scroll" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr><th class="col-check"><input type="checkbox"></th><th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th></tr>
+              <tr class="filter-row">
+                <th></th>
+                <th><input class="input sm" placeholder="Filtrar número"></th>
+                <th><input class="input sm" placeholder="Filtrar descripción"></th>
+                <th><input class="input sm" placeholder="Filtrar referencias"></th>
+                <th><input class="input sm" placeholder="Filtrar marca"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">10001</td><td>Amortiguador delantero derecho</td><td class="num">AM-1001</td><td>Monroe</td><td><span class="tag off">No</span></td></tr>
+              <tr><td><input type="checkbox"></td><td class="num">10002</td><td>Amortiguador trasero izquierdo</td><td class="num">AM-1002</td><td>Monroe</td><td><span class="tag off">No</span></td></tr>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">10008</td><td>Bujía de encendido iridio</td><td class="num">BJ-4409 · 7781-D</td><td>NGK</td><td><span class="tag ok">Sí</span></td></tr>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">10015</td><td>Correa de distribución 120 dientes</td><td class="num">CD-2210</td><td>Gates</td><td><span class="tag off">No</span></td></tr>
+              <tr><td><input type="checkbox"></td><td class="num">10021</td><td>Disco de freno ventilado 280 mm</td><td class="num">DF-8801</td><td>Brembo</td><td><span class="tag off">No</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span class="info">Mostrando 1–5 de 13.575 items</span>
+          <div class="controls">
+            <button class="btn sm is-disabled" disabled>Anterior</button>
+            <span class="page-ind">Página 1 de 2.715</span>
+            <button class="btn sm">Siguiente</button>
+            <button class="btn sm">Última</button>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>96 items seleccionados</b> · 3 visibles en esta página</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm btn-ghost">Limpiar selección</button>
+          <button class="btn sm btn-primary">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-label">Items del catálogo que ya no existen</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Editar catálogo · Catálogo primavera 2026</h3><p>Algunos items ya no están disponibles.</p></div></div>
+      <div class="app-body">
+        <div class="banner warn">4 de los 96 items guardados ya no existen en el inventario y no se marcaron en la selección. Al guardar, el catálogo quedará con 92 items.</div>
+      </div>
+    </div>
+
+    <div class="state-label">Error al hidratar la selección</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Editar catálogo · Catálogo primavera 2026</h3><p>No se pudo recuperar la selección.</p></div></div>
+      <div class="app-body">
+        <div class="banner error">No se pudieron recuperar los items del catálogo. Guardar ahora podría perder la selección original.</div>
+        <div class="empty">
+          <strong>Error al recuperar los items del catálogo</strong>
+          <p>Reintenta antes de editar para no sobrescribir el catálogo con una selección incompleta.</p>
+          <button class="btn sm btn-primary">Reintentar</button>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel">Selección no disponible</span>
+        <button class="btn sm btn-primary is-disabled" disabled>Guardar cambios</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 6. GENERAR DESDE CATALOGO -->
+  <!-- ============================================================ -->
+  <section class="section" id="generar">
+    <div class="section-title">
+      <h2>6. Generar desde catálogo</h2>
+      <span class="path">views/.../GenerarDesdeCatalogoView</span>
+    </div>
+    <p class="section-desc">Los items del catálogo se traen con un único <span class="kbd">POST /items/by-ids</span>. El filtrado es client-side sobre ese subconjunto acotado. Desaparece por completo la lógica y el aviso de truncado.</p>
+    <div class="reqs"><span class="req">REQ-08</span><span class="req">REQ-11</span><span class="req">REQ-13</span></div>
+
+    <div class="app">
+      <div class="app-head">
+        <div>
+          <h3>Generar desde catálogo · Catálogo primavera 2026</h3>
+          <p>Selecciona los items del catálogo que quieres incluir y sus cantidades.</p>
+        </div>
+        <span class="tag">96 items en el catálogo</span>
+      </div>
+      <div class="app-body">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="field"><label for="g-buscar">Buscar</label><input id="g-buscar" class="input" placeholder="Número o descripción" value="filtro"></div>
+          <div class="field"><label for="g-marca">Marca</label><select id="g-marca" class="select"><option>Todas</option><option>Bosch</option></select></div>
+          <div class="field"><label for="g-oferta">Oferta</label><select id="g-oferta" class="select"><option>Todos</option><option>Solo en oferta</option></select></div>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="col-check"><input type="checkbox"></th>
+                <th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th><th>Cantidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">15024</td><td>Filtro de aceite motor 1.6</td><td class="num">FA-1560</td><td>Bosch</td><td><span class="tag ok">Sí</span></td><td><input class="input sm" style="width:70px" value="2"></td></tr>
+              <tr><td><input type="checkbox"></td><td class="num">15052</td><td>Filtro de cabina con carbón activado</td><td class="num">FCA-3301</td><td>Bosch</td><td><span class="tag ok">Sí</span></td><td><input class="input sm" style="width:70px" value="0"></td></tr>
+              <tr class="selected"><td><input type="checkbox" checked></td><td class="num">15203</td><td>Filtro de aire alto flujo</td><td class="num">FAI-7788</td><td>Bosch</td><td><span class="tag ok">Sí</span></td><td><input class="input sm" style="width:70px" value="1"></td></tr>
+              <tr><td><input type="checkbox"></td><td class="num">15047</td><td>Filtro de combustible diésel</td><td class="num">FC-8890</td><td>Mahle</td><td><span class="tag ok">Sí</span></td><td><input class="input sm" style="width:70px" value="0"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pagination">
+          <span class="info">Mostrando 4 de 12 items que coinciden con la búsqueda (de 96 del catálogo)</span>
+          <div class="controls">
+            <button class="btn sm is-disabled" disabled>Anterior</button>
+            <span class="page-ind">Página 1 de 1</span>
+            <button class="btn sm is-disabled" disabled>Siguiente</button>
+            <button class="btn sm is-disabled" disabled>Última</button>
+          </div>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>2 items seleccionados</b> · 3 unidades en total</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm">Cancelar</button>
+          <button class="btn sm btn-primary">Generar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-label">Aviso eliminado (referencia de lo que ya no debe aparecer)</div>
+    <div class="app"><div class="app-body">
+      <div class="banner warn strike">Se muestran solo los primeros 500 items del catálogo. Refina la búsqueda para ver el resto.</div>
+      <p class="note">Este aviso de truncado se elimina junto con su lógica: el batch-get por ids trae el conjunto completo del catálogo en un solo request.</p>
+    </div></div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 7. GENERAR — ESTADOS -->
+  <!-- ============================================================ -->
+  <section class="section" id="generar-estados">
+    <div class="section-title"><h2>7. Generar desde catálogo — estados</h2></div>
+    <div class="reqs"><span class="req">REQ-08</span><span class="req">REQ-11</span></div>
+
+    <div class="state-label">Cargando los items del catálogo</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Generar desde catálogo · Catálogo primavera 2026</h3><p>Cargando los items del catálogo…</p></div></div>
+      <div class="app-body">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="field"><label>Buscar</label><span class="sk sk-box"></span></div>
+          <div class="field"><label>Marca</label><span class="sk sk-box"></span></div>
+          <div class="field"><label>Oferta</label><span class="sk sk-box"></span></div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th class="col-check"></th><th>Número</th><th>Descripción</th><th>Referencias</th><th>Marca</th><th>Oferta</th><th>Cantidad</th></tr></thead>
+            <tbody>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w90"></span></td><td><span class="sk w50"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td><td><span class="sk w50"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w50"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w50"></span></td><td><span class="sk w35"></span></td><td><span class="sk w50"></span></td></tr>
+              <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td><td><span class="sk w60"></span></td><td><span class="sk w35"></span></td><td><span class="sk w50"></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="state-label">Catálogo sin items</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Generar desde catálogo · Catálogo vacío</h3><p>Este catálogo no tiene items.</p></div></div>
+      <div class="app-body">
+        <div class="empty">
+          <strong>El catálogo no tiene items</strong>
+          <p>Edita el catálogo y agrega items para poder generar desde él.</p>
+          <button class="btn sm">Editar catálogo</button>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>0 items seleccionados</b></span>
+        <button class="btn sm btn-primary is-disabled" disabled>Generar</button>
+      </div>
+    </div>
+
+    <div class="state-label">Sin coincidencias en el filtro local</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Generar desde catálogo · Catálogo primavera 2026</h3><p>Ningún item del catálogo coincide con la búsqueda.</p></div><span class="tag">96 items en el catálogo</span></div>
+      <div class="app-body">
+        <div class="grid-3" style="margin-bottom:16px">
+          <div class="field"><label for="g2-buscar">Buscar</label><input id="g2-buscar" class="input" value="turbocompresor"></div>
+          <div class="field"><label for="g2-marca">Marca</label><select id="g2-marca" class="select"><option>Todas</option></select></div>
+          <div class="field"><label for="g2-oferta">Oferta</label><select id="g2-oferta" class="select"><option>Todos</option></select></div>
+        </div>
+        <div class="empty">
+          <strong>Ningún item coincide con la búsqueda</strong>
+          <p>Ajusta o limpia los filtros para ver los 96 items del catálogo.</p>
+          <button class="btn sm">Limpiar filtros</button>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel"><b>2 items seleccionados</b> · se conservan</span>
+        <button class="btn sm btn-primary">Generar</button>
+      </div>
+    </div>
+
+    <div class="state-label">Error al recuperar los items del catálogo</div>
+    <div class="app">
+      <div class="app-head"><div><h3>Generar desde catálogo · Catálogo primavera 2026</h3><p>No se pudieron cargar los items.</p></div></div>
+      <div class="app-body">
+        <div class="banner error">No se pudieron cargar los items del catálogo. Inténtalo nuevamente.</div>
+        <div class="empty">
+          <strong>Error al cargar los items del catálogo</strong>
+          <p>Sin los items no es posible generar desde este catálogo.</p>
+          <button class="btn sm btn-primary">Reintentar</button>
+        </div>
+      </div>
+      <div class="sticky-bar">
+        <span class="sel">Sin items disponibles</span>
+        <button class="btn sm btn-primary is-disabled" disabled>Generar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 8. NO MODIFICADAS -->
+  <!-- ============================================================ -->
+  <section class="section" id="no-tocar">
+    <div class="section-title">
+      <h2>8. Vistas no modificadas — solo verificación de no regresión</h2>
+      <span class="path">ItemSearchPanel · ItemsListView</span>
+    </div>
+    <p class="section-desc">Ya son server-side. No se cambia su layout ni sus textos: solo heredan el fix de <span class="kbd">Pagination</span>. Se incluyen aquí como referencia visual de lo que debe seguir viéndose igual.</p>
+    <div class="reqs"><span class="req">REQ-14</span></div>
+
+    <div class="split">
+      <div class="app">
+        <div class="app-head"><div><h3>Buscar items (builder de facturas)</h3><p>ItemSearchPanel · sin cambios de diseño</p></div></div>
+        <div class="app-body">
+          <div class="field" style="margin-bottom:12px"><label for="isp">Buscar</label><input id="isp" class="input" placeholder="Número, descripción o referencia"></div>
+          <div class="table-scroll">
+            <table style="min-width:0">
+              <thead><tr><th>Número</th><th>Descripción</th><th>Marca</th></tr></thead>
+              <tbody>
+                <tr><td class="num">10008</td><td>Bujía de encendido iridio</td><td>NGK</td></tr>
+                <tr><td class="num">10015</td><td>Correa de distribución</td><td>Gates</td></tr>
+                <tr><td class="num">10021</td><td>Disco de freno ventilado</td><td>Brembo</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span class="info">Mostrando 1–3 de 13.575</span>
+            <div class="controls">
+              <button class="btn sm is-disabled" disabled>Anterior</button>
+              <span class="page-ind">Página 1 de 4.525</span>
+              <button class="btn sm">Siguiente</button>
+              <button class="btn sm">Última</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="app">
+        <div class="app-head"><div><h3>Inventario de items</h3><p>ItemsListView · sin cambios de diseño</p></div></div>
+        <div class="app-body">
+          <div class="table-scroll">
+            <table style="min-width:0">
+              <thead><tr><th>Número</th><th>Descripción</th><th>Marca</th><th>Oferta</th></tr></thead>
+              <tbody>
+                <tr><td class="num">10001</td><td>Amortiguador delantero derecho</td><td>Monroe</td><td><span class="tag off">No</span></td></tr>
+                <tr><td class="num">10002</td><td>Amortiguador trasero izquierdo</td><td>Monroe</td><td><span class="tag off">No</span></td></tr>
+                <tr><td class="num">15024</td><td>Filtro de aceite motor 1.6</td><td>Bosch</td><td><span class="tag ok">Sí</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span class="info">Mostrando 1–3 de 13.575</span>
+            <div class="controls">
+              <button class="btn sm is-disabled" disabled>Anterior</button>
+              <span class="page-ind">Página 1 de 4.525</span>
+              <button class="btn sm">Siguiente</button>
+              <button class="btn sm">Última</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "run_id": "ab-jury-pr578",
+  "ts_start": "2026-09-10T18:05:00Z",
+  "ts_end": "2026-09-10T18:14:00Z",
+  "wall_clock_s": 246,
+  "project_id": "up1",
+  "mode": "A",
+  "shadow": true,
+  "target": {
+    "pr_url": "https://bitbucket.org/uplanner/object-manager/pull-requests/578",
+    "repos": ["uplanner/object-manager"],
+    "branch": "bugfix/UPONE-1872-1873-flowsync-tenant-and-core-prisma-arrays",
+    "refs": [{ "repo": "uplanner/object-manager", "head_sha": "46897269cf5e", "base_branch": "develop", "base_sha": "22ea30901ce4" }]
+  },
+  "external_ref": "UPONE-1872/1873",
+  "internal_ticket": null,
+  "topology": "acotado",
+  "heavy_reasoning_lanes": ["object-manager"],
+  "needs_code_tracing": true,
+  "topology_rationale": "1 modulo (object-manager), alto riesgo (aislamiento multi-tenant en flowSync + tipado Prisma core_*); +39/-8 pero exige trazar comportamiento -> jurado ciego forzado (A/B)",
+  "diffstat": { "files": 4, "lines_added": 39, "lines_deleted": 8, "repos": 1, "deletes": false, "deps": false, "i18n": false, "vue": false },
+  "jury": {
+    "enabled": true,
+    "forced": true,
+    "k": 3,
+    "models": ["opus", "sonnet", "sonnet"],
+    "consensus": "majority",
+    "agreement": {
+      "unanimous_ok": 4,
+      "majority_consulta": 1,
+      "minority": 3,
+      "minority_detail": "S1 checksum (1/3, rescatado y confirmado por re-verify) + 2 S3 distintos (1/3 cada uno)"
+    },
+    "recall_note": "el S1 lo vio 1 de 3 jueces; un juez unico habria fallado el S1 con prob 2/3"
+  },
+  "roles": [
+    { "role": "reason", "model": "opus",   "tokens": 92111,  "duration_s": 160 },
+    { "role": "reason", "model": "sonnet", "tokens": 134943, "duration_s": 115 },
+    { "role": "reason", "model": "sonnet", "tokens": 131031, "duration_s": 175 },
+    { "role": "verify", "model": "opus",   "tokens": 86650,  "duration_s": 71 }
+  ],
+  "totals": { "tokens_total": 444735, "tokens_by_model": { "opus": 178761, "sonnet": 265974 } },
+  "estimate": { "real_min": 4.1 },
+  "phases_run": ["F0","F1","F2","V"],
+  "phases_skipped": ["F1.5","F3","F4"],
+  "findings": { "S0": 0, "S1": 1, "S2": 0, "S3": 2, "consulta": 1, "ok": 5 },
+  "verdict": "iterar",
+  "guard_mode": "soft",
+  "notes": [
+    "A/B del jurado ciego: shadow, NO se posteo al PR.",
+    "S1 SOSTENIDO por re-verify adversarial (opus, 4 intentos de refutacion): sourceChecksum() no incluye staticData -> flows ya sincronizados hacen no-op skip (continue) antes del PATCH; el mirror de tenant no llega a los flows existentes salvo --force/FLOW_SYNC_FORCE.",
+    "Varianza medida entre 3 jueces sobre el mismo diff: top-severity S3/S3/S1; solo la consulta del runtime Up1FormObject convergio 2/3.",
+    "El base__flowSync del prefetch salio con contenido head; 2/3 jueces lo detectaron y usaron el diff como fuente autoritativa (rigor).",
+    "PR ya MERGEADO: el S1 es accionable fuera de banda (avisar al autor), no por comentario del A/B."
+  ]
+}
