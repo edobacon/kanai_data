@@ -1,0 +1,1265 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maqueta TAO-008 / HU-00-01 · Estructura del monorepo, CODEOWNERS y plantillas</title>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --surface-2:#fafbfc;
+    --border:#d8dee4;
+    --border-strong:#c3cbd4;
+    --text:#1c2128;
+    --muted:#5b6672;
+    --faint:#8a94a0;
+    --accent:#3a5bd9;
+    --accent-soft:#eaeefb;
+    --green:#1a7f4b;
+    --green-soft:#e6f4ec;
+    --amber:#8a5a00;
+    --amber-soft:#fdf2dc;
+    --red:#a01b2b;
+    --red-soft:#fbeaec;
+    --purple:#6234a8;
+    --purple-soft:#f0eafb;
+    --term-bg:#12161c;
+    --term-fg:#d6dce4;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,kbd{font-family:var(--mono);font-size:.86em}
+
+  /* ---------- Layout ---------- */
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px 80px}
+  header.top{
+    background:var(--surface);border-bottom:1px solid var(--border);
+    padding:26px 0 18px;margin-bottom:26px;
+  }
+  header.top .wrap{padding-bottom:0}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600}
+  h1{font-size:23px;margin:6px 0 8px;line-height:1.25;letter-spacing:-.01em}
+  .sub{color:var(--muted);max-width:820px;margin:0 0 16px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+
+  nav.toc{
+    position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);
+    backdrop-filter:blur(6px);border-bottom:1px solid var(--border);margin-bottom:28px;
+  }
+  nav.toc ul{display:flex;flex-wrap:wrap;gap:2px;list-style:none;margin:0 auto;padding:8px 24px;max-width:1180px}
+  nav.toc a{display:block;padding:5px 10px;border-radius:6px;color:var(--muted);font-size:12.5px;font-weight:500}
+  nav.toc a:hover{background:var(--accent-soft);color:var(--accent);text-decoration:none}
+
+  section.view{margin-bottom:46px;scroll-margin-top:60px}
+  .view-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .view-head h2{font-size:17px;margin:0;letter-spacing:-.01em}
+  .view-note{color:var(--muted);margin:0 0 14px;max-width:860px;font-size:13px}
+
+  /* ---------- Chips ---------- */
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;
+    font-size:11px;font-weight:600;border:1px solid transparent;white-space:nowrap;
+  }
+  .chip.req{background:var(--accent-soft);color:var(--accent);border-color:#cdd8f6}
+  .chip.new{background:var(--green-soft);color:var(--green);border-color:#bfe2cd}
+  .chip.mod{background:var(--amber-soft);color:var(--amber);border-color:#f0dcb0}
+  .chip.state{background:#eef1f4;color:var(--muted);border-color:var(--border)}
+  .chip.dec{background:var(--purple-soft);color:var(--purple);border-color:#ddd0f3}
+
+  /* ---------- Frames que representan pantallas ---------- */
+  .frame{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 1px 2px rgba(20,25,35,.05)}
+  .frame + .frame{margin-top:16px}
+  .frame-bar{
+    display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--surface-2);
+    border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)
+  }
+  .dots{display:flex;gap:5px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:#dfe4ea;display:block}
+  .urlbar{
+    flex:1;background:#fff;border:1px solid var(--border);border-radius:6px;
+    padding:3px 9px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+  }
+  .frame-body{padding:20px 22px}
+  .frame-caption{padding:8px 14px;border-top:1px solid var(--border);background:var(--surface-2);font-size:12px;color:var(--muted)}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+  /* ---------- Form mock (GitHub issue forms) ---------- */
+  .field{margin-bottom:16px}
+  .field:last-child{margin-bottom:0}
+  .flabel{display:block;font-weight:600;font-size:13px;margin-bottom:2px}
+  .flabel .req-mark{color:var(--red);font-weight:700;margin-left:3px}
+  .fhelp{color:var(--muted);font-size:12px;margin:0 0 6px}
+  .input,.textarea,.select{
+    width:100%;border:1px solid var(--border-strong);border-radius:6px;background:#fff;
+    padding:7px 10px;font-size:13px;color:var(--text);font-family:inherit
+  }
+  .input.ph,.textarea.ph{color:var(--faint)}
+  .textarea{min-height:70px;white-space:pre-wrap;font-family:var(--mono);font-size:12px;line-height:1.6}
+  .select{background-image:linear-gradient(#fff,#fafbfc);display:flex;justify-content:space-between;align-items:center}
+  .select::after{content:"▾";color:var(--muted)}
+  .checks{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .check{display:flex;align-items:flex-start;gap:8px;font-size:13px}
+  .box{
+    width:15px;height:15px;border:1px solid var(--border-strong);border-radius:4px;flex:none;margin-top:2px;background:#fff
+  }
+  .box.on{background:var(--accent);border-color:var(--accent);position:relative}
+  .box.on::after{content:"";position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+  .radio{width:15px;height:15px;border:1px solid var(--border-strong);border-radius:50%;flex:none;margin-top:2px;background:#fff}
+  .radio.on{border:4.5px solid var(--accent);background:#fff}
+  .divider{height:1px;background:var(--border);margin:18px 0}
+  .fieldset-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:700;margin:0 0 10px}
+
+  .btn{display:inline-block;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--text)}
+  .btn.primary{background:#1f7a41;border-color:#1a6b39;color:#fff}
+  .btn.ghost{background:#fff}
+
+  /* ---------- Chooser ---------- */
+  .chooser-row{
+    display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border:1px solid var(--border);
+    border-radius:8px;margin-bottom:10px;background:#fff
+  }
+  .chooser-row .ico{
+    width:34px;height:34px;border-radius:8px;flex:none;display:grid;place-items:center;
+    font-size:16px;background:var(--accent-soft)
+  }
+  .chooser-row h4{margin:0 0 2px;font-size:14px}
+  .chooser-row p{margin:0;color:var(--muted);font-size:12.5px}
+  .chooser-row .go{margin-left:auto;align-self:center}
+
+  /* ---------- PR view ---------- */
+  .pr-layout{display:grid;grid-template-columns:1fr 260px;gap:20px}
+  @media(max-width:900px){.pr-layout{grid-template-columns:1fr}}
+  .side-block{border-bottom:1px solid var(--border);padding:0 0 14px;margin-bottom:14px}
+  .side-block:last-child{border-bottom:0}
+  .side-title{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between}
+  .reviewer{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px}
+  .av{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#c9d2e8,#9fb0d6);flex:none}
+  .pill-req{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:1px 7px;margin-left:auto}
+  .codeowners-note{
+    background:var(--amber-soft);border:1px solid #f0dcb0;border-radius:8px;padding:10px 12px;
+    font-size:12.5px;color:#6b4700;margin-top:10px
+  }
+
+  /* ---------- Markdown render (README / CONTRIBUTING) ---------- */
+  .md h3{font-size:16px;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .md h3:first-child{margin-top:0}
+  .md h4{font-size:13.5px;margin:16px 0 6px}
+  .md p{margin:0 0 10px;color:#2b333d}
+  .md ul{margin:0 0 12px;padding-left:20px}
+  .md li{margin-bottom:4px}
+  pre{
+    background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+    padding:12px 14px;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.65;margin:0 0 12px
+  }
+  pre .c{color:var(--faint)}
+  pre .k{color:var(--purple)}
+  table.t{width:100%;border-collapse:collapse;font-size:12.5px;margin:0 0 12px}
+  table.t th,table.t td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+  table.t th{background:var(--surface-2);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  table.t td code{background:var(--surface-2);padding:1px 4px;border-radius:4px}
+
+  /* ---------- Terminal ---------- */
+  .term{background:var(--term-bg);border-radius:10px;overflow:hidden;border:1px solid #232a33}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:7px 12px;background:#1a1f26;border-bottom:1px solid #232a33;color:#8b95a3;font-size:11.5px}
+  .term pre{background:transparent;border:0;color:var(--term-fg);margin:0;padding:14px 16px;font-size:12px}
+  .term .ok{color:#5fd39a}
+  .term .err{color:#ff8f9c}
+  .term .warn{color:#f0c674}
+  .term .dim{color:#6f7a88}
+  .term .cmd{color:#9fc6ff}
+
+  /* ---------- Estados ---------- */
+  .state-box{border:1px dashed var(--border-strong);border-radius:10px;padding:26px 18px;text-align:center;background:var(--surface-2)}
+  .state-box .icon{font-size:22px;opacity:.55}
+  .state-box h4{margin:8px 0 4px;font-size:14px}
+  .state-box p{margin:0;color:var(--muted);font-size:12.5px}
+  .skel{height:11px;border-radius:5px;background:linear-gradient(90deg,#e9edf1,#f4f6f8,#e9edf1);margin-bottom:9px}
+  .skel.w40{width:40%}.skel.w70{width:70%}.skel.w90{width:90%}.skel.w55{width:55%}
+  .alert{border-radius:8px;padding:11px 13px;font-size:12.5px;display:flex;gap:9px;align-items:flex-start}
+  .alert.err{background:var(--red-soft);border:1px solid #f0c7cd;color:#7d1523}
+  .alert.ok{background:var(--green-soft);border:1px solid #bfe2cd;color:#125c36}
+  .alert.info{background:var(--accent-soft);border:1px solid #cdd8f6;color:#26397f}
+  .alert b{display:block;margin-bottom:2px}
+
+  /* ---------- Checks ---------- */
+  .check-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px}
+  .check-row:last-child{border-bottom:0}
+  .mark{width:16px;height:16px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;color:#fff;font-weight:700}
+  .mark.pass{background:var(--green)}
+  .mark.fail{background:var(--red)}
+  .mark.wait{background:#c0c8d1}
+  .check-row .meta{margin-left:auto;color:var(--faint);font-size:11.5px;font-family:var(--mono)}
+
+  .foot{color:var(--faint);font-size:12px;border-top:1px solid var(--border);padding-top:16px;margin-top:40px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Maqueta de verificacion · TAO-008</div>
+    <h1>HU-00-01 · Estructura del monorepo, <code>CODEOWNERS</code>, plantillas de issue y PR y archivos base de colaboracion</h1>
+    <p class="sub">
+      Esta historia no agrega interfaz de producto. Las "vistas" que se verifican son las <b>superficies de colaboracion</b>
+      que el repositorio publica: el selector de issues y sus seis formularios, la plantilla de PR precargada, el panel de
+      revisores que dispara <code>CODEOWNERS</code>, el README raiz, el <code>CONTRIBUTING.md</code> y las salidas de consola
+      que los criterios de aceptacion exigen. Cada bloque esta etiquetado con el REQ que cubre.
+    </p>
+    <div class="legend">
+      <span class="chip new">nueva</span>
+      <span class="chip mod">modificada</span>
+      <span class="chip req">REQ-xx</span>
+      <span class="chip dec">DEC-xxx</span>
+      <span class="chip state">estado vacio / carga / error</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <ul>
+    <li><a href="#v1">1 · README raiz</a></li>
+    <li><a href="#v2">2 · CONTRIBUTING</a></li>
+    <li><a href="#v3">3 · Selector de issues</a></li>
+    <li><a href="#v4">4 · Formulario Historia</a></li>
+    <li><a href="#v5">5 · Los otros cinco formularios</a></li>
+    <li><a href="#v6">6 · Plantilla de PR</a></li>
+    <li><a href="#v7">7 · PR con CODEOWNERS</a></li>
+    <li><a href="#v8">8 · Consola: instalacion</a></li>
+    <li><a href="#v9">9 · Consola: .gitignore</a></li>
+    <li><a href="#v10">10 · Gates documentales</a></li>
+    <li><a href="#v11">11 · Estados vacio / carga / error</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<!-- ============================ VISTA 1 ============================ -->
+<section class="view" id="v1">
+  <div class="view-head">
+    <h2>1 · README raiz: mapa de carpetas e inicio rapido</h2>
+    <span class="chip mod">modificada</span>
+    <span class="chip req">REQ-06</span>
+    <span class="chip req">REQ-01</span>
+    <span class="chip dec">DEC-160</span>
+  </div>
+  <p class="view-note">
+    Se conserva la estructura canonica y no se mueve ninguna ruta de <code>docs/</code>. El README publica el mapa
+    y el inicio rapido con Corepack, la minor de <code>.nvmrc</code> y la instalacion separada de <code>server/</code>.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">github.com/edobacon/taomangalam</div>
+    </div>
+    <div class="frame-body md">
+      <h3># Tao Mangalam</h3>
+      <p>Monorepo de la aplicacion. La app cliente vive en <code>app/</code>, el backend en <code>server/</code>
+      y la documentacion canonica en <code>docs/</code>. El contrato de API es la fuente de verdad compartida.</p>
+
+      <h3>Mapa de carpetas</h3>
+      <table class="t">
+        <thead><tr><th style="width:24%">Carpeta</th><th>Contenido</th><th style="width:26%">Instalacion</th></tr></thead>
+        <tbody>
+          <tr><td><code>app/</code></td><td>Aplicacion cliente. Incluye <code>app/assets/</code>, que se preserva sin cambios.</td><td>Workspace <code>pnpm</code> de la raiz</td></tr>
+          <tr><td><code>server/</code></td><td>Backend. Tiene su propio <code>package.json</code> y <code>pnpm-lock.yaml</code>.</td><td><b>Fuera</b> del workspace raiz</td></tr>
+          <tr><td><code>server/contract/</code></td><td>Contrato de API (<code>openapi.yaml</code>). Area con owner declarado.</td><td>Incluido en <code>server/</code></td></tr>
+          <tr><td><code>docs/</code></td><td>Documentacion canonica. Ninguna ruta se renombra ni se mueve.</td><td>No aplica</td></tr>
+          <tr><td><code>scripts/</code></td><td>Gates documentales y utilidades (<code>check_*.py</code>, <code>build_*.py</code>).</td><td>Python del entorno local</td></tr>
+          <tr><td><code>tests/</code></td><td>Pruebas del repositorio.</td><td>Workspace <code>pnpm</code> de la raiz</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Inicio rapido</h3>
+      <pre><span class="c"># 1. Node de la minor fijada en .nvmrc</span>
+nvm use
+
+<span class="c"># 2. Habilitar el pnpm que declara packageManager</span>
+corepack enable
+
+<span class="c"># 3. Instalar el workspace de la raiz (app/, tests/)</span>
+pnpm install --frozen-lockfile
+
+<span class="c"># 4. Instalar el backend por separado: server/ no es parte del workspace</span>
+cd server && pnpm install --frozen-lockfile</pre>
+
+      <div class="alert info">
+        <span>i</span>
+        <div><b>Por que <code>server/</code> se instala aparte</b>
+        El backend es autoinstalable y no depende de nada fuera de <code>server/</code>. Un
+        <code>pnpm install</code> en la raiz no crea ni modifica <code>server/pnpm-lock.yaml</code>.</div>
+      </div>
+
+      <h3>Convenciones</h3>
+      <ul>
+        <li>Ramas, squash merge y proceso de PR: <a href="#v2">CONTRIBUTING.md</a></li>
+        <li>Revision obligatoria por area: <code>.github/CODEOWNERS</code></li>
+        <li>Formularios de issue y plantilla de PR: <code>.github/</code></li>
+      </ul>
+    </div>
+    <div class="frame-caption">Vista modificada · <code>README.md</code> en la raiz del repositorio</div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 2 ============================ -->
+<section class="view" id="v2">
+  <div class="view-head">
+    <h2>2 · CONTRIBUTING.md: modelo de ramas y merge</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-05</span>
+  </div>
+  <p class="view-note">
+    Cuatro prefijos de rama, squash merge y ausencia explicita de rama <code>develop</code>. Incluye el criterio de
+    <code>.gitignore</code>: que se excluye siempre y que se conserva siempre.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">github.com/edobacon/taomangalam/blob/main/CONTRIBUTING.md</div>
+    </div>
+    <div class="frame-body md">
+      <h3># Guia de contribucion</h3>
+
+      <h4>Modelo de ramas</h4>
+      <p>Todo sale de <code>main</code> y vuelve a <code>main</code>. <b>No existe rama <code>develop</code>.</b></p>
+      <table class="t">
+        <thead><tr><th style="width:22%">Prefijo</th><th>Cuando se usa</th><th style="width:22%">Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td><code>feature/*</code></td><td>Funcionalidad nueva o historia del backlog.</td><td><code>feature/hu-00-01-monorepo</code></td></tr>
+          <tr><td><code>fix/*</code></td><td>Correccion de un defecto reportado.</td><td><code>fix/sesion-expira-antes</code></td></tr>
+          <tr><td><code>chore/*</code></td><td>Mantenimiento, dependencias, tooling, documentacion.</td><td><code>chore/bump-node-24</code></td></tr>
+          <tr><td><code>hotfix/*</code></td><td>Correccion urgente sobre lo publicado.</td><td><code>hotfix/login-500</code></td></tr>
+        </tbody>
+      </table>
+
+      <h4>Integracion</h4>
+      <ul>
+        <li><b>Squash merge</b> como unica estrategia. Un PR deja un commit en <code>main</code>.</li>
+        <li>El titulo del squash describe el cambio completo, no el ultimo commit de la rama.</li>
+        <li>La rama se borra al mergear.</li>
+      </ul>
+
+      <h4>Que ignora el repositorio</h4>
+      <table class="t">
+        <thead><tr><th style="width:50%">Siempre excluido</th><th>Siempre versionado</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>
+              <code>.env</code> y <code>.env.local</code> en cualquier carpeta<br>
+              Binarios compilados y artefactos de build<br>
+              Certificados y claves<br>
+              Perfiles de firma<br>
+              Generados temporales y caches
+            </td>
+            <td>
+              <code>pnpm-lock.yaml</code> de la raiz<br>
+              <code>server/pnpm-lock.yaml</code><br>
+              <code>server/prisma/migrations/**</code><br>
+              <code>server/contract/openapi.yaml</code><br>
+              <code>.nvmrc</code> y <code>pnpm-workspace.yaml</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert info">
+        <span>i</span>
+        <div><b>Privacidad al abrir issues y PR</b>
+        No incluyas correos reales, nombres completos ni datos de consultantes en titulos, descripciones ni capturas.
+        Usa datos ficticios o anonimizados.</div>
+      </div>
+    </div>
+    <div class="frame-caption">Vista nueva · <code>CONTRIBUTING.md</code></div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 3 ============================ -->
+<section class="view" id="v3">
+  <div class="view-head">
+    <h2>3 · Selector de issues: los seis formularios</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-04</span>
+  </div>
+  <p class="view-note">
+    Pantalla que ve quien pulsa "New issue". Los seis formularios aparecen en el orden de trabajo del backlog.
+    El enlace en blanco queda deshabilitado para que todo issue entre con campos estructurados.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">github.com/edobacon/taomangalam/issues/new/choose</div>
+    </div>
+    <div class="frame-body">
+      <h3 style="margin:0 0 4px;font-size:16px">Elige el tipo de trabajo</h3>
+      <p style="color:var(--muted);margin:0 0 18px;font-size:13px">
+        Cada formulario carga los campos canonicos del backlog. Completalos antes de enviar: el gate
+        <code>check_backlog.py</code> valida despues la misma estructura.
+      </p>
+
+      <div class="chooser-row">
+        <div class="ico">◈</div>
+        <div><h4>Epica</h4><p>Agrupa historias bajo un mismo resultado de negocio. ID estable <code>EP-nn</code>.</p></div>
+        <span class="btn ghost go">Comenzar</span>
+      </div>
+      <div class="chooser-row" style="border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)">
+        <div class="ico">▤</div>
+        <div><h4>Historia</h4><p>Unidad entregable con criterios de aceptacion y casos de prueba. ID estable <code>HU-nn-nn</code>.</p></div>
+        <span class="btn ghost go">Comenzar</span>
+      </div>
+      <div class="chooser-row">
+        <div class="ico">✓</div>
+        <div><h4>Task</h4><p>Trabajo tecnico u operativo que no produce valor observable por si solo.</p></div>
+        <span class="btn ghost go">Comenzar</span>
+      </div>
+      <div class="chooser-row">
+        <div class="ico" style="background:var(--red-soft)">!</div>
+        <div><h4>Bug</h4><p>Comportamiento observado distinto del esperado, con pasos de reproduccion.</p></div>
+        <span class="btn ghost go">Comenzar</span>
+      </div>
+      <div class="chooser-row">
+        <div class="ico" style="background:var(--green-soft)">▣</div>
+        <div><h4>Content / asset</h4><p>Alta o cambio de contenido, texto o recurso grafico. Incluye estado del asset y licencia.</p></div>
+        <span class="btn ghost go">Comenzar</span>
+      </div>
+      <div class="chooser-row">
+        <div class="ico" style="background:var(--purple-soft)">?</div>
+        <div><h4>Spike</h4><p>Investigacion acotada en tiempo para resolver una incognita antes de comprometer alcance.</p></div>
+        <span class="btn ghost go">Comenzar</span>
+      </div>
+
+      <div class="divider"></div>
+      <div style="display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--faint)">
+        <span>Issue en blanco</span>
+        <span class="chip state">deshabilitado</span>
+        <span style="margin-left:auto">Definido en <code>.github/ISSUE_TEMPLATE/config.yml</code></span>
+      </div>
+    </div>
+    <div class="frame-caption">Vista nueva · <code>.github/ISSUE_TEMPLATE/</code> (seis formularios + <code>config.yml</code>)</div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 4 ============================ -->
+<section class="view" id="v4">
+  <div class="view-head">
+    <h2>4 · Formulario "Historia" completo</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-04</span>
+    <span class="chip dec">DEC-237</span>
+  </div>
+  <p class="view-note">
+    Formulario de referencia, con los campos del doc 48 secciones 2 a 7. Se muestra <b>precargado</b> con el contenido
+    de esta misma historia para verificar que cada seccion tiene su campo. El bloque de handoff a Kanai es
+    <b>selectivo</b>: los campos de abajo solo se completan si el interruptor esta activo.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">github.com/edobacon/taomangalam/issues/new?template=historia.yml</div>
+    </div>
+    <div class="frame-body">
+
+      <p class="fieldset-title">Identidad</p>
+      <div class="grid-2">
+        <div class="field">
+          <label class="flabel">Titulo<span class="req-mark">*</span></label>
+          <div class="input">[HU-00-01][Historia] Estructura del monorepo con workspace pnpm, CODEOWNERS, plantillas de issue y PR y archivos base de colaboracion</div>
+        </div>
+        <div class="field">
+          <label class="flabel">ID estable<span class="req-mark">*</span></label>
+          <p class="fhelp">Formato <code>HU-nn-nn</code>. No cambia aunque cambie el titulo.</p>
+          <div class="input">HU-00-01</div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="field">
+          <label class="flabel">Epica<span class="req-mark">*</span></label>
+          <div class="select"><span>EP-00 · Fundaciones</span></div>
+        </div>
+        <div class="field">
+          <label class="flabel">Estado<span class="req-mark">*</span></label>
+          <div class="select"><span>Ready</span></div>
+        </div>
+        <div class="field">
+          <label class="flabel">Orden recomendado</label>
+          <div class="input">1</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Objetivo y alcance</p>
+      <div class="field">
+        <label class="flabel">Objetivo<span class="req-mark">*</span></label>
+        <p class="fhelp">Resultado observable y quien lo consume.</p>
+        <div class="textarea">Resultado: el repositorio queda organizado en sus carpetas canonicas, con workspace pnpm en la raiz, revision obligatoria por areas criticas y plantillas de issue y PR equivalentes a las del doc 48.
+Consumidor: el resto de las historias de EP-00 y el equipo que carga el backlog en GitHub Projects (DEC-203).</div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="flabel">Alcance · incluye<span class="req-mark">*</span></label>
+          <div class="textarea">- Carpetas app/, server/, server/contract/, docs/, scripts/ y tests/
+- package.json raiz con packageManager, pnpm-workspace.yaml y pnpm-lock.yaml
+- server/ fuera del workspace, con su propio lockfile
+- Node 24 LTS con la minor fijada en .nvmrc
+- .github/CODEOWNERS por area critica
+- Seis formularios de issue y plantilla de PR
+- CONTRIBUTING.md y .gitignore
+- README raiz con mapa e inicio rapido</div>
+        </div>
+        <div class="field">
+          <label class="flabel">Alcance · no incluye<span class="req-mark">*</span></label>
+          <div class="textarea">- Proteccion de main y checks obligatorios: HU-00-09
+- Configuracion de editor y .env.example: HU-00-13
+- Project, campos, vistas y automatizaciones: operacion de DEC-203</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Referencias canonicas</p>
+      <div class="grid-3">
+        <div class="field"><label class="flabel">Vistas</label><div class="input ph">ninguna</div></div>
+        <div class="field"><label class="flabel">Decisiones</label><div class="input">DEC-160, DEC-191, DEC-198, DEC-203, DEC-205, DEC-230</div></div>
+        <div class="field"><label class="flabel">Datos</label><div class="input ph">ninguno</div></div>
+      </div>
+      <div class="grid-3">
+        <div class="field"><label class="flabel">API</label><div class="input ph">ninguna</div></div>
+        <div class="field"><label class="flabel">Capacidades</label><div class="input ph">ninguna</div></div>
+        <div class="field"><label class="flabel">Contenido / assets</label><div class="input">app/assets/ se preserva sin cambios</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Criterios de aceptacion</p>
+      <div class="field">
+        <p class="fhelp">Uno por linea, en formato Dado / cuando / entonces. El gate valida que haya al menos uno.</p>
+        <div class="textarea">- [ ] Dado un clon limpio con el Node de .nvmrc, cuando se ejecutan corepack enable y pnpm install --frozen-lockfile en la raiz, entonces terminan con codigo 0 y git status queda limpio.
+- [ ] Dado server/ copiado solo a otra ubicacion, cuando se ejecuta pnpm install --frozen-lockfile dentro de esa copia, entonces instala con su propio lockfile sin leer nada fuera de server/.
+- [ ] Dado pnpm-workspace.yaml, cuando se inspecciona, entonces no incluye server/.
+- [ ] Dado un PR que toca server/contract/openapi.yaml, server/prisma/migrations/** o .github/workflows/**, cuando se abre, entonces GitHub solicita la revision del owner declarado.
+- [ ] Dado el repositorio en GitHub, cuando se crea un issue, entonces se ofrecen los seis formularios.
+- [ ] Dado un PR nuevo, cuando se abre, entonces precarga docs-impact y la seccion de QA humana.
+- [ ] Dado un .env o .env.local en cualquier carpeta, cuando se ejecuta git add -A --dry-run, entonces el archivo no aparece.
+- [ ] Dado el contenido documental previo, cuando se integra la historia, entonces los gates siguen pasando localmente.</div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Requisitos transversales</p>
+      <div class="grid-2">
+        <div class="field"><label class="flabel">Permisos</label><div class="input">No aplica. La revision por area la controla CODEOWNERS.</div></div>
+        <div class="field"><label class="flabel">Offline / sync</label><div class="input ph">No aplica</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label class="flabel">Seguridad / privacidad</label><div class="input">.gitignore impide versionar secretos y firmas</div></div>
+        <div class="field"><label class="flabel">Accesibilidad / responsive</label><div class="input ph">No aplica</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label class="flabel">Observabilidad</label><div class="input ph">No aplica</div></div>
+        <div class="field"><label class="flabel">Compatibilidad / migracion</label><div class="input">No se mueve contenido de docs/; los enlaces siguen validos</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Casos de prueba y evidencia</p>
+      <div class="field">
+        <label class="flabel">Casos <code>QA-nn-nn-nn</code><span class="req-mark">*</span></label>
+        <div class="textarea">- [ ] QA-00-01-01 · Clon limpio: pnpm install --frozen-lockfile termina en 0 y no modifica el lockfile.
+- [ ] QA-00-01-02 · PR que solo cambia server/contract/openapi.yaml: aparece el owner del contrato como revisor requerido.
+- [ ] QA-00-01-03 · package.json modificado sin actualizar lockfile: --frozen-lockfile falla con codigo distinto de 0.
+- [ ] QA-00-01-04 · server/.env con valor ficticio: no aparece en git add -A --dry-run.
+- [ ] QA-00-01-05 · Dependencia nueva solo en server/package.json: el lockfile de la raiz no cambia.</div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label class="flabel">Unitarias</label><div class="input ph">No aplica</div></div>
+        <div class="field"><label class="flabel">Integracion / E2E</label><div class="input">Gates documentales existentes ejecutados en local sin cambios</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label class="flabel">QA humana y dispositivos</label><div class="input">Revision del PR con captura de los formularios y del revisor requerido</div></div>
+        <div class="field"><label class="flabel">Preview / artifact</label><div class="input">Enlace al PR de prueba y salida de pnpm install --frozen-lockfile</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Planificacion</p>
+      <div class="grid-3">
+        <div class="field"><label class="flabel">Hito</label><div class="select"><span>M0</span></div></div>
+        <div class="field"><label class="flabel">Prioridad</label><div class="select"><span>P1</span></div></div>
+        <div class="field"><label class="flabel">Puntos</label><div class="select"><span>3</span></div></div>
+      </div>
+      <div class="grid-3">
+        <div class="field"><label class="flabel">Riesgo</label><div class="select"><span>Bajo</span></div></div>
+        <div class="field"><label class="flabel">Bloqueada por</label><div class="input ph">ninguna</div></div>
+        <div class="field"><label class="flabel">Bloquea a</label><div class="input">HU-00-02, HU-00-04, HU-00-05</div></div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Handoff a Kanai <span class="chip dec" style="margin-left:6px">DEC-237</span></p>
+      <div class="field">
+        <div class="check"><span class="box on"></span>
+          <span><b>Enviar esta historia a Kanai</b><br>
+          <span style="color:var(--muted);font-size:12px">Selectivo: si queda sin marcar, los campos siguientes se omiten y el issue vive solo en GitHub.</span></span>
+        </div>
+      </div>
+      <div style="border-left:3px solid var(--accent);padding-left:14px;margin-top:12px">
+        <div class="grid-3">
+          <div class="field"><label class="flabel">Tipo de trabajo</label><div class="select"><span>implement</span></div></div>
+          <div class="field"><label class="flabel">Modulo</label><div class="input">EP-00</div></div>
+          <div class="field"><label class="flabel">Estimacion publicada</label><div class="input">3 puntos · tier por intake</div></div>
+        </div>
+        <div class="field">
+          <label class="flabel">Fuentes por criterio y caso</label>
+          <div class="input">Referencias canonicas y casos QA-00-01-* de esta historia</div>
+        </div>
+        <div class="field">
+          <label class="flabel">Referencia externa</label>
+          <p class="fhelp">Se completa al tomar el issue.</p>
+          <div class="input ph">GH-&lt;numero&gt; y URL</div>
+        </div>
+        <div class="field">
+          <label class="flabel">Rollback</label>
+          <div class="textarea">Revertir plantillas y archivos base del PR conservando el contenido previo. Los issues ya publicados no se borran automaticamente.</div>
+        </div>
+        <div class="field">
+          <label class="flabel">Diseno</label>
+          <div class="input">No aplica a interfaz de producto; se revisan formularios y artifacts de colaboracion</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="field">
+        <div class="check"><span class="box on"></span>
+          <span>Confirmo que este issue no contiene correos reales, nombres completos ni datos de consultantes.<span class="req-mark">*</span></span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px">
+        <span class="btn ghost">Vista previa</span>
+        <span class="btn primary">Crear issue</span>
+      </div>
+    </div>
+    <div class="frame-caption">Vista nueva · <code>.github/ISSUE_TEMPLATE/historia.yml</code></div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 5 ============================ -->
+<section class="view" id="v5">
+  <div class="view-head">
+    <h2>5 · Los otros cinco formularios: campos propios</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-04</span>
+  </div>
+  <p class="view-note">
+    Todos comparten identidad, referencias canonicas, planificacion, handoff selectivo a Kanai y la confirmacion de
+    privacidad. Aqui se muestra solo lo que cada uno agrega o cambia respecto de "Historia".
+  </p>
+
+  <div class="grid-2">
+
+    <div class="frame">
+      <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar">template=epica.yml</div></div>
+      <div class="frame-body">
+        <h4 style="margin:0 0 12px;font-size:14px">◈ Epica</h4>
+        <div class="field"><label class="flabel">ID estable</label><div class="input ph">EP-nn</div></div>
+        <div class="field"><label class="flabel">Resultado de negocio<span class="req-mark">*</span></label><div class="textarea ph">Que cambia para quien cuando la epica cierra.</div></div>
+        <div class="field"><label class="flabel">Historias que agrupa</label><div class="textarea ph">HU-nn-nn, una por linea. Se puede dejar vacio y completar despues.</div></div>
+        <div class="field"><label class="flabel">Criterio de cierre<span class="req-mark">*</span></label><div class="textarea ph">Condicion observable que permite dar la epica por terminada.</div></div>
+        <div class="field"><label class="flabel">Hito</label><div class="select"><span>Selecciona</span></div></div>
+        <div class="field"><label class="flabel">Handoff a Kanai</label><div class="check"><span class="box"></span><span>Enviar a Kanai</span></div></div>
+      </div>
+      <div class="frame-caption">Sin criterios de aceptacion ni casos QA: viven en sus historias.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar">template=task.yml</div></div>
+      <div class="frame-body">
+        <h4 style="margin:0 0 12px;font-size:14px">✓ Task</h4>
+        <div class="field"><label class="flabel">Historia o epica asociada</label><div class="input ph">HU-nn-nn o EP-nn. Vacio si es trabajo independiente.</div></div>
+        <div class="field"><label class="flabel">Trabajo a realizar<span class="req-mark">*</span></label><div class="textarea ph">Pasos concretos. Sin valor observable de usuario.</div></div>
+        <div class="field"><label class="flabel">Definicion de hecho<span class="req-mark">*</span></label><div class="textarea ph">- [ ] Condicion verificable</div></div>
+        <div class="field"><label class="flabel">Es operativa (fuera del codigo)</label><div class="check"><span class="box"></span><span>Se resuelve en GitHub, en un panel o en un servicio, no en el repositorio.</span></div></div>
+        <div class="field"><label class="flabel">Handoff a Kanai</label><div class="check"><span class="box"></span><span>Enviar a Kanai</span></div></div>
+      </div>
+      <div class="frame-caption">La marca de tarea operativa evita que un trabajo sin codigo espere un PR.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar">template=bug.yml</div></div>
+      <div class="frame-body">
+        <h4 style="margin:0 0 12px;font-size:14px">! Bug</h4>
+        <div class="field"><label class="flabel">Comportamiento observado<span class="req-mark">*</span></label><div class="textarea ph">Que pasa hoy.</div></div>
+        <div class="field"><label class="flabel">Comportamiento esperado<span class="req-mark">*</span></label><div class="textarea ph">Que deberia pasar y por que (referencia canonica si existe).</div></div>
+        <div class="field"><label class="flabel">Pasos para reproducir<span class="req-mark">*</span></label><div class="textarea ph">1.
+2.
+3.</div></div>
+        <div class="grid-2" style="gap:10px">
+          <div class="field"><label class="flabel">Severidad</label><div class="select"><span>Selecciona</span></div></div>
+          <div class="field"><label class="flabel">Frecuencia</label><div class="select"><span>Selecciona</span></div></div>
+        </div>
+        <div class="field"><label class="flabel">Entorno y dispositivo</label><div class="input ph">Version, sistema, dispositivo</div></div>
+        <div class="field"><label class="flabel">Evidencia</label><div class="textarea ph">Capturas o logs, sin correos reales ni datos de consultantes.</div></div>
+      </div>
+      <div class="frame-caption">El recordatorio de privacidad aparece junto al campo de evidencia.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar">template=content-asset.yml</div></div>
+      <div class="frame-body">
+        <h4 style="margin:0 0 12px;font-size:14px">▣ Content / asset</h4>
+        <div class="field"><label class="flabel">Tipo<span class="req-mark">*</span></label><div class="select"><span>Texto · Imagen · Audio · Icono</span></div></div>
+        <div class="field"><label class="flabel">Ubicacion destino</label><div class="input ph">app/assets/...</div></div>
+        <div class="field"><label class="flabel">Estado del contenido<span class="req-mark">*</span></label><div class="select"><span>Pendiente · Borrador · Aprobado</span></div></div>
+        <div class="field"><label class="flabel">Origen y licencia<span class="req-mark">*</span></label><div class="textarea ph">De donde sale y bajo que licencia se puede usar.</div></div>
+        <div class="field"><label class="flabel">Criterio de aceptacion del asset</label><div class="textarea ph">Formato, dimensiones, peso maximo, texto alternativo.</div></div>
+        <div class="field"><label class="flabel">Reemplaza a</label><div class="input ph">Ruta del asset anterior, si aplica.</div></div>
+      </div>
+      <div class="frame-caption">app/assets/ existente se preserva; este formulario cubre altas y reemplazos futuros.</div>
+    </div>
+
+    <div class="frame" style="grid-column:1/-1">
+      <div class="frame-bar"><div class="dots"><i></i><i></i><i></i></div><div class="urlbar">template=spike.yml</div></div>
+      <div class="frame-body">
+        <h4 style="margin:0 0 12px;font-size:14px">? Spike</h4>
+        <div class="grid-2">
+          <div class="field"><label class="flabel">Pregunta a responder<span class="req-mark">*</span></label><div class="textarea ph">Una sola incognita, formulada como pregunta cerrada.</div></div>
+          <div class="field"><label class="flabel">Decision que desbloquea<span class="req-mark">*</span></label><div class="textarea ph">Que se puede decidir cuando el spike termine. DEC-nnn si ya existe.</div></div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label class="flabel">Tiempo maximo<span class="req-mark">*</span></label><div class="select"><span>4 h · 1 dia · 2 dias</span></div></div>
+          <div class="field"><label class="flabel">Hito</label><div class="select"><span>Selecciona</span></div></div>
+          <div class="field"><label class="flabel">Bloquea a</label><div class="input ph">HU-nn-nn</div></div>
+        </div>
+        <div class="field"><label class="flabel">Entregable<span class="req-mark">*</span></label><div class="textarea ph">Que queda escrito al terminar: nota en docs/, prototipo desechable, comparativa. El codigo de un spike no se mergea.</div></div>
+        <div class="field"><label class="flabel">Handoff a Kanai</label><div class="check"><span class="box"></span><span>Enviar a Kanai (tipo de trabajo: <code>research</code>)</span></div></div>
+      </div>
+      <div class="frame-caption">El tiempo maximo es obligatorio: un spike sin tope deja de ser un spike.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================ VISTA 6 ============================ -->
+<section class="view" id="v6">
+  <div class="view-head">
+    <h2>6 · Plantilla de PR precargada</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-04</span>
+  </div>
+  <p class="view-note">
+    Asi se ve el cuadro de descripcion al abrir un PR nuevo, antes de escribir nada. <code>docs-impact</code> se elige
+    entre tres valores y la seccion de QA humana queda visible aunque no aplique.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">github.com/edobacon/taomangalam/compare/main...feature/hu-00-01-monorepo</div>
+    </div>
+    <div class="frame-body">
+      <div class="field">
+        <label class="flabel">Titulo</label>
+        <div class="input ph">feat(repo): estructura del monorepo, CODEOWNERS y plantillas de colaboracion</div>
+      </div>
+      <div class="field">
+        <label class="flabel">Descripcion</label>
+        <p class="fhelp">Precargada desde <code>.github/pull_request_template.md</code>.</p>
+        <div class="textarea" style="min-height:auto">## Proposito
+&lt;!-- Que resuelve este PR y para quien. Enlaza el issue: Closes #nn --&gt;
+
+## Riesgo
+&lt;!-- Bajo / Medio / Alto + que puede romperse y como se detecta --&gt;
+- Nivel:
+- Que puede fallar:
+- Como se revierte:
+
+## Pruebas
+- [ ] Unitarias
+- [ ] Integracion o E2E
+- [ ] Verificacion manual descrita abajo
+
+&lt;!-- Pega la salida relevante (por ejemplo pnpm install --frozen-lockfile) --&gt;
+
+## Capturas
+&lt;!-- Antes / despues. Sin correos reales ni datos de consultantes. --&gt;
+
+## docs-impact
+&lt;!-- Elige exactamente uno --&gt;
+- [ ] required        &lt;!-- hay que escribir o actualizar documentacion a mano --&gt;
+- [ ] generated-only  &lt;!-- la documentacion se regenera con los build_*.py --&gt;
+- [ ] none            &lt;!-- el cambio no toca documentacion --&gt;
+
+## QA humana
+- Resultado: &lt;!-- Aprobada / Aprobada con observaciones / Rechazada / No aplica --&gt;
+- Quien la ejecuto:
+- Dispositivos o entornos:
+- Observaciones:</div>
+      </div>
+
+      <div class="divider"></div>
+      <p class="fieldset-title">Como queda una vez completado</p>
+      <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px" class="md">
+        <h4 style="margin-top:0">Proposito</h4>
+        <p>Deja el monorepo con workspace <code>pnpm</code>, revision por area y plantillas de colaboracion. Closes #2.</p>
+        <h4>Riesgo</h4>
+        <ul>
+          <li><b>Nivel:</b> bajo</li>
+          <li><b>Que puede fallar:</b> si <code>pnpm-workspace.yaml</code> incluyera <code>server/</code>, un install en la raiz reescribiria <code>server/pnpm-lock.yaml</code>.</li>
+          <li><b>Como se revierte:</b> revert del squash; los issues ya publicados no se borran.</li>
+        </ul>
+        <h4>Pruebas</h4>
+        <ul style="list-style:none;padding-left:0">
+          <li><span class="box on" style="display:inline-block;vertical-align:-3px;margin-right:7px"></span>Integracion o E2E: gates documentales en local</li>
+          <li><span class="box on" style="display:inline-block;vertical-align:-3px;margin-right:7px"></span>Verificacion manual: QA-00-01-01 a QA-00-01-05</li>
+        </ul>
+        <h4>docs-impact</h4>
+        <p><span class="chip req">generated-only</span> <span style="color:var(--muted)">Los <code>build_*.py --check</code> cubren el cambio.</span></p>
+        <h4>QA humana</h4>
+        <p><span class="chip new">Aprobada</span> Capturas de los seis formularios y del revisor requerido adjuntas arriba.</p>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+        <span class="btn ghost">Guardar como borrador</span>
+        <span class="btn primary">Crear pull request</span>
+      </div>
+    </div>
+    <div class="frame-caption">Vista nueva · <code>.github/pull_request_template.md</code></div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 7 ============================ -->
+<section class="view" id="v7">
+  <div class="view-head">
+    <h2>7 · PR abierto: revisores solicitados por CODEOWNERS</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-03</span>
+    <span class="chip state">caso QA-00-01-02</span>
+  </div>
+  <p class="view-note">
+    Un PR que solo toca <code>server/contract/openapi.yaml</code>. GitHub agrega el owner del contrato como revisor
+    requerido sin que nadie lo pida. Los usuarios concretos son variable operativa: la maqueta usa marcadores.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">github.com/edobacon/taomangalam/pull/17</div>
+    </div>
+    <div class="frame-body">
+      <div class="pr-layout">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span class="chip new">Open</span>
+            <span style="font-size:12.5px;color:var(--muted)">quiere mergear <code>feature/contract-tweak</code> en <code>main</code></span>
+          </div>
+          <h3 style="margin:0 0 14px;font-size:17px">chore(contract): ajusta el ejemplo de respuesta de /sessions</h3>
+
+          <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+            <div style="padding:9px 13px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:12.5px;font-weight:600">
+              Archivos modificados · 1
+            </div>
+            <div style="padding:9px 13px;font-family:var(--mono);font-size:12px;display:flex;gap:10px;align-items:center">
+              <span>server/contract/openapi.yaml</span>
+              <span style="color:var(--green)">+4</span><span style="color:var(--red)">-2</span>
+              <span class="chip req" style="margin-left:auto">area critica</span>
+            </div>
+          </div>
+
+          <div class="codeowners-note">
+            <b>Revision requerida por area</b><br>
+            Este PR toca <code>server/contract/</code>. La regla de <code>CODEOWNERS</code> solicito automaticamente
+            la revision de su owner. El PR no se puede mergear sin esa aprobacion.
+          </div>
+
+          <div style="margin-top:18px">
+            <p class="fieldset-title">Reglas declaradas en <code>.github/CODEOWNERS</code></p>
+            <table class="t">
+              <thead><tr><th style="width:44%">Patron</th><th>Area</th></tr></thead>
+              <tbody>
+                <tr><td><code>/server/contract/</code></td><td>Contrato de API</td></tr>
+                <tr><td><code>/server/prisma/migrations/</code></td><td>Migraciones de base de datos</td></tr>
+                <tr><td><code>/.github/workflows/</code></td><td>Workflows de CI</td></tr>
+                <tr><td><code>/server/src/auth/</code>, <code>/server/src/permissions/</code></td><td>Autenticacion y permisos</td></tr>
+                <tr><td><code>/app/native/</code></td><td>Codigo nativo de respaldo</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:12px;color:var(--faint);margin:0">
+              Los usuarios y equipos concretos son variable operativa (doc 46 §1); se completan al publicar el repositorio.
+            </p>
+          </div>
+        </div>
+
+        <aside>
+          <div class="side-block">
+            <p class="side-title">Reviewers <span>⚙</span></p>
+            <div class="reviewer"><span class="av"></span><span>owner-contrato</span><span class="pill-req">requerido</span></div>
+            <p style="font-size:11.5px;color:var(--faint);margin:6px 0 0">Solicitado automaticamente por <code>CODEOWNERS</code>.</p>
+          </div>
+          <div class="side-block">
+            <p class="side-title">Assignees</p>
+            <div class="reviewer"><span class="av"></span><span>autor-del-pr</span></div>
+          </div>
+          <div class="side-block">
+            <p class="side-title">Labels</p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="chip state">contract</span>
+              <span class="chip state">docs-impact: none</span>
+            </div>
+          </div>
+          <div class="side-block">
+            <p class="side-title">Projects</p>
+            <p style="font-size:12px;color:var(--faint);margin:0">Tao Mangalam · Backlog</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <div class="frame-caption">Vista nueva · efecto de <code>.github/CODEOWNERS</code> sobre la pantalla de PR</div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 8 ============================ -->
+<section class="view" id="v8">
+  <div class="view-head">
+    <h2>8 · Consola: instalacion reproducible</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-01</span>
+    <span class="chip req">REQ-02</span>
+    <span class="chip dec">DEC-205</span>
+    <span class="chip dec">DEC-230</span>
+  </div>
+  <p class="view-note">
+    Salidas que la historia promete. Son la evidencia que se pega en el PR, por lo que su forma tambien se verifica.
+  </p>
+
+  <div class="grid-2">
+    <div>
+      <div class="term">
+        <div class="term-bar"><span>QA-00-01-01 · clon limpio, raiz</span><span style="margin-left:auto" class="chip new">exito</span></div>
+        <pre><span class="dim">$</span> <span class="cmd">node -v</span>
+v24.8.0
+<span class="dim">$</span> <span class="cmd">corepack enable</span>
+<span class="dim">$</span> <span class="cmd">pnpm install --frozen-lockfile</span>
+Lockfile is up to date, resolution step is skipped
+Packages: <span class="ok">+312</span>
+Progress: resolved 312, reused 312, downloaded 0, done
+
+<span class="ok">Done in 6.2s</span>
+<span class="dim">$</span> <span class="cmd">echo $?</span>
+<span class="ok">0</span>
+<span class="dim">$</span> <span class="cmd">git status --porcelain</span>
+<span class="dim">(sin salida: arbol limpio)</span></pre>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">
+        Codigo 0 y <code>git status</code> limpio: el lockfile no se reescribio.
+      </p>
+    </div>
+
+    <div>
+      <div class="term">
+        <div class="term-bar"><span>QA-00-01-03 · borde, lockfile desactualizado</span><span style="margin-left:auto" class="chip mod">fallo esperado</span></div>
+        <pre><span class="dim">$</span> <span class="cmd">pnpm install --frozen-lockfile</span>
+<span class="err">ERR_PNPM_OUTDATED_LOCKFILE</span>
+Cannot install with "frozen-lockfile" because
+pnpm-lock.yaml is not up to date with package.json
+
+<span class="warn">Failure reason:</span>
+specifiers in the lockfile don't match specifiers
+in package.json
+
+<span class="dim">$</span> <span class="cmd">echo $?</span>
+<span class="err">1</span></pre>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">
+        El fallo es el comportamiento correcto: el gate protege la reproducibilidad.
+      </p>
+    </div>
+
+    <div>
+      <div class="term">
+        <div class="term-bar"><span>QA · server/ copiado solo a otra ubicacion</span><span style="margin-left:auto" class="chip new">exito</span></div>
+        <pre><span class="dim">$</span> <span class="cmd">cp -R server /tmp/server-aislado</span>
+<span class="dim">$</span> <span class="cmd">cd /tmp/server-aislado</span>
+<span class="dim">$</span> <span class="cmd">pnpm install --frozen-lockfile</span>
+Lockfile: <span class="dim">/tmp/server-aislado/pnpm-lock.yaml</span>
+Lockfile is up to date, resolution step is skipped
+Packages: <span class="ok">+187</span>
+
+<span class="ok">Done in 4.1s</span>
+<span class="dim">$</span> <span class="cmd">echo $?</span>
+<span class="ok">0</span>
+
+<span class="dim"># No leyo nada fuera de server/</span></pre>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">
+        <code>server/</code> es autoinstalable (DEC-205).
+      </p>
+    </div>
+
+    <div>
+      <div class="term">
+        <div class="term-bar"><span>QA-00-01-05 · dependencia nueva solo en server/</span><span style="margin-left:auto" class="chip new">exito</span></div>
+        <pre><span class="dim">$</span> <span class="cmd">cat pnpm-workspace.yaml</span>
+packages:
+  - <span class="ok">"app"</span>
+  - <span class="ok">"tests"</span>
+<span class="dim"># server/ no aparece (DEC-230)</span>
+
+<span class="dim">$</span> <span class="cmd">pnpm install</span>   <span class="dim"># en la raiz</span>
+Already up to date
+<span class="ok">Done in 1.1s</span>
+
+<span class="dim">$</span> <span class="cmd">git status --porcelain</span>
+ M server/package.json
+ M server/pnpm-lock.yaml
+<span class="dim"># pnpm-lock.yaml de la raiz: sin cambios</span></pre>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 0">
+        El lockfile de la raiz no se toca cuando cambia una dependencia del backend.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 9 ============================ -->
+<section class="view" id="v9">
+  <div class="view-head">
+    <h2>9 · Consola: <code>.gitignore</code> frente a secretos</h2>
+    <span class="chip new">nueva</span>
+    <span class="chip req">REQ-05</span>
+    <span class="chip state">caso QA-00-01-04</span>
+  </div>
+
+  <div class="grid-2">
+    <div class="term">
+      <div class="term-bar"><span>Secretos en cualquier carpeta</span><span style="margin-left:auto" class="chip new">exito</span></div>
+      <pre><span class="dim">$</span> <span class="cmd">printf 'TOKEN=ficticio\n' &gt; server/.env</span>
+<span class="dim">$</span> <span class="cmd">printf 'API=local\n' &gt; app/.env.local</span>
+<span class="dim">$</span> <span class="cmd">git add -A --dry-run</span>
+add 'CONTRIBUTING.md'
+add 'README.md'
+add '.github/CODEOWNERS'
+add '.github/pull_request_template.md'
+add '.nvmrc'
+add 'pnpm-workspace.yaml'
+
+<span class="ok">server/.env y app/.env.local no aparecen</span></pre>
+    </div>
+
+    <div class="term">
+      <div class="term-bar"><span>Lo que si debe versionarse</span><span style="margin-left:auto" class="chip new">exito</span></div>
+      <pre><span class="dim">$</span> <span class="cmd">git check-ignore -v \
+    pnpm-lock.yaml \
+    server/pnpm-lock.yaml \
+    server/prisma/migrations/0001_init/migration.sql \
+    server/contract/openapi.yaml</span>
+
+<span class="dim">(sin salida: ninguno esta ignorado)</span>
+<span class="dim">$</span> <span class="cmd">echo $?</span>
+<span class="ok">1</span>
+
+<span class="dim"># Codigo 1 = ningun archivo coincide con una regla
+# de ignore. Es el resultado buscado.</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 10 ============================ -->
+<section class="view" id="v10">
+  <div class="view-head">
+    <h2>10 · Gates documentales tras la historia</h2>
+    <span class="chip mod">modificada</span>
+    <span class="chip req">REQ-07</span>
+  </div>
+  <p class="view-note">
+    Los archivos nuevos de colaboracion no pueden romper citas ni cobertura. Este panel representa la corrida local
+    que se adjunta como evidencia.
+  </p>
+
+  <div class="frame">
+    <div class="frame-bar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="urlbar">local · scripts/</div>
+    </div>
+    <div style="padding:0">
+      <div class="check-row"><span class="mark pass">✓</span><span><code>check_citas.py</code></span><span style="color:var(--muted);font-size:12px">Todas las citas resuelven</span><span class="meta">0.8 s</span></div>
+      <div class="check-row"><span class="mark pass">✓</span><span><code>check_cobertura.py</code></span><span style="color:var(--muted);font-size:12px">Sin huecos nuevos</span><span class="meta">1.2 s</span></div>
+      <div class="check-row"><span class="mark pass">✓</span><span><code>build_*.py --check</code></span><span style="color:var(--muted);font-size:12px">Generados al dia</span><span class="meta">2.6 s</span></div>
+      <div class="check-row"><span class="mark pass">✓</span><span><code>unittest</code></span><span style="color:var(--muted);font-size:12px">Sin regresiones</span><span class="meta">3.4 s</span></div>
+      <div class="check-row"><span class="mark pass">✓</span><span><code>check_backlog.py</code></span><span style="color:var(--muted);font-size:12px">HU-00-01 con estructura valida</span><span class="meta">0.9 s</span></div>
+    </div>
+    <div class="frame-caption">Estado esperado al cerrar la historia. Los mismos nombres se reutilizan en HU-00-09 como checks obligatorios.</div>
+  </div>
+</section>
+
+<!-- ============================ VISTA 11 ============================ -->
+<section class="view" id="v11">
+  <div class="view-head">
+    <h2>11 · Estados vacio, de carga y de error</h2>
+    <span class="chip state">transversal</span>
+    <span class="chip req">REQ-04</span>
+    <span class="chip req">REQ-03</span>
+    <span class="chip req">REQ-07</span>
+  </div>
+  <p class="view-note">
+    Estados que se deben poder reconocer sin leer logs. Cubren el selector de issues, el panel de revisores, la
+    plantilla de PR y la corrida de gates.
+  </p>
+
+  <div class="grid-3">
+
+    <div class="frame">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Vacio</span><span class="chip state" style="margin-left:auto">selector</span></div>
+      <div class="frame-body">
+        <div class="state-box">
+          <div class="icon">▢</div>
+          <h4>Sin formularios disponibles</h4>
+          <p>No hay archivos en <code>.github/ISSUE_TEMPLATE/</code>. Revisa que los seis <code>.yml</code> esten en la rama por defecto.</p>
+        </div>
+      </div>
+      <div class="frame-caption">Si aparece esto, la historia no esta cumplida.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Carga</span><span class="chip state" style="margin-left:auto">selector</span></div>
+      <div class="frame-body">
+        <div style="padding:4px 0">
+          <div class="skel w40"></div>
+          <div style="height:12px"></div>
+          <div class="skel w90"></div>
+          <div class="skel w70"></div>
+          <div style="height:14px"></div>
+          <div class="skel w90"></div>
+          <div class="skel w55"></div>
+          <div style="height:14px"></div>
+          <div class="skel w90"></div>
+          <div class="skel w70"></div>
+        </div>
+        <p style="text-align:center;color:var(--faint);font-size:12px;margin:14px 0 0">Cargando formularios...</p>
+      </div>
+      <div class="frame-caption">Transitorio, mientras GitHub resuelve la carpeta de plantillas.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Error</span><span class="chip state" style="margin-left:auto">selector</span></div>
+      <div class="frame-body">
+        <div class="alert err">
+          <span>✕</span>
+          <div>
+            <b>Un formulario no se pudo cargar</b>
+            <code>historia.yml</code>: el campo <code>id</code> de un input esta duplicado. El formulario no se ofrece
+            hasta corregir el YAML.
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:12px 0 0">
+          Los otros cinco siguen disponibles. El error se ve solo en la pantalla del selector, no en el archivo.
+        </p>
+      </div>
+      <div class="frame-caption">Modo de falla mas probable de esta historia.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Vacio</span><span class="chip state" style="margin-left:auto">revisores</span></div>
+      <div class="frame-body">
+        <p class="side-title">Reviewers</p>
+        <div class="state-box" style="padding:18px 12px">
+          <div class="icon">◯</div>
+          <h4>Sin revisor requerido</h4>
+          <p>El PR no toca ninguna area con owner declarado. Se puede pedir revision manualmente.</p>
+        </div>
+      </div>
+      <div class="frame-caption">Correcto para un PR que solo cambia, por ejemplo, <code>README.md</code>.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Error</span><span class="chip state" style="margin-left:auto">CODEOWNERS</span></div>
+      <div class="frame-body">
+        <div class="alert err">
+          <span>✕</span>
+          <div>
+            <b>CODEOWNERS tiene errores</b>
+            Linea 7: el owner declarado no tiene acceso de escritura al repositorio. Esa regla se ignora y el area
+            queda sin revision requerida.
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:12px 0 0">
+          Falla silenciosa peligrosa: el PR se puede mergear sin que nadie note que falto el owner.
+        </p>
+      </div>
+      <div class="frame-caption">Se verifica en la pestana del archivo <code>CODEOWNERS</code> en GitHub.</div>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Error</span><span class="chip state" style="margin-left:auto">gates</span></div>
+      <div class="frame-body">
+        <div style="margin:-20px -22px 12px">
+          <div class="check-row"><span class="mark pass">✓</span><span><code>check_citas.py</code></span><span class="meta">0.8 s</span></div>
+          <div class="check-row"><span class="mark fail">✕</span><span><code>check_cobertura.py</code></span><span style="color:var(--red);font-size:12px">1 hueco</span><span class="meta">1.1 s</span></div>
+          <div class="check-row"><span class="mark wait">·</span><span style="color:var(--faint)"><code>build_*.py --check</code></span><span class="meta">omitido</span></div>
+        </div>
+        <div class="alert err">
+          <span>✕</span>
+          <div>
+            <b>Cobertura incompleta</b>
+            <code>CONTRIBUTING.md</code> introduce una afirmacion sin referencia canonica. Agrega la cita o excluye el
+            archivo de la regla.
+          </div>
+        </div>
+      </div>
+      <div class="frame-caption">Estado que bloquea el cierre de la historia (REQ-07).</div>
+    </div>
+
+    <div class="frame" style="grid-column:1/-1">
+      <div class="frame-bar"><span style="font-weight:600;color:var(--text)">Vacio</span><span class="chip state" style="margin-left:auto">plantilla de PR</span></div>
+      <div class="frame-body">
+        <div class="grid-2">
+          <div>
+            <p class="fieldset-title">Antes de la historia</p>
+            <div class="state-box" style="text-align:left;padding:18px 16px">
+              <p style="color:var(--faint);font-family:var(--mono);font-size:12px;margin:0">Leave a comment</p>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin:10px 0 0">
+              Cuadro en blanco: cada autor inventa su formato y <code>docs-impact</code> se olvida.
+            </p>
+          </div>
+          <div>
+            <p class="fieldset-title">Despues de la historia</p>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--surface-2)">
+              <div style="font-family:var(--mono);font-size:11.5px;line-height:1.9;color:var(--muted)">
+                ## Proposito<br>
+                ## Riesgo<br>
+                ## Pruebas<br>
+                ## Capturas<br>
+                ## docs-impact<br>
+                ## QA humana
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin:10px 0 0">
+              Seis secciones siempre presentes, aunque la respuesta sea "no aplica".
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="frame-caption">Contraste que verifica el criterio de precarga.</div>
+    </div>
+
+  </div>
+</section>
+
+<p class="foot">
+  Maqueta estatica de verificacion para TAO-008 / HU-00-01. Sin scripts ni dependencias externas.
+  Los nombres de owners, numeros de PR y tiempos de ejecucion son marcadores; los textos visibles de plantillas,
+  README y CONTRIBUTING son los que se proponen entregar.
+</p>
+
+</div>
+</body>
+</html>
