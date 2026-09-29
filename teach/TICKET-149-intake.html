@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<!-- teach-intake · ticket: TICKET-149 · kind: intake · project: up1 · external: UPONE-1770 · generated: 2026-09-17 -->
+<title>Teach-intake · TICKET-149 (UPONE-1770) · Tributación: peso del eje 1</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.55; color: #1c2330; max-width: 880px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.5rem; border-bottom: 2px solid #3b5bdb; padding-bottom: 6px; }
+  h2 { font-size: 1.15rem; color: #3b5bdb; margin-top: 30px; }
+  code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+  .tldr { background: #edf2ff; border: 1px solid #bac8ff; border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+  .callout { border-left: 4px solid #3b5bdb; background: #f6f8fc; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .callout.warn { border-left-color: #e8590c; background: #fff4ec; }
+  .concept-card { border: 1px solid #d5dae4; border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: #fff; }
+  .invariant { border-left: 4px solid #2b8a3e; background: #ebfbee; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .term { font-weight: 600; }
+  ul { margin: 6px 0; }
+  table.comparison-table, table.timeline { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 0.92em; }
+  table th, table td { border: 1px solid #d5dae4; padding: 6px 9px; text-align: left; vertical-align: top; }
+  table th { background: #eef1f6; }
+</style>
+</head>
+<body>
+<h1>Teach-intake · Tributación (UPONE-1770): peso del eje 1, guardado en conjunto, vía masiva y vista por malla</h1>
+
+<div class="tldr" data-dkc-block="tldr">
+  <strong>Qué se va a resolver:</strong> completar la captura de tributación (qué asignatura aporta a qué competencia y con cuánto peso) sobre el CRUD ya entregado en 1756. Entra: guardado transaccional de toda una matriz de una vez, gobierno del peso de cada asignatura, reparto en partes iguales, vía masiva, vista alternativa "Por malla" y dos cierres chicos (fix del selector en solo lectura + test de paridad MCP del peso). Todo en curriculum-mapping, reutilizando los componentes reales. Spec aprobado; ramas ya creadas; listo para arrancar por la Sesión 1.
+</div>
+
+<h2>Conceptos mínimos (para leer el resto sin dar nada por sabido)</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+  <ul>
+    <li><span class="term">Tributación</span>: registro de que una asignatura aporta a una competencia en un nivel de desarrollo, con un tipo (Desarrolla / Evalúa / Ambos). Es el objeto <code>CompetencyAlignment</code>.</li>
+    <li><span class="term">Peso (contributionPercentage)</span>: porcentaje con que una asignatura pesa dentro de su grupo. Solo Evalúa/Ambos pesan; Desarrolla queda en <code>null</code> (R-6).</li>
+    <li><span class="term">Matriz</span>: conjunto de competencias que un plan adoptó. La tributación se guarda acotada al par <code>(planId, matriz)</code>.</li>
+    <li><span class="term">Upsert de conjunto transaccional</span>: se manda el conjunto completo del <code>(planId, matriz)</code> y el backend reemplaza todo de una (crea, modifica y retira lo que ya no vino), todo o nada, una sola entrada de historial.</li>
+    <li><span class="term">Escritura gobernada</span>: mutación propia del mod, con validación y RBAC propios (<code>*Validated</code> + <code>runInTransaction</code>), NUNCA el CRUD genérico del core.</li>
+  </ul>
+</div>
+
+<h2>De dónde parte (contexto previo)</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">UPONE-1756</span> entregó el CRUD fila por fila y sus reglas por fila (R-1..R-5/R-10). Este ticket lo <strong>extiende reutilizando sus componentes</strong>, no lo reemplaza.</li>
+    <li><span class="term">UPONE-1769</span> dejó el modelo cableado en <code>develop</code> (<code>contributionPercentage</code> nullable + índice de grupo). Acá se lo empieza a usar.</li>
+    <li>El trabajo es de <span class="term">curriculum-mapping</span> (backend gobernado + UI), con un apoyo puntual en <span class="term">curriculum-design</span> para restituir el RBAC del batch.</li>
+  </ul>
+</div>
+
+<h2>Qué construye (alcance, 7 piezas)</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+  <ol>
+    <li><span class="term">Guardado en conjunto</span> de una matriz: upsert transaccional acotado a <code>(planId, matriz)</code>, con <code>planId</code> derivado server-side. El scope de borrado se acota por <code>planId</code> + competencias de la matriz (no hay columna <code>matrixId</code>); nunca toca otras matrices adoptadas ni las filas "fuera de diseño" (se marcan, no se borran, R-12).</li>
+    <li><span class="term">Peso del eje 1</span>: <code>contributionPercentage</code> pasa a campo escribible y validado por fila (string 0-100, 2 decimales, sin truncar), reutilizando la precisión ya vigente.</li>
+    <li><span class="term">Repartir en partes iguales</span>: reparte 100 en el grupo, client-side; el estado auto/manual es derivado (no se persiste, sin campo nuevo).</li>
+    <li><span class="term">Vía masiva</span>: aplica un destino (nivel + tipo) a varias asignaturas en una transacción troceada en el backend, e informa las salteadas y por qué.</li>
+    <li><span class="term">Vista "Por malla"</span>: asignaturas por período, con los datos que ya trae el view. No importa <code>CurriculumMesh</code> (M-26).</li>
+    <li><span class="term">Fix de UI</span>: quitar el selector de asignatura de la vista solo lectura (pertenece al editor).</li>
+    <li><span class="term">Test de paridad MCP</span>: cubrir <code>contributionPercentage</code> (documenta el hueco de la vía genérica; el cierre real es de los tickets de MCP de cm).</li>
+  </ol>
+</div>
+
+<h2>Reglas duras a respetar (invariantes)</h2>
+<div class="invariant" data-dkc-block="invariant">
+  <table class="comparison-table" data-dkc-block="comparison-table">
+    <tr><th>Regla</th><th>Qué exige</th></tr>
+    <tr><td>R-6</td><td>Solo Evalúa/Ambos pesan; Desarrolla queda en null.</td></tr>
+    <tr><td>G-6</td><td>Reparto y estado (auto/manual) client-side y derivado, sin persistir.</td></tr>
+    <tr><td>AD-12</td><td>La vía masiva se trocea en el backend (patrón matrixAdoption).</td></tr>
+    <tr><td>M-26</td><td>No importar componentes ni objetos de curriculum-design.</td></tr>
+    <tr><td>Reuso (Adenda 1)</td><td>Reutilizar los componentes reales de <code>CompetencyAlignmentGrid/</code>; no re-inventar. Asignación por selección lateral + click, sin drag (REQ-16).</td></tr>
+    <tr><td>Gobernado</td><td>Escrituras <code>*Validated</code> con <code>runInTransaction</code>; nunca CRUD genérico.</td></tr>
+  </table>
+</div>
+
+<h2>Qué queda fuera (para no desbordar el alcance)</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li>Validación "suma 100 al publicar el plan" (D1): cross-mod hacia curriculum-design, ticket aparte.</li>
+    <li>Indicadores y versionado del plan (1771), outcomeAlignment y retiro con aviso (1772), migración de niveles (1773).</li>
+    <li>R-9 (gate del peso por institución): legacy, no aplica en up1.</li>
+  </ul>
+</div>
+
+<h2>Riesgos concretos (qué puede fallar, dónde y por qué)</h2>
+<div class="callout warn" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">Scope de borrado mal acotado</span>: si el batch retira por <code>planId</code> sin filtrar por las competencias de la matriz, borra tributaciones de otras matrices adoptadas por el mismo plan. Riesgo central de la etapa 2 (REQ-02).</li>
+    <li><span class="term">Regresión del CRUD de 1756</span>: el guardado en conjunto convive con lo entregado en 1756; esa suite debe quedar en verde.</li>
+    <li><span class="term">Re-inventar componentes</span>: crear una grilla o un panel de detalle paralelos en vez de extender <code>CompetencyAlignmentDetailModal</code> y <code>CompetencyAlignmentGridTable</code>. El cierre verifica por grep que no aparezca drag ni panel lateral de detalle.</li>
+    <li><span class="term">Precisión del peso</span>: truncar o redondear (33.33 -> 33.3) rompe la validación; transportar como string y persistir sin truncar.</li>
+    <li><span class="term">Drift de sync/codegen</span>: los artefactos de sync no deben quedar commiteados; el CI de up1 corre check:ui + lint + typecheck + drift de migraciones.</li>
+  </ul>
+</div>
+
+<h2>Cómo se valida (mapa de sesiones y gates)</h2>
+<table class="timeline" data-dkc-block="timeline">
+  <tr><th>Sesión</th><th>Entrega</th><th>Se valida con</th></tr>
+  <tr><td>S1</td><td>Peso validado en el backend gobernado (rango, precisión, R-6).</td><td>Suite del validador + sync sin drift.</td></tr>
+  <tr><td>S2</td><td>Upsert de conjunto transaccional acotado al scope.</td><td>Integración del batch + regresión 1756.</td></tr>
+  <tr><td>S3</td><td>Editor por competencia end-to-end (chip EN MANO, + Asignar acá, modal con bloque de peso).</td><td>En pantalla + tests de componente/interacción.</td></tr>
+  <tr><td>S4</td><td>Modo "Por malla" sobre la misma grilla y vía gobernada.</td><td>En pantalla + tests + sin grilla paralela ni import de CurriculumMesh.</td></tr>
+  <tr><td>S5</td><td>Vía masiva viva (aplicadas/salteadas con motivo).</td><td>Tests de lote válido, duplicados, fuera de plan, reversión, 200 sin timeout.</td></tr>
+  <tr><td>S6</td><td>Cierre verificable (paridad MCP + grep de fidelidad).</td><td>Suite completa en verde + grep + sync/codegen sin drift.</td></tr>
+  <tr><td>S7</td><td>Sesión T0 acotada (cierre chico).</td><td>Según su gate.</td></tr>
+</table>
+
+<div class="callout" data-dkc-block="callout">
+  Spec aprobado (juez OK en gates 3, 5 y 6), 16 REQ y 82 casos de test mapeados. Ramas creadas en curriculum-design y curriculum-mapping. Con este teach-intake registrado, el pre-gate queda completo y la ejecución arranca por la Sesión 1.
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dkc-teach-format" content="v2" />
+<title>Teach intake — Widgetbook como app separada + catálogo web por PR · TAO-162</title>
+<!-- ticket: TAO-162 · kind: intake · project: taomangalam · generated: 2026-09-29 -->
+<style>
+  :root { --amber:#f59e0b; --bg:#0c0a09; --card:#1c1917; --border:#292524; --txt:#e7e5e4; --muted:#a8a29e; }
+  html, body { background:var(--bg); color:var(--txt); font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; margin:0; }
+  main { max-width:52rem; margin:0 auto; padding:2.5rem 1.5rem; }
+  h1 { font-size:1.7rem; margin:0 0 .6rem; } h2 { font-size:1.2rem; margin:2rem 0 .6rem; color:#fafaf9; }
+  p { line-height:1.6; color:var(--muted); }
+  code { background:#292524; color:#fcd34d; padding:.06rem .38rem; border-radius:.25rem; font-size:.85em; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:.6rem; padding:1rem 1.2rem; margin:.6rem 0; }
+  .callout { border-left:4px solid; padding:.8rem 1.1rem; border-radius:0 .5rem .5rem 0; margin:.5rem 0; color:var(--muted); }
+  .warn { border-color:#fbbf24; background:rgba(251,191,36,.10); } .info { border-color:#818cf8; background:rgba(129,140,248,.10); }
+  .note { border-color:#38bdf8; background:rgba(56,189,248,.10); }
+  ul { color:var(--muted); line-height:1.6; } li { margin:.25rem 0; }
+  footer { margin-top:3rem; border-top:1px solid var(--border); padding-top:1rem; font-size:.75rem; color:#78716c; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Widgetbook como app separada + catálogo web publicado por PR</h1>
+  <p><strong>HU-00-12 · GH-15 · TAO-162 · módulo EP-00 · implement.</strong> Saca el catálogo de componentes fuera del build de producto: <code>app/widgetbook/</code> es una app Flutter aparte que reusa el <code>design_system</code> de la app, muestra cada componente con controles de dispositivo, escala de texto y movimiento, y publica su build web como artifact en cada PR que toca <code>app/</code>. Es el habilitador de la revisión visual de EP-01 (DEC-193).</p>
+
+  <h2>Resultado</h2>
+  <div data-dkc-block="tldr" class="card">
+    <strong>TL;DR</strong> — <strong>Qué hay:</strong> <code>app/widgetbook/</code> no existe todavía; ya existen el catálogo de comandos raíz (<code>scripts/dev/catalog.mjs</code>) y el gate <code>quality-gate</code> en <code>ci-pr.yml</code>. <strong>Qué se hará:</strong> app + controles + caso de uso con fixture compartida; comandos <code>dev:catalog</code>/<code>docs:catalog</code>; job de CI que publica el build web del catálogo y verifica que no lleve secretos. <strong>Por qué:</strong> revisar componentes y estados sin meter Widgetbook en el build productivo.
+  </div>
+  <div data-dkc-block="concept-card" class="grid">
+    <div class="card"><strong>Widgetbook.</strong> App Flutter que cataloga componentes y estados con controles (dispositivo, orientación, escala de texto, tema, movimiento); sus anotaciones <code>@UseCase</code> arman el árbol del catálogo.</div>
+    <div class="card"><strong>Fixtures compartidas.</strong> Datos de ejemplo en una única ubicación (<code>app/lib/design_system/fixtures/</code>), importables por widget tests, golden tests y el caso de uso del catálogo. Sin duplicar.</div>
+    <div class="card"><strong>Reuso del design_system.</strong> El catálogo monta el MISMO <code>ThemeData</code> claro que la app (fuente única con <code>app/lib/main.dart</code>); el oscuro es selector técnico oculto (DEC-196).</div>
+    <div class="card"><strong>Catálogo de comandos raíz.</strong> <code>scripts/dev/catalog.mjs</code> declara <code>COMMANDS</code> y <code>cli.mjs</code> los despacha; los nuevos comandos se suman ahí, con el contrato común de fallo.</div>
+  </div>
+
+  <h2>Verificación</h2>
+  <div data-dkc-block="study-qa" class="card">
+    <ul>
+      <li><strong>S1:</strong> <code>fvm flutter run -d chrome</code> dentro de <code>app/widgetbook/</code> abre el catálogo con el caso de uso y los controles operativos; el widget test de <code>app/</code> que usa la misma fixture pasa.</li>
+      <li><strong>S2:</strong> <code>pnpm dev:catalog</code> y <code>pnpm docs:catalog</code> abren el mismo catálogo con hot reload; <code>pnpm check</code> verde con el paquete anidado; <code>fvm flutter pub deps</code> en <code>app/</code> no lista <code>widgetbook</code>.</li>
+      <li><strong>S3:</strong> un PR que toca <code>app/</code> publica un artifact que se descarga, se sirve localmente y abre en el navegador; la verificación de secretos sale 0; el job figura en <code>quality-gate</code>. Un PR solo de <code>docs/</code> deja el job <code>skipped</code> y el gate verde.</li>
+    </ul>
+  </div>
+  <div data-dkc-block="timeline" class="card">
+    <ul>
+      <li><strong>S1 (T2):</strong> app + controles + átomo <code>@UseCase</code> + widget test con la misma fixture.</li>
+      <li><strong>S2 (T1):</strong> comandos raíz + documentación en <code>docs/development/commands.md</code>.</li>
+      <li><strong>S3 (T1):</strong> job de CI + artifact del build web + verificación de secretos.</li>
+    </ul>
+  </div>
+
+  <h2>Decisiones</h2>
+  <div data-dkc-block="callout" class="callout warn"><strong>Widgetbook NO entra al build productivo.</strong> <code>fvm flutter pub deps</code> en <code>app/</code> no debe listarlo; <code>app/widgetbook/</code> queda excluido del format/analyze/custom_lint de <code>app/</code> sin dejar de analizarse por su cuenta (REQ-08).</div>
+  <div data-dkc-block="callout" class="callout warn"><strong>El artifact no lleva secretos.</strong> Antes de subir el build web, el job verifica que no haya <code>.env</code>, tokens ni endpoints de ambientes (REQ-07).</div>
+  <div data-dkc-block="callout" class="callout info"><strong>Reusar, no reinventar.</strong> El comando se suma al catálogo raíz existente y el tema sale de la fuente única compartida con <code>app/lib/main.dart</code> (REQ-05/REQ-09). Toolchain por <code>fvm</code> (<code>app/.fvmrc</code>).</div>
+  <div data-dkc-block="callout" class="callout note"><strong>Sonda de intake:</strong> la única tarjeta (privilegios de rol) se resolvió <em>no aplica</em> — el ticket no crea ni modifica tablas ni el contrato; no hay impacto de schema.</div>
+
+  <h2>Aprendizajes</h2>
+  <div data-dkc-block="code" class="card">
+    <ul>
+      <li><code>app/widgetbook/</code> no existe: es lo que este ticket crea.</li>
+      <li>El catálogo de comandos raíz ya está (<code>scripts/dev/catalog.mjs</code>, <code>COMMANDS</code> en la línea 21); faltan <code>dev:catalog</code>/<code>docs:catalog</code>.</li>
+      <li>El gate obligatorio <code>quality-gate</code> (<code>ci-pr.yml</code>) ya incluye en su <code>needs</code> a <code>dev-commands</code>, <code>build-smoke</code> y <code>docs</code>.</li>
+      <li>El toolchain Flutter está fijado por <code>app/.fvmrc</code>: Flutter se invoca con <code>fvm</code>, como el resto de los comandos y jobs.</li>
+    </ul>
+  </div>
+  <div data-dkc-block="tag" class="card">
+    <strong>Alcance:</strong> <code>app/widgetbook/</code> · <code>app/lib/design_system/fixtures/</code> · <code>scripts/dev/catalog.mjs</code> · <code>scripts/dev/cli.mjs</code> · <code>.github/workflows/ci-pr.yml</code> · <code>docs/development/commands.md</code>
+  </div>
+
+  <footer>Teaching v2 · TAO-162 · intake · taomangalam · GH-15 · HU-00-12 · 2026-09-29.</footer>
+</main>
+</body>
+</html>

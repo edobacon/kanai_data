@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "2026-09-29-taomangalam-f3",
+  "project_id": "taomangalam",
+  "ts": "2026-09-29T09:00:00Z",
+  "kind": "findings",
+  "scope": {
+    "tickets": ["TAO-161"],
+    "dredd_runs": ["tao161-local-2026-09-29"],
+    "note": "Primera clasificacion de hallazgos tardios de kn-dredd para taomangalam (los anteriores f1/f2 no tenian metricas). El review local de TAO-161 (HU-00-17, script operativo de configuracion) dio 0 S0/S1 y 3 S2. Los 3 caen fuera de las 6 sondas del proyecto POR DISENO: el catalogo de las sondas es el openapi del server (objetos de dominio) y TAO-161 no toca objetos del catalogo (crea tablas de configuracion operativa y un CLI, sin endpoints). Los mecanismos son de seguridad/infra operativa (privilegios de rol Postgres, guarda de produccion por --env, doc de superficie operativa), que ningun tipo de sonda lee. El ticket no abrio tarjetas (0). Los 4 hallazgos S3 (infos: causa de error, valor por argv, coherencia region/alcance, doc de auditoria diferida) quedan fuera del alcance de tassadar (solo S0-S2)."
+  },
+  "classifier": { "model": "manual", "reverify_model": null, "tokens": 0 },
+  "findings": [
+    {
+      "dredd_run": "tao161-local-2026-09-29",
+      "finding_id": "config-clave-least-privilege",
+      "ticket": "TAO-161",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "media",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "mecanismo de privilegios de rol PostgreSQL (least privilege) sobre tablas operativas; las sondas de perfil-x-operacion leen capacidades del perfil de la app desde el catalogo openapi, no GRANTs de migraciones"
+    },
+    {
+      "dredd_run": "tao161-local-2026-09-29",
+      "finding_id": "guard-honor-system",
+      "ticket": "TAO-161",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "mecanismo de guarda operativa de un script de plataforma (destino real vs --env declarado); ningun tipo de sonda lee scripts CLI ni validaciones de entorno"
+    },
+    {
+      "dredd_run": "tao161-local-2026-09-29",
+      "finding_id": "doc-config-set",
+      "ticket": "TAO-161",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "documentacion de una superficie operativa nueva (comando CLI); las sondas no cubren docs"
+    }
+  ],
+  "unattributed": 0,
+  "backtest": null,
+  "proposals": [
+    {
+      "type": "new-kind",
+      "category": "perfil-x-operacion",
+      "mechanism": "al crear o modificar una tabla, un rol operativo (el de aplicacion, sobre todo) queda con mas privilegios de los que su operacion necesita, o un historial append-only pierde su inmutabilidad: las ALTER DEFAULT PRIVILEGES del schema otorgan DML amplio a toda tabla nueva y la migracion no lo acota con REVOKE explicito",
+      "reads": "archivos de migracion SQL del repo (server/prisma/migrations/**/migration.sql): sentencias GRANT / REVOKE / ALTER DEFAULT PRIVILEGES sobre las tablas que el pedido crea o modifica, cruzadas con los roles del runtime (server/.env.example, infra/)",
+      "signal": "una tarjeta por tabla: 'el rol <rol> conserva INSERT/UPDATE/DELETE sobre <tabla> sin REVOKE explicito' (p.ej. un catalogo que la app solo deberia leer, o un historial append-only que debería perder UPDATE/DELETE)",
+      "why_new_kind": "ningun tipo existente lee SQL de migraciones ni privilegios de rol de PostgreSQL; profile-ops lee los perfiles y capacidades de la app (JSON) desde el catalogo, no GRANTs de la base",
+      "params": {
+        "migrations": "prisma/migrations/**/migration.sql",
+        "runtimeRoleSource": "server/.env.example + infra/**",
+        "appendOnlyWords": ["version", "historial", "auditoria", "audit", "log", "evento"]
+      },
+      "from": ["tao161-local-2026-09-29|config-clave-least-privilege"]
+    }
+  ]
+}

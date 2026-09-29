@@ -1,0 +1,256 @@
+{
+  "run_id": "flujo02",
+  "plan_id": "kanai-app-flujo-revision",
+  "ts_start": "2026-09-24T02:05:00",
+  "ts_end": "2026-09-24T02:25:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "98a0a41989bb89b83529c5be4ccfe090d5d9798e",
+  "head_ref": "9e2ddf6",
+  "repo": "kanai-app",
+  "calibration": "comportamiento",
+  "judge_model": "opus",
+  "reverify_run": true,
+  "priority_files": 15,
+  "findings": {
+    "S0": 0,
+    "S1": 1,
+    "S2": 2,
+    "S3": 2,
+    "consulta": 1
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S1",
+      "kind": "migration",
+      "where": "server/repo/gateRuns.ts:106",
+      "title": "migracion legacy pierde el veredicto del N3 (unknown)",
+      "evidence": "la base registraba el N3 como dual-judge 'gate sesion' (sin id) + gate-level N3; legacyGateRuns solo busca integral-gate (existio solo entre 47ea1c5 y 780c921) -> unknown -> DET-INTEGRAL traba. Sin gate-level (levels off) el N3 se pierde entero. Re-verify: sostenido, reproducido.",
+      "outcome": "fixed",
+      "persists_from": "flujo01/f3",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/repo/preGate.ts:388",
+      "title": "ticketBranchRanges usa develop para repos fuera de la propuesta, ignora defaultRef",
+      "evidence": "baseByName solo tiene los repos de la propuesta; el resto cae a 'develop' sin resolveRepoBase(defaultRef); en repos master el rangeDiff falla y el N3 no los revisa.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/dispatch/locks.ts:490",
+      "title": "reserva del gate y lock ignoran la staleness de jobs (OB3)",
+      "evidence": "gateReservations sin vencimiento (se libera en run.finally); hasRunningForTicket ahora la consulta; el lock de archivo solo vence por TTL desde la creacion: un gate colgado traba el ticket.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "S3",
+      "kind": "correctness",
+      "where": "server/dispatch/locks.ts:459",
+      "title": "lock sin renovar y release borra el archivo sin verificar dueño",
+      "evidence": "at solo al crear; pasado el TTL otro lo toma y el release del original borra el lock nuevo; igual con otro arranque del mismo proceso.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f5",
+      "severity": "consulta",
+      "kind": "correctness",
+      "where": "server/dispatch/sessionCommit.ts:240",
+      "title": "git commit -- . con hooks lint-staged",
+      "evidence": "commit con pathspec (--only); algunas versiones de lint-staged no lo soportan; sin reproducir.",
+      "outcome": "pending"
+    },
+    {
+      "id": "f6",
+      "severity": "S3",
+      "kind": "scope_creep",
+      "where": "server/dispatch/gateOutcome.ts:110",
+      "title": "cambios fuera de la lista de fases",
+      "evidence": "sin cambios desde flujo01 (refinamiento sin auto-commit, knobs, cobertura de REQs, hallazgos del smoke, pathspec, JOB_STALE_MS, GATEABLE_STATES); reportado al dev, no revertido.",
+      "outcome": "pending",
+      "carried_from": "flujo01/f9",
+      "outcome_note": "re-chequeo: sigue presente",
+      "outcome_inferred": true
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 71,
+    "read_full": 63,
+    "skimmed": 7,
+    "not_read": 1,
+    "files": {
+      "read_full": [
+        ".env.example",
+        "docs/configuration.md",
+        "docs/data-workspace.md",
+        "docs/motor.md",
+        "docs/gate-niveles.md",
+        "app/pages/chat.vue",
+        "app/pages/panel.vue",
+        "app/utils/ticketFlow.ts",
+        "server/api/actions/execute.post.ts",
+        "server/api/tickets/[id]/transition.post.ts",
+        "server/data/ticketLog.ts",
+        "server/db/boot.ts",
+        "server/db/migrations/0045_silent_frog_thor.sql",
+        "server/db/migrations/0046_dazzling_stature.sql",
+        "server/db/schema.ts",
+        "server/dispatch/adapter.ts",
+        "server/dispatch/adapters/claude.ts",
+        "server/dispatch/gate.ts",
+        "server/dispatch/gateAutofix.ts",
+        "server/dispatch/gateContext.ts",
+        "server/dispatch/gateCoverage.ts",
+        "server/dispatch/gateFidelity.ts",
+        "server/dispatch/gateLevels.ts",
+        "server/dispatch/gateOutcome.ts",
+        "server/dispatch/gateOverride.ts",
+        "server/dispatch/gateSpecial.ts",
+        "server/dispatch/jobs.ts",
+        "server/dispatch/judgeAgents.ts",
+        "server/dispatch/locks.ts",
+        "server/dispatch/planTicket.ts",
+        "server/dispatch/planner.ts",
+        "server/dispatch/preLevel.ts",
+        "server/dispatch/sessionCommit.ts",
+        "server/dispatch/sessionSizing.ts",
+        "server/dispatch/specReview.ts",
+        "server/dispatch/strongGate.ts",
+        "server/dispatch/workTypeProposal.ts",
+        "server/engine/fsm.ts",
+        "server/engine/guards/catalog.ts",
+        "server/engine/guards/closure.ts",
+        "server/engine/guards/index.ts",
+        "server/engine/guards/intake.ts",
+        "server/engine/guards/integral.ts",
+        "server/engine/guards/session.ts",
+        "server/engine/guards/ticket.ts",
+        "server/engine/transitions.ts",
+        "server/llm/bootstrap.ts",
+        "server/mcp/tools.ts",
+        "server/repo/closeAdvisories.ts",
+        "server/repo/gateRuns.ts",
+        "server/repo/planning.ts",
+        "server/repo/preGate.ts",
+        "server/repo/relations.ts",
+        "server/repo/ticketStructure.ts",
+        "server/repo/tickets.ts",
+        "shared/session-policy.ts",
+        "shared/work-types.ts",
+        "tests/unit/export-md.test.ts",
+        "tests/unit/gate-levels.test.ts",
+        "tests/unit/gate-monorepo-integral.test.ts",
+        "tests/unit/gate-orchestration.test.ts",
+        "tests/unit/gate-override.test.ts",
+        "tests/unit/guards.test.ts"
+      ],
+      "skimmed": [
+        "tests/unit/closure-integrity.test.ts",
+        "tests/unit/flow-policy.test.ts",
+        "tests/unit/gate-phase3.test.ts",
+        "tests/unit/scale-phase4.test.ts",
+        "tests/unit/arbiter-flujo01-fixes.test.ts",
+        "server/db/migrations/meta/0045_snapshot.json",
+        "server/db/migrations/meta/0046_snapshot.json"
+      ],
+      "not_read": [
+        "server/db/migrations/meta/_journal.json"
+      ]
+    }
+  },
+  "recheck": [
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f1",
+      "verdict": "corregido",
+      "evidence": "closeAcks al payload.acks del audit de la transicion + decision integral-ack con el motivo.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f2",
+      "verdict": "corregido",
+      "evidence": "panel.vue y chat.vue piden el motivo ante DET-INTEGRAL y reintentan; el panel ya no traga el error.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f3",
+      "verdict": "corregido",
+      "evidence": "migrateLegacyGateState en boot, idempotente; residuo: el formato real del N3 viejo (dual-judge sin id) se pierde, cubierto por f1 actual.",
+      "matches_current": "f1"
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f4",
+      "verdict": "corregido",
+      "evidence": "dropSessionGateHistory en deleteSession/reslice/persistPlan; logCreated en todas las altas de sesion y tarea.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f5",
+      "verdict": "corregido",
+      "evidence": "BOOT_ID por arranque + gracia de 5 s para archivo recien creado.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f6",
+      "verdict": "corregido",
+      "evidence": "reslice rechaza toda sesion de codigo no abierta.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f7",
+      "verdict": "corregido",
+      "evidence": "setReqKind y setTicketDeliverables pasan por guardStructuralChange.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f8",
+      "verdict": "corregido",
+      "evidence": "withCloseAdvisories en MCP, execute.post y transition.post.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f9",
+      "verdict": "sigue",
+      "evidence": "gateOutcome.ts sin cambios en las correcciones; reportado al dev, no revertido.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "flujo01",
+      "prev_id": "f10",
+      "verdict": "corregido",
+      "evidence": "guided isWork=true por decision del dev.",
+      "matches_current": null
+    }
+  ],
+  "ticket": {
+    "resolution": "none",
+    "kanai_id": null,
+    "external_ref": null,
+    "project": null
+  },
+  "notes": "segunda corrida; primera con priority_files (15 archivos que flujo01 no leyo completos, pasados a mano porque el MCP no se reinicio y arbiter_get_plan no devuelve coverageGaps aun); 9/10 de flujo01 corregidos, f9 arrastrado; f1 sostenido por re-verify",
+  "verdict_expected_by_rubric": "iterar"
+}

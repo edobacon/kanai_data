@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<!-- teach-close · ticket: TICKET-150 · kind: close · project: up1 · external: UPONE-1770 D1 · generated: 2026-09-24 -->
+<title>Teach-close · TICKET-150 (UPONE-1770 D1) · Guard de suma al publicar el plan</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.55; color: #1c2330; max-width: 880px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.5rem; border-bottom: 2px solid #3b5bdb; padding-bottom: 6px; }
+  h2 { font-size: 1.15rem; color: #3b5bdb; margin-top: 30px; }
+  code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+  .tldr { background: #edf2ff; border: 1px solid #bac8ff; border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+  .callout { border-left: 4px solid #3b5bdb; background: #f6f8fc; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .callout.warn { border-left-color: #e8590c; background: #fff4ec; }
+  .concept-card { border: 1px solid #d5dae4; border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: #fff; }
+  .invariant { border-left: 4px solid #2b8a3e; background: #ebfbee; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .term { font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 0.92em; }
+  table th, table td { border: 1px solid #d5dae4; padding: 6px 9px; text-align: left; vertical-align: top; }
+  table th { background: #eef1f6; }
+</style>
+</head>
+<body>
+<h1>Teach-close · Guard de suma al publicar el plan (UPONE-1770 D1)</h1>
+
+<div class="tldr panel" data-dkc-block="tldr">
+  <strong>Qué quedó resuelto:</strong> un plan de estudios ya no puede pasar de Aprobado a Vigente si su tributación está incompleta. En cada grupo medible toda fila que evalúa debe tener un peso válido y la suma debe ser exactamente 100; si no, el formulario muestra un aviso por problema, anclado al Estado, que nombra competencia, nivel, matriz, asignatura y cuánto falta o sobra. Hay además una consulta de anticipación (y su herramienta en el asistente) que devuelve la misma lista sin publicar nada. Es una pieza interina aprobada por plataforma, que se retira cuando llegue el motor de reglas del core (BRE). Todo vive en la rama <code>feat/UPONE-1770-d1-guard-suma-publicacion</code> de curriculum-design, sin push.
+</div>
+
+<h2>Conceptos para leer el resto</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+  <ul>
+    <li><span class="term">Publicar un plan</span>: pasarlo de Aprobado a Vigente. Es la única transición que mira el guard.</li>
+    <li><span class="term">Grupo medible</span>: las filas de tributación de un mismo plan, competencia y nivel, en una matriz que promedia (no por máximo), contando solo las filas que evalúan (Evalúa o Ambas).</li>
+    <li><span class="term">Adopción vigente</span>: que el plan tenga adoptada hoy la matriz (estado Adoptada, ya iniciada y sin vencer). Las filas de matrices sin adopción vigente no cuentan.</li>
+    <li><span class="term">Guard interino</span>: verificación que vive en curriculum-design aunque la regla sea de curriculum-mapping, porque hoy el core no tiene dónde registrarla. Marcado INTERINO en el código, con lista de retiro en la nota del KB sp11.</li>
+  </ul>
+</div>
+
+<h2>Resultado: qué hace el guard, en orden</h2>
+<div class="invariant" data-dkc-block="invariant">
+  <ol>
+    <li><span class="term">Permiso primero.</span> Sin permiso de edición sobre el plan responde el error estándar de autorización, sin mostrar tributación ni leer la base. Se evalúa sobre el mismo tipo de objeto que usará el core al guardar, así el guard no es ni más laxo ni más estricto que la escritura.</li>
+    <li><span class="term">Solo filas que rigen.</span> Se descartan las de competencias que ya no existen y las de matrices sin adopción vigente.</li>
+    <li><span class="term">Exención por máximo.</span> Las matrices que consolidan por el valor más alto no exigen suma.</li>
+    <li><span class="term">Peso con el formato de curriculum-mapping.</span> Número entre 0 y 100 con hasta 2 decimales, igual que al guardar. Un peso que no cumple se informa como "peso no válido" y no entra en la suma.</li>
+    <li><span class="term">Suma exacta en centésimos.</span> Sin tolerancia: 33,33 + 33,33 + 33,33 no pasa como 100.</li>
+  </ol>
+</div>
+
+<h2>Verificación</h2>
+<table data-dkc-block="timeline">
+  <tr><th>Qué</th><th>Estado</th></tr>
+  <tr><td>Sesiones</td><td>3 sesiones con gate aprobado y revisión integral del ticket aprobada.</td></tr>
+  <tr><td>Suite de curriculum-design</td><td>2234 tests en verde, 1 omitido preexistente, sobre <code>4929844</code>. eslint limpio.</td></tr>
+  <tr><td>Revisión kn-dredd (1)</td><td>Jurado de 3 jueces: iterar. Permiso después de leer, formato del peso más estricto que curriculum-mapping, filas de matrices no adoptadas.</td></tr>
+  <tr><td>Revisión kn-dredd (2)</td><td>Jurado de 3 jueces: aprobable con nits. Todo lo anterior cerrado; los 2 nits de documentación se corrigieron antes de cerrar.</td></tr>
+  <tr><td>Casos de prueba</td><td>85 de 85 en aprobado, con evidencia test por test.</td></tr>
+</table>
+
+<h2>Decisiones y ventanas aceptadas</h2>
+<table data-dkc-block="comparison-table">
+  <tr><th>Tema</th><th>Decisión</th></tr>
+  <tr><td>Dónde vive la regla</td><td>Guard interino en curriculum-design; definitivo en el BRE, registrado desde curriculum-mapping.</td></tr>
+  <tr><td>Edición masiva del core</td><td>Publica sin pasar por el guard. Ventana conocida y documentada. Dato nuevo: el core ya tiene un hook por objeto antes de guardar (UPONE-1741) que también corre en la edición masiva; exponerlo a los mods la cerraría antes del BRE.</td></tr>
+  <tr><td>Plan ya Vigente editado después</td><td>Puede quedar descuadrado: el criterio pedido es validar al publicar.</td></tr>
+  <tr><td>Lectura fuera de la transacción del core</td><td>Aceptado, mismo patrón que los guards hermanos.</td></tr>
+  <tr><td>Herramienta del asistente</td><td>Lleva su selección GraphQL escrita a mano porque el compilador de fichas no expande enums de un mod (análisis en KB sp11).</td></tr>
+  <tr><td>Orden de merge</td><td>UPONE-1770 antes o a la par, nunca este guard primero.</td></tr>
+</table>
+
+<h2>Qué queda después del cierre</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li>Commit de los 2 nits de documentación y push de la rama, cuando el dev lo ordene.</li>
+    <li>Consulta al PO: la consulta de anticipación muestra pesos a quien puede ver planes, mientras curriculum-mapping protege esa lectura con su propio permiso.</li>
+    <li>Propuesta al core para exponer el hook por objeto a los mods (cerraría la ventana de la edición masiva).</li>
+  </ul>
+</div>
+
+<h2>Aprendizajes</h2>
+<div class="callout warn" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">Validar datos de otro módulo con su misma semántica.</span> Un guard más estricto que la escritura bloquea datos que el sistema ya aceptó y deja al usuario sin salida.</li>
+    <li><span class="term">Permiso antes de leer.</span> Si el guard lee primero, su mensaje de error puede filtrar información a quien no tiene permiso.</li>
+    <li><span class="term">Filtrar por lo que rige.</span> Sumar filas que la grilla no muestra (matrices no adoptadas, competencias retiradas) puede dejar un plan impublicable sin forma de corregirlo.</li>
+    <li><span class="term">Los títulos de commit automáticos.</span> "sesión N" y "Adenda N" contradicen la regla de usar solo ids de Jira; conviene ajustarlos en el origen (Kanai).</li>
+  </ul>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+# Sondas del intake de up1. Recetas deterministas que Kanai corre sobre el codigo base antes de
+# planificar un ticket. Cada sonda levanta tarjetas de decision sobre los objetos que nombra el pedido.
+# Se mantiene aca (KB del proyecto); kanai-app solo aporta los tipos de sonda (kind).
+version: 1
+
+catalog:
+  # Mods cuyos objetos (JSON schema por objeto) forman el catalogo que recorren las sondas.
+  repos:
+    - academic-scheduling
+    - ai-agent
+    - curriculum-design
+    - curriculum-mapping
+    - retention-wellbeing
+    - uengagement-up1
+    - up1-manager
+  objects: "objects/**/*.json"
+  # Etiquetas de negocio de los campos (i18n por objeto): un pedido que dice "peso" encuentra rollupWeight.
+  fieldLabels:
+    path: "lang/es/{object}.i18n.json"
+    key: column
+
+core:
+  # CRUD generico del core: escribe cualquier objeto sin pasar por los resolvers del mod.
+  repo: object-manager
+  genericFile: src/graphql/resolvers/instance.resolver.js
+  genericOps: [createInstance, updateInstance, deleteInstance, updateBulkInstances, deleteBulkInstances]
+
+metrics:
+  # Referencia sin sondas para medir el ahorro: los tickets del analisis de reactividad (143 a 152).
+  # Todos los cerrados mezclan tickets livianos y subestiman lo que cuesta un hallazgo tardio.
+  baseline: [TICKET-143, TICKET-144, TICKET-145, TICKET-146, TICKET-147, TICKET-148, TICKET-149, TICKET-150, TICKET-151, TICKET-152]
+
+probes:
+  - id: vias-de-escritura
+    kind: write-paths
+    params:
+      resolvers: "logic/*.resolver.js"
+      governance: ["ai/index.js", "ai/contracts.js"]
+
+  - id: ciclo-de-vida-del-padre
+    kind: parent-lifecycle
+    params:
+      stateField: status
+      guards: ["logic/helpers/*Guard*.js", "logic/helpers/*guard*.js"]
+
+  - id: perfil-x-operacion
+    kind: profile-ops
+    params:
+      profiles: "profiles/*.json"
+
+  - id: unicidad
+    kind: uniques
+
+  - id: reemplazo-total
+    kind: full-replace
+    params:
+      siblings: "logic/*.resolver.js"
+      siblingNames: "batch|upsert|bulk|set"
+
+  - id: consumidores-cruzados
+    kind: cross-consumers
+    params:
+      paths: ["logic/**", "modsComponents/**", "modsComposables/**"]
+
+  - id: forma-de-entrada
+    kind: input-shape
+
+  - id: coherencia-de-referencias
+    kind: reference-coherence
+    params:
+      depth: 4

@@ -3,6 +3,7 @@ id: RULE-curriculum-design-001
 project: up1
 type: rule
 module: curriculum-design
+status: retired
 tags:
   - a11y
   - wcag

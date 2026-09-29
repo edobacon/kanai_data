@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<!-- teach-intake · ticket: TICKET-150 · kind: intake · project: up1 · external: UPONE-1770 (D1) · generated: 2026-09-23 -->
+<title>Teach-intake · TICKET-150 · Guard de suma 100 al publicar el plan</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.55; color: #1c2330; max-width: 880px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.5rem; border-bottom: 2px solid #3b5bdb; padding-bottom: 6px; }
+  h2 { font-size: 1.15rem; color: #3b5bdb; margin-top: 30px; }
+  code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+  .tldr { background: #edf2ff; border: 1px solid #bac8ff; border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+  .callout { border-left: 4px solid #3b5bdb; background: #f6f8fc; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .callout.warn { border-left-color: #e8590c; background: #fff4ec; }
+  .concept-card { border: 1px solid #d5dae4; border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: #fff; }
+  .invariant { border-left: 4px solid #2b8a3e; background: #ebfbee; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .term { font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 0.92em; }
+  table th, table td { border: 1px solid #d5dae4; padding: 6px 9px; text-align: left; vertical-align: top; }
+  table th { background: #eef1f6; }
+</style>
+</head>
+<body>
+<h1>Teach-intake · Guard de suma = 100 al publicar el plan (interino en curriculum-design)</h1>
+
+<div class="tldr" data-dkc-block="tldr">
+  <strong>Qué se va a resolver:</strong> que un plan de estudios no pueda pasar de Aprobado a Vigente si su tributación está incompleta: en cada grupo que se mide, todas las asignaturas que evalúan tienen que tener peso y los pesos tienen que sumar exactamente 100. Si algo falla, el sistema dice exactamente dónde, con un ítem por problema. Además, una consulta de solo lectura permite ver esa misma lista antes de intentar publicar. Todo el código va en <strong>curriculum-design</strong> y es <strong>interino</strong>: se retira cuando el core tenga su motor de reglas (BRE). Spec aprobado por el juez; faltan la rama de trabajo y arrancar la Sesión 1.
+</div>
+
+<h2>Conceptos mínimos</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+  <ul>
+    <li><span class="term">Tributación</span>: registro de que una asignatura del plan aporta a una competencia, en un nivel de desarrollo, con un tipo: Desarrolla, Evalúa o Ambas. Es el objeto <code>CompetencyAlignment</code> de curriculum-mapping.</li>
+    <li><span class="term">Grupo medible</span>: las tributaciones del mismo plan, la misma competencia y el mismo nivel <code>(planId, competencyNodeId, developmentLevelId)</code>, cuya matriz combina las asignaturas por <strong>promedio ponderado</strong> (<code>WeightedAvg</code>). Ahí el peso de cada asignatura importa, por eso tiene que sumar 100.</li>
+    <li><span class="term">Matriz en modo Max</span>: toma la mejor asignatura en vez de promediar; los pesos no se usan, así que el grupo queda eximido. El modo vive en <code>rt__Matrix__competencynode.courseAggregationMode</code>.</li>
+    <li><span class="term">Publicar</span>: la transición del plan de <code>Approved</code> a <code>Active</code> (Aprobado a Vigente), que exige la capability <code>curriculum:publish</code>.</li>
+    <li><span class="term">Interino / por deprecar</span>: solución puente aprobada por plataforma. Debe quedar mínima y aislada para borrarla fácil cuando llegue el BRE.</li>
+  </ul>
+</div>
+
+<h2>De dónde parte</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li>Es el requerimiento <strong>D1 de UPONE-1770</strong>, que salió de TICKET-149 porque cruza de mod: el momento (publicar) es de curriculum-design y el dato (los pesos) es de curriculum-mapping.</li>
+    <li>El editor de tributación (149) ya impide que un grupo pase de 100, pero no obliga a que llegue a 100 ni a que todas las filas tengan peso. Este ticket agrega esa garantía dura al publicar.</li>
+    <li>La decisión completa (por qué interino, puntos débiles aceptados, retiro con el BRE) está en <code>DECISION-guard-publicacion-interino-y-retiro-con-BRE</code> (KB sp11).</li>
+  </ul>
+</div>
+
+<h2>Lo que se descubrió al revisar el código (Adenda 2)</h2>
+<div class="callout warn" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">Hay dos caminos para publicar, no uno.</span> El formulario del plan guarda (incluido el cambio de estado) por la mutation propia <code>updateCurriculumWithRecordType</code>, que llama directo al <code>updateInstance</code> del core y <strong>no pasa</strong> por la cadena de asserts de <code>polymorphicUpdate.resolver.js</code>. Si el guard solo estuviera en polymorphicUpdate, el camino principal de la UI publicaría igual. Por eso va en los dos (mismo precedente que <code>assertNoActiveDependentsOnRevert</code>).</li>
+    <li><span class="term">El plan llega con tres nombres.</span> <code>Curriculum</code>, <code>rt__Plan__curriculum</code> o <code>rt__Minor__curriculum</code>. Los alias no matchean <code>RT_PATTERN</code> y caen en la rama correcta; el guard acepta los tres.</li>
+    <li><span class="term">El modo Max no está en la tributación.</span> Se llega por competencia → <code>matrixId</code> → satélite de la matriz.</li>
+    <li><span class="term">Un error común esconde la lista.</span> El formulario muestra un modal genérico ("An unexpected error occurred") para errores planos. Un <code>GraphQLError</code> con <code>VALIDATION_FAILED</code> y <code>fieldErrors</code> en cambio se muestra en el resumen de errores del formulario, ítem por ítem.</li>
+  </ul>
+</div>
+
+<h2>Reglas duras (invariantes)</h2>
+<div class="invariant" data-dkc-block="invariant">
+  <table data-dkc-block="comparison-table">
+    <tr><th>Regla</th><th>Qué exige</th></tr>
+    <tr><td>Cuándo actúa</td><td>Solo si el payload lleva <code>status</code> a <code>Active</code> y el plan está hoy en <code>Approved</code>. Re-guardar un plan ya Vigente no lo dispara.</td></tr>
+    <tr><td>Qué valida</td><td>En cada grupo medible: toda fila Evalúa/Ambas con peso cargado, y suma exactamente 100 en centésimos enteros (sin coma flotante ni tolerancia). Desarrolla no participa (R-6); Max eximido.</td></tr>
+    <tr><td>Gate</td><td>Por tenant (existe el modelo <code>competencyAlignment</code>), nunca por el permiso del usuario que publica.</td></tr>
+    <tr><td>Error</td><td><code>GraphQLError</code> <code>VALIDATION_FAILED</code>, un <code>fieldError</code> por problema, sin tope, nombrando competencia, nivel, matriz y asignatura; uno anclado a <code>status</code>; la lista también en el <code>message</code>.</td></tr>
+    <tr><td>Costo</td><td>Número constante de consultas en lote, sin N+1; los nombres solo se leen si hay problemas.</td></tr>
+    <tr><td>Aislamiento</td><td>Un helper propio, sin imports de curriculum-mapping (lectura por Prisma directo), comentado como interino.</td></tr>
+  </table>
+</div>
+
+<h2>Qué queda fuera</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li>Cerrar la escritura genérica del peso (G-2) y la paridad MCP (D4): los resuelve el BRE / los tickets de MCP de cm.</li>
+    <li>La UI del editor de tributación que marque las celdas con problemas usando la query: ticket aparte en curriculum-mapping.</li>
+    <li>Cualquier generalización del guard.</li>
+  </ul>
+</div>
+
+<h2>Riesgos concretos</h2>
+<div class="callout warn" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">Orden de merge:</span> si este ticket llega a develop antes que UPONE-1770, ningún plan con tributaciones medibles se podría publicar (sus grupos sumarían 0). 1770 primero o a la par.</li>
+    <li><span class="term">Enganche olvidado:</span> si falta uno de los dos, hay una puerta de publicación sin guard. Lo cubre S2.T3 (un test por camino).</li>
+    <li><span class="term">Redondeo:</span> sumar decimales en coma flotante puede rechazar un 33.33 + 33.33 + 33.34 válido. Se suma en centésimos.</li>
+    <li><span class="term">Ventanas conocidas del interino:</span> un peso inválido puede escribirse por la vía genérica (se detecta al publicar), y un plan ya Vigente puede quedar incompleto si se editan sus tributaciones después. Ambas quedan anotadas en el KB y las cierra el BRE.</li>
+  </ul>
+</div>
+
+<h2>Cómo se valida</h2>
+<table data-dkc-block="timeline">
+  <tr><th>Sesión</th><th>Entrega</th><th>Se valida con</th></tr>
+  <tr><td>S1</td><td>Helper con la función única de cálculo, guard cableado en los dos caminos y la query <code>validateCurriculumAlignmentWeights</code>.</td><td>Tests unitarios (suma en centésimos, fila sin peso, Max, tenant sin modelo, alias, forma del error).</td></tr>
+  <tr><td>S2</td><td>Integración por camino, forma del error, tests de la query, regresión y nota del KB (BRE, retiro, orden de merge, ventanas).</td><td>Publicación rechazada que deja el plan en Aprobado por los dos caminos; suite de curriculum-design verde; sync/codegen sin drift.</td></tr>
+</table>
+
+<div class="callout" data-dkc-block="callout">
+  Spec aprobado por el juez tras cuatro vueltas (11 REQ, 2 sesiones, 13 tareas). Antes de arrancar la Sesión 1 falta establecer la rama de trabajo en curriculum-design.
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<!-- teach-close · ticket: TICKET-149 · kind: close · project: up1 · external: UPONE-1770 · generated: 2026-09-23 -->
+<title>Teach-close · TICKET-149 (UPONE-1770) · Tributación: peso del eje 1</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.55; color: #1c2330; max-width: 880px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 1.5rem; border-bottom: 2px solid #3b5bdb; padding-bottom: 6px; }
+  h2 { font-size: 1.15rem; color: #3b5bdb; margin-top: 30px; }
+  code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
+  .tldr { background: #edf2ff; border: 1px solid #bac8ff; border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+  .callout { border-left: 4px solid #3b5bdb; background: #f6f8fc; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .callout.warn { border-left-color: #e8590c; background: #fff4ec; }
+  .concept-card { border: 1px solid #d5dae4; border-radius: 8px; padding: 12px 16px; margin: 12px 0; background: #fff; }
+  .invariant { border-left: 4px solid #2b8a3e; background: #ebfbee; padding: 10px 14px; margin: 12px 0; border-radius: 4px; }
+  .term { font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 0.92em; }
+  table th, table td { border: 1px solid #d5dae4; padding: 6px 9px; text-align: left; vertical-align: top; }
+  table th { background: #eef1f6; }
+</style>
+</head>
+<body>
+<h1>Teach-close · Tributación (UPONE-1770): qué quedó, cómo funciona y qué falta</h1>
+
+<div class="tldr" data-dkc-block="tldr">
+  <strong>En una frase:</strong> el editor de tributación de curriculum-mapping ahora trabaja sobre un borrador en memoria y guarda toda la matriz de una vez (todo o nada), con peso por asignatura, reparto en partes iguales, vía masiva en los dos modos, vista "Por malla" y el selector quitado de la vista de solo lectura. Nueve sesiones, siete adendas, 23 requisitos con sus casos de test en verde, una review de Dredd con jurado cuyos hallazgos se corrigieron antes de cerrar. Todo vive en la rama <code>feat/UPONE-1770-tributacion-peso-del-eje-1</code> de curriculum-mapping, sin push.
+</div>
+
+<h2>Conceptos para leer el resto</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+  <ul>
+    <li><span class="term">Tributación</span>: registro de que una asignatura del plan aporta a una competencia, en un nivel de desarrollo y con un tipo (Desarrolla, Evalúa o Ambas). Es el objeto <code>CompetencyAlignment</code>.</li>
+    <li><span class="term">Peso</span> (<code>contributionPercentage</code>): cuánto pesa una asignatura dentro de su grupo (plan, competencia, nivel). Solo pesan las filas Evalúa o Ambas (regla R-6); una Desarrolla queda sin peso.</li>
+    <li><span class="term">Borrador</span>: copia en memoria de la tributación de la matriz abierta. Todas las acciones del editor la modifican sin tocar la base; recién "Guardar Tributación" persiste.</li>
+    <li><span class="term">Guardado en conjunto</span> (<code>upsertCompetencyAlignmentSetValidated</code>): el editor manda el conjunto completo de (plan, matriz) y el servidor crea, edita y retira lo necesario en una sola transacción. Si una fila viola una regla, no se escribe ninguna.</li>
+  </ul>
+</div>
+
+<h2>Qué se entregó</h2>
+<table data-dkc-block="comparison-table">
+  <tr><th>Pieza</th><th>Cómo quedó</th></tr>
+  <tr><td>Guardado en conjunto</td><td>Una mutation gobernada, acotada a plan + competencias de la matriz. Nunca toca otra matriz adoptada ni filas cuya competencia ya no está en el árbol. El plan de cada fila se deriva en el servidor. Historial: una entrada por guardado.</td></tr>
+  <tr><td>Permisos del guardado</td><td>Se pide cada permiso según lo que el conjunto hace: crear si agrega, modificar si edita, eliminar si retira. Así un Diseñador (crea y modifica) puede guardar sus altas y ediciones, y una Autoridad (elimina) sus retiros.</td></tr>
+  <tr><td>Peso</td><td>Validado por fila en el servidor (0 a 100, hasta 2 decimales, solo Evalúa/Ambas). En el editor: reparto en partes iguales, estado automático/manual derivado y tope dinámico que no deja que el grupo pase de 100.</td></tr>
+  <tr><td>Editor</td><td>Dos modos que comparten borrador, modal de detalle y guardado: "Por competencia" y "Por malla". Barra Guardar/Descartar y aviso al cambiar de matriz con cambios pendientes.</td></tr>
+  <tr><td>Vía masiva</td><td>"Varias" en los dos modos abre el mismo modal generalizado: "Agregar competencias" (destino fijo = la asignatura) y "Agregar asignaturas" (destino fijo = la competencia). Agrega filas al borrador, no guarda sola.</td></tr>
+  <tr><td>Solo lectura</td><td>La pestaña "Tributación" ya no muestra el selector de asignatura.</td></tr>
+  <tr><td>Paridad MCP</td><td>El test de paridad cubre el peso y deja asentado el hueco de la vía genérica.</td></tr>
+</table>
+
+<h2>Decisiones que conviene recordar</h2>
+<div class="invariant" data-dkc-block="invariant">
+  <ul>
+    <li><span class="term">El shell orquesta los dos modos</span> (Adenda 3): cada modo tiene su panel y su superficie, pero comparten el modal de detalle y la vía de guardado. No se fusionó "Por malla" dentro de la grilla.</li>
+    <li><span class="term">Del guardado por campo al guardado en conjunto</span> (Adenda 4): las primeras sesiones guardaban campo por campo; el criterio de Jira exigía el guardado transaccional de conjunto y se agregó la conversión.</li>
+    <li><span class="term">La vía masiva va al borrador</span> (Adendas 5 y 6): la mutation masiva de servidor quedó sin uso desde el editor; sigue disponible por API.</li>
+    <li><span class="term">Permisos por operación</span> (Adenda 7, tras la review): reemplaza el "exige los tres permisos siempre".</li>
+  </ul>
+</div>
+
+<h2>Qué queda fuera (y dónde vive)</h2>
+<div class="callout" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">Que el grupo sume exactamente 100 al publicar el plan</span>: regla de publicación, fuera del mod. Interino en TICKET-150 (curriculum-design) y definitivo con el motor de reglas del core.</li>
+    <li><span class="term">Escritura por el CRUD genérico / MCP sin gobierno</span>: preexistente desde 1756; se cierra en los tickets de MCP de cm (bloquear la mutation genérica y agregar la ficha).</li>
+    <li>Indicadores y versionado (UPONE-1771), retiro con aviso (UPONE-1772) y migración de niveles (UPONE-1773).</li>
+  </ul>
+</div>
+
+<h2>Aprendizajes del recorrido</h2>
+<div class="callout warn" data-dkc-block="callout">
+  <ul>
+    <li><span class="term">Un cambio de mecanismo necesita su tarea de conversión.</span> Cuando un requisito cambia CÓMO funciona algo existente (guardar por campo a guardar en conjunto), el plan debe incluir la tarea explícita de convertirlo; acá faltó y se agregó recién en la Sesión 7.</li>
+    <li><span class="term">Un borrador que reutiliza claves debe reutilizar identidades.</span> Si se retira una fila y se vuelve a agregar antes de guardar, tiene que conservar su id persistido; si no, el servidor la ve como alta duplicada.</li>
+    <li><span class="term">Un permiso de lote se pide por operación, no por las dudas.</span> Pedir todos los permisos juntos rompe la separación de funciones que los perfiles declaran.</li>
+    <li><span class="term">La cobertura 0% del entorno aislado del gate es un artefacto</span>: ese entorno no corre la suite real del mod. Se aceptó por criterio en tres gates (queda contado en la estadística de overrides de Kanai) y la verificación real se hizo con la suite completa del mod.</li>
+    <li><span class="term">Los mensajes de commit también son artefactos del repo.</span> Siete quedaron con etiquetas internas de sesión/requisito; el dev decidió no reescribir el historial. Para los próximos tickets, usar solo el id de Jira desde el primer commit.</li>
+  </ul>
+</div>
+
+<h2>Cómo verificarlo y qué falta antes de publicar</h2>
+<table data-dkc-block="timeline">
+  <tr><th>Qué</th><th>Estado</th></tr>
+  <tr><td>Suite del mod</td><td>2692/2692 en verde sobre <code>c61029f</code>.</td></tr>
+  <tr><td>Typecheck (vue-tsc)</td><td>exit 0.</td></tr>
+  <tr><td>Lint</td><td>0 errores; 3 warnings de <code>eslint-disable</code> sin uso en la mutation masiva.</td></tr>
+  <tr><td>Smoke en la app</td><td>Pendiente: guardar con un usuario con solo el perfil Diseñador, y retirar y volver a agregar una asignatura antes de guardar.</td></tr>
+  <tr><td>Sync de layout</td><td>Pendiente de correr para ver en la app el cambio del borrador.</td></tr>
+  <tr><td>Publicación</td><td>Rama sin push. La rama está 10 commits detrás de develop, con merge limpio.</td></tr>
+</table>
+</body>
+</html>

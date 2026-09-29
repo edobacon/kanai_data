@@ -1,0 +1,171 @@
+{
+  "run_id": "gate02",
+  "plan_id": "kanai-app-gate-niveles",
+  "ts_start": "2026-09-23T22:10:00",
+  "ts_end": "2026-09-23T22:30:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "1762a9f70c5ef0e8358ecc2cb5537abf0e123cb8",
+  "head_ref": "d941fc8",
+  "repo": "kanai-app",
+  "calibration": "comportamiento",
+  "judge_model": "opus",
+  "reverify_run": true,
+  "findings": {
+    "S0": 0,
+    "S1": 2,
+    "S2": 2,
+    "S3": 2,
+    "consulta": 0
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S1",
+      "kind": "intent_gap",
+      "where": "server/dispatch/gate.ts:188",
+      "title": "N3 automatico nunca corre si la ultima sesion abierta es de verificacion o revision",
+      "evidence": "specialSessionGate retorna antes de integralGateIfLast (unico call site gate.ts:236); planning agrega verificacion (UI) y revision (dredd) al final; allSessionsClosed exige todas continue. Re-verify: sostenido.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S1",
+      "kind": "correctness",
+      "where": "server/repo/preGate.ts:359",
+      "title": "untracked filtrados por prefix en repo subcarpeta de monorepo",
+      "evidence": "ls-files --others con -C subdir da rutas relativas al cwd; diff --name-only desde toplevel; el filtro startsWith(prefix) descarta los nuevos y levelCode los usa como pathspec. Re-verify: sostenido con experimento git.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/dispatch/sessionDiff.ts:510",
+      "title": "delta N1 sin pathspec de subcarpeta: se duplica por repo en monorepo",
+      "evidence": "snapshotTree/treeDelta y deltaSince operan sobre el git entero; levelCode concatena por repo; en jormat (3 repos en un git) cada archivo aparece 3 veces e incluye hermanos.",
+      "outcome": "pending",
+      "persists_from": "gate01/f4",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/dispatch/gate.ts:159",
+      "title": "N3 puede correr mas de una vez",
+      "evidence": "integralGateIfLast no consulta si ya hubo ticket-integral; un refinamiento o supersede aprobado despues vuelve a dispararlo (2 jueces + diff 40k).",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f5",
+      "severity": "S3",
+      "kind": "correctness",
+      "where": "server/dispatch/sessionSizing.ts:59",
+      "title": "sizing cuenta la sesion reemplazada mientras la nueva no cerro",
+      "evidence": "supersededSessionIds solo marca superseded si la nueva esta en continue; al enmendar con la nueva abierta cuentan ambas.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f6",
+      "severity": "S3",
+      "kind": "error_handling",
+      "where": "server/dispatch/gateLevels.ts:202",
+      "title": "error de git en un repo invalida todo el diff; foto borrada no cae a deltaSince",
+      "evidence": "levelCode sin catch por repo; repoDelta llama treeDelta sin respaldo si el arbol fue borrado por gc.",
+      "outcome": "pending",
+      "persists_from": "gate01/f6",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 28,
+    "read_full": 9,
+    "skimmed": 12,
+    "not_read": 7
+  },
+  "recheck": [
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f1",
+      "verdict": "corregido",
+      "evidence": "worktreeDiff concatena tracked + untrackedDiff (ls-files --others). Residuo monorepo en f2 actual (causa distinta, preGate).",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f2",
+      "verdict": "corregido",
+      "evidence": "integralGateIfLast + allSessionsClosed disparan N3 al aprobar. Residuo: sesiones especiales finales, cubierto por f1 actual.",
+      "matches_current": "f1"
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f3",
+      "verdict": "corregido",
+      "evidence": "handoff N1 lleva verification, recentRuns y recentRunsScope.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f4",
+      "verdict": "corregido",
+      "evidence": "N1 compara contra la foto exacta del gate anterior. Residuo monorepo sin pathspec, cubierto por f3 actual.",
+      "matches_current": "f3"
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f5",
+      "verdict": "corregido",
+      "evidence": "stripRecheckId aplicado en N1 antes de severityGate y findingsStalled.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f6",
+      "verdict": "corregido",
+      "evidence": "catch de levelCode declara el error. Residuo: error de un repo invalida todo, cubierto por f6 actual.",
+      "matches_current": "f6"
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f7",
+      "verdict": "corregido",
+      "evidence": "recordGateRun registra nivel y foto solo si levelsOn && !judgesFailed.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f8",
+      "verdict": "corregido",
+      "evidence": "excluye supersedidas, body vacio cae al titulo, evaluateSessionSizing en MCP, web y restructure.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "gate01",
+      "prev_id": "f9",
+      "verdict": "corregido",
+      "evidence": "describe con KANAI_GATE_LEVELS on: N1, N2, N3, judgesFailed, sesiones abiertas.",
+      "matches_current": null
+    }
+  ],
+  "ticket": {
+    "resolution": "none",
+    "kanai_id": null,
+    "external_ref": null,
+    "project": null
+  },
+  "notes": "segunda corrida; 9/9 de gate01 corregidos en su caso base; residuos nuevos: sesiones especiales finales (f1) y monorepo (f2, f3); f2 causa de fondo preexistente en preGate.repoChangedFiles",
+  "verdict_expected_by_rubric": "iterar"
+}

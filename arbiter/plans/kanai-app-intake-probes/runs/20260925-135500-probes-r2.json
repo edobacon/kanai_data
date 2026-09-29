@@ -1,0 +1,250 @@
+{
+  "run_id": "probes-r2",
+  "plan_id": "kanai-app-intake-probes",
+  "ts_start": "2026-09-25T13:40:00-03:00",
+  "ts_end": "2026-09-25T13:55:00-03:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "608195a",
+  "head_ref": "worktree",
+  "repo": "kanai-app",
+  "calibration": "comportamiento",
+  "judge_model": "opus",
+  "reverify_run": false,
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 1,
+    "S3": 5,
+    "consulta": 1
+  },
+  "max_severity": "S2",
+  "verdict": "aprobable_con_reservas",
+  "verdict_expected_by_rubric": "aprobable_con_reservas",
+  "notes": "Head = 9279062 + fixes-r1 sin commitear. Re-chequeo: los 8 hallazgos de probes-r1 corregidos. Juez ciego: 1 S2 nuevo (tarjetas resueltas no se dan de baja al re-correr con otros objetos), 1 consulta (reuso por conjunto exacto de objetos vs por objeto), 5 S3. Fuera de alcance: execute.post.ts descarta en silencio estados no planned (preexistente, afecta needs_probe_decisions en la web).",
+  "findings_detail": [
+    {
+      "id": "g1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "Una tarjeta ya resuelta nunca se da de baja al re-correr las sondas con otros objetos: la variante vieja sigue exigiendo su REQ y entrando al prompt",
+      "where": "server/repo/probeCards.ts:144",
+      "phase": "d4915ae",
+      "confidence": "confirmed",
+      "evidence": "La clave de tarjeta depende del conjunto de objetos; solo las filas open no disparadas pasan a dropped. Una resolved/reused del conjunto viejo queda viva: decided() la manda al planner y uncoveredVariants hace bloquear DET-45 hasta un REQ variant. Salida unica: probesAck.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "g2",
+      "severity": "consulta",
+      "kind": "intent_gap",
+      "title": "El reuso de decisiones entre tickets exige el mismo conjunto exacto de objetos, no el mismo objeto",
+      "where": "server/repo/probeCards.ts:117",
+      "phase": "d4915ae",
+      "confidence": "confirmed",
+      "evidence": "groupCards junta una tarjeta por sonda con todos los objetos; findPrior reusa solo con conjunto identico. Un ticket {A,B} no reusa lo decidido en {A} y {B}. Pregunta al dev: reuso por combinacion o por objeto?",
+      "outcome": "pending"
+    },
+    {
+      "id": "g3",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "Las metricas cuentan tarjetas dropped como reales: inflan tarjetas por ticket y convierten huecos en tarjetas sin implementar",
+      "where": "server/probes/metrics.ts:187",
+      "phase": "b21f19d",
+      "confidence": "confirmed",
+      "evidence": "efficacyOf arma probesByTicket con todas las tarjetas sin filtrar estado; efficiencyOf cuenta dropped en cards y cardsPerTicket.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "g4",
+      "severity": "S3",
+      "kind": "unfulfilled_phase",
+      "title": "El override probesAck existe en el endpoint web pero la pantalla de aprobacion no lo envia",
+      "where": "app/pages/specs/[id].vue:44",
+      "phase": "fe63b18",
+      "confidence": "confirmed",
+      "evidence": "approve.post.ts acepta probesAck y criterion; la UI hace POST sin body y nada en app/ menciona probesAck.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "g5",
+      "severity": "S3",
+      "kind": "performance",
+      "title": "La cache del recheck no cubre el resultado vacio: cada re-gate sin hallazgos vuelve a correr las sondas dos veces",
+      "where": "server/probes/recheck.ts:175",
+      "phase": "fixes-r1",
+      "confidence": "confirmed",
+      "evidence": "Solo se reusa con misma key y text no vacio; runRecheck sin items retorna antes de registrar, asi que no queda key para el proximo gate.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "g6",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "El recheck compara contra origin/defaultRef, no contra la base de la rama del ticket",
+      "where": "server/probes/recheck.ts:135",
+      "phase": "686240d",
+      "confidence": "probable",
+      "evidence": "runRecheck usa probeTargets sin overrides (origin/defaultRef); reposOnWorkBranch usa el baseRef de proposeBranchSetup. Si la rama salio de otra base, added incluye trabajo ajeno.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    },
+    {
+      "id": "g7",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "La regla probes_maintenance matchea cualquier pedido con la palabra sonda antes de implement/fix: rutea a kn-probes sin ticket",
+      "where": "server/llm/guide.ts:447",
+      "phase": "9279062",
+      "confidence": "confirmed",
+      "evidence": "Las reglas nuevas van primero y la primera que matchea manda; /\\bsondas?\\b/ con NO_TICKET_INTENTS deja requiresTicket en false para un pedido de trabajo que mencione sondas.",
+      "outcome": "pending",
+      "outcome_note": "solo en la ultima corrida",
+      "outcome_inferred": true
+    }
+  ],
+  "recheck": [
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f1",
+      "verdict": "corregido",
+      "evidence": "planner.ts:83 usa spread condicional; con flag off el join da el mismo prompt que antes.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f2",
+      "verdict": "corregido",
+      "evidence": "stillValid compara el conjunto completo de fuentes actuales (incluye archivos nuevos) contra prior.sources.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f3",
+      "verdict": "corregido",
+      "evidence": "intake.ts devuelve probeDecisionsPrompt(cards) aun con pendientes; las decididas llegan al planner con skipProbes.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f4",
+      "verdict": "corregido",
+      "evidence": "withProbeRecheck calcula scope+key primero y, con misma key, retorna sin runRecheck (no relee git).",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f5",
+      "verdict": "corregido",
+      "evidence": "efficacyOf recibe categoryOf que mapea id -> KIND_CATEGORY[kind] desde probes.yaml.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f6",
+      "verdict": "corregido",
+      "evidence": "kn-probes paso 4 valida el borrador con probes-backtest.mts y aclara que run_probes solo lee lo registrado.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f7",
+      "verdict": "corregido",
+      "evidence": "amendmentPlanner acepta probeDecisions, ofrece variant en el contrato y ambos callers (MCP y web) lo pasan.",
+      "matches_current": null
+    },
+    {
+      "prev_run_id": "probes-r1",
+      "prev_id": "f8",
+      "verdict": "corregido",
+      "evidence": "Opcion A del dev: guard sin cambios, salud.get.ts usa projectHasProbeCards, doc 'Que apaga el flag'.",
+      "matches_current": null
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 63,
+    "read_full": 46,
+    "skimmed": 2,
+    "not_read": 15,
+    "files": {
+      "read_full": [
+        "server/probes/intake.ts",
+        "server/probes/prompt.ts",
+        "server/probes/labels.ts",
+        "server/probes/extract.ts",
+        "server/probes/recheck.ts",
+        "server/probes/reader.ts",
+        "server/probes/engine.ts",
+        "server/probes/spec.ts",
+        "server/probes/targets.ts",
+        "server/probes/present.ts",
+        "server/probes/health.ts",
+        "server/probes/kinds/common.ts",
+        "server/probes/metrics.ts",
+        "server/repo/probeCards.ts",
+        "server/mcp/probesTools.ts",
+        "server/mcp/tools.ts",
+        "server/engine/guards/probes.ts",
+        "server/engine/guards/catalog.ts",
+        "server/engine/guards/index.ts",
+        "server/engine/render.ts",
+        "server/dispatch/planTicket.ts",
+        "server/dispatch/planner.ts",
+        "server/dispatch/specReview.ts",
+        "server/dispatch/gate.ts",
+        "server/dispatch/amendmentPlanner.ts",
+        "server/api/dispatch/refine.post.ts",
+        "server/api/specs/[id]/approve.post.ts",
+        "server/api/salud.get.ts",
+        "server/data/ticketLog.ts",
+        "server/repo/closeAdvisories.ts",
+        "server/repo/planning.ts",
+        "server/llm/guide.ts",
+        "server/skills/registry.ts",
+        "server/db/schema.ts",
+        "server/db/migrations/0048_probe_cards.sql",
+        "server/db/migrations/meta/_journal.json",
+        "skills/claude/kn-dredd/SKILL.md",
+        "skills/claude/kn-dredd/scripts/dredd-metrics-validate.py",
+        "skills/claude/kn-dredd/scripts/tests/test_metrics_scripts.py",
+        "skills/claude/kn-tassadar/SKILL.md",
+        "skills/claude/kn-probes/SKILL.md",
+        "docs/sondas-intake.md",
+        "docs/configuration.md",
+        ".env.example",
+        "scripts/probes-backtest.mts",
+        "app/pages/salud.vue"
+      ],
+      "skimmed": [
+        "server/probes/kinds/write.ts",
+        "server/probes/kinds/context.ts"
+      ],
+      "not_read": [
+        "server/probes/catalog.ts",
+        "server/probes/types.ts",
+        "server/db/migrations/meta/0048_snapshot.json",
+        "docs/README.md",
+        "skills/claude/kn-tassadar/scripts/tassadar-validate.py",
+        "skills/claude/kn-tassadar/scripts/tests/test_tassadar_validate.py",
+        "tests/unit/guards.test.ts",
+        "tests/unit/guide-skills.test.ts",
+        "tests/unit/probe-cards.test.ts",
+        "tests/unit/probe-metrics.test.ts",
+        "tests/unit/probes-engine.test.ts",
+        "tests/unit/probes-git-reader.test.ts",
+        "tests/unit/probes-health.test.ts",
+        "tests/unit/probes-intake.test.ts",
+        "tests/unit/probes-recheck.test.ts"
+      ]
+    }
+  }
+}

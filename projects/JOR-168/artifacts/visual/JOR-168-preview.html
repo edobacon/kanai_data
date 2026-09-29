@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOR-168 — Maqueta builder de factura (Ventas)</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --surface:#ffffff; --surface-2:#f8fafc; --surface-3:#eef2f7;
+    --border:#d8dfe8; --border-strong:#b9c4d2;
+    --text:#182433; --text-2:#5a6b7f; --text-3:#8a99ab;
+    --brand:#1f5f9c; --brand-dark:#164876; --brand-soft:#e5eff8;
+    --ok:#177245; --ok-soft:#e6f4ec;
+    --warn:#8a5a00; --warn-soft:#fdf3e0;
+    --danger:#a52a2a; --danger-soft:#fbeaea;
+    --info:#2c5aa0; --info-soft:#e9eefa;
+    --radius:6px; --radius-lg:10px;
+    --shadow:0 1px 2px rgba(20,35,55,.07), 0 6px 18px rgba(20,35,55,.07);
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{margin:0; font-weight:650; letter-spacing:-.01em}
+  p{margin:0}
+  table{border-collapse:collapse; width:100%}
+
+  /* ---------- Cascara de la maqueta ---------- */
+  .mockup-head{
+    background:#101b28; color:#e8eef5; padding:22px 28px 20px;
+    border-bottom:3px solid var(--brand);
+  }
+  .mockup-head h1{font-size:19px; color:#fff}
+  .mockup-head .sub{color:#9fb2c6; font-size:13px; margin-top:6px; max-width:1000px}
+  .mockup-head .chips{margin-top:12px; display:flex; flex-wrap:wrap; gap:6px}
+  .chip{
+    font-size:11px; padding:3px 9px; border-radius:99px; background:#1e2f42;
+    color:#b9cde2; border:1px solid #2c4258; font-weight:600;
+  }
+  .chip.req{background:#14304d; color:#8fc2f0; border-color:#1f4c78}
+
+  .wrap{max-width:1280px; margin:0 auto; padding:26px 20px 80px}
+
+  .screen{margin:0 0 42px}
+  .screen-head{
+    display:flex; align-items:flex-start; gap:12px; margin:0 0 12px; padding:0 2px;
+  }
+  .screen-num{
+    flex:0 0 auto; width:26px; height:26px; border-radius:6px; background:var(--brand);
+    color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .screen-title{font-size:16px}
+  .screen-desc{color:var(--text-2); font-size:12.5px; margin-top:3px}
+  .screen-tags{margin-top:7px; display:flex; flex-wrap:wrap; gap:5px}
+  .tag{font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:4px; letter-spacing:.02em}
+  .tag.new{background:var(--ok-soft); color:var(--ok); border:1px solid #bfe0cd}
+  .tag.mod{background:var(--warn-soft); color:var(--warn); border:1px solid #edd6a8}
+  .tag.ver{background:var(--info-soft); color:var(--info); border:1px solid #c6d4ef}
+  .tag.same{background:var(--surface-3); color:var(--text-2); border:1px solid var(--border)}
+
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .panel + .panel{margin-top:14px}
+
+  .note{
+    margin:10px 0 0; padding:9px 12px; border-left:3px solid var(--brand);
+    background:var(--brand-soft); color:#1b3d5e; font-size:12px; border-radius:0 var(--radius) var(--radius) 0;
+  }
+  .note strong{font-weight:700}
+  .note.plain{border-left-color:var(--border-strong); background:var(--surface-3); color:var(--text-2)}
+
+  /* ---------- App chrome ---------- */
+  .appbar{
+    background:var(--brand-dark); color:#fff; padding:9px 16px; display:flex;
+    align-items:center; gap:14px; font-size:12.5px;
+  }
+  .appbar .logo{font-weight:700; letter-spacing:.06em; font-size:12px; opacity:.9}
+  .appbar .path{color:#bcd4ea}
+  .appbar .spacer{flex:1}
+  .appbar .user{color:#d6e5f4}
+
+  .builder-head{
+    padding:14px 18px; border-bottom:1px solid var(--border); background:var(--surface);
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  .builder-head h2{font-size:17px}
+  .builder-head .meta{color:var(--text-3); font-size:12px}
+  .builder-head .spacer{flex:1}
+
+  .badge{
+    font-size:11px; font-weight:700; padding:3px 9px; border-radius:99px;
+    border:1px solid transparent; white-space:nowrap;
+  }
+  .badge.draft{background:var(--warn-soft); color:var(--warn); border-color:#edd6a8}
+  .badge.issued{background:var(--ok-soft); color:var(--ok); border-color:#bfe0cd}
+  .badge.neutral{background:var(--surface-3); color:var(--text-2); border-color:var(--border)}
+
+  /* ---------- Botones ---------- */
+  .btn{
+    font:inherit; font-size:13px; font-weight:600; padding:7px 14px; border-radius:var(--radius);
+    border:1px solid var(--border-strong); background:var(--surface); color:var(--text);
+    cursor:pointer; white-space:nowrap;
+  }
+  .btn.sm{font-size:12px; padding:5px 10px}
+  .btn.primary{background:var(--brand); border-color:var(--brand); color:#fff}
+  .btn.ghost{background:transparent; border-color:transparent; color:var(--brand)}
+  .btn.danger{background:var(--surface); border-color:#e0b4b4; color:var(--danger)}
+  .btn.icon{padding:5px 8px; font-size:12px}
+  .btn[disabled]{opacity:.45; cursor:not-allowed}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+
+  /* ---------- Formularios ---------- */
+  .form-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px 14px; padding:16px 18px}
+  .field{display:flex; flex-direction:column; gap:4px}
+  .field label{font-size:11.5px; font-weight:650; color:var(--text-2); text-transform:uppercase; letter-spacing:.03em}
+  .control{
+    border:1px solid var(--border-strong); border-radius:var(--radius); padding:6px 9px;
+    background:var(--surface); font-size:13px; min-height:32px; display:flex; align-items:center;
+  }
+  .control.placeholder{color:var(--text-3)}
+  .control.select::after{content:"▾"; margin-left:auto; color:var(--text-3); font-size:11px}
+  .control.readonly{background:var(--surface-3); color:var(--text-2)}
+  .hint{font-size:11px; color:var(--text-3)}
+
+  /* ---------- Tablas ---------- */
+  .section-bar{
+    display:flex; align-items:center; gap:10px; padding:11px 18px;
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    background:var(--surface-2);
+  }
+  .section-bar h3{font-size:13.5px}
+  .section-bar .spacer{flex:1}
+
+  .tbl-scroll{overflow-x:auto}
+  table.items{min-width:920px; font-size:13px}
+  table.items th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+    color:var(--text-2); font-weight:700; padding:8px 10px; background:var(--surface-2);
+    border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  table.items td{padding:7px 10px; border-bottom:1px solid #eef1f5; vertical-align:middle}
+  table.items tr:last-child td{border-bottom:none}
+  .num{text-align:right; font-variant-numeric:tabular-nums}
+  th.num{text-align:right}
+  .cell-input{
+    border:1px solid var(--border-strong); border-radius:4px; padding:4px 7px; background:#fff;
+    font-size:12.5px; display:inline-flex; align-items:center; gap:4px; min-width:86px; justify-content:flex-end;
+    font-variant-numeric:tabular-nums;
+  }
+  .cell-input .cur{color:var(--text-3); font-size:11px; margin-right:auto}
+  .cell-input.focus{border-color:var(--brand); box-shadow:0 0 0 2px var(--brand-soft)}
+  .cell-input.err{border-color:#d38b8b; background:#fdf6f6}
+  .desc-main{font-weight:600}
+  .desc-sub{font-size:11px; color:var(--text-3)}
+  .err-msg{color:var(--danger); font-size:11px; margin-top:3px; display:block; text-align:right}
+
+  /* ---------- Totales ---------- */
+  .totals{display:flex; justify-content:flex-end; padding:14px 18px; background:var(--surface-2); border-top:1px solid var(--border)}
+  .totals-box{width:330px; font-size:13px}
+  .totals-row{display:flex; justify-content:space-between; padding:4px 0; color:var(--text-2)}
+  .totals-row .v{font-variant-numeric:tabular-nums; color:var(--text); font-weight:600}
+  .totals-row.grand{
+    border-top:1px solid var(--border-strong); margin-top:6px; padding-top:9px; font-size:16px; color:var(--text);
+  }
+  .totals-row.grand .v{font-weight:750}
+  .totals-row.disc .v{color:var(--danger)}
+
+  /* ---------- Footer acciones ---------- */
+  .builder-foot{
+    display:flex; align-items:center; gap:10px; padding:13px 18px;
+    border-top:1px solid var(--border); background:var(--surface); flex-wrap:wrap;
+  }
+  .builder-foot .spacer{flex:1}
+  .autosave{font-size:11.5px; color:var(--text-3)}
+
+  /* ---------- Modal / drawer ---------- */
+  .overlay{
+    background:rgba(16,27,40,.42); padding:26px; display:flex; align-items:flex-start;
+    justify-content:center; min-height:120px;
+  }
+  .modal{
+    background:var(--surface); border-radius:var(--radius-lg); width:100%; max-width:860px;
+    box-shadow:0 18px 50px rgba(10,20,32,.28); overflow:hidden; border:1px solid var(--border);
+  }
+  .modal.narrow{max-width:470px}
+  .modal-head{
+    padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px;
+  }
+  .modal-head h3{font-size:15px}
+  .modal-head .spacer{flex:1}
+  .modal-body{padding:16px 18px}
+  .modal-foot{
+    padding:13px 18px; border-top:1px solid var(--border); background:var(--surface-2);
+    display:flex; gap:9px; align-items:center; flex-wrap:wrap;
+  }
+  .modal-foot .spacer{flex:1}
+
+  /* ---------- Buscador de items ---------- */
+  .search-bar{display:flex; gap:9px; align-items:center; padding:0 0 12px}
+  .search-input{
+    flex:1; border:1px solid var(--border-strong); border-radius:var(--radius); padding:8px 11px;
+    font-size:13.5px; display:flex; align-items:center; gap:8px; background:#fff;
+  }
+  .search-input .ico{color:var(--text-3)}
+  .filters{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:10px; padding:12px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius);
+  }
+  .filter{display:flex; flex-direction:column; gap:4px}
+  .filter label{font-size:10.5px; font-weight:700; color:var(--text-2); text-transform:uppercase; letter-spacing:.03em}
+  .filter .control{padding:5px 8px; min-height:30px; font-size:12.5px}
+  .filter .control.active{border-color:var(--brand); background:var(--brand-soft); color:var(--brand-dark); font-weight:600}
+  .switch{
+    display:flex; align-items:center; gap:7px; border:1px solid var(--border-strong);
+    border-radius:var(--radius); padding:5px 8px; min-height:30px; background:#fff; font-size:12.5px;
+  }
+  .switch .knob{
+    width:30px; height:17px; border-radius:99px; background:var(--border-strong); position:relative; flex:0 0 auto;
+  }
+  .switch .knob::after{
+    content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%; background:#fff;
+  }
+  .switch.on{border-color:var(--brand); background:var(--brand-soft); color:var(--brand-dark); font-weight:600}
+  .switch.on .knob{background:var(--brand)}
+  .switch.on .knob::after{left:auto; right:2px}
+
+  .applied{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:11px}
+  .applied .lbl{font-size:11.5px; color:var(--text-2); font-weight:600}
+  .pill{
+    font-size:11.5px; background:var(--brand-soft); color:var(--brand-dark); border:1px solid #c4dbf0;
+    border-radius:99px; padding:3px 6px 3px 9px; display:inline-flex; align-items:center; gap:6px; font-weight:600;
+  }
+  .pill .x{color:#5b83a8; font-weight:700; cursor:pointer}
+
+  .result-meta{
+    display:flex; align-items:center; gap:8px; margin:13px 0 8px; font-size:12px; color:var(--text-2);
+  }
+  .result-meta .spacer{flex:1}
+
+  table.results{font-size:13px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden}
+  table.results th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-2);
+    font-weight:700; padding:8px 10px; background:var(--surface-2); border-bottom:1px solid var(--border);
+  }
+  table.results td{padding:8px 10px; border-bottom:1px solid #eef1f5}
+  table.results tr:last-child td{border-bottom:none}
+  .stock-tag{font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:99px; white-space:nowrap}
+  .stock-tag.ok{background:var(--ok-soft); color:var(--ok)}
+  .stock-tag.low{background:var(--warn-soft); color:var(--warn)}
+  .stock-tag.out{background:var(--danger-soft); color:var(--danger)}
+  .offer-tag{font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:4px; background:#f3e8fb; color:#6b2f9c}
+
+  .load-more{display:flex; justify-content:center; padding:14px 0 2px}
+
+  /* ---------- Estados ---------- */
+  .state{
+    padding:34px 20px; text-align:center; color:var(--text-2);
+    border:1px dashed var(--border-strong); border-radius:var(--radius); background:var(--surface-2);
+  }
+  .state .ico{font-size:24px; display:block; margin-bottom:8px; opacity:.55}
+  .state h4{font-size:14px; color:var(--text); margin-bottom:5px}
+  .state p{font-size:12.5px; max-width:430px; margin:0 auto}
+  .state .btn{margin-top:13px}
+  .state.error{background:var(--danger-soft); border-color:#e6bcbc; color:#7d2626}
+  .state.error h4{color:#7d2626}
+
+  .skel-row{display:flex; gap:10px; align-items:center; padding:9px 10px; border-bottom:1px solid #eef1f5}
+  .skel{height:10px; border-radius:4px; background:linear-gradient(90deg,#e8edf3 0%,#f3f6fa 50%,#e8edf3 100%)}
+  .skel.w1{flex:0 0 70px} .skel.w2{flex:1} .skel.w3{flex:0 0 100px} .skel.w4{flex:0 0 74px} .skel.w5{flex:0 0 58px}
+
+  .inline-loading{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-2);
+    padding:8px 11px; background:var(--brand-soft); border:1px solid #cfe1f2; border-radius:var(--radius);
+  }
+  .spinner{
+    width:13px; height:13px; border-radius:50%; border:2px solid #b9d3ea; border-top-color:var(--brand);
+    flex:0 0 auto;
+  }
+
+  .toast{
+    display:inline-flex; align-items:flex-start; gap:9px; padding:11px 14px; border-radius:var(--radius);
+    font-size:13px; box-shadow:var(--shadow); max-width:520px;
+  }
+  .toast.ok{background:var(--ok-soft); border:1px solid #bfe0cd; color:#0f5230}
+  .toast.err{background:var(--danger-soft); border:1px solid #e6bcbc; color:#7d2626}
+  .toast .t{font-weight:700; display:block; margin-bottom:2px}
+
+  /* ---------- Comparativa Ventas/Compras ---------- */
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  .compare .col{border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; background:var(--surface)}
+  .compare .col-head{
+    padding:10px 14px; border-bottom:1px solid var(--border); background:var(--surface-2);
+    display:flex; align-items:center; gap:8px;
+  }
+  .compare .col-head h4{font-size:13px}
+  .compare .col-head .spacer{flex:1}
+  .compare table.items{min-width:0}
+  .compare table.items th,.compare table.items td{padding:6px 9px; font-size:12px}
+  .mode-tag{font-family:var(--mono); font-size:10.5px; padding:2px 6px; border-radius:4px; background:var(--surface-3); color:var(--text-2); border:1px solid var(--border)}
+  .mode-tag.amount{background:var(--ok-soft); color:var(--ok); border-color:#bfe0cd}
+  .mode-tag.percent{background:var(--info-soft); color:var(--info); border-color:#c6d4ef}
+
+  /* ---------- Checklist verificacion ---------- */
+  table.check{font-size:12.5px}
+  table.check th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-2);
+    font-weight:700; padding:8px 12px; background:var(--surface-2); border-bottom:1px solid var(--border);
+  }
+  table.check td{padding:8px 12px; border-bottom:1px solid #eef1f5; vertical-align:top}
+  table.check tr:last-child td{border-bottom:none}
+  table.check .ca{font-weight:700; white-space:nowrap; font-family:var(--mono); font-size:11.5px}
+  .dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:6px}
+  .dot.ok{background:var(--ok)} .dot.mod{background:var(--warn)} .dot.new{background:var(--brand)}
+
+  .legend{
+    display:flex; flex-wrap:wrap; gap:14px; padding:12px 16px; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:22px; font-size:12px; color:var(--text-2);
+  }
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+
+  @media (max-width:1000px){
+    .form-grid{grid-template-columns:repeat(2,1fr)}
+    .filters{grid-template-columns:repeat(2,1fr)}
+    .compare{grid-template-columns:1fr}
+  }
+  @media (max-width:640px){
+    .wrap{padding:18px 14px 60px}
+    .form-grid{grid-template-columns:1fr}
+    .filters{grid-template-columns:1fr}
+    .overlay{padding:12px}
+    .totals-box{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<header class="mockup-head">
+  <h1>JOR-168 · Builder de creación de factura (Ventas) — maqueta de verificación</h1>
+  <p class="sub">
+    Vistas afectadas por el slice correctivo: descuento de línea como importe monetario (CA-09), reactivación de
+    "Guardar borrador" con guard de salida de tres opciones (CA-12 / CA-15) y buscador de items con 5 filtros
+    server-side parametrizados solo para Ventas (CA-08). Incluye estados vacío / carga / error y los textos visibles.
+  </p>
+  <div class="chips">
+    <span class="chip req">REQ-01 descuento monto</span>
+    <span class="chip req">REQ-02 control parametrizado</span>
+    <span class="chip req">REQ-03 guardar borrador</span>
+    <span class="chip req">REQ-04 stub JOR-166</span>
+    <span class="chip req">REQ-05 filtros + ver más</span>
+    <span class="chip req">REQ-06 solo Ventas</span>
+    <span class="chip req">REQ-07 regresión CA conformes</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="legend">
+    <span><span class="tag new">NUEVO</span> pantalla o bloque que no existía</span>
+    <span><span class="tag mod">MODIFICADO</span> vista existente que cambia</span>
+    <span><span class="tag ver">VERIFICACIÓN</span> se valida, no se reimplementa</span>
+    <span><span class="tag same">SIN CAMBIO</span> queda tal cual (Compras)</span>
+  </div>
+
+  <!-- =========================================================
+       1. BUILDER — vista principal
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">1</div>
+      <div>
+        <h2 class="screen-title">Builder de factura — vista principal</h2>
+        <p class="screen-desc">
+          Cabecera del documento, tabla de líneas con descuento en importe monetario, totales y barra de acciones
+          con "Guardar borrador" activo.
+        </p>
+        <div class="screen-tags">
+          <span class="tag mod">MODIFICADO</span>
+          <span class="tag">CA-09</span><span class="tag">CA-12</span>
+          <span class="tag">REQ-01</span><span class="tag">REQ-03</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="appbar">
+        <span class="logo">JORMAT</span>
+        <span class="path">Ventas › Documentos › Nueva factura</span>
+        <span class="spacer"></span>
+        <span class="user">Sucursal Central · M. Fernández</span>
+      </div>
+
+      <div class="builder-head">
+        <h2>Nueva factura</h2>
+        <span class="badge neutral">Sin emitir</span>
+        <span class="meta">Documento N° a asignar al emitir</span>
+        <span class="spacer"></span>
+        <span class="autosave">Sin guardar</span>
+      </div>
+
+      <!-- Cabecera -->
+      <div class="form-grid">
+        <div class="field">
+          <label>Cliente</label>
+          <div class="control select">Distribuidora San Martín S.A.</div>
+          <span class="hint">RUT 76.451.220-9 · <a href="#" style="color:var(--brand)">Ver ficha</a></span>
+        </div>
+        <div class="field">
+          <label>Condición de pago</label>
+          <div class="control select">Crédito 30 días</div>
+        </div>
+        <div class="field">
+          <label>Fecha de emisión</label>
+          <div class="control">20/09/2026</div>
+        </div>
+        <div class="field">
+          <label>Vendedor</label>
+          <div class="control select">M. Fernández</div>
+        </div>
+        <div class="field">
+          <label>Bodega de origen</label>
+          <div class="control select readonly">Bodega Central</div>
+          <span class="hint">Fuera de alcance: separación Origen / Bodega (CA-05)</span>
+        </div>
+        <div class="field">
+          <label>Lista de precios</label>
+          <div class="control select">Mayorista</div>
+        </div>
+        <div class="field">
+          <label>Moneda</label>
+          <div class="control select readonly">CLP $</div>
+        </div>
+        <div class="field">
+          <label>Observaciones</label>
+          <div class="control placeholder">Opcional</div>
+        </div>
+      </div>
+
+      <!-- Tabla de líneas -->
+      <div class="section-bar">
+        <h3>Detalle de items</h3>
+        <span class="badge neutral">3 líneas</span>
+        <span class="spacer"></span>
+        <div class="btn-row">
+          <button class="btn sm">Buscar items</button>
+          <button class="btn sm ghost">+ Agregar línea manual</button>
+        </div>
+      </div>
+
+      <div class="tbl-scroll">
+        <table class="items">
+          <thead>
+            <tr>
+              <th style="width:34px"></th>
+              <th style="width:110px">Código</th>
+              <th>Descripción</th>
+              <th class="num" style="width:90px">Cantidad</th>
+              <th class="num" style="width:120px">Precio unitario</th>
+              <th class="num" style="width:140px">Descuento ($)</th>
+              <th class="num" style="width:120px">Total línea</th>
+              <th style="width:44px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--text-3)">1</td>
+              <td><span class="desc-main">PER-4410</span></td>
+              <td>
+                <span class="desc-main">Perfil aluminio 40×40 anodizado</span>
+                <span class="desc-sub">Marca Alumtec · Barra 6 m</span>
+              </td>
+              <td class="num"><span class="cell-input">12</span></td>
+              <td class="num"><span class="cell-input">18.900</span></td>
+              <td class="num">
+                <span class="cell-input"><span class="cur">$</span>15.000</span>
+              </td>
+              <td class="num"><strong>211.800</strong></td>
+              <td><button class="btn icon ghost" title="Eliminar línea">✕</button></td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-3)">2</td>
+              <td><span class="desc-main">TOR-0912</span></td>
+              <td>
+                <span class="desc-main">Tornillo autoperforante 8×1/2" (caja 500)</span>
+                <span class="desc-sub">Marca Fixel</span>
+              </td>
+              <td class="num"><span class="cell-input">4</span></td>
+              <td class="num"><span class="cell-input">7.450</span></td>
+              <td class="num">
+                <span class="cell-input focus"><span class="cur">$</span>0</span>
+              </td>
+              <td class="num"><strong>29.800</strong></td>
+              <td><button class="btn icon ghost" title="Eliminar línea">✕</button></td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-3)">3</td>
+              <td><span class="desc-main">SIL-2200</span></td>
+              <td>
+                <span class="desc-main">Silicona neutra transparente 280 ml</span>
+                <span class="desc-sub">Marca Sellatec</span>
+              </td>
+              <td class="num"><span class="cell-input">20</span></td>
+              <td class="num"><span class="cell-input">3.290</span></td>
+              <td class="num">
+                <span class="cell-input"><span class="cur">$</span>5.800</span>
+              </td>
+              <td class="num"><strong>60.000</strong></td>
+              <td><button class="btn icon ghost" title="Eliminar línea">✕</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totales -->
+      <div class="totals">
+        <div class="totals-box">
+          <div class="totals-row"><span>Subtotal bruto</span><span class="v">$ 322.600</span></div>
+          <div class="totals-row disc"><span>Descuentos de línea</span><span class="v">− $ 20.800</span></div>
+          <div class="totals-row"><span>Neto</span><span class="v">$ 301.800</span></div>
+          <div class="totals-row"><span>IVA 19%</span><span class="v">$ 57.342</span></div>
+          <div class="totals-row grand"><span>Total a pagar</span><span class="v">$ 359.142</span></div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="builder-foot">
+        <button class="btn ghost">Cancelar</button>
+        <span class="spacer"></span>
+        <button class="btn">Guardar borrador</button>
+        <button class="btn primary">Emitir factura</button>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>REQ-01.</strong> La columna es <strong>Descuento ($)</strong>: se ingresa un monto en pesos, no un
+      porcentaje. Total de línea = (cantidad × precio unitario) − descuento. Fila 1: 12 × 18.900 = 226.800 − 15.000 =
+      211.800. El bloque de totales muestra la suma de descuentos como monto y el neto ya descontado.
+    </p>
+    <p class="note">
+      <strong>REQ-03.</strong> "Guardar borrador" aparece en la barra de acciones porque <code>SHOW_SAVE_DRAFT=true</code>.
+      Antes estaba oculto tras el flag.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       2. Descuento — estados de edición y validación
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">2</div>
+      <div>
+        <h2 class="screen-title">Descuento de línea — estados de la celda</h2>
+        <p class="screen-desc">Edición, sin descuento, descuento mayor al bruto de la línea y línea sin precio.</p>
+        <div class="screen-tags">
+          <span class="tag mod">MODIFICADO</span>
+          <span class="tag">CA-09</span><span class="tag">REQ-01</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="tbl-scroll">
+        <table class="items">
+          <thead>
+            <tr>
+              <th>Estado</th>
+              <th>Descripción</th>
+              <th class="num" style="width:90px">Cantidad</th>
+              <th class="num" style="width:120px">Precio unitario</th>
+              <th class="num" style="width:170px">Descuento ($)</th>
+              <th class="num" style="width:120px">Total línea</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge neutral">En edición</span></td>
+              <td>Perfil aluminio 40×40 anodizado</td>
+              <td class="num"><span class="cell-input">12</span></td>
+              <td class="num"><span class="cell-input">18.900</span></td>
+              <td class="num"><span class="cell-input focus"><span class="cur">$</span>15.000</span></td>
+              <td class="num"><strong>211.800</strong></td>
+            </tr>
+            <tr>
+              <td><span class="badge neutral">Sin descuento</span></td>
+              <td>Tornillo autoperforante 8×1/2"</td>
+              <td class="num"><span class="cell-input">4</span></td>
+              <td class="num"><span class="cell-input">7.450</span></td>
+              <td class="num"><span class="cell-input"><span class="cur">$</span>0</span></td>
+              <td class="num"><strong>29.800</strong></td>
+            </tr>
+            <tr>
+              <td><span class="badge draft">Inválido</span></td>
+              <td>Silicona neutra transparente 280 ml</td>
+              <td class="num"><span class="cell-input">20</span></td>
+              <td class="num"><span class="cell-input">3.290</span></td>
+              <td class="num">
+                <span class="cell-input err"><span class="cur">$</span>80.000</span>
+                <span class="err-msg">El descuento no puede superar $ 65.800</span>
+              </td>
+              <td class="num" style="color:var(--text-3)">—</td>
+            </tr>
+            <tr>
+              <td><span class="badge draft">Inválido</span></td>
+              <td>Manilla acero inoxidable 120 mm</td>
+              <td class="num"><span class="cell-input">2</span></td>
+              <td class="num"><span class="cell-input err">0</span></td>
+              <td class="num">
+                <span class="cell-input" style="opacity:.5"><span class="cur">$</span>0</span>
+                <span class="err-msg" style="color:var(--text-3)">Se habilita al ingresar precio</span>
+              </td>
+              <td class="num" style="color:var(--text-3)">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="builder-foot">
+        <span class="badge draft">2 líneas con errores</span>
+        <span class="autosave">Corrige los descuentos marcados para emitir el documento.</span>
+        <span class="spacer"></span>
+        <button class="btn">Guardar borrador</button>
+        <button class="btn primary" disabled>Emitir factura</button>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>Reglas visibles.</strong> Descuento admite 0 y montos positivos; el tope es el bruto de la línea
+      (cantidad × precio). Con líneas inválidas "Emitir factura" queda deshabilitado, pero
+      <strong>"Guardar borrador" sigue habilitado</strong>: un borrador puede estar incompleto.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       3. Parametrización Ventas vs Compras
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">3</div>
+      <div>
+        <h2 class="screen-title">Control compartido parametrizado — Ventas vs Compras</h2>
+        <p class="screen-desc">
+          Misma <code>LineItemsTable</code> y mismo <code>calc-totals</code>, con modo de descuento por parámetro.
+          Compras no cambia.
+        </p>
+        <div class="screen-tags">
+          <span class="tag mod">MODIFICADO</span>
+          <span class="tag same">COMPRAS SIN CAMBIO</span>
+          <span class="tag">REQ-02</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare">
+      <div class="col">
+        <div class="col-head">
+          <h4>Ventas — builder de factura</h4>
+          <span class="spacer"></span>
+          <span class="mode-tag amount">discountMode: "amount"</span>
+        </div>
+        <div class="tbl-scroll">
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th class="num">Cant.</th>
+                <th class="num">P. unit.</th>
+                <th class="num">Descuento ($)</th>
+                <th class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Perfil aluminio 40×40</td>
+                <td class="num">12</td><td class="num">18.900</td>
+                <td class="num"><span class="cell-input"><span class="cur">$</span>15.000</span></td>
+                <td class="num"><strong>211.800</strong></td>
+              </tr>
+              <tr>
+                <td>Silicona neutra 280 ml</td>
+                <td class="num">20</td><td class="num">3.290</td>
+                <td class="num"><span class="cell-input"><span class="cur">$</span>5.800</span></td>
+                <td class="num"><strong>60.000</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="totals" style="padding:11px 14px">
+          <div class="totals-box" style="width:100%">
+            <div class="totals-row disc"><span>Descuentos de línea</span><span class="v">− $ 20.800</span></div>
+            <div class="totals-row grand" style="font-size:14px"><span>Total a pagar</span><span class="v">$ 359.142</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="col-head">
+          <h4>Compras — builder de orden de compra</h4>
+          <span class="spacer"></span>
+          <span class="mode-tag percent">discountMode: "percent"</span>
+        </div>
+        <div class="tbl-scroll">
+          <table class="items">
+            <thead>
+              <tr>
+                <th>Descripción</th>
+                <th class="num">Cant.</th>
+                <th class="num">P. unit.</th>
+                <th class="num">Descuento (%)</th>
+                <th class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Perfil aluminio 40×40</td>
+                <td class="num">12</td><td class="num">18.900</td>
+                <td class="num"><span class="cell-input">6,61 <span style="color:var(--text-3)">%</span></span></td>
+                <td class="num"><strong>211.807</strong></td>
+              </tr>
+              <tr>
+                <td>Silicona neutra 280 ml</td>
+                <td class="num">20</td><td class="num">3.290</td>
+                <td class="num"><span class="cell-input">8,81 <span style="color:var(--text-3)">%</span></span></td>
+                <td class="num"><strong>60.003</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="totals" style="padding:11px 14px">
+          <div class="totals-box" style="width:100%">
+            <div class="totals-row disc"><span>Descuentos de línea</span><span class="v">− $ 20.790</span></div>
+            <div class="totals-row grand" style="font-size:14px"><span>Total orden</span><span class="v">$ 359.155</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>REQ-02.</strong> Lo único que cambia entre ambas columnas es el encabezado de la columna de descuento,
+      el prefijo/sufijo de la celda (<code>$</code> vs <code>%</code>) y la fórmula del total de línea. Layout,
+      orden de columnas, acciones de fila y el bloque de totales se mantienen idénticos. Compras conserva su
+      comportamiento y su suite de tests sin modificaciones.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       4. Buscador de items — con filtros (Ventas)
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">4</div>
+      <div>
+        <h2 class="screen-title">Buscador de items (Ventas) — 5 filtros server-side + "Ver más items"</h2>
+        <p class="screen-desc">
+          Modal de búsqueda con filtros de marca, estado de stock, categoría, proveedor y ofertas. La paginación
+          opera sobre el resultado ya filtrado.
+        </p>
+        <div class="screen-tags">
+          <span class="tag new">NUEVO (bloque de filtros)</span>
+          <span class="tag">CA-08</span><span class="tag">REQ-05</span><span class="tag">REQ-06</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="overlay">
+        <div class="modal">
+          <div class="modal-head">
+            <h3>Buscar items</h3>
+            <span class="badge neutral">Ventas</span>
+            <span class="spacer"></span>
+            <button class="btn icon ghost">✕</button>
+          </div>
+          <div class="modal-body">
+
+            <div class="search-bar">
+              <div class="search-input"><span class="ico">🔍</span> perfil aluminio</div>
+              <button class="btn primary">Buscar</button>
+            </div>
+
+            <div class="filters">
+              <div class="filter">
+                <label>Marca</label>
+                <div class="control select active">Alumtec</div>
+              </div>
+              <div class="filter">
+                <label>Estado de stock</label>
+                <div class="control select active">Con stock</div>
+              </div>
+              <div class="filter">
+                <label>Categoría</label>
+                <div class="control select placeholder">Todas</div>
+              </div>
+              <div class="filter">
+                <label>Proveedor</label>
+                <div class="control select placeholder">Todos</div>
+              </div>
+              <div class="filter">
+                <label>Solo ofertas</label>
+                <div class="switch on"><span class="knob"></span> Activado</div>
+              </div>
+            </div>
+
+            <div class="applied">
+              <span class="lbl">Filtros aplicados:</span>
+              <span class="pill">Marca: Alumtec <span class="x">✕</span></span>
+              <span class="pill">Stock: Con stock <span class="x">✕</span></span>
+              <span class="pill">Solo ofertas <span class="x">✕</span></span>
+              <button class="btn sm ghost">Limpiar filtros</button>
+            </div>
+
+            <div class="result-meta">
+              <strong style="color:var(--text)">Mostrando 8 de 23 items</strong>
+              <span>· resultado filtrado</span>
+              <span class="spacer"></span>
+              <span>Ordenado por relevancia</span>
+            </div>
+
+            <table class="results">
+              <thead>
+                <tr>
+                  <th style="width:36px"></th>
+                  <th style="width:100px">Código</th>
+                  <th>Descripción</th>
+                  <th style="width:96px">Marca</th>
+                  <th style="width:110px">Stock</th>
+                  <th class="num" style="width:100px">Precio</th>
+                  <th style="width:74px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>☐</td>
+                  <td>PER-4410</td>
+                  <td>Perfil aluminio 40×40 anodizado <span class="offer-tag">Oferta</span></td>
+                  <td>Alumtec</td>
+                  <td><span class="stock-tag ok">Con stock · 140</span></td>
+                  <td class="num">18.900</td>
+                  <td><button class="btn sm">Agregar</button></td>
+                </tr>
+                <tr>
+                  <td>☐</td>
+                  <td>PER-4420</td>
+                  <td>Perfil aluminio 40×20 anodizado <span class="offer-tag">Oferta</span></td>
+                  <td>Alumtec</td>
+                  <td><span class="stock-tag ok">Con stock · 86</span></td>
+                  <td class="num">12.450</td>
+                  <td><button class="btn sm">Agregar</button></td>
+                </tr>
+                <tr>
+                  <td>☑</td>
+                  <td>PER-6010</td>
+                  <td>Perfil aluminio 60×10 natural <span class="offer-tag">Oferta</span></td>
+                  <td>Alumtec</td>
+                  <td><span class="stock-tag low">Stock bajo · 7</span></td>
+                  <td class="num">9.880</td>
+                  <td><button class="btn sm">Agregado</button></td>
+                </tr>
+                <tr>
+                  <td>☐</td>
+                  <td>PER-8020</td>
+                  <td>Perfil aluminio 80×20 estructural <span class="offer-tag">Oferta</span></td>
+                  <td>Alumtec</td>
+                  <td><span class="stock-tag ok">Con stock · 32</span></td>
+                  <td class="num">26.700</td>
+                  <td><button class="btn sm">Agregar</button></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="load-more">
+              <button class="btn">Ver más items (15 restantes)</button>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <span class="badge neutral">1 item seleccionado</span>
+            <span class="spacer"></span>
+            <button class="btn">Cancelar</button>
+            <button class="btn primary">Agregar al documento</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>REQ-05.</strong> El contador dice <em>"Mostrando 8 de 23 items"</em> y "Ver más items (15 restantes)"
+      refiere al total <strong>ya filtrado</strong>, no al catálogo completo. Al cambiar un filtro la paginación se
+      reinicia a la primera página.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       5. Buscador — estados
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">5</div>
+      <div>
+        <h2 class="screen-title">Buscador de items — carga, vacío, error y paginación en curso</h2>
+        <p class="screen-desc">Estados del resultado server-side con filtros aplicados.</p>
+        <div class="screen-tags">
+          <span class="tag new">NUEVO</span>
+          <span class="tag">CA-08</span><span class="tag">REQ-05</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5a carga -->
+    <div class="panel">
+      <div class="section-bar"><h3>5a · Cargando resultados (filtros aplicados)</h3></div>
+      <div class="modal-body">
+        <div class="applied" style="margin-top:0">
+          <span class="lbl">Filtros aplicados:</span>
+          <span class="pill">Marca: Alumtec <span class="x">✕</span></span>
+          <span class="pill">Categoría: Perfilería <span class="x">✕</span></span>
+        </div>
+        <div class="result-meta"><span class="inline-loading"><span class="spinner"></span> Buscando items…</span></div>
+        <div style="border:1px solid var(--border); border-radius:var(--radius); overflow:hidden">
+          <div class="skel-row"><span class="skel w1"></span><span class="skel w2"></span><span class="skel w3"></span><span class="skel w4"></span><span class="skel w5"></span></div>
+          <div class="skel-row"><span class="skel w1"></span><span class="skel w2"></span><span class="skel w3"></span><span class="skel w4"></span><span class="skel w5"></span></div>
+          <div class="skel-row"><span class="skel w1"></span><span class="skel w2"></span><span class="skel w3"></span><span class="skel w4"></span><span class="skel w5"></span></div>
+          <div class="skel-row" style="border-bottom:none"><span class="skel w1"></span><span class="skel w2"></span><span class="skel w3"></span><span class="skel w4"></span><span class="skel w5"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5b vacio -->
+    <div class="panel">
+      <div class="section-bar"><h3>5b · Sin resultados para los filtros aplicados</h3></div>
+      <div class="modal-body">
+        <div class="applied" style="margin-top:0">
+          <span class="lbl">Filtros aplicados:</span>
+          <span class="pill">Marca: Sellatec <span class="x">✕</span></span>
+          <span class="pill">Stock: Sin stock <span class="x">✕</span></span>
+          <span class="pill">Proveedor: Import Andes <span class="x">✕</span></span>
+          <span class="pill">Solo ofertas <span class="x">✕</span></span>
+        </div>
+        <div class="state" style="margin-top:14px">
+          <span class="ico">🔍</span>
+          <h4>No hay items que coincidan</h4>
+          <p>Ningún item cumple con la búsqueda "silicona" y los 4 filtros aplicados. Prueba quitando filtros o ajustando el texto de búsqueda.</p>
+          <button class="btn">Limpiar filtros</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5c vacio sin busqueda -->
+    <div class="panel">
+      <div class="section-bar"><h3>5c · Estado inicial, aún sin buscar</h3></div>
+      <div class="modal-body">
+        <div class="search-bar">
+          <div class="search-input"><span class="ico">🔍</span> <span style="color:var(--text-3)">Buscar por código o descripción</span></div>
+          <button class="btn primary">Buscar</button>
+        </div>
+        <div class="state">
+          <span class="ico">📦</span>
+          <h4>Busca items para agregar al documento</h4>
+          <p>Escribe un código o una descripción, o filtra por marca, stock, categoría, proveedor u ofertas.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5d error -->
+    <div class="panel">
+      <div class="section-bar"><h3>5d · Error al consultar el catálogo</h3></div>
+      <div class="modal-body">
+        <div class="state error">
+          <span class="ico">⚠</span>
+          <h4>No se pudieron cargar los items</h4>
+          <p>Ocurrió un problema al consultar el catálogo. Los filtros aplicados se mantienen; puedes reintentar la búsqueda.</p>
+          <button class="btn">Reintentar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5e paginando -->
+    <div class="panel">
+      <div class="section-bar"><h3>5e · "Ver más items" en curso (append sobre el resultado filtrado)</h3></div>
+      <div class="modal-body">
+        <div class="result-meta"><strong style="color:var(--text)">Mostrando 8 de 23 items</strong><span>· resultado filtrado</span></div>
+        <table class="results">
+          <thead>
+            <tr><th style="width:100px">Código</th><th>Descripción</th><th style="width:110px">Stock</th><th class="num" style="width:100px">Precio</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PER-4410</td><td>Perfil aluminio 40×40 anodizado</td><td><span class="stock-tag ok">Con stock · 140</span></td><td class="num">18.900</td></tr>
+            <tr><td>PER-4420</td><td>Perfil aluminio 40×20 anodizado</td><td><span class="stock-tag ok">Con stock · 86</span></td><td class="num">12.450</td></tr>
+          </tbody>
+        </table>
+        <div class="load-more">
+          <button class="btn" disabled><span class="spinner" style="display:inline-block; vertical-align:-2px; margin-right:6px"></span> Cargando más items…</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="note plain">
+      Los 5 filtros son <strong>server-side</strong>: cada cambio dispara una consulta nueva y el conteo total se
+      recalcula. Con un filtro sin catálogo disponible, el select muestra "Sin opciones" y queda deshabilitado.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       6. Buscador Compras
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">6</div>
+      <div>
+        <h2 class="screen-title">Buscador de items (Compras) — sin filtros, paginación actual</h2>
+        <p class="screen-desc">Referencia de no-regresión: el mismo componente sin el bloque de filtros.</p>
+        <div class="screen-tags">
+          <span class="tag same">SIN CAMBIO</span>
+          <span class="tag">REQ-06</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="overlay">
+        <div class="modal">
+          <div class="modal-head">
+            <h3>Buscar items</h3>
+            <span class="badge neutral">Compras</span>
+            <span class="spacer"></span>
+            <button class="btn icon ghost">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="search-bar">
+              <div class="search-input"><span class="ico">🔍</span> perfil aluminio</div>
+              <button class="btn primary">Buscar</button>
+            </div>
+            <div class="result-meta"><strong style="color:var(--text)">Mostrando 8 de 61 items</strong></div>
+            <table class="results">
+              <thead>
+                <tr><th style="width:36px"></th><th style="width:100px">Código</th><th>Descripción</th><th class="num" style="width:100px">Precio</th><th style="width:74px"></th></tr>
+              </thead>
+              <tbody>
+                <tr><td>☐</td><td>PER-4410</td><td>Perfil aluminio 40×40 anodizado</td><td class="num">18.900</td><td><button class="btn sm">Agregar</button></td></tr>
+                <tr><td>☐</td><td>PER-4420</td><td>Perfil aluminio 40×20 anodizado</td><td class="num">12.450</td><td><button class="btn sm">Agregar</button></td></tr>
+                <tr><td>☐</td><td>PER-6010</td><td>Perfil aluminio 60×10 natural</td><td class="num">9.880</td><td><button class="btn sm">Agregar</button></td></tr>
+              </tbody>
+            </table>
+            <div class="load-more"><button class="btn">Ver más items</button></div>
+          </div>
+          <div class="modal-foot">
+            <span class="spacer"></span>
+            <button class="btn">Cancelar</button>
+            <button class="btn primary">Agregar al documento</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note plain">
+      Compras no muestra el bloque de filtros ni los chips de filtros aplicados, y conserva su "Ver más items" tal
+      como está hoy. Es la misma pantalla que antes del ticket.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       7. Guard de salida — 3 opciones
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">7</div>
+      <div>
+        <h2 class="screen-title">Guard de salida — tres opciones</h2>
+        <p class="screen-desc">
+          Al intentar salir del builder con cambios sin guardar: descartar, cancelar o guardar borrador.
+        </p>
+        <div class="screen-tags">
+          <span class="tag mod">MODIFICADO</span>
+          <span class="tag">CA-12</span><span class="tag">CA-15</span><span class="tag">REQ-03</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="overlay">
+        <div class="modal narrow">
+          <div class="modal-head"><h3>Tienes cambios sin guardar</h3></div>
+          <div class="modal-body">
+            <p style="color:var(--text-2)">
+              Si sales ahora, el detalle cargado en esta factura se perderá. Puedes guardarlo como borrador para
+              retomarlo más tarde.
+            </p>
+            <div style="margin-top:12px; padding:10px 12px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius); font-size:12.5px; color:var(--text-2)">
+              <strong style="color:var(--text)">Distribuidora San Martín S.A.</strong> · 3 items · Total $ 359.142
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn danger">Descartar cambios</button>
+            <span class="spacer"></span>
+            <button class="btn">Cancelar</button>
+            <button class="btn primary">Guardar borrador</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>REQ-03 / CA-15.</strong> Antes el guard ofrecía dos opciones (descartar / cancelar). Ahora la acción
+      primaria es <strong>"Guardar borrador"</strong>: guarda y deja salir. "Cancelar" vuelve al builder sin cambios.
+      "Descartar cambios" se mantiene como acción destructiva a la izquierda.
+    </p>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="section-bar"><h3>7b · Guardando desde el guard</h3></div>
+      <div class="modal-body" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center">
+        <span class="inline-loading"><span class="spinner"></span> Guardando borrador…</span>
+        <span style="font-size:12.5px; color:var(--text-3)">Las tres acciones quedan deshabilitadas mientras se guarda.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       8. Guardar borrador — resultados
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">8</div>
+      <div>
+        <h2 class="screen-title">Guardar borrador — confirmación, error y documento en estado borrador</h2>
+        <p class="screen-desc">
+          Feedback tras guardar desde la barra de acciones y estado del builder al retomar un borrador existente.
+        </p>
+        <div class="screen-tags">
+          <span class="tag mod">MODIFICADO</span>
+          <span class="tag">CA-12</span><span class="tag">REQ-03</span><span class="tag">REQ-04</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-bar"><h3>8a · Guardado correcto</h3></div>
+      <div class="modal-body">
+        <div class="toast ok">
+          <span>✓</span>
+          <span><span class="t">Borrador guardado</span>El documento quedó como borrador. Puedes retomarlo desde el listado de documentos.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-bar"><h3>8b · Error al guardar</h3></div>
+      <div class="modal-body">
+        <div class="toast err">
+          <span>⚠</span>
+          <span><span class="t">No se pudo guardar el borrador</span>Ocurrió un problema al guardar. El documento sigue abierto con tus cambios; vuelve a intentarlo.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-bar">
+        <h3>8c · Builder con borrador guardado (retomado)</h3>
+      </div>
+      <div class="builder-head">
+        <h2>Factura — borrador</h2>
+        <span class="badge draft">Borrador</span>
+        <span class="meta">Guardado el 20/09/2026 a las 11:42</span>
+        <span class="spacer"></span>
+        <span class="autosave">Sin cambios desde el último guardado</span>
+      </div>
+      <div class="totals">
+        <div class="totals-box">
+          <div class="totals-row"><span>Subtotal bruto</span><span class="v">$ 322.600</span></div>
+          <div class="totals-row disc"><span>Descuentos de línea</span><span class="v">− $ 20.800</span></div>
+          <div class="totals-row"><span>IVA 19%</span><span class="v">$ 57.342</span></div>
+          <div class="totals-row grand"><span>Total a pagar</span><span class="v">$ 359.142</span></div>
+        </div>
+      </div>
+      <div class="builder-foot">
+        <button class="btn ghost">Volver al listado</button>
+        <span class="spacer"></span>
+        <button class="btn">Guardar borrador</button>
+        <button class="btn primary">Emitir factura</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-bar"><h3>8d · Listado de documentos con el borrador visible</h3></div>
+      <div class="modal-body">
+        <table class="results">
+          <thead>
+            <tr><th style="width:120px">N° documento</th><th>Cliente</th><th style="width:110px">Fecha</th><th style="width:110px">Estado</th><th class="num" style="width:120px">Total</th><th style="width:80px"></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--text-3)">— sin número —</td>
+              <td>Distribuidora San Martín S.A.</td>
+              <td>20/09/2026</td>
+              <td><span class="badge draft">Borrador</span></td>
+              <td class="num">$ 359.142</td>
+              <td><button class="btn sm">Retomar</button></td>
+            </tr>
+            <tr>
+              <td>F-000 1284</td>
+              <td>Ferretería El Roble Ltda.</td>
+              <td>19/09/2026</td>
+              <td><span class="badge issued">Emitida</span></td>
+              <td class="num">$ 128.540</td>
+              <td><button class="btn sm">Ver</button></td>
+            </tr>
+            <tr>
+              <td>F-000 1283</td>
+              <td>Constructora Ñuble SpA</td>
+              <td>19/09/2026</td>
+              <td><span class="badge issued">Emitida</span></td>
+              <td class="num">$ 942.310</td>
+              <td><button class="btn sm">Ver</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>REQ-04.</strong> El borrador entra a <code>STUB_DOCUMENTOS</code> con <code>esBorrador:true</code>
+      (aparece en el listado, sin número asignado). Al emitir, <code>issueFactura</code> lo pasa a
+      <code>esBorrador:false</code> y le asigna número: la fila cambia de "Borrador" a "Emitida". No hay mecanismo de
+      persistencia nuevo.
+    </p>
+  </section>
+
+  <!-- =========================================================
+       9. Emisión desde borrador
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">9</div>
+      <div>
+        <h2 class="screen-title">Emisión de un borrador — transición de estado</h2>
+        <p class="screen-desc">Confirmación de emisión y resultado.</p>
+        <div class="screen-tags">
+          <span class="tag ver">VERIFICACIÓN</span>
+          <span class="tag">REQ-04</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="overlay">
+        <div class="modal narrow">
+          <div class="modal-head"><h3>Emitir factura</h3></div>
+          <div class="modal-body">
+            <p style="color:var(--text-2)">
+              Se emitirá la factura para <strong style="color:var(--text)">Distribuidora San Martín S.A.</strong> por
+              un total de <strong style="color:var(--text)">$ 359.142</strong>. El documento dejará de ser un borrador
+              y no podrá volver a editarse.
+            </p>
+          </div>
+          <div class="modal-foot">
+            <span class="spacer"></span>
+            <button class="btn">Cancelar</button>
+            <button class="btn primary">Emitir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="section-bar"><h3>9b · Resultado</h3></div>
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:10px">
+        <div class="toast ok">
+          <span>✓</span>
+          <span><span class="t">Factura emitida — N° F-000 1285</span>El documento pasó de borrador a emitido.</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; font-size:12.5px; color:var(--text-2)">
+          <span class="badge draft">Borrador</span> <span>→</span> <span class="badge issued">Emitida</span>
+          <span style="color:var(--text-3)">· <code>esBorrador: true → false</code></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       10. Checklist de verificación
+       ========================================================= -->
+  <section class="screen">
+    <div class="screen-head">
+      <div class="screen-num">10</div>
+      <div>
+        <h2 class="screen-title">Checklist de criterios — qué cambia y qué solo se verifica</h2>
+        <p class="screen-desc">Referencia para la persona que revisa la maqueta contra el build.</p>
+        <div class="screen-tags"><span class="tag ver">VERIFICACIÓN</span><span class="tag">REQ-07</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <table class="check">
+        <thead>
+          <tr><th style="width:80px">Criterio</th><th style="width:130px">Tratamiento</th><th>Qué se ve en la maqueta</th><th style="width:130px">Pantalla</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="ca">CA-08</td>
+            <td><span class="dot new"></span>Se implementa</td>
+            <td>5 filtros server-side en el buscador de Ventas, chips de filtros aplicados y "Ver más items" sobre el resultado filtrado.</td>
+            <td>4, 5, 6</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-09</td>
+            <td><span class="dot mod"></span>Se corrige</td>
+            <td>Columna "Descuento ($)" con monto, total de línea y totales del documento recalculados.</td>
+            <td>1, 2, 3</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-12</td>
+            <td><span class="dot mod"></span>Se reactiva</td>
+            <td>"Guardar borrador" en la barra de acciones y en el guard; badge "Borrador" y listado con el documento.</td>
+            <td>1, 7, 8</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-15</td>
+            <td><span class="dot mod"></span>Se amplía</td>
+            <td>Guard de salida con tres opciones: descartar, cancelar, guardar borrador.</td>
+            <td>7</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-05</td>
+            <td><span class="dot ok"></span>Solo verificación</td>
+            <td>Bodega de origen en la cabecera, sin cambios. La separación Origen / Bodega queda fuera de alcance.</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-06</td>
+            <td><span class="dot ok"></span>Solo verificación</td>
+            <td>Cabecera de cliente y condición de pago, sin cambios.</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-10</td>
+            <td><span class="dot ok"></span>Solo verificación</td>
+            <td>Bloque de totales e IVA, con el comportamiento actual.</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-11</td>
+            <td><span class="dot ok"></span>Solo verificación</td>
+            <td>Alta y eliminación de líneas, incluida la línea manual.</td>
+            <td>1</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-13</td>
+            <td><span class="dot ok"></span>Solo verificación</td>
+            <td>Confirmación de emisión y asignación de número de documento.</td>
+            <td>9</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-14</td>
+            <td><span class="dot ok"></span>Solo verificación</td>
+            <td>Validaciones que bloquean la emisión y su mensajería.</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td class="ca">CA-07</td>
+            <td><span class="dot ok" style="background:var(--text-3)"></span>Fuera de alcance</td>
+            <td>Recuperar nota de pedido / recepción + O.C. No aparece en la maqueta: depende de definiciones de negocio abiertas.</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note plain">
+      También queda fuera de alcance el contenido real del popup de ficha del cliente (el enlace "Ver ficha" de la
+      pantalla 1 se mantiene con su comportamiento actual).
+    </p>
+  </section>
+
+</div>
+</body>
+</html>

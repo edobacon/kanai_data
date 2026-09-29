@@ -61,6 +61,8 @@ Aplica cuando:
 - Queres evitar la complejidad de Vueform cell renderer custom (que no funciona, ver DEC-LOCAL-03 SPEC-006)
 - El TableCell default (FK → link) no es lo que el UX pide
 
+Antes de agregar el mapeo: verificar si el objeto destino ya declara `metadata.idColumn` (UPONE-1750). Si ese campo es el que se quiere mostrar, no repetir el mapeo en el layout: la columna cae sola al `idColumn`. Usar `relationDisplayFields` solo cuando se necesita otro campo o varios. Ver RULE-mods-074.
+
 NO aplica si:
 
 - Queres link clickeable al record relacionado (TableCell default ya hace eso)
@@ -81,4 +83,4 @@ grep -A 5 "relationDisplayFields" mods/<mod>/config/layouts/*_list.json
 
 - **Discovered in**: TICKET-025, Session 3 (S3.T1 columna Estado texto plano en list)
 - **Evidence**: Tras descubrir que RecordList no soporta Vueform renderers (DEC-LOCAL-03), busque patron declarativo. Hallado: `executionUnitId` (FK a OrgUnit) del `default_activity_list.json` ya usaba `relationDisplayFields: { "OrgUnit": "name" }`. Replicado para el nuevo campo `currentStatusId` agregando `"workflowStatus": "name"`. Aprendizaje L13 del ticket. Commit `b757661` curriculum-design
-- **Related**: RULE-layout-016 (default sort), DEC-LOCAL-03 de SPEC-006 (list no soporta Vueform renderers)
+- **Related**: RULE-layout-016 (default sort), DEC-LOCAL-03 de SPEC-006 (list no soporta Vueform renderers), RULE-mods-074 (idColumn como default), RULE-layout-fk-idcolumn-fallback-UPONE-1750

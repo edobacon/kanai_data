@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOR-167 · Maqueta builder de facturas de venta</title>
+<style>
+  :root{
+    --bg:#eef1f5;
+    --surface:#ffffff;
+    --surface-2:#f7f9fc;
+    --border:#d8dee7;
+    --border-strong:#c2cbd8;
+    --text:#1d2430;
+    --text-2:#5b6676;
+    --text-3:#8a95a5;
+    --primary:#1f5fa8;
+    --primary-dark:#184a83;
+    --primary-soft:#e8f0fa;
+    --success:#1d7a4a;
+    --success-soft:#e6f4ec;
+    --warn:#a76a06;
+    --warn-soft:#fdf3e2;
+    --danger:#b3261e;
+    --danger-soft:#fdecea;
+    --draft:#6b4fa3;
+    --draft-soft:#f0ebf9;
+    --radius:6px;
+    --shadow:0 1px 2px rgba(20,30,45,.08), 0 6px 18px rgba(20,30,45,.06);
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .page{max-width:1240px;margin:0 auto;padding:28px 20px 80px}
+
+  /* ---------- cabecera del documento de maqueta ---------- */
+  .doc-head{background:#111a26;color:#fff;border-radius:10px;padding:22px 24px;margin-bottom:26px}
+  .doc-head h1{margin:0 0 6px;font-size:20px;letter-spacing:.2px}
+  .doc-head p{margin:0;color:#aebbcc;font-size:13px;max-width:900px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .legend span{font-size:11px;letter-spacing:.4px;text-transform:uppercase;background:#1e2b3b;border:1px solid #2e3e52;color:#b9c7d8;padding:4px 9px;border-radius:99px}
+  .legend span.new{background:#123a2a;border-color:#1c5a41;color:#7fd8ab}
+  .legend span.chg{background:#3a2f12;border-color:#5b4a1c;color:#e9c77a}
+
+  /* ---------- secciones de maqueta ---------- */
+  .mock{margin:0 0 34px}
+  .mock-title{display:flex;align-items:center;gap:10px;margin:0 0 4px;font-size:15px;font-weight:650}
+  .mock-title .code{font:600 11px/1 var(--mono);background:#111a26;color:#fff;padding:5px 7px;border-radius:4px;letter-spacing:.5px}
+  .mock-sub{margin:0 0 12px;color:var(--text-2);font-size:12.5px}
+  .tag{font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 7px;border-radius:99px;border:1px solid transparent}
+  .tag.new{background:var(--success-soft);color:var(--success);border-color:#bfe3cf}
+  .tag.chg{background:var(--warn-soft);color:var(--warn);border-color:#f0dcb4}
+  .tag.ok{background:var(--surface-2);color:var(--text-2);border-color:var(--border)}
+
+  /* ---------- chrome de app ---------- */
+  .app{background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+  .app-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .crumb{font-size:12px;color:var(--text-3)}
+  .crumb b{color:var(--text);font-weight:600}
+  .app-bar h2{margin:2px 0 0;font-size:17px;font-weight:650}
+  .bar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  .btn{font:inherit;font-size:13px;font-weight:600;border-radius:var(--radius);border:1px solid var(--border-strong);background:var(--surface);color:var(--text);padding:8px 14px;cursor:default;white-space:nowrap}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.draft{background:var(--draft-soft);border-color:#d3c6ec;color:var(--draft)}
+  .btn.ghost{background:transparent;border-color:transparent;color:var(--text-2)}
+  .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn.sm{padding:6px 10px;font-size:12px}
+  .btn.icon{padding:6px 9px}
+  .btn[disabled],.btn.is-disabled{opacity:.5}
+  .btn.loading::before{content:"";display:inline-block;width:11px;height:11px;margin-right:7px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;vertical-align:-1px}
+
+  .body{padding:18px;background:var(--surface-2)}
+  .grid-2{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+  @media (max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+  .card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .card-h h3{margin:0;font-size:13.5px;font-weight:650}
+  .card-b{padding:14px}
+  .card-b.tight{padding:0}
+
+  .fields{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 14px}
+  .fields.two{grid-template-columns:repeat(2,1fr)}
+  @media (max-width:760px){.fields,.fields.two{grid-template-columns:1fr}}
+  .f label{display:block;font-size:11.5px;font-weight:600;color:var(--text-2);margin-bottom:5px;letter-spacing:.2px}
+  .f label .req{color:var(--danger)}
+  .ctl{display:flex;align-items:center;gap:6px;border:1px solid var(--border-strong);background:#fff;border-radius:var(--radius);padding:7px 10px;font-size:13px;min-height:35px}
+  .ctl.select::after{content:"▾";margin-left:auto;color:var(--text-3);font-size:11px}
+  .ctl.search::before{content:"⌕";color:var(--text-3);font-size:15px}
+  .ctl .ph{color:var(--text-3)}
+  .ctl.readonly{background:var(--surface-2);color:var(--text-2)}
+  .ctl.err{border-color:var(--danger);background:#fff8f7}
+  .hint{font-size:11.5px;color:var(--text-3);margin-top:5px}
+  .hint.err{color:var(--danger)}
+  .opt{font-size:10.5px;color:var(--text-3);font-weight:500;text-transform:none;letter-spacing:0}
+
+  /* referencias */
+  .refs{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .ref-chip{display:inline-flex;align-items:center;gap:8px;background:var(--primary-soft);border:1px solid #cddff2;color:var(--primary-dark);border-radius:99px;padding:5px 10px;font-size:12px}
+  .ref-chip b{font-weight:650}
+  .ref-chip .x{color:#6f8db3;font-size:13px}
+
+  /* tablas */
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-2);text-align:left;font-weight:700;padding:9px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+  td{padding:9px 12px;border-bottom:1px solid #eef1f5;font-size:13px;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .idcell{font:600 12px/1 var(--mono);color:var(--text-2)}
+  .desc b{display:block;font-weight:600}
+  .desc small{color:var(--text-3);font-size:11.5px}
+
+  .inline-in{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--border-strong);border-radius:5px;background:#fff;padding:4px 7px;font-size:12.5px;min-width:86px;justify-content:flex-end;font-variant-numeric:tabular-nums}
+  .inline-in .pre{color:var(--text-3);margin-right:auto;font-weight:600}
+  .inline-in .suf{color:var(--text-3);font-weight:600}
+  .inline-in.err{border-color:var(--danger);background:#fff8f7}
+  .inline-in.qty{min-width:66px}
+  .rowerr{font-size:11.5px;color:var(--danger);margin-top:4px;display:block}
+  .rowwarn{font-size:11.5px;color:var(--warn);margin-top:4px;display:block}
+  .iconbtn{border:1px solid var(--border);background:#fff;border-radius:5px;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;color:var(--text-2);font-size:14px}
+  .iconbtn.add{border-color:#bcd9c8;background:var(--success-soft);color:var(--success);font-weight:700}
+  .iconbtn.del{border-color:#f2cfcc;background:var(--danger-soft);color:var(--danger)}
+
+  /* estados */
+  .empty{padding:34px 18px;text-align:center;color:var(--text-2)}
+  .empty .ico{font-size:26px;color:var(--border-strong);display:block;margin-bottom:8px}
+  .empty b{display:block;font-size:13.5px;color:var(--text);margin-bottom:4px}
+  .empty p{margin:0 auto;max-width:430px;font-size:12.5px;color:var(--text-3)}
+  .skel{height:12px;border-radius:4px;background:linear-gradient(90deg,#eceff4,#f6f8fb,#eceff4);display:block}
+  .banner{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:var(--radius);font-size:12.5px;border:1px solid}
+  .banner .bi{font-weight:700;line-height:1.2}
+  .banner.warn{background:var(--warn-soft);border-color:#f0dcb4;color:#7a4e05}
+  .banner.err{background:var(--danger-soft);border-color:#f2cfcc;color:#8f1f18}
+  .banner.ok{background:var(--success-soft);border-color:#bfe3cf;color:#125c36}
+  .banner.info{background:var(--primary-soft);border-color:#cddff2;color:var(--primary-dark)}
+  .banner b{display:block;margin-bottom:2px}
+  .banner ul{margin:4px 0 0;padding-left:18px}
+
+  /* resumen */
+  .totals .row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px dashed #e7ebf1}
+  .totals .row span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+  .totals .row.total{border-bottom:0;border-top:2px solid var(--text);margin-top:6px;padding-top:11px;font-size:16px;font-weight:700}
+  .totals .row.disc span:last-child{color:var(--danger)}
+  .totals .row small{color:var(--text-3);font-weight:500}
+
+  .switch{display:flex;align-items:center;gap:9px;font-size:13px}
+  .track{width:38px;height:21px;border-radius:99px;background:#cdd5df;position:relative;flex:none}
+  .track.on{background:var(--primary)}
+  .track::after{content:"";position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:#fff}
+  .track.on::after{left:19px}
+
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:6px 10px;font-size:12.5px}
+  .kv dt{color:var(--text-3)}
+  .kv dd{margin:0;color:var(--text)}
+
+  /* overlays / modales */
+  .stage{position:relative;background:#e3e8ef;border:1px solid var(--border);border-radius:8px;padding:26px;display:flex;justify-content:center}
+  .stage::before{content:"vista de fondo atenuada";position:absolute;top:8px;left:12px;font-size:10.5px;color:#9aa6b6;letter-spacing:.4px;text-transform:uppercase}
+  .modal{background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 12px 40px rgba(16,24,36,.18);width:100%;max-width:560px;overflow:hidden}
+  .modal.wide{max-width:720px}
+  .modal-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .modal-h h4{margin:0;font-size:14.5px;font-weight:650}
+  .modal-b{padding:16px}
+  .modal-f{display:flex;justify-content:flex-end;gap:8px;padding:13px 16px;border-top:1px solid var(--border);background:var(--surface-2);flex-wrap:wrap}
+  .modal-f.spread{justify-content:space-between}
+
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 16px}
+  .tabs div{padding:9px 13px;font-size:12.5px;color:var(--text-2);border-bottom:2px solid transparent}
+  .tabs div.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:650}
+
+  .toast{display:flex;gap:10px;align-items:flex-start;background:#111a26;color:#fff;border-radius:var(--radius);padding:12px 14px;font-size:12.5px;max-width:420px;box-shadow:var(--shadow)}
+  .toast.okk{background:#12492f}
+  .toast b{display:block;margin-bottom:2px}
+
+  .note{background:#fffdf5;border:1px dashed #e3d4a6;border-radius:var(--radius);padding:10px 12px;font-size:12px;color:#6d5a21;margin-top:10px}
+  .note b{color:#4f4115}
+
+  .two-up{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:860px){.two-up{grid-template-columns:1fr}}
+  .mini-h{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-2);margin:0 0 8px}
+
+  .pop{position:relative;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);padding:14px;max-width:320px}
+  .pop::before{content:"";position:absolute;top:-7px;left:26px;width:12px;height:12px;background:#fff;border-left:1px solid var(--border);border-top:1px solid var(--border);transform:rotate(45deg)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-head">
+    <h1>JOR-167 · Ventas / Facturas clientes: creacion (builder)</h1>
+    <p>Maqueta de verificacion del slice ejecutable (Adenda 1). Cubre REQ-01 y REQ-02 (descuento de linea como importe monetario, con el control compartido parametrizado), REQ-03 (Guardar borrador visible y como tercera opcion del guard de salida), REQ-04 (boton Filtros y control Ver mas items) y REQ-05 (verificacion de lo ya conforme al canon). Los importes son de ejemplo, en pesos sin decimales.</p>
+    <div class="legend">
+      <span class="new">verde = nuevo</span>
+      <span class="chg">amarillo = modificado</span>
+      <span>gris = existente, solo se verifica</span>
+    </div>
+  </div>
+
+  <!-- ============================================================ M1 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M1</span> Crear factura · vista completa (estado con datos) <span class="tag chg">modificado</span></h2>
+    <p class="mock-sub">Pantalla principal del builder. Cambios visibles: columna <b>Descuento</b> en importe (prefijo $), boton <b>Filtros</b> y <b>Ver mas items</b> en el buscador, y <b>Guardar borrador</b> en la barra de acciones.</p>
+
+    <div class="app">
+      <div class="app-bar">
+        <div>
+          <div class="crumb">Ventas / <b>Facturas clientes</b> / Crear factura</div>
+          <h2>Crear factura</h2>
+        </div>
+        <div class="bar-actions">
+          <span class="tag new">nuevo</span>
+          <button class="btn ghost">Cancelar</button>
+          <button class="btn draft">Guardar borrador</button>
+          <button class="btn primary">Facturar</button>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="grid-2">
+          <div>
+
+            <!-- Datos del documento -->
+            <div class="card">
+              <div class="card-h"><h3>Datos del documento</h3><span class="tag ok">CA-05 · verificar</span></div>
+              <div class="card-b">
+                <div class="fields">
+                  <div class="f">
+                    <label>RUT / Razon social <span class="req">*</span></label>
+                    <div class="ctl search">76.543.210-K · Comercial Andes Ltda.</div>
+                  </div>
+                  <div class="f">
+                    <label>Fecha <span class="req">*</span></label>
+                    <div class="ctl select">17-09-2026</div>
+                  </div>
+                  <div class="f">
+                    <label>Tipo de documento <span class="req">*</span></label>
+                    <div class="ctl select">Factura afecta</div>
+                    <div class="hint">Define el IVA del resumen (afecta 19%, exenta y guia 0%).</div>
+                  </div>
+                  <div class="f">
+                    <label>Origen <span class="req">*</span></label>
+                    <div class="ctl select">Venta directa</div>
+                  </div>
+                  <div class="f">
+                    <label>Bodega <span class="req">*</span></label>
+                    <div class="ctl select">Bodega Central</div>
+                    <div class="hint">Determina los productos disponibles y su stock.</div>
+                  </div>
+                  <div class="f">
+                    <label>Nota de pedido o recepcion <span class="opt">(opcional)</span></label>
+                    <div class="ctl search"><span class="ph">Buscar documento del cliente</span></div>
+                    <div class="hint">Tambien puedes facturar cargando productos directamente.</div>
+                  </div>
+                  <div class="f">
+                    <label>O.C. <span class="opt">(opcional)</span></label>
+                    <div class="ctl">OC-2026-4471</div>
+                  </div>
+                </div>
+
+                <div class="refs">
+                  <span class="ref-chip"><b>O.C.</b> OC-2026-4471 <span class="x">✕</span></span>
+                  <span class="ref-chip"><b>Bodega</b> Bodega Central <span class="x">✕</span></span>
+                </div>
+
+                <div class="note"><b>Fuera del slice (CA-07):</b> la recuperacion real de la nota de pedido o recepcion con carga de productos y control de cantidades ya facturadas queda pendiente de las definiciones de negocio Q1 y Q2. En esta iteracion los campos quedan como referencia y la carga de productos es manual.</div>
+              </div>
+            </div>
+
+            <!-- Buscar items -->
+            <div class="card">
+              <div class="card-h">
+                <h3>Buscar items</h3>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="tag new">Filtros · Ver mas items</span>
+                  <button class="btn sm">⛭ Filtros</button>
+                </div>
+              </div>
+              <div class="card-b">
+                <div class="ctl search" style="margin-bottom:12px">Sellador</div>
+                <div class="hint" style="margin:-6px 0 12px">Busca por descripcion, referencia o marca.</div>
+              </div>
+              <div class="card-b tight">
+                <table>
+                  <thead><tr><th style="width:80px">ID</th><th>Descripcion</th><th style="width:150px">Referencias</th><th class="num" style="width:110px">Precio</th><th style="width:56px"></th></tr></thead>
+                  <tbody>
+                    <tr><td class="idcell">3311</td><td class="desc"><b>Sellador poliuretano 300 ml</b><small>Marca Sika · gris</small></td><td class="idcell">SIK-PU300</td><td class="num">$ 7.450</td><td><span class="iconbtn add">+</span></td></tr>
+                    <tr><td class="idcell">3312</td><td class="desc"><b>Sellador silicona neutra 280 ml</b><small>Marca Sika · transparente</small></td><td class="idcell">SIK-SN280</td><td class="num">$ 5.990</td><td><span class="iconbtn add">+</span></td></tr>
+                    <tr><td class="idcell">3318</td><td class="desc"><b>Sellador acrilico 300 ml</b><small>Marca Fester · blanco</small></td><td class="idcell">FST-AC300</td><td class="num">$ 4.120</td><td><span class="iconbtn add">+</span></td></tr>
+                    <tr><td class="idcell">3402</td><td class="desc"><b>Pistola aplicadora para sellador</b><small>Marca Jormat · metalica</small></td><td class="idcell">JOR-PIS01</td><td class="num">$ 9.800</td><td><span class="iconbtn add">+</span></td></tr>
+                  </tbody>
+                </table>
+                <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:13px;border-top:1px solid var(--border);background:var(--surface-2)">
+                  <button class="btn sm">Ver mas items</button>
+                  <span class="hint" style="margin:0">Mostrando 20 de 137</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items del documento -->
+            <div class="card">
+              <div class="card-h">
+                <h3>Items del documento</h3>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="tag chg">descuento en importe</span>
+                  <button class="btn sm">Agregar observacion a items</button>
+                </div>
+              </div>
+              <div class="card-b tight">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width:74px">ID</th><th>Descripcion</th>
+                      <th class="num" style="width:104px">Precio</th>
+                      <th class="num" style="width:96px">Cantidad</th>
+                      <th class="num" style="width:126px">Descuento</th>
+                      <th class="num" style="width:110px">Total</th>
+                      <th style="width:52px"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="idcell">1042</td>
+                      <td class="desc"><b>Perfil aluminio 40x40</b><small>ALU-4040 · Bodega Central</small></td>
+                      <td class="num">$ 12.500</td>
+                      <td class="num"><span class="inline-in qty">8</span></td>
+                      <td class="num"><span class="inline-in"><span class="pre">$</span>4.000</span></td>
+                      <td class="num">$ 92.000</td>
+                      <td><span class="iconbtn del">🗑</span></td>
+                    </tr>
+                    <tr>
+                      <td class="idcell">2087</td>
+                      <td class="desc"><b>Tornillo autoperforante 8x1/2</b><small>TOR-8012 · caja de 100</small></td>
+                      <td class="num">$ 3.900</td>
+                      <td class="num"><span class="inline-in qty">12</span></td>
+                      <td class="num"><span class="inline-in"><span class="pre">$</span>0</span></td>
+                      <td class="num">$ 46.800</td>
+                      <td><span class="iconbtn del">🗑</span></td>
+                    </tr>
+                    <tr>
+                      <td class="idcell">3311</td>
+                      <td class="desc"><b>Sellador poliuretano 300 ml</b><small>SIK-PU300 · gris</small>
+                        <span class="rowwarn">⚠ Stock insuficiente en Bodega Central: disponible 4, solicitado 6.</span>
+                      </td>
+                      <td class="num">$ 7.450</td>
+                      <td class="num"><span class="inline-in qty">6</span></td>
+                      <td class="num"><span class="inline-in"><span class="pre">$</span>2.700</span></td>
+                      <td class="num">$ 41.700</td>
+                      <td><span class="iconbtn del">🗑</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="card-b" style="border-top:1px solid var(--border)">
+                <div class="banner warn"><span class="bi">⚠</span><div><b>Revisa la disponibilidad antes de facturar</b>Sellador poliuretano 300 ml (3311): disponible 4 en Bodega Central, solicitado 6.</div></div>
+                <div class="note"><b>Pendiente de negocio (Q3):</b> hoy el stock insuficiente bloquea el boton Facturar. Si negocio define que solo advierte, se relaja el bloqueo. No se cambia en este slice.</div>
+              </div>
+            </div>
+
+            <!-- Pago / despacho / receptor -->
+            <div class="card">
+              <div class="card-h"><h3>Pago, despacho y receptor</h3><span class="tag ok">CA-10 · verificar</span></div>
+              <div class="card-b">
+                <div class="fields two">
+                  <div class="f">
+                    <label>Forma de pago <span class="req">*</span></label>
+                    <div class="ctl select">Credito 30 dias</div>
+                  </div>
+                  <div class="f">
+                    <label>Despacho</label>
+                    <div class="ctl" style="border-color:transparent;background:transparent;padding-left:0">
+                      <span class="switch"><span class="track on"></span> Con despacho</span>
+                    </div>
+                  </div>
+                  <div class="f">
+                    <label>Receptor</label>
+                    <div class="ctl">Patricia Rojas</div>
+                  </div>
+                  <div class="f">
+                    <label>Observacion</label>
+                    <div class="ctl"><span class="ph">Escribe una observacion para el documento</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- columna derecha -->
+          <div>
+            <div class="card">
+              <div class="card-h"><h3>Resumen</h3><span class="tag chg">descuento en importe</span></div>
+              <div class="card-b totals">
+                <div class="row"><span>Subtotal</span><span>$ 187.500</span></div>
+                <div class="row disc"><span>Descuento</span><span>- $ 6.700</span></div>
+                <div class="row"><span>Neto</span><span>$ 180.800</span></div>
+                <div class="row"><span>IVA <small>19% · Factura afecta</small></span><span>$ 34.352</span></div>
+                <div class="row total"><span>Total</span><span>$ 215.152</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-h"><h3>Datos del cliente</h3><button class="btn sm">Actualizar receptor</button></div>
+              <div class="card-b">
+                <dl class="kv">
+                  <dt>RUT</dt><dd>76.543.210-K</dd>
+                  <dt>Telefono</dt><dd>+56 2 2345 6789</dd>
+                  <dt>Ciudad</dt><dd>Santiago</dd>
+                  <dt>Direccion</dt><dd>Av. Los Industriales 1420, Quilicura</dd>
+                </dl>
+                <div class="note"><b>Pendiente de negocio (Q4):</b> falta definir si "Actualizar receptor" modifica solo esta factura o persiste los datos del cliente, como hacia "Actualizar direccion" en el sistema anterior.</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-h"><h3>Acciones</h3></div>
+              <div class="card-b" style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn primary" style="width:100%">Facturar</button>
+                <button class="btn draft" style="width:100%">Guardar borrador</button>
+                <button class="btn" style="width:100%">Cancelar</button>
+                <p class="hint" style="margin:2px 0 0">Guardar borrador conserva los datos sin emitir la factura.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M2 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M2</span> Descuento de linea en importe: control compartido parametrizado <span class="tag chg">REQ-01 / REQ-02</span></h2>
+    <p class="mock-sub">La misma tabla de lineas atiende los dos modos. Ventas usa importe monetario; Compras conserva porcentaje. La diferencia visible es el afijo del campo y el texto de ayuda.</p>
+
+    <div class="two-up">
+      <div class="app">
+        <div class="app-bar"><div><div class="crumb">Ventas</div><h2 style="font-size:15px">Modo importe <span class="tag new" style="vertical-align:2px">nuevo</span></h2></div></div>
+        <div class="body">
+          <div class="card" style="margin:0">
+            <div class="card-b tight">
+              <table>
+                <thead><tr><th>Descripcion</th><th class="num" style="width:92px">Precio</th><th class="num" style="width:78px">Cant.</th><th class="num" style="width:112px">Descuento</th><th class="num" style="width:96px">Total</th></tr></thead>
+                <tbody>
+                  <tr><td class="desc"><b>Perfil aluminio 40x40</b></td><td class="num">$ 12.500</td><td class="num"><span class="inline-in qty">8</span></td><td class="num"><span class="inline-in"><span class="pre">$</span>4.000</span></td><td class="num">$ 92.000</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-b" style="border-top:1px solid var(--border)">
+              <p class="hint" style="margin:0">Descuento en pesos sobre el importe de la linea (precio x cantidad).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="app">
+        <div class="app-bar"><div><div class="crumb">Compras</div><h2 style="font-size:15px">Modo porcentaje <span class="tag ok" style="vertical-align:2px">sin cambios</span></h2></div></div>
+        <div class="body">
+          <div class="card" style="margin:0">
+            <div class="card-b tight">
+              <table>
+                <thead><tr><th>Descripcion</th><th class="num" style="width:92px">Precio</th><th class="num" style="width:78px">Cant.</th><th class="num" style="width:112px">Descuento</th><th class="num" style="width:96px">Total</th></tr></thead>
+                <tbody>
+                  <tr><td class="desc"><b>Perfil aluminio 40x40</b></td><td class="num">$ 12.500</td><td class="num"><span class="inline-in qty">8</span></td><td class="num"><span class="inline-in">4,0<span class="suf">%</span></span></td><td class="num">$ 96.000</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-b" style="border-top:1px solid var(--border)">
+              <p class="hint" style="margin:0">Descuento en porcentaje sobre el importe de la linea (0 a 100).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M3 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M3</span> Validaciones de cantidad y descuento <span class="tag chg">REQ-01</span></h2>
+    <p class="mock-sub">Se rechazan cantidades menores o iguales a cero y descuentos que dejen la linea en negativo. La linea invalida no aporta al resumen y el boton Facturar queda inhabilitado.</p>
+
+    <div class="app">
+      <div class="body">
+        <div class="card" style="margin:0">
+          <div class="card-h"><h3>Items del documento</h3><span class="tag chg">estado de error</span></div>
+          <div class="card-b tight">
+            <table>
+              <thead><tr><th style="width:74px">ID</th><th>Descripcion</th><th class="num" style="width:104px">Precio</th><th class="num" style="width:96px">Cantidad</th><th class="num" style="width:126px">Descuento</th><th class="num" style="width:110px">Total</th><th style="width:52px"></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="idcell">1042</td>
+                  <td class="desc"><b>Perfil aluminio 40x40</b>
+                    <span class="rowerr">La cantidad debe ser mayor que cero.</span></td>
+                  <td class="num">$ 12.500</td>
+                  <td class="num"><span class="inline-in qty err">0</span></td>
+                  <td class="num"><span class="inline-in"><span class="pre">$</span>0</span></td>
+                  <td class="num" style="color:var(--text-3)">-</td>
+                  <td><span class="iconbtn del">🗑</span></td>
+                </tr>
+                <tr>
+                  <td class="idcell">3311</td>
+                  <td class="desc"><b>Sellador poliuretano 300 ml</b>
+                    <span class="rowerr">El descuento no puede superar el importe de la linea ($ 44.700).</span></td>
+                  <td class="num">$ 7.450</td>
+                  <td class="num"><span class="inline-in qty">6</span></td>
+                  <td class="num"><span class="inline-in err"><span class="pre">$</span>52.000</span></td>
+                  <td class="num" style="color:var(--text-3)">-</td>
+                  <td><span class="iconbtn del">🗑</span></td>
+                </tr>
+                <tr>
+                  <td class="idcell">2087</td>
+                  <td class="desc"><b>Tornillo autoperforante 8x1/2</b></td>
+                  <td class="num">$ 3.900</td>
+                  <td class="num"><span class="inline-in qty">12</span></td>
+                  <td class="num"><span class="inline-in"><span class="pre">$</span>0</span></td>
+                  <td class="num">$ 46.800</td>
+                  <td><span class="iconbtn del">🗑</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-b" style="border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 300px;gap:16px">
+            <div class="banner err"><span class="bi">✕</span><div><b>Hay 2 lineas con datos invalidos</b>Corrige la cantidad y el descuento marcados para poder facturar.</div></div>
+            <div class="totals">
+              <div class="row"><span>Subtotal</span><span>$ 46.800</span></div>
+              <div class="row disc"><span>Descuento</span><span>- $ 0</span></div>
+              <div class="row"><span>Neto</span><span>$ 46.800</span></div>
+              <div class="row"><span>IVA <small>19%</small></span><span>$ 8.892</span></div>
+              <div class="row total"><span>Total</span><span>$ 55.692</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M4 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M4</span> Buscador de items: boton Filtros y Ver mas items <span class="tag new">REQ-04</span></h2>
+    <p class="mock-sub">La paginacion numerada se reemplaza por carga incremental. El panel de Filtros se entrega como andamiaje: abre, pero su contenido depende de la definicion de negocio Q4.</p>
+
+    <div class="two-up">
+      <div>
+        <p class="mini-h">Panel de filtros (andamiaje)</p>
+        <div class="app">
+          <div class="body">
+            <div class="card" style="margin:0">
+              <div class="card-h"><h3>Buscar items</h3><button class="btn sm" style="border-color:var(--primary);color:var(--primary);background:var(--primary-soft)">⛭ Filtros</button></div>
+              <div class="card-b">
+                <div class="ctl search" style="margin-bottom:14px"><span class="ph">Descripcion, referencia o marca</span></div>
+                <div class="pop" style="margin-left:auto">
+                  <p class="mini-h" style="margin-bottom:6px">Filtros</p>
+                  <p class="hint" style="margin:0 0 10px">Los criterios de filtrado estan pendientes de definicion de negocio. El panel queda disponible y sin opciones.</p>
+                  <div class="banner info" style="font-size:12px"><span class="bi">i</span><div>Aun no hay filtros configurados.</div></div>
+                  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+                    <button class="btn sm ghost">Limpiar</button>
+                    <button class="btn sm primary is-disabled">Aplicar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="mini-h">Ver mas items: estados del control</p>
+        <div class="app">
+          <div class="body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="card" style="margin:0">
+              <div class="card-b" style="text-align:center">
+                <button class="btn sm">Ver mas items</button>
+                <p class="hint" style="margin:8px 0 0">Mostrando 20 de 137</p>
+              </div>
+            </div>
+            <div class="card" style="margin:0">
+              <div class="card-b" style="text-align:center">
+                <button class="btn sm primary loading">Cargando...</button>
+                <p class="hint" style="margin:8px 0 0">Mostrando 20 de 137</p>
+              </div>
+            </div>
+            <div class="card" style="margin:0">
+              <div class="card-b" style="text-align:center">
+                <p class="hint" style="margin:0">No hay mas items para mostrar (137 de 137).</p>
+              </div>
+            </div>
+            <div class="card" style="margin:0">
+              <div class="card-b">
+                <div class="banner err"><span class="bi">✕</span><div><b>No se pudieron cargar mas items</b>Revisa la conexion e intentalo nuevamente. <span style="text-decoration:underline">Reintentar</span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M5 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M5</span> Estados vacio, carga y error del buscador y del detalle <span class="tag ok">soporte</span></h2>
+
+    <div class="two-up">
+      <div class="app">
+        <div class="body" style="display:flex;flex-direction:column;gap:12px">
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Buscar items · sin busqueda</h3></div>
+            <div class="empty"><span class="ico">⌕</span><b>Busca un producto para agregarlo</b><p>Escribe una descripcion, referencia o marca. Los resultados dependen de la bodega seleccionada.</p></div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Buscar items · cargando</h3></div>
+            <div class="card-b" style="display:flex;flex-direction:column;gap:11px">
+              <span class="skel" style="width:35%"></span>
+              <span class="skel" style="width:78%"></span>
+              <span class="skel" style="width:64%"></span>
+              <span class="skel" style="width:71%"></span>
+              <span class="skel" style="width:48%"></span>
+            </div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Buscar items · sin resultados</h3></div>
+            <div class="empty"><span class="ico">∅</span><b>Sin resultados para "seladr"</b><p>Revisa la escritura o prueba con otra referencia. Tambien puedes cambiar la bodega seleccionada.</p></div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Buscar items · error</h3></div>
+            <div class="card-b"><div class="banner err"><span class="bi">✕</span><div><b>No se pudo consultar el catalogo</b>El servicio no respondio. <span style="text-decoration:underline">Reintentar</span></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="app">
+        <div class="body" style="display:flex;flex-direction:column;gap:12px">
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Items del documento · vacio</h3></div>
+            <div class="empty"><span class="ico">▤</span><b>Aun no agregaste productos</b><p>Busca items arriba y agregalos con el boton +, o recupera un documento de referencia del cliente.</p></div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Resumen · sin items</h3></div>
+            <div class="card-b totals">
+              <div class="row"><span>Subtotal</span><span>$ 0</span></div>
+              <div class="row disc"><span>Descuento</span><span>- $ 0</span></div>
+              <div class="row"><span>Neto</span><span>$ 0</span></div>
+              <div class="row"><span>IVA <small>19% · Factura afecta</small></span><span>$ 0</span></div>
+              <div class="row total"><span>Total</span><span>$ 0</span></div>
+            </div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="card-h"><h3>Formulario · sin cliente</h3></div>
+            <div class="card-b">
+              <div class="f" style="margin-bottom:12px">
+                <label>RUT / Razon social <span class="req">*</span></label>
+                <div class="ctl search"><span class="ph">Buscar por RUT o razon social</span></div>
+              </div>
+              <div class="banner info"><span class="bi">i</span><div>Selecciona un cliente para habilitar el resto del documento.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M6 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M6</span> Popup del cliente: Informacion adicional / Documentos pendientes <span class="tag ok">CA-06 · verificar</span></h2>
+    <p class="mock-sub">Se abre automaticamente al seleccionar el cliente y se actualiza al cambiarlo. Es informativo: cerrarlo permite continuar.</p>
+
+    <div class="stage">
+      <div class="modal wide">
+        <div class="modal-h">
+          <div>
+            <h4>Informacion adicional / Documentos pendientes</h4>
+            <div class="crumb" style="margin-top:3px">76.543.210-K · Comercial Andes Ltda.</div>
+          </div>
+          <span class="btn ghost icon">✕</span>
+        </div>
+        <div class="tabs"><div class="on">Credito</div><div>Facturas (3)</div><div>Notas (1)</div><div>Cheques (2)</div></div>
+        <div class="modal-b">
+          <div class="fields" style="margin-bottom:14px">
+            <div class="f"><label>Linea de credito</label><div class="ctl readonly">$ 8.000.000</div></div>
+            <div class="f"><label>Credito utilizado</label><div class="ctl readonly">$ 6.420.000</div></div>
+            <div class="f"><label>Disponible</label><div class="ctl readonly">$ 1.580.000</div></div>
+          </div>
+          <table>
+            <thead><tr><th>Documento</th><th>Emision</th><th>Vencimiento</th><th class="num">Monto</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td class="idcell">F-0098231</td><td>12-07-2026</td><td>11-08-2026</td><td class="num">$ 1.240.500</td><td><span class="tag chg">Vencida</span></td></tr>
+              <tr><td class="idcell">F-0099104</td><td>02-08-2026</td><td>01-09-2026</td><td class="num">$ 3.115.000</td><td><span class="tag ok">Pendiente</span></td></tr>
+              <tr><td class="idcell">F-0099887</td><td>29-08-2026</td><td>28-09-2026</td><td class="num">$ 2.064.500</td><td><span class="tag ok">Pendiente</span></td></tr>
+            </tbody>
+          </table>
+          <div class="banner info" style="margin-top:14px"><span class="bi">i</span><div>Esta informacion es referencial y no impide continuar con el documento.</div></div>
+          <div class="note"><b>Pendiente de negocio (Q1 y Q3):</b> falta definir que comprende "Notas" y si el credito o los documentos pendientes bloquean la facturacion o requieren autorizacion. Hoy solo informan.</div>
+        </div>
+        <div class="modal-f"><button class="btn primary">Cerrar y continuar</button></div>
+      </div>
+    </div>
+
+    <div class="two-up" style="margin-top:16px">
+      <div>
+        <p class="mini-h">Popup · cargando</p>
+        <div class="stage" style="padding:18px">
+          <div class="modal">
+            <div class="modal-h"><h4>Informacion adicional / Documentos pendientes</h4><span class="btn ghost icon">✕</span></div>
+            <div class="modal-b" style="display:flex;flex-direction:column;gap:11px">
+              <span class="skel" style="width:40%"></span><span class="skel" style="width:85%"></span><span class="skel" style="width:70%"></span><span class="skel" style="width:78%"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="mini-h">Popup · error al consultar</p>
+        <div class="stage" style="padding:18px">
+          <div class="modal">
+            <div class="modal-h"><h4>Informacion adicional / Documentos pendientes</h4><span class="btn ghost icon">✕</span></div>
+            <div class="modal-b"><div class="banner err"><span class="bi">✕</span><div><b>No se pudo obtener la informacion del cliente</b>Puedes continuar con el documento e intentarlo nuevamente mas tarde.</div></div></div>
+            <div class="modal-f"><button class="btn">Reintentar</button><button class="btn primary">Cerrar y continuar</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M7 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M7</span> Guardar borrador <span class="tag new">REQ-03</span></h2>
+    <p class="mock-sub">Accion visible en la barra superior y en la columna de acciones. Conserva los datos sin emitir el documento y permite retomarlo.</p>
+
+    <div class="two-up">
+      <div>
+        <p class="mini-h">Guardando</p>
+        <div class="app">
+          <div class="app-bar">
+            <div><div class="crumb">Ventas / Facturas clientes</div><h2 style="font-size:15px">Crear factura</h2></div>
+            <div class="bar-actions">
+              <button class="btn ghost is-disabled">Cancelar</button>
+              <button class="btn draft loading" style="color:var(--draft)">Guardando...</button>
+              <button class="btn primary is-disabled">Facturar</button>
+            </div>
+          </div>
+          <div class="body"><div class="banner info" style="margin:0"><span class="bi">i</span><div>Guardando el borrador. No cierres la pantalla.</div></div></div>
+        </div>
+      </div>
+      <div>
+        <p class="mini-h">Borrador guardado</p>
+        <div class="app">
+          <div class="app-bar">
+            <div>
+              <div class="crumb">Ventas / Facturas clientes</div>
+              <h2 style="font-size:15px">Crear factura <span class="tag" style="background:var(--draft-soft);color:var(--draft);border-color:#d3c6ec;vertical-align:3px">Borrador</span></h2>
+            </div>
+            <div class="bar-actions">
+              <button class="btn ghost">Cancelar</button>
+              <button class="btn draft">Guardar borrador</button>
+              <button class="btn primary">Facturar</button>
+            </div>
+          </div>
+          <div class="body" style="display:flex;flex-direction:column;gap:12px">
+            <div class="toast okk"><span class="bi">✓</span><div><b>Borrador guardado</b>Puedes retomarlo desde el listado de facturas. Ultimo guardado: 17-09-2026 11:42.</div></div>
+            <div class="toast"><span class="bi">✕</span><div><b>No se pudo guardar el borrador</b>Los datos siguen en pantalla. Intentalo nuevamente.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M8 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M8</span> Guard de salida con tercera opcion <span class="tag chg">REQ-03 / CA-15</span></h2>
+    <p class="mock-sub">Al cancelar o salir con cambios sin guardar. Se agrega "Guardar borrador" junto a descartar y seguir editando.</p>
+
+    <div class="stage">
+      <div class="modal">
+        <div class="modal-h"><h4>Tienes cambios sin guardar</h4></div>
+        <div class="modal-b">
+          <p style="margin:0 0 10px">Si sales ahora se perderan los datos ingresados en la factura. Puedes guardarlos como borrador y retomarlos despues.</p>
+          <div class="banner info"><span class="bi">i</span><div>3 productos, cliente y forma de pago cargados.</div></div>
+        </div>
+        <div class="modal-f spread">
+          <button class="btn danger">Descartar cambios</button>
+          <span style="display:flex;gap:8px">
+            <button class="btn">Seguir editando</button>
+            <button class="btn primary">Guardar borrador</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M9 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M9</span> Facturar: validacion, envio en curso, exito y error <span class="tag ok">CA-13 / CA-14 · verificar</span></h2>
+
+    <div class="two-up">
+      <div>
+        <p class="mini-h">Faltan datos obligatorios</p>
+        <div class="app">
+          <div class="body">
+            <div class="banner err" style="margin-bottom:12px"><span class="bi">✕</span><div><b>Completa los datos requeridos para facturar</b>
+              <ul><li>Bodega</li><li>Forma de pago</li><li>Al menos un producto valido</li></ul></div></div>
+            <div class="fields two">
+              <div class="f"><label>Bodega <span class="req">*</span></label><div class="ctl select err"><span class="ph">Selecciona una bodega</span></div><div class="hint err">Campo obligatorio.</div></div>
+              <div class="f"><label>Forma de pago <span class="req">*</span></label><div class="ctl select err"><span class="ph">Selecciona una forma de pago</span></div><div class="hint err">Campo obligatorio.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="mini-h" style="margin-top:16px">Envio en curso (anti doble submit)</p>
+        <div class="app">
+          <div class="app-bar">
+            <div><div class="crumb">Ventas / Facturas clientes</div><h2 style="font-size:15px">Crear factura</h2></div>
+            <div class="bar-actions">
+              <button class="btn ghost is-disabled">Cancelar</button>
+              <button class="btn draft is-disabled">Guardar borrador</button>
+              <button class="btn primary loading">Facturando...</button>
+            </div>
+          </div>
+          <div class="body"><div class="banner info" style="margin:0"><span class="bi">i</span><div>Estamos emitiendo el documento. Las acciones quedan inhabilitadas hasta obtener el resultado.</div></div></div>
+        </div>
+      </div>
+
+      <div>
+        <p class="mini-h">Facturacion exitosa</p>
+        <div class="stage" style="padding:18px">
+          <div class="modal">
+            <div class="modal-h"><h4>Factura emitida</h4></div>
+            <div class="modal-b">
+              <div class="banner ok" style="margin-bottom:12px"><span class="bi">✓</span><div><b>Factura afecta N.º 0100342 emitida correctamente</b>Comercial Andes Ltda. · Total $ 215.152</div></div>
+              <p class="hint" style="margin:0">El documento ya aparece en el listado de facturas clientes.</p>
+            </div>
+            <div class="modal-f"><button class="btn">Crear otra factura</button><button class="btn primary">Ir al listado</button></div>
+          </div>
+        </div>
+
+        <p class="mini-h" style="margin-top:16px">Fallo en la emision</p>
+        <div class="app">
+          <div class="body">
+            <div class="banner err" style="margin-bottom:12px"><span class="bi">✕</span><div><b>No se pudo emitir la factura</b>El servicio de facturacion rechazo el documento: folio no disponible para el tipo seleccionado. Los datos del formulario se conservan.</div></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn draft">Guardar borrador</button>
+              <button class="btn primary">Reintentar facturacion</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ M10 -->
+  <section class="mock">
+    <h2 class="mock-title"><span class="code">M10</span> Textos visibles (resumen para revision)</h2>
+    <div class="app">
+      <div class="body">
+        <div class="card" style="margin:0">
+          <div class="card-b tight">
+            <table>
+              <thead><tr><th style="width:170px">Ubicacion</th><th>Texto</th><th style="width:110px">Estado</th></tr></thead>
+              <tbody>
+                <tr><td>Barra de acciones</td><td>Cancelar · Guardar borrador · Facturar</td><td><span class="tag new">nuevo</span></td></tr>
+                <tr><td>Items del documento</td><td>Encabezado de columna: <b>Descuento</b>. Campo con prefijo <b>$</b>. Ayuda: "Descuento en pesos sobre el importe de la linea (precio x cantidad)."</td><td><span class="tag chg">modificado</span></td></tr>
+                <tr><td>Items del documento</td><td>"La cantidad debe ser mayor que cero."</td><td><span class="tag chg">modificado</span></td></tr>
+                <tr><td>Items del documento</td><td>"El descuento no puede superar el importe de la linea ($ X)."</td><td><span class="tag new">nuevo</span></td></tr>
+                <tr><td>Buscar items</td><td>Boton <b>Filtros</b> · "Aun no hay filtros configurados."</td><td><span class="tag new">nuevo</span></td></tr>
+                <tr><td>Buscar items</td><td>"Ver mas items" · "Mostrando 20 de 137" · "No hay mas items para mostrar (137 de 137)."</td><td><span class="tag new">nuevo</span></td></tr>
+                <tr><td>Buscar items</td><td>"No se pudieron cargar mas items" · "Reintentar"</td><td><span class="tag new">nuevo</span></td></tr>
+                <tr><td>Guardar borrador</td><td>"Guardando..." · "Borrador guardado" · "Puedes retomarlo desde el listado de facturas." · "No se pudo guardar el borrador"</td><td><span class="tag new">nuevo</span></td></tr>
+                <tr><td>Guard de salida</td><td>"Tienes cambios sin guardar" · Descartar cambios / Seguir editando / <b>Guardar borrador</b></td><td><span class="tag chg">modificado</span></td></tr>
+                <tr><td>Resumen</td><td>Subtotal · Descuento · Neto · IVA (19% · Factura afecta) · Total</td><td><span class="tag ok">existente</span></td></tr>
+                <tr><td>Stock</td><td>"Stock insuficiente en {bodega}: disponible {n}, solicitado {m}."</td><td><span class="tag ok">existente</span></td></tr>
+                <tr><td>Popup cliente</td><td>"Informacion adicional / Documentos pendientes" · Credito / Facturas / Notas / Cheques · "Cerrar y continuar"</td><td><span class="tag ok">existente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

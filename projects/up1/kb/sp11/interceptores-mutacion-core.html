@@ -1,0 +1,409 @@
+<title>Guard de publicación</title>
+<style>
+  :root{
+    --ground:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb;
+    --ink:#14202e; --muted:#5a6b7c; --faint:#8494a4;
+    --hair:#d8dee7; --hair-strong:#c2cbd6;
+    --accent:#1f5fd6; --accent-soft:#e4edfc;
+    --good:#0f7a4d; --good-soft:#e0f2e9;
+    --warn:#b45309; --warn-soft:#fbe6d4;
+    --danger:#b42318; --danger-soft:#fbe3df;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#0c121b; --surface:#141d29; --surface-2:#101823;
+    --ink:#e7eef6; --muted:#93a3b4; --faint:#6b7c8d;
+    --hair:#243141; --hair-strong:#32424f;
+    --accent:#5b93f5; --accent-soft:#16273f;
+    --good:#4ecf93; --good-soft:#12271d;
+    --warn:#e6a45c; --warn-soft:#2c2011;
+    --danger:#f2837a; --danger-soft:#2c1614;
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0c121b; --surface:#141d29; --surface-2:#101823;
+    --ink:#e7eef6; --muted:#93a3b4; --faint:#6b7c8d;
+    --hair:#243141; --hair-strong:#32424f;
+    --accent:#5b93f5; --accent-soft:#16273f;
+    --good:#4ecf93; --good-soft:#12271d;
+    --warn:#e6a45c; --warn-soft:#2c2011;
+    --danger:#f2837a; --danger-soft:#2c1614;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding-inline:20px;padding-block:0}
+  a{color:var(--accent)}
+  code,.mono{font-family:var(--mono);font-size:.88em}
+
+  header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--ground) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--hair)}
+  header.top .wrap{display:flex;align-items:center;gap:14px;padding-block:12px;flex-wrap:wrap}
+  header.top .mark{width:30px;height:30px;flex:none;border-radius:7px;background:var(--accent);display:grid;place-items:center;color:#fff;font-family:var(--mono);font-weight:600;font-size:15px}
+  header.top h1{font-size:16px;margin:0;letter-spacing:-.01em;font-weight:600}
+  header.top .stamp{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--good);border:1px solid var(--good);border-radius:999px;padding:3px 10px;background:var(--good-soft);white-space:nowrap}
+
+  .hero{padding-block:40px 24px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}
+  .hero h2{font-size:clamp(27px,4.6vw,42px);line-height:1.07;margin:0 0 16px;letter-spacing:-.02em;text-wrap:balance;font-weight:600;max-width:16ch}
+  .lede{font-size:clamp(16px,2.1vw,19px);color:var(--muted);max-width:64ch;margin:0}
+  .lede strong{color:var(--ink);font-weight:600}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+  .toc a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:4px 11px;background:var(--surface)}
+  .toc a b{color:var(--accent);font-weight:600}
+
+  section{padding-block:28px;border-top:1px solid var(--hair)}
+  h3{font-size:13px;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:0 0 5px;font-weight:600}
+  h3 .n{color:var(--accent)}
+  h3 + .oneliner{font-size:19px;color:var(--ink);margin:0 0 20px;letter-spacing:-.01em;font-weight:500;max-width:62ch;text-wrap:balance}
+  p{max-width:66ch}
+  .muted{color:var(--muted)}
+  .sub{font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin:26px 0 8px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+  .split .o{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:15px 17px}
+  .split .o .ot{font-size:14px;font-weight:600}
+  .split .o .ot span{font-family:var(--mono);font-size:11px;color:var(--faint);font-weight:400;margin-left:6px}
+  .split .o .od{font-size:13px;color:var(--muted);margin-top:4px}
+
+  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:9px 20px;margin-top:18px;padding:15px 17px;background:var(--surface-2);border:1px solid var(--hair);border-radius:12px}
+  .legend .lg{font-size:12.5px;color:var(--muted);line-height:1.45}
+  .legend .lg b{font-family:var(--mono);color:var(--accent);font-weight:600;font-size:12px;margin-right:2px}
+
+  .glossary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 24px;margin-top:20px}
+  .glossary dt{font-weight:600;font-size:14px}
+  .glossary dd{margin:3px 0 0;color:var(--muted);font-size:12.5px}
+
+  .flow{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:20px 20px 22px;margin-top:4px}
+  .rail{position:relative;padding-left:22px}
+  .rail::before{content:"";position:absolute;left:6px;top:6px;bottom:10px;width:2px;background:var(--hair-strong)}
+  .step{position:relative;margin-bottom:13px}
+  .step:last-child{margin-bottom:0}
+  .step::before{content:"";position:absolute;left:-19px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--hair-strong)}
+  .step.g::before{border-color:var(--good);background:var(--good)}
+  .step.w::before{border-color:var(--warn);background:var(--warn)}
+  .step .st{font-size:14px;font-weight:600}
+  .step .sd{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .step .sd code{color:var(--ink)}
+  .chip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
+  .chip.g{background:var(--good-soft);color:var(--good)}
+  .chip.w{background:var(--warn-soft);color:var(--warn)}
+
+  .paths{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+  .path{border:1px solid var(--hair);border-radius:14px;padding:18px 20px;background:var(--surface)}
+  .path.core{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .path .ph{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+  .path .ph .k{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:6px;background:var(--surface-2);color:var(--muted);border:1px solid var(--hair)}
+  .path.core .ph .k{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+  .path h4{margin:0;font-size:16px}
+  .path .tag{font-size:12.5px;color:var(--faint);margin:0 0 14px}
+  .path dl{margin:0}
+  .path dt{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-top:13px}
+  .path dt:first-of-type{margin-top:0}
+  .path dd{margin:3px 0 0;font-size:13px;color:var(--muted);line-height:1.5}
+  .path dd b{color:var(--ink);font-weight:600}
+  .path dd.open{color:var(--warn)}
+  .path.core dd.open{color:var(--good)}
+
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--hair);border-radius:12px;margin-top:18px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair);vertical-align:middle}
+  thead th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);background:var(--surface-2);font-weight:600}
+  tbody tr:last-child td{border-bottom:0}
+  td .door{font-weight:600}
+  .state{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;white-space:nowrap}
+  .state.g{background:var(--good-soft);color:var(--good)}
+  .state.r{background:var(--danger-soft);color:var(--danger)}
+  .state.n{background:var(--surface-2);color:var(--faint);border:1px solid var(--hair)}
+
+  blockquote{margin:14px 0 0;padding:11px 15px;border-left:3px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;font-size:13px}
+  blockquote p{margin:0;color:var(--ink);max-width:none}
+  blockquote .src{display:block;margin-top:5px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+  .verdict{background:var(--surface);border:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent) inset;border-radius:14px;padding:20px 22px;margin-top:22px}
+  .verdict .big{font-size:clamp(18px,2.4vw,22px);font-weight:600;letter-spacing:-.01em;margin:0 0 12px;text-wrap:balance}
+  .verdict .big em{font-style:normal;color:var(--accent)}
+  .verdict .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .verdict .row .r .rt{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-bottom:4px}
+  .verdict .row .r p{margin:0;font-size:13.5px;color:var(--muted)}
+  .verdict .row .r p b{color:var(--ink);font-weight:600}
+
+  .ficha{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .ficha .f{font-family:var(--mono);font-size:11.5px;padding:4px 11px;border-radius:999px;background:var(--surface);border:1px solid var(--hair);color:var(--muted)}
+  .ficha .f b{color:var(--ink);font-weight:600}
+  .ficha .f.hot{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+  .rfc{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--surface-2);border:1px solid var(--hair);border-radius:12px;padding:16px 18px;margin-top:14px}
+  .rfc pre{margin:0;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--ink);white-space:pre;tab-size:2}
+  .tickb{background:var(--surface);border:1px solid var(--hair);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:16px 18px;margin-top:16px}
+  .tickb h4{margin:0 0 6px;font-size:14.5px}
+  .tickb p{margin:0;font-size:13.5px;color:var(--muted);max-width:none}
+
+  .srclist{columns:2;column-gap:34px;font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:6px}
+  .srclist div{break-inside:avoid;margin-bottom:8px;max-width:46ch}
+  .srclist b{color:var(--ink);font-weight:600}
+  .note{font-size:12.5px;color:var(--faint);margin-top:16px;max-width:72ch}
+  .note b{color:var(--muted)}
+  .clist{margin:6px 0 0;padding-left:20px;max-width:70ch}
+  .clist li{margin-bottom:10px;font-size:13.5px;color:var(--muted);line-height:1.5}
+  .clist li b{color:var(--ink);font-weight:600}
+  .clist li.warn::marker{color:var(--warn)}
+  .clist li.good::marker{color:var(--good)}
+  footer{border-top:1px solid var(--hair);padding-block:22px 40px;color:var(--faint);font-size:12px;font-family:var(--mono)}
+
+  @media (max-width:720px){
+    .split,.paths,.glossary,.legend,.verdict .row{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<header class="top">
+  <div class="wrap">
+    <div class="mark">{ }</div>
+    <h1>Guard de publicación del plan</h1>
+    <span class="stamp">verificado contra código · 2026-09-23</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <p class="eyebrow">Propuesta de Core Extension · object-manager</p>
+    <h2>El control de la suma: ¿en el módulo o en el core?</h2>
+    <p class="lede">Cuando se publica un plan de estudios, cada grupo de pesos debe sumar 100. La regla es simple; lo que hay que decidir es <strong>dónde vive el control</strong>, porque el dato y el momento de aplicarlo están en módulos distintos. Este documento recorre el caso, los dos caminos posibles con su alcance, y qué los diferencia, para elegir con la foto completa.</p>
+    <nav class="toc">
+      <a href="#caso"><b>1</b> El caso</a>
+      <a href="#hoy"><b>2</b> Cómo es hoy</a>
+      <a href="#caminos"><b>3</b> Los dos caminos</a>
+      <a href="#decide"><b>4</b> Qué decide</a>
+      <a href="#consec"><b>5</b> Consecuencias</a>
+      <a href="#ticket"><b>6</b> El ticket</a>
+    </nav>
+  </div>
+
+  <section id="caso">
+    <h3><span class="n">1</span> · El caso</h3>
+    <p class="oneliner">El momento de la regla y el dato de la regla no viven en el mismo módulo.</p>
+    <div class="split">
+      <div class="o"><div class="ot">El momento <span>curriculum-design</span></div><div class="od">Publicar es una transición de estado del plan (de Aprobado a Vigente). El plan es un objeto de curriculum-design: ahí ocurre el evento que hay que controlar.</div></div>
+      <div class="o"><div class="ot">El dato <span>curriculum-mapping</span></div><div class="od">Los pesos viven en las tributaciones (una fila por asignatura que aporta a una competencia), objeto de curriculum-mapping, agrupadas por plan, competencia y nivel.</div></div>
+    </div>
+    <p class="muted" style="margin-top:16px">Lo que se necesita es que un plan no llegue a Vigente si algún grupo de pesos no suma 100 (los grupos de matrices "Máx" quedan eximidos). Es un requerimiento verificado del negocio: está en la maqueta, en el plan de división y en la descripción del ticket. La regla no es el problema; el problema es que aplicarla obliga a cruzar dos módulos. Y bien resuelto, ese cruce cierra de paso dos huecos vecinos que hoy quedan sueltos.</p>
+    <div class="legend">
+      <span class="lg"><b>D1</b> El guard de suma = 100 al publicar el plan (el pedido central).</span>
+      <span class="lg"><b>G-2</b> Cerrar la escritura genérica que hoy saltea las reglas del peso.</span>
+      <span class="lg"><b>D4</b> Que el asistente MCP no tenga que duplicar la regla del peso.</span>
+      <span class="lg"><b>R-6</b> Solo las tributaciones que evalúan participan del peso.</span>
+      <span class="lg"><b>Máx</b> Matriz cuyo modo de consolidación exime a su grupo de sumar.</span>
+      <span class="lg"><b>UPONE-####</b> Número de ticket en Jira (el caso nace de UPONE-1770).</span>
+    </div>
+    <dl class="glossary">
+      <div><dt>Transición gobernada</dt><dd>El estado del plan es un enum con saltos declarados; el core valida cuál salto y con qué permiso, nunca el contenido.</dd></div>
+      <div><dt>Guard pre-escritura</dt><dd>Una validación que corre después del permiso y antes de escribir, y puede abortar. El core ya corre dos ahí.</dd></div>
+      <div><dt>Las tres puertas</dt><dd>Toda escritura entra por la UI, por el asistente MCP, o por GraphQL directo / el bulk del core. Una regla en una sola puerta no es barrera.</dd></div>
+    </dl>
+  </section>
+
+  <section id="hoy">
+    <h3><span class="n">2</span> · Cómo funciona hoy</h3>
+    <p class="oneliner">El core ya controla el permiso y la transición; falta el control del contenido, y la escritura tiene puertas sin gobernar.</p>
+    <div class="flow">
+      <div class="rail">
+        <div class="step g"><div class="st">1 · Llega la petición de publicar</div><div class="sd">Un cliente pide pasar el plan a Vigente.</div></div>
+        <div class="step g"><div class="st">2 · curriculum-design delega en el core</div><div class="sd">El plan no es un tipo especial que el módulo maneje aparte, así que su resolver delega en el resolver genérico. Verificado.</div></div>
+        <div class="step g"><div class="st">3 · El core valida permiso y transición</div><div class="sd">Permiso de publicar (<code>curriculum:publish</code>) + que el salto Aprobado→Vigente esté declarado. Esto ya corre.</div></div>
+        <div class="step w"><div class="st">4 · Control de suma = 100 <span class="chip w">no existe</span></div><div class="sd">Nada valida el contenido en esa transición. Nota: curriculum-design ya hace este mismo patrón para otro caso (valida la suma del árbol de evaluación al publicar un Activity), porque el motor de transiciones del core no tiene punto para reglas de negocio.</div></div>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Puerta de escritura del peso</th><th>Estado hoy</th></tr></thead>
+        <tbody>
+          <tr><td><span class="door">UI → mutación gobernada del módulo</span></td><td><span class="state g">valida R-6 y rango</span></td></tr>
+          <tr><td><span class="door">Asistente MCP → escritura genérica</span></td><td><span class="state g">bloqueado</span></td></tr>
+          <tr><td><span class="door">Asistente MCP → herramienta gobernada</span></td><td><span class="state n">no existe (D4)</span></td></tr>
+          <tr><td><span class="door">GraphQL directo</span></td><td><span class="state r">escribe sin reglas (G-2)</span></td></tr>
+          <tr><td><span class="door">Bulk-edit del core</span></td><td><span class="state r">escribe sin reglas (G-2)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><b>En corto:</b> hoy la publicación se puede hacer con pesos inconsistentes (no hay control), y el peso se puede escribir mal por dos puertas de atrás. El resto está cubierto por trabajo nuestro previo.</p>
+  </section>
+
+  <section id="caminos">
+    <h3><span class="n">3</span> · Los dos caminos y su alcance</h3>
+    <p class="oneliner">Los dos bloquean la publicación con pesos malos. Se diferencian en qué más cierran y qué cuesta.</p>
+    <div class="paths">
+      <div class="path">
+        <div class="ph"><span class="k">Opción B</span><h4>Solo módulo</h4></div>
+        <p class="tag">Un guard en curriculum-design, sin tocar el core.</p>
+        <dl>
+          <dt>Qué hace</dt><dd>Al publicar, curriculum-design lee los pesos y bloquea si un grupo no suma 100. Clona un patrón que el módulo ya tiene en producción.</dd>
+          <dt>Alcance</dt><dd><b>Bloquea la publicación.</b> Nada más. Lee en vivo, así que el bloqueo no se puede engañar.</dd>
+          <dt>Deja abierto</dt><dd class="open">La escritura del peso por GraphQL directo y por el bulk del core (G-2). La paridad del asistente MCP (D4).</dd>
+          <dt>Supone</dt><dd>Que el peso inválido en la base es tolerable (se detecta solo al publicar); que curriculum-design puede depender de curriculum-mapping y cargar su permiso, su modelo y su regla.</dd>
+          <dt>Costo</dt><dd>Ticket de módulo, sin RFC. Estrena una dependencia entre módulos.</dd>
+        </dl>
+      </div>
+      <div class="path core">
+        <div class="ph"><span class="k">Opción A</span><h4>En el core</h4></div>
+        <p class="tag">El core ofrece el punto de extensión; el módulo dueño registra su guard.</p>
+        <dl>
+          <dt>Qué hace</dt><dd>El core corre, antes de escribir, una lista de validaciones que los módulos registran. curriculum-mapping registra ahí su guard de suma.</dd>
+          <dt>Alcance</dt><dd><b>Bloquea la publicación</b> + cierra la escritura del peso por toda puerta (G-2) + deja la regla server-side, sin duplicar en MCP (D4).</dd>
+          <dt>Deja abierto</dt><dd class="open">Nada de lo anterior: cierra la entrada y la salida.</dd>
+          <dt>Supone</dt><dd>Nada entre módulos: el permiso, el modelo y la regla quedan en su dueño (curriculum-mapping). curriculum-design no se entera.</dd>
+          <dt>Costo</dt><dd>Cambio de core (Architecture change): RFC + coordinación con el equipo de core.</dd>
+        </dl>
+      </div>
+    </div>
+    <p class="sub">El panorama, puerta por puerta</p>
+    <p class="muted" style="font-size:13px;margin-top:0">Cómo leerlo: qué pasa con cada puerta según dónde viva el control.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Puerta / acción</th><th>Hoy</th><th>B · solo módulo</th><th>A · core</th></tr></thead>
+        <tbody>
+          <tr><td><span class="door">Publicar con pesos que no cierran</span></td><td><span class="state r">pasa</span></td><td><span class="state g">bloqueado</span></td><td><span class="state g">bloqueado</span></td></tr>
+          <tr><td><span class="door">Escribir el peso por GraphQL directo</span></td><td><span class="state r">sin reglas</span></td><td><span class="state r">sin reglas</span></td><td><span class="state g">gobernado</span></td></tr>
+          <tr><td><span class="door">Escribir el peso por el bulk del core</span></td><td><span class="state r">sin reglas</span></td><td><span class="state r">sin reglas</span></td><td><span class="state g">gobernado</span></td></tr>
+          <tr><td><span class="door">Paridad del asistente MCP (D4)</span></td><td><span class="state n">duplicada</span></td><td><span class="state n">duplicada</span></td><td><span class="state g">unificada</span></td></tr>
+          <tr><td><span class="door">Dependencia entre módulos</span></td><td><span class="state g">ninguna</span></td><td><span class="state r">nueva cd→cm</span></td><td><span class="state g">ninguna</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><b>En una frase:</b> B tapa la salida (la publicación), no la entrada (la escritura). A cierra las dos, y deja cada regla en su módulo dueño.</p>
+  </section>
+
+  <section id="decide">
+    <h3><span class="n">4</span> · Qué decide entre los dos</h3>
+    <p class="oneliner">Dos hechos del código, no opiniones, inclinan la balanza cuando el alcance pasa de "que no publique mal" a "que el dato no pueda quedar mal".</p>
+
+    <p class="sub">Hecho 1 · La escritura de atrás no tiene cierre desde un módulo, y no es una decisión</p>
+    <p class="muted">Que nadie pueda escribir un peso inválido por GraphQL directo o por el bulk del core (G-2) no se puede resolver desde un módulo: es el resolver genérico del core. Y no está abierto por diseño, está abierto por trabajo pendiente. Se identificó, se intentó cerrar en el módulo, y se revirtió a propósito para llevarlo al core.</p>
+    <blockquote><p>"the MCP is one of three doors, the UI's generic CRUD and API clients are the other two."</p><span class="src">commit del intento · UPONE-1758</span></blockquote>
+    <blockquote><p>"se remueve el guard del mod, se buscará la forma de agregarlo al core."</p><span class="src">commit del revert · UPONE-1758</span></blockquote>
+
+    <p class="sub">Hecho 2 · El control tiene que ser capability-aware, y ese conocimiento es del dueño</p>
+    <p class="muted">La tributación no está en todos los clientes: el objeto de pesos existe solo donde el módulo está instalado (verificado). Así que el guard tiene dos filtros antes de mirar nada: que el cliente tenga el módulo (el modelo existe) y que el usuario tenga el permiso de tributación (<code>competencyalignment:view</code>, con <code>hasCapability</code>). Los dos existen hoy, así que se puede en cualquiera de los dos caminos. La diferencia es de quién es ese conocimiento: en A lo aporta curriculum-mapping (su permiso, su modelo, su regla) y un cliente sin tributación simplemente no tiene guard; en B, curriculum-design tendría que leer un permiso ajeno en runtime, que en este sistema ya se trata como una dependencia de plataforma.</p>
+
+    <div class="verdict">
+      <p class="big">El requerimiento del negocio lo cumplen <em>los dos</em>. El panorama completo, <em>solo A</em>.</p>
+      <div class="row">
+        <div class="r"><div class="rt">Si el alcance es solo "que no publique mal"</div><p><b>B alcanza</b>, aceptando sus supuestos (peso inválido tolerable en la base, dependencia cd→cm). Es más rápido y no espera a core.</p></div>
+        <div class="r"><div class="rt">Si el alcance es "que el peso no pueda quedar mal por ninguna puerta"</div><p><b>A es el único camino</b>: cierra la escritura, unifica la regla server-side y deja cada módulo dueño de lo suyo. El costo es proceso (RFC), no deuda.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="consec">
+    <h3><span class="n">5</span> · Consecuencias en el tiempo</h3>
+    <p class="oneliner">B cumple hoy y deja deuda que se paga después; A abre capacidades que hoy no existen.</p>
+
+    <p class="sub">Si se va por B · la deuda que queda latente</p>
+    <ul class="clist">
+      <li class="warn"><b>El peso se puede corromper por atrás (G-2).</b> B frena la publicación, no la escritura. Un peso inválido escrito por GraphQL directo o el bulk del core queda en la base, y el error recién aparece al publicar: <b>tarde y lejos de la causa</b>. Cada plan que "no publica sin razón visible" va a mandar a alguien a debuggear un dato que se escribió por otra puerta.</li>
+      <li class="warn"><b>La regla vive en dos lugares (D4).</b> La validación del peso queda en el guard de cd y, en paralelo, en lo que el asistente MCP tenga que sostener por su lado. Dos copias que hay que mantener en sincronía a mano.</li>
+      <li class="warn"><b>El acoplamiento cd→cm es permanente.</b> No es un costo de una vez: mientras exista el guard, curriculum-design queda atado a un objeto y un permiso de curriculum-mapping, y los dos módulos se condicionan al evolucionar.</li>
+    </ul>
+
+    <p class="sub">Si se va por B · el sobre-esfuerzo y la lógica duplicada</p>
+    <ul class="clist">
+      <li class="warn"><b>La regla de suma se reescribe donde ya existe.</b> Agrupar por plan + competencia + nivel, la exención "Máx" y R-6 ya viven en curriculum-mapping. En B se vuelven a escribir en curriculum-design: se <b>duplica el conocimiento del dominio</b> de un módulo dentro del otro.</li>
+      <li class="warn"><b>Los dos filtros se hacen a mano.</b> El probe de "existe el modelo" y el chequeo de permiso (<code>hasCapability</code>) se cablean a mano en cd, replicando algo que en A es inherente (si cm no está, no hay guard).</li>
+      <li class="warn"><b>No se puede reusar.</b> El próximo módulo que necesite gatear una publicación por contenido no hereda nada: repite todo el patrón en su propio override. La duplicación se multiplica por cada caso nuevo.</li>
+      <li class="warn"><b>Es trabajo con fecha de vencimiento.</b> Como G-2 y D4 empujan igual hacia el core, el día que se haga A el guard de B hay que migrarlo o retirarlo. Parte del esfuerzo de B se tira.</li>
+    </ul>
+
+    <p class="sub">Con A · las puertas que se abren</p>
+    <p class="muted" style="font-size:13px;margin-top:0">A no resuelve solo este caso: deja una capacidad nueva en el core que otros casos reusan.</p>
+    <div class="split">
+      <div class="o"><div class="ot">Gate de contenido en cualquier transición</div><div class="od">Cualquier módulo puede bloquear un cambio de estado por su propia regla de negocio, no solo la tributación. Los gates de publicación quedan a un registro de distancia.</div></div>
+      <div class="o"><div class="ot">Invariantes que cruzan tablas</div><div class="od">Reglas de suma, conteo o referencia entre objetos, que la validación declarativa de hoy no puede expresar porque solo ve el propio registro.</div></div>
+      <div class="o"><div class="ot">Cierre del bypass para todo objeto gobernado</div><div class="od">No solo la tributación: cualquier objeto con reglas puede cerrar sus puertas de GraphQL directo y bulk del core. G-2 resuelto de sistema, no de un caso.</div></div>
+      <div class="o"><div class="ot">Herramientas MCP gobernadas sin duplicar</div><div class="od">Con la regla server-side, exponer escritura por el asistente deja de duplicar la regla y de arriesgar dato inconsistente. D4 resuelto de sistema.</div></div>
+      <div class="o"><div class="ot">Cubre el borrado</div><div class="od">La validación declarativa del core no corre en delete; el mecanismo sí, así que un retiro también puede gobernarse.</div></div>
+      <div class="o"><div class="ot">Un solo lugar de registro</div><div class="od">Los futuros guards no vuelven a tocar el core: se registran contra el mecanismo. El costo de core se paga una vez.</div></div>
+    </div>
+    <p class="note"><b>El contraste:</b> el esfuerzo de B se gasta en una copia local que después hay que deshacer; el de A se gasta una vez en una capacidad que queda para todos.</p>
+  </section>
+
+  <section id="ticket">
+    <h3><span class="n">6</span> · El ticket propuesto (opción A)</h3>
+    <p class="oneliner">Dos tickets: el mecanismo va al core, su consumo al módulo. curriculum-design no se toca.</p>
+    <div class="ficha">
+      <span class="f hot"><b>Ticket A</b> · Core Extension</span>
+      <span class="f"><b>Repo:</b> object-manager</span>
+      <span class="f"><b>Tipo:</b> Architecture change (RFC + PR)</span>
+      <span class="f"><b>Origin:</b> bloquea UPONE-1770</span>
+      <span class="f"><b>Habilita:</b> D1 · G-2 · D4</span>
+    </div>
+    <div class="rfc"><pre># RFC: Registry de interceptores de mutación pre-escritura (Object Manager)
+
+## Problema
+El core no tiene un punto de validación de negocio pre-escritura, y el campo de
+mutación tiene dueño único:
+  - enforceEnumTransitions valida la transición mirando solo arista + permiso.
+  - core_ObjectValidation (validación declarativa) no corre en transiciones, no
+    cruza tablas y no cubre delete.
+  - updateInstance es un solo campo: el core hace spread de los mods al final, así
+    que "gana el último" y un segundo mod no tiene dónde validar.
+Tres casos lo necesitan hoy: D1, G-2 y D4.
+
+## Propuesta
+Un registry de interceptores por (object, op[, when]), corridos en orden,
+pre-escritura, en los dos caminos de instance.resolver.js, después de
+enforceEnumTransitions y antes de prisma.write().
+
+  registerMutationInterceptor({
+    object: 'Curriculum', op: 'update',
+    when: { field: 'status', from: 'Approved', to: 'Active' },   // opcional
+    run: async (ctx) => { /* lanza si no cumple; nada si está OK */ },
+  });
+
+curriculum-mapping registra ahí su guard de suma (y sus interceptores de
+create/update/delete para cerrar G-2). Rompe el "gana el último": lista aditiva.
+
+## Alternativas descartadas
+  - Guard en curriculum-design (opción B): no cierra G-2/D4 y estrena el
+    acoplamiento cd→cm.
+  - Bandera derivada declarativa: denormaliza (puede mentir ante el bypass).
+
+## Impacto
+Aditivo, sin romper consumidores. Si ningún mod registra, todo se comporta igual
+que hoy. Los overrides de mod actuales coexisten.
+
+## Test cases
+  happy:     publicar con todos los grupos en 100 procede.
+  error:     un grupo en 80 aborta; el plan no pasa a Vigente.
+  borde:     grupo de matriz "Máx" eximido, publica.
+  regresión: dos interceptores sobre el mismo objeto corren ambos.</pre></div>
+    <div class="tickb">
+      <h4>Ticket B · módulo (curriculum-mapping) · consume el mecanismo</h4>
+      <p>Bloqueado por el Ticket A. Implementa el guard de suma (lee las tributaciones del plan, agrupa, exime "Máx", aborta si no da 100), con sus dos filtros (cliente + permiso), y lo registra contra la transición de publicación. Reusa lógica que el módulo ya tiene. Recomendación: acotarlo a D1 y dejar G-2/D4 como consumo incremental del mismo mecanismo.</p>
+    </div>
+  </section>
+
+  <section>
+    <h3>Fuentes · verificado contra el checkout real</h3>
+    <p class="oneliner">Cada afirmación traza a un archivo o un commit.</p>
+    <div class="srclist">
+      <div><b>Curriculum.json:126-134</b> · curriculum-design. La transición Aprobado→Vigente y su permiso ya están declarados.</div>
+      <div><b>polymorphicUpdate.resolver.js</b> · curriculum-design. El plan delega al core; el módulo ya valida suma al publicar un Activity (assertActivityEvaluationsOnPublish).</div>
+      <div><b>enum-transitions.md · instance.resolver.js</b> · object-manager. La ranura pre-escritura (transiciones + validación declarativa) y sus límites.</div>
+      <div><b>validateCompetencyAlignment.js · alignmentView.resolver.js</b> · curriculum-mapping. El peso valida R-6; la lectura se gatea por competencyalignment:view.</div>
+      <div><b>prisma/&lt;tenant&gt;/schema.prisma</b> · object-manager. El objeto de pesos existe solo en clientes con el módulo (UPU sí, otros no).</div>
+      <div><b>generic-write-block.js</b> · mcp. Cierra la puerta del MCP, no el bypass cross-client; el cierre integral se escala al core.</div>
+      <div><b>commits 7972381 / 068ec91</b> · curriculum-mapping. Intento de guard en el módulo y su revert con intención de llevarlo al core.</div>
+      <div><b>authChecker.js</b> · object-manager. hasCapability para el filtro de permiso en runtime.</div>
+    </div>
+    <p class="note"><b>Vigencia:</b> verificado el 2026-09-23 sobre la rama de trabajo de curriculum-design y curriculum-mapping y develop de object-manager. El diseño final del mecanismo lo fija el RFC con el equipo de core.</p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">up1 · sprint 11 · Core Extension (Architecture change) · deriva de UPONE-1770 (D1) · habilita G-2 y D4</div>
+</footer>

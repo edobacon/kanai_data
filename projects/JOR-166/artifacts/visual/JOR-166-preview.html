@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JOR-166 — Maqueta: Ventas / Facturas clientes (listado)</title>
+<style>
+  :root{
+    --bg:#f1f3f7;
+    --surface:#ffffff;
+    --surface-alt:#f7f8fb;
+    --border:#dfe3ea;
+    --border-strong:#c6ccd8;
+    --text:#1d2433;
+    --text-soft:#5b6576;
+    --text-faint:#8a93a3;
+    --primary:#1f5fd0;
+    --primary-soft:#e8effc;
+    --danger:#b4232a;
+    --danger-soft:#fdeceb;
+    --warn:#8a5a00;
+    --warn-soft:#fff5e0;
+    --ok:#1c6b48;
+    --ok-soft:#e6f4ec;
+    --neutral-soft:#eceff4;
+    --radius:8px;
+    --shadow:0 1px 2px rgba(23,31,46,.06), 0 6px 18px rgba(23,31,46,.06);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.45;
+  }
+  .page{max-width:1280px;margin:0 auto;padding:28px 20px 80px}
+
+  /* ---------- Cabecera de la maqueta (no es parte de la UI) ---------- */
+  .maq-head{background:#111827;color:#e8ecf4;border-radius:var(--radius);padding:20px 22px;margin-bottom:10px}
+  .maq-head h1{margin:0 0 6px;font-size:18px;letter-spacing:.2px}
+  .maq-head p{margin:0;color:#aab3c2;font-size:13px;max-width:92ch}
+  .maq-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.4px;
+       padding:3px 8px;border-radius:999px;background:#1f2937;color:#c9d4e6;border:1px solid #2f3a4c}
+  .maq-section{margin:34px 0 12px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .maq-section h2{margin:0;font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--text-soft)}
+  .maq-section .req{font-size:11px;font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:999px;
+                    background:var(--primary-soft);color:var(--primary);border:1px solid #c7dbfa}
+  .maq-note{background:#fffdf4;border:1px solid #efe2bd;border-left:4px solid #d9b755;
+            border-radius:6px;padding:10px 14px;margin:10px 0 16px;color:#5f4c14;font-size:13px}
+  .maq-note strong{color:#4a3a06}
+  .maq-note ul{margin:6px 0 0 18px;padding:0}
+
+  /* ---------- Marco de la aplicación ---------- */
+  .app{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+  .crumbs{padding:12px 20px;border-bottom:1px solid var(--border);color:var(--text-faint);font-size:12px;background:var(--surface-alt)}
+  .crumbs b{color:var(--text-soft);font-weight:600}
+  .view-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:18px 20px 14px;flex-wrap:wrap}
+  .view-head h3{margin:0;font-size:20px;font-weight:650}
+  .view-head .sub{margin:4px 0 0;color:var(--text-soft);font-size:13px}
+  .head-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* ---------- Controles ---------- */
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:6px;border:1px solid var(--border-strong);
+       background:#fff;color:var(--text);padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;
+       font-family:inherit;white-space:nowrap}
+  .btn:hover{background:var(--surface-alt)}
+  .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn-primary:hover{background:#1a53b8}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--primary)}
+  .btn-ghost:hover{background:var(--primary-soft)}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .btn .ico{font-size:14px;line-height:1}
+  .btn-sm{padding:6px 10px;font-size:12px}
+
+  .filters{padding:0 20px 16px;display:flex;flex-direction:column;gap:12px}
+  .filter-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-faint)}
+  .input,.select{border:1px solid var(--border-strong);border-radius:6px;padding:8px 10px;font-size:13px;
+                 font-family:inherit;color:var(--text);background:#fff;min-width:150px}
+  .input::placeholder{color:#aeb6c3}
+  .input-search{min-width:300px;background-image:none}
+  .input-invalid{border-color:var(--danger);background:#fffafa;box-shadow:0 0 0 3px rgba(180,35,42,.09)}
+  .daterange{display:flex;gap:10px;align-items:flex-end;padding:10px 12px;border:1px solid var(--border);
+             border-radius:8px;background:var(--surface-alt);flex-wrap:wrap}
+  .daterange .sep{align-self:center;color:var(--text-faint);padding-bottom:9px}
+  .daterange.invalid{border-color:#e9b4b4;background:var(--danger-soft)}
+
+  .inline-error{display:flex;gap:8px;align-items:flex-start;background:var(--danger-soft);
+                border:1px solid #f0c0bf;color:#7d1a20;border-radius:6px;padding:9px 12px;font-size:13px}
+  .inline-error .ico{font-weight:800}
+  .inline-warn{display:flex;gap:8px;align-items:flex-start;background:var(--warn-soft);
+               border:1px solid #f0dcae;color:var(--warn);border-radius:6px;padding:9px 12px;font-size:13px}
+
+  .chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .chips-label{font-size:12px;color:var(--text-faint);font-weight:600}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--primary-soft);color:#17458f;
+        border:1px solid #cbdcf8;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600}
+  .chip .x{color:#5b7fc0;font-weight:700;cursor:pointer}
+
+  /* ---------- Tabla ---------- */
+  .table-wrap{overflow-x:auto;border-top:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1120px}
+  thead th{background:var(--surface-alt);text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;
+           color:var(--text-soft);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+  thead th .sort{color:var(--text-faint);font-weight:400;margin-left:4px}
+  thead tr.col-filters th{background:#fff;padding:7px 8px;border-bottom:1px solid var(--border)}
+  thead tr.col-filters .input,thead tr.col-filters .select{min-width:0;width:100%;padding:5px 7px;font-size:12px}
+  tbody td{padding:11px 12px;border-bottom:1px solid #eef0f4;vertical-align:middle}
+  tbody tr:hover{background:#fafbfd}
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .mono{font-family:var(--mono);font-size:12.5px}
+  .cli{font-weight:600}
+  .muted{color:var(--text-faint)}
+  .dash{color:#b9c0cc}
+  th.col-acciones,td.col-acciones{width:56px;text-align:center}
+
+  .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .b-emitida{background:var(--primary-soft);color:#17458f}
+  .b-pagada{background:var(--ok-soft);color:var(--ok)}
+  .b-pendiente{background:var(--warn-soft);color:var(--warn)}
+  .b-anulada{background:var(--danger-soft);color:#8b2027}
+
+  details.menu{position:relative;display:inline-block}
+  details.menu>summary{list-style:none;cursor:pointer;border:1px solid var(--border-strong);border-radius:6px;
+                       width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+                       color:var(--text-soft);font-weight:800;background:#fff}
+  details.menu>summary::-webkit-details-marker{display:none}
+  .menu-pop{position:absolute;right:0;top:32px;z-index:5;min-width:212px;background:#fff;border:1px solid var(--border);
+            border-radius:8px;box-shadow:0 10px 26px rgba(23,31,46,.16);padding:6px;text-align:left}
+  .menu-pop .mi{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border-radius:5px;font-size:13px;color:var(--text)}
+  .menu-pop .mi:hover{background:var(--surface-alt)}
+  .menu-pop .mi.off{color:var(--text-faint)}
+  .menu-pop .mi small{color:var(--text-faint);font-size:11px}
+  .menu-pop .mhint{padding:7px 9px;border-top:1px solid var(--border);margin-top:4px;color:var(--text-faint);font-size:11.5px}
+
+  .table-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 20px;flex-wrap:wrap;
+              border-top:1px solid var(--border);background:var(--surface-alt)}
+  .table-foot .count{color:var(--text-soft);font-size:12.5px}
+  .pager{display:flex;gap:6px;align-items:center}
+  .pager .pg{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);
+             background:#fff;border-radius:6px;font-size:12.5px;color:var(--text);cursor:pointer}
+  .pager .pg.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+  .pager .pg.off{color:#b9c0cc;cursor:not-allowed}
+  .pager select{border:1px solid var(--border-strong);border-radius:6px;padding:5px 7px;font-size:12.5px}
+
+  /* ---------- Estados ---------- */
+  .state{padding:56px 24px;text-align:center;color:var(--text-soft)}
+  .state .glyph{font-size:30px;line-height:1;margin-bottom:12px;color:#b6bfcd}
+  .state h4{margin:0 0 6px;font-size:16px;color:var(--text)}
+  .state p{margin:0 auto;max-width:56ch;font-size:13.5px}
+  .state .acts{margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .sk{background:linear-gradient(90deg,#eef0f4 0%,#e4e7ee 50%,#eef0f4 100%);border-radius:4px;height:11px;display:block}
+  .sk.w40{width:40%}.sk.w60{width:60%}.sk.w80{width:80%}.sk.w100{width:100%}.sk.w25{width:25%}
+  .sr{display:block;padding:6px 0}
+
+  /* ---------- Overlay de preparación de impresión ---------- */
+  .modal-scrim{background:rgba(23,31,46,.35);padding:38px 20px;border-radius:0}
+  .modal{max-width:440px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 18px 44px rgba(16,22,36,.28);padding:22px}
+  .modal h4{margin:0 0 6px;font-size:16px}
+  .modal p{margin:0;color:var(--text-soft);font-size:13px}
+  .progress{height:6px;border-radius:999px;background:var(--neutral-soft);margin:16px 0 8px;overflow:hidden}
+  .progress i{display:block;height:100%;width:62%;background:var(--primary);border-radius:999px}
+  .modal .foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  .modal .meta{font-size:12px;color:var(--text-faint);display:flex;justify-content:space-between}
+
+  /* ---------- Documento de impresión ---------- */
+  .sheet{background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:var(--shadow);
+         padding:26px 30px;font-size:12px;color:#111827}
+  .sheet-head{display:flex;justify-content:space-between;gap:20px;border-bottom:2px solid #111827;padding-bottom:12px;flex-wrap:wrap}
+  .sheet-head h4{margin:0 0 4px;font-size:16px;letter-spacing:.2px}
+  .sheet-head .org{font-size:12px;color:#4b5563}
+  .sheet-head .right{text-align:right;font-size:11.5px;color:#4b5563;white-space:nowrap}
+  .sheet-crit{margin:12px 0 14px;font-size:11.5px;color:#374151;display:grid;grid-template-columns:150px 1fr;gap:4px 14px}
+  .sheet-crit dt{font-weight:700;color:#111827}
+  .sheet-crit dd{margin:0}
+  .sheet table{min-width:0;font-size:11.5px}
+  .sheet thead th{background:#f3f4f6;color:#111827;border-bottom:1px solid #9ca3af;text-transform:none;letter-spacing:0;font-size:11px;padding:7px 8px}
+  .sheet tbody td{padding:6px 8px;border-bottom:1px solid #e5e7eb}
+  .sheet tfoot td{padding:8px;border-top:2px solid #111827;font-weight:700;background:#fafafa}
+  .sheet-foot{display:flex;justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid #d1d5db;
+              color:#6b7280;font-size:10.5px}
+  .sheet-cut{margin:14px 0;border-top:1px dashed #b7bdc8;text-align:center}
+  .sheet-cut span{position:relative;top:-10px;background:#fff;padding:0 10px;color:var(--text-faint);font-size:11px}
+
+  @media print{
+    .maq-head,.maq-section,.maq-note,.app{display:none!important}
+    body{background:#fff}
+    .sheet{border:0;box-shadow:none;padding:0}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ CABECERA DE LA MAQUETA ============ -->
+  <div class="maq-head">
+    <h1>JOR-166 — Ventas / Facturas clientes: listado canónico (maqueta de verificación)</h1>
+    <p>Maqueta estática del slice ejecutable de la iteración 1: 9 columnas del canon con RUT y Total propios (REQ-01),
+       rango de fechas con validación inicio ≤ fin más acciones aplicar y limpiar (REQ-02), e Imprimir listado sobre
+       todo el universo filtrado (REQ-03 / REQ-05). Los estados de carga, vacío y error se muestran uno debajo del otro
+       para poder verificarlos sin interacción.</p>
+    <div class="maq-legend">
+      <span class="tag">REQ-01 · 9 columnas</span>
+      <span class="tag">REQ-02 · rango + validación</span>
+      <span class="tag">REQ-03 · imprimir</span>
+      <span class="tag">REQ-04 · búsqueda y filtros combinables</span>
+      <span class="tag">REQ-05 · reuso fetchAllPagesCapped (tope 5000)</span>
+      <span class="tag">Pendiente · JOR-166-Q1 rótulo Orden</span>
+      <span class="tag">Pendiente · JOR-166-Q2 set de Acciones</span>
+    </div>
+  </div>
+
+  <!-- ============ 1. ESTADO CON DATOS ============ -->
+  <div class="maq-section">
+    <h2>1 · Listado con resultados</h2>
+    <span class="req">REQ-01</span><span class="req">REQ-02</span><span class="req">REQ-03</span><span class="req">REQ-04</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong>
+    <ul>
+      <li>Las nueve columnas del canon en este orden: Factura, Cliente, RUT, Total, Origen, Orden, Fecha, Estado, Acciones.
+          RUT y Total ya no viven embebidos en Cliente ni en el bloque Neto/IVA/Total.</li>
+      <li>Filtros por columna en la segunda fila del encabezado, combinables con el buscador por cliente y con el rango de fechas.</li>
+      <li>Rango de fechas con acción <em>Aplicar</em> explícita (ya no aplica al tipear) y <em>Limpiar rango</em> que conserva el resto de los filtros.</li>
+      <li>El rótulo de la columna <em>Orden</em> se muestra como lo nombra el canon; su semántica queda pendiente (JOR-166-Q1).</li>
+    </ul>
+  </div>
+
+  <div class="app">
+    <div class="crumbs">Inicio / <b>Ventas</b> / <b>Facturas clientes</b></div>
+
+    <div class="view-head">
+      <div>
+        <h3>Facturas clientes</h3>
+        <p class="sub">Consulta, filtra e imprime las facturas emitidas a clientes.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn"><span class="ico">🖨</span> Imprimir listado</button>
+        <button class="btn"><span class="ico">⭳</span> Exportar CSV</button>
+        <button class="btn btn-primary"><span class="ico">＋</span> Crear factura</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-row">
+        <div class="field">
+          <label for="q1">Buscar cliente</label>
+          <input id="q1" class="input input-search" type="text" value="constructora" placeholder="Nombre o razón social del cliente">
+        </div>
+
+        <div class="daterange">
+          <div class="field">
+            <label for="d1">Fecha inicio</label>
+            <input id="d1" class="input" type="date" value="2026-08-01">
+          </div>
+          <span class="sep">→</span>
+          <div class="field">
+            <label for="d2">Fecha fin</label>
+            <input id="d2" class="input" type="date" value="2026-09-15">
+          </div>
+          <button class="btn btn-primary btn-sm">Aplicar rango</button>
+          <button class="btn btn-ghost btn-sm">Limpiar rango</button>
+        </div>
+      </div>
+
+      <div class="chips">
+        <span class="chips-label">Filtros activos:</span>
+        <span class="chip">Cliente contiene “constructora” <span class="x">✕</span></span>
+        <span class="chip">Período 01-08-2026 al 15-09-2026 <span class="x">✕</span></span>
+        <span class="chip">Estado: Emitida <span class="x">✕</span></span>
+        <button class="btn btn-ghost btn-sm">Limpiar todos</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Factura <span class="sort">↕</span></th>
+            <th>Cliente <span class="sort">↕</span></th>
+            <th>RUT</th>
+            <th class="num">Total <span class="sort">↕</span></th>
+            <th>Origen</th>
+            <th>Orden</th>
+            <th>Fecha <span class="sort">↓</span></th>
+            <th>Estado</th>
+            <th class="col-acciones">Acciones</th>
+          </tr>
+          <tr class="col-filters">
+            <th><input class="input" type="text" placeholder="N°"></th>
+            <th><input class="input" type="text" value="constructora" placeholder="Cliente"></th>
+            <th><input class="input" type="text" placeholder="RUT"></th>
+            <th><input class="input" type="text" placeholder="Monto"></th>
+            <th>
+              <select class="select">
+                <option>Todos</option><option>Nota de pedido</option><option>Recepción</option><option>Sin documento</option>
+              </select>
+            </th>
+            <th><input class="input" type="text" placeholder="Orden"></th>
+            <th><span class="muted" style="font-size:11.5px">Usa el rango ↑</span></th>
+            <th>
+              <select class="select">
+                <option selected>Emitida</option><option>Todos</option><option>Pagada</option><option>Pendiente</option><option>Anulada</option>
+              </select>
+            </th>
+            <th class="col-acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">F-000241</td>
+            <td class="cli">Constructora Andes Sur SpA</td>
+            <td class="mono">76.543.210-8</td>
+            <td class="num">$ 8.412.900</td>
+            <td>Nota de pedido</td>
+            <td class="mono">OC-4412</td>
+            <td>15-09-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones">
+              <details class="menu">
+                <summary>⋯</summary>
+                <div class="menu-pop">
+                  <div class="mi">Ver detalle</div>
+                  <div class="mi">Clonar</div>
+                  <div class="mi off">Descargar XML <small>por definir</small></div>
+                  <div class="mi off">Descargar PDF <small>por definir</small></div>
+                  <div class="mi">Anular</div>
+                  <div class="mhint">Set final pendiente de negocio (JOR-166-Q2). Este menú es andamiaje y no se imprime.</div>
+                </div>
+              </details>
+            </td>
+          </tr>
+          <tr>
+            <td class="mono">F-000238</td>
+            <td class="cli">Constructora Los Álamos Ltda.</td>
+            <td class="mono">77.019.884-K</td>
+            <td class="num">$ 1.247.650</td>
+            <td>Recepción</td>
+            <td class="mono">OC-4388</td>
+            <td>11-09-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000235</td>
+            <td class="cli">Constructora Pehuén S.A.</td>
+            <td class="mono">96.777.120-4</td>
+            <td class="num">$ 23.980.000</td>
+            <td>Nota de pedido</td>
+            <td class="mono">OC-4370</td>
+            <td>04-09-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000231</td>
+            <td class="cli">Constructora Río Claro SpA</td>
+            <td class="mono">76.112.440-1</td>
+            <td class="num">$ 645.300</td>
+            <td>Sin documento</td>
+            <td class="dash">—</td>
+            <td>28-08-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000229</td>
+            <td class="cli">Constructora Maipo Norte Ltda.</td>
+            <td class="mono">78.440.007-6</td>
+            <td class="num">$ 3.105.480</td>
+            <td>Recepción</td>
+            <td class="mono">OC-4351</td>
+            <td>22-08-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000224</td>
+            <td class="cli">Constructora Huelén SpA</td>
+            <td class="mono">76.908.311-2</td>
+            <td class="num">$ 512.000</td>
+            <td>Nota de pedido</td>
+            <td class="mono">OC-4330</td>
+            <td>09-08-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000220</td>
+            <td class="cli">Constructora Andes Sur SpA</td>
+            <td class="mono">76.543.210-8</td>
+            <td class="num">$ 9.877.420</td>
+            <td>Recepción</td>
+            <td class="mono">OC-4318</td>
+            <td>01-08-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-foot">
+      <span class="count">Mostrando <b>1 a 7</b> de <b>34</b> facturas que cumplen los filtros activos</span>
+      <div class="pager">
+        <select><option>10 por página</option><option>25 por página</option><option>50 por página</option></select>
+        <span class="pg off">‹</span>
+        <span class="pg active">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">4</span>
+        <span class="pg">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 2. RANGO INVÁLIDO ============ -->
+  <div class="maq-section">
+    <h2>2 · Rango de fechas inválido</h2>
+    <span class="req">REQ-02</span><span class="req">CA-03</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> con inicio posterior al fin, al presionar <em>Aplicar rango</em> se muestra el mensaje
+    y <strong>no se aplica el filtro</strong>: los resultados, el contador y los chips quedan exactamente como estaban
+    (el chip de período sigue mostrando el rango vigente, no el inválido). Los campos quedan marcados y el botón
+    <em>Aplicar rango</em> queda deshabilitado mientras el rango sea inválido.
+  </div>
+
+  <div class="app">
+    <div class="crumbs">Inicio / <b>Ventas</b> / <b>Facturas clientes</b></div>
+    <div class="view-head">
+      <div>
+        <h3>Facturas clientes</h3>
+        <p class="sub">Consulta, filtra e imprime las facturas emitidas a clientes.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn"><span class="ico">🖨</span> Imprimir listado</button>
+        <button class="btn"><span class="ico">⭳</span> Exportar CSV</button>
+        <button class="btn btn-primary"><span class="ico">＋</span> Crear factura</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="filter-row">
+        <div class="field">
+          <label for="q2">Buscar cliente</label>
+          <input id="q2" class="input input-search" type="text" value="constructora">
+        </div>
+        <div class="daterange invalid">
+          <div class="field">
+            <label for="d3">Fecha inicio</label>
+            <input id="d3" class="input input-invalid" type="date" value="2026-09-30" aria-invalid="true" aria-describedby="err-rango">
+          </div>
+          <span class="sep">→</span>
+          <div class="field">
+            <label for="d4">Fecha fin</label>
+            <input id="d4" class="input input-invalid" type="date" value="2026-08-01" aria-invalid="true" aria-describedby="err-rango">
+          </div>
+          <button class="btn btn-primary btn-sm" disabled>Aplicar rango</button>
+          <button class="btn btn-ghost btn-sm">Limpiar rango</button>
+        </div>
+      </div>
+
+      <div class="inline-error" id="err-rango" role="alert">
+        <span class="ico">!</span>
+        <span>La fecha de inicio no puede ser posterior a la fecha de fin. Corrige el rango para aplicarlo;
+              mientras tanto se mantienen los resultados del período vigente.</span>
+      </div>
+
+      <div class="chips">
+        <span class="chips-label">Filtros activos:</span>
+        <span class="chip">Cliente contiene “constructora” <span class="x">✕</span></span>
+        <span class="chip">Período 01-08-2026 al 15-09-2026 <span class="x">✕</span></span>
+        <span class="chip">Estado: Emitida <span class="x">✕</span></span>
+        <button class="btn btn-ghost btn-sm">Limpiar todos</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Factura</th><th>Cliente</th><th>RUT</th><th class="num">Total</th><th>Origen</th>
+            <th>Orden</th><th>Fecha</th><th>Estado</th><th class="col-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">F-000241</td><td class="cli">Constructora Andes Sur SpA</td><td class="mono">76.543.210-8</td>
+            <td class="num">$ 8.412.900</td><td>Nota de pedido</td><td class="mono">OC-4412</td><td>15-09-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000238</td><td class="cli">Constructora Los Álamos Ltda.</td><td class="mono">77.019.884-K</td>
+            <td class="num">$ 1.247.650</td><td>Recepción</td><td class="mono">OC-4388</td><td>11-09-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+          <tr>
+            <td class="mono">F-000235</td><td class="cli">Constructora Pehuén S.A.</td><td class="mono">96.777.120-4</td>
+            <td class="num">$ 23.980.000</td><td>Nota de pedido</td><td class="mono">OC-4370</td><td>04-09-2026</td>
+            <td><span class="badge b-emitida">Emitida</span></td>
+            <td class="col-acciones"><details class="menu"><summary>⋯</summary><div class="menu-pop"><div class="mi">Ver detalle</div><div class="mi">Clonar</div><div class="mi">Anular</div><div class="mhint">Set final pendiente (JOR-166-Q2).</div></div></details></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-foot">
+      <span class="count">Mostrando <b>1 a 7</b> de <b>34</b> facturas que cumplen los filtros activos
+        <span class="muted">(sin cambios: el rango inválido no se aplicó)</span></span>
+      <div class="pager">
+        <span class="pg off">‹</span><span class="pg active">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">4</span><span class="pg">›</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 3. CARGA ============ -->
+  <div class="maq-section">
+    <h2>3 · Cargando resultados</h2>
+    <span class="req">REQ-04</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> el encabezado, los controles y los filtros activos permanecen visibles y operables;
+    solo el cuerpo de la tabla muestra el esqueleto de carga. Los botones que dependen del resultado
+    (<em>Imprimir listado</em> y <em>Exportar CSV</em>) quedan deshabilitados mientras la consulta está en vuelo.
+  </div>
+
+  <div class="app">
+    <div class="crumbs">Inicio / <b>Ventas</b> / <b>Facturas clientes</b></div>
+    <div class="view-head">
+      <div>
+        <h3>Facturas clientes</h3>
+        <p class="sub">Consulta, filtra e imprime las facturas emitidas a clientes.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn" disabled><span class="ico">🖨</span> Imprimir listado</button>
+        <button class="btn" disabled><span class="ico">⭳</span> Exportar CSV</button>
+        <button class="btn btn-primary"><span class="ico">＋</span> Crear factura</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-row">
+        <div class="field">
+          <label>Buscar cliente</label>
+          <input class="input input-search" type="text" value="constructora">
+        </div>
+        <div class="daterange">
+          <div class="field"><label>Fecha inicio</label><input class="input" type="date" value="2026-08-01"></div>
+          <span class="sep">→</span>
+          <div class="field"><label>Fecha fin</label><input class="input" type="date" value="2026-09-15"></div>
+          <button class="btn btn-primary btn-sm">Aplicar rango</button>
+          <button class="btn btn-ghost btn-sm">Limpiar rango</button>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Factura</th><th>Cliente</th><th>RUT</th><th class="num">Total</th><th>Origen</th>
+            <th>Orden</th><th>Fecha</th><th>Estado</th><th class="col-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody aria-busy="true">
+          <tr><td><span class="sk w80"></span></td><td><span class="sk w100"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w40"></span></td><td class="col-acciones"><span class="sk w25"></span></td></tr>
+          <tr><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w100"></span></td><td><span class="sk w40"></span></td><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w40"></span></td><td class="col-acciones"><span class="sk w25"></span></td></tr>
+          <tr><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w100"></span></td><td><span class="sk w40"></span></td><td><span class="sk w60"></span></td><td><span class="sk w40"></span></td><td class="col-acciones"><span class="sk w25"></span></td></tr>
+          <tr><td><span class="sk w60"></span></td><td><span class="sk w100"></span></td><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w60"></span></td><td><span class="sk w40"></span></td><td class="col-acciones"><span class="sk w25"></span></td></tr>
+          <tr><td><span class="sk w80"></span></td><td><span class="sk w80"></span></td><td><span class="sk w100"></span></td><td><span class="sk w60"></span></td><td><span class="sk w80"></span></td><td><span class="sk w40"></span></td><td><span class="sk w60"></span></td><td><span class="sk w40"></span></td><td class="col-acciones"><span class="sk w25"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot"><span class="count">Cargando facturas…</span></div>
+  </div>
+
+  <!-- ============ 4. VACÍO ============ -->
+  <div class="maq-section">
+    <h2>4 · Sin resultados</h2>
+    <span class="req">REQ-02</span><span class="req">REQ-04</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> el mensaje de vacío enumera los filtros que produjeron el resultado vacío
+    (búsqueda, rango y filtros por columna) y ofrece limpiar solo el rango o limpiar todo. <em>Imprimir listado</em> y
+    <em>Exportar CSV</em> quedan deshabilitados porque no hay filas que imprimir. El encabezado de columnas se mantiene
+    visible para que el usuario sepa qué se está consultando.
+  </div>
+
+  <div class="app">
+    <div class="crumbs">Inicio / <b>Ventas</b> / <b>Facturas clientes</b></div>
+    <div class="view-head">
+      <div>
+        <h3>Facturas clientes</h3>
+        <p class="sub">Consulta, filtra e imprime las facturas emitidas a clientes.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn" disabled><span class="ico">🖨</span> Imprimir listado</button>
+        <button class="btn" disabled><span class="ico">⭳</span> Exportar CSV</button>
+        <button class="btn btn-primary"><span class="ico">＋</span> Crear factura</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-row">
+        <div class="field">
+          <label>Buscar cliente</label>
+          <input class="input input-search" type="text" value="inmobiliaria del este">
+        </div>
+        <div class="daterange">
+          <div class="field"><label>Fecha inicio</label><input class="input" type="date" value="2026-01-01"></div>
+          <span class="sep">→</span>
+          <div class="field"><label>Fecha fin</label><input class="input" type="date" value="2026-01-31"></div>
+          <button class="btn btn-primary btn-sm">Aplicar rango</button>
+          <button class="btn btn-ghost btn-sm">Limpiar rango</button>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="chips-label">Filtros activos:</span>
+        <span class="chip">Cliente contiene “inmobiliaria del este” <span class="x">✕</span></span>
+        <span class="chip">Período 01-01-2026 al 31-01-2026 <span class="x">✕</span></span>
+        <span class="chip">Estado: Pagada <span class="x">✕</span></span>
+        <button class="btn btn-ghost btn-sm">Limpiar todos</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Factura</th><th>Cliente</th><th>RUT</th><th class="num">Total</th><th>Origen</th>
+            <th>Orden</th><th>Fecha</th><th>Estado</th><th class="col-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="9">
+              <div class="state">
+                <div class="glyph">🗐</div>
+                <h4>No hay facturas para los filtros aplicados</h4>
+                <p>Ninguna factura de clientes coincide con la búsqueda “inmobiliaria del este”, el período
+                   01-01-2026 al 31-01-2026 y el estado Pagada. Ajusta o quita alguno de los filtros para ver resultados.</p>
+                <div class="acts">
+                  <button class="btn">Limpiar rango de fechas</button>
+                  <button class="btn">Limpiar todos los filtros</button>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-foot"><span class="count">0 facturas</span></div>
+  </div>
+
+  <!-- ============ 5. ERROR ============ -->
+  <div class="maq-section">
+    <h2>5 · Error al cargar el listado</h2>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> el error no descarta los filtros ingresados y ofrece reintentar. No se expone
+    detalle técnico al usuario más allá de un código de referencia para soporte.
+  </div>
+
+  <div class="app">
+    <div class="crumbs">Inicio / <b>Ventas</b> / <b>Facturas clientes</b></div>
+    <div class="view-head">
+      <div>
+        <h3>Facturas clientes</h3>
+        <p class="sub">Consulta, filtra e imprime las facturas emitidas a clientes.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn" disabled><span class="ico">🖨</span> Imprimir listado</button>
+        <button class="btn" disabled><span class="ico">⭳</span> Exportar CSV</button>
+        <button class="btn btn-primary"><span class="ico">＋</span> Crear factura</button>
+      </div>
+    </div>
+    <div class="table-wrap" style="border-top:1px solid var(--border)">
+      <div class="state">
+        <div class="glyph">⚠</div>
+        <h4>No se pudo cargar el listado de facturas</h4>
+        <p>Ocurrió un problema al consultar las facturas de clientes. Tus filtros se conservaron: vuelve a intentarlo
+           y, si el problema persiste, informa el código de referencia a soporte.</p>
+        <p class="muted mono" style="margin-top:8px">Referencia: VTA-FC-5031</p>
+        <div class="acts"><button class="btn btn-primary">Reintentar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 6. PREPARANDO IMPRESIÓN ============ -->
+  <div class="maq-section">
+    <h2>6 · Preparando la impresión (trae todo el universo filtrado)</h2>
+    <span class="req">REQ-03</span><span class="req">REQ-05</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> al presionar <em>Imprimir listado</em> se recorren todas las páginas del universo
+    filtrado reusando la lógica ya existente del export (tope 5000 filas); el usuario ve el avance y puede cancelar.
+    Al terminar, la impresión la resuelve el navegador (no hay generación de documento en el servidor).
+    Debajo está el aviso de tope alcanzado.
+  </div>
+
+  <div class="app">
+    <div class="modal-scrim">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt1">
+        <h4 id="mt1">Preparando la impresión</h4>
+        <p>Se están recuperando todas las facturas que cumplen los filtros activos, incluidas las que no están en la página visible.</p>
+        <div class="progress"><i></i></div>
+        <div class="meta"><span>2.120 de 3.418 facturas</span><span>Página 22 de 35</span></div>
+        <div class="foot">
+          <button class="btn">Cancelar</button>
+          <button class="btn btn-primary" disabled>Abrir vista de impresión</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:16px"></div>
+  <div class="app">
+    <div style="padding:18px 20px">
+      <div class="inline-warn" role="status">
+        <span class="ico">!</span>
+        <span><b>Se alcanzó el máximo de 5.000 registros imprimibles.</b> El listado se imprimirá con las primeras 5.000
+              facturas del período y los filtros aplicados, ordenadas por fecha descendente. Acota el rango de fechas o
+              agrega filtros para imprimir el universo completo.</span>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button class="btn">Ajustar filtros</button>
+        <button class="btn btn-primary">Imprimir las primeras 5.000</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 7. DOCUMENTO IMPRIMIBLE ============ -->
+  <div class="maq-section">
+    <h2>7 · Salida imprimible del listado</h2>
+    <span class="req">REQ-03</span><span class="req">CA-04</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> el documento incluye el período aplicado y el resto de los criterios en el
+    encabezado, las ocho columnas de datos y <strong>ninguna</strong> columna Acciones ni control de interfaz
+    (buscador, selects, chips, paginación, menús). El total de registros corresponde al universo filtrado completo,
+    no a la página visible. Cuando no hay filtros, el encabezado indica que se imprime el listado completo disponible
+    para el usuario.
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h4>Ventas — Facturas clientes</h4>
+        <div class="org">Jormat S.A. · Sucursal Santiago Centro</div>
+      </div>
+      <div class="right">
+        Emitido el 17-09-2026 11:42<br>
+        Usuario: eduardo.bacon<br>
+        Página 1 de 4
+      </div>
+    </div>
+
+    <dl class="sheet-crit">
+      <dt>Período</dt><dd>01-08-2026 al 15-09-2026 (ambos días incluidos)</dd>
+      <dt>Búsqueda cliente</dt><dd>“constructora”</dd>
+      <dt>Estado</dt><dd>Emitida</dd>
+      <dt>Origen</dt><dd>Todos</dd>
+      <dt>Registros incluidos</dt><dd>34 facturas (universo filtrado completo)</dd>
+    </dl>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Factura</th><th>Cliente</th><th>RUT</th><th style="text-align:right">Total</th>
+          <th>Origen</th><th>Orden</th><th>Fecha</th><th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>F-000241</td><td>Constructora Andes Sur SpA</td><td>76.543.210-8</td><td class="num">$ 8.412.900</td><td>Nota de pedido</td><td>OC-4412</td><td>15-09-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000238</td><td>Constructora Los Álamos Ltda.</td><td>77.019.884-K</td><td class="num">$ 1.247.650</td><td>Recepción</td><td>OC-4388</td><td>11-09-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000235</td><td>Constructora Pehuén S.A.</td><td>96.777.120-4</td><td class="num">$ 23.980.000</td><td>Nota de pedido</td><td>OC-4370</td><td>04-09-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000231</td><td>Constructora Río Claro SpA</td><td>76.112.440-1</td><td class="num">$ 645.300</td><td>Sin documento</td><td>—</td><td>28-08-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000229</td><td>Constructora Maipo Norte Ltda.</td><td>78.440.007-6</td><td class="num">$ 3.105.480</td><td>Recepción</td><td>OC-4351</td><td>22-08-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000226</td><td>Constructora Aconcagua SpA</td><td>76.330.981-5</td><td class="num">$ 1.980.000</td><td>Nota de pedido</td><td>OC-4341</td><td>14-08-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000224</td><td>Constructora Huelén SpA</td><td>76.908.311-2</td><td class="num">$ 512.000</td><td>Nota de pedido</td><td>OC-4330</td><td>09-08-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000222</td><td>Constructora Biobío Ltda.</td><td>77.551.028-9</td><td class="num">$ 7.044.110</td><td>Recepción</td><td>OC-4322</td><td>05-08-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000220</td><td>Constructora Andes Sur SpA</td><td>76.543.210-8</td><td class="num">$ 9.877.420</td><td>Recepción</td><td>OC-4318</td><td>01-08-2026</td><td>Emitida</td></tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total página 1 (9 de 34 facturas)</td>
+          <td class="num">$ 56.804.860</td>
+          <td colspan="4"></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="sheet-foot">
+      <span>Ventas / Facturas clientes · Período 01-08-2026 al 15-09-2026</span>
+      <span>Página 1 de 4</span>
+    </div>
+
+    <div class="sheet-cut"><span>corte de página</span></div>
+
+    <div class="sheet-head" style="border-bottom-width:1px">
+      <div>
+        <h4 style="font-size:14px">Ventas — Facturas clientes <span style="font-weight:400;color:#6b7280">(continuación)</span></h4>
+        <div class="org">Período 01-08-2026 al 15-09-2026 · Búsqueda “constructora” · Estado Emitida</div>
+      </div>
+      <div class="right">Página 2 de 4</div>
+    </div>
+    <table style="margin-top:12px">
+      <thead>
+        <tr>
+          <th>Factura</th><th>Cliente</th><th>RUT</th><th style="text-align:right">Total</th>
+          <th>Origen</th><th>Orden</th><th>Fecha</th><th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>F-000218</td><td>Constructora Elqui SpA</td><td>76.221.700-3</td><td class="num">$ 430.900</td><td>Nota de pedido</td><td>OC-4309</td><td>01-08-2026</td><td>Emitida</td></tr>
+        <tr><td colspan="8" class="muted" style="text-align:center;padding:10px">…el encabezado con el período se repite en cada página del documento…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 8. IMPRESIÓN SIN FILTROS ============ -->
+  <div class="maq-section">
+    <h2>8 · Salida imprimible sin filtros</h2>
+    <span class="req">REQ-03</span>
+  </div>
+  <div class="maq-note">
+    <strong>Qué verificar aquí:</strong> el texto del encabezado cuando no hay filtros activos. Se imprime el listado
+    completo disponible para el usuario, y el bloque de criterios lo declara en lugar de mostrar un período vacío.
+  </div>
+
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <h4>Ventas — Facturas clientes</h4>
+        <div class="org">Jormat S.A. · Sucursal Santiago Centro</div>
+      </div>
+      <div class="right">
+        Emitido el 17-09-2026 11:55<br>
+        Usuario: eduardo.bacon<br>
+        Página 1 de 118
+      </div>
+    </div>
+    <dl class="sheet-crit">
+      <dt>Período</dt><dd>Sin rango de fechas aplicado</dd>
+      <dt>Filtros</dt><dd>Sin filtros aplicados: listado completo disponible para el usuario</dd>
+      <dt>Registros incluidos</dt><dd>1.176 facturas</dd>
+    </dl>
+    <table>
+      <thead>
+        <tr>
+          <th>Factura</th><th>Cliente</th><th>RUT</th><th style="text-align:right">Total</th>
+          <th>Origen</th><th>Orden</th><th>Fecha</th><th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>F-000241</td><td>Constructora Andes Sur SpA</td><td>76.543.210-8</td><td class="num">$ 8.412.900</td><td>Nota de pedido</td><td>OC-4412</td><td>15-09-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000240</td><td>Comercial Santa Rita Ltda.</td><td>78.005.442-7</td><td class="num">$ 289.900</td><td>Sin documento</td><td>—</td><td>15-09-2026</td><td>Pagada</td></tr>
+        <tr><td>F-000239</td><td>Distribuidora Quilín SpA</td><td>76.778.120-0</td><td class="num">$ 1.004.500</td><td>Recepción</td><td>OC-4401</td><td>12-09-2026</td><td>Anulada</td></tr>
+        <tr><td>F-000238</td><td>Constructora Los Álamos Ltda.</td><td>77.019.884-K</td><td class="num">$ 1.247.650</td><td>Recepción</td><td>OC-4388</td><td>11-09-2026</td><td>Emitida</td></tr>
+        <tr><td>F-000237</td><td>Ferretería Bellavista EIRL</td><td>76.443.019-2</td><td class="num">$ 74.320</td><td>Sin documento</td><td>—</td><td>10-09-2026</td><td>Pendiente</td></tr>
+      </tbody>
+    </table>
+    <div class="sheet-foot">
+      <span>Ventas / Facturas clientes · Sin filtros aplicados</span>
+      <span>Página 1 de 118</span>
+    </div>
+  </div>
+
+  <!-- ============ NOTAS FINALES ============ -->
+  <div class="maq-section"><h2>Fuera de esta maqueta</h2></div>
+  <div class="maq-note">
+    <ul style="margin-left:18px">
+      <li><b>JOR-166-Q1 — rótulo y semántica de la columna Orden:</b> la maqueta usa el nombre del canon (“Orden”) y
+          muestra valores del tipo <span class="mono">OC-4412</span>. Si Orden no es la orden de compra, cambia el
+          contenido de esa columna (y posiblemente se agregue una columna adicional).</li>
+      <li><b>JOR-166-Q2 — set de acciones por fila:</b> el menú de la columna Acciones es andamiaje. Las opciones
+          mostradas no son la definición final y no aparecen en la salida imprimible.</li>
+      <li><b>Filtros incrustados por columna:</b> se maquetan como segunda fila del encabezado, pero la migración
+          definitiva de la barra superior a filtros por columna depende del mockup pendiente (queda fuera de REQ-04).</li>
+      <li><b>Creación de factura (CA-05 a CA-08):</b> el botón <em>Crear factura</em> se muestra, pero la vista de
+          creación se maqueta en JOR-167.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
