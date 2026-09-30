@@ -85,13 +85,13 @@ Contrato: rollback: Quitar el gate de regeneración y su invocación.. Status: d
 Contrato: rollback: Eliminar los tests nuevos de diagramas.. Status: done
 
 #### S3.T1 — Configurar `dart doc --dry-run` con los lints public_member_api_docs y comment_references sobre la API pública de app/.
-Contrato: rollback: Revertir la configuración de lints y el paso de dart doc.. Status: pending
+Contrato: rollback: Revertir la configuración de lints y el paso de dart doc.. Status: done
 
 #### S3.T2 — Configurar TypeDoc sobre los exports de server/ con validación y warnings tratados como error.
-Contrato: rollback: Revertir la configuración de TypeDoc y su script.. Status: pending
+Contrato: rollback: Revertir la configuración de TypeDoc y su script.. Status: done
 
 #### S3.T3 — Verificación de regresión: miembro Dart sin `///` falla, enlace TSDoc inválido falla y la API documentada pasa.
-Contrato: rollback: Eliminar los tests nuevos de API docs.. Status: pending
+Contrato: rollback: Eliminar los tests nuevos de API docs.. Status: done
 
 #### S4.T1 — Crear los scripts `pnpm docs:generate`, `pnpm docs:api` (Redoc, DartDoc, TypeDoc) y `pnpm docs:diagrams`, y documentarlos en docs/development/commands.md.
 Contrato: rollback: Quitar los scripts del package.json y revertir docs/development/commands.md.. Status: pending
@@ -140,12 +140,12 @@ Contrato: rollback: Eliminar los tests/verificación nuevos de integración.. St
 
 **Gate (auto)**: Modificar un .mmd sin regenerar hace fallar el gate mostrando el diff; regenerar produce diff limpio y no queda ningún HTML de Mermaid cargando CDN.
 
-### Session 3 · T1 · open
+### Session 3 · T1 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Correr docs:api falla si un miembro público de Dart en app/ no tiene comentario `///` o si un export de server/ tiene un enlace TSDoc inválido, y pasa con la API documentada.
 
