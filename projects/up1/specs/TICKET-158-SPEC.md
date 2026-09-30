@@ -52,6 +52,16 @@ DB_MANAGED_FIELDS es una única constante compartida por los 4 puntos de copia (
 > Fuente: object-manager/scripts/detect-schema-drift.js:37
 
 El verificador de drift de esquemas reconoce el tipo autoincrement y deja de reportar hallazgos falsos sobre internalId: jsonTypeToPrisma (object-manager/scripts/detect-schema-drift.js:37) mapea autoincrement a Int en vez de caer al default String, compareGeneratedGraphQL (:326) no exige en GraphQL los campos autoincrement reusando isAutoincrementFieldType de src/services/typeMappers.js:518 (estan ocultos de GraphQL a proposito), y la tabla de tipos de docs/guides/schema-drift-detection.md:228 incluye autoincrement. CA5: npm run drift:check no reporta ningun hallazgo sobre internalId en los objetos que lo declaran. El error preexistente up1_document_template.allowedRoles (GraphQL JSON vs [String!]) queda fuera de alcance y drift:check puede seguir terminando en exit 1 por el. Sin test unitario del script (hoy ejecuta main() al importarse; decision del dev): la validacion es la corrida del propio comando.
+
+### REQ-09 `confirmed` `enforcement`
+> Fuente: pedido-de-cambio 2026-09-30: tests/e2e/clone-activity-polymorphic.test.js, tests/e2e/derived-remap-generic.test.js, tests/e2e/clone-direct-children.test.js
+
+Los e2e existentes que invocan los helpers de clonacion imitando al resolver deben hacerlo con la misma firma que el resolver real: tests/e2e/clone-activity-polymorphic.test.js, tests/e2e/derived-remap-generic.test.js y tests/e2e/clone-direct-children.test.js (casos A y B) pasan exclude: [...DB_MANAGED_FIELDS] (importado de src/graphql/resolvers/helpers/db-managed-fields.js, sin redeclarar la lista) a deepClonePolymorphicChildren / deepCloneDirectChildren, y verifican que las filas clonadas reciben un internalId nuevo distinto del origen. Hoy esos tests fallan con P2002 sobre internalId en CurricularSection con y sin el fix, porque la llamada del test no refleja la del resolver. No se aflojan las aserciones existentes de esos tests.
+
+### REQ-10 `confirmed` `enforcement`
+> Fuente: pedido-de-cambio 2026-09-30: tests/e2e/clone-version-createinstance-full.test.js (vi.mock de withAuth.js sin requireAuth) vs tests/e2e/copy-internalid-createinstance.test.js
+
+tests/e2e/clone-version-createinstance-full.test.js deja de ser un falso verde: su vi.mock de withAuth.js usa importOriginal y expone requireAuth (mismo patron que tests/e2e/copy-internalid-createinstance.test.js), de modo que el import de instance.resolver.js no falla, isDbReady queda en true y los casos ejercitan realmente la base en vez de saltearse. El resultado real de ese archivo se reporta explicitamente (pasados/fallidos), sin relajar las aserciones existentes para forzar el verde.
 ## Tasks
 
 #### S1.T1 — Crear la constante compartida DB_MANAGED_FIELDS = ['internalId'] en un módulo de helpers de object-manager (junto a prefill-from-source.js) y exportarla, documentando que el nombre es fijo para el tipo autoincrement del codegen (generatePrismaSchema.js:502). Sin derivación desde el esquema.
@@ -76,13 +86,16 @@ Contrato: rollback: No aplica: tarea de verificación por lectura, sin cambios d
 Contrato: rollback: Borrar los archivos de test agregados; no se modifican tests existentes, asi que el repo queda igual que antes de la task.. Status: done
 
 #### S1.T4 — Smoke en tenant local de las 4 acciones con hijos: Clonar escenario (academic-scheduling), Duplicar plan, Nueva version de plan y Nueva version de actividad (curriculum-design). Verificar con includeInternalId:true que raiz, hijos y nietos del clon reciben internalId nuevos distintos del origen, que el origen no cambio, que la copia por la via GraphQL generica (sin UI, mismo camino del MCP) se comporta igual, y que el mapa de internalId del algoritmo (academic-scheduling/logic/schedule/internalIds.js) resuelve sobre el escenario clonado. Ademas, valida REQ-05: en Nueva version de plan, la copia se crea sin error y recibe version n+1 y previousVersionId del origen igual que hoy, es decir la logica de version existente sigue definiendo esa clave unica. Registrar el resultado por accion; si el tenant no tiene la columna aplicada para algun objeto, declararlo como pendiente, no como exito.
-Contrato: rollback: Borrar los registros creados por el smoke en el tenant local; no hay cambios de codigo que revertir.. Status: pending
+Contrato: rollback: Borrar los registros creados por el smoke en el tenant local; no hay cambios de codigo que revertir.. Status: done
 
 #### S1.T5 — Adenda 1 - verificador de drift: en object-manager/scripts/detect-schema-drift.js mapear el tipo 'autoincrement' a Int en jsonTypeToPrisma (:37) y excluir los campos autoincrement de la exigencia de GraphQL en compareGeneratedGraphQL (:326) reusando isAutoincrementFieldType de src/services/typeMappers.js:518 (no duplicar la deteccion); agregar el tipo a la tabla de docs/guides/schema-drift-detection.md:228. Sin test unitario del script (hoy ejecuta main() al importarse; decision del dev). Validacion: correr npm run drift:check antes y despues y registrar que desaparecen los 17 errores 'Prisma type mismatch' y los 17 avisos 'Field missing from GraphQL typeDefs' de internalId, y que el unico hallazgo restante es el preexistente up1_document_template.allowedRoles. Esta tarea va ANTES de la tarea de smoke de la sesion. Si ya existe una tarea del verificador en la sesion por un intento previo, completarla en vez de duplicarla.
 Contrato: rollback: git revert del commit; el verificador vuelve a su mapeo previo.. Status: done
+
+#### S1.T6 — Adaptar los e2e de clonacion existentes a la nueva realidad. (1) En tests/e2e/clone-activity-polymorphic.test.js, tests/e2e/derived-remap-generic.test.js y tests/e2e/clone-direct-children.test.js (casos A y B), pasar exclude: [...DB_MANAGED_FIELDS] a deepClonePolymorphicChildren / deepCloneDirectChildren, importando la constante de src/graphql/resolvers/helpers/db-managed-fields.js (sin redeclararla), replicando la llamada real del resolver; agregar la verificacion de que cada fila clonada (hija y nieta) recibe un internalId nuevo distinto del origen. (2) En tests/e2e/clone-version-createinstance-full.test.js, corregir el vi.mock de withAuth.js con importOriginal para que exporte requireAuth (mismo patron que tests/e2e/copy-internalid-createinstance.test.js), de modo que el import de instance.resolver.js no falle y isDbReady quede en true; reportar el resultado real de esos casos una vez que corren de verdad. No aflojar aserciones existentes para conseguir verde. Validacion: npx vitest run --pool=forks tests/e2e, informando el conteo por archivo.
+Contrato: rollback: git checkout -- tests/e2e/clone-activity-polymorphic.test.js tests/e2e/derived-remap-generic.test.js tests/e2e/clone-direct-children.test.js tests/e2e/clone-version-createinstance-full.test.js. Status: done
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
 - [x] S1.T1
@@ -92,8 +105,9 @@ Contrato: rollback: git revert del commit; el verificador vuelve a su mapeo prev
 - [x] S1.T2.3
 - [x] S1.T2.4
 - [x] S1.T3
-- [ ] S1.T4
+- [x] S1.T4
 - [x] S1.T5
+- [x] S1.T6
 
 **Gate (auto)**: En el tenant local, Clonar escenario / Duplicar plan / Nueva versión de plan / Nueva versión de actividad completan y crean la copia (antes fallaban con P2002); el clon y sus hijos muestran internalId nuevos con includeInternalId:true y el origen conserva el suyo. En consola, la suite de los helpers de copia pasa en verde.
 ## Enmiendas (refine_spec)
@@ -137,3 +151,13 @@ Contrato: rollback: git revert del commit; el verificador vuelve a su mapeo prev
 **Task ops:**
 
 - move S1.T4 → S1
+
+### Enmienda 6
+**REQs:**
+
+- REQ-09 (add) `confirmed`: Los e2e existentes que invocan los helpers de clonacion imitando al resolver deben hacerlo con la misma firma que el resolver real: tests/e2
+- REQ-10 (add) `confirmed`: tests/e2e/clone-version-createinstance-full.test.js deja de ser un falso verde: su vi.mock de withAuth.js usa importOriginal y expone requir
+
+**Tasks agregadas:**
+
+- S1: Adaptar los e2e de clonacion existentes a la nueva realidad. (1) En tests/e2e/clone-activity-polymorphic.test.js, tests/e2e/derived-remap-generic.test.js y tests/e2e/clone-direct-children.test.js (casos A y B), pasar exclude: [...DB_MANAGED_FIELDS] a deepClonePolymorphicChildren / deepCloneDirectChildren, importando la constante de src/graphql/resolvers/helpers/db-managed-fields.js (sin redeclararla), replicando la llamada real del resolver; agregar la verificacion de que cada fila clonada (hija y nieta) recibe un internalId nuevo distinto del origen. (2) En tests/e2e/clone-version-createinstance-full.test.js, corregir el vi.mock de withAuth.js con importOriginal para que exporte requireAuth (mismo patron que tests/e2e/copy-internalid-createinstance.test.js), de modo que el import de instance.resolver.js no falle y isDbReady quede en true; reportar el resultado real de esos casos una vez que corren de verdad. No aflojar aserciones existentes para conseguir verde. Validacion: npx vitest run --pool=forks tests/e2e, informando el conteo por archivo. (valida: REQ-09, REQ-10, REQ-03, REQ-07, test; rollback: git checkout -- tests/e2e/clone-activity-polymorphic.test.js tests/e2e/derived-remap-generic.test.js tests/e2e/clone-direct-children.test.js tests/e2e/clone-version-createinstance-full.test.js)
