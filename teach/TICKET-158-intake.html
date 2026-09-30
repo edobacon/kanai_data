@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-intake · UPONE-2003 · La copia de registros arrastra internalId</title>
+<!-- ticket: TICKET-158 · kind: intake · project: up1 · generated: 2026-09-30 -->
+</head>
+<body>
+<h1>La copia de registros arrastra internalId y falla por el índice único (UPONE-2003)</h1>
+
+<div class="panel" data-dkc-block="tldr">
+<strong>TL;DR.</strong> Fix de core en <code>object-manager</code>. Clonar, Duplicar con hijos y Nueva versión copian la fila completa del registro original, incluido <code>internalId</code> (número único que asigna la base). El guardado falla con P2002 y, como corre en una transacción, no se crea nada. Se agrega una constante compartida con los campos que maneja la base y se aplica en los 4 puntos de copia. Además, el verificador de drift aprende el tipo <code>autoincrement</code>.
+</div>
+
+<h2>Conceptos</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+<ul>
+<li><strong>internalId</strong>: entero <code>Int @unique @default(autoincrement())</code> agregado en UPONE-1562. Lo usa el algoritmo de programación académica (mapa de UPONE-1982). Dos registros no pueden repetirlo.</li>
+<li><strong>Copia del core</strong>: arma el registro nuevo leyendo la fila del origen y quitando una lista fija (<code>id</code>, fechas, autor). Esa lista no incluye <code>internalId</code>.</li>
+<li><strong>Hijos y nietos</strong>: la copia también duplica registros relacionados, por relación directa o polimórfica. Cada camino tiene su propio punto de copia.</li>
+</ul>
+</div>
+
+<h2>Qué falla hoy en develop</h2>
+<div class="callout" data-dkc-block="callout">
+Clonar escenario (academic-scheduling). Desde que se mergeó curriculum-design #66, también Duplicar plan, Nueva versión de plan y Nueva versión de actividad. Los "Duplicar" que llenan el formulario en el navegador no pasan por la copia del core y no fallan.
+</div>
+
+<h2>Qué se hace</h2>
+<div class="flow" data-dkc-block="flow">
+<ol>
+<li>Constante compartida <code>DB_MANAGED_FIELDS = ['internalId']</code> junto a los helpers de copia.</li>
+<li>Aplicarla en los 4 puntos: <code>prefill-from-source.js</code> (raíz), <code>prefillSkip</code> del camino RecordType en <code>instance.resolver.js</code> (que además pasa a respetar <code>prefillFrom.exclude</code>), y el <code>exclude</code> que se pasa a <code>deepCloneDirectChildren</code> y <code>deepClonePolymorphicChildren</code> (hijos y nietos). Las líneas se corrieron tras el último pull: buscar por símbolo.</li>
+<li>Tests unitarios de los 4 puntos.</li>
+<li>Verificador de drift (<code>scripts/detect-schema-drift.js</code>): mapear <code>autoincrement</code> a <code>Int</code> y no exigirlo en GraphQL; validar con <code>npm run drift:check</code>.</li>
+<li>Smoke local de las 4 acciones con hijos, al final.</li>
+</ol>
+</div>
+
+<h2>Invariantes que no se pueden violar</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li>La exclusión nueva se <strong>suma</strong> al <code>exclude</code> que declara cada mod; nunca lo reemplaza (CA3).</li>
+<li>El <code>internalId</code> del registro original no cambia (CA2).</li>
+<li>No se commitea la salida regenerable del sync del core; solo el código fuente del fix.</li>
+</ul>
+</div>
+
+<h2>Fuera de alcance</h2>
+<div class="callout" data-dkc-block="callout">
+Parche temporal en los mods, otras claves únicas, permisos de copia y el error preexistente <code>up1_document_template.allowedRoles</code> del verificador de drift. La base ya tiene 53 tests rojos preexistentes: el gate solo bloquea regresiones nuevas. La ampliación del alcance se comenta en Jira antes del PR.
+</div>
+</body>
+</html>

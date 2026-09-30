@@ -2,7 +2,7 @@
 id: TICKET-158-SPEC
 project: up1
 ticket: TICKET-158
-status: draft
+status: approved
 ---
 
 # Excluir internalId de la copia de registros (Clonar / Duplicar / Nueva versión)
@@ -72,13 +72,13 @@ Contrato: rollback: Quitar el exclude agregado de ambas llamadas.. Status: pendi
 #### S1.T2.4 — Revisar los consumidores del camino de copia en el core (delete data.internalId de instance.resolver.js:4277, applyPrefillFromSource en :4385 y version-from-source.js) y confirmar por lectura que ninguno queda con doble exclusión contradictoria ni pierde columnas de negocio; reportar hallazgos sin cambiar version-from-source.js (no copia columnas).
 Contrato: rollback: No aplica: tarea de verificación por lectura, sin cambios de código.. Status: pending
 
-#### S1.T4 — Tests unitarios de los 4 puntos de copia: (a) prefill-from-source: un origen con internalId:42 produce un data sin la clave internalId y el exclude declarado por el mod se sigue respetando; (b) deep-clone-direct: el hijo y el nieto insertados no llevan internalId y el exclude del mod se aplica en la recursion; (c) deep-clone-polymorphic: idem hijo y nieto sin internalId con exclude del mod aplicado; (d) camino RecordType (instance.resolver): el data heredado no lleva internalId y respeta prefillFrom.exclude. Ademas, valida REQ-05 con una asercion concreta de conjunto: el data resultante es exactamente el del origen menos (lista fija + exclude del mod + internalId); se compara el set completo de claves y el valor de cada clave sobreviviente, de modo que el test falla si desaparece o cambia cualquier otra clave (incluidas las que participan de otras claves unicas, como sectionId o code). Si el test carga Prisma, correrlo con --pool=forks segun el patron de los scripts de CI. No se incluye un caso de regresion de otra clave unica por colision (ScenarioSection scenarioId+sectionId): en una copia el padre es nuevo, nunca colisiona, seria un test artificial.
+#### S1.T3 — Tests unitarios de los 4 puntos de copia: (a) prefill-from-source: un origen con internalId:42 produce un data sin la clave internalId y el exclude declarado por el mod se sigue respetando; (b) deep-clone-direct: el hijo y el nieto insertados no llevan internalId y el exclude del mod se aplica en la recursion; (c) deep-clone-polymorphic: idem hijo y nieto sin internalId con exclude del mod aplicado; (d) camino RecordType (instance.resolver): el data heredado no lleva internalId y respeta prefillFrom.exclude. Ademas, valida REQ-05 con una asercion concreta de conjunto: el data resultante es exactamente el del origen menos (lista fija + exclude del mod + internalId); se compara el set completo de claves y el valor de cada clave sobreviviente, de modo que el test falla si desaparece o cambia cualquier otra clave (incluidas las que participan de otras claves unicas, como sectionId o code). Si el test carga Prisma, correrlo con --pool=forks segun el patron de los scripts de CI. No se incluye un caso de regresion de otra clave unica por colision (ScenarioSection scenarioId+sectionId): en una copia el padre es nuevo, nunca colisiona, seria un test artificial.
 Contrato: rollback: Borrar los archivos de test agregados; no se modifican tests existentes, asi que el repo queda igual que antes de la task.. Status: pending
 
-#### S1.T5 — Smoke en tenant local de las 4 acciones con hijos: Clonar escenario (academic-scheduling), Duplicar plan, Nueva version de plan y Nueva version de actividad (curriculum-design). Verificar con includeInternalId:true que raiz, hijos y nietos del clon reciben internalId nuevos distintos del origen, que el origen no cambio, que la copia por la via GraphQL generica (sin UI, mismo camino del MCP) se comporta igual, y que el mapa de internalId del algoritmo (academic-scheduling/logic/schedule/internalIds.js) resuelve sobre el escenario clonado. Ademas, valida REQ-05: en Nueva version de plan, la copia se crea sin error y recibe version n+1 y previousVersionId del origen igual que hoy, es decir la logica de version existente sigue definiendo esa clave unica. Registrar el resultado por accion; si el tenant no tiene la columna aplicada para algun objeto, declararlo como pendiente, no como exito.
+#### S1.T4 — Smoke en tenant local de las 4 acciones con hijos: Clonar escenario (academic-scheduling), Duplicar plan, Nueva version de plan y Nueva version de actividad (curriculum-design). Verificar con includeInternalId:true que raiz, hijos y nietos del clon reciben internalId nuevos distintos del origen, que el origen no cambio, que la copia por la via GraphQL generica (sin UI, mismo camino del MCP) se comporta igual, y que el mapa de internalId del algoritmo (academic-scheduling/logic/schedule/internalIds.js) resuelve sobre el escenario clonado. Ademas, valida REQ-05: en Nueva version de plan, la copia se crea sin error y recibe version n+1 y previousVersionId del origen igual que hoy, es decir la logica de version existente sigue definiendo esa clave unica. Registrar el resultado por accion; si el tenant no tiene la columna aplicada para algun objeto, declararlo como pendiente, no como exito.
 Contrato: rollback: Borrar los registros creados por el smoke en el tenant local; no hay cambios de codigo que revertir.. Status: pending
 
-#### S1.T7 — Adenda 1 - verificador de drift: en object-manager/scripts/detect-schema-drift.js mapear el tipo 'autoincrement' a Int en jsonTypeToPrisma (:37) y excluir los campos autoincrement de la exigencia de GraphQL en compareGeneratedGraphQL (:326) reusando isAutoincrementFieldType de src/services/typeMappers.js:518 (no duplicar la deteccion); agregar el tipo a la tabla de docs/guides/schema-drift-detection.md:228. Sin test unitario del script (hoy ejecuta main() al importarse; decision del dev). Validacion: correr npm run drift:check antes y despues y registrar que desaparecen los 17 errores 'Prisma type mismatch' y los 17 avisos 'Field missing from GraphQL typeDefs' de internalId, y que el unico hallazgo restante es el preexistente up1_document_template.allowedRoles. Esta tarea va ANTES de la tarea de smoke de la sesion. Si ya existe una tarea del verificador en la sesion por un intento previo, completarla en vez de duplicarla.
+#### S1.T5 — Adenda 1 - verificador de drift: en object-manager/scripts/detect-schema-drift.js mapear el tipo 'autoincrement' a Int en jsonTypeToPrisma (:37) y excluir los campos autoincrement de la exigencia de GraphQL en compareGeneratedGraphQL (:326) reusando isAutoincrementFieldType de src/services/typeMappers.js:518 (no duplicar la deteccion); agregar el tipo a la tabla de docs/guides/schema-drift-detection.md:228. Sin test unitario del script (hoy ejecuta main() al importarse; decision del dev). Validacion: correr npm run drift:check antes y despues y registrar que desaparecen los 17 errores 'Prisma type mismatch' y los 17 avisos 'Field missing from GraphQL typeDefs' de internalId, y que el unico hallazgo restante es el preexistente up1_document_template.allowedRoles. Esta tarea va ANTES de la tarea de smoke de la sesion. Si ya existe una tarea del verificador en la sesion por un intento previo, completarla en vez de duplicarla.
 Contrato: rollback: git revert del commit; el verificador vuelve a su mapeo previo.. Status: pending
 ## Sessions
 
@@ -91,9 +91,9 @@ Contrato: rollback: git revert del commit; el verificador vuelve a su mapeo prev
 - [ ] S1.T2.2
 - [ ] S1.T2.3
 - [ ] S1.T2.4
+- [ ] S1.T3
 - [ ] S1.T4
 - [ ] S1.T5
-- [ ] S1.T7
 
 **Gate (auto)**: En el tenant local, Clonar escenario / Duplicar plan / Nueva versión de plan / Nueva versión de actividad completan y crean la copia (antes fallaban con P2002); el clon y sus hijos muestran internalId nuevos con includeInternalId:true y el origen conserva el suyo. En consola, la suite de los helpers de copia pasa en verde.
 ## Enmiendas (refine_spec)
@@ -131,3 +131,9 @@ Contrato: rollback: git revert del commit; el verificador vuelve a su mapeo prev
 **Tasks agregadas:**
 
 - S1: Adenda 1 - verificador de drift: en object-manager/scripts/detect-schema-drift.js mapear el tipo 'autoincrement' a Int en jsonTypeToPrisma (:37) y excluir los campos autoincrement de la exigencia de GraphQL en compareGeneratedGraphQL (:326) reusando isAutoincrementFieldType de src/services/typeMappers.js:518 (no duplicar la deteccion); agregar el tipo a la tabla de docs/guides/schema-drift-detection.md:228. Sin test unitario del script (hoy ejecuta main() al importarse; decision del dev). Validacion: correr npm run drift:check antes y despues y registrar que desaparecen los 17 errores 'Prisma type mismatch' y los 17 avisos 'Field missing from GraphQL typeDefs' de internalId, y que el unico hallazgo restante es el preexistente up1_document_template.allowedRoles. Esta tarea va ANTES de la tarea de smoke de la sesion. Si ya existe una tarea del verificador en la sesion por un intento previo, completarla en vez de duplicarla. (valida: REQ-08; rollback: git revert del commit; el verificador vuelve a su mapeo previo.)
+
+### Enmienda 5
+
+**Task ops:**
+
+- move S1.T4 → S1

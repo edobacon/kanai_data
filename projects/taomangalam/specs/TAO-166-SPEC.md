@@ -100,19 +100,19 @@ Contrato: rollback: Quitar `codeql.yml`.. Status: done
 Contrato: rollback: Revertir el test agregado.. Status: done
 
 #### S3.T1 — Crear `.github/dependabot.yml` semanal: npm/pnpm (raíz y `server/`), `pub` (`app/` y `app/widgetbook/`) y `github-actions`, con grupos de parches compatibles y sin auto-merge de mayores, toolchain, Prisma, seguridad, plugins nativos ni Actions.
-Contrato: rollback: Borrar `.github/dependabot.yml`.. Status: pending
+Contrato: rollback: Borrar `.github/dependabot.yml`.. Status: done
 
 #### S3.T2 — Crear el verificador de SHA y `permissions` en `scripts/ci/` y cablearlo al job `metadata` de ci-pr.yml (patrón `scripts/ci-pr-metadata.sh`, ejecutable en local).
-Contrato: rollback: Quitar el script y el paso del job `metadata`.. Status: pending
+Contrato: rollback: Quitar el script y el paso del job `metadata`.. Status: done
 
 #### S3.T2.1 — Script `scripts/ci/check-workflow-pins.sh`: recorre `.github/workflows/*.yml` y falla nombrando archivo y línea si un `uses:` no es SHA completo o un job no declara `permissions` (acepta workflows locales `./`).
-Contrato: rollback: Borrar `scripts/ci/check-workflow-pins.sh`.. Status: pending
+Contrato: rollback: Borrar `scripts/ci/check-workflow-pins.sh`.. Status: done
 
 #### S3.T2.2 — Cablear el script al job `metadata` de `.github/workflows/ci-pr.yml`.
-Contrato: rollback: Quitar el paso del job `metadata`.. Status: pending
+Contrato: rollback: Quitar el paso del job `metadata`.. Status: done
 
 #### S3.T3 — Tests unitarios del verificador con workflows de ejemplo válidos e inválidos y test de coherencia de `.github/dependabot.yml`.
-Contrato: rollback: Revertir los tests agregados.. Status: pending
+Contrato: rollback: Revertir los tests agregados.. Status: done
 ## Enmiendas (refine_spec)
 
 ### Enmienda 1
@@ -150,13 +150,13 @@ Contrato: rollback: Revertir los tests agregados.. Status: pending
 
 **Gate (auto)**: Un despacho manual de `nightly.yml` termina verde ejecutando la suite completa y los builds Android e iOS Simulator; CodeQL publica resultados de JS/TS y Actions en la pestaña de seguridad.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T2.1
-- [ ] S3.T2.2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T2.1
+- [x] S3.T2.2
+- [x] S3.T3
 
 **Gate (auto)**: Dependabot abre un PR semanal agrupado de parches sin auto-merge de mayores; el job `metadata` falla nombrando archivo y línea si un `uses:` no está fijado a SHA o un job no declara `permissions`.
