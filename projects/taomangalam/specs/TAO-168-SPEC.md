@@ -80,16 +80,16 @@ Contrato: rollback: Quitar el setup de Ruby y volver al paso `flutter build ios`
 Contrato: rollback: Eliminar el test nuevo.. Status: done
 
 #### S2.T1 — Declarar las lanes internas (`mobile-internal`) en `app/fastlane/`: pasos de versión/build únicos, firma y subida a canales internos, cada uno como step/lane, con una guarda al inicio que corta si falta la credencial.
-Contrato: rollback: Eliminar las lanes internas y su guarda del Fastfile.. Status: pending
+Contrato: rollback: Eliminar las lanes internas y su guarda del Fastfile.. Status: done
 
 #### S2.T1.1 — Declarar los pasos de la lane interna (versión/build únicos, firma y subida) sin implementar firma real (fuera de alcance, EP-17).
-Contrato: rollback: Eliminar los pasos internos del Fastfile.. Status: pending
+Contrato: rollback: Eliminar los pasos internos del Fastfile.. Status: done
 
 #### S2.T1.2 — Implementar la guarda que valida las variables de entorno al inicio: si falta, corta con código != 0 nombrando la variable y sin exponer su valor ni invocar APIs.
-Contrato: rollback: Eliminar la guarda de credenciales.. Status: pending
+Contrato: rollback: Eliminar la guarda de credenciales.. Status: done
 
 #### S2.T2 — Test de regresión de la guarda: sin credenciales la lane interna sale != 0 nombrando la variable faltante; el mensaje no contiene ningún valor y no se ejecuta ninguna llamada a tiendas.
-Contrato: rollback: Eliminar el test nuevo.. Status: pending
+Contrato: rollback: Eliminar el test nuevo.. Status: done
 
 #### S3.T1 — Endurecer `scripts/ci-pr-metadata.sh`: ampliar la regex de archivos prohibidos para incluir `.mobileprovision` y `.provisionprofile` (las demás extensiones de firma ya están cubiertas).
 Contrato: rollback: Revertir la regex a su versión previa.. Status: pending
@@ -117,13 +117,13 @@ Contrato: rollback: Eliminar los casos de test nuevos.. Status: pending
 
 **Gate (auto)**: En un PR que cambia `app/`, `build-smoke` corre `bundle exec fastlane` y publica el artifact `*-development-apk` con el APK development; `ios-simulator` publica `Runner.app`; `quality-gate` queda verde con los mismos artifacts.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T2
 
 **Gate (auto)**: Ejecutar la lane interna sin credenciales (`cd app && bundle exec fastlane <lane interna>`) termina con código != 0 nombrando la variable de entorno faltante, sin imprimir valores ni llamar a las APIs de tiendas.
 
