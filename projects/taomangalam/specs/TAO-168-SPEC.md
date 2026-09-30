@@ -92,13 +92,13 @@ Contrato: rollback: Eliminar la guarda de credenciales.. Status: done
 Contrato: rollback: Eliminar el test nuevo.. Status: done
 
 #### S3.T1 — Endurecer `scripts/ci-pr-metadata.sh`: ampliar la regex de archivos prohibidos para incluir `.mobileprovision` y `.provisionprofile` (las demás extensiones de firma ya están cubiertas).
-Contrato: rollback: Revertir la regex a su versión previa.. Status: pending
+Contrato: rollback: Revertir la regex a su versión previa.. Status: done
 
 #### S3.T2 — Documentar en `docs/development/release-runbook.md` la ejecución local de las lanes (prerequisitos Ruby/bundler y `bundle exec fastlane …`), sin tocar la sección de staging ni el rollback.
-Contrato: rollback: Revertir la sección nueva del runbook.. Status: pending
+Contrato: rollback: Revertir la sección nueva del runbook.. Status: done
 
 #### S3.T3 — Ampliar `tests/test_ci_pr_ruleset.py` con los casos de `.mobileprovision`/`.provisionprofile` y conservar la regresión de `.p12`/`.keystore`/`.jks`.
-Contrato: rollback: Eliminar los casos de test nuevos.. Status: pending
+Contrato: rollback: Eliminar los casos de test nuevos.. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -127,11 +127,11 @@ Contrato: rollback: Eliminar los casos de test nuevos.. Status: pending
 
 **Gate (auto)**: Ejecutar la lane interna sin credenciales (`cd app && bundle exec fastlane <lane interna>`) termina con código != 0 nombrando la variable de entorno faltante, sin imprimir valores ni llamar a las APIs de tiendas.
 
-### Session 3 · T1 · open
+### Session 3 · T1 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Un PR que agrega `.mobileprovision` (o `.p12`/`.keystore`/`.jks`) queda rojo en `metadata`; `docs/development/release-runbook.md` documenta la ejecución local de las lanes y `tests/test_release_runbook.py` sigue verde.
