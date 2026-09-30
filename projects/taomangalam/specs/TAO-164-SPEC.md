@@ -97,7 +97,7 @@ Contrato: rollback: Eliminar el test; no afecta los workflows.. Status: done
 
 **Gate (auto)**: En un PR a `main` que cambia `app/`, Actions muestra el artifact del APK y el `qa-bundle` descargables y el summary con enlaces e instrucciones; el test de contrato verde.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
 - [x] S3.T1
