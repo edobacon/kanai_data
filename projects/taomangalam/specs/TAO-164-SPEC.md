@@ -54,28 +54,28 @@ Contrato: rollback: Revertir `catalog.mjs`, `cli.mjs`, `package.json` y `command
 Contrato: rollback: Eliminar el test; no afecta la app ni el comando.. Status: done
 
 #### S2.T1 — En el job `build-smoke` de `ci-pr.yml`, subir el APK de `flutter build apk --debug --flavor development` como artifact con nombre `<sha-corto>-development.apk` y `retention-days: 30`.
-Contrato: rollback: Quitar el paso `upload-artifact` del APK; el build Android debug previo se mantiene intacto.. Status: pending
+Contrato: rollback: Quitar el paso `upload-artifact` del APK; el build Android debug previo se mantiene intacto.. Status: done
 
 #### S2.T2 — Agregar un job `qa-bundle` en `ci-pr.yml` (solo PRs a `main`) que descarga `flutter-coverage-lcov`, `widgetbook-web` y el APK, corre `node scripts/dev/qa-bundle.mjs assemble` y sube `qa-bundle` con `retention-days: 30`.
-Contrato: rollback: Eliminar el job, sus descargas y su artifact; el resto de `ci-pr` queda igual.. Status: pending
+Contrato: rollback: Eliminar el job, sus descargas y su artifact; el resto de `ci-pr` queda igual.. Status: done
 
 #### S2.T3 — Extender `scripts/resumen_ci.py` para listar los enlaces de descarga del APK, del build de Simulator y del `qa-bundle`, las instrucciones de instalacion (`adb install`, `xcrun simctl install`) y el motivo cuando falte el APK o el build iOS.
-Contrato: rollback: Revertir `resumen_ci.py` al resumen previo (jobs, cobertura, duraciones).. Status: pending
+Contrato: rollback: Revertir `resumen_ci.py` al resumen previo (jobs, cobertura, duraciones).. Status: done
 
 #### S2.T4 — Agregar un test de contrato (Node en `scripts/dev/` o Python en `tests/`) que parsea `ci-pr.yml` y asertan: los artifacts del APK y del `qa-bundle` declaran `retention-days: 30`, cada job nuevo declara `permissions` y cada `uses:` esta fijado a SHA completo.
-Contrato: rollback: Eliminar el test; no afecta el workflow.. Status: pending
+Contrato: rollback: Eliminar el test; no afecta el workflow.. Status: done
 
 #### S3.T1 — En el job `changes` de `ci-pr.yml`, agregar el output `ios` que se pone `true` cuando el diff toca `^app/ios/`, `^app/pubspec\.yaml$` o `^app/pubspec\.lock$`.
-Contrato: rollback: Quitar el output `ios` y su calculo; los filtros `app`/`server`/`code` quedan intactos.. Status: pending
+Contrato: rollback: Quitar el output `ios` y su calculo; los filtros `app`/`server`/`code` quedan intactos.. Status: done
 
 #### S3.T2 — Agregar el job `ios-simulator` (runner macOS, `if: github.base_ref == 'main' && needs.changes.outputs.ios == 'true'`, `flutter build ios --simulator --debug --flavor development`, `upload-artifact` con `retention-days: 30`); sumarlo a `quality-gate.needs` y pasar el motivo de omision al summary.
-Contrato: rollback: Eliminar el job, su artifact y su entrada en `quality-gate.needs`; el gate vuelve a su conjunto previo.. Status: pending
+Contrato: rollback: Eliminar el job, su artifact y su entrada en `quality-gate.needs`; el gate vuelve a su conjunto previo.. Status: done
 
 #### S3.T3 — Agregar el build de iOS Simulator a `nightly.yml` (siempre, sin filtro de rutas). DEPENDE de HU-00-10/TAO-166 (`nightly.yml` aun no existe): confirmar el orden relativo TAO-166/TAO-164 antes de ejecutar; si aun no existe, no crear `nightly.yml` dentro de este ticket y reportar el bloqueo.
-Contrato: rollback: Quitar el paso/job de iOS de `nightly.yml`; si el archivo no existe, no hay nada que revertir.. Status: pending
+Contrato: rollback: Quitar el paso/job de iOS de `nightly.yml`; si el archivo no existe, no hay nada que revertir.. Status: done
 
 #### S3.T4 — Agregar un test de contrato que asertan: el `if` del job `ios-simulator` combina `base_ref == 'main'` con el output `ios`, `ios-simulator` figura en `quality-gate.needs`, y un PR `feat/* -> epic/*` deja `build-smoke` e `ios-simulator` como `skipped`.
-Contrato: rollback: Eliminar el test; no afecta los workflows.. Status: pending
+Contrato: rollback: Eliminar el test; no afecta los workflows.. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -87,22 +87,22 @@ Contrato: rollback: Eliminar el test; no afecta los workflows.. Status: pending
 
 **Gate (auto)**: `pnpm qa:bundle` deja `dist/qa-bundle/` con APK, reporte, cobertura, catalogo y `qa-bundle.json` (sha == HEAD); `node --test scripts/dev/qa-bundle.test.mjs` verde.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: En un PR a `main` que cambia `app/`, Actions muestra el artifact del APK y el `qa-bundle` descargables y el summary con enlaces e instrucciones; el test de contrato verde.
 
 ### Session 3 · T2 · open
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: En un PR a `main` que cambia `app/ios/**` Actions muestra el artifact del build de iOS Simulator instalable con `xcrun simctl install`; en un PR solo Dart el summary explica la omision; un error iOS deja `quality-gate` rojo; el test verde.
