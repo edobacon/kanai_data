@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TICKET-158 · Copia de registros sin internalId</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --surface:#ffffff; --surface-2:#f8fafc; --line:#e2e8f0; --line-strong:#cbd5e1;
+    --text:#0f172a; --muted:#64748b; --faint:#94a3b8;
+    --brand:#2f5bd8; --brand-soft:#eaf0ff; --brand-dark:#22409c;
+    --ok:#0f766e; --ok-soft:#e6f5f2; --ok-line:#99e0d5;
+    --warn:#a16207; --warn-soft:#fef7e3; --warn-line:#f0d38a;
+    --err:#b42318; --err-soft:#fdeceb; --err-line:#f5b5b0;
+    --radius:10px; --shadow:0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.5;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 20px 80px}
+
+  /* Cabecera del documento de maqueta */
+  .doc-head{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:var(--shadow)}
+  .doc-head h1{margin:0 0 6px; font-size:20px; letter-spacing:-.01em}
+  .doc-head p{margin:0; color:var(--muted); max-width:78ch}
+  .meta-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .pill{font-size:11px; font-weight:600; letter-spacing:.02em; text-transform:uppercase;
+        padding:4px 9px; border-radius:999px; border:1px solid var(--line-strong); color:var(--muted); background:var(--surface-2)}
+  .pill.brand{background:var(--brand-soft); border-color:#c7d5ff; color:var(--brand-dark)}
+
+  /* Secciones */
+  section{margin-top:34px}
+  .sec-title{display:flex; align-items:baseline; gap:10px; margin:0 0 4px; font-size:16px}
+  .sec-title .num{font-family:var(--mono); font-size:12px; color:var(--brand); border:1px solid #c7d5ff; background:var(--brand-soft); padding:2px 7px; border-radius:6px}
+  .sec-sub{margin:0 0 16px; color:var(--muted); max-width:82ch}
+
+  .grid{display:grid; gap:18px}
+  .grid.two{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+  .grid.three{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+
+  /* Marco de pantalla */
+  .screen{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden}
+  .screen-label{display:flex; justify-content:space-between; align-items:center; gap:10px;
+        padding:8px 14px; background:#0f172a; color:#e2e8f0; font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:600}
+  .screen-label .state{background:rgba(255,255,255,.12); padding:3px 8px; border-radius:999px; letter-spacing:.02em; text-transform:none; font-weight:500}
+  .screen-body{padding:0}
+
+  /* App chrome simulado */
+  .app-bar{display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); background:var(--surface-2)}
+  .brandmark{width:22px; height:22px; border-radius:6px; background:var(--brand); color:#fff; display:grid; place-items:center; font-size:11px; font-weight:700}
+  .crumbs{color:var(--muted); font-size:12.5px}
+  .crumbs b{color:var(--text); font-weight:600}
+  .page-head{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:18px}
+  .page-head h2{margin:0 0 3px; font-size:17px}
+  .page-head p{margin:0; color:var(--muted); font-size:12.5px}
+
+  /* Botones */
+  .btn{display:inline-flex; align-items:center; gap:7px; border-radius:8px; border:1px solid var(--line-strong);
+       background:var(--surface); color:var(--text); font-size:13px; font-weight:600; padding:8px 13px; cursor:default; white-space:nowrap}
+  .btn.primary{background:var(--brand); border-color:var(--brand); color:#fff}
+  .btn.ghost{background:transparent; border-color:transparent; color:var(--brand); font-weight:600}
+  .btn.disabled{opacity:.55}
+  .btn.sm{padding:5px 10px; font-size:12px}
+
+  /* Tablas */
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  thead th{text-align:left; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--faint);
+           font-weight:700; padding:10px 14px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--surface-2)}
+  tbody td{padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:middle}
+  tbody tr.row-hl{background:var(--brand-soft)}
+  tbody tr.row-new{background:var(--ok-soft)}
+  .code{font-family:var(--mono); font-size:12px; color:var(--muted)}
+  .code.strong{color:var(--text); font-weight:600}
+  .kebab{display:inline-grid; place-items:center; width:26px; height:26px; border-radius:6px; border:1px solid transparent; color:var(--muted); font-weight:700}
+  .kebab.open{border-color:var(--line-strong); background:var(--surface-2); color:var(--text)}
+  td.actions{text-align:right; position:relative; width:52px}
+
+  /* Menu de fila */
+  .menu{position:absolute; right:12px; top:38px; z-index:5; width:214px; background:var(--surface);
+        border:1px solid var(--line-strong); border-radius:10px; box-shadow:0 12px 30px rgba(15,23,42,.16); padding:5px; text-align:left}
+  .menu .item{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border-radius:7px; font-size:13px}
+  .menu .item.sel{background:var(--brand-soft); color:var(--brand-dark); font-weight:600}
+  .menu .item.off{color:var(--faint)}
+  .menu .sep{height:1px; background:var(--line); margin:5px 4px}
+  .menu .hint{font-size:11px; color:var(--faint)}
+
+  /* Estados de badge */
+  .badge{display:inline-block; font-size:11px; font-weight:600; padding:3px 8px; border-radius:999px; border:1px solid}
+  .badge.ok{background:var(--ok-soft); border-color:var(--ok-line); color:var(--ok)}
+  .badge.draft{background:var(--warn-soft); border-color:var(--warn-line); color:var(--warn)}
+  .badge.neutral{background:var(--surface-2); border-color:var(--line-strong); color:var(--muted)}
+
+  /* Modal simulado */
+  .modal-stage{position:relative; background:#0f172a0d; padding:22px; min-height:100%}
+  .backdrop{position:absolute; inset:0; background:rgba(15,23,42,.35)}
+  .modal{position:relative; background:var(--surface); border-radius:12px; border:1px solid var(--line);
+         box-shadow:0 18px 44px rgba(15,23,42,.24); overflow:hidden}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; padding:15px 18px; border-bottom:1px solid var(--line)}
+  .modal-head h3{margin:0; font-size:15px}
+  .modal-head .x{color:var(--faint); font-size:16px}
+  .modal-body{padding:18px; display:grid; gap:14px}
+  .modal-foot{display:flex; justify-content:flex-end; gap:10px; padding:14px 18px; border-top:1px solid var(--line); background:var(--surface-2)}
+
+  /* Formulario */
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:5px}
+  .field label .req{color:var(--err)}
+  .input{border:1px solid var(--line-strong); border-radius:8px; padding:9px 11px; background:var(--surface); font-size:13.5px; min-height:38px; display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .input.placeholder{color:var(--faint)}
+  .input.focus{border-color:var(--brand); box-shadow:0 0 0 3px rgba(47,91,216,.15)}
+  .input.readonly{background:var(--surface-2); color:var(--muted)}
+  .input.invalid{border-color:var(--err-line); background:var(--err-soft)}
+  .hint{font-size:11.5px; color:var(--faint); margin-top:5px}
+  .hint.err{color:var(--err)}
+  .checkline{display:flex; gap:9px; align-items:flex-start}
+  .box{width:16px; height:16px; border-radius:4px; border:1.5px solid var(--line-strong); flex:none; margin-top:2px}
+  .box.on{background:var(--brand); border-color:var(--brand); color:#fff; display:grid; place-items:center; font-size:11px; line-height:1}
+  .checkline .txt{font-size:13px}
+  .checkline .txt small{display:block; color:var(--muted); font-size:11.5px}
+
+  /* Avisos */
+  .alert{border-radius:9px; border:1px solid; padding:11px 13px; display:flex; gap:10px; align-items:flex-start; font-size:12.8px}
+  .alert .ico{flex:none; width:18px; height:18px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:700; color:#fff}
+  .alert.error{background:var(--err-soft); border-color:var(--err-line); color:#7a1c14}
+  .alert.error .ico{background:var(--err)}
+  .alert.ok{background:var(--ok-soft); border-color:var(--ok-line); color:#0b5a53}
+  .alert.ok .ico{background:var(--ok)}
+  .alert.warn{background:var(--warn-soft); border-color:var(--warn-line); color:#7a4c06}
+  .alert.warn .ico{background:#b8860b}
+  .alert b{display:block; margin-bottom:2px}
+  .alert .tech{font-family:var(--mono); font-size:11px; margin-top:6px; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:6px; border:1px dashed var(--err-line); word-break:break-word}
+
+  /* Carga */
+  .skel{background:linear-gradient(90deg,#eef2f7 25%,#e3e9f1 37%,#eef2f7 63%); border-radius:6px; height:12px}
+  .spinner{width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,.45); border-top-color:#fff; display:inline-block}
+  .spinner.dark{border:2px solid var(--line-strong); border-top-color:var(--brand)}
+  .loading-strip{height:3px; background:var(--line); position:relative; overflow:hidden}
+  .loading-strip i{position:absolute; left:0; top:0; height:100%; width:38%; background:var(--brand)}
+
+  /* Vacio */
+  .empty{padding:44px 20px; text-align:center}
+  .empty .icon{width:44px; height:44px; border-radius:12px; margin:0 auto 12px; background:var(--surface-2); border:1px solid var(--line); display:grid; place-items:center; color:var(--faint); font-size:18px}
+  .empty h4{margin:0 0 5px; font-size:14px}
+  .empty p{margin:0 auto 14px; color:var(--muted); font-size:12.5px; max-width:44ch}
+
+  /* Toast */
+  .toast{display:flex; gap:10px; align-items:flex-start; background:#0f172a; color:#e8eefc; border-radius:10px; padding:12px 14px; font-size:13px; box-shadow:var(--shadow); max-width:420px}
+  .toast .dot{width:8px; height:8px; border-radius:50%; background:#34d399; margin-top:6px; flex:none}
+  .toast small{display:block; color:#a8b6d1; font-size:11.5px; margin-top:2px}
+
+  /* Notas de verificacion */
+  .note{margin-top:12px; border-left:3px solid var(--brand); background:var(--brand-soft); border-radius:0 8px 8px 0; padding:10px 14px; font-size:12.5px; color:var(--brand-dark)}
+  .note b{font-weight:700}
+  .reqs{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+  .reqs span{font-family:var(--mono); font-size:11px; background:var(--surface); border:1px solid #c7d5ff; color:var(--brand-dark); padding:2px 7px; border-radius:5px}
+
+  .legend{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); margin-top:16px}
+  .legend div{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:12px 14px; font-size:12.5px; color:var(--muted)}
+  .legend b{display:block; color:var(--text); font-size:13px; margin-bottom:3px}
+  .foot{margin-top:40px; color:var(--faint); font-size:12px; text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="doc-head">
+    <h1>TICKET-158 · Copia de registros (Clonar / Duplicar / Nueva versión) sin arrastrar el código interno</h1>
+    <p>Maqueta de verificación visual. El arreglo vive en el core (object-manager), por lo que <b>no se agregan pantallas ni controles nuevos</b>: lo que cambia es que los cuatro flujos de copia dejan de fallar. Esta maqueta muestra las vistas afectadas con sus estados de carga, vacío, error y éxito, y el contraste entre el comportamiento actual (falla) y el esperado (copia creada).</p>
+    <div class="meta-row">
+      <span class="pill brand">Core Extension · Bug fix</span>
+      <span class="pill">academic-scheduling</span>
+      <span class="pill">curriculum-design</span>
+      <span class="pill">UPONE-2003</span>
+      <span class="pill">Sin cambios de UI nuevos</span>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       1. LISTA DE ESCENARIOS
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">V1</span> Lista de escenarios de programación · acción de fila "Clonar"</h2>
+    <p class="sec-sub">Punto de entrada del flujo que hoy falla. La acción ya existe y no cambia: se maqueta para fijar el contexto y sus estados.</p>
+
+    <div class="grid two">
+
+      <!-- Estado normal con menu abierto -->
+      <div class="screen">
+        <div class="screen-label">V1.a Listado con acciones <span class="state">Estado: con datos</span></div>
+        <div class="screen-body">
+          <div class="app-bar">
+            <div class="brandmark">U</div>
+            <div class="crumbs">Programación académica / <b>Escenarios</b></div>
+          </div>
+          <div class="page-head">
+            <div>
+              <h2>Escenarios</h2>
+              <p>12 escenarios · Periodo 2026-1</p>
+            </div>
+            <span class="btn primary">Nuevo escenario</span>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Nombre</th><th>Periodo</th><th>Estado</th><th>Código interno</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr class="row-hl">
+                <td><b>Escenario base 2026-1</b></td>
+                <td>2026-1</td>
+                <td><span class="badge ok">Publicado</span></td>
+                <td><span class="code strong">1042</span></td>
+                <td class="actions">
+                  <span class="kebab open">⋮</span>
+                  <div class="menu">
+                    <div class="item">Ver detalle</div>
+                    <div class="item">Editar</div>
+                    <div class="item sel">Clonar <span class="hint">con secciones</span></div>
+                    <div class="sep"></div>
+                    <div class="item off">Eliminar</div>
+                  </div>
+                </td>
+              </tr>
+              <tr><td>Simulación aulas norte</td><td>2026-1</td><td><span class="badge draft">Borrador</span></td><td><span class="code">1041</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+              <tr><td>Escenario piloto vespertino</td><td>2026-1</td><td><span class="badge neutral">Archivado</span></td><td><span class="code">1039</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Carga + vacio -->
+      <div class="grid" style="gap:18px">
+        <div class="screen">
+          <div class="screen-label">V1.b Listado <span class="state">Estado: cargando</span></div>
+          <div class="screen-body">
+            <div class="loading-strip"><i></i></div>
+            <div class="page-head">
+              <div><h2>Escenarios</h2><p>Cargando escenarios...</p></div>
+              <span class="btn primary disabled">Nuevo escenario</span>
+            </div>
+            <table>
+              <thead><tr><th>Nombre</th><th>Periodo</th><th>Estado</th><th>Código interno</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><div class="skel" style="width:70%"></div></td><td><div class="skel" style="width:50%"></div></td><td><div class="skel" style="width:60%"></div></td><td><div class="skel" style="width:40%"></div></td><td></td></tr>
+                <tr><td><div class="skel" style="width:55%"></div></td><td><div class="skel" style="width:50%"></div></td><td><div class="skel" style="width:45%"></div></td><td><div class="skel" style="width:40%"></div></td><td></td></tr>
+                <tr><td><div class="skel" style="width:62%"></div></td><td><div class="skel" style="width:50%"></div></td><td><div class="skel" style="width:52%"></div></td><td><div class="skel" style="width:40%"></div></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="screen">
+          <div class="screen-label">V1.c Listado <span class="state">Estado: vacío</span></div>
+          <div class="screen-body">
+            <div class="app-bar"><div class="brandmark">U</div><div class="crumbs">Programación académica / <b>Escenarios</b></div></div>
+            <div class="empty">
+              <div class="icon">▢</div>
+              <h4>Aún no hay escenarios en este periodo</h4>
+              <p>Crea un escenario nuevo o clona uno de un periodo anterior para partir de una base ya armada.</p>
+              <span class="btn primary">Nuevo escenario</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <b>Qué verificar:</b> la acción "Clonar" se ofrece igual que hoy (solo con el permiso correspondiente) y la columna "Código interno" muestra el número del escenario original, que no debe cambiar tras clonar.
+      <div class="reqs"><span>CA2</span><span>REQ-06</span></div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       2. MODAL CLONAR ESCENARIO: 4 ESTADOS
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">V2</span> Modal "Clonar escenario" · ciclo completo</h2>
+    <p class="sec-sub">Mismo formulario de siempre. El estado de error P2002 es el comportamiento actual que este ticket elimina; queda maquetado como referencia de lo que ya no debe verse.</p>
+
+    <div class="grid two">
+
+      <!-- Inicial -->
+      <div class="screen">
+        <div class="screen-label">V2.a <span class="state">Estado: formulario listo</span></div>
+        <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="modal-head"><h3>Clonar escenario</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="field">
+                <label>Escenario de origen</label>
+                <div class="input readonly">Escenario base 2026-1</div>
+                <div class="hint">Se copian sus secciones y la configuración asociada.</div>
+              </div>
+              <div class="field">
+                <label>Nombre del nuevo escenario <span class="req">*</span></label>
+                <div class="input focus">Escenario base 2026-1 (copia)</div>
+              </div>
+              <div class="field">
+                <label>Periodo <span class="req">*</span></label>
+                <div class="input">2026-1 <span class="code">▾</span></div>
+              </div>
+              <div class="checkline">
+                <span class="box on">✓</span>
+                <span class="txt">Copiar secciones del escenario<small>Incluye las secciones y sus dependencias.</small></span>
+              </div>
+            </div>
+            <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Clonar</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Guardando -->
+      <div class="screen">
+        <div class="screen-label">V2.b <span class="state">Estado: guardando</span></div>
+        <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="loading-strip"><i style="left:34%"></i></div>
+            <div class="modal-head"><h3>Clonar escenario</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="field">
+                <label>Escenario de origen</label>
+                <div class="input readonly">Escenario base 2026-1</div>
+              </div>
+              <div class="field">
+                <label>Nombre del nuevo escenario <span class="req">*</span></label>
+                <div class="input readonly">Escenario base 2026-1 (copia)</div>
+              </div>
+              <div class="field">
+                <label>Periodo <span class="req">*</span></label>
+                <div class="input readonly">2026-1</div>
+              </div>
+              <div class="alert warn">
+                <span class="ico">i</span>
+                <span><b>Copiando escenario y secciones</b>La operación se realiza en una sola transacción. Si algo falla, no se crea nada.</span>
+              </div>
+            </div>
+            <div class="modal-foot"><span class="btn disabled">Cancelar</span><span class="btn primary disabled"><span class="spinner"></span> Clonando...</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Error actual (a eliminar) -->
+      <div class="screen">
+        <div class="screen-label">V2.c Comportamiento actual, a eliminar <span class="state">Estado: error</span></div>
+        <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="modal-head"><h3>Clonar escenario</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="alert error">
+                <span class="ico">!</span>
+                <span>
+                  <b>No se pudo clonar el escenario</b>
+                  Ya existe un registro con el mismo código interno. No se creó ningún escenario ni ninguna sección.
+                  <span class="tech">Unique constraint failed on the fields: (`internalId`) · Scenario_internalId_key · Prisma P2002</span>
+                </span>
+              </div>
+              <div class="field">
+                <label>Nombre del nuevo escenario <span class="req">*</span></label>
+                <div class="input">Escenario base 2026-1 (copia)</div>
+              </div>
+              <div class="field">
+                <label>Periodo <span class="req">*</span></label>
+                <div class="input">2026-1</div>
+              </div>
+            </div>
+            <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Reintentar</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <!-- Exito -->
+      <div class="screen">
+        <div class="screen-label">V2.d Comportamiento esperado <span class="state">Estado: éxito</span></div>
+        <div class="screen-body">
+          <div class="app-bar"><div class="brandmark">U</div><div class="crumbs">Programación académica / <b>Escenarios</b></div></div>
+          <div style="padding:14px 18px 0"><div class="toast"><span class="dot"></span><span>Escenario clonado correctamente<small>"Escenario base 2026-1 (copia)" se creó con 24 secciones.</small></span></div></div>
+          <table style="margin-top:14px">
+            <thead><tr><th>Nombre</th><th>Periodo</th><th>Estado</th><th>Código interno</th><th></th></tr></thead>
+            <tbody>
+              <tr class="row-new"><td><b>Escenario base 2026-1 (copia)</b></td><td>2026-1</td><td><span class="badge draft">Borrador</span></td><td><span class="code strong">1043</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+              <tr><td>Escenario base 2026-1</td><td>2026-1</td><td><span class="badge ok">Publicado</span></td><td><span class="code">1042</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+              <tr><td>Simulación aulas norte</td><td>2026-1</td><td><span class="badge draft">Borrador</span></td><td><span class="code">1041</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <b>Qué verificar:</b> tras el arreglo, V2.c no debe alcanzarse por esta causa. La fila nueva aparece con un código interno tomado de la secuencia (1043) y el original conserva el suyo (1042).
+      <div class="reqs"><span>CA1</span><span>CA2</span><span>REQ-01</span><span>REQ-03</span></div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. PLANES DE ESTUDIO
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">V3</span> Planes de estudio · "Duplicar" y "Nueva versión"</h2>
+    <p class="sec-sub">Dos de las cuatro acciones afectadas viven en esta lista. Ambas pasan por la copia del core y hoy fallan.</p>
+
+    <div class="grid two">
+
+      <div class="screen">
+        <div class="screen-label">V3.a Listado de planes <span class="state">Estado: con datos</span></div>
+        <div class="screen-body">
+          <div class="app-bar"><div class="brandmark">U</div><div class="crumbs">Diseño curricular / <b>Planes de estudio</b></div></div>
+          <div class="page-head">
+            <div><h2>Planes de estudio</h2><p>8 planes · Facultad de Ingeniería</p></div>
+            <span class="btn primary">Nuevo plan</span>
+          </div>
+          <table>
+            <thead><tr><th>Plan</th><th>Versión</th><th>Estado</th><th>Código interno</th><th></th></tr></thead>
+            <tbody>
+              <tr class="row-hl">
+                <td><b>Ingeniería Civil Industrial</b></td><td>v3</td>
+                <td><span class="badge ok">Vigente</span></td><td><span class="code strong">318</span></td>
+                <td class="actions">
+                  <span class="kebab open">⋮</span>
+                  <div class="menu">
+                    <div class="item">Ver plan</div>
+                    <div class="item sel">Duplicar <span class="hint">con secciones</span></div>
+                    <div class="item sel">Nueva versión</div>
+                    <div class="sep"></div>
+                    <div class="item off">Archivar</div>
+                  </div>
+                </td>
+              </tr>
+              <tr><td>Ingeniería Comercial</td><td>v2</td><td><span class="badge ok">Vigente</span></td><td><span class="code">317</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+              <tr><td>Ingeniería en Informática</td><td>v1</td><td><span class="badge draft">En edición</span></td><td><span class="code">311</span></td><td class="actions"><span class="kebab">⋮</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid" style="gap:18px">
+        <div class="screen">
+          <div class="screen-label">V3.b Modal "Duplicar plan" <span class="state">Estado: formulario listo</span></div>
+          <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+            <div class="modal">
+              <div class="modal-head"><h3>Duplicar plan de estudio</h3><span class="x">✕</span></div>
+              <div class="modal-body">
+                <div class="field">
+                  <label>Plan de origen</label>
+                  <div class="input readonly">Ingeniería Civil Industrial · v3</div>
+                </div>
+                <div class="field">
+                  <label>Nombre del plan duplicado <span class="req">*</span></label>
+                  <div class="input focus">Ingeniería Civil Industrial (copia)</div>
+                </div>
+                <div class="field">
+                  <label>Código del plan <span class="req">*</span></label>
+                  <div class="input">ICI-COPIA</div>
+                  <div class="hint">El código es propio del plan y no se copia del origen.</div>
+                </div>
+                <div class="checkline">
+                  <span class="box on">✓</span>
+                  <span class="txt">Copiar secciones y asignaturas<small>Incluye las secciones del plan y sus elementos hijos.</small></span>
+                </div>
+              </div>
+              <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Duplicar</span></div>
+            </div>
+          </div></div>
+        </div>
+
+        <div class="screen">
+          <div class="screen-label">V3.c Modal "Nueva versión de plan" <span class="state">Estado: formulario listo</span></div>
+          <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+            <div class="modal">
+              <div class="modal-head"><h3>Crear nueva versión del plan</h3><span class="x">✕</span></div>
+              <div class="modal-body">
+                <div class="field">
+                  <label>Versión de origen</label>
+                  <div class="input readonly">Ingeniería Civil Industrial · v3</div>
+                </div>
+                <div class="field">
+                  <label>Nueva versión</label>
+                  <div class="input readonly">v4</div>
+                  <div class="hint">La versión se calcula a partir de la anterior.</div>
+                </div>
+                <div class="field">
+                  <label>Vigente desde <span class="req">*</span></label>
+                  <div class="input">01/03/2027 <span class="code">▾</span></div>
+                </div>
+                <div class="alert warn">
+                  <span class="ico">i</span>
+                  <span><b>La versión anterior queda como histórica</b>El plan v3 deja de estar disponible para edición cuando v4 se publique.</span>
+                </div>
+              </div>
+              <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Crear versión</span></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. NUEVA VERSION DE ACTIVIDAD
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">V4</span> Actividad curricular · "Nueva versión" (falla en las secciones)</h2>
+    <p class="sec-sub">Aquí el registro raíz se crea, pero la copia de las secciones de la actividad es la que rompe. La transacción deja todo sin efecto.</p>
+
+    <div class="grid two">
+
+      <div class="screen">
+        <div class="screen-label">V4.a Modal "Nueva versión de actividad" <span class="state">Estado: formulario listo</span></div>
+        <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="modal-head"><h3>Crear nueva versión de la actividad</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="field">
+                <label>Actividad de origen</label>
+                <div class="input readonly">Cálculo I · v2</div>
+              </div>
+              <div class="field">
+                <label>Nueva versión</label>
+                <div class="input readonly">v3</div>
+              </div>
+              <div class="field">
+                <label>Periodo de vigencia <span class="req">*</span></label>
+                <div class="input focus">2027-1 <span class="code">▾</span></div>
+              </div>
+              <div class="checkline">
+                <span class="box on">✓</span>
+                <span class="txt">Copiar secciones de la actividad<small>6 secciones se copiarán a la nueva versión.</small></span>
+              </div>
+            </div>
+            <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Crear versión</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="screen">
+        <div class="screen-label">V4.b Comportamiento actual, a eliminar <span class="state">Estado: error en las secciones</span></div>
+        <div class="screen-body"><div class="modal-stage"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="modal-head"><h3>Crear nueva versión de la actividad</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="alert error">
+                <span class="ico">!</span>
+                <span>
+                  <b>No se pudo crear la nueva versión</b>
+                  Una de las secciones copiadas quedó con un código interno repetido. No se creó la versión nueva ni ninguna de sus secciones.
+                  <span class="tech">Unique constraint failed on the fields: (`internalId`) · CurricularSection_internalId_key · Prisma P2002</span>
+                </span>
+              </div>
+              <div class="field">
+                <label>Periodo de vigencia <span class="req">*</span></label>
+                <div class="input invalid">2027-1</div>
+                <div class="hint err">Vuelve a intentarlo. Si el problema persiste, contacta al administrador.</div>
+              </div>
+            </div>
+            <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Reintentar</span></div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================================
+       5. EVIDENCIA: ORIGEN VS COPIA
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">V5</span> Evidencia del clon: raíz, hijos y nietos con código interno propio</h2>
+    <p class="sec-sub">Vista de detalle del escenario clonado. Sirve para verificar a simple vista que cada registro copiado recibió un número nuevo y que el origen conservó el suyo.</p>
+
+    <div class="screen">
+      <div class="screen-label">V5.a Detalle del clon <span class="state">Estado: con datos</span></div>
+      <div class="screen-body">
+        <div class="app-bar"><div class="brandmark">U</div><div class="crumbs">Programación académica / Escenarios / <b>Escenario base 2026-1 (copia)</b></div></div>
+        <div class="page-head">
+          <div><h2>Escenario base 2026-1 (copia)</h2><p>Clonado desde "Escenario base 2026-1" el 30/09/2026</p></div>
+          <span class="btn">Ver escenario de origen</span>
+        </div>
+        <table>
+          <thead><tr><th>Nivel</th><th>Registro</th><th>Código interno del origen</th><th>Código interno de la copia</th><th>Resultado</th></tr></thead>
+          <tbody>
+            <tr class="row-new"><td>Raíz</td><td><b>Escenario</b></td><td><span class="code">1042</span></td><td><span class="code strong">1043</span></td><td><span class="badge ok">Nuevo</span></td></tr>
+            <tr><td>Hijo</td><td>Sección 001 · Cálculo I</td><td><span class="code">88301</span></td><td><span class="code strong">88425</span></td><td><span class="badge ok">Nuevo</span></td></tr>
+            <tr><td>Hijo</td><td>Sección 002 · Cálculo I</td><td><span class="code">88302</span></td><td><span class="code strong">88426</span></td><td><span class="badge ok">Nuevo</span></td></tr>
+            <tr><td>Nieto</td><td>Bloque horario · Lunes 08:30</td><td><span class="code">50117</span></td><td><span class="code strong">50240</span></td><td><span class="badge ok">Nuevo</span></td></tr>
+            <tr><td>Nieto</td><td>Bloque horario · Miércoles 10:00</td><td><span class="code">50118</span></td><td><span class="code strong">50241</span></td><td><span class="badge ok">Nuevo</span></td></tr>
+          </tbody>
+        </table>
+        <div style="padding:14px 18px">
+          <div class="alert ok"><span class="ico">✓</span><span><b>Ningún registro copiado reutiliza el código interno del origen</b>Los códigos del escenario original (1042 y sus secciones) permanecen sin cambios.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Qué verificar:</b> la recursión llega hasta el nivel de nieto. Si algún nivel repite el código del origen, el arreglo no cubrió esa vía de copia.
+      <div class="reqs"><span>CA1</span><span>CA2</span><span>REQ-03</span><span>REQ-06</span></div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       6. ERRORES QUE SIGUEN EXISTIENDO
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">V6</span> Errores que deben seguir apareciendo igual que hoy</h2>
+    <p class="sec-sub">Solo el código interno se libera a la secuencia de la base. El resto de las claves únicas de negocio mantiene su validación y su mensaje actual.</p>
+
+    <div class="grid three">
+
+      <div class="screen">
+        <div class="screen-label">V6.a Plan duplicado <span class="state">Clave de negocio</span></div>
+        <div class="screen-body"><div class="modal-stage" style="padding:16px"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="modal-head"><h3>Duplicar plan de estudio</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="alert error"><span class="ico">!</span><span><b>Ya existe una versión con ese número</b>Revisa la versión indicada para este plan antes de continuar.</span></div>
+              <div class="field"><label>Versión <span class="req">*</span></label><div class="input invalid">v3</div><div class="hint err">La versión v3 ya está registrada para este plan.</div></div>
+            </div>
+            <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Duplicar</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="screen">
+        <div class="screen-label">V6.b Sección repetida <span class="state">Clave de negocio</span></div>
+        <div class="screen-body"><div class="modal-stage" style="padding:16px"><div class="backdrop"></div>
+          <div class="modal">
+            <div class="modal-head"><h3>Clonar escenario</h3><span class="x">✕</span></div>
+            <div class="modal-body">
+              <div class="alert error"><span class="ico">!</span><span><b>Hay una sección repetida en el escenario de destino</b>Una sección ya está asociada a este escenario. No se creó nada.</span></div>
+              <div class="field"><label>Escenario de destino</label><div class="input invalid">Escenario base 2026-1 (copia)</div></div>
+            </div>
+            <div class="modal-foot"><span class="btn">Cancelar</span><span class="btn primary">Reintentar</span></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="screen">
+        <div class="screen-label">V6.c Sin permiso <span class="state">Acción no disponible</span></div>
+        <div class="screen-body">
+          <div class="app-bar"><div class="brandmark">U</div><div class="crumbs">Programación académica / <b>Escenarios</b></div></div>
+          <table>
+            <thead><tr><th>Nombre</th><th>Código interno</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Escenario base 2026-1</td><td><span class="code">1042</span></td>
+                <td class="actions">
+                  <span class="kebab open">⋮</span>
+                  <div class="menu" style="width:190px">
+                    <div class="item">Ver detalle</div>
+                    <div class="item off">Clonar <span class="hint">sin permiso</span></div>
+                  </div>
+                </td>
+              </tr>
+              <tr><td colspan="3" style="height:86px"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="note">
+      <b>Qué verificar:</b> estos mensajes no cambian de texto ni de momento de aparición. Si alguno desapareció, el arreglo excluyó de más.
+      <div class="reqs"><span>CA3</span><span>REQ-05</span></div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       LEYENDA
+  ========================================================== -->
+  <section>
+    <h2 class="sec-title"><span class="num">·</span> Notas de la maqueta</h2>
+    <div class="legend">
+      <div><b>Sin pantallas nuevas</b>El arreglo vive en el core y aplica por igual a la interfaz, a la API genérica y al MCP. No se agrega ningún control ni texto nuevo a los mods.</div>
+      <div><b>"Código interno"</b>Nombre visible del campo que hoy se arrastra en la copia. Se muestra en las tablas solo para poder verificar el resultado; no es una columna que este ticket agregue.</div>
+      <div><b>Los estados de error</b>V2.c y V4.b son el comportamiento actual en develop. Quedan maquetados como referencia de lo que debe dejar de ocurrir, no como pantallas a construir.</div>
+      <div><b>Transacción</b>Todos los mensajes de error indican que no queda nada a medias, porque la copia corre dentro de una sola transacción.</div>
+      <div><b>Duplicar del navegador</b>Los "Duplicar" que solo rellenan el formulario en pantalla no pasan por la copia del core y quedan fuera de esta maqueta.</div>
+      <div><b>Textos</b>Los rótulos y mensajes mostrados son los visibles hoy en la aplicación; los mensajes de error se presentan en lenguaje de usuario con el detalle técnico como apoyo de diagnóstico.</div>
+    </div>
+  </section>
+
+  <p class="foot">Maqueta de verificación · TICKET-158 · generada para revisión visual, no es código de producción</p>
+
+</div>
+</body>
+</html>
