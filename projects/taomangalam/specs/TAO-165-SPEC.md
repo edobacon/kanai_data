@@ -78,10 +78,10 @@ Contrato: rollback: Revertir los `uses:` a su estado previo.. Status: done
 Contrato: rollback: Revertir los archivos de prueba usados en los PR.. Status: done
 
 #### S3.T1 — Añadir el paso de Redocly CLI build-docs en el job `docs`, condicionado a la validación previa de Spectral, y publicar la referencia HTML como artifact.
-Contrato: rollback: Retirar el paso de Redocly y el artifact de la referencia.. Status: pending
+Contrato: rollback: Retirar el paso de Redocly y el artifact de la referencia.. Status: done
 
 #### S3.T2 — Regresión: un contrato válido produce el artifact de la referencia y un contrato con error de Spectral deja el job rojo sin ejecutar Redocly.
-Contrato: rollback: Revertir el contrato de prueba a su estado válido.. Status: pending
+Contrato: rollback: Revertir el contrato de prueba a su estado válido.. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -106,10 +106,10 @@ Contrato: rollback: Revertir el contrato de prueba a su estado válido.. Status:
 
 **Gate (auto)**: Un PR con enlace interno roto deja el job `docs` de ci-pr.yml en rojo indicando archivo y enlace; un PR válido queda verde; nightly.yml informa enlaces externos caídos; un merge a main publica el sitio completo como artifact y las Actions de Vale/Lychee figuran por SHA completo.
 
-### Session 3 · T1 · open
+### Session 3 · T1 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
+- [x] S3.T1
+- [x] S3.T2
 
 **Gate (auto)**: En el job `docs`, con contrato validado por Spectral se publica la referencia HTML del contrato como artifact; con un error de Spectral, Redocly no corre y el job queda rojo.
