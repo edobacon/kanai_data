@@ -63,19 +63,19 @@ Contrato: rollback: Revertir los scripts agregados en package.json.. Status: don
 Contrato: rollback: Revertir el arnés y los archivos de prueba local.. Status: done
 
 #### S2.T1 — Ampliar el job `docs` de ci-pr.yml con pasos de MkDocs (Python 3.12 desde requirements.txt), markdownlint-cli2, cspell, Vale y Lychee interno, con las Actions fijadas por SHA completo.
-Contrato: rollback: Revertir ci-pr.yml a su versión previa del job docs.. Status: pending
+Contrato: rollback: Revertir ci-pr.yml a su versión previa del job docs.. Status: done
 
 #### S2.T2 — Agregar o ampliar `nightly.yml` con Lychee de enlaces externos con reintento.
-Contrato: rollback: Revertir o eliminar el paso de Lychee externo en nightly.yml.. Status: pending
+Contrato: rollback: Revertir o eliminar el paso de Lychee externo en nightly.yml.. Status: done
 
 #### S2.T3 — Agregar el build completo del sitio en `main.yml` y publicarlo como artifact.
-Contrato: rollback: Revertir main.yml a su versión previa.. Status: pending
+Contrato: rollback: Revertir main.yml a su versión previa.. Status: done
 
 #### S2.T4 — Fijar por SHA completo las Actions de Vale y Lychee del job documental y alinearlas con la verificación de fijación del job `metadata` (HU-00-10).
-Contrato: rollback: Revertir los `uses:` a su estado previo.. Status: pending
+Contrato: rollback: Revertir los `uses:` a su estado previo.. Status: done
 
 #### S2.T5 — Regresión CI: un PR de prueba con enlace interno roto deja el job `docs` rojo con archivo y enlace, un PR válido queda verde y el artifact del sitio aparece tras el merge a main.
-Contrato: rollback: Revertir los archivos de prueba usados en los PR.. Status: pending
+Contrato: rollback: Revertir los archivos de prueba usados en los PR.. Status: done
 
 #### S3.T1 — Añadir el paso de Redocly CLI build-docs en el job `docs`, condicionado a la validación previa de Spectral, y publicar la referencia HTML como artifact.
 Contrato: rollback: Retirar el paso de Redocly y el artifact de la referencia.. Status: pending
@@ -95,14 +95,14 @@ Contrato: rollback: Revertir el contrato de prueba a su estado válido.. Status:
 
 **Gate (auto)**: Correr `pnpm docs:preview` compila el sitio MkDocs Material sobre docs/ sin enlaces internos rotos, y `pnpm docs:check` reporta resultados de markdownlint, cspell y Vale aplicando reglas completas solo a archivos nuevos/modificados (un heredado en baseline no bloquea).
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: Un PR con enlace interno roto deja el job `docs` de ci-pr.yml en rojo indicando archivo y enlace; un PR válido queda verde; nightly.yml informa enlaces externos caídos; un merge a main publica el sitio completo como artifact y las Actions de Vale/Lychee figuran por SHA completo.
 

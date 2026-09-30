@@ -1,0 +1,31 @@
+{
+ "schema_version": 1,
+ "case_id": "up1__upone-2003",
+ "project_id": "up1",
+ "ref": "UPONE-2003",
+ "mode": "pre-envio",
+ "repos": [{"repo": "uplanner/object-manager", "branch": "feat/UPONE-2003-la-copia-de-registros-duplicar", "base_branch": "develop", "base_sha": "4dab5e98", "verified_head": "68d9d29b"}],
+ "ticket_ac": {"source": "jira", "fetched_at": "2026-09-30T18:10:00-03:00", "items": [
+  "CA1 Clonar escenario, Duplicar plan, Nueva version de plan y de actividad crean la copia con internalId nuevo en raiz, hijos y nietos",
+  "CA2 el internalId del original no cambia",
+  "CA3 los exclude que declaran los mods siguen igual",
+  "CA4 RecordType con prefillFrom no copia internalId y respeta prefillFrom.exclude",
+  "CA5 (adenda) drift:check sin hallazgos sobre internalId"]},
+ "rounds": [{"n": 1, "kind": "full", "run_id": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1", "head": {"uplanner/object-manager": "68d9d29b"}, "ts": "2026-09-30T18:20:00-03:00", "verdict": "aprobable con reservas", "opened": ["P1", "P2", "P3", "P4"], "closed": []}],
+ "points": [
+  {"id": "P1", "fp": "docs/prefill-capability.md|default-exclude-doc-stale", "severity": "S2", "status": "open",
+   "mechanism": "la doc de contrato dice que el exclude por defecto es id, createdAt, updatedAt, createdBy; el codigo ahora suma DB_MANAGED_FIELDS (internalId) en raiz, raiz RecordType e hijos de deepClone",
+   "verify_closed": "docs/prefill-capability.md (:36 y :110) dice que las columnas asignadas por la DB (internalId) nunca se heredan en raiz, raiz RecordType e hijos/nietos, y que la raiz RecordType respeta prefillFrom.exclude; mods/docs/guides/implementing-cloning.md:48 queda como follow-up en el repo mods"},
+  {"id": "P2", "fp": "deep-clone-polymorphic.js|copy-path-without-db-managed-exclude", "severity": "S3", "status": "open",
+   "mechanism": "applyDerivedRemap (:145-186) y copyOneToOne/cloneChildProjections (:219-232) insertan filas copiadas sin quitar DB_MANAGED_FIELDS; latente hoy (CurricularLink sin internalId; rt/ext no admiten autoincrement)",
+   "verify_closed": "esas dos rutas quitan DB_MANAGED_FIELDS antes de create, con test unitario; o el docstring de db-managed-fields.js acota la garantia a raiz e hijos de deepClone"},
+  {"id": "P3", "fp": "prefill-from-source.test.js|wiring-tested-by-source-text", "severity": "S3", "status": "open",
+   "mechanism": "el test de que la lista no se duplica compara texto del fuente (fragil ante refactors)", "verify_closed": "opcional"},
+  {"id": "P4", "fp": "db-managed-fields.js|docstring-nombre-fijo", "severity": "S3", "status": "open",
+   "mechanism": "el docstring dice que el nombre internalId es fijo; el codegen solo avisa y emite otro nombre",
+   "verify_closed": "el docstring dice que es la convencion que el codegen exige con warning, no una garantia"}
+ ],
+ "consultas": [
+  "CA4: el exclude de la raiz RecordType no tiene efecto hoy con la config real (ningun RecordType declara prefillFrom); preexistente",
+  "Comentario de ampliacion en Jira pendiente (planeado antes del PR)"]
+}
