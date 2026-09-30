@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "2026-09-30-taomangalam-f4",
+  "project_id": "taomangalam",
+  "ts": "2026-09-30T20:35:00Z",
+  "kind": "findings",
+  "scope": {
+    "tickets": ["TAO-167"],
+    "dredd_runs": ["tao167-local-2026-09-30"],
+    "note": "Review local de kn-dredd (modo B, sin PR al momento de revisar; luego se abrio el PR #45) de la rama de TAO-167 (HU-00-19: Dev Container opcional + panel interno de desarrollo). 0 S0/S1 y 2 S2: D1 (los toggles de simulacion del panel no re-lanzan la sonda de salud) y D4 (docs con comandos de build sin --target tras eliminar main.dart). El resto fueron S3/nits. Ambos S2 caen fuera de las sondas del proyecto POR DISENO: el catalogo de sondas es el openapi del server (objetos de dominio) y TAO-167 es DX y documentacion. El ticket abrio 1 tarjeta de sonda (privilegios-de-rol), resuelta no_aplica/irrelevante y reused de TAO-162: falso positivo de la sonda role-grants porque su schemaWords por defecto incluye 'postgres', y el pedido menciona 'PostgreSQL de compose.yaml' sin tocar el schema. De ahi la propuesta de ruido (medida con el backtest)."
+  },
+  "classifier": { "model": "manual", "reverify_model": null, "tokens": 0 },
+  "findings": [
+    {
+      "dredd_run": "tao167-local-2026-09-30",
+      "finding_id": "panel-toggle-no-reprobe",
+      "ticket": "TAO-167",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "mecanismo de UX/observabilidad de una herramienta interna: los toggles de simulacion no invalidan la sonda, asi que el efecto no se ve hasta reabrir el panel. Ninguna sonda lee UI; es sin-sonda por diseno, no por hueco."
+    },
+    {
+      "dredd_run": "tao167-local-2026-09-30",
+      "finding_id": "doc-commands-sin-target",
+      "ticket": "TAO-167",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "coherencia doc<->codigo: comandos de build documentados sin --target que ahora fallan al eliminarse main.dart. Las sondas no leen documentacion; sin-sonda por diseno."
+    }
+  ],
+  "unattributed": 0,
+  "backtest": null,
+  "proposals": [
+    {
+      "type": "noise",
+      "probe": "privilegios-de-rol",
+      "description": "acotar schemaWords de la sonda role-grants para que no dispare por una mera mencion de la base (p.ej. 'postgres') y solo lo haga cuando el pedido toque el schema: migrac|schema|tabla|columna|prisma|ddl.",
+      "from": ["TAO-167:card-privilegios-de-rol-b4cc421145", "TAO-162:card-privilegios-de-rol-b4cc421145"],
+      "measured": {
+        "cases": ["TAO-167", "control-schema"],
+        "before": { "recall_pct": 100, "useful_pct": 50, "cards": 2 },
+        "after": { "recall_pct": 100, "useful_pct": 100, "cards": 1 },
+        "caught": [],
+        "lost": [],
+        "new_noise": 0
+      }
+    }
+  ]
+}
