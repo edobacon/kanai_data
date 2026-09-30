@@ -76,10 +76,10 @@ Contrato: rollback: Revertir el gate de compilación y la exclusión por sabor..
 Contrato: rollback: Remover las pruebas del panel agregadas.. Status: done
 
 #### S3.T1 — Adaptadores de desarrollo inyectables (cliente HTTP con modos 'sin conexión' y 'error de red') y sus toggles en el panel; con la simulación activa la petición falla sin llegar al servidor.
-Contrato: rollback: Remover los adaptadores y sus toggles, restaurando el cliente HTTP real.. Status: pending
+Contrato: rollback: Remover los adaptadores y sus toggles, restaurando el cliente HTTP real.. Status: done
 
 #### S3.T2 — Unitarias de los adaptadores: sin conexión no llama al servidor, error de red responde con el fallo configurado, apagar la simulación restaura las peticiones reales; más regresión de la suite de la app.
-Contrato: rollback: Remover las pruebas de los adaptadores.. Status: pending
+Contrato: rollback: Remover las pruebas de los adaptadores.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por HU-00-19 · Dev Container opcional y panel interno de desarrollo compilado solo en development
@@ -107,11 +107,11 @@ Contrato: rollback: Remover las pruebas de los adaptadores.. Status: pending
 
 **Gate (auto)**: Con `pnpm dev` en sabor `development` se abre el panel y muestra sabor, endpoint, versión, conectividad y salud/`requestId` con valores sensibles redactados y espacios reservados; con el backend caído muestra 'no disponible' sin bloquear la app; un build de `staging`/`production` no incluye el panel ni su entrada.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
+- [x] S3.T1
+- [x] S3.T2
 
 **Gate (auto)**: En el panel, activar 'sin conexión' hace que la siguiente petición falle con el error simulado sin que el servidor reciba la llamada, y activar 'error de red' fuerza el estado de error configurado; apagar la simulación restaura las peticiones reales y las suites de la app siguen verdes.
 
