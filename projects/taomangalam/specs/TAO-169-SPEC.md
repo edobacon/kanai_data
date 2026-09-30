@@ -70,19 +70,19 @@ Contrato: rollback: Quitar la validación de referencias y el manejo de baseline
 Contrato: rollback: Eliminar los tests nuevos del verificador.. Status: done
 
 #### S2.T1 — Agregar @mermaid-js/mermaid-cli con versión fijada y el paso que genera SVG desde los .mmd de docs/product/tecnologia/diagramas/, incluyéndolos en MkDocs, y reemplazar los HTML de Mermaid con CDN por el SVG generado.
-Contrato: rollback: Quitar la dependencia y el paso de generación y restaurar los HTML de Mermaid previos.. Status: pending
+Contrato: rollback: Quitar la dependencia y el paso de generación y restaurar los HTML de Mermaid previos.. Status: done
 
 #### S2.T1.1 — Fijar @mermaid-js/mermaid-cli y el script/step que renderiza cada .mmd a SVG.
-Contrato: rollback: Quitar la dependencia fijada y el script de render.. Status: pending
+Contrato: rollback: Quitar la dependencia fijada y el script de render.. Status: done
 
 #### S2.T1.2 — Sustituir los HTML de Mermaid con CDN por el SVG generado en el sitio de docs.
-Contrato: rollback: Restaurar los HTML de Mermaid con CDN.. Status: pending
+Contrato: rollback: Restaurar los HTML de Mermaid con CDN.. Status: done
 
 #### S2.T2 — Implementar el gate de regeneración sin diff que falla y muestra el diff cuando un .mmd modificado no regeneró su SVG.
-Contrato: rollback: Quitar el gate de regeneración y su invocación.. Status: pending
+Contrato: rollback: Quitar el gate de regeneración y su invocación.. Status: done
 
 #### S2.T3 — Verificación de regresión: .mmd sin cambios deja diff vacío, .mmd cambiado sin regenerar falla con diff y no queda script CDN en el HTML.
-Contrato: rollback: Eliminar los tests nuevos de diagramas.. Status: pending
+Contrato: rollback: Eliminar los tests nuevos de diagramas.. Status: done
 
 #### S3.T1 — Configurar `dart doc --dry-run` con los lints public_member_api_docs y comment_references sobre la API pública de app/.
 Contrato: rollback: Revertir la configuración de lints y el paso de dart doc.. Status: pending
@@ -129,14 +129,14 @@ Contrato: rollback: Eliminar los tests/verificación nuevos de integración.. St
 
 **Gate (auto)**: El verificador corre sobre docs/ y falla nombrando archivo y campo ante status fuera del enum o doc sin id, lista ambos archivos ante ids duplicados, falla ante DEC/vista inexistente en un documento modificado y no bloquea un heredado de baseline sin tocar.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Modificar un .mmd sin regenerar hace fallar el gate mostrando el diff; regenerar produce diff limpio y no queda ningún HTML de Mermaid cargando CDN.
 
