@@ -76,28 +76,28 @@ Contrato: rollback: Restaurar el flag, su default ON y el fallback en el script.
 Contrato: rollback: Revertir los cambios en tests y docs.. Status: done
 
 #### S2.T1 — Crear `.github/workflows/nightly.yml` (schedule + workflow_dispatch): suite completa sin filtros de ruta, build Android, build iOS Simulator y auditoría de dependencias, listo para sumar escenarios futuros.
-Contrato: rollback: Borrar `.github/workflows/nightly.yml`.. Status: pending
+Contrato: rollback: Borrar `.github/workflows/nightly.yml`.. Status: done
 
 #### S2.T1.1 — Definir triggers `schedule` (cron) y `workflow_dispatch`, sin filtros de ruta.
-Contrato: rollback: Borrar `.github/workflows/nightly.yml`.. Status: pending
+Contrato: rollback: Borrar `.github/workflows/nightly.yml`.. Status: done
 
 #### S2.T1.2 — Job de suite completa (sin filtros de ruta) y job de auditoría de dependencias.
-Contrato: rollback: Quitar los jobs de suite y auditoría de `nightly.yml`.. Status: pending
+Contrato: rollback: Quitar los jobs de suite y auditoría de `nightly.yml`.. Status: done
 
 #### S2.T1.3 — Job de build Android y job de build iOS Simulator.
-Contrato: rollback: Quitar los jobs de build de `nightly.yml`.. Status: pending
+Contrato: rollback: Quitar los jobs de build de `nightly.yml`.. Status: done
 
 #### S2.T2 — Crear `.github/workflows/codeql.yml` para JavaScript/TypeScript y acciones de Actions, con permisos mínimos y publicación en la pestaña de seguridad.
-Contrato: rollback: Borrar `.github/workflows/codeql.yml`.. Status: pending
+Contrato: rollback: Borrar `.github/workflows/codeql.yml`.. Status: done
 
 #### S2.T2.1 — Configurar la matriz de lenguajes `javascript-typescript` y `actions` (sin Dart).
-Contrato: rollback: Quitar `codeql.yml`.. Status: pending
+Contrato: rollback: Quitar `codeql.yml`.. Status: done
 
 #### S2.T2.2 — Definir triggers (push a main + schedule) y permisos mínimos, incluyendo `security-events: write`.
-Contrato: rollback: Quitar `codeql.yml`.. Status: pending
+Contrato: rollback: Quitar `codeql.yml`.. Status: done
 
 #### S2.T3 — Test que parsea `nightly.yml` y `codeql.yml` validando triggers, jobs de build y lenguajes (patrón `tests/test_ci_pr_metadata_job.py`).
-Contrato: rollback: Revertir el test agregado.. Status: pending
+Contrato: rollback: Revertir el test agregado.. Status: done
 
 #### S3.T1 — Crear `.github/dependabot.yml` semanal: npm/pnpm (raíz y `server/`), `pub` (`app/` y `app/widgetbook/`) y `github-actions`, con grupos de parches compatibles y sin auto-merge de mayores, toolchain, Prisma, seguridad, plugins nativos ni Actions.
 Contrato: rollback: Borrar `.github/dependabot.yml`.. Status: pending
@@ -136,17 +136,17 @@ Contrato: rollback: Revertir los tests agregados.. Status: pending
 
 **Gate (auto)**: Al mergear a main, el run `main` queda verde con el SHA candidato, la versión y los enlaces a artifacts en su summary; y `ci-green` de staging ya no acepta la ausencia de main.yml (falla cerrado).
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T2.1
-- [ ] S2.T2.2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T2.1
+- [x] S2.T2.2
+- [x] S2.T3
 
 **Gate (auto)**: Un despacho manual de `nightly.yml` termina verde ejecutando la suite completa y los builds Android e iOS Simulator; CodeQL publica resultados de JS/TS y Actions en la pestaña de seguridad.
 
