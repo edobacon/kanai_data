@@ -2,7 +2,7 @@
 id: TICKET-158
 project: up1
 type: ticket
-status: open
+status: in_progress
 work_type: fix
 external: UPONE-2003
 tier: T1
