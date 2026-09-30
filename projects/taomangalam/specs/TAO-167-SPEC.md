@@ -64,16 +64,16 @@ Contrato: rollback: Revertir la sección agregada a `docs/development/setup.md`.
 Contrato: rollback: Remover la guarda/test agregada.. Status: done
 
 #### S2.T1 — Capa de datos del panel: provider del cliente Dart generado del contrato (`PlataformaApi`) usando `AppConfig.apiBaseUrl`, y sonda de salud que consulta `GET /health/ready` capturando el estado y el `X-Request-Id` de la última petición fallida.
-Contrato: rollback: Remover la capa de datos del panel; la app vuelve a su estado sin consumo HTTP.. Status: pending
+Contrato: rollback: Remover la capa de datos del panel; la app vuelve a su estado sin consumo HTTP.. Status: done
 
 #### S2.T2 — Pantalla del panel (solo development) con sabor, endpoint, versión de la app (package_info_plus), conectividad (connectivity_plus), salud + `requestId`, espacios reservados para sync/outbox/reloj/versión del contenido, y redacción de valores sensibles en todo lo mostrado.
-Contrato: rollback: Remover la pantalla del panel y su punto de entrada en la app.. Status: pending
+Contrato: rollback: Remover la pantalla del panel y su punto de entrada en la app.. Status: done
 
 #### S2.T3 — Gate de compilación que incluye el panel y sus adaptadores solo en el sabor development y los excluye físicamente de staging/production (código ausente del binario y sin entrada accesible).
-Contrato: rollback: Revertir el gate de compilación y la exclusión por sabor.. Status: pending
+Contrato: rollback: Revertir el gate de compilación y la exclusión por sabor.. Status: done
 
 #### S2.T4 — Pruebas de widget del panel con sabor y salud simulados, verificación de redacción de valores sensibles y verificación de exclusión (staging/production no incluyen el panel).
-Contrato: rollback: Remover las pruebas del panel agregadas.. Status: pending
+Contrato: rollback: Remover las pruebas del panel agregadas.. Status: done
 
 #### S3.T1 — Adaptadores de desarrollo inyectables (cliente HTTP con modos 'sin conexión' y 'error de red') y sus toggles en el panel; con la simulación activa la petición falla sin llegar al servidor.
 Contrato: rollback: Remover los adaptadores y sus toggles, restaurando el cliente HTTP real.. Status: pending
@@ -97,13 +97,13 @@ Contrato: rollback: Remover las pruebas de los adaptadores.. Status: pending
 
 **Gate (auto)**: Al abrir el repo en VS Code Dev Containers, `server/` queda instalado, `pnpm generate` no deja diff y `pnpm -C server test` pasa contra el PostgreSQL de `compose.yaml`; `.devcontainer/` no tiene secretos ni rutas absolutas y `docs/development/setup.md` explica que no reemplaza macOS.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: Con `pnpm dev` en sabor `development` se abre el panel y muestra sabor, endpoint, versión, conectividad y salud/`requestId` con valores sensibles redactados y espacios reservados; con el backend caído muestra 'no disponible' sin bloquear la app; un build de `staging`/`production` no incluye el panel ni su entrada.
 
