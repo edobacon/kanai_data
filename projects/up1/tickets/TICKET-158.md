@@ -10,6 +10,7 @@ tier_origin: estimated
 module: object-manager
 autopilot: manual
 story_points:
+  published: 2
   estimated: 2
 ---
 
@@ -74,3 +75,23 @@ Alternativa descartada: derivar del esquema los campos autoincrement; mismo resu
 - Parche temporal en los mods (agregar `"internalId"` al `prefillFrom.exclude` de Scenario.json, Curriculum.json y activity.json): no se hace en este ticket.
 
 Relacionado: UPONE-1562, UPONE-1641 (Clonar escenario), UPONE-1982 (mapa internalId para el algoritmo).
+
+## Adendas al request
+
+### Adenda 1 - 2026-09-30 - Eduardo Bacon
+
+El chequeo de drift de esquemas (`npm run drift:check`, `object-manager/scripts/detect-schema-drift.js`) no reconoce el tipo `autoincrement`:
+- `jsonTypeToPrisma` (:37) cae al default `String`, asi que reporta 17 errores falsos "Prisma type mismatch (expected: String, got: Int)", uno por cada objeto que declara `internalId`. `src/services/typeMappers.js:350` si lo mapea a Int.
+- `compareGeneratedGraphQL` (:326) reporta 17 avisos "Field missing from GraphQL typeDefs" para `internalId`, que esta oculto de GraphQL a proposito (`typeMappers.js:518`, `isAutoincrementFieldType`).
+
+Se suma:
+- Mapear `autoincrement` a `Int` en el verificador.
+- No exigir en GraphQL los campos `autoincrement` (reusar `isAutoincrementFieldType`).
+- Agregar el tipo a la tabla de `docs/guides/schema-drift-detection.md:228`.
+- Validacion: correr `npm run drift:check` y confirmar que no queda ningun hallazgo sobre `internalId` (sin test unitario del script: hoy ejecuta main() al importarse; decision del dev).
+
+CA5: `drift:check` no reporta ningun hallazgo sobre `internalId` en los objetos que lo declaran.
+
+Fuera de alcance: el error preexistente `up1_document_template.allowedRoles` (GraphQL JSON vs [String!]); mientras siga, `drift:check` termina con exit 1.
+
+**Motivo**: Segundo efecto del tipo autoincrement (UPONE-1562) en la misma zona, detectado al preparar el desarrollo (sync del 2026-09-30). Se comunica en Jira con un comentario antes del PR, al terminar la ejecucion, por si aparece otro caso.
