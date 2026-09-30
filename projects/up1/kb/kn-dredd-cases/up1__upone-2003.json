@@ -4,28 +4,273 @@
  "project_id": "up1",
  "ref": "UPONE-2003",
  "mode": "pre-envio",
- "repos": [{"repo": "uplanner/object-manager", "branch": "feat/UPONE-2003-la-copia-de-registros-duplicar", "base_branch": "develop", "base_sha": "4dab5e98", "verified_head": "68d9d29b"}],
- "ticket_ac": {"source": "jira", "fetched_at": "2026-09-30T18:10:00-03:00", "items": [
-  "CA1 Clonar escenario, Duplicar plan, Nueva version de plan y de actividad crean la copia con internalId nuevo en raiz, hijos y nietos",
-  "CA2 el internalId del original no cambia",
-  "CA3 los exclude que declaran los mods siguen igual",
-  "CA4 RecordType con prefillFrom no copia internalId y respeta prefillFrom.exclude",
-  "CA5 (adenda) drift:check sin hallazgos sobre internalId"]},
- "rounds": [{"n": 1, "kind": "full", "run_id": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1", "head": {"uplanner/object-manager": "68d9d29b"}, "ts": "2026-09-30T18:20:00-03:00", "verdict": "aprobable con reservas", "opened": ["P1", "P2", "P3", "P4"], "closed": []}],
- "points": [
-  {"id": "P1", "fp": "docs/prefill-capability.md|default-exclude-doc-stale", "severity": "S2", "status": "open",
-   "mechanism": "la doc de contrato dice que el exclude por defecto es id, createdAt, updatedAt, createdBy; el codigo ahora suma DB_MANAGED_FIELDS (internalId) en raiz, raiz RecordType e hijos de deepClone",
-   "verify_closed": "docs/prefill-capability.md (:36 y :110) dice que las columnas asignadas por la DB (internalId) nunca se heredan en raiz, raiz RecordType e hijos/nietos, y que la raiz RecordType respeta prefillFrom.exclude; mods/docs/guides/implementing-cloning.md:48 queda como follow-up en el repo mods"},
-  {"id": "P2", "fp": "deep-clone-polymorphic.js|copy-path-without-db-managed-exclude", "severity": "S3", "status": "open",
-   "mechanism": "applyDerivedRemap (:145-186) y copyOneToOne/cloneChildProjections (:219-232) insertan filas copiadas sin quitar DB_MANAGED_FIELDS; latente hoy (CurricularLink sin internalId; rt/ext no admiten autoincrement)",
-   "verify_closed": "esas dos rutas quitan DB_MANAGED_FIELDS antes de create, con test unitario; o el docstring de db-managed-fields.js acota la garantia a raiz e hijos de deepClone"},
-  {"id": "P3", "fp": "prefill-from-source.test.js|wiring-tested-by-source-text", "severity": "S3", "status": "open",
-   "mechanism": "el test de que la lista no se duplica compara texto del fuente (fragil ante refactors)", "verify_closed": "opcional"},
-  {"id": "P4", "fp": "db-managed-fields.js|docstring-nombre-fijo", "severity": "S3", "status": "open",
-   "mechanism": "el docstring dice que el nombre internalId es fijo; el codegen solo avisa y emite otro nombre",
-   "verify_closed": "el docstring dice que es la convencion que el codegen exige con warning, no una garantia"}
+ "repos": [
+  {
+   "repo": "uplanner/object-manager",
+   "branch": "feat/UPONE-2003-la-copia-de-registros-duplicar",
+   "base_branch": "develop",
+   "base_sha": "4dab5e98",
+   "verified_head": "46a6d026"
+  }
  ],
- "consultas": [
-  "CA4: el exclude de la raiz RecordType no tiene efecto hoy con la config real (ningun RecordType declara prefillFrom); preexistente",
-  "Comentario de ampliacion en Jira pendiente (planeado antes del PR)"]
+ "ticket_ac": {
+  "source": "jira",
+  "items": [
+   "CA1 Clonar escenario, Duplicar plan, Nueva version de plan y de actividad crean la copia con internalId nuevo en raiz, hijos y nietos",
+   "CA2 el internalId del original no cambia",
+   "CA3 los exclude que declaran los mods siguen igual",
+   "CA4 RecordType con prefillFrom no copia internalId y respeta prefillFrom.exclude",
+   "CA5 (adenda) drift:check sin hallazgos sobre internalId"
+  ],
+  "fetched_at": "2026-09-30T18:10:00-03:00"
+ },
+ "rounds": [
+  {
+   "n": 1,
+   "kind": "full",
+   "run_id": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1",
+   "head": {
+    "uplanner/object-manager": "68d9d29b"
+   },
+   "ts": "2026-09-30T18:20:00-03:00",
+   "verdict": "aprobable con reservas",
+   "opened": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6"
+   ],
+   "closed": []
+  },
+  {
+   "n": 2,
+   "kind": "closure",
+   "run_id": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r2",
+   "head": {
+    "uplanner/object-manager": "46a6d026"
+   },
+   "ts": "2026-09-30T18:45:00-03:00",
+   "verdict": "aprobable",
+   "opened": [],
+   "reopened": [],
+   "duplicates": [],
+   "conflicts": [],
+   "matched": [],
+   "closed": [
+    "P1",
+    "P2",
+    "P4"
+   ]
+  }
+ ],
+ "points": [
+  {
+   "id": "P1",
+   "fp": "e689a2667a",
+   "repo": "uplanner/object-manager",
+   "severity": "S2",
+   "info_class": "contradiction_contract",
+   "info_floor": true,
+   "title": "la doc de contrato dice que el exclude por defecto es id, createdAt, updatedAt, ",
+   "where": "docs/prefill-capability.md:36",
+   "mechanism": "la-doc-de-contrato-dice-que-el-exclude-por-defecto-es-id-createdat-updatedat-createdby-el-codigo-ahora-suma-db-managed-fields-internalid-en-raiz-raiz-recordtype-e-hijos-de-deepclone",
+   "mechanism_source": "explicit",
+   "verify_closed": "docs/prefill-capability.md (:36 y :110) dice que las columnas asignadas por la DB (internalId) nunca se heredan en raiz, raiz RecordType e hijos/nietos, y que la raiz RecordType respeta prefillFrom.exclude; mods/docs/guides/implementing-cloning.md:48 queda como follow-up en el repo mods",
+   "status": "closed",
+   "opened_round": 1,
+   "closed_round": 2,
+   "decision": null,
+   "run_ref": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1/P1",
+   "history": [
+    {
+     "round": 1,
+     "status": "open",
+     "severity": "S2",
+     "evidence": ""
+    },
+    {
+     "round": 2,
+     "status": "closed",
+     "check": "corregido",
+     "severity": "S2",
+     "evidence": "docs/prefill-capability.md:36, :92 y seccion :110-119 (internalId nunca se hereda en raiz, raiz RecordType, hijos/nietos, derivadas y proyecciones)"
+    }
+   ],
+   "refuted_round": null
+  },
+  {
+   "id": "P2",
+   "fp": "ddd5ed67ad",
+   "repo": "uplanner/object-manager",
+   "severity": "S3",
+   "info_class": "none",
+   "info_floor": false,
+   "title": "applyDerivedRemap (:145-186) y copyOneToOne/cloneChildProjections (:219-232) ins",
+   "where": "src/graphql/resolvers/helpers/deep-clone-polymorphic.js:186",
+   "mechanism": "applyderivedremap-145-186-y-copyonetoone-clonechildprojections-219-232-insertan-filas-copiadas-sin-quitar-db-managed-fields-latente-hoy-curricularlink-sin-internalid-rt-ext-no-admiten-autoincrement",
+   "mechanism_source": "explicit",
+   "verify_closed": "esas dos rutas quitan DB_MANAGED_FIELDS antes de create, con test unitario; o el docstring de db-managed-fields.js acota la garantia a raiz e hijos de deepClone",
+   "status": "closed",
+   "opened_round": 1,
+   "closed_round": 2,
+   "decision": null,
+   "run_ref": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1/P2",
+   "history": [
+    {
+     "round": 1,
+     "status": "open",
+     "severity": "S3",
+     "evidence": ""
+    },
+    {
+     "round": 2,
+     "status": "closed",
+     "check": "corregido",
+     "severity": "S3",
+     "evidence": "deep-clone-polymorphic.js:148 (applyDerivedRemap), :234 (copyOneToOne), :331 (exclude del helper); deep-clone-direct.js:314; tests nuevos 51/51 y 72/72"
+    }
+   ],
+   "refuted_round": null
+  },
+  {
+   "id": "P3",
+   "fp": "739022a163",
+   "repo": "uplanner/object-manager",
+   "severity": "S3",
+   "info_class": "none",
+   "info_floor": false,
+   "title": "el test de que la lista no se duplica compara texto del fuente (fragil ante refa",
+   "where": "tests/unit/resolvers/prefill-from-source.test.js",
+   "mechanism": "el-test-de-que-la-lista-no-se-duplica-compara-texto-del-fuente-fragil-ante-refactors",
+   "mechanism_source": "explicit",
+   "verify_closed": "opcional",
+   "status": "open",
+   "opened_round": 1,
+   "closed_round": null,
+   "decision": null,
+   "run_ref": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1/P3",
+   "history": [
+    {
+     "round": 1,
+     "status": "open",
+     "severity": "S3",
+     "evidence": ""
+    },
+    {
+     "round": 2,
+     "status": "open",
+     "check": "parcial",
+     "severity": "S3",
+     "evidence": "prefill-from-source.test.js:370-388: it.each sobre 4 fuentes + asercion por import de PREFILL_DEFAULT_EXCLUDE; sigue usando regex sobre el fuente (menos fragil)"
+    }
+   ],
+   "refuted_round": null
+  },
+  {
+   "id": "P4",
+   "fp": "d88eb5ac1a",
+   "repo": "uplanner/object-manager",
+   "severity": "S3",
+   "info_class": "none",
+   "info_floor": false,
+   "title": "el docstring dice que el nombre internalId es fijo; el codegen solo avisa y emit",
+   "where": "src/graphql/resolvers/helpers/db-managed-fields.js:8",
+   "mechanism": "el-docstring-dice-que-el-nombre-internalid-es-fijo-el-codegen-solo-avisa-y-emite-otro-nombre",
+   "mechanism_source": "explicit",
+   "verify_closed": "el docstring dice que es la convencion que el codegen exige con warning, no una garantia",
+   "status": "closed",
+   "opened_round": 1,
+   "closed_round": 2,
+   "decision": null,
+   "run_ref": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1/P4",
+   "history": [
+    {
+     "round": 1,
+     "status": "open",
+     "severity": "S3",
+     "evidence": ""
+    },
+    {
+     "round": 2,
+     "status": "closed",
+     "check": "corregido",
+     "severity": "S3",
+     "evidence": "db-managed-fields.js:6-11: convencion del codegen con aviso, no garantia"
+    }
+   ],
+   "refuted_round": null
+  },
+  {
+   "id": "P5",
+   "fp": "221d450c7b",
+   "repo": "uplanner/object-manager",
+   "severity": "consulta",
+   "info_class": "none",
+   "info_floor": false,
+   "title": "CA4: el exclude de la raiz RecordType no tiene efecto hoy con la config real (ningun RecordType declara prefillFrom); preexistente",
+   "where": "",
+   "mechanism": "consulta-1",
+   "mechanism_source": "explicit",
+   "verify_closed": "",
+   "status": "open",
+   "opened_round": 1,
+   "closed_round": null,
+   "decision": null,
+   "run_ref": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1/C1",
+   "history": [
+    {
+     "round": 1,
+     "status": "open",
+     "severity": "consulta",
+     "evidence": ""
+    },
+    {
+     "round": 2,
+     "status": "open",
+     "check": "sigue",
+     "severity": "consulta",
+     "evidence": "ningun RecordType declara prefillFrom; el delta no cambia ese comportamiento (preexistente)"
+    }
+   ],
+   "refuted_round": null
+  },
+  {
+   "id": "P6",
+   "fp": "f60d3f8983",
+   "repo": "uplanner/object-manager",
+   "severity": "consulta",
+   "info_class": "none",
+   "info_floor": false,
+   "title": "Comentario de ampliacion en Jira pendiente (planeado antes del PR)",
+   "where": "",
+   "mechanism": "consulta-2",
+   "mechanism_source": "explicit",
+   "verify_closed": "",
+   "status": "open",
+   "opened_round": 1,
+   "closed_round": null,
+   "decision": null,
+   "run_ref": "5f2c47cc-6c3d-4dc8-a8c9-b7fd5cea09ef-upone2003-r1/C2",
+   "history": [
+    {
+     "round": 1,
+     "status": "open",
+     "severity": "consulta",
+     "evidence": ""
+    },
+    {
+     "round": 2,
+     "status": "open",
+     "check": "sigue",
+     "severity": "consulta",
+     "evidence": "comentario de ampliacion en Jira UPONE-2003 aun no posteado"
+    }
+   ],
+   "refuted_round": null
+  }
+ ],
+ "state": "closable",
+ "updated_at": "2026-09-30T18:04:34Z"
 }
