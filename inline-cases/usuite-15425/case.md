@@ -4,7 +4,7 @@
 
 **Objetivo:** Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 **Tags:** repos: user-api, sandbox-api · tickets: USUITE-15425 · labels: suite-legacy
-**Etapa:** analisis
+**Etapa:** ejecucion
 
 ## Falta
 
@@ -49,10 +49,11 @@
 
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
+| plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
 | usuite-15425-claves-en-logs-uvmcl.md | analisis | USUITE-15425: contraseñas en los logs de suite-api (uvmcl). Análisis, plan de prueba y esfuerzo | Análisis inicial: por qué la clave de uvmcl sale en los logs y flujo del login |
 | usuite-15425-niveles-de-solucion.md | analisis | USUITE-15425: niveles de solución (consolidado con verificación en uvmcl) | Vulnerabilidades, estado verificado de uvmcl y niveles de solución |
 | usuite-15425-plan-helper-ofuscacion-y-mapa-logger.md | analisis | USUITE-15425: plan del helper de ofuscación y mapa del sistema de logs de suite-api | Mapa del sistema de logs (loggerLevel, niveles, salidas que no controla); su parte B la reemplaza el plan |
 
 ## Plan
 
-Sin plan todavía.
+0 de 11 fases cerradas, fase actual F0. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
