@@ -91,13 +91,13 @@ Contrato: rollback: Revertir server/src/middleware/error-handler.ts a los litera
 Contrato: rollback: Quitar los tests agregados en server/src.. Status: done
 
 #### S4.T1 — Agregar en server/eslint.config.mjs una regla que rechaza literales de texto en title y detail de respuestas de error y dejarla activa en pnpm run static.
-Contrato: rollback: Revertir server/eslint.config.mjs.. Status: pending
+Contrato: rollback: Revertir server/eslint.config.mjs.. Status: done
 
 #### S4.T2 — Tests de la regla ESLint: marca title y detail literales, permite el acceso al catálogo y las claves estáticas, y el código actual pasa.
-Contrato: rollback: Quitar los tests de la regla ESLint.. Status: pending
+Contrato: rollback: Quitar los tests de la regla ESLint.. Status: done
 
 #### S4.T3 — Regresión integral: flutter-static y flutter-test (app) y static y test (server) verdes; ARB, catálogo y lista de no traducibles coherentes; sin regresión de server/src/middleware/error-handler.test.ts ni server/src/app.test.ts.
-Contrato: rollback: No aplica (verificación).. Status: pending
+Contrato: rollback: No aplica (verificación).. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -130,11 +130,11 @@ Contrato: rollback: No aplica (verificación).. Status: pending
 
 **Gate (auto)**: Un endpoint que falla devuelve problem+json con title y detail en español tomados del catálogo i18next sin importar Accept-Language (en-US y fr caen a es), una prueba falla nombrando la clave faltante y el log conserva codigo y requestId sin el texto traducido.
 
-### Session 4 · T2 · open
+### Session 4 · T2 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
-- [ ] S4.T3
+- [x] S4.T1
+- [x] S4.T2
+- [x] S4.T3
 
 **Gate (auto)**: backend-static rechaza un title o detail literal en una respuesta de error y el servidor limpio pasa; la regresión de app y servidor queda verde y ARB, catálogo y lista de no traducibles quedan coherentes.
