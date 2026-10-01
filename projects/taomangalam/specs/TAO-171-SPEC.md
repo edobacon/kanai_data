@@ -79,16 +79,16 @@ Contrato: rollback: Revertir app/pubspec.yaml, app/analysis_options.yaml y .gith
 Contrato: rollback: Quitar los tests de la regla.. Status: done
 
 #### S3.T1 — Agregar i18next al servidor y crear el catálogo es en server/src/i18n/ con una entrada por CodigoError del contrato (title y detail por defecto).
-Contrato: rollback: Quitar server/src/i18n y la dependencia i18next.. Status: pending
+Contrato: rollback: Quitar server/src/i18n y la dependencia i18next.. Status: done
 
 #### S3.T2 — Implementar la resolución de locale en el servidor: preferencia de la persona (vacía en esta entrega; llega con EP-03b) -> Accept-Language -> es, con es como único idioma publicado.
-Contrato: rollback: Quitar el módulo de resolución de locale.. Status: pending
+Contrato: rollback: Quitar el módulo de resolución de locale.. Status: done
 
 #### S3.T3 — Reemplazar los literales de server/src/middleware/error-handler.ts (TITULO_POR_CODIGO, tituloPorDefecto, recurso_no_encontrado/error_interno) por lecturas del catálogo, conservando el logueo por codigo y el contrato Problem.
-Contrato: rollback: Revertir server/src/middleware/error-handler.ts a los literales previos.. Status: pending
+Contrato: rollback: Revertir server/src/middleware/error-handler.ts a los literales previos.. Status: done
 
 #### S3.T4 — Tests: resolución de locale (orden y fallback a es); problem+json en español con Accept-Language en-US y fr; clave faltante falla nombrando la clave; 500 error_interno sin stack; el log conserva codigo y requestId.
-Contrato: rollback: Quitar los tests agregados en server/src.. Status: pending
+Contrato: rollback: Quitar los tests agregados en server/src.. Status: done
 
 #### S4.T1 — Agregar en server/eslint.config.mjs una regla que rechaza literales de texto en title y detail de respuestas de error y dejarla activa en pnpm run static.
 Contrato: rollback: Revertir server/eslint.config.mjs.. Status: pending
@@ -120,13 +120,13 @@ Contrato: rollback: No aplica (verificación).. Status: pending
 
 **Gate (auto)**: Correr flutter-static (o dart run custom_lint local) rechaza un Text('Guardar') en app/lib citando archivo y línea y el app/lib limpio pasa; la guarda corre como paso dentro del job flutter-static existente, sin job nuevo.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: Un endpoint que falla devuelve problem+json con title y detail en español tomados del catálogo i18next sin importar Accept-Language (en-US y fr caen a es), una prueba falla nombrando la clave faltante y el log conserva codigo y requestId sin el texto traducido.
 
