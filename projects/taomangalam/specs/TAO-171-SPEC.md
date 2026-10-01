@@ -70,13 +70,13 @@ Contrato: rollback: Borrar app/lib/l10n/README.md.. Status: done
 Contrato: rollback: Quitar los tests agregados en app/test.. Status: done
 
 #### S2.T1 — Crear el paquete de custom_lint de la app con una regla que rechaza literales de texto en posiciones visibles o semánticas (Text, Tooltip, Semantics.label, etc.) en app/lib, excluyendo código generado y tests, reportando archivo y línea.
-Contrato: rollback: Eliminar el paquete de lint y su entrada en pubspec/analysis_options.. Status: pending
+Contrato: rollback: Eliminar el paquete de lint y su entrada en pubspec/analysis_options.. Status: done
 
 #### S2.T2 — Declarar el plugin en app/pubspec.yaml (dev_dependencies) para que custom_lint lo descubra, ajustar app/analysis_options.yaml si hace falta y agregar el paso de la guarda dentro del job flutter-static existente en .github/workflows/ci-pr.yml.
-Contrato: rollback: Revertir app/pubspec.yaml, app/analysis_options.yaml y .github/workflows/ci-pr.yml.. Status: pending
+Contrato: rollback: Revertir app/pubspec.yaml, app/analysis_options.yaml y .github/workflows/ci-pr.yml.. Status: done
 
 #### S2.T3 — Tests de la regla de lint: marca Text('Guardar') y etiquetas semánticas o tooltips literales; no marca el ARB generado ni los tests; el app/lib existente pasa.
-Contrato: rollback: Quitar los tests de la regla.. Status: pending
+Contrato: rollback: Quitar los tests de la regla.. Status: done
 
 #### S3.T1 — Agregar i18next al servidor y crear el catálogo es en server/src/i18n/ con una entrada por CodigoError del contrato (title y detail por defecto).
 Contrato: rollback: Quitar server/src/i18n y la dependencia i18next.. Status: pending
@@ -111,12 +111,12 @@ Contrato: rollback: No aplica (verificación).. Status: pending
 
 **Gate (auto)**: La app corre en es: el título de la barra y el mensaje del HomeScreen salen de app_es.arb, un widget test con Locale('es') muestra el plural en 0, 1 y 5 y un marcador ICU interpolado, una clave ausente rompe la compilación, y la convención de claves + lista DEC-049 quedan versionadas junto al ARB.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Correr flutter-static (o dart run custom_lint local) rechaza un Text('Guardar') en app/lib citando archivo y línea y el app/lib limpio pasa; la guarda corre como paso dentro del job flutter-static existente, sin job nuevo.
 
