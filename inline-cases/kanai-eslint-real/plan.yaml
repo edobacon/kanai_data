@@ -1,0 +1,245 @@
+plan_id: kanai-eslint-real
+title: Lint real en kanai-app
+intent: Integrar ESLint con config flat propia (typescript-eslint + eslint-plugin-vue) y reglas minimas, dejando el codigo actual sin violaciones, para que el job Calidad de CI revise de verdad.
+tags:
+  projects: []
+  repos:
+    - kanai-app
+  tickets: []
+  branches: []
+  folders: []
+  labels:
+    - lint
+    - ci
+    - deuda-tecnica
+settings:
+  judge: final
+risks:
+  - "Un import o variable sin uso puede ocultar un bug (valor calculado que se dejo de usar): revisar cada caso antes de borrarlo."
+  - "En tests, una variable sin uso (p.ej. un spy 'warn' o un 'db') puede indicar una asercion faltante: no se cambian aserciones sin OK del dev."
+  - "Un v-html sin sanitizar es un riesgo de XSS: anotarlo sin revisar lo silencia."
+  - "Mientras no se pushee, el commit de config hace fallar lint si se aplica sin los commits de limpieza: se pushean juntos."
+out_of_scope:
+  - Modulo @nuxt/eslint y preset de Nuxt (descartados).
+  - Activar no-console, no-control-regex u otras reglas fuera de las tres minimas.
+  - Reglas de estilo/formato (prettier sigue aparte).
+phases:
+  - code: F1
+    title: Preparar rama, dependencias y config local
+    goal: Tener la config flat y sus dependencias en el working tree, y una medicion de `pnpm lint` sobre todo el repo (no solo las 5 carpetas medidas), sin commit todavia.
+    prerequisites:
+      - id: F1-P1
+        text: "Working tree de kanai-app sin cambios ajenos pendientes (hoy hay cambios en app/utils/markdown.ts y 2 docs que no son de este caso): commitearlos, guardarlos o confirmar que se dejan fuera."
+      - id: F1-P2
+        text: Node 24 en el PATH (el default de la maquina es 22).
+    tasks:
+      - code: F1.1
+        text: Crear la rama chore/eslint-real desde setup actualizada.
+        run:
+          command: git -C /Users/edobacon/Workspace/kanai/kanai-app switch -c chore/eslint-real setup
+          repo: kanai-app
+          expect: Rama nueva creada y activa
+      - code: F1.2
+        text: Agregar devDependencies typescript-eslint, eslint-plugin-vue y vue-eslint-parser.
+        kb:
+          - decision-integracion.md#via-de-integracion-2-config-flat-propia
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm add -D typescript-eslint eslint-plugin-vue vue-eslint-parser
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: package.json y pnpm-lock.yaml actualizados, sin errores de instalacion
+          exit_code: 0
+      - code: F1.3
+        text: Reescribir eslint.config.mjs con la config medida (flat/base de vue, parser vue + TS, las 3 reglas en error) y reemplazar el comentario de 'Fase 0' por uno que diga que reglas aplica y por que solo esas.
+        kb:
+          - analisis-lint-actual.md#como-se-midio-reproducible-sin-tocar-el-repo
+          - analisis-lint-actual.md#hallazgo-clave-los-eslint-disable-de-v-html-necesitan-vue-comment-directive
+      - code: F1.4
+        text: Correr pnpm lint sobre todo el repo y comparar con la medicion (106 en 47 archivos). Si aparecen archivos fuera de app/server/shared/scripts/tests (configs raiz, skills/, docs/), decidir con el dev si se lintean o se ignoran.
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm lint
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: Falla con ~62 errores (42 no-unused-vars + 20 vue/no-v-html) y ~44 avisos de eslint-disable sin efecto; reportar los numeros reales
+    criteria:
+      - id: F1-C1
+        text: pnpm lint ya revisa los .ts/.mts/.vue (no aparece 'File ignored because no matching configuration was supplied').
+        kind: command
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm exec eslint app/components/InlineMd.vue server/db/seed.ts
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: Sin el aviso 'File ignored'
+      - id: F1-C2
+        text: Los numeros de F1.4 estan registrados y cualquier diferencia con la medicion esta explicada.
+        kind: manual
+    effort: 30 min
+  - code: F2
+    title: Borrar eslint-disable sin efecto
+    goal: Quitar los 44 eslint-disable de no-console y no-control-regex, que no hacen nada con la config elegida.
+    prerequisites:
+      - id: F2-P1
+        text: F1 cerrada con la config en el working tree.
+    tasks:
+      - code: F2.1
+        text: Quitar los eslint-disable sin efecto con el autofix de ESLint y revisar el diff (que solo se borren esos comentarios).
+        kb:
+          - analisis-lint-actual.md#eslint-disable-sin-efecto-44
+          - decision-integracion.md#eslint-disable-sin-efecto-a-borrarlos
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm exec eslint . --fix --fix-type directive
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: Solo se borran comentarios eslint-disable; git diff sin otros cambios
+      - code: F2.2
+        text: Commit solo con esos archivos (sin la config ni las dependencias), mostrando antes al dev mensaje y archivos.
+    criteria:
+      - id: F2-C1
+        text: pnpm lint ya no reporta 'Unused eslint-disable directive'.
+        kind: command
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm lint 2>&1 | grep -c 'Unused eslint-disable'
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: "0"
+      - id: F2-C2
+        text: Commit registrado con su SHA.
+        kind: evidence
+    effort: 15 min
+  - code: F3
+    title: Limpiar imports y variables sin uso
+    goal: "Resolver las 42 violaciones de no-unused-vars revisando cada una: borrar lo muerto y reportar lo que parezca un bug o una asercion faltante."
+    prerequisites:
+      - id: F3-P1
+        text: F2 cerrada.
+    tasks:
+      - code: F3.1
+        text: "En server/, scripts/ y app/: borrar imports sin uso; para variables asignadas y nunca leidas (p.ej. preLevel.ts:162 'profile', chat.vue:336 'CLOSE_PATH', tickets/[id].vue:402 'artifactIsCode', kb.vue:124 'isMd', modelos.vue:31 'selectedHistory'), confirmar si es codigo muerto o un uso que se perdio, y reportar los segundos al dev antes de tocar."
+        kb:
+          - analisis-lint-actual.md#no-unused-vars-42
+      - code: F3.2
+        text: "En tests/: borrar imports sin uso; las variables sin uso que parezcan una asercion faltante (db.test.ts:214 'db', rueditas-readiness.test.ts:57 'db', judge-hardening-hosts.test.ts:139 y 164 'warn') se le muestran al dev y no se cambian aserciones sin su OK."
+        kb:
+          - analisis-lint-actual.md#no-unused-vars-42
+      - code: F3.3
+        text: Correr typecheck y tests para confirmar que nada dependia de lo borrado.
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm typecheck && pnpm test
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: typecheck sin errores; tests con el mismo resultado que en setup (fallas preexistentes, como el flaky de git-workspace, se clasifican aparte)
+          exit_code: 0
+      - code: F3.4
+        text: Commit de la limpieza (sin config ni dependencias), mostrando antes mensaje y archivos.
+    criteria:
+      - id: F3-C1
+        text: pnpm lint no reporta @typescript-eslint/no-unused-vars.
+        kind: command
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm lint 2>&1 | grep -c 'no-unused-vars'
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: "0"
+      - id: F3-C2
+        text: typecheck y tests sin fallas introducidas.
+        kind: manual
+      - id: F3-C3
+        text: Commit registrado con su SHA.
+        kind: evidence
+    effort: 1 a 2 h
+  - code: F4
+    title: Revisar y anotar los 20 v-html
+    goal: Confirmar que cada v-html sin anotar renderiza HTML escapado o sanitizado; anotar los seguros con eslint-disable y corregir el origen de los que no lo sean.
+    prerequisites:
+      - id: F4-P1
+        text: F3 cerrada.
+    tasks:
+      - code: F4.1
+        text: Rastrear cada funcion productora (renderMarkdown, formatExec, highlightLine, hlCell, line.html, markdownHtml, md de DataModelFlow y los 2 de tickets/[id].vue) hasta donde escapa o pasa por DOMPurify, con archivo:linea.
+        kb:
+          - analisis-lint-actual.md#v-html-sin-anotar-20
+      - code: F4.2
+        text: "Guardar la revision en el KB del caso (revision-v-html.md): por cada uso, fuente del contenido, como se protege y veredicto."
+        kb:
+          - decision-integracion.md#tratamiento-de-lo-existente-a-arreglar-todo
+      - code: F4.3
+        text: Anotar los seguros con <!-- eslint-disable-next-line vue/no-v-html --> igual que los 32 existentes; si alguno no es seguro, proponer al dev el arreglo del origen antes de aplicarlo.
+      - code: F4.4
+        text: Commit propio de la revision de v-html, mostrando antes mensaje y archivos.
+    criteria:
+      - id: F4-C1
+        text: pnpm lint no reporta vue/no-v-html.
+        kind: command
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm lint 2>&1 | grep -c 'vue/no-v-html'
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: "0"
+      - id: F4-C2
+        text: revision-v-html.md guardada en el KB del caso con un veredicto por cada uno de los 20 usos.
+        kind: evidence
+      - id: F4-C3
+        text: Commit registrado con su SHA.
+        kind: evidence
+    effort: 1 a 2 h
+  - code: F5
+    title: Commit de la config y paridad local con CI
+    goal: Commitear config y dependencias y reproducir en local el job Calidad completo antes de entregar.
+    prerequisites:
+      - id: F5-P1
+        text: F2, F3 y F4 cerradas.
+    tasks:
+      - code: F5.1
+        text: Revisar si README.md (linea 71) y docs/README.md (linea 199) necesitan mencionar que lint aplica; actualizar solo si dicen algo que ya no es cierto.
+      - code: F5.2
+        text: Correr el job Calidad completo en local con instalacion congelada.
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm install --frozen-lockfile && pnpm check:ui && pnpm docs:check && pnpm lint && pnpm typecheck
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: Todo en verde; pnpm lint con 0 errores y 0 avisos
+          exit_code: 0
+      - code: F5.3
+        text: Commit de eslint.config.mjs, package.json y pnpm-lock.yaml (y docs si cambiaron), mostrando antes mensaje y archivos.
+    criteria:
+      - id: F5-C1
+        text: check:ui, docs:check, lint y typecheck pasan en local con Node 24.
+        kind: command
+        run:
+          command: export PATH="$(ls -d $HOME/.nvm/versions/node/v24.*/bin | tail -1):$PATH" && pnpm check:ui && pnpm docs:check && pnpm lint && pnpm typecheck
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: exit 0
+          exit_code: 0
+      - id: F5-C2
+        text: Commit registrado con su SHA.
+        kind: evidence
+    effort: 30 min
+  - code: F6
+    title: Entrega
+    goal: Llevar los 4 commits a setup y pushear con OK explicito del dev, con CI en verde.
+    prerequisites:
+      - id: F6-P1
+        text: F5 cerrada con la paridad local en verde.
+      - id: F6-P2
+        text: OK explicito del dev para integrar en setup y hacer push.
+    tasks:
+      - code: F6.1
+        text: Integrar chore/eslint-real en setup (fast-forward si setup no avanzo; si avanzo, volver a correr la paridad de F5 sobre el resultado).
+      - code: F6.2
+        text: Push de setup (lo ejecuta el dev).
+        run:
+          command: git -C /Users/edobacon/Workspace/kanai/kanai-app push origin setup
+          repo: kanai-app
+          expect: Push aceptado
+      - code: F6.3
+        text: Confirmar que el job Calidad de CI pasa en el push.
+    criteria:
+      - id: F6-C1
+        text: Job Calidad en verde en GitHub Actions para el commit pusheado.
+        kind: evidence
+    effort: 15 min
+    delivers: true
+    rollback: "Revertir el commit de config (F5.3) devuelve pnpm lint al estado anterior sin tocar runtime; los commits de limpieza (F2 a F4) pueden quedarse porque solo borran codigo muerto y anotan v-html. Si hace falta volver todo: git revert de los 4 commits en orden inverso y push."
+created: 2026-10-01T19:24:16.053Z
+updated: 2026-10-01T19:24:16.088Z
