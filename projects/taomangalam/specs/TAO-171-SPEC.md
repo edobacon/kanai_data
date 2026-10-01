@@ -98,6 +98,21 @@ Contrato: rollback: Quitar los tests de la regla ESLint.. Status: done
 
 #### S4.T3 — Regresión integral: flutter-static y flutter-test (app) y static y test (server) verdes; ARB, catálogo y lista de no traducibles coherentes; sin regresión de server/src/middleware/error-handler.test.ts ni server/src/app.test.ts.
 Contrato: rollback: No aplica (verificación).. Status: done
+
+#### S5.T1 — Ampliar la regla no_hardcoded_ui_text del paquete app/custom_lint para que detecte literales de texto pasados a widgets propios del proyecto, no solo a la lista fija de widgets de Flutter. La deteccion debe basarse en el tipo resuelto del constructor invocado (subclase de Widget) mas los nombres de parametros textuales, de modo que marque casos como _MutedText('...'), _ValueText('...'), _PanelCard(title: '...') y _PlaceholderLine(label: '...')/_PlaceholderLine(note: '...'). No debe marcar valores no visibles: rutas de assets, claves/keys, tags, nombres de familia de fuente y demas valores tecnicos. Mantener las exclusiones vigentes de codigo generado y pruebas. Incluir tests del propio paquete de lint que cubran un widget propio con literal visible (marcado) y un valor tecnico (no marcado).
+Contrato: rollback: Revertir el paquete app/custom_lint (regla y tests) a la version previa al cambio; la regla vuelve a marcar solo los widgets de Flutter de la lista fija.. Status: done
+
+#### S5.T2 — Migrar al ARB app/lib/l10n/app_es.arb todos los literales visibles que la regla ampliada (S5.T1) senale en app/lib, incluidos los que hoy se pasan a widgets propios: titulos de seccion ('Sabor', 'Endpoint', 'Version de la app', 'Conectividad', 'Salud del backend', 'Simulacion (development)', 'Pendientes'); etiquetas y notas de placeholders ('Sync', 'Outbox', 'Version del contenido', 'Reloj', 'Pendiente (EP-06) — sin datos aun', 'Pendiente (EP-02) — sin datos aun', 'Pendiente — sin datos aun'); estados ('Cargando...', 'No disponible', 'Consultando...', 'Sin estado', 'Sin chequeos'); y los dos subtitulos del panel ('Rechaza la peticion sin llegar al servidor', 'Rechaza como un error del servidor, sin llegar a el'). Conservar los textos visibles exactos, usar la convencion de nombres de claves vigente, regenerar las clases de localizacion y ajustar los tests de pantalla solo si fuera necesario, sin aflojar aserciones.
+Contrato: rollback: Revertir app/lib/l10n/app_es.arb, el panel y las pantallas tocadas y los archivos generados de localizacion al estado previo, dejando los textos como literales en el codigo.. Status: done
+
+#### S5.T3 — Acotar la regla de ESLint de server/eslint.config.mjs para que solo marque title/detail literales en objetos de respuesta de error del contrato (por ejemplo, objetos que tambien declaran codigo), de modo que un objeto de dominio o un DTO ajeno con un title literal no se marque. Actualizar server/src/static-gate.test.ts: los fixtures positivos pasan a ser objetos con forma de respuesta de error (incluyendo codigo) y se agrega un caso negativo de objeto de dominio con title literal que no debe marcarse.
+Contrato: rollback: Revertir server/eslint.config.mjs y server/src/static-gate.test.ts al estado previo; la regla vuelve a marcar cualquier title/detail literal.. Status: done
+
+#### S5.T4 — Documentar en server/src/i18n/README.md, junto al catalogo del servidor, la convencion de claves errors.<codigo>.<campo> y la politica de terminos no traducibles. Limpiar los ids internos de proceso de los documentos que agrego este ticket: app/lib/l10n/README.md, app/lib/l10n/terminos_no_traducibles.txt y la descripcion del ARB que los mencione, reemplazandolos por una descripcion en texto o por la referencia externa GH-49, sin tokens tipo REQ-, DEC- ni equivalentes.
+Contrato: rollback: Revertir server/src/i18n/README.md, app/lib/l10n/README.md, app/lib/l10n/terminos_no_traducibles.txt y la descripcion del ARB al estado previo.. Status: done
+
+#### S5.T5 — Verificacion final de la sesion, sin cambios de codigo: correr la regresion de la app (analyze estricto, custom_lint, flutter test) y la del servidor (static, test); confirmar que app/lib queda limpio bajo la regla ampliada y que el ARB, el catalogo i18next del servidor y la lista de terminos no traducibles son coherentes entre si (sin claves usadas que falten, sin terminos listados traducidos). Reportar la evidencia de cada corrida.
+Contrato: rollback: No aplica: la tarea solo verifica y no modifica archivos.. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -138,3 +153,26 @@ Contrato: rollback: No aplica (verificación).. Status: done
 - [x] S4.T3
 
 **Gate (auto)**: backend-static rechaza un title o detail literal en una respuesta de error y el servidor limpio pasa; la regresión de app y servidor queda verde y ARB, catálogo y lista de no traducibles quedan coherentes.
+
+### Session 5 · T2 · continue
+
+**Tasks:**
+- [x] S5.T1
+- [x] S5.T2
+- [x] S5.T3
+- [x] S5.T4
+- [x] S5.T5
+
+**Gate (auto)**: La regla ampliada rechaza un literal de texto pasado a un widget propio (p. ej. _MutedText('Guardar')) citando archivo y línea, y app/lib limpio pasa; backend-static rechaza un title/detail literal de una respuesta de error y no marca un objeto de dominio con title; la regresión de app y servidor queda verde y los docs del catálogo y de términos no traducibles quedan sin ids internos de proceso.
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+
+**Tasks agregadas:**
+
+- S5: Ampliar la regla no_hardcoded_ui_text del paquete app/custom_lint para que detecte literales de texto pasados a widgets propios del proyecto, no solo a la lista fija de widgets de Flutter. La deteccion debe basarse en el tipo resuelto del constructor invocado (subclase de Widget) mas los nombres de parametros textuales, de modo que marque casos como _MutedText('...'), _ValueText('...'), _PanelCard(title: '...') y _PlaceholderLine(label: '...')/_PlaceholderLine(note: '...'). No debe marcar valores no visibles: rutas de assets, claves/keys, tags, nombres de familia de fuente y demas valores tecnicos. Mantener las exclusiones vigentes de codigo generado y pruebas. Incluir tests del propio paquete de lint que cubran un widget propio con literal visible (marcado) y un valor tecnico (no marcado). (valida: REQ-03, REQ-07; rollback: Revertir el paquete app/custom_lint (regla y tests) a la version previa al cambio; la regla vuelve a marcar solo los widgets de Flutter de la lista fija.)
+- S5: Migrar al ARB app/lib/l10n/app_es.arb todos los literales visibles que la regla ampliada (S5.T1) senale en app/lib, incluidos los que hoy se pasan a widgets propios: titulos de seccion ('Sabor', 'Endpoint', 'Version de la app', 'Conectividad', 'Salud del backend', 'Simulacion (development)', 'Pendientes'); etiquetas y notas de placeholders ('Sync', 'Outbox', 'Version del contenido', 'Reloj', 'Pendiente (EP-06) — sin datos aun', 'Pendiente (EP-02) — sin datos aun', 'Pendiente — sin datos aun'); estados ('Cargando...', 'No disponible', 'Consultando...', 'Sin estado', 'Sin chequeos'); y los dos subtitulos del panel ('Rechaza la peticion sin llegar al servidor', 'Rechaza como un error del servidor, sin llegar a el'). Conservar los textos visibles exactos, usar la convencion de nombres de claves vigente, regenerar las clases de localizacion y ajustar los tests de pantalla solo si fuera necesario, sin aflojar aserciones. (valida: REQ-01, REQ-03; rollback: Revertir app/lib/l10n/app_es.arb, el panel y las pantallas tocadas y los archivos generados de localizacion al estado previo, dejando los textos como literales en el codigo.)
+- S5: Acotar la regla de ESLint de server/eslint.config.mjs para que solo marque title/detail literales en objetos de respuesta de error del contrato (por ejemplo, objetos que tambien declaran codigo), de modo que un objeto de dominio o un DTO ajeno con un title literal no se marque. Actualizar server/src/static-gate.test.ts: los fixtures positivos pasan a ser objetos con forma de respuesta de error (incluyendo codigo) y se agrega un caso negativo de objeto de dominio con title literal que no debe marcarse. (valida: REQ-04, REQ-06, REQ-07; rollback: Revertir server/eslint.config.mjs y server/src/static-gate.test.ts al estado previo; la regla vuelve a marcar cualquier title/detail literal.)
+- S5: Documentar en server/src/i18n/README.md, junto al catalogo del servidor, la convencion de claves errors.<codigo>.<campo> y la politica de terminos no traducibles. Limpiar los ids internos de proceso de los documentos que agrego este ticket: app/lib/l10n/README.md, app/lib/l10n/terminos_no_traducibles.txt y la descripcion del ARB que los mencione, reemplazandolos por una descripcion en texto o por la referencia externa GH-49, sin tokens tipo REQ-, DEC- ni equivalentes. (valida: REQ-05; rollback: Revertir server/src/i18n/README.md, app/lib/l10n/README.md, app/lib/l10n/terminos_no_traducibles.txt y la descripcion del ARB al estado previo.)
+- S5: Verificacion final de la sesion, sin cambios de codigo: correr la regresion de la app (analyze estricto, custom_lint, flutter test) y la del servidor (static, test); confirmar que app/lib queda limpio bajo la regla ampliada y que el ARB, el catalogo i18next del servidor y la lista de terminos no traducibles son coherentes entre si (sin claves usadas que falten, sin terminos listados traducidos). Reportar la evidencia de cada corrida. (valida: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-07, test; rollback: No aplica: la tarea solo verifica y no modifica archivos.)
+
