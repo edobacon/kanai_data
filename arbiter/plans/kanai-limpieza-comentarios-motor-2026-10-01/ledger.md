@@ -1,7 +1,7 @@
 ---
 plan_id: kanai-limpieza-comentarios-motor-2026-10-01
 created: 2026-10-01T15:02:31.242Z
-updated: 2026-10-01T15:48:57.584Z
+updated: 2026-10-01T16:42:24.083Z
 tags:
   projects:
     - kanai
@@ -29,25 +29,21 @@ tags:
 | --- | --- | --- | --- | --- | --- |
 | kanai-limpieza-motor-2026-10-01-r1-kanai-app | 2026-10-01T12:05:00-03:00 | bd9f91c | iterar | 0 / 1 / 7 / 4 / 3 | 30/30 completos, 0 sin leer |
 | kanai-limpieza-motor-2026-10-01-r2-kanai-app | 2026-10-01T12:50:00-03:00 | 352af32 | iterar | 0 / 1 / 8 / 4 / 1 | 24/25 completos, 0 sin leer |
+| kanai-limpieza-motor-2026-10-01-r3-kanai-app | 2026-10-01T13:15:00-03:00 | b6456cc | iterar | 0 / 3 / 6 / 4 / 0 | 19/22 completos, 0 sin leer |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app | 2026-10-01T13:40:00-03:00 | e1e8142 | iterar | 0 / 1 / 6 / 1 / 0 | 15/20 completos, 0 sin leer |
 
 ## Abiertos (ultima corrida)
 
 | hallazgo | sev | kind | donde | titulo | nota |
 | --- | --- | --- | --- | --- | --- |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b1-f1 | S1 | correctness | server/cleaner/tsTokens.ts:63 | El tokenizador marca como comentario texto JSX y regex mal desambiguadas, y la huella no lo ve: borrarlo pasa la verificacion |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b1-f2 | S2 | correctness | server/cleaner/lines.ts:23 | El analisis por lineas no cubre bloques literales YAML en listas, strings multilinea entre comillas ni comillas escapadas |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b1-f3 | S2 | correctness | server/cleaner/lines.ts:76 | Fuera de py/yaml el analisis por lineas no sigue heredocs ni strings multilinea |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b1-f4 | S2 | correctness | server/cleaner/lines.ts:105 | Un .vue sin <script> reconocible cae al analisis por lineas con // y /* activos sobre el template |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b1-f5 | S2 | correctness | server/cleaner/apply.ts:43 | isCommentText acepta un /* sin cierre y la huella no lo ve si lo que sigue son comentarios o EOF |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b2-f1 | S2 | correctness | server/cleaner/run.ts:189 | El reintento automatico tras un fallo casi nunca se dispara (no se engancha al cierre de sesiones especiales como el N3) |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b2-f2 | S2 | maintainability | docs/kn-cleaner.md:44 | Doc y skill prometen un N3 sobre el codigo limpio que con KANAI_GATE_LEVELS=off (default) no corre, y nadie verifica lo aplicado |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b2-f3 | S2 | correctness | server/cleaner/resolve.ts:49 | La auditoria comment_cleanup registra actor human aunque la confirmacion la haya declarado el agente |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b2-f4 | S2 | correctness | server/mcp/cleanupTools.ts:21 | apply y run de comment_cleanup escriben y commitean sin reservar el ticket |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/b1-f5 | S3 | correctness | server/cleaner/inventory.ts:44 | La heuristica de codigo comentado marca prosa con parentesis, '=' o '=>' (camino sin modelo) | arrastrado de kanai-limpieza-motor-2026-10-01-r1-kanai-app/b1-f5 |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/b1-f6 | S3 | correctness | server/cleaner/apply.ts:119 | Un archivo con fines de linea mezclados se reescribe entero en CRLF | arrastrado de kanai-limpieza-motor-2026-10-01-r1-kanai-app/b1-f6 |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b2-f5 | S3 | correctness | server/mcp/cleanupTools.ts:29 | El binding de la confirmacion no identifica la propuesta |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b2-f6 | S3 | maintainability | skills/claude/kn-cleaner/SKILL.md:132 | SKILL.md describe los cambios como repo/archivo:linea y la propuesta usa repo:ruta:linea |  |
-| kanai-limpieza-motor-2026-10-01-r2-kanai-app/r2-b1-f7 | consulta | maintainability | server/cleaner/tsTokens.ts:26 | El fallback sin typescript solo se avisa por console.warn; no llega al reporte |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-b1-f1 | S1 | correctness | server/cleaner/vueSfc.ts:69 | Borrar una linea de comentario del template dentro de <pre> cambia el texto visible y la huella no lo detecta |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-b1-f2 | S2 | correctness | server/cleaner/syntax.ts:52 | Directivas de Volar en el template no protegidas |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-b1-f3 | S2 | correctness | server/cleaner/inventory.ts:108 | Proteger etiquetas JSDoc partia el bloque en grupos sueltos y arrastraba el rechazo de todo el archivo |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-o1 | S2 | correctness | server/cleaner/vueSfc.ts:87 | Un .vue cuyo <script> tiene errores de sintaxis igual se limpiaba (contradice B1) |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-b2-f1 | S2 | maintainability | server/mcp/cleanupTools.ts:55 | La ficha de la tool y el resumen decian que se tocan nombres de tests |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-b2-f2 | S2 | maintainability | server/cleaner/verify.ts:1 | verify.ts y run.ts decian que la verificacion es solo fuera del gate |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-b2-f3 | S2 | maintainability | tests/unit/gate-orchestration.test.ts:244 | Faltaban tests de verifyAfter true en el reintento y en el override |  |
+| kanai-limpieza-motor-2026-10-01-r4-kanai-app/r4-o2 | S3 | correctness | server/cleaner/syntax.ts:61 | <!-- @vue-expect-error --> no protegido (mismo origen que r4-b1-f2) |  |
 
 ## Corregidos
 

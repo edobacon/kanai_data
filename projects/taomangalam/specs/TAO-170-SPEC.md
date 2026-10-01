@@ -83,34 +83,34 @@ Contrato: rollback: Restaurar los valores previos de tokens.v1.json; la tabla de
 Contrato: rollback: Borrar los tests; no afecta el runtime.. Status: done
 
 #### S2.T1 — Definir AppThemeData/ThemeExtension y AppTheme.light mapeando los tokens generados (color, tipografía y extensiones semánticas), reemplazando taoLightTheme.
-Contrato: rollback: Restaurar app/lib/design_system/theme.dart con taoLightTheme fromSeed.. Status: pending
+Contrato: rollback: Restaurar app/lib/design_system/theme.dart con taoLightTheme fromSeed.. Status: done
 
 #### S2.T1.1 — Definir AppThemeData y el ThemeExtension semántico con los nombres de tokens.v1.json (canvas, surface, actionPrimary).
-Contrato: rollback: Borrar el contrato AppThemeData/ThemeExtension.. Status: pending
+Contrato: rollback: Borrar el contrato AppThemeData/ThemeExtension.. Status: done
 
 #### S2.T1.2 — Mapear el color generado a ColorScheme y ThemeData de AppTheme.light.
-Contrato: rollback: Revertir el mapeo a taoLightTheme.. Status: pending
+Contrato: rollback: Revertir el mapeo a taoLightTheme.. Status: done
 
 #### S2.T1.3 — Mapear tipografía y extensiones (espacio, radio, trazo, movimiento) en AppTheme.light.
-Contrato: rollback: Borrar las extensiones no visuales del tema.. Status: pending
+Contrato: rollback: Borrar las extensiones no visuales del tema.. Status: done
 
 #### S2.T2 — Cablear MaterialApp con ThemeMode.light y ThemeController de una sola opción; normalizar cualquier preferencia dark/system guardada a light y persistirla; exponer darkThemeSupported=false que bloquea la activación remota de oscuro.
-Contrato: rollback: Revertir app/lib/app.dart al tema sin ThemeMode y quitar el ThemeController.. Status: pending
+Contrato: rollback: Revertir app/lib/app.dart al tema sin ThemeMode y quitar el ThemeController.. Status: done
 
 #### S2.T2.1 — Implementar ThemeController como provider con única opción pública light.
-Contrato: rollback: Borrar el ThemeController.. Status: pending
+Contrato: rollback: Borrar el ThemeController.. Status: done
 
 #### S2.T2.2 — Normalizar y persistir a light cualquier preferencia dark/system previa mediante un accesor local mínimo.
-Contrato: rollback: Quitar la normalización y su accesor de preferencia.. Status: pending
+Contrato: rollback: Quitar la normalización y su accesor de preferencia.. Status: done
 
 #### S2.T2.3 — Exponer darkThemeSupported=false y usarlo para ignorar una configuración remota que intente activar oscuro.
-Contrato: rollback: Quitar la capacidad darkThemeSupported.. Status: pending
+Contrato: rollback: Quitar la capacidad darkThemeSupported.. Status: done
 
 #### S2.T3 — Fijar el estilo explícito de barra de estado y barra de navegación en contraste claro (SystemChrome o AnnotatedRegion), sin heredar el modo del OS.
-Contrato: rollback: Quitar la llamada de SystemChrome y dejar el default del framework.. Status: pending
+Contrato: rollback: Quitar la llamada de SystemChrome y dejar el default del framework.. Status: done
 
 #### S2.T4 — Tests de widget y golden con platformBrightness oscuro en teléfono y tablet que verifican ThemeMode.light, el estilo de barras, la normalización de preferencia y la ausencia de selector.
-Contrato: rollback: Borrar los tests y los golden.. Status: pending
+Contrato: rollback: Borrar los tests y los golden.. Status: done
 
 #### S3.T1 — Implementar el check de vigencia en CI: regenerar en memoria y comparar con el Dart versionado, fallando con el nombre del archivo desactualizado cuando tokens.v1.json cambia sin regenerar.
 Contrato: rollback: Quitar el check; el job de tests vuelve a su alcance previo.. Status: pending
@@ -134,19 +134,19 @@ Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetb
 
 **Gate (auto)**: Existe app/lib/design_system/tokens/tokens.g.dart generado, compila, reproduce tokens.v1.json y la tabla de contraste pasa con los valores AA; tokens.v1.json queda ajustado.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T2.1
-- [ ] S2.T2.2
-- [ ] S2.T2.3
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T2.1
+- [x] S2.T2.2
+- [x] S2.T2.3
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: La app corriendo con el OS en oscuro se ve clara, con barras del sistema de contraste claro, sin selector y con el ThemeController admitiendo solo light.
 
