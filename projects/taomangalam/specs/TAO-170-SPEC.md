@@ -113,13 +113,13 @@ Contrato: rollback: Quitar la llamada de SystemChrome y dejar el default del fra
 Contrato: rollback: Borrar los tests y los golden.. Status: done
 
 #### S3.T1 — Implementar el check de vigencia en CI: regenerar en memoria y comparar con el Dart versionado, fallando con el nombre del archivo desactualizado cuando tokens.v1.json cambia sin regenerar.
-Contrato: rollback: Quitar el check; el job de tests vuelve a su alcance previo.. Status: pending
+Contrato: rollback: Quitar el check; el job de tests vuelve a su alcance previo.. Status: done
 
 #### S3.T2 — Implementar la guarda de literales que rechaza Color(0x...), Colors.*, ThemeMode.dark y ThemeMode.system en app/lib fuera del Dart generado.
-Contrato: rollback: Quitar la guarda de literales.. Status: pending
+Contrato: rollback: Quitar la guarda de literales.. Status: done
 
 #### S3.T3 — Tests de las guardas (pasa/falla) y actualización de la prueba de Widgetbook para afirmar un único tema claro sin selector oscuro.
-Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetbook previa.. Status: pending
+Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetbook previa.. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -150,11 +150,11 @@ Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetb
 
 **Gate (auto)**: La app corriendo con el OS en oscuro se ve clara, con barras del sistema de contraste claro, sin selector y con el ThemeController admitiendo solo light.
 
-### Session 3 · T1 · open
+### Session 3 · T1 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: CI falla nombrando el Dart generado desactualizado y rechaza literales o ThemeMode.dark/system fuera del generado; Widgetbook afirma un único tema claro sin selector.
