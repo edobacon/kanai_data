@@ -80,7 +80,7 @@ Contrato: rollback: Borrar esos bloques del Dart generado.. Status: done
 Contrato: rollback: Restaurar los valores previos de tokens.v1.json; la tabla de contraste vuelve a fallar.. Status: done
 
 #### S1.T3 — Tests del generador (valores, tipos, grupos y vigencia byte a byte) y de la tabla de contraste (pares semánticos y los casos de aceptación).
-Contrato: rollback: Borrar los tests; no afecta el runtime.. Status: pending
+Contrato: rollback: Borrar los tests; no afecta el runtime.. Status: done
 
 #### S2.T1 — Definir AppThemeData/ThemeExtension y AppTheme.light mapeando los tokens generados (color, tipografía y extensiones semánticas), reemplazando taoLightTheme.
 Contrato: rollback: Restaurar app/lib/design_system/theme.dart con taoLightTheme fromSeed.. Status: pending
@@ -122,7 +122,7 @@ Contrato: rollback: Quitar la guarda de literales.. Status: pending
 Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetbook previa.. Status: pending
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
 - [x] S1.T1
@@ -130,7 +130,7 @@ Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetb
 - [x] S1.T1.2
 - [x] S1.T1.3
 - [x] S1.T2
-- [ ] S1.T3
+- [x] S1.T3
 
 **Gate (auto)**: Existe app/lib/design_system/tokens/tokens.g.dart generado, compila, reproduce tokens.v1.json y la tabla de contraste pasa con los valores AA; tokens.v1.json queda ajustado.
 
