@@ -94,28 +94,28 @@ Contrato: rollback: Revertir la configuración de TypeDoc y su script.. Status: 
 Contrato: rollback: Eliminar los tests nuevos de API docs.. Status: done
 
 #### S4.T1 — Crear los scripts `pnpm docs:generate`, `pnpm docs:api` (Redoc, DartDoc, TypeDoc) y `pnpm docs:diagrams`, y documentarlos en docs/development/commands.md.
-Contrato: rollback: Quitar los scripts del package.json y revertir docs/development/commands.md.. Status: pending
+Contrato: rollback: Quitar los scripts del package.json y revertir docs/development/commands.md.. Status: done
 
 #### S4.T1.1 — Agregar los scripts docs:generate, docs:api y docs:diagrams al package.json raíz.
-Contrato: rollback: Eliminar los scripts nuevos del package.json.. Status: pending
+Contrato: rollback: Eliminar los scripts nuevos del package.json.. Status: done
 
 #### S4.T1.2 — Documentar los tres comandos en docs/development/commands.md.
-Contrato: rollback: Revertir la sección agregada en commands.md.. Status: pending
+Contrato: rollback: Revertir la sección agregada en commands.md.. Status: done
 
 #### S4.T2 — Agregar los pasos nuevos al job docs de .github/workflows/ci-pr.yml (frontmatter, DartDoc, TypeDoc, Mermaid y regeneración sin diff) y la detección de documentos huérfanos y metadata atrasada en .github/workflows/nightly.yml.
-Contrato: rollback: Retirar los pasos y la detección nuevos; volver al job docs de HU-00-16.. Status: pending
+Contrato: rollback: Retirar los pasos y la detección nuevos; volver al job docs de HU-00-16.. Status: done
 
 #### S4.T2.1 — Incorporar frontmatter, DartDoc, TypeDoc, Mermaid y el gate de regeneración sin diff al job docs de ci-pr.yml.
-Contrato: rollback: Quitar los pasos nuevos de ci-pr.yml.. Status: pending
+Contrato: rollback: Quitar los pasos nuevos de ci-pr.yml.. Status: done
 
 #### S4.T2.2 — Agregar a nightly.yml la detección de documentos huérfanos y metadata atrasada con su reporte en el summary.
-Contrato: rollback: Quitar la detección y el reporte nuevos de nightly.yml.. Status: pending
+Contrato: rollback: Quitar la detección y el reporte nuevos de nightly.yml.. Status: done
 
 #### S4.T3 — Normalizar el patrón que rechaza el linter de docs en los documentos de la baseline que se tocan (docs/PLAN.md, docs/content/SCHEMA.md, docs/development/commands.md) para que queden compliant.
-Contrato: rollback: Revertir la normalización de esos documentos al estado previo.. Status: pending
+Contrato: rollback: Revertir la normalización de esos documentos al estado previo.. Status: done
 
 #### S4.T4 — Regresión y verificación de integración: clon limpio `pnpm docs:generate` con `git diff --exit-code` 0, job docs verde en PR válido, nightly informando huérfano y scripts documentales de HU-00-16 todavía pasando.
-Contrato: rollback: Eliminar los tests/verificación nuevos de integración.. Status: pending
+Contrato: rollback: Eliminar los tests/verificación nuevos de integración.. Status: done
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -149,16 +149,16 @@ Contrato: rollback: Eliminar los tests/verificación nuevos de integración.. St
 
 **Gate (auto)**: Correr docs:api falla si un miembro público de Dart en app/ no tiene comentario `///` o si un export de server/ tiene un enlace TSDoc inválido, y pasa con la API documentada.
 
-### Session 4 · T2 · open
+### Session 4 · T2 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T1.1
-- [ ] S4.T1.2
-- [ ] S4.T2
-- [ ] S4.T2.1
-- [ ] S4.T2.2
-- [ ] S4.T3
-- [ ] S4.T4
+- [x] S4.T1
+- [x] S4.T1.1
+- [x] S4.T1.2
+- [x] S4.T2
+- [x] S4.T2.1
+- [x] S4.T2.2
+- [x] S4.T3
+- [x] S4.T4
 
 **Gate (auto)**: En clon limpio `pnpm docs:generate` deja `git diff --exit-code` en 0; el job docs de ci-pr.yml corre frontmatter/DartDoc/TypeDoc/Mermaid sin diff y nightly.yml informa un documento huérfano como tal.
