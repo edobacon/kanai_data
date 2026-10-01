@@ -77,7 +77,7 @@ Contrato: rollback: Borrar el bloque de color del Dart generado.. Status: done
 Contrato: rollback: Borrar esos bloques del Dart generado.. Status: done
 
 #### S1.T2 — Implementar el arnés de contraste WCAG en Dart puro y ajustar tokens.v1.json hasta cumplir AA en focus, textSecondary, warning, actionSecondary y border sobre background y sobre canvas.
-Contrato: rollback: Restaurar los valores previos de tokens.v1.json; la tabla de contraste vuelve a fallar.. Status: pending
+Contrato: rollback: Restaurar los valores previos de tokens.v1.json; la tabla de contraste vuelve a fallar.. Status: done
 
 #### S1.T3 — Tests del generador (valores, tipos, grupos y vigencia byte a byte) y de la tabla de contraste (pares semánticos y los casos de aceptación).
 Contrato: rollback: Borrar los tests; no afecta el runtime.. Status: pending
@@ -129,7 +129,7 @@ Contrato: rollback: Borrar los tests de guardas y restaurar la prueba de Widgetb
 - [x] S1.T1.1
 - [x] S1.T1.2
 - [x] S1.T1.3
-- [ ] S1.T2
+- [x] S1.T2
 - [ ] S1.T3
 
 **Gate (auto)**: Existe app/lib/design_system/tokens/tokens.g.dart generado, compila, reproduce tokens.v1.json y la tabla de contraste pasa con los valores AA; tokens.v1.json queda ajustado.
