@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Teach-close · UPONE-2003 · La copia de registros ya no arrastra internalId</title>
+<!-- ticket: TICKET-158 · kind: close · project: up1 · generated: 2026-10-01 -->
+</head>
+<body>
+<h1>La copia de registros ya no arrastra internalId (UPONE-2003)</h1>
+
+<div class="panel" data-dkc-block="tldr">
+<strong>TL;DR.</strong> Fix de core en <code>object-manager</code>, mezclado en <code>develop</code> por el PR #619 (commit de merge <code>9a9117a</code>, 2026-10-01). Clonar escenario, Duplicar plan, Nueva versión de plan y Nueva versión de actividad vuelven a crear la copia: cada registro copiado (raíz, hijos y nietos) recibe un <code>internalId</code> nuevo de la secuencia y el original conserva el suyo. El verificador de drift entiende el tipo <code>autoincrement</code>.
+</div>
+
+<h2>Qué se hizo</h2>
+<div class="flow" data-dkc-block="flow">
+<ol>
+<li><strong>Constante compartida</strong>: <code>src/graphql/resolvers/helpers/db-managed-fields.js</code> declara <code>DB_MANAGED_FIELDS = ['internalId']</code>, los campos que asigna la base y que una copia nunca debe traer.</li>
+<li><strong>Raíz normal</strong>: <code>prefill-from-source.js</code> suma la constante a su exclusión por defecto.</li>
+<li><strong>Raíz de un RecordType</strong>: en <code>instance.resolver.js</code> la lista de campos omitidos suma la constante y ahora también respeta <code>prefillFrom.exclude</code> (antes lo ignoraba).</li>
+<li><strong>Hijos y nietos</strong>: <code>deep-clone-direct.js</code> y <code>deep-clone-polymorphic.js</code> excluyen la constante en todas sus rutas, además del <code>exclude</code> que declara cada mod.</li>
+<li><strong>Verificador de drift</strong>: <code>scripts/detect-schema-drift.js</code> mapea <code>autoincrement</code> a <code>Int</code> y no exige en GraphQL los campos <code>autoincrement</code> (están ocultos a propósito). Tabla actualizada en <code>docs/guides/schema-drift-detection.md</code>.</li>
+<li><strong>Docs</strong>: <code>docs/prefill-capability.md</code> y <code>docs/guides/object-definitions.md</code> explican que la copia nunca trae los campos que maneja la base.</li>
+</ol>
+</div>
+
+<h2>Cómo se evaluó y testeó</h2>
+<div class="concept-card" data-dkc-block="concept-card">
+<ul>
+<li><strong>Tests unitarios</strong>: <code>prefill-from-source</code>, <code>deep-clone-direct</code>, <code>deep-clone-polymorphic</code> e <code>instance.resolver</code> verifican que el <code>data</code> armado no lleva <code>internalId</code> (incluido un nieto) y que el <code>exclude</code> de los mods se sigue aplicando.</li>
+<li><strong>Tests e2e contra base real</strong>: <code>copy-internalid-createinstance.test.js</code> (nuevo) y los de clonación existentes comprueban que cada fila copiada recibe un <code>internalId</code> entero y distinto del origen; antes fallaban con P2002. En serie: 8/8 archivos, 18/18 tests.</li>
+<li><strong>Revisiones</strong>: gate de sesión y gate integral aprobados con verificación ejecutada (4418 tests pasan; los 36 que fallan son preexistentes, ajenos al ticket). Revisión de PR con kn-dredd corrida.</li>
+<li><strong>Smoke por UI</strong> en el tenant local UPU: las 4 acciones crean la copia con hijos.</li>
+</ul>
+</div>
+
+<h2>Lo que conviene recordar</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li>Si aparece otro campo que asigna la base (otra secuencia o un valor por defecto único), se agrega a <code>DB_MANAGED_FIELDS</code> y queda cubierto en los 4 puntos de copia.</li>
+<li>La exclusión del core se suma al <code>exclude</code> de cada mod; nunca lo reemplaza.</li>
+<li>Con los tests e2e en paralelo aparece P2034 (conflicto de transacciones Serializable entre archivos sobre la misma base). Es preexistente y no tiene relación con <code>internalId</code>.</li>
+</ul>
+</div>
+
+<h2>Pendiente fuera de este ticket</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li><code>mods/docs/guides/implementing-cloning.md</code> no menciona <code>internalId</code>.</li>
+<li>El error preexistente <code>up1_document_template.allowedRoles</code> del verificador de drift sigue haciendo que <code>drift:check</code> termine con exit 1.</li>
+</ul>
+</div>
+</body>
+</html>

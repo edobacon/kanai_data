@@ -2,7 +2,7 @@
 id: TICKET-158
 project: up1
 type: ticket
-status: ready_to_close
+status: closed
 work_type: fix
 external: UPONE-2003
 tier: T1
@@ -12,6 +12,7 @@ autopilot: manual
 story_points:
   published: 2
   estimated: 2
+  executed: 2
 ---
 
 ## Request

@@ -1,0 +1,445 @@
+{
+  "run_id": "r1-kanai-app",
+  "plan_id": "kanai-planes-inline-2026-10-01",
+  "ts_start": "2026-10-01T11:30:00-03:00",
+  "ts_end": "2026-10-01T11:50:00-03:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "bfedbfc",
+  "head_ref": "0cd11a0",
+  "repo": "kanai-app",
+  "calibration": "comportamiento",
+  "plan_phase_ids": [
+    "F0",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7"
+  ],
+  "findings": {
+    "S1": 1,
+    "S2": 4,
+    "S3": 3,
+    "consulta": 1
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "verdict_expected_by_rubric": "iterar",
+  "findings_detail": [
+    {
+      "id": "b1-f1",
+      "severity": "S1",
+      "kind": "correctness",
+      "where": "server/inlinePlan/state.ts:46",
+      "title": "Un not_met sin ref (o con ref a un requisito previo) no se puede resolver nunca y la fase no cierra mas",
+      "evidence": "resolveNotMet solo resuelve por ref igual y solo desde task_done/criterion_met; not_met sin ref o con ref de requisito queda en openNotMet; phaseGaps lo lista y canClose rechaza; no hay evento ni enmienda que lo resuelva. Re-verify: sostenido.",
+      "outcome": "fixed",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b1-f2",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/inlinePlan/import.ts:101",
+      "title": "El importador descarta sin avisar lineas bajo rotulos desconocidos y mete en la meta tareas sin rotulo Tareas",
+      "evidence": "labelSection manda rotulos no reconocidos a 'other' y consumeLine no los pasa a unparsed; con seccion meta activa, una tarea se concatena a la meta. Contradice el contrato de unparsed.",
+      "outcome": "fixed",
+      "info_class": "contradiction_internal",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b2-f1",
+      "severity": "S2",
+      "kind": "intent_gap",
+      "where": "docs/mcp-catalogo.md:210",
+      "title": "El catalogo MCP generado lista las 7 tools inline_plan_* bajo Tickets y sus 7 filas dicen lo mismo",
+      "evidence": "scripts/docs-catalog.mts:27 regex de area Tickets calza 'plan'; firstSentence toma solo INLINE_PLAN_TOOL_PREFIX_NOTE. Falta area propia 'Planes inline' y regenerar.",
+      "outcome": "fixed",
+      "info_class": "contradiction_contract",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b2-f2",
+      "severity": "S2",
+      "kind": "maintainability",
+      "where": "docs/planes-inline.md:102",
+      "title": "La doc dice que se rechaza una ejecucion con comando distinto del plan, pero task_done no recibe command",
+      "evidence": "schema.ts task_done no declara command (zod lo descarta); checkDevRun solo compara si viene. La descripcion de inline_plan_record induce a mandarlo.",
+      "outcome": "fixed",
+      "info_class": "contradiction_contract",
+      "info_floor": true,
+      "seen_by": [
+        "b2"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b2-f3",
+      "severity": "S2",
+      "kind": "maintainability",
+      "where": "docs/plan/implementacion/plan-planes-inline.md:64",
+      "title": "El plan afirma que el lint exige rollback (es aviso), que entregar incluye commits, y que close devuelve dev_actions",
+      "evidence": "lint.ts:22 es warn; import.ts:33 excluye commits; service close lanza error solo con gaps. Lista de eventos omite prerequisite_met.",
+      "outcome": "fixed",
+      "info_class": "contradiction_internal",
+      "info_floor": true,
+      "seen_by": [
+        "b2"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b1-f3",
+      "severity": "S3",
+      "kind": "correctness",
+      "where": "server/inlinePlan/service.ts:206",
+      "title": "La enmienda no vuelve a chequear proyectos registrados ni la pertenencia de las refs a su fase",
+      "evidence": "amendInlinePlan no llama registeredProjects; refs se comparan en todo el plan, no por fase; cualquier ack sirve aunque su project no coincida.",
+      "outcome": "fixed",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b1-f4",
+      "severity": "S3",
+      "kind": "maintainability",
+      "where": "server/inlinePlan/service.ts:166",
+      "title": "El flujo per_phase se decide comparando el prefijo del mensaje 'la fase necesita veredicto'",
+      "evidence": "state.ts genera el texto; advance.ts y service.ts lo detectan con startsWith. Magic string.",
+      "outcome": "fixed",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b1-f5",
+      "severity": "S3",
+      "kind": "maintainability",
+      "where": "server/data/localConfig.ts:259",
+      "title": "setInlinePlanRepoPath no tiene consumidores",
+      "evidence": "git grep en 0cd11a0 sin llamadores; codigo muerto exportado.",
+      "outcome": "fixed",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "b1-f6",
+      "severity": "consulta",
+      "kind": "intent_gap",
+      "where": "server/inlinePlan/advance.ts:38",
+      "title": "El veredicto del juez final y los criterios manuales los puede registrar el mismo LLM sin juez ni dev",
+      "evidence": "canRecordJudge acepta actor llm sin ligarlo a un brief; checkCriterion no exige actor dev en criterios manual. Decision de diseno.",
+      "outcome": "pending",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 29,
+    "read_full": 29,
+    "skimmed": 0,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "server/inlinePlan/schema.ts",
+        "server/inlinePlan/types.ts",
+        "server/data/localConfig.ts",
+        "server/inlinePlan/advance.ts",
+        "server/inlinePlan/import.ts",
+        "server/inlinePlan/lint.ts",
+        "server/inlinePlan/next.ts",
+        "server/inlinePlan/render.ts",
+        "server/inlinePlan/service.ts",
+        "server/inlinePlan/state.ts",
+        "server/inlinePlan/store.ts",
+        "server/inlinePlan/validate.ts",
+        "server/mcp/inlinePlanTools.ts",
+        "server/mcp/instructions.ts",
+        "server/mcp/tools.ts",
+        "tests/unit/inline-plan-import.test.ts",
+        "tests/unit/inline-plan-schema.test.ts",
+        "tests/unit/inline-plan-service.test.ts",
+        "tests/unit/inline-plan-state.test.ts",
+        "tests/unit/inline-plan-store.test.ts",
+        "tests/unit/inline-plan-tools.test.ts",
+        "tests/unit/inline-plan-validate.test.ts",
+        "docs/arbiter.md",
+        "docs/data-workspace.md",
+        "docs/mcp-catalogo.md",
+        "docs/mcp.md",
+        "docs/planes-inline.md",
+        "docs/README.md",
+        "docs/plan/implementacion/plan-planes-inline.md"
+      ],
+      "skimmed": [],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "docs/arbiter.md",
+        "lines": 5,
+        "blob": "63f0644c6d27b33f614d6c0d8333d0907fabb769",
+        "deleted": false
+      },
+      {
+        "path": "docs/data-workspace.md",
+        "lines": 7,
+        "blob": "6cfc43e9d798f905e8b78897a48489b9163a034b",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp-catalogo.md",
+        "lines": 9,
+        "blob": "c5941f285b0ac2c36c7f52926ef74cd02ffcb930",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp.md",
+        "lines": 6,
+        "blob": "bd6c95dad21e1aba013545846053fadb02479ae3",
+        "deleted": false
+      },
+      {
+        "path": "docs/plan/implementacion/plan-planes-inline.md",
+        "lines": 321,
+        "blob": "7b3151c4f04f3e2804456b12c8187cce87138ada",
+        "deleted": false
+      },
+      {
+        "path": "docs/planes-inline.md",
+        "lines": 186,
+        "blob": "0aafcd28bbff5d366c09a8e64955e1ff0346b75b",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 2,
+        "blob": "55afcba4c9487daa79f2a60855c14701a4980edf",
+        "deleted": false
+      },
+      {
+        "path": "server/data/localConfig.ts",
+        "lines": 19,
+        "blob": "21e4b11ca553e88ff0012b82faf09c77260281ad",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/advance.ts",
+        "lines": 92,
+        "blob": "e194607f7e941ecd1a6f1e6181f2d4a964be36dc",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/import.ts",
+        "lines": 210,
+        "blob": "c537106c40e9bd07e14c6746b6ee4b9e37cd289c",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/lint.ts",
+        "lines": 57,
+        "blob": "923ff9cd066979229e4267778b608628d5105211",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/next.ts",
+        "lines": 105,
+        "blob": "3c3efcac6f3f01de96ec0b2a81abee4a18250e61",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/render.ts",
+        "lines": 97,
+        "blob": "a2b17a9a97f8a23c9874c56de25cc78ac3434f94",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/schema.ts",
+        "lines": 85,
+        "blob": "de751a77e9c693116db62369a6729e4df585fb25",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/service.ts",
+        "lines": 223,
+        "blob": "b456ec381ccf51b1c2239b82959dbeecd5728695",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/state.ts",
+        "lines": 114,
+        "blob": "21e2475af1f4781bd266e98bad21bcf0d8aa3c50",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/store.ts",
+        "lines": 165,
+        "blob": "aec19c6ffb8708eb302bf3ebbe035ab19cd617b2",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/types.ts",
+        "lines": 124,
+        "blob": "0e452d0785a4bdc2f52d483f0dd0069decd08c92",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/validate.ts",
+        "lines": 138,
+        "blob": "0f833269c4bd8f159e89170084fa5bc32b910d87",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/inlinePlanTools.ts",
+        "lines": 128,
+        "blob": "ee695004daf7ca0ba8c5291ae6840af3d6dfaef3",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/instructions.ts",
+        "lines": 1,
+        "blob": "8c2254f9e642dcf2246c304f18f3029166c87c55",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 4,
+        "blob": "1b61383b73fb0cb3823eb34e45bdee2b50af8b41",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-import.test.ts",
+        "lines": 166,
+        "blob": "57f6b364df2680b55385617344f69ed6f0eb0fd7",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-schema.test.ts",
+        "lines": 108,
+        "blob": "84d25679c09561310a28e070aa90d8631ecc9c2b",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-service.test.ts",
+        "lines": 139,
+        "blob": "8fd3fa4e99b5472c278a7fbbfd0347a594ccab72",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-state.test.ts",
+        "lines": 109,
+        "blob": "9fc67e2ac4c605c10cf2f3fbecbe01372da85561",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-store.test.ts",
+        "lines": 103,
+        "blob": "a4ef9a6089fb04af7d37df1202b2b912442de618",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-tools.test.ts",
+        "lines": 101,
+        "blob": "1eb16f7d6ce68eedd9c55892e31543e19adb51f1",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-validate.test.ts",
+        "lines": 139,
+        "blob": "789f4237aea509912450ccd71eae0309bf0b0e0e",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "server/inlinePlan/schema.ts": "de751a77e9c693116db62369a6729e4df585fb25",
+      "server/inlinePlan/types.ts": "0e452d0785a4bdc2f52d483f0dd0069decd08c92",
+      "server/data/localConfig.ts": "21e4b11ca553e88ff0012b82faf09c77260281ad",
+      "server/inlinePlan/advance.ts": "e194607f7e941ecd1a6f1e6181f2d4a964be36dc",
+      "server/inlinePlan/import.ts": "c537106c40e9bd07e14c6746b6ee4b9e37cd289c",
+      "server/inlinePlan/lint.ts": "923ff9cd066979229e4267778b608628d5105211",
+      "server/inlinePlan/next.ts": "3c3efcac6f3f01de96ec0b2a81abee4a18250e61",
+      "server/inlinePlan/render.ts": "a2b17a9a97f8a23c9874c56de25cc78ac3434f94",
+      "server/inlinePlan/service.ts": "b456ec381ccf51b1c2239b82959dbeecd5728695",
+      "server/inlinePlan/state.ts": "21e2475af1f4781bd266e98bad21bcf0d8aa3c50",
+      "server/inlinePlan/store.ts": "aec19c6ffb8708eb302bf3ebbe035ab19cd617b2",
+      "server/inlinePlan/validate.ts": "0f833269c4bd8f159e89170084fa5bc32b910d87",
+      "server/mcp/inlinePlanTools.ts": "ee695004daf7ca0ba8c5291ae6840af3d6dfaef3",
+      "server/mcp/instructions.ts": "8c2254f9e642dcf2246c304f18f3029166c87c55",
+      "server/mcp/tools.ts": "1b61383b73fb0cb3823eb34e45bdee2b50af8b41",
+      "tests/unit/inline-plan-import.test.ts": "57f6b364df2680b55385617344f69ed6f0eb0fd7",
+      "tests/unit/inline-plan-schema.test.ts": "84d25679c09561310a28e070aa90d8631ecc9c2b",
+      "tests/unit/inline-plan-service.test.ts": "8fd3fa4e99b5472c278a7fbbfd0347a594ccab72",
+      "tests/unit/inline-plan-state.test.ts": "9fc67e2ac4c605c10cf2f3fbecbe01372da85561",
+      "tests/unit/inline-plan-store.test.ts": "a4ef9a6089fb04af7d37df1202b2b912442de618",
+      "tests/unit/inline-plan-tools.test.ts": "1eb16f7d6ce68eedd9c55892e31543e19adb51f1",
+      "tests/unit/inline-plan-validate.test.ts": "789f4237aea509912450ccd71eae0309bf0b0e0e",
+      "docs/arbiter.md": "63f0644c6d27b33f614d6c0d8333d0907fabb769",
+      "docs/data-workspace.md": "6cfc43e9d798f905e8b78897a48489b9163a034b",
+      "docs/mcp-catalogo.md": "c5941f285b0ac2c36c7f52926ef74cd02ffcb930",
+      "docs/mcp.md": "bd6c95dad21e1aba013545846053fadb02479ae3",
+      "docs/planes-inline.md": "0aafcd28bbff5d366c09a8e64955e1ff0346b75b",
+      "docs/README.md": "55afcba4c9487daa79f2a60855c14701a4980edf",
+      "docs/plan/implementacion/plan-planes-inline.md": "7b3151c4f04f3e2804456b12c8187cce87138ada"
+    },
+    "summary": {
+      "files": 29,
+      "reviewed_files": 29,
+      "lines": 2963,
+      "reviewed_lines": 2963,
+      "pct_lines": 100,
+      "excluded": []
+    }
+  },
+  "batches": 2,
+  "consumers": 30,
+  "lines_judged": 2963,
+  "reverify": [
+    {
+      "id": "b1-f1",
+      "result": "sostenido"
+    }
+  ],
+  "ticket": {
+    "resolution": "none",
+    "kanai_id": null,
+    "external_ref": null,
+    "project": null
+  }
+}

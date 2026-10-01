@@ -1,0 +1,619 @@
+{
+  "run_id": "kanai-limpieza-motor-2026-10-01-r1-kanai-app",
+  "plan_id": "kanai-limpieza-comentarios-motor-2026-10-01",
+  "ts_start": "2026-10-01T11:57:00-03:00",
+  "ts_end": "2026-10-01T12:05:00-03:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "428d4aa",
+  "head_ref": "bd9f91c",
+  "repo": "kanai-app",
+  "plan_phase_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5"
+  ],
+  "calibration": "comportamiento",
+  "findings": {
+    "S0": 0,
+    "S1": 1,
+    "S2": 7,
+    "S3": 4,
+    "consulta": 3
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "b1-f1",
+      "severity": "S1",
+      "kind": "correctness",
+      "title": "La verificacion del esqueleto no detecta codigo inyectado por el reemplazo del LLM (salto de linea dentro de un elemento, o codigo despues de */ en un bloque)",
+      "where": "server/cleaner/apply.ts:46",
+      "phase": "F3",
+      "evidence": "Reproducido: trailing con replacement ['// nota\\nprocess.exit(1)'] y bloque con ' * nota */ process.exit(1)' dan skeletonPreserved=true y escriben codigo nuevo.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b1-f2",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "Inventario y esqueleto comparten el lexer por lineas: lo que confunde con comentario se puede borrar sin que la verificacion lo note",
+      "where": "server/cleaner/inventory.ts:83",
+      "phase": "F3",
+      "evidence": "Reproducido: '/* @__PURE__ */ register(x)' y '// hola' dentro de un template literal se borran con preserved=true; YAML block scalar por el mismo mecanismo.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b2-f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "El candado de una vez deja sin limpiar el codigo que llega despues (corrida a pedido temprana, sesion nueva o retrabajo tras el N3)",
+      "where": "server/mcp/cleanupTools.ts:21",
+      "phase": "F4",
+      "evidence": "alreadyRan acepta cualquier veredicto; runOnDemand no exige sesiones cerradas y no permite repetir; integralPending si re-dispara con sesiones nuevas.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b2-f2",
+      "severity": "S2",
+      "kind": "intent_gap",
+      "title": "Con mas de 8 cambios el dev aprueba a ciegas: status solo devuelve el resumen con tope de 8",
+      "where": "server/cleaner/report.ts:14",
+      "phase": "F4",
+      "evidence": "details() corta en LISTED=8; ninguna accion muestra la propuesta completa; apply aplica tambien lo no mostrado.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b2-f3",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "exclude espera repo:ruta:linea pero el resumen muestra repo/ruta:linea; un id que no coincide se ignora en silencio",
+      "where": "server/mcp/cleanupTools.ts:44",
+      "phase": "F4",
+      "evidence": "inventory.ts:96 arma repo:ruta:linea; report.ts:52 muestra repo/ruta:linea; editsByFile saltea solo coincidencia exacta; sin validacion.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b2-f4",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Doc y skill dicen que el N3 juzga el codigo ya limpio; en manual el N3 corre sobre el codigo sin limpiar y lo aplicado despues no lo juzga ningun gate",
+      "where": "skills/claude/kn-cleaner/SKILL.md:45",
+      "phase": "F5",
+      "evidence": "SKILL.md:45, kn-cleaner.md:38 y gate.ts:407 lo afirman sin condicion; kn-cleaner.md:93 promete un gate siguiente que no existe.",
+      "info_class": "contradiction_ai",
+      "info_floor": true,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b2-f5",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Sin tests para la tool comment_cleanup ni para el cableado del disparo en el gate y el override",
+      "where": "server/mcp/cleanupTools.ts:46",
+      "phase": "F4",
+      "evidence": "Solo cleaner-run.test.ts llama directo al orquestador; gate-orchestration.test.ts no fija orden, condicion ni override.",
+      "info_class": "missing_test_write",
+      "info_floor": true,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b1-f4",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "El clasificador llama a chat sin pure:true, a diferencia de los jueces del mismo backend",
+      "where": "server/cleaner/classify.ts:107",
+      "phase": "F2",
+      "evidence": "judgeAgents usa { model, pure: true }; claude.ts pure quita tools y MCP; la entrada (comentarios del ticket) no es confiable.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b1-f5",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "La heuristica de codigo comentado marca prosa que empieza con palabras clave, y sin modelo el autonomo la borra",
+      "where": "server/cleaner/inventory.ts:42",
+      "phase": "F1",
+      "evidence": "'// return early when the list is empty' sale commentedCode=true; fallbackDecision lo elimina.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b1-f6",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "CRLF mezclado y patrones $ en la sustitucion del nombre de test",
+      "where": "server/cleaner/apply.ts:53",
+      "phase": "F3",
+      "evidence": "split('\\n') deja \\r; trimEnd lo quita; line.replace(string, to) interpreta $&.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b2-f6",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "apply/dismiss piden confirmacion antes de verificar que hay una propuesta pendiente",
+      "where": "server/mcp/cleanupTools.ts:48",
+      "phase": "F4",
+      "evidence": "accept_gate_finding valida con dryRun antes; comment_cleanup no; un skipped posterior no queda como no aplicado.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b2-f7",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "En el override, la limpieza corre fuera de la reserva del gate del ticket",
+      "where": "server/mcp/tools.ts:658",
+      "phase": "F4",
+      "evidence": "gate normal la corre dentro de reserveTicketGate; accept_gate_finding no.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ]
+    },
+    {
+      "id": "b1-f3",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "Aplicar una propuesta guardada no revisa que el repo siga en la rama del ticket",
+      "where": "server/cleaner/run.ts:88",
+      "phase": "F4",
+      "evidence": "Re-verify: baja a consulta; applyEdits exige lineas identicas, en otra rama casi siempre se rechaza.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b1-f7",
+      "severity": "consulta",
+      "kind": "error_handling",
+      "title": "Un fallo transitorio deja la limpieza automatica sin reintento; un fallo despues del commit queda como failed",
+      "where": "server/cleaner/run.ts:133",
+      "phase": "F4",
+      "evidence": "alreadyRan cuenta failed; applyProposal commitea antes de persist.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    },
+    {
+      "id": "b2-f8",
+      "severity": "consulta",
+      "kind": "security",
+      "title": "En hosts sin elicitation, apply/dismiss proceden con la confirmacion declarada por el agente (sin requireConfirmation)",
+      "where": "server/mcp/cleanupTools.ts:48",
+      "phase": "F4",
+      "evidence": "approve_spec y approveDesign pasan requireConfirmation:true; comment_cleanup no.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ]
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 30,
+    "read_full": 30,
+    "skimmed": 0,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        ".env.example",
+        "docs/README.md",
+        "docs/configuration.md",
+        "docs/kn-cleaner.md",
+        "docs/mcp-catalogo.md",
+        "docs/skills.md",
+        "scripts/docs-catalog.mts",
+        "server/cleaner/apply.ts",
+        "server/cleaner/classify.ts",
+        "server/cleaner/commit.ts",
+        "server/cleaner/inventory.ts",
+        "server/cleaner/report.ts",
+        "server/cleaner/run.ts",
+        "server/cleaner/source.ts",
+        "server/cleaner/store.ts",
+        "server/cleaner/syntax.ts",
+        "server/dispatch/gate.ts",
+        "server/dispatch/gateTypes.ts",
+        "server/dispatch/internalIds.ts",
+        "server/mcp/cleanupTools.ts",
+        "server/mcp/humanConfirm.ts",
+        "server/mcp/toolProfiles.ts",
+        "server/mcp/tools.ts",
+        "server/repo/closeAdvisories.ts",
+        "server/skills/registry.ts",
+        "skills/claude/kn-cleaner/SKILL.md",
+        "tests/unit/cleaner-apply.test.ts",
+        "tests/unit/cleaner-classify.test.ts",
+        "tests/unit/cleaner-inventory.test.ts",
+        "tests/unit/cleaner-run.test.ts"
+      ],
+      "skimmed": [],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": ".env.example",
+        "lines": 4,
+        "blob": "a8dd5259a1fdf4b32b337b59c88c412e6845d486",
+        "deleted": false
+      },
+      {
+        "path": "docs/configuration.md",
+        "lines": 1,
+        "blob": "dd0e7452963ffb57aac3a904da33e185fc397bee",
+        "deleted": false
+      },
+      {
+        "path": "docs/kn-cleaner.md",
+        "lines": 95,
+        "blob": "3930f847c24a6411b1ab3e4773917a0e696bbe2d",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp-catalogo.md",
+        "lines": 24,
+        "blob": "a85b03606015f7e99119a64654d56355b5cd2385",
+        "deleted": false
+      },
+      {
+        "path": "docs/plan/implementacion/plan-planes-inline.md",
+        "lines": 22,
+        "blob": "ce04e9b36cf9f42ec958a5e82ec1c35a5b05aff2",
+        "deleted": false
+      },
+      {
+        "path": "docs/planes-inline.md",
+        "lines": 57,
+        "blob": "ebd9429fec57b8908d7c5cdb805b78d17f4f8660",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 2,
+        "blob": "a319be7b55fb234fc01588913dfed17168d9bec9",
+        "deleted": false
+      },
+      {
+        "path": "docs/skills.md",
+        "lines": 4,
+        "blob": "9cfbebedbbd424c07e7cb3b30a19ff72703a1760",
+        "deleted": false
+      },
+      {
+        "path": "scripts/docs-catalog.mts",
+        "lines": 11,
+        "blob": "4a209c101d804245795d8348382f87221c602b7f",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/apply.ts",
+        "lines": 118,
+        "blob": "e563aeaf071d2d296f581fe5d0abc6ea8c582db4",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/classify.ts",
+        "lines": 131,
+        "blob": "05b6db0c485f131727a602ad935935e53ee8b72d",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/commit.ts",
+        "lines": 49,
+        "blob": "c4f85c7a7418a9434dde3f01d2ad41c43703a41b",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/inventory.ts",
+        "lines": 147,
+        "blob": "2b132e9b77e9b1cff234820c3d5f36bae8c12448",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/report.ts",
+        "lines": 85,
+        "blob": "14335ba9f75ac06bc1587c84c294928aba796ac8",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/run.ts",
+        "lines": 178,
+        "blob": "34105491e816e933e06671ba46b44be05f74af28",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/source.ts",
+        "lines": 53,
+        "blob": "4ae7aa30294d820e6ff34431f8c62c558647b3a1",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/store.ts",
+        "lines": 56,
+        "blob": "52a1801415e6fc1b59182d11aa7ca7e4398baf57",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/syntax.ts",
+        "lines": 69,
+        "blob": "61932176beb4a837510fe352dd8a07cd1ce76005",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gate.ts",
+        "lines": 4,
+        "blob": "10fcce46092ac4e38b8a69110529dd3b082310b8",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateTypes.ts",
+        "lines": 3,
+        "blob": "3fac9977ee998305426a071a32f5a6c1603f98b3",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/internalIds.ts",
+        "lines": 5,
+        "blob": "d73d7a23ebf5c0cbf791f67fcb6ba0c9e86f1bb0",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/advance.ts",
+        "lines": 37,
+        "blob": "2c3a03b44e563ea4b5506b6693291bd5938d6937",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/amend.ts",
+        "lines": 61,
+        "blob": "edf36c7dd892eb977df540be9c245dc24bc91415",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/import.ts",
+        "lines": 27,
+        "blob": "c4ebb473aa7de771acacd57f2c00749d0c282ef7",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/next.ts",
+        "lines": 8,
+        "blob": "1b132d3d9014f27220d5336f895f45f68f4f834c",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/render.ts",
+        "lines": 10,
+        "blob": "497c890fedb9589028109c50d84e9fd14aeaa554",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/schema.ts",
+        "lines": 11,
+        "blob": "9370e0456c432d1569921ec90dc501d4604f0a5c",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/service.ts",
+        "lines": 116,
+        "blob": "fb77cba1d5a35441d3afd2fdbe5eefc1ba6a3e2a",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/state.ts",
+        "lines": 44,
+        "blob": "d8a45aafe02a5e70a8a1462efa0d6d2128e71583",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/types.ts",
+        "lines": 11,
+        "blob": "ed0163b2dab16bd794584957adb40c77821d6bbc",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/validate.ts",
+        "lines": 11,
+        "blob": "e8b59856f6d52290dae67ed5221e790f8aa53df2",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/cleanupTools.ts",
+        "lines": 58,
+        "blob": "a0749300a4108b10be6b60c42c3e4bcab30646cd",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/humanConfirm.ts",
+        "lines": 1,
+        "blob": "f4d84168c56932b325c9f4e2a4d7f36bd55cc969",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/inlinePlanTools.ts",
+        "lines": 19,
+        "blob": "645ab6f474091660ceccc7107fd9fee2ea0a2231",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/toolProfiles.ts",
+        "lines": 2,
+        "blob": "a75bf2911d205bcfcac8367d01b01e26d4e5313d",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 15,
+        "blob": "7e99dd3547b1b2b2c788c50ee303593fe1cef7a2",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/closeAdvisories.ts",
+        "lines": 19,
+        "blob": "6efe7f7982d0aca5fff0878c8e57f994232946a1",
+        "deleted": false
+      },
+      {
+        "path": "server/skills/registry.ts",
+        "lines": 2,
+        "blob": "a317daace9d4d727e69e2315e11dcca3fb4a1298",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-cleaner/SKILL.md",
+        "lines": 236,
+        "blob": "27c2d177cde6ef3bb8950d1d7d868631f687903f",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/cleaner-apply.test.ts",
+        "lines": 109,
+        "blob": "a075f8886f24e1f5145d78623f253c814cbc98eb",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/cleaner-classify.test.ts",
+        "lines": 75,
+        "blob": "3cc018cce606d583f15b3a6486cea6eb900077cb",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/cleaner-inventory.test.ts",
+        "lines": 78,
+        "blob": "e685973658e50acba3023f93d841ae076b888a1a",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/cleaner-run.test.ts",
+        "lines": 160,
+        "blob": "30054d9dfeb15f52e7b4363736c97d3ae9bfef8b",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-schema.test.ts",
+        "lines": 10,
+        "blob": "743181a54e85a96b1da5376373095eab42c60341",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-service.test.ts",
+        "lines": 45,
+        "blob": "0b98149624d704a808ffb95a4a6f1049b1ace236",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-state.test.ts",
+        "lines": 16,
+        "blob": "826fa758f25de9a601cc8f37219a4f735e8feb33",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-tools.test.ts",
+        "lines": 30,
+        "blob": "36e28da921c63658f233fbf119752c36bb4b8609",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-validate.test.ts",
+        "lines": 7,
+        "blob": "c06372704099064293f69c52f52b4c50bc0c7a90",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      ".env.example": "a8dd5259a1fdf4b32b337b59c88c412e6845d486",
+      "docs/README.md": "a319be7b55fb234fc01588913dfed17168d9bec9",
+      "docs/configuration.md": "dd0e7452963ffb57aac3a904da33e185fc397bee",
+      "docs/kn-cleaner.md": "3930f847c24a6411b1ab3e4773917a0e696bbe2d",
+      "docs/mcp-catalogo.md": "a85b03606015f7e99119a64654d56355b5cd2385",
+      "docs/skills.md": "9cfbebedbbd424c07e7cb3b30a19ff72703a1760",
+      "scripts/docs-catalog.mts": "4a209c101d804245795d8348382f87221c602b7f",
+      "server/cleaner/apply.ts": "e563aeaf071d2d296f581fe5d0abc6ea8c582db4",
+      "server/cleaner/classify.ts": "05b6db0c485f131727a602ad935935e53ee8b72d",
+      "server/cleaner/commit.ts": "c4f85c7a7418a9434dde3f01d2ad41c43703a41b",
+      "server/cleaner/inventory.ts": "2b132e9b77e9b1cff234820c3d5f36bae8c12448",
+      "server/cleaner/report.ts": "14335ba9f75ac06bc1587c84c294928aba796ac8",
+      "server/cleaner/run.ts": "34105491e816e933e06671ba46b44be05f74af28",
+      "server/cleaner/source.ts": "4ae7aa30294d820e6ff34431f8c62c558647b3a1",
+      "server/cleaner/store.ts": "52a1801415e6fc1b59182d11aa7ca7e4398baf57",
+      "server/cleaner/syntax.ts": "61932176beb4a837510fe352dd8a07cd1ce76005",
+      "server/dispatch/gate.ts": "10fcce46092ac4e38b8a69110529dd3b082310b8",
+      "server/dispatch/gateTypes.ts": "3fac9977ee998305426a071a32f5a6c1603f98b3",
+      "server/dispatch/internalIds.ts": "d73d7a23ebf5c0cbf791f67fcb6ba0c9e86f1bb0",
+      "server/mcp/cleanupTools.ts": "a0749300a4108b10be6b60c42c3e4bcab30646cd",
+      "server/mcp/humanConfirm.ts": "f4d84168c56932b325c9f4e2a4d7f36bd55cc969",
+      "server/mcp/toolProfiles.ts": "a75bf2911d205bcfcac8367d01b01e26d4e5313d",
+      "server/mcp/tools.ts": "7e99dd3547b1b2b2c788c50ee303593fe1cef7a2",
+      "server/repo/closeAdvisories.ts": "6efe7f7982d0aca5fff0878c8e57f994232946a1",
+      "server/skills/registry.ts": "a317daace9d4d727e69e2315e11dcca3fb4a1298",
+      "skills/claude/kn-cleaner/SKILL.md": "27c2d177cde6ef3bb8950d1d7d868631f687903f",
+      "tests/unit/cleaner-apply.test.ts": "a075f8886f24e1f5145d78623f253c814cbc98eb",
+      "tests/unit/cleaner-classify.test.ts": "3cc018cce606d583f15b3a6486cea6eb900077cb",
+      "tests/unit/cleaner-inventory.test.ts": "e685973658e50acba3023f93d841ae076b888a1a",
+      "tests/unit/cleaner-run.test.ts": "30054d9dfeb15f52e7b4363736c97d3ae9bfef8b"
+    },
+    "summary": {
+      "files": 48,
+      "reviewed_files": 30,
+      "lines": 2336,
+      "reviewed_lines": 1794,
+      "pct_lines": 76,
+      "excluded": []
+    }
+  },
+  "batches": 2,
+  "consumers": 12,
+  "lines_judged": 1650,
+  "recheck": null,
+  "ticket": {
+    "resolution": "none"
+  },
+  "verdict_expected_by_rubric": "iterar"
+}
