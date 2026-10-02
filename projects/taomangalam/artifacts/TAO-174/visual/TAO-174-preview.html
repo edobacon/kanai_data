@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAO-174 · HU-01-03 · Átomos del sistema de diseño</title>
+<style>
+  /* ============================================================
+     Tokens de la maqueta (espejo de tokens.g.dart / AppThemeData)
+     Solo para VERIFICACION visual. El build consume los tokens
+     generados; aqui se replican con los mismos nombres.
+     ============================================================ */
+  :root{
+    /* --- color --- */
+    --ivory100:#FBF7EF;
+    --canvas:#F4EEE2;
+    --background:#FBF7EF;
+    --surface:#FFFFFF;
+    --ink:#1C1A17;
+    --inkMuted:#5A534A;
+    --inkSubtle:#7B7367;
+    --brand:#6B2D2D;
+    --brandSoft:#8A4040;
+    --actionPrimary:#6B2D2D;
+    --actionPrimaryText:#FBF7EF;
+    --actionSecondaryText:#6B2D2D;
+    --error:#A32020;
+    --errorText:#FBF7EF;
+    --errorSoft:#F7E4E2;
+    --success:#2F6B46;
+    --successSoft:#E3F0E7;
+    --focus:#1B5FA8;
+    --border:#8C8275;          /* ajustado por HU-01-01 a >=3:1 sobre background y canvas */
+    --borderStrong:#6E655A;
+    --overlayPressed:rgba(28,26,23,.08);
+    --overlayHover:rgba(28,26,23,.04);
+
+    /* --- radio --- */
+    --radius-xs:4px;
+    --radius-sm:8px;
+    --radius-md:12px;
+    --radius-lg:20px;
+    --radius-pill:999px;
+
+    /* --- espacio --- */
+    --space-1:4px;  --space-2:8px;  --space-3:12px; --space-4:16px;
+    --space-5:20px; --space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px;
+
+    /* --- trazo --- */
+    --stroke-hairline:1px;
+    --stroke-regular:1.5px;
+    --stroke-focus:3px;
+
+    /* --- tamano --- */
+    --size-controlMin:48px;
+    --size-touchMin:44px;
+    --size-icon:24px;
+
+    /* --- movimiento --- */
+    --fast:120ms;
+    --base:180ms;
+    --slow:240ms;
+    --ease:cubic-bezier(.2,0,0,1);
+    --scalePressed:.985;
+
+    /* --- tipografia (familias empaquetadas + respaldo de sistema) --- */
+    --fontDisplay:"Zen Old Mincho","Hiragino Mincho ProN","Songti SC",Georgia,serif;
+    --fontText:"Spectral",Georgia,"Times New Roman",serif;
+    --fontMono:"IBM Plex Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  }
+
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--canvas);
+    color:var(--ink);
+    font-family:var(--fontText);
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Escala tipografica: los 12 estilos ---------- */
+  .displayL   {font-family:var(--fontDisplay);font-weight:700;font-size:40px;line-height:44px;letter-spacing:-.01em}
+  .displayM   {font-family:var(--fontDisplay);font-weight:600;font-size:32px;line-height:38px;letter-spacing:-.01em}
+  .titleL     {font-family:var(--fontDisplay);font-weight:600;font-size:24px;line-height:30px}
+  .titleM     {font-family:var(--fontDisplay);font-weight:500;font-size:20px;line-height:26px}
+  .bodyL      {font-family:var(--fontText);font-weight:400;font-size:18px;line-height:28px}
+  .bodyM      {font-family:var(--fontText);font-weight:400;font-size:16px;line-height:24px}
+  .bodyS      {font-family:var(--fontText);font-weight:400;font-size:14px;line-height:20px}
+  .labelLarge {font-family:var(--fontText);font-weight:600;font-size:16px;line-height:20px}
+  .labelSmall {font-family:var(--fontText);font-weight:500;font-size:13px;line-height:16px}
+  .meta       {font-family:var(--fontMono);font-weight:400;font-size:12px;line-height:16px;letter-spacing:.02em}
+  .numberL    {font-family:var(--fontMono);font-weight:500;font-size:40px;line-height:40px;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  .numberM    {font-family:var(--fontMono);font-weight:500;font-size:20px;line-height:24px;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+  /* ============================================================
+     Chrome de Widgetbook (la vista que realmente se verifica)
+     ============================================================ */
+  .wb{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+  .wb-nav{
+    background:var(--surface);
+    border-right:var(--stroke-hairline) solid var(--border);
+    padding:var(--space-6) var(--space-4);
+    position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;
+  }
+  .wb-brand{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-6)}
+  .wb-brand-mark{
+    width:36px;height:36px;border-radius:var(--radius-sm);
+    background:var(--brand);color:var(--actionPrimaryText);
+    display:grid;place-items:center;font-family:var(--fontDisplay);font-weight:700;font-size:18px;
+  }
+  .wb-nav h3{
+    font-family:var(--fontMono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--inkSubtle);margin:var(--space-6) 0 var(--space-2);font-weight:500;
+  }
+  .wb-nav a{
+    display:flex;justify-content:space-between;align-items:center;gap:var(--space-2);
+    padding:var(--space-2) var(--space-3);border-radius:var(--radius-xs);
+    color:var(--inkMuted);text-decoration:none;font-size:14px;
+  }
+  .wb-nav a:hover{background:var(--overlayHover);color:var(--ink)}
+  .wb-nav a .cnt{font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle)}
+
+  .wb-main{padding:var(--space-8) var(--space-10);max-width:1180px}
+  .wb-head{
+    display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:flex-end;justify-content:space-between;
+    padding-bottom:var(--space-5);border-bottom:var(--stroke-hairline) solid var(--border);margin-bottom:var(--space-8);
+  }
+  .wb-eyebrow{font-family:var(--fontMono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--inkSubtle)}
+  .wb-knobs{display:flex;gap:var(--space-2);flex-wrap:wrap}
+  .knob{
+    display:inline-flex;align-items:center;gap:var(--space-2);
+    border:var(--stroke-hairline) solid var(--border);border-radius:var(--radius-pill);
+    padding:6px var(--space-3);background:var(--surface);font-size:13px;color:var(--inkMuted);
+  }
+  .knob strong{color:var(--ink);font-weight:600}
+  .knob.on{border-color:var(--brand);color:var(--brand);background:#F6ECE9}
+
+  section{margin-bottom:var(--space-12)}
+  section > header{margin-bottom:var(--space-5)}
+  section > header p{margin:var(--space-2) 0 0;color:var(--inkMuted);max-width:72ch}
+
+  .card{
+    background:var(--surface);
+    border:var(--stroke-hairline) solid var(--border);
+    border-radius:var(--radius-md);
+    padding:var(--space-6);
+  }
+  .card + .card{margin-top:var(--space-4)}
+  .card-title{
+    display:flex;align-items:baseline;gap:var(--space-3);margin-bottom:var(--space-5);
+    padding-bottom:var(--space-3);border-bottom:var(--stroke-hairline) solid var(--border);
+  }
+  .card-title h3{margin:0;font-family:var(--fontDisplay);font-weight:600;font-size:20px;line-height:26px}
+  .tag{
+    font-family:var(--fontMono);font-size:11px;letter-spacing:.04em;
+    color:var(--inkSubtle);border:var(--stroke-hairline) solid var(--border);
+    border-radius:var(--radius-xs);padding:1px 6px;white-space:nowrap;
+  }
+  .tag.ok{color:var(--success);border-color:var(--success);background:var(--successSoft)}
+  .tag.err{color:var(--error);border-color:var(--error);background:var(--errorSoft)}
+
+  /* ---------- Escala tipografica: muestra ---------- */
+  .type-row{
+    display:grid;grid-template-columns:168px 1fr 150px;gap:var(--space-4);align-items:baseline;
+    padding:var(--space-4) 0;border-bottom:var(--stroke-hairline) solid var(--border);
+  }
+  .type-row:last-child{border-bottom:0}
+  .type-key{font-family:var(--fontMono);font-size:12px;color:var(--ink)}
+  .type-key small{display:block;color:var(--inkSubtle);margin-top:2px}
+  .type-spec{font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle);text-align:right;line-height:1.5}
+
+  /* ============================================================
+     ATOMO: boton — cinco variantes, seis estados
+     ============================================================ */
+  .btn{
+    position:relative;
+    display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);
+    min-height:var(--size-controlMin);
+    padding:var(--space-3) var(--space-5);
+    border-radius:var(--radius-sm);
+    border:var(--stroke-regular) solid transparent;
+    font-family:var(--fontText);font-weight:600;font-size:16px;line-height:20px;
+    text-align:center;cursor:pointer;background:none;color:inherit;
+    transition:transform var(--fast) var(--ease), background-color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+  }
+  .btn--primary   {background:var(--actionPrimary);color:var(--actionPrimaryText)}
+  .btn--secondary {background:transparent;color:var(--actionSecondaryText);border-color:var(--actionSecondaryText)}
+  .btn--tertiary  {background:transparent;color:var(--actionSecondaryText);padding-left:var(--space-3);padding-right:var(--space-3)}
+  .btn--destructive{background:var(--error);color:var(--errorText)}
+  .btn--icon{
+    width:var(--size-controlMin);height:var(--size-controlMin);
+    min-width:var(--size-touchMin);min-height:var(--size-touchMin);
+    padding:0;border-radius:var(--radius-sm);
+    background:transparent;color:var(--ink);border-color:var(--border);
+  }
+
+  /* estados (estaticos, para verificar en una sola pantalla) */
+  .is-pressed{transform:scale(var(--scalePressed))}
+  .btn--primary.is-pressed{background:#5A2525}
+  .btn--secondary.is-pressed,.btn--tertiary.is-pressed,.btn--icon.is-pressed{background:var(--overlayPressed)}
+  .btn--destructive.is-pressed{background:#8A1A1A}
+
+  .is-focus{outline:var(--stroke-focus) solid var(--focus);outline-offset:2px}
+
+  .is-disabled{opacity:.38;cursor:not-allowed}
+
+  .is-loading{cursor:progress}
+  .is-success{background:var(--success)!important;color:#FBF7EF!important;border-color:var(--success)!important}
+
+  .spinner{
+    width:18px;height:18px;flex:none;border-radius:var(--radius-pill);
+    border:2px solid currentColor;border-top-color:transparent;opacity:.9;
+    animation:spin 800ms linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Icono (Material Symbols empaquetado; aqui SVG inline equivalente, caja 24, trazo 1.75) */
+  .icon{width:var(--size-icon);height:var(--size-icon);flex:none;display:block}
+  .icon path,.icon circle,.icon line,.icon polyline,.icon rect{
+    fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;
+  }
+
+  /* Matriz de estados */
+  .matrix{overflow-x:auto}
+  .matrix table{border-collapse:collapse;width:100%;min-width:760px}
+  .matrix th,.matrix td{
+    text-align:left;vertical-align:top;padding:var(--space-4) var(--space-3);
+    border-bottom:var(--stroke-hairline) solid var(--border);
+  }
+  .matrix thead th{
+    font-family:var(--fontMono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--inkSubtle);font-weight:500;border-bottom-width:var(--stroke-regular);
+  }
+  .matrix tbody th{width:168px;font-family:var(--fontText);font-weight:600;font-size:15px}
+  .matrix tbody th small{display:block;font-weight:400;font-size:12px;color:var(--inkSubtle);font-family:var(--fontMono);margin-top:2px}
+  .cell-note{display:block;margin-top:var(--space-2);font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle)}
+  .na{font-family:var(--fontMono);font-size:12px;color:var(--inkSubtle)}
+
+  /* ============================================================
+     ATOMO: campo de texto
+     ============================================================ */
+  .field{display:flex;flex-direction:column;max-width:420px}
+  .field-label{
+    font-family:var(--fontText);font-weight:500;font-size:13px;line-height:16px;
+    color:var(--ink);margin-bottom:var(--space-2);           /* separacion etiqueta-campo = 8 */
+  }
+  .field-label .req{color:var(--error);margin-left:2px}
+  .field-input{
+    min-height:var(--size-controlMin);
+    display:flex;align-items:center;
+    padding:var(--space-3) var(--space-4);
+    border:var(--stroke-regular) solid var(--border);      /* >=3:1 sobre background y canvas */
+    border-radius:var(--radius-sm);
+    background:var(--surface);
+    font-family:var(--fontText);font-size:16px;line-height:24px;color:var(--ink);
+    transition:border-color var(--fast) var(--ease);
+  }
+  .field-input.ph{color:var(--inkSubtle)}
+  .field-input .caret{
+    display:inline-block;width:1.5px;height:20px;background:var(--brand);margin-left:1px;vertical-align:middle;
+  }
+  .field.is-focus .field-input{border-color:var(--brand);outline:var(--stroke-focus) solid var(--focus);outline-offset:2px}
+  .field.is-error .field-input{border-color:var(--error);border-width:var(--stroke-regular)}
+  .field.is-disabled{opacity:.38}
+  .field-help{margin-top:var(--space-2);font-size:13px;line-height:16px;color:var(--inkMuted)}
+  .field-error{
+    display:flex;align-items:flex-start;gap:6px;margin-top:var(--space-2);
+    font-size:13px;line-height:16px;color:var(--error);
+  }
+  .field-error .icon{width:16px;height:16px;margin-top:0}
+  .field-counter{margin-top:var(--space-2);font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle);text-align:right}
+
+  /* ---------- Grillas de demo ---------- */
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:var(--space-6)}
+  .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-5)}
+  .stack{display:flex;flex-direction:column;gap:var(--space-4)}
+  .row{display:flex;flex-wrap:wrap;gap:var(--space-4);align-items:center}
+
+  .spec{font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle);margin-top:var(--space-2)}
+
+  /* ---------- Simulacion de viewport 360x800 ---------- */
+  .devices{display:flex;gap:var(--space-6);flex-wrap:wrap;align-items:flex-start}
+  .device{flex:none}
+  .device-cap{
+    font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle);
+    margin-bottom:var(--space-2);display:flex;gap:var(--space-2);align-items:center;
+  }
+  .phone{
+    width:360px;height:800px;overflow:auto;
+    border:var(--stroke-regular) solid var(--borderStrong);border-radius:var(--radius-lg);
+    background:var(--background);padding:var(--space-4);
+  }
+  .phone.x200{font-size:200%}
+  .phone.x200 .btn{font-size:32px;line-height:40px;min-height:96px;padding:var(--space-4) var(--space-5)}
+  .phone.x200 .btn--icon{width:auto;min-width:88px;height:88px}
+  .phone.x200 .field-label{font-size:26px;line-height:32px}
+  .phone.x200 .field-input{font-size:32px;line-height:44px;min-height:96px}
+  .phone.x200 .field-help,.phone.x200 .field-error{font-size:26px;line-height:32px}
+  .phone .btn{width:100%;white-space:normal;word-break:normal;overflow-wrap:anywhere}
+  .tablet{
+    width:420px;height:560px;overflow:auto;
+    border:var(--stroke-regular) solid var(--borderStrong);border-radius:var(--radius-lg);
+    background:var(--background);padding:var(--space-5);
+  }
+
+  /* ---------- Estados de pagina (vacio / carga / error) de Widgetbook ---------- */
+  .state-panel{
+    border:var(--stroke-regular) dashed var(--border);border-radius:var(--radius-md);
+    background:var(--background);padding:var(--space-8) var(--space-6);
+    display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--space-3);
+    min-height:220px;justify-content:center;
+  }
+  .state-panel .icon{width:32px;height:32px;color:var(--inkSubtle)}
+  .state-panel h4{margin:0;font-family:var(--fontDisplay);font-weight:600;font-size:18px}
+  .state-panel p{margin:0;color:var(--inkMuted);font-size:14px;max-width:38ch}
+  .skel{height:14px;border-radius:var(--radius-xs);background:linear-gradient(90deg,#EDE6D9,#F7F2E8,#EDE6D9);background-size:200% 100%;animation:shim 1.2s linear infinite}
+  @keyframes shim{to{background-position:-200% 0}}
+  .skel-btn{height:48px;border-radius:var(--radius-sm)}
+
+  /* ---------- Checklist de criterios ---------- */
+  .checks{list-style:none;margin:0;padding:0}
+  .checks li{
+    display:grid;grid-template-columns:22px 1fr auto;gap:var(--space-3);align-items:start;
+    padding:var(--space-3) 0;border-bottom:var(--stroke-hairline) solid var(--border);font-size:14px;
+  }
+  .checks li:last-child{border-bottom:0}
+  .checks .box{
+    width:20px;height:20px;border:var(--stroke-regular) solid var(--border);border-radius:var(--radius-xs);
+    display:grid;place-items:center;color:var(--success);
+  }
+  .checks .ref{font-family:var(--fontMono);font-size:11px;color:var(--inkSubtle);white-space:nowrap}
+
+  @media (prefers-reduced-motion:reduce){
+    .spinner{animation:none;border-top-color:currentColor;opacity:.5}
+    .skel{animation:none}
+    .is-pressed{transform:none}            /* movimiento reducido: solo cambia la superficie */
+  }
+
+  @media (max-width:900px){
+    .wb{grid-template-columns:1fr}
+    .wb-nav{position:static;max-height:none;border-right:0;border-bottom:var(--stroke-hairline) solid var(--border)}
+    .wb-main{padding:var(--space-6) var(--space-4)}
+  }
+</style>
+</head>
+<body>
+
+<div class="wb">
+
+  <!-- ===================== NAV DE WIDGETBOOK ===================== -->
+  <nav class="wb-nav">
+    <div class="wb-brand">
+      <div class="wb-brand-mark">त</div>
+      <div>
+        <div class="labelLarge">Widgetbook</div>
+        <div class="meta" style="color:var(--inkSubtle)">tao · átomos</div>
+      </div>
+    </div>
+
+    <h3>Fundaciones</h3>
+    <a href="#tipografia">Tipografía <span class="cnt">12</span></a>
+    <a href="#fuentes">Fuentes y licencias <span class="cnt">3</span></a>
+    <a href="#iconos">Iconos <span class="cnt">14</span></a>
+
+    <h3>Átomos</h3>
+    <a href="#boton-primario">Botón · Primario <span class="cnt">6</span></a>
+    <a href="#boton-secundario">Botón · Secundario <span class="cnt">5</span></a>
+    <a href="#boton-terciario">Botón · Terciario <span class="cnt">4</span></a>
+    <a href="#boton-destructivo">Botón · Destructivo <span class="cnt">5</span></a>
+    <a href="#boton-icono">Botón · Icono <span class="cnt">5</span></a>
+    <a href="#campo">Campo de texto <span class="cnt">6</span></a>
+
+    <h3>Casos borde</h3>
+    <a href="#escala200">Escala 200 % · 360×800 <span class="cnt">2</span></a>
+    <a href="#texto-largo">Etiqueta de 60 caracteres <span class="cnt">1</span></a>
+    <a href="#estados-pagina">Vacío · carga · error <span class="cnt">3</span></a>
+
+    <h3>Verificación</h3>
+    <a href="#criterios">Criterios de aceptación <span class="cnt">14</span></a>
+  </nav>
+
+  <!-- ===================== CONTENIDO ===================== -->
+  <main class="wb-main">
+
+    <header class="wb-head">
+      <div>
+        <div class="wb-eyebrow">TAO-174 · HU-01-03 · EP-01 · M0</div>
+        <h1 class="displayM" style="margin:var(--space-2) 0 0">Átomos del sistema de diseño</h1>
+        <p class="bodyM" style="margin:var(--space-2) 0 0;color:var(--inkMuted);max-width:70ch">
+          Tipografía, botones en cinco variantes con todos sus estados, iconos y campos.
+          Todo deriva de tokens generados: ningún valor suelto.
+        </p>
+      </div>
+      <div class="wb-knobs">
+        <span class="knob on">Tema <strong>claro</strong></span>
+        <span class="knob">Fondo <strong>ivory100</strong></span>
+        <span class="knob">Dispositivo <strong>teléfono 360×800</strong></span>
+        <span class="knob">Escala de texto <strong>100 %</strong></span>
+        <span class="knob">Movimiento <strong>completo</strong></span>
+      </div>
+    </header>
+
+    <!-- ===================== TIPOGRAFIA ===================== -->
+    <section id="tipografia">
+      <header>
+        <h2 class="titleL" style="margin:0">Tipografía · doce estilos</h2>
+        <p class="bodyM">
+          Display y títulos en <em>Zen Old Mincho</em>, texto y etiquetas en <em>Spectral</em>,
+          dato y metadato en <em>IBM Plex Mono</em>. Los estilos de dato variable usan cifras tabulares.
+        </p>
+      </header>
+
+      <div class="card">
+        <div class="type-row">
+          <div class="type-key">displayL<small>Zen Old Mincho 700</small></div>
+          <div class="displayL">Sendero de los siete valles</div>
+          <div class="type-spec">40 / 44<br>tracking −0.01em</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">displayM<small>Zen Old Mincho 600</small></div>
+          <div class="displayM">Sendero de los siete valles</div>
+          <div class="type-spec">32 / 38</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">titleL<small>Zen Old Mincho 600</small></div>
+          <div class="titleL">La práctica de hoy</div>
+          <div class="type-spec">24 / 30</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">titleM<small>Zen Old Mincho 500</small></div>
+          <div class="titleM">La práctica de hoy</div>
+          <div class="type-spec">20 / 26</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">bodyL<small>Spectral 400</small></div>
+          <div class="bodyL">El texto largo se lee cómodo en párrafos extensos y mantiene el color del papel.</div>
+          <div class="type-spec">18 / 28</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">bodyM<small>Spectral 400</small></div>
+          <div class="bodyM">El texto largo se lee cómodo en párrafos extensos y mantiene el color del papel.</div>
+          <div class="type-spec">16 / 24</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">bodyS<small>Spectral 400</small></div>
+          <div class="bodyS">Nota secundaria, ayuda de campo y pies de tarjeta.</div>
+          <div class="type-spec">14 / 20</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">labelLarge<small>Spectral 600</small></div>
+          <div class="labelLarge">Guardar y continuar</div>
+          <div class="type-spec">16 / 20<br>etiqueta de botón</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">labelSmall<small>Spectral 500</small></div>
+          <div class="labelSmall">Nombre de la práctica</div>
+          <div class="type-spec">13 / 16<br>etiqueta de campo</div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">meta<small>IBM Plex Mono 400</small></div>
+          <div class="meta">ACTUALIZADO 02-10-2026 · 18:40</div>
+          <div class="type-spec">12 / 16<br><span class="tag ok">tabular</span></div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">numberL<small>IBM Plex Mono 500</small></div>
+          <div class="numberL">108 · 1 109 · 0 011</div>
+          <div class="type-spec">40 / 40<br><span class="tag ok">tabular</span></div>
+        </div>
+        <div class="type-row">
+          <div class="type-key">numberM<small>IBM Plex Mono 500</small></div>
+          <div class="numberM">11 111 / 00 000 / 10 101</div>
+          <div class="type-spec">20 / 24<br><span class="tag ok">tabular</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== FUENTES ===================== -->
+    <section id="fuentes">
+      <header>
+        <h2 class="titleL" style="margin:0">Fuentes empaquetadas y licencias</h2>
+        <p class="bodyM">Los archivos viven en <span class="meta">app/assets/fonts/</span> con su licencia junto a ellos. La app no descarga nada en tiempo de ejecución.</p>
+      </header>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title"><h3>Zen Old Mincho</h3><span class="tag">OFL</span></div>
+          <div class="meta" style="color:var(--inkMuted);line-height:1.9">
+            ZenOldMincho-Medium.ttf · 500<br>
+            ZenOldMincho-SemiBold.ttf · 600<br>
+            ZenOldMincho-Bold.ttf · 700<br>
+            OFL.txt
+          </div>
+          <p class="spec">Respaldo: Hiragino Mincho ProN → serif</p>
+        </div>
+        <div class="card">
+          <div class="card-title"><h3>Spectral</h3><span class="tag">OFL</span></div>
+          <div class="meta" style="color:var(--inkMuted);line-height:1.9">
+            Spectral-Regular.ttf · 400<br>
+            Spectral-Medium.ttf · 500<br>
+            Spectral-SemiBold.ttf · 600<br>
+            OFL.txt
+          </div>
+          <p class="spec">Respaldo: Georgia → serif</p>
+        </div>
+        <div class="card">
+          <div class="card-title"><h3>IBM Plex Mono</h3><span class="tag">OFL</span></div>
+          <div class="meta" style="color:var(--inkMuted);line-height:1.9">
+            IBMPlexMono-Regular.ttf · 400<br>
+            IBMPlexMono-Medium.ttf · 500<br>
+            IBMPlexMono-SemiBold.ttf · 600<br>
+            OFL.txt
+          </div>
+          <p class="spec">Respaldo: Menlo → monospace</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ICONOS ===================== -->
+    <section id="iconos">
+      <header>
+        <h2 class="titleL" style="margin:0">Iconos operativos</h2>
+        <p class="bodyM">
+          Material Symbols (Apache 2.0) empaquetados en <span class="meta">app/assets/icons/</span>.
+          Caja de 24, trazo de 1.75 a 2, etiqueta accesible obligatoria: un icono sin etiqueta no compila.
+        </p>
+      </header>
+
+      <div class="card">
+        <div class="grid-3" style="gap:var(--space-4)">
+          <!-- cada icono con su etiqueta semantica visible en el catalogo -->
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg>
+            <span class="bodyS">check<br><span class="meta" style="color:var(--inkSubtle)">«Completado»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <span class="bodyS">close<br><span class="meta" style="color:var(--inkSubtle)">«Cerrar»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+            <span class="bodyS">chevron_right<br><span class="meta" style="color:var(--inkSubtle)">«Siguiente»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span class="bodyS">add<br><span class="meta" style="color:var(--inkSubtle)">«Agregar»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+            <span class="bodyS">delete<br><span class="meta" style="color:var(--inkSubtle)">«Eliminar»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18 9.5 14.5 6 4 16.5zM14.5 6L18 2.5 21.5 6 18 9.5"/></svg>
+            <span class="bodyS">edit<br><span class="meta" style="color:var(--inkSubtle)">«Editar»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20"/></svg>
+            <span class="bodyS">search<br><span class="meta" style="color:var(--inkSubtle)">«Buscar»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v5M12 16h.01"/></svg>
+            <span class="bodyS">error<br><span class="meta" style="color:var(--inkSubtle)">«Error»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 16v-5M12 8h.01"/></svg>
+            <span class="bodyS">info<br><span class="meta" style="color:var(--inkSubtle)">«Información»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12l7-7v4c6 0 8 4 8 9-2-3.5-4.5-4.5-8-4.5V19z"/></svg>
+            <span class="bodyS">share<br><span class="meta" style="color:var(--inkSubtle)">«Compartir»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.7-7-9.5A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 3.5C19 15.3 12 20 12 20z"/></svg>
+            <span class="bodyS">favorite<br><span class="meta" style="color:var(--inkSubtle)">«Favorito»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 14a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V20a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.5 18l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4 12.5H4a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 5.6 6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 11 4V4a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.6 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H20a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-.5.3z"/></svg>
+            <span class="bodyS">settings<br><span class="meta" style="color:var(--inkSubtle)">«Ajustes»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="8"/></svg>
+            <span class="bodyS">schedule<br><span class="meta" style="color:var(--inkSubtle)">«Horario»</span></span>
+          </div>
+          <div class="row" style="gap:var(--space-3)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+            <span class="bodyS">remove<br><span class="meta" style="color:var(--inkSubtle)">«Quitar»</span></span>
+          </div>
+        </div>
+        <p class="spec" style="margin-top:var(--space-5)">
+          app/assets/icons/material-symbols/ · LICENSE-APACHE-2.0.txt · sin descarga en tiempo de ejecución
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== MATRIZ DE BOTONES ===================== -->
+    <section id="boton-primario">
+      <header>
+        <h2 class="titleL" style="margin:0">Botones · cinco variantes × seis estados</h2>
+        <p class="bodyM">
+          Una fila por variante, una columna por estado. Primario:
+          fondo <span class="meta">actionPrimary</span>, texto <span class="meta">actionPrimaryText</span>,
+          estilo <span class="meta">labelLarge</span>, alto mínimo 48, radio <span class="meta">sm</span>.
+        </p>
+      </header>
+
+      <div class="card matrix">
+        <table>
+          <thead>
+            <tr>
+              <th>Variante</th><th>Default</th><th>Pressed</th><th>Focus</th>
+              <th>Disabled</th><th>Loading</th><th>Success</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Primario -->
+            <tr id="boton-primario-row">
+              <th>Primario<small>actionPrimary</small></th>
+              <td><button class="btn btn--primary">Guardar</button></td>
+              <td><button class="btn btn--primary is-pressed">Guardar</button><span class="cell-note">scale 0.985 · 120 ms</span></td>
+              <td><button class="btn btn--primary is-focus">Guardar</button><span class="cell-note">stroke.focus 3 px · focus</span></td>
+              <td><button class="btn btn--primary is-disabled" aria-disabled="true">Guardar</button><span class="cell-note">opacidad 0.38 · «no disponible»</span></td>
+              <td><button class="btn btn--primary is-loading" aria-busy="true"><span class="spinner"></span>Guardar</button><span class="cell-note">conserva etiqueta · un solo callback</span></td>
+              <td><button class="btn btn--primary is-success"><svg class="icon" style="width:20px;height:20px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg>Guardado</button></td>
+            </tr>
+            <!-- Secundario -->
+            <tr id="boton-secundario">
+              <th>Secundario<small>contorno · brand</small></th>
+              <td><button class="btn btn--secondary">Revisar</button></td>
+              <td><button class="btn btn--secondary is-pressed">Revisar</button><span class="cell-note">superficie overlayPressed</span></td>
+              <td><button class="btn btn--secondary is-focus">Revisar</button></td>
+              <td><button class="btn btn--secondary is-disabled" aria-disabled="true">Revisar</button></td>
+              <td><button class="btn btn--secondary is-loading" aria-busy="true"><span class="spinner"></span>Revisar</button></td>
+              <td><span class="na">no aplica</span></td>
+            </tr>
+            <!-- Terciario -->
+            <tr id="boton-terciario">
+              <th>Terciario<small>solo texto</small></th>
+              <td><button class="btn btn--tertiary">Omitir</button></td>
+              <td><button class="btn btn--tertiary is-pressed">Omitir</button></td>
+              <td><button class="btn btn--tertiary is-focus">Omitir</button></td>
+              <td><button class="btn btn--tertiary is-disabled" aria-disabled="true">Omitir</button></td>
+              <td><span class="na">no aplica</span></td>
+              <td><span class="na">no aplica</span></td>
+            </tr>
+            <!-- Destructivo -->
+            <tr id="boton-destructivo">
+              <th>Destructivo<small>error · sin brand</small></th>
+              <td><button class="btn btn--destructive">Eliminar</button></td>
+              <td><button class="btn btn--destructive is-pressed">Eliminar</button></td>
+              <td><button class="btn btn--destructive is-focus">Eliminar</button></td>
+              <td><button class="btn btn--destructive is-disabled" aria-disabled="true">Eliminar</button></td>
+              <td><button class="btn btn--destructive is-loading" aria-busy="true"><span class="spinner"></span>Eliminar</button></td>
+              <td><span class="na">no aplica</span></td>
+            </tr>
+            <!-- Icono -->
+            <tr id="boton-icono">
+              <th>Icono<small>44×44 · touchMin</small></th>
+              <td>
+                <button class="btn btn--icon" aria-label="Agregar práctica" title="Agregar práctica">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+                <span class="cell-note">etiqueta + tooltip</span>
+              </td>
+              <td><button class="btn btn--icon is-pressed" aria-label="Agregar práctica" title="Agregar práctica"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></td>
+              <td><button class="btn btn--icon is-focus" aria-label="Agregar práctica" title="Agregar práctica"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></td>
+              <td><button class="btn btn--icon is-disabled" aria-disabled="true" aria-label="Agregar práctica, no disponible"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></td>
+              <td><button class="btn btn--icon is-loading" aria-busy="true" aria-label="Agregando práctica"><span class="spinner"></span></button></td>
+              <td><span class="na">no aplica</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="spec" style="margin-top:var(--space-5)">
+          Movimiento reducido: la escala no se aplica; solo cambia la superficie (overlayPressed / tono oscuro).
+          Loading no encola una segunda acción: el segundo toque se descarta.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== JERARQUIA EN UNA VISTA ===================== -->
+    <section>
+      <header>
+        <h2 class="titleL" style="margin:0">Jerarquía de acción en una vista</h2>
+        <p class="bodyM">
+          Referencia de dirección consolidada: controles mínimos y un único botón primario sólido por pantalla.
+        </p>
+      </header>
+      <div class="card" style="background:var(--background)">
+        <div class="row" style="justify-content:flex-end">
+          <button class="btn btn--tertiary">Omitir</button>
+          <button class="btn btn--secondary">Revisar</button>
+          <button class="btn btn--primary">Guardar y continuar</button>
+        </div>
+        <p class="spec">Un primario · un secundario · un terciario · separación 16</p>
+      </div>
+    </section>
+
+    <!-- ===================== CAMPO DE TEXTO ===================== -->
+    <section id="campo">
+      <header>
+        <h2 class="titleL" style="margin:0">Campo de texto · seis estados</h2>
+        <p class="bodyM">
+          Etiqueta persistente sobre el campo, separación de 8, alto mínimo 48.
+          El placeholder nunca reemplaza la etiqueta. El borde sin foco alcanza 3:1 sobre
+          <span class="meta">background</span> y <span class="meta">canvas</span>.
+        </p>
+      </header>
+
+      <div class="card">
+        <div class="grid-2">
+
+          <!-- default vacio -->
+          <div>
+            <div class="card-title" style="margin-bottom:var(--space-4)"><h3 style="font-size:16px">Vacío</h3><span class="tag">default</span></div>
+            <div class="field">
+              <label class="field-label">Nombre de la práctica</label>
+              <div class="field-input ph">Por ejemplo, respiración de la mañana</div>
+              <div class="field-help">Lo verás en tu lista diaria.</div>
+            </div>
+          </div>
+
+          <!-- con contenido -->
+          <div>
+            <div class="card-title" style="margin-bottom:var(--space-4)"><h3 style="font-size:16px">Con contenido</h3><span class="tag">filled</span></div>
+            <div class="field">
+              <label class="field-label">Nombre de la práctica</label>
+              <div class="field-input">Respiración de la mañana</div>
+              <div class="field-help">Lo verás en tu lista diaria.</div>
+            </div>
+          </div>
+
+          <!-- foco -->
+          <div>
+            <div class="card-title" style="margin-bottom:var(--space-4)"><h3 style="font-size:16px">Con foco</h3><span class="tag">focus</span></div>
+            <div class="field is-focus">
+              <label class="field-label">Nombre de la práctica</label>
+              <div class="field-input">Respiración de la mañana<span class="caret"></span></div>
+              <div class="field-help">Lo verás en tu lista diaria.</div>
+            </div>
+            <p class="spec">contorno exterior 3 px · color focus</p>
+          </div>
+
+          <!-- error -->
+          <div>
+            <div class="card-title" style="margin-bottom:var(--space-4)"><h3 style="font-size:16px">Con error</h3><span class="tag err">error</span></div>
+            <div class="field is-error">
+              <label class="field-label">Nombre de la práctica <span class="req">*</span></label>
+              <div class="field-input ph">Por ejemplo, respiración de la mañana</div>
+              <div class="field-error">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v5M12 16h.01"/></svg>
+                <span>Escribe un nombre para poder guardar la práctica.</span>
+              </div>
+            </div>
+            <p class="spec">aparece abajo en 180 ms, sin sacudida · icono + texto</p>
+          </div>
+
+          <!-- deshabilitado -->
+          <div>
+            <div class="card-title" style="margin-bottom:var(--space-4)"><h3 style="font-size:16px">Deshabilitado</h3><span class="tag">disabled</span></div>
+            <div class="field is-disabled">
+              <label class="field-label">Nombre de la práctica</label>
+              <div class="field-input">Respiración de la mañana</div>
+              <div class="field-help">Este nombre no se puede editar aquí.</div>
+            </div>
+            <p class="spec">opacidad 0.38 · lector: «no disponible»</p>
+          </div>
+
+          <!-- texto largo + contador -->
+          <div>
+            <div class="card-title" style="margin-bottom:var(--space-4)"><h3 style="font-size:16px">Texto largo</h3><span class="tag">borde</span></div>
+            <div class="field">
+              <label class="field-label">Intención de la sesión de esta mañana</label>
+              <div class="field-input" style="align-items:flex-start;min-height:96px">
+                Sostener la atención en la respiración durante los primeros diez minutos y volver sin juicio cada vez que la mente se vaya.
+              </div>
+              <div class="field-counter">124 / 280</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ESCALA 200 % ===================== -->
+    <section id="escala200">
+      <header>
+        <h2 class="titleL" style="margin:0">Escala de texto 200 % en 360 × 800</h2>
+        <p class="bodyM">
+          Caso borde QA-01-03-03. Ninguna etiqueta de acción se trunca ni se superpone:
+          el texto se ajusta en varias líneas y el botón crece en alto.
+        </p>
+      </header>
+
+      <div class="devices">
+        <div class="device">
+          <div class="device-cap"><span class="knob">360 × 800</span><span class="knob on">escala 100 %</span></div>
+          <div class="phone">
+            <h3 class="titleL" style="margin:0 0 var(--space-4)">Nueva práctica</h3>
+            <div class="field" style="max-width:none">
+              <label class="field-label">Nombre de la práctica</label>
+              <div class="field-input ph">Por ejemplo, respiración</div>
+              <div class="field-help">Lo verás en tu lista diaria.</div>
+            </div>
+            <div class="stack" style="margin-top:var(--space-6)">
+              <button class="btn btn--primary">Guardar y continuar</button>
+              <button class="btn btn--secondary">Revisar antes de guardar</button>
+              <button class="btn btn--tertiary">Omitir</button>
+              <button class="btn btn--destructive">Eliminar esta práctica</button>
+              <div class="row">
+                <button class="btn btn--icon" aria-label="Agregar" title="Agregar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+                <button class="btn btn--icon" aria-label="Editar" title="Editar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18 9.5 14.5 6 4 16.5zM14.5 6L18 2.5 21.5 6 18 9.5"/></svg></button>
+                <button class="btn btn--icon" aria-label="Eliminar" title="Eliminar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="device">
+          <div class="device-cap"><span class="knob">360 × 800</span><span class="knob on">escala 200 %</span></div>
+          <div class="phone x200">
+            <h3 class="titleL" style="margin:0 0 var(--space-4);font-size:40px;line-height:48px">Nueva práctica</h3>
+            <div class="field" style="max-width:none">
+              <label class="field-label">Nombre de la práctica</label>
+              <div class="field-input ph" style="align-items:flex-start">Por ejemplo, respiración</div>
+              <div class="field-help">Lo verás en tu lista diaria.</div>
+            </div>
+            <div class="stack" style="margin-top:var(--space-6)">
+              <button class="btn btn--primary">Guardar y continuar</button>
+              <button class="btn btn--secondary">Revisar antes de guardar</button>
+              <button class="btn btn--tertiary">Omitir</button>
+              <button class="btn btn--destructive">Eliminar esta práctica</button>
+              <div class="row">
+                <button class="btn btn--icon" aria-label="Agregar" title="Agregar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width:36px;height:36px"><path d="M12 5v14M5 12h14"/></svg></button>
+                <button class="btn btn--icon" aria-label="Editar" title="Editar"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width:36px;height:36px"><path d="M4 16.5V20h3.5L18 9.5 14.5 6 4 16.5zM14.5 6L18 2.5 21.5 6 18 9.5"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TEXTO LARGO ===================== -->
+    <section id="texto-largo">
+      <header>
+        <h2 class="titleL" style="margin:0">Etiqueta de 60 caracteres</h2>
+        <p class="bodyM">Caso borde QA-01-03-03: la etiqueta se ajusta en varias líneas, el botón conserva radio, alto mínimo y área táctil.</p>
+      </header>
+
+      <div class="devices">
+        <div class="device">
+          <div class="device-cap"><span class="knob">360 × 800</span><span class="knob">100 %</span></div>
+          <div class="phone" style="height:auto;min-height:260px">
+            <button class="btn btn--primary">Guardar la práctica y continuar con la siguiente etapa</button>
+            <p class="spec">60 caracteres · 3 líneas · sin desborde</p>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-cap"><span class="knob">360 × 800</span><span class="knob on">200 %</span></div>
+          <div class="phone x200" style="height:auto;min-height:420px">
+            <button class="btn btn--primary">Guardar la práctica y continuar con la siguiente etapa</button>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-cap"><span class="knob">tablet 834</span><span class="knob">100 %</span></div>
+          <div class="tablet" style="height:auto;min-height:200px">
+            <div class="row" style="justify-content:flex-end">
+              <button class="btn btn--tertiary">Omitir</button>
+              <button class="btn btn--primary">Guardar la práctica y continuar con la siguiente etapa</button>
+            </div>
+            <p class="spec">en tablet la misma etiqueta ocupa 2 líneas</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== ESTADOS DE PAGINA ===================== -->
+    <section id="estados-pagina">
+      <header>
+        <h2 class="titleL" style="margin:0">Estados del catálogo: vacío, carga y error</h2>
+        <p class="bodyM">
+          Estados del propio Widgetbook cuando un caso no tiene variantes, cuando el preview está montando
+          y cuando una fuente o un icono no se pudo resolver desde el paquete.
+        </p>
+      </header>
+
+      <div class="grid-3">
+        <!-- vacio -->
+        <div class="card">
+          <div class="card-title"><h3>Vacío</h3><span class="tag">empty</span></div>
+          <div class="state-panel">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg>
+            <h4>Este átomo todavía no tiene casos</h4>
+            <p>Agrega una entrada por estado para que Diseño pueda revisarlo.</p>
+            <button class="btn btn--secondary" style="margin-top:var(--space-2)">Ver cómo se agrega un caso</button>
+          </div>
+        </div>
+
+        <!-- carga -->
+        <div class="card">
+          <div class="card-title"><h3>Cargando</h3><span class="tag">loading</span></div>
+          <div class="state-panel" style="align-items:stretch;text-align:left;gap:var(--space-4)" aria-busy="true">
+            <div class="skel" style="width:45%"></div>
+            <div class="skel" style="width:70%"></div>
+            <div class="skel skel-btn" style="width:60%"></div>
+            <div class="skel skel-btn" style="width:48%"></div>
+            <span class="meta" style="color:var(--inkSubtle)">Montando el preview…</span>
+          </div>
+        </div>
+
+        <!-- error -->
+        <div class="card">
+          <div class="card-title"><h3>Error</h3><span class="tag err">error</span></div>
+          <div class="state-panel" style="border-color:var(--error);background:var(--errorSoft)">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="color:var(--error)"><circle cx="12" cy="12" r="8"/><path d="M12 8v5M12 16h.01"/></svg>
+            <h4 style="color:var(--error)">No se pudo resolver un recurso empaquetado</h4>
+            <p>Falta el peso <span class="meta">Spectral 600</span> en <span class="meta">app/assets/fonts/</span>. Se está usando el respaldo de sistema.</p>
+            <button class="btn btn--secondary" style="margin-top:var(--space-2)">Reintentar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CRITERIOS ===================== -->
+    <section id="criterios">
+      <header>
+        <h2 class="titleL" style="margin:0">Qué verificar en esta maqueta</h2>
+        <p class="bodyM">Cada punto corresponde a un criterio de aceptación o a un caso de prueba de la historia.</p>
+      </header>
+
+      <div class="card">
+        <ul class="checks">
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Todo átomo consume solo tokens generados: color, tipografía, espacio, radio, trazo, tamaño y movimiento.</span>
+            <span class="ref">REQ-08</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Primario: fondo <span class="meta">actionPrimary</span>, texto <span class="meta">actionPrimaryText</span>, <span class="meta">labelLarge</span>, alto ≥ 48, radio <span class="meta">sm</span>.</span>
+            <span class="ref">REQ-04</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Pressed: escala 0.985 durante 120 ms; con movimiento reducido cambia solo la superficie.</span>
+            <span class="ref">REQ-05</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Foco de teclado o lector: contorno exterior de 3 px con el color <span class="meta">focus</span>.</span>
+            <span class="ref">QA-01-03-01</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Disabled: opacidad 0.38, no ejecuta la acción y el lector lo anuncia como no disponible.</span>
+            <span class="ref">REQ-05</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Loading: conserva la etiqueta junto al indicador y un segundo toque no encola otra acción.</span>
+            <span class="ref">QA-01-03-02</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Botón Icono: área táctil ≥ 44 × 44, etiqueta semántica y tooltip.</span>
+            <span class="ref">REQ-04</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Destructivo: usa <span class="meta">error</span> y no usa <span class="meta">brand</span>.</span>
+            <span class="ref">REQ-04</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Campo: etiqueta visible sobre el campo, alto ≥ 48, separación 8, placeholder que no reemplaza la etiqueta.</span>
+            <span class="ref">REQ-06</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Borde sin foco: al menos 3:1 sobre <span class="meta">background</span> y <span class="meta">canvas</span>.</span>
+            <span class="ref">REQ-06</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Error del campo: debajo, con icono y texto, en 180 ms y sin sacudida.</span>
+            <span class="ref">REQ-06</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Fuentes e iconos en <span class="meta">app/</span> con su licencia; sin descarga en tiempo de ejecución.</span>
+            <span class="ref">REQ-01 · REQ-03 · QA-01-03-04</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Escala 200 % en 360 × 800: ninguna etiqueta de acción se trunca ni se superpone.</span>
+            <span class="ref">QA-01-03-03</span>
+          </li>
+          <li>
+            <span class="box"><svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l6 6L20 6"/></svg></span>
+            <span>Widgetbook: cada variante muestra todos sus estados en teléfono y tablet.</span>
+            <span class="ref">REQ-07 · QA-01-03-05</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="meta" style="color:var(--inkSubtle);border-top:var(--stroke-hairline) solid var(--border);padding-top:var(--space-5)">
+      TAO-174 · HU-01-03 · maqueta de verificación · fondo ivory100 (DEC-235) · decisiones DEC-189, DEC-174, DEC-080, DEC-075, DEC-230
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>

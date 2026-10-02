@@ -2,7 +2,7 @@ plan_id: usuite-15425
 title: "USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles)"
 intent: Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 created: 2026-10-01T17:50:36.527Z
-updated: 2026-10-02T13:34:03.089Z
+updated: 2026-10-02T14:23:24.015Z
 tags:
   projects: []
   repos:
@@ -122,10 +122,11 @@ phases:
           - plan-original.md#tests-que-ya-existen-verificado-el-2026-10-01
           - plan-original.md#linea-base-de-tests
         run:
-          command: docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test node:10.24.1-alpine3.11 node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts
+          command: MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Necesita server/config/local.env.js apuntando a una base de pruebas disponible.
-          expect: Resumen de mocha con N passing / N failing / N pending. Hoy son 13 casos existentes; los fallos se anotan como preexistentes.
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md.
+          expect: "Resumen de mocha con N passing / N failing / N pending. Tomada el 2026-10-02: 15 tests, 14 passing, 1 failing (userdetail.test.js:14, preexistente). Código de salida = cantidad de fallos."
+          exit_code: 1
     criteria:
       - id: F0.c1
         text: Las 9 tareas respondidas con su dato concreto.
@@ -249,10 +250,11 @@ phases:
         text: Suite existente (`test:user-api`) sin fallos nuevos respecto de la línea base de F0.9.
         kind: command
         run:
-          command: docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test node:10.24.1-alpine3.11 node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts
+          command: MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Necesita la base de pruebas de local.env.js.
-          expect: "Los 13 casos existentes con el mismo resultado que la línea base de F0.9 (solo fallos preexistentes). El patrón también toma los tests del helper: contarlos aparte."
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md.
+          expect: "Mismo resultado que la línea base de F0.9: 15 tests, 14 passing y 1 failing (userdetail.test.js:14, preexistente, depende de los datos de suite_dev); mocha termina con código 1 = cantidad de fallos. Los tests del helper que también toma el patrón pasan todos; contarlos aparte."
+          exit_code: 1
       - id: F1.c3
         text: "`node --check` de `logSanitizer.js` sin errores en la imagen de producción (Node 10)."
         kind: command
@@ -465,10 +467,11 @@ phases:
         text: Tests del helper (T1 a T42) en verde y suite existente sin fallos nuevos respecto de la línea base de F0.9.
         kind: command
         run:
-          command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js" && docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test node:10.24.1-alpine3.11 node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts
+          command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js" && MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Necesita la base de pruebas de local.env.js.
-          expect: "Helper: 42 passing, 0 failing. Suite existente: los 13 casos con el mismo resultado que la línea base de F0.9."
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md. Primero corren los tests del helper (deben terminar con 0) y después la suite existente.
+          expect: "Helper: 0 failing. Suite existente: mismo resultado que la línea base de F0.9: 15 tests, 14 passing y 1 failing (userdetail.test.js:14, preexistente, depende de los datos de suite_dev); mocha termina con código 1 = cantidad de fallos."
+          exit_code: 1
       - id: F4.c4
         text: Un commit solo con este archivo.
         kind: command
@@ -552,10 +555,11 @@ phases:
         text: Tests del helper en verde y suite existente sin fallos nuevos respecto de la línea base (se corre después de cada archivo convertido).
         kind: command
         run:
-          command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js" && docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test node:10.24.1-alpine3.11 node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts
+          command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js" && MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Necesita la base de pruebas de local.env.js.
-          expect: "Helper: 0 failing. Suite existente: los 13 casos con el mismo resultado que la línea base de F0.9."
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md. Primero corren los tests del helper (deben terminar con 0) y después la suite existente.
+          expect: "Helper: 0 failing. Suite existente: mismo resultado que la línea base de F0.9: 15 tests, 14 passing y 1 failing (userdetail.test.js:14, preexistente, depende de los datos de suite_dev); mocha termina con código 1 = cantidad de fallos."
+          exit_code: 1
       - id: F5.c3
         text: Smoke local con los fixtures de cada proveedor sin datos sensibles visibles.
         kind: manual
@@ -610,10 +614,11 @@ phases:
         text: Suite existente sin fallos nuevos respecto de la línea base de F0.9 (F6 toca el arranque de la app).
         kind: command
         run:
-          command: docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test node:10.24.1-alpine3.11 node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts
+          command: MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Necesita la base de pruebas de local.env.js.
-          expect: "Los 13 casos existentes con el mismo resultado que la línea base de F0.9 (solo fallos preexistentes). El patrón también toma los tests del helper: contarlos aparte."
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md.
+          expect: "Mismo resultado que la línea base de F0.9: 15 tests, 14 passing y 1 failing (userdetail.test.js:14, preexistente, depende de los datos de suite_dev); mocha termina con código 1 = cantidad de fallos. El patrón también toma los tests del helper: contarlos aparte."
+          exit_code: 1
       - id: F6.c3
         text: "Dos commits propios en `sandbox-api` según COMMITS.md: `fix` solo con `server/app.js` y `test` solo con T43 a T45."
         kind: command
@@ -836,14 +841,16 @@ phases:
     tasks:
       - code: F10.1
         text: "`git fetch` y crear `USUITE-15425-logs-auth-seguros-secure` desde `origin/feature/secure-develop` actualizado en `user-api` y `sandbox-api`. Antes de aplicar commits, tomar la línea base de la suite existente en esta rama. *Responder* en el registro de la tarea: commit base por repo y la línea base (total, pasan, fallan, omitidos y fallos preexistentes). Se registra en el plan (registro validado), no en las tablas ni plantillas de plan-original.md: esa es la copia congelada del import y no se edita."
+        detail: |-
+          Comandos (los ejecuta el dev desde la raíz de sandbox-api; se registran los números, sin control automático del código de salida porque la línea secure todavía no tiene línea base):
+          ```bash
+          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git checkout -b USUITE-15425-logs-auth-seguros-secure origin/feature/secure-develop && git rev-parse --short HEAD && git status -sb) || exit 1; done
+          MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
+          ```
+          Mismas condiciones que la suite de F0.9 (túnel 5500, Redis local, app abajo; ver ambiente-local.md). *Responder:* commit base por repo y total, pasan, fallan, omitidos y fallos preexistentes de esta línea.
         kb:
           - plan-original.md#linea-base-de-tests
           - plan-original.md#tests-que-ya-existen-verificado-el-2026-10-01
-        run:
-          command: for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git checkout -b USUITE-15425-logs-auth-seguros-secure origin/feature/secure-develop && git rev-parse --short HEAD && git status -sb) || exit 1; done && docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test node:10.24.1-alpine3.11 node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts
-          repo: sandbox-api
-          how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Crea la rama secure en ambos repos y corre la suite existente.
-          expect: "Por repo: SHA base y la rama nueva; después, el resumen de mocha (N passing / N failing / N pending)."
       - code: F10.2
         text: "`git cherry-pick -x` de los commits de la línea normal, en orden. Resolver conflictos archivo por archivo, conservando el comportamiento propio de secure (cookies `httpOnly`, logout con `req.jwt.userId`). *Responder:* por cada commit: SHA original → SHA en secure → con o sin conflicto → cómo se resolvió."
         kb:
