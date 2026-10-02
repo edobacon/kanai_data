@@ -74,22 +74,22 @@ go_router se agrega una sola vez con `cd app && fvm flutter pub add go_router` (
 ## Tasks
 
 #### S1.T1 — Agregar go_router a la app con `cd app && fvm flutter pub add go_router` (Flutter de `.fvmrc`), dejando `go_router: ^x.y.z` en `app/pubspec.yaml` y la version exacta resuelta en `app/pubspec.lock`. No probar otras versiones ni fijar la version a mano.
-Contrato: rollback: `cd app && fvm flutter pub remove go_router` y revertir `app/pubspec.yaml` y `app/pubspec.lock` con git checkout.. Status: pending
+Contrato: rollback: `cd app && fvm flutter pub remove go_router` y revertir `app/pubspec.yaml` y `app/pubspec.lock` con git checkout.. Status: done
 
 #### S1.T2 — Crear la tabla de rutas en `app/lib/navigation/` (constantes de nombre de ruta estables + configuracion de GoRouter) con parametros tipados: cada ruta expone un objeto de parametros parseado, no un Map<String, String> crudo. Declarar una ruta por destino principal del consultor (Inicio, Consultas, Biblioteca y Productos, Ajustes, Cuenta, Ayuda) y una ruta de segundo nivel de detalle con parametro tipado para probar enlaces profundos.
-Contrato: rollback: Borrar los archivos nuevos de `app/lib/navigation/`; la app vuelve a no tener router.. Status: pending
+Contrato: rollback: Borrar los archivos nuevos de `app/lib/navigation/`; la app vuelve a no tener router.. Status: done
 
 #### S1.T3 — Crear una pantalla de marcador por destino principal bajo `app/lib/features/<destino>/presentation/`, con un encabezado PROVISIONAL simple y compartido (solo titulo, sin menu, panel lateral ni hamburguesa: eso es HU-01-08) y el titulo tomado del ARB via `AppLocalizations.of(context)` igual que `home_screen.dart:16`. Agregar al ARB las claves de titulo de los siete destinos.
-Contrato: rollback: Borrar las pantallas de marcador y las claves ARB nuevas; regenerar localizaciones.. Status: pending
+Contrato: rollback: Borrar las pantallas de marcador y las claves ARB nuevas; regenerar localizaciones.. Status: done
 
 #### S1.T4 — Montar el router en `TaoApp` (`app/lib/app.dart`) con MaterialApp.router, reemplazando la pantalla provisional `features/home/presentation/home_screen.dart` por el marcador de Inicio, y CONSERVANDO los parametros `builder` y `navigatorKey` que usa el entrypoint de development para el panel interno (el navigatorKey debe pasar al navigator raiz del router).
-Contrato: rollback: git checkout de `app/lib/app.dart` y restaurar `home_screen.dart` como pantalla inicial.. Status: pending
+Contrato: rollback: git checkout de `app/lib/app.dart` y restaurar `home_screen.dart` como pantalla inicial.. Status: done
 
 #### S1.T5 — Implementar el manejo de ruta desconocida: redireccion a Inicio sin error visible y log de desarrollo que registre solo el path pedido, sin query string ni valores de parametros (los parametros de ruta no llevan datos personales).
-Contrato: rollback: Quitar el errorBuilder/redirect y el logger; el router vuelve al comportamiento por defecto de go_router.. Status: pending
+Contrato: rollback: Quitar el errorBuilder/redirect y el logger; el router vuelve al comportamiento por defecto de go_router.. Status: done
 
 #### S1.T6 — Tests de la tabla de rutas y del manejo de ruta desconocida en `app/test/navigation/app_router_test.dart`: arranque en Inicio, navegacion por nombre a los siete destinos con titulo del ARB, parseo de parametros tipados, parametro invalido sin excepcion, QA-01-09-02 (ruta inexistente muestra Inicio sin excepcion), log emitido una vez con el path y sin parametros, y regresion de que `builder` y `navigatorKey` siguen aplicandose.
-Contrato: rollback: Borrar `app/test/navigation/app_router_test.dart`.. Status: pending
+Contrato: rollback: Borrar `app/test/navigation/app_router_test.dart`.. Status: done
 
 #### S2.T1 — Implementar la pagina de transicion compartida (CustomTransitionPage) en `app/lib/navigation/`: saliente con desvanecido de 180 ms y desplazamiento de 12 px en telefono (8 a 12 px en tablet, segun ancho), entrante de 240 ms, y sentido invertido al volver. Las duraciones y curvas se toman de los tokens de movimiento de HU-01-07; prohibido escribir `Duration(milliseconds: ...)` literal.
 Contrato: rollback: Volver a las paginas por defecto de go_router (MaterialPage) borrando el archivo de transiciones.. Status: pending
@@ -140,15 +140,15 @@ Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
 
 **Gate (auto)**: En el emulador, la app arranca en el marcador de Inicio (ya no en la pantalla provisional), navega a cada uno de los seis destinos principales con su titulo del ARB, y una ruta inventada muestra Inicio con un log de desarrollo en consola y sin excepcion.
 
@@ -175,4 +175,3 @@ Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`
 **Gate (auto)**: Con la app cerrada, el enlace profundo abierto desde la terminal del emulador muestra la vista de detalle y Atras lleva al destino principal (y recien el segundo Atras sale de la app); y en la lista de marcador con filtro activo desplazada 40 elementos, abrir un detalle y volver deja la lista exactamente en el mismo offset, filtro, seleccion y texto de busqueda, sin verla animar.
 
 ### Session 4 · T0 · open
-
