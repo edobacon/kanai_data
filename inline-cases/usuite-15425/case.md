@@ -51,10 +51,11 @@
 | decision-deteccion-en-texto.md | decision | Decisión F2: dónde se aplica la detección de datos dentro de textos | La detección en texto se aplica solo a textos sin estrategia por nombre (A); dentro de un XML cada etiqueta se oculta según la estrategia de su nombre (B) |
 | decision-niveles-y-archivos-helper.md | decision | Decisión F1: regla de niveles proporcional con tope, rangos numéricos y helper en dos archivos | Niveles light/medium/strong según el largo con tope (B), maxDepth 1 a 50, maxTextLength 256 a 1 MB, helper en dos archivos, tipo_documento excluido del catálogo id y estilo ajustado a mano según .eslintrc.js |
 | plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
+| smoke-f7.md | registro | Smoke F7: salida real del logger con authLog (USUITE-15425) | Tres escenarios del smoke de F7 (sin config, config mal formada, info con niveles propios) con 0 claves ficticias, el script para repetirlo en F10 y las salidas completas |
 | usuite-15425-claves-en-logs-uvmcl.md | analisis | USUITE-15425: contraseñas en los logs de suite-api (uvmcl). Análisis, plan de prueba y esfuerzo | Análisis inicial: por qué la clave de uvmcl sale en los logs y flujo del login |
 | usuite-15425-niveles-de-solucion.md | analisis | USUITE-15425: niveles de solución (consolidado con verificación en uvmcl) | Vulnerabilidades, estado verificado de uvmcl y niveles de solución |
 | usuite-15425-plan-helper-ofuscacion-y-mapa-logger.md | analisis | USUITE-15425: plan del helper de ofuscación y mapa del sistema de logs de suite-api | Mapa del sistema de logs (loggerLevel, niveles, salidas que no controla); su parte B la reemplaza el plan |
 
 ## Plan
 
-7 de 11 fases cerradas, fase actual F7. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+8 de 11 fases cerradas, fase actual F8. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md

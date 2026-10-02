@@ -2,7 +2,7 @@ plan_id: usuite-15425
 title: "USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles)"
 intent: Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 created: 2026-10-01T17:50:36.527Z
-updated: 2026-10-02T17:03:10.219Z
+updated: 2026-10-02T18:55:43.052Z
 tags:
   projects: []
   repos:
@@ -658,18 +658,18 @@ phases:
           expect: Sin salida (código de salida 1).
           exit_code: 1
       - code: F7.2
-        text: "Chequeo de sintaxis Node 10 en la imagen de producción:"
+        text: "Chequeo de sintaxis Node 10 en la imagen de producción (node --check para CommonJS; transpilado con babel y compilado para los que usan import):"
         detail: |-
           ```bash
-          docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in <archivos modificados>; do node --check "$f" || exit 1; done'
+          L() { git diff --name-only origin/develop...HEAD -- '*.js'; git -C server/api/user-api diff --name-only origin/develop...HEAD -- '*.js' | sed 's#^#server/api/user-api/#'; }; L | xargs grep -LE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in "$@"; do node --check "$f" || exit 1; echo "ok $f"; done' _ && L | xargs grep -lE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node -e "var b=require('babel-core'),vm=require('vm');process.argv.slice(1).forEach(function(f){new vm.Script(b.transformFileSync(f).code,{filename:f});console.log('babel ok '+f)})"
           ```
         kb:
           - plan-original.md#restricciones-tecnicas-verificadas
         run:
-          command: files=$( (git diff --name-only origin/develop...HEAD -- '*.js'; git -C server/api/user-api diff --name-only origin/develop...HEAD -- '*.js' | sed 's#^#server/api/user-api/#') ); docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in "$@"; do node --check "$f" || exit 1; echo "ok $f"; done' _ $files
+          command: L() { git diff --name-only origin/develop...HEAD -- '*.js'; git -C server/api/user-api diff --name-only origin/develop...HEAD -- '*.js' | sed 's#^#server/api/user-api/#'; }; L | xargs grep -LE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in "$@"; do node --check "$f" || exit 1; echo "ok $f"; done' _ && L | xargs grep -lE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node -e "var b=require('babel-core'),vm=require('vm');process.argv.slice(1).forEach(function(f){new vm.Script(b.transformFileSync(f).code,{filename:f});console.log('babel ok '+f)})"
           repo: sandbox-api
-          how: "Desde la raíz de sandbox-api: arma la lista de .js modificados en ambos repos y los revisa con Node 10."
-          expect: Una línea "ok <archivo>" por cada archivo modificado y ningún error.
+          how: Desde la raíz de sandbox-api, en zsh o bash. Los .js sin import/export se revisan con node --check; los que usan import (app.js, ldap.js, userInfoMethod1.js, seed-helper.js) se transpilan con el babel-core del proyecto, como en producción (babel-core/register), y se compilan en Node 10.
+          expect: Una línea "ok <archivo>" por cada .js sin import y una "babel ok <archivo>" por cada uno con import (hoy 24 + 4 = 28), sin errores.
           exit_code: 0
       - code: F7.3
         text: "Smoke que carga el logger real, pasa cada fixture por `authLog` e imprime la salida, en Docker con la imagen de producción, en tres escenarios:"
@@ -677,11 +677,34 @@ phases:
           1. **sin `LOG_MASKING` ni `loggerLevel`** (como todos los clientes hoy);
           2. con `LOG_MASKING` mal formado;
           3. con `loggerLevel: 'info'`, niveles por estrategia y patrones personalizados.
+
+          El script (`smoke-f7.js`, fuera del repo; su contenido queda en `smoke-f7.md`) simula `local.env.js` en memoria por escenario, carga `server/config/logger.js` y `authLog`, pasa los fixtures de `test/helpers/fixtures/`, imprime lo enviado a Sentry y termina con el conteo de claves ficticias encontradas en la salida (sale con 1 si hay alguna).
+
+          ```bash
+          for s in 1 2 3; do docker run --rm --platform linux/amd64 -v "$PWD":/w -v /private/tmp/claude-501/-Users-edobacon-Workspace-kanai/721e4ba6-ae94-42e3-a356-f4ece9e361f0/scratchpad:/smoke -w /w node:10.24.1-alpine3.11 node /smoke/smoke-f7.js $s > /tmp/smoke-f7-$s.txt 2>&1; echo "escenario $s exit=$?"; tail -1 /tmp/smoke-f7-$s.txt; done
+          ```
         kb:
           - plan-original.md#configuracion-log-masking-en-local-env-js-todo-opcional
           - usuite-15425-plan-helper-ofuscacion-y-mapa-logger.md#a-3-que-muestra-u-oculta-cada-configuracion
+        run:
+          command: for s in 1 2 3; do docker run --rm --platform linux/amd64 -v "$PWD":/w -v /private/tmp/claude-501/-Users-edobacon-Workspace-kanai/721e4ba6-ae94-42e3-a356-f4ece9e361f0/scratchpad:/smoke -w /w node:10.24.1-alpine3.11 node /smoke/smoke-f7.js $s > /tmp/smoke-f7-$s.txt 2>&1; echo "escenario $s exit=$?"; tail -1 /tmp/smoke-f7-$s.txt; done
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api. Deja cada salida en /tmp/smoke-f7-<n>.txt.
+          expect: 'Los tres escenarios con exit=0 y "Claves ficticias encontradas en la salida: 0".'
+          exit_code: 0
       - code: F7.4
         text: "Revisar las tres salidas: sin claves visibles, correos e identificadores según nivel, nombres y códigos según config, sin excepciones. Guardar las tres salidas en el KB del caso como un documento de tipo registro (`smoke-f7.md`) y citar ese nombre en el registro de la tarea."
+      - code: F7.5
+        text: "Corregir el hueco de apellidos que mostró el smoke: sumar `surname`, `familyname` y `lastname` a las keys de `text` en `helpers/logMaskingConfig.js`, y una aserción del apellido SAML en T11 (`test/helpers/logSanitizer.test.js`). Un commit propio en user-api."
+        detail: "Hallazgo del escenario 3 del smoke (2026-10-02): con `text` en `light`, el claim SAML `surname` salía completo porque el catálogo solo tenía `sn` (LDAP). Los mismos apellidos llegan como `lastName` (`index.js:200`) y `familyName` (`loginServices.js:571`)."
+        kb:
+          - plan-original.md#catalogo-base-dentro-del-helper
+        run:
+          command: docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api (suite del helper, sin --opts).
+          expect: 42 passing, 0 failing.
+          exit_code: 0
     criteria:
       - id: F7.c1
         text: Los tres `grep` de F7.1 en `0`. *Evidencia:* salida literal (vacía) y conteo.
@@ -693,18 +716,28 @@ phases:
           expect: Sin salida (código de salida 1).
           exit_code: 1
       - id: F7.c2
-        text: "`node --check` sin errores en todos los archivos modificados (comando de F7.2). *Evidencia:* lista de archivos revisados y salida del comando."
+        text: Sintaxis Node 10 sin errores en todos los archivos modificados (comando de F7.2). *Evidencia:* lista de archivos revisados y salida del comando.
         kind: command
         run:
-          command: files=$( (git diff --name-only origin/develop...HEAD -- '*.js'; git -C server/api/user-api diff --name-only origin/develop...HEAD -- '*.js' | sed 's#^#server/api/user-api/#') ); docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in "$@"; do node --check "$f" || exit 1; echo "ok $f"; done' _ $files
+          command: L() { git diff --name-only origin/develop...HEAD -- '*.js'; git -C server/api/user-api diff --name-only origin/develop...HEAD -- '*.js' | sed 's#^#server/api/user-api/#'; }; L | xargs grep -LE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in "$@"; do node --check "$f" || exit 1; echo "ok $f"; done' _ && L | xargs grep -lE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node -e "var b=require('babel-core'),vm=require('vm');process.argv.slice(1).forEach(function(f){new vm.Script(b.transformFileSync(f).code,{filename:f});console.log('babel ok '+f)})"
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api.
-          expect: Una línea "ok <archivo>" por archivo modificado y ningún error.
+          how: Desde la raíz de sandbox-api, en zsh o bash. Los .js sin import/export se revisan con node --check; los que usan import (app.js, ldap.js, userInfoMethod1.js, seed-helper.js) se transpilan con el babel-core del proyecto, como en producción (babel-core/register), y se compilan en Node 10.
+          expect: Una línea "ok <archivo>" por cada .js sin import y una "babel ok <archivo>" por cada uno con import (hoy 24 + 4 = 28), sin errores.
           exit_code: 0
       - id: F7.c3
         text: "Las tres salidas del smoke guardadas en el KB del caso (`smoke-f7.md`) y revisadas, con una línea por escenario: qué se esperaba y qué salió."
         kind: evidence
+      - id: F7.c4
+        text: Suite del helper en verde en Node 10 tras la corrección de F7.5. *Evidencia:* salida con el conteo.
+        kind: command
+        run:
+          command: docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api.
+          expect: 42 passing, 0 failing.
+          exit_code: 0
     effort: 0,25 a 0,5 días.
+    changes_code: true
   - code: F8
     title: Documentación
     goal: "que cualquier persona del equipo pueda usar, configurar y diagnosticar el helper sin leer su código: JSDoc completo, guía de uso y ejemplo en la plantilla de configuración."
@@ -715,6 +748,17 @@ phases:
       - id: F8.preR
         text: 'Rama de trabajo al día en user-api y sandbox-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo.'
     tasks:
+      - code: F8.0
+        text: "Actualizar `test/userdetail.test.js` al id cifrado de ISO-636 (b25c8d6, 2025-03-06): `getUsrDetails` exige `id` cifrado con aes-128-cbc e `iv`, y el test mandaba `id: 1` sin `iv`, por eso respondía 'Parametro omitido en la petición' y fallaba en la línea 14. El test reemplaza `crypto.createDecipheriv` solo mientras corre (sin copiar la clave de services.js:263), suma el caso sin `iv` y quita el `console.log` que imprimía el correo y el nombre del usuario. Un commit propio de test en user-api."
+        kb:
+          - plan-original.md#linea-base-de-tests
+          - plan-original.md#tests-que-ya-existen-verificado-el-2026-10-01
+        run:
+          command: MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md.
+          expect: "58 tests (42 del helper + 16 propios: 14 de user-api y 2 de server/test/index.test.js), 58 passing y 0 failing; mocha termina con código 0. Nueva línea base de la línea normal."
+          exit_code: 0
       - code: F8.1
         text: "**JSDoc** en `logMaskingConfig.js`, `logSanitizer.js`, `logTextDetection.js` y `authLog.js` (descripciones en español):"
         detail: |-
@@ -748,6 +792,15 @@ phases:
       - code: F8.4
         text: "**KB del caso:** si el comportamiento final cambió respecto del análisis, agregar al KB del caso un documento de tipo decisión o revisión con lo que cambió y por qué. No se edita plan-original.md (copia congelada del import)."
     criteria:
+      - id: F8.c0
+        text: "Suite existente sin fallos tras F8.0: el fallo de userdetail.test.js:14 de la línea base de F0.9 desaparece y no aparece ninguno nuevo. *Evidencia:* conteo de mocha y código de salida."
+        kind: command
+        run:
+          command: MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md.
+          expect: 58 passing, 0 failing; código de salida 0.
+          exit_code: 0
       - id: F8.c1
         text: "`npx jsdoc -c jsdoc.json server/api/user-api/helpers -d /tmp/usuite-15425-jsdoc` sin errores ni advertencias y con los `@typedef` en la salida (puede correr con el Node del host). *Evidencia:* salida del comando."
         kind: command
@@ -770,6 +823,7 @@ phases:
           expect: "Commits de documentación en ambos repos: LOGGING.md y JSDoc en user-api, plantilla local.env.sample.backend.js en sandbox-api."
           exit_code: 0
     effort: 0,5 a 0,75 días.
+    changes_code: true
   - code: F9
     title: QA y entrega a master (línea normal)
     goal: llevar el cambio a `master` en ambos repos, validado en la QA de uvmcl, para que quede listo para cualquier ambiente de la línea normal.

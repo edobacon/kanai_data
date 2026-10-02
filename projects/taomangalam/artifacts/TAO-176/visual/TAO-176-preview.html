@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAO-176 · HU-01-05 — Overlays y feedback</title>
+<style>
+  :root{
+    /* Papel y superficies (la familia la pone la vista anfitriona; los overlays NO traen fondo propio) */
+    --paper:#F4EFE6;
+    --paper-2:#EDE6D9;
+    --surface:#FFFDF8;
+    --surface-alt:#F8F4EC;
+    --ink:#241F18;
+    --ink-2:#5A5245;
+    --ink-3:#8B8274;
+    --line:#DED5C4;
+    --line-soft:#EAE3D5;
+
+    --accent:#7A5B2E;
+    --accent-ink:#FFFDF8;
+    --accent-soft:#EFE3CE;
+
+    --danger:#8E2F24;
+    --danger-soft:#F6E3DF;
+    --danger-line:#E0BEB7;
+
+    --warn:#8A6410;
+    --warn-soft:#F8EED6;
+    --warn-line:#E6D3A6;
+
+    --ok:#2E5F43;
+    --ok-soft:#E1EFE5;
+    --ok-line:#BCD7C5;
+
+    --info:#2D4E6B;
+    --info-soft:#E2ECF4;
+    --info-line:#BBD0E0;
+
+    --scrim:rgba(24,20,14,.65);
+
+    --r-s:8px; --r-m:12px; --r-l:18px; --r-xl:26px;
+
+    --d-fast:180ms;
+    --d-dialog:240ms;
+    --d-sheet:280ms;
+    --d-reduced:120ms;
+    --ease:cubic-bezier(.2,.7,.3,1);
+
+    --dialog-max:560px;
+    --pad-dialog:24px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Chrome de la maqueta (NO es parte del producto) ---------- */
+  .mock-head{
+    position:sticky; top:0; z-index:50;
+    background:#1E1A14; color:#F4EFE6;
+    padding:14px 20px;
+    border-bottom:1px solid #000;
+  }
+  .mock-head h1{font-size:15px;margin:0 0 2px;letter-spacing:.2px}
+  .mock-head p{margin:0;font-size:12.5px;color:#C8BFAE}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+  section.block{margin:0 0 44px}
+  .sec-title{
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    border-bottom:1px solid var(--line);
+    padding-bottom:8px;margin:0 0 6px;
+  }
+  .sec-title h2{font-size:17px;margin:0;letter-spacing:.2px}
+  .sec-note{font-size:12.5px;color:var(--ink-3);margin:6px 0 18px;max-width:72ch}
+  .reqs{display:flex;gap:6px;flex-wrap:wrap}
+  .req{
+    font-size:11px;font-weight:600;letter-spacing:.3px;
+    background:var(--accent-soft);color:#5E4520;
+    border:1px solid #DFCDAE;border-radius:999px;padding:2px 8px;
+  }
+  .spec{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:11.5px;color:var(--ink-3);
+    background:var(--surface-alt);border:1px dashed var(--line);
+    border-radius:var(--r-s);padding:8px 10px;margin:0 0 16px;
+  }
+  .grid{display:grid;gap:22px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+
+  .case{min-width:0}
+  .case-label{
+    font-size:11.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--ink-3);margin:0 0 8px;
+  }
+  .case-foot{font-size:12px;color:var(--ink-3);margin:8px 0 0}
+
+  /* ---------- Marco de dispositivo ---------- */
+  .device{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--r-xl);
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 1px 2px rgba(36,31,24,.06);
+  }
+  .device.phone{width:100%;max-width:360px}
+  .device.tablet{width:100%;max-width:620px}
+  .device-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:7px 14px;font-size:11px;color:var(--ink-3);
+    background:var(--surface-alt);border-bottom:1px solid var(--line-soft);
+  }
+
+  /* Vista anfitriona: su fondo es el que debe verse detrás del scrim (DEC-235) */
+  .host{
+    position:relative;
+    min-height:420px;
+    padding:16px;
+    background:
+      radial-gradient(130% 90% at 12% 0%, #FBF5E8 0%, rgba(251,245,232,0) 62%),
+      repeating-linear-gradient(112deg, rgba(122,91,46,.055) 0 2px, rgba(122,91,46,0) 2px 15px),
+      linear-gradient(170deg,#F2E9D8 0%,#E8DCC6 100%);
+    overflow:hidden;
+  }
+  .host.short{min-height:330px}
+  .host-title{font-size:15px;font-weight:700;margin:2px 0 3px}
+  .host-sub{font-size:12.5px;color:var(--ink-2);margin:0 0 14px}
+  .host-card{
+    background:rgba(255,253,248,.82);
+    border:1px solid var(--line-soft);
+    border-radius:var(--r-m);
+    padding:12px;margin-bottom:10px;
+  }
+  .host-card h4{margin:0 0 4px;font-size:13.5px}
+  .host-card p{margin:0;font-size:12.5px;color:var(--ink-2)}
+  .host-appbar{
+    display:flex;align-items:center;gap:10px;
+    margin:-16px -16px 14px;padding:12px 16px;
+    background:rgba(255,253,248,.72);
+    border-bottom:1px solid var(--line-soft);
+    font-weight:700;font-size:14px;
+  }
+  .icon-btn{
+    width:30px;height:30px;border-radius:var(--r-s);
+    border:1px solid var(--line);background:var(--surface);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:14px;color:var(--ink-2);flex:none;
+  }
+
+  /* ---------- Scrim ---------- */
+  .scrim{position:absolute;inset:0;background:var(--scrim)}
+  .scrim.center{display:flex;align-items:center;justify-content:center;padding:20px}
+  .scrim.bottom{display:flex;align-items:flex-end}
+
+  /* ---------- Diálogo ---------- */
+  .dialog{
+    width:100%;max-width:var(--dialog-max);
+    background:var(--surface);              /* superficie opaca: el texto largo va aquí */
+    border:1px solid var(--line);
+    border-radius:var(--r-l);
+    padding:var(--pad-dialog);
+    box-shadow:0 18px 44px rgba(24,20,14,.28);
+  }
+  .dialog-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+  .dialog-title{font-size:17px;font-weight:700;margin:0;flex:1;line-height:1.3}
+  .dialog-body{font-size:13.5px;color:var(--ink-2);margin:0 0 20px}
+  .dialog-body p{margin:0 0 10px}
+  .dialog-body p:last-child{margin-bottom:0}
+  .dialog-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+  /* ---------- Botones ---------- */
+  .btn{
+    font:inherit;font-size:13.5px;font-weight:600;
+    border-radius:var(--r-s);padding:9px 16px;
+    border:1px solid transparent;cursor:default;
+    display:inline-flex;align-items:center;gap:7px;line-height:1.2;
+  }
+  .btn-primary{background:var(--accent);color:var(--accent-ink);border-color:#634723}
+  .btn-ghost{background:transparent;color:var(--ink-2);border-color:var(--line)}
+  .btn-danger{background:var(--danger);color:#FFF6F4;border-color:#6F241B}
+  .btn-quiet{background:transparent;color:var(--accent);border-color:transparent;padding:9px 8px}
+  .btn-sm{font-size:12.5px;padding:6px 11px}
+
+  /* Anillo de foco visible: el foco queda atrapado dentro del overlay */
+  .focus-ring{
+    position:relative;
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+  .focus-tag{
+    position:absolute;top:-9px;right:-8px;
+    background:var(--accent);color:var(--accent-ink);
+    font-size:9.5px;font-weight:700;letter-spacing:.4px;
+    border-radius:999px;padding:1px 6px;white-space:nowrap;
+  }
+
+  /* ---------- Hoja inferior ---------- */
+  .sheet{
+    width:100%;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    border-radius:var(--r-l) var(--r-l) 0 0;
+    padding:12px 20px 20px;
+    box-shadow:0 -14px 34px rgba(24,20,14,.24);
+  }
+  .grabber{width:38px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 12px}
+  .sheet-title{font-size:16px;font-weight:700;margin:0 0 4px}
+  .sheet-sub{font-size:12.5px;color:var(--ink-2);margin:0 0 14px}
+  .opt-list{border:1px solid var(--line-soft);border-radius:var(--r-m);overflow:hidden;margin:0 0 16px}
+  .opt{
+    display:flex;align-items:center;gap:11px;
+    padding:11px 13px;font-size:13.5px;
+    border-bottom:1px solid var(--line-soft);background:var(--surface);
+  }
+  .opt:last-child{border-bottom:none}
+  .opt span.sub{display:block;font-size:11.5px;color:var(--ink-3)}
+  .opt .dot{width:9px;height:9px;border-radius:99px;background:var(--accent);flex:none}
+  .opt .dot.off{background:transparent;border:1.5px solid var(--line)}
+
+  /* ---------- Pantalla completa ---------- */
+  .fullscreen{
+    position:absolute;inset:0;
+    background:var(--surface);              /* opaca: lectura y formularios largos */
+    display:flex;flex-direction:column;
+  }
+  .fs-bar{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 14px;border-bottom:1px solid var(--line-soft);
+    background:var(--surface-alt);
+  }
+  .fs-bar .t{font-weight:700;font-size:14px;flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fs-body{padding:18px 20px;overflow:auto;font-size:13.5px;color:var(--ink-2)}
+  .fs-body h3{color:var(--ink);font-size:15px;margin:0 0 8px}
+  .fs-body p{margin:0 0 12px;max-width:62ch}
+  .field{margin:0 0 14px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin:0 0 5px}
+  .input{
+    width:100%;border:1px solid var(--line);border-radius:var(--r-s);
+    background:var(--surface);padding:9px 11px;font-size:13.5px;color:var(--ink);
+  }
+  .input.ph{color:var(--ink-3)}
+  .fs-foot{
+    margin-top:auto;display:flex;gap:10px;justify-content:flex-end;
+    padding:12px 16px;border-top:1px solid var(--line-soft);background:var(--surface-alt);
+  }
+
+  /* ---------- Banner persistente ---------- */
+  .banner{
+    display:flex;gap:11px;align-items:flex-start;
+    border:1px solid var(--line);border-left-width:4px;
+    border-radius:var(--r-m);padding:12px 13px;margin:0 0 12px;
+    background:var(--surface);
+  }
+  .banner .glyph{font-size:14px;line-height:1.3;flex:none;width:18px;text-align:center}
+  .banner .bt{font-size:13.5px;font-weight:700;margin:0 0 2px}
+  .banner .bd{font-size:12.5px;color:var(--ink-2);margin:0}
+  .banner .ba{margin-top:9px;display:flex;gap:8px;flex-wrap:wrap}
+  .banner.error{background:var(--danger-soft);border-color:var(--danger-line);border-left-color:var(--danger)}
+  .banner.error .bt{color:var(--danger)}
+  .banner.warn{background:var(--warn-soft);border-color:var(--warn-line);border-left-color:var(--warn)}
+  .banner.warn .bt{color:var(--warn)}
+  .banner.info{background:var(--info-soft);border-color:var(--info-line);border-left-color:var(--info)}
+  .banner.info .bt{color:var(--info)}
+  .banner.offline{background:var(--surface-alt);border-color:var(--line);border-left-color:var(--ink-3)}
+
+  /* ---------- Snackbar ---------- */
+  .snackbar{
+    display:flex;align-items:center;gap:12px;
+    background:#2B251C;color:#F6F1E6;
+    border-radius:var(--r-m);padding:12px 14px;
+    box-shadow:0 10px 26px rgba(24,20,14,.3);
+    font-size:13px;
+  }
+  .snackbar .st{flex:1;min-width:0}
+  .snackbar .sa{
+    font-weight:700;color:#E9CF9E;font-size:13px;
+    border:none;background:transparent;padding:2px 2px;white-space:nowrap;
+  }
+  .snack-anchor{position:absolute;left:16px;right:16px;bottom:16px}
+  .snack-timer{
+    height:2px;border-radius:99px;background:rgba(233,207,158,.35);
+    margin-top:9px;overflow:hidden;
+  }
+  .snack-timer i{display:block;height:100%;width:62%;background:#E9CF9E}
+
+  /* ---------- Estado vacío ---------- */
+  .empty{
+    text-align:center;max-width:380px;margin:0 auto;
+    padding:34px 8px;
+  }
+  /* Viñeta: sin marco, sin borde, sin sombra, sin fondo gris; contain, no deforma */
+  .vignette{
+    display:block;width:170px;height:132px;margin:0 auto 18px;
+    object-fit:contain;background:none;border:none;box-shadow:none;border-radius:0;
+  }
+  .empty h3{font-size:16px;margin:0 0 6px}
+  .empty p{font-size:13px;color:var(--ink-2);margin:0 0 18px}
+
+  /* ---------- Skeleton ---------- */
+  .sk{
+    background:linear-gradient(90deg,#E6DECF 0%,#F1EADC 42%,#E6DECF 84%);
+    background-size:220% 100%;
+    border-radius:6px;
+    animation:shimmer 1200ms linear infinite;   /* ciclo 1200 ms */
+  }
+  @keyframes shimmer{0%{background-position:120% 0}100%{background-position:-120% 0}}
+  .sk.static{animation:none;background:#E6DECF}
+  .sk-line{height:11px;margin:0 0 8px}
+  .sk-title{height:15px;width:58%;margin:0 0 12px}
+  .sk-chip{height:24px;width:86px;border-radius:99px}
+  .sk-thumb{height:56px;width:56px;border-radius:var(--r-s);flex:none}
+  .sk-row{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line-soft);
+    border-radius:var(--r-m);background:rgba(255,253,248,.82);margin-bottom:10px}
+  .sk-row .col{flex:1;min-width:0}
+
+  /* ---------- Píldoras de anotación ---------- */
+  .ann{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:600;color:var(--ink-2);
+    background:var(--surface-alt);border:1px solid var(--line);
+    border-radius:999px;padding:3px 9px;margin:0 6px 6px 0;
+  }
+  .ann b{color:var(--ink);font-weight:700}
+  .ann.sr{background:var(--info-soft);border-color:var(--info-line);color:var(--info)}
+  .ann.no{background:var(--danger-soft);border-color:var(--danger-line);color:var(--danger)}
+  .ann.yes{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+  .anns{margin:10px 0 0}
+
+  /* ---------- Tabla de reglas ---------- */
+  table.rules{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+  table.rules th,table.rules td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  table.rules th{background:var(--surface-alt);font-size:12px;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-3)}
+  table.rules tr:last-child td{border-bottom:none}
+  table.rules td.ok{color:var(--ok);font-weight:600}
+  table.rules td.nok{color:var(--danger);font-weight:600}
+
+  /* ---------- Diagrama de tiempos ---------- */
+  .timeline{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:16px}
+  .tl-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;font-size:12.5px}
+  .tl-row:last-child{margin-bottom:0}
+  .tl-name{width:170px;flex:none;color:var(--ink-2)}
+  .tl-bar{height:16px;border-radius:4px;background:var(--accent-soft);border:1px solid #DFCDAE;
+    display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;color:#5E4520}
+  .tl-bar.wait{background:var(--surface-alt);border-color:var(--line);color:var(--ink-3)}
+  .tl-bar.hold{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok)}
+  .tl-bar.red{background:var(--danger-soft);border-color:var(--danger-line);color:var(--danger)}
+
+  .legend{font-size:12px;color:var(--ink-3);margin-top:10px}
+
+  .stack-row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .arrow{align-self:center;font-size:22px;color:var(--ink-3);padding:0 2px}
+  @media (max-width:760px){ .arrow{display:none} }
+</style>
+</head>
+<body>
+
+<header class="mock-head">
+  <h1>TAO-176 · HU-01-05 — Overlays y feedback</h1>
+  <p>Maqueta de verificación: diálogo, hoja inferior, pantalla completa, banner persistente, snackbar, estado vacío y skeleton. Los overlays se dibujan sobre una vista anfitriona con fondo propio (DEC-235).</p>
+</header>
+
+<div class="wrap">
+
+<!-- ====================== 1. DIÁLOGO ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>1 · Diálogo centrado</h2>
+    <div class="reqs"><span class="req">REQ-01</span><span class="req">REQ-02</span><span class="req">REQ-10</span></div>
+  </div>
+  <p class="sec-note">El diálogo no trae fondo de familia: detrás del scrim se ve el fondo de la vista anfitriona. El texto largo se apoya siempre en la superficie opaca del diálogo. En teléfono y tablet el ancho máximo es el mismo; en teléfono queda limitado por los márgenes laterales.</p>
+  <p class="spec">ancho máx. 560 · padding 24 · scrim 65 % entra en 180 ms · superficie de opacidad 0 y escala 0.97 → 1 en 240 ms · salida 180 ms</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Teléfono · diálogo de confirmación crítica</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono 360 pt</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tablero de tirada</span></div>
+          <div class="host-card"><h4>Tirada del 2 de octubre</h4><p>Tres posiciones abiertas, sin registro.</p></div>
+          <div class="host-card"><h4>Consulta anterior</h4><p>Guardada hace cuatro días.</p></div>
+
+          <div class="scrim center">
+            <div class="dialog">
+              <div class="dialog-head">
+                <h3 class="dialog-title">¿Descartar la tirada?</h3>
+              </div>
+              <div class="dialog-body">
+                <p>Se perderán las tres posiciones abiertas y la nota que escribiste. Esta acción no se puede deshacer.</p>
+              </div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Conservar</button>
+                <button class="btn btn-danger focus-ring">Descartar<span class="focus-tag">foco inicial</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann sr">Lector: anuncia «¿Descartar la tirada?» al abrir</span>
+        <span class="ann">Foco atrapado: Conservar ⇄ Descartar</span>
+        <span class="ann yes">Confirmar: el dato se actualiza <b>antes</b> de iniciar la salida</span>
+      </div>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Tablet · mismo diálogo, mismo ancho máximo</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet 820 pt</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tablero de tirada</span></div>
+          <div class="host-card"><h4>Tirada del 2 de octubre</h4><p>Tres posiciones abiertas, sin registro.</p></div>
+          <div class="host-card"><h4>Consulta anterior</h4><p>Guardada hace cuatro días.</p></div>
+          <div class="host-card"><h4>Notas de la sesión</h4><p>Dos párrafos sin guardar.</p></div>
+
+          <div class="scrim center">
+            <div class="dialog">
+              <div class="dialog-head">
+                <h3 class="dialog-title">¿Descartar la tirada?</h3>
+              </div>
+              <div class="dialog-body">
+                <p>Se perderán las tres posiciones abiertas y la nota que escribiste. Esta acción no se puede deshacer.</p>
+              </div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Conservar</button>
+                <button class="btn btn-danger focus-ring">Descartar<span class="focus-tag">foco inicial</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="case-foot">El diálogo no crece más allá de 560; el resto del ancho muestra el fondo de la vista anfitriona a través del scrim.</p>
+    </div>
+  </div>
+
+  <!-- Vías de cierre -->
+  <div style="margin-top:26px">
+    <p class="case-label">Cuatro vías de cierre, una sola salida</p>
+    <table class="rules">
+      <thead><tr><th>Vía</th><th>Qué la dispara</th><th>Salida</th><th>Foco al cerrar</th></tr></thead>
+      <tbody>
+        <tr><td>Botón del diálogo</td><td>«Conservar» o «Descartar»</td><td class="ok">180 ms</td><td>Vuelve al control que lo abrió</td></tr>
+        <tr><td>Toque exterior</td><td>Toque sobre el scrim</td><td class="ok">180 ms</td><td>Vuelve al control que lo abrió</td></tr>
+        <tr><td>Escape</td><td>Tecla Esc (teclado físico en tablet)</td><td class="ok">180 ms</td><td>Vuelve al control que lo abrió</td></tr>
+        <tr><td>Atrás</td><td>Gesto o botón Atrás de Android</td><td class="ok">180 ms</td><td>Vuelve al control que lo abrió</td></tr>
+        <tr><td>Confirmación crítica</td><td>Confirmar con efecto sobre el dato</td><td class="ok">180 ms, <b>después</b> de actualizar</td><td>Vuelve al control que lo abrió</td></tr>
+      </tbody>
+    </table>
+    <p class="legend">QA-01-05-01 · las tres pruebas (Escape, toque exterior, Atrás) deben devolver el foco al mismo botón de origen.</p>
+  </div>
+</section>
+
+<!-- ====================== 2. MODAL DE OPERACIÓN: SLOT ÚNICO ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>2 · Modal de operación — slot único</h2>
+    <div class="reqs"><span class="req">REQ-03</span></div>
+  </div>
+  <p class="sec-note">Cuando el flujo necesita otra decisión, el overlay abierto cambia su contenido. No se apila un segundo modal encima: el scrim es uno solo y la pila de navegación no crece.</p>
+
+  <div class="stack-row">
+    <div class="case" style="flex:1;min-width:300px">
+      <p class="case-label">Paso 1 — confirmar el envío</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>Paso 1 de 2</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Consulta</span></div>
+          <div class="host-card"><h4>Pregunta abierta</h4><p>Tres cartas seleccionadas.</p></div>
+          <div class="scrim center">
+            <div class="dialog">
+              <h3 class="dialog-title">Enviar la consulta</h3>
+              <div class="dialog-body"><p>Se registrará la tirada con las tres cartas que elegiste.</p></div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Cancelar</button>
+                <button class="btn btn-primary focus-ring">Enviar<span class="focus-tag">foco</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">→</div>
+
+    <div class="case" style="flex:1;min-width:300px">
+      <p class="case-label">Paso 2 — el mismo overlay cambia de contenido</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>Paso 2 de 2</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Consulta</span></div>
+          <div class="host-card"><h4>Pregunta abierta</h4><p>Tres cartas seleccionadas.</p></div>
+          <div class="scrim center">
+            <div class="dialog">
+              <h3 class="dialog-title">Falta elegir el mazo</h3>
+              <div class="dialog-body"><p>La consulta necesita un mazo asociado antes de registrarse.</p></div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Volver</button>
+                <button class="btn btn-primary focus-ring">Elegir mazo<span class="focus-tag">foco</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann"><b>Un</b> scrim, <b>una</b> superficie</span>
+        <span class="ann no">Nunca: segundo modal encima del primero</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 3. HOJA INFERIOR ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>3 · Hoja inferior</h2>
+    <div class="reqs"><span class="req">REQ-04</span><span class="req">REQ-10</span></div>
+  </div>
+  <p class="sec-note">Entra desde el borde inferior en 280 ms. Usa el mismo contrato de cierre, foco y anuncio que el diálogo. Pensada para teléfono; sobre tablet se evalúa diálogo en su lugar.</p>
+  <p class="spec">entrada 280 ms desde el borde natural · salida 180 ms · scrim 65 % en 180 ms</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Teléfono · hoja de opciones</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tirada guardada</span></div>
+          <div class="host-card"><h4>Tres cartas · 2 de octubre</h4><p>Registrada esta mañana.</p></div>
+          <div class="host-card"><h4>Notas</h4><p>Sin notas todavía.</p></div>
+
+          <div class="scrim bottom">
+            <div class="sheet">
+              <div class="grabber"></div>
+              <h3 class="sheet-title">Opciones de la tirada</h3>
+              <p class="sheet-sub">Se aplican solo a esta tirada.</p>
+              <div class="opt-list">
+                <div class="opt"><span class="dot"></span><span>Duplicar la tirada<span class="sub">Copia las cartas y la pregunta</span></span></div>
+                <div class="opt"><span class="dot off"></span><span>Compartir<span class="sub">Genera un enlace de lectura</span></span></div>
+                <div class="opt"><span class="dot off"></span><span>Archivar<span class="sub">Sale del tablero principal</span></span></div>
+              </div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Cancelar</button>
+                <button class="btn btn-primary focus-ring">Aplicar<span class="focus-tag">foco</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann sr">Lector: anuncia «Opciones de la tirada»</span>
+        <span class="ann">Cierre: botón · toque exterior · Escape · Atrás</span>
+      </div>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Teléfono · hoja de lectura breve</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tablero</span></div>
+          <div class="host-card"><h4>Posición 2</h4><p>Carta cubierta.</p></div>
+          <div class="host-card"><h4>Posición 3</h4><p>Carta cubierta.</p></div>
+
+          <div class="scrim bottom">
+            <div class="sheet">
+              <div class="grabber"></div>
+              <h3 class="sheet-title">Qué significa esta posición</h3>
+              <p class="sheet-sub">Posición 2 · el obstáculo</p>
+              <p style="font-size:13px;color:var(--ink-2);margin:0 0 16px">
+                La segunda posición describe aquello que se interpone entre la pregunta y su respuesta.
+                Se lee siempre en relación con la primera carta, nunca por sí sola.
+              </p>
+              <div class="dialog-actions">
+                <button class="btn btn-primary focus-ring">Entendido<span class="focus-tag">foco</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="case-foot">El texto largo va sobre la superficie opaca de la hoja, no sobre el fondo de la vista.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 4. PANTALLA COMPLETA ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>4 · Pantalla completa</h2>
+    <div class="reqs"><span class="req">REQ-04</span><span class="req">REQ-10</span></div>
+  </div>
+  <p class="sec-note">Para lectura larga o formularios. Hereda a pantalla completa el fondo de la vista anfitriona: no declara una familia visual propia. Mismo contrato de cierre, foco y anuncio.</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Teléfono · formulario a pantalla completa</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>9:41</span></div>
+        <div class="host">
+          <div class="fullscreen">
+            <div class="fs-bar">
+              <span class="icon-btn focus-ring">✕<span class="focus-tag">foco</span></span>
+              <span class="t">Nueva tirada</span>
+              <button class="btn btn-quiet btn-sm">Guardar</button>
+            </div>
+            <div class="fs-body">
+              <div class="field">
+                <label>Pregunta</label>
+                <div class="input ph">¿Qué necesito ver sobre esto?</div>
+              </div>
+              <div class="field">
+                <label>Mazo</label>
+                <div class="input">Marsella clásico</div>
+              </div>
+              <div class="field">
+                <label>Notas iniciales</label>
+                <div class="input ph" style="min-height:78px">Opcional</div>
+              </div>
+            </div>
+            <div class="fs-foot">
+              <button class="btn btn-ghost">Descartar</button>
+              <button class="btn btn-primary">Crear tirada</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann sr">Lector: anuncia «Nueva tirada» al abrir</span>
+        <span class="ann">Atrás = ✕ : misma salida de 180 ms</span>
+      </div>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Tablet · lectura a pantalla completa</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet</span><span>9:41</span></div>
+        <div class="host">
+          <div class="fullscreen">
+            <div class="fs-bar">
+              <span class="icon-btn focus-ring">✕<span class="focus-tag">foco</span></span>
+              <span class="t">Lectura completa de la tirada</span>
+              <button class="btn btn-quiet btn-sm">Compartir</button>
+            </div>
+            <div class="fs-body">
+              <h3>Tres cartas · 2 de octubre</h3>
+              <p>La primera posición abre la pregunta y fija el tono de toda la lectura. Conviene leerla entera antes de pasar a las siguientes, porque las dos que siguen se interpretan en relación con ella.</p>
+              <p>La segunda posición nombra el obstáculo. No siempre aparece como una dificultad externa; con frecuencia señala una lectura previa que ya no sostiene la situación actual.</p>
+              <p>La tercera posición cierra. Aquí la tirada propone una dirección, no un resultado: describe hacia dónde se inclina la situación si nada cambia.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="case-foot">Texto largo sobre superficie opaca; la pantalla completa no introduce fondo de familia propio.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 5. BANNER PERSISTENTE ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>5 · Banner persistente</h2>
+    <div class="reqs"><span class="req">REQ-05</span></div>
+  </div>
+  <p class="sec-note">Superficie de bloqueos, conflictos y avisos sin conexión. Permanece hasta que la condición se resuelve: no se autodescarta.</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Variantes del banner en la vista</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Mis tiradas</span></div>
+
+          <div class="banner error">
+            <span class="glyph">▲</span>
+            <div style="flex:1">
+              <p class="bt">No se pudieron cargar tus tiradas</p>
+              <p class="bd">Revisa la conexión y vuelve a intentarlo.</p>
+              <div class="ba"><button class="btn btn-sm btn-danger">Reintentar</button></div>
+            </div>
+          </div>
+
+          <div class="banner warn">
+            <span class="glyph">◆</span>
+            <div style="flex:1">
+              <p class="bt">Hay una versión más reciente de esta tirada</p>
+              <p class="bd">Se editó en otro dispositivo después de tu último cambio.</p>
+              <div class="ba">
+                <button class="btn btn-sm btn-ghost">Ver diferencias</button>
+                <button class="btn btn-sm btn-primary">Usar la más reciente</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="banner offline">
+            <span class="glyph">◌</span>
+            <div style="flex:1">
+              <p class="bt">Sin conexión</p>
+              <p class="bd">Puedes seguir leyendo. Lo que registres se enviará al recuperar la conexión.</p>
+            </div>
+          </div>
+
+          <div class="banner info">
+            <span class="glyph">●</span>
+            <div style="flex:1">
+              <p class="bt">Esta tirada es de solo lectura</p>
+              <p class="bd">La compartieron contigo sin permiso de edición.</p>
+            </div>
+          </div>
+
+          <div class="host-card"><h4>Tres cartas · 2 de octubre</h4><p>Registrada esta mañana.</p></div>
+        </div>
+      </div>
+      <p class="case-foot">Error · conflicto · sin conexión · bloqueo. Todos persisten hasta resolverse.</p>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Reintentar que vuelve a fallar — un solo banner</p>
+      <div class="stack-row" style="gap:12px">
+        <div style="flex:1;min-width:250px">
+          <div class="device phone">
+            <div class="device-bar"><span>1er fallo</span><span>—</span></div>
+            <div class="host short">
+              <div class="host-appbar"><span>Mis tiradas</span></div>
+              <div class="banner error">
+                <span class="glyph">▲</span>
+                <div style="flex:1">
+                  <p class="bt">No se pudieron cargar tus tiradas</p>
+                  <p class="bd">Revisa la conexión y vuelve a intentarlo.</p>
+                  <div class="ba"><button class="btn btn-sm btn-danger focus-ring">Reintentar<span class="focus-tag">foco</span></button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div style="flex:1;min-width:250px">
+          <div class="device phone">
+            <div class="device-bar"><span>2º fallo</span><span>—</span></div>
+            <div class="host short">
+              <div class="host-appbar"><span>Mis tiradas</span></div>
+              <div class="banner error">
+                <span class="glyph">▲</span>
+                <div style="flex:1">
+                  <p class="bt">No se pudieron cargar tus tiradas</p>
+                  <p class="bd">El segundo intento también falló. Vuelve a intentarlo en unos minutos.</p>
+                  <div class="ba"><button class="btn btn-sm btn-danger focus-ring">Reintentar<span class="focus-tag">foco</span></button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann yes">El estado de error <b>sustituye</b> al anterior</span>
+        <span class="ann no">Nunca: dos banners de error apilados</span>
+      </div>
+      <p class="case-foot">QA-01-05-02 · tras el segundo fallo hay un solo banner visible, con el texto actualizado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 6. SNACKBAR ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>6 · Snackbar</h2>
+    <div class="reqs"><span class="req">REQ-06</span></div>
+  </div>
+  <p class="sec-note">Solo confirmaciones no críticas y reversibles. Un bloqueo o una acción irreversible no usa snackbar: usa banner o diálogo, y la revisión rechaza el caso contrario.</p>
+  <p class="spec">entrada 180 ms · permanencia 3500 ms · salida 180 ms</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Uso correcto · confirmación reversible</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>9:41</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Mis tiradas</span></div>
+          <div class="host-card"><h4>Tres cartas · 28 de septiembre</h4><p>Archivada.</p></div>
+          <div class="host-card"><h4>Cruz celta · 20 de septiembre</h4><p>Registrada.</p></div>
+
+          <div class="snack-anchor">
+            <div class="snackbar">
+              <span class="st">Tirada archivada</span>
+              <button class="sa">Deshacer</button>
+            </div>
+            <div class="snack-timer"><i></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann yes">Reversible: la acción «Deshacer» existe</span>
+        <span class="ann">Se va solo a los 3500 ms</span>
+      </div>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Otros usos correctos</p>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:6px 0">
+        <div class="snackbar"><span class="st">Nota guardada</span></div>
+        <div class="snackbar"><span class="st">Enlace copiado</span></div>
+        <div class="snackbar"><span class="st">Carta retirada del tablero</span><button class="sa">Deshacer</button></div>
+      </div>
+
+      <p class="case-label" style="margin-top:22px">Regla de decisión (documentada en Widgetbook)</p>
+      <table class="rules">
+        <thead><tr><th>Situación</th><th>Superficie</th><th>Snackbar</th></tr></thead>
+        <tbody>
+          <tr><td>Confirmación reversible («archivada», «copiado»)</td><td>Snackbar</td><td class="ok">Sí</td></tr>
+          <tr><td>Error de carga</td><td>Banner persistente</td><td class="nok">No</td></tr>
+          <tr><td>Sin conexión</td><td>Banner persistente</td><td class="nok">No</td></tr>
+          <tr><td>Conflicto de versiones</td><td>Banner persistente</td><td class="nok">No</td></tr>
+          <tr><td>Borrado definitivo</td><td>Diálogo de confirmación</td><td class="nok">No</td></tr>
+          <tr><td>Permiso denegado / bloqueo</td><td>Banner o diálogo</td><td class="nok">No</td></tr>
+        </tbody>
+      </table>
+      <p class="legend">La revisión rechaza cualquier snackbar usado para un bloqueo o una acción irreversible.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 7. ESTADO VACÍO ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>7 · Estado vacío</h2>
+    <div class="reqs"><span class="req">REQ-07</span></div>
+  </div>
+  <p class="sec-note">Título, explicación y acción siempre. La viñeta es opcional: hoy falta como asset (HU-02-14) y el estado debe funcionar sin ella. Cuando exista, va sin marco, borde, sombra ni fondo gris, integrada al papel, con ajuste <code>contain</code> y sin deformar.</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Sin viñeta · estado base de hoy</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span>Mis tiradas</span></div>
+          <div class="empty">
+            <h3>Todavía no registraste ninguna tirada</h3>
+            <p>Cuando hagas tu primera tirada, aquí vas a ver la pregunta, las cartas y la fecha de cada una.</p>
+            <button class="btn btn-primary">Hacer mi primera tirada</button>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann yes">Comprensible sin ilustración</span>
+        <span class="ann">Título + explicación + acción</span>
+      </div>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Con viñeta · integrada al papel, sin marco</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>9:41</span></div>
+        <div class="host">
+          <div class="host-appbar"><span>Mis tiradas</span></div>
+          <div class="empty">
+            <!-- Viñeta: SVG transparente, sin fondo ni borde; contain -->
+            <svg class="vignette" viewBox="0 0 220 170" role="img" aria-label="Tres cartas apoyadas sobre una mesa">
+              <g fill="none" stroke="#8B8274" stroke-width="2.4" stroke-linejoin="round">
+                <rect x="34" y="50" width="54" height="80" rx="6" transform="rotate(-9 61 90)"/>
+                <rect x="83" y="42" width="54" height="80" rx="6"/>
+                <rect x="132" y="50" width="54" height="80" rx="6" transform="rotate(9 159 90)"/>
+              </g>
+              <g fill="none" stroke="#B4A78C" stroke-width="1.8" stroke-linecap="round">
+                <path d="M96 62h28M96 72h20M96 100h28"/>
+                <path d="M26 142h168"/>
+              </g>
+              <circle cx="110" cy="86" r="7" fill="none" stroke="#7A5B2E" stroke-width="2.2"/>
+            </svg>
+            <h3>Todavía no registraste ninguna tirada</h3>
+            <p>Cuando hagas tu primera tirada, aquí vas a ver la pregunta, las cartas y la fecha de cada una.</p>
+            <button class="btn btn-primary">Hacer mi primera tirada</button>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann no">Sin marco · sin borde · sin sombra · sin fondo gris</span>
+        <span class="ann yes">contain: no deforma</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:22px">
+    <div class="case">
+      <p class="case-label">Estado vacío por filtro · acción de salida</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet</span><span>9:41</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span>Mis tiradas · filtro: septiembre</span></div>
+          <div class="empty">
+            <h3>Ninguna tirada en este período</h3>
+            <p>No hay tiradas registradas entre el 1 y el 30 de septiembre. Prueba con otro rango de fechas.</p>
+            <button class="btn btn-ghost">Quitar el filtro</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="case">
+      <p class="case-label">Estado vacío sin acción disponible</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet</span><span>9:41</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span>Compartidas conmigo</span></div>
+          <div class="empty">
+            <h3>Nadie compartió tiradas contigo</h3>
+            <p>Cuando alguien comparta una tirada, va a aparecer en esta lista con su nombre y la fecha.</p>
+          </div>
+        </div>
+      </div>
+      <p class="case-foot">Sin acción cuando no hay nada que el usuario pueda hacer desde aquí; el título y la explicación siguen siendo obligatorios.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 8. SKELETON ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>8 · Skeleton</h2>
+    <div class="reqs"><span class="req">REQ-08</span></div>
+  </div>
+  <p class="sec-note">Aparece solo si la espera supera 300 ms. Usa la geometría final del contenido: mismas alturas, mismos bloques, misma separación que la lista real.</p>
+  <p class="spec">umbral 300 ms · ciclo de animación 1200 ms · geometría igual a la del contenido final</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Espera &gt; 300 ms · skeleton animado</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>cargando…</span></div>
+        <div class="host">
+          <div class="host-appbar"><span>Mis tiradas</span></div>
+          <div class="sk-row"><div class="sk sk-thumb"></div><div class="col"><div class="sk sk-title"></div><div class="sk sk-line" style="width:92%"></div><div class="sk sk-line" style="width:64%;margin-bottom:0"></div></div></div>
+          <div class="sk-row"><div class="sk sk-thumb"></div><div class="col"><div class="sk sk-title"></div><div class="sk sk-line" style="width:88%"></div><div class="sk sk-line" style="width:52%;margin-bottom:0"></div></div></div>
+          <div class="sk-row"><div class="sk sk-thumb"></div><div class="col"><div class="sk sk-title"></div><div class="sk sk-line" style="width:95%"></div><div class="sk sk-line" style="width:70%;margin-bottom:0"></div></div></div>
+        </div>
+      </div>
+      <p class="case-foot">Ciclo de 1200 ms. Sin texto de relleno ni «Cargando…» superpuesto.</p>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Contenido final · misma geometría</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>listo</span></div>
+        <div class="host">
+          <div class="host-appbar"><span>Mis tiradas</span></div>
+          <div class="sk-row" style="align-items:center">
+            <div class="sk-thumb" style="background:var(--accent-soft);border:1px solid #DFCDAE"></div>
+            <div class="col"><h4 style="margin:0 0 3px;font-size:13.5px">Tres cartas · 2 de octubre</h4>
+              <p style="margin:0;font-size:12.5px;color:var(--ink-2)">¿Qué necesito ver sobre el cambio de trabajo?</p>
+              <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink-3)">Marsella clásico</p></div>
+          </div>
+          <div class="sk-row" style="align-items:center">
+            <div class="sk-thumb" style="background:var(--accent-soft);border:1px solid #DFCDAE"></div>
+            <div class="col"><h4 style="margin:0 0 3px;font-size:13.5px">Cruz celta · 20 de septiembre</h4>
+              <p style="margin:0;font-size:12.5px;color:var(--ink-2)">Una lectura larga sobre la mudanza.</p>
+              <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink-3)">Rider clásico</p></div>
+          </div>
+          <div class="sk-row" style="align-items:center">
+            <div class="sk-thumb" style="background:var(--accent-soft);border:1px solid #DFCDAE"></div>
+            <div class="col"><h4 style="margin:0 0 3px;font-size:13.5px">Una carta · 14 de septiembre</h4>
+              <p style="margin:0;font-size:12.5px;color:var(--ink-2)">Tirada rápida de la mañana.</p>
+              <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink-3)">Marsella clásico</p></div>
+          </div>
+        </div>
+      </div>
+      <p class="case-foot">Al llegar el dato, los bloques no se mueven de sitio: el skeleton ya ocupaba esa geometría.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:22px">
+    <div class="case">
+      <p class="case-label">Espera de 200 ms · no aparece skeleton</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Teléfono</span><span>200 ms</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span>Mis tiradas</span></div>
+          <div class="host-card"><h4>Tres cartas · 2 de octubre</h4><p>¿Qué necesito ver sobre el cambio de trabajo?</p></div>
+          <div class="host-card"><h4>Cruz celta · 20 de septiembre</h4><p>Una lectura larga sobre la mudanza.</p></div>
+          <p style="font-size:12px;color:var(--ink-3);margin:14px 0 0">La vista aparece ya resuelta: nunca se dibujó un placeholder.</p>
+        </div>
+      </div>
+      <p class="case-foot">QA-01-05-03 · con 200 ms de carga simulada, el skeleton no llega a montarse.</p>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Umbral del skeleton</p>
+      <div class="timeline">
+        <div class="tl-row"><span class="tl-name">Carga de 200 ms</span><span class="tl-bar wait" style="width:120px">200 ms sin nada</span><span style="color:var(--ok);font-weight:600">→ contenido</span></div>
+        <div class="tl-row"><span class="tl-name">Carga de 900 ms</span><span class="tl-bar wait" style="width:90px">300 ms</span><span class="tl-bar" style="width:170px">skeleton · ciclo 1200 ms</span></div>
+        <div class="tl-row"><span class="tl-name">Diálogo: scrim</span><span class="tl-bar" style="width:108px">180 ms</span></div>
+        <div class="tl-row"><span class="tl-name">Diálogo: superficie</span><span class="tl-bar" style="width:144px">240 ms · 0.97 → 1</span></div>
+        <div class="tl-row"><span class="tl-name">Hoja inferior: entrada</span><span class="tl-bar" style="width:168px">280 ms</span></div>
+        <div class="tl-row"><span class="tl-name">Salida de todo overlay</span><span class="tl-bar red" style="width:108px">180 ms</span></div>
+        <div class="tl-row"><span class="tl-name">Snackbar</span><span class="tl-bar" style="width:72px">180 ms</span><span class="tl-bar hold" style="width:200px">permanencia 3500 ms</span><span class="tl-bar red" style="width:72px">180 ms</span></div>
+      </div>
+      <p class="legend">Todas las duraciones provienen de los tokens de movimiento publicados (HU-01-07). Los widgets no declaran duraciones propias.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 9. MOVIMIENTO REDUCIDO ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>9 · Movimiento reducido</h2>
+    <div class="reqs"><span class="req">REQ-09</span></div>
+  </div>
+  <p class="sec-note">Con movimiento reducido activo, el skeleton deja de animar y los overlays solo hacen fundido de hasta 120 ms, o aparecen de inmediato. No hay deslizamiento ni escala.</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label">Skeleton estático</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Movimiento reducido</span><span>cargando…</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span>Mis tiradas</span></div>
+          <div class="sk-row"><div class="sk static sk-thumb"></div><div class="col"><div class="sk static sk-title"></div><div class="sk static sk-line" style="width:92%"></div><div class="sk static sk-line" style="width:64%;margin-bottom:0"></div></div></div>
+          <div class="sk-row"><div class="sk static sk-thumb"></div><div class="col"><div class="sk static sk-title"></div><div class="sk static sk-line" style="width:88%"></div><div class="sk static sk-line" style="width:52%;margin-bottom:0"></div></div></div>
+        </div>
+      </div>
+      <div class="anns"><span class="ann no">Sin brillo recorriendo el bloque</span><span class="ann yes">Tono plano constante</span></div>
+    </div>
+
+    <div class="case">
+      <p class="case-label">Overlay con fundido de 120 ms, sin escala ni deslizamiento</p>
+      <div class="device phone">
+        <div class="device-bar"><span>Movimiento reducido</span><span>9:41</span></div>
+        <div class="host short">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tablero de tirada</span></div>
+          <div class="host-card"><h4>Tirada del 2 de octubre</h4><p>Tres posiciones abiertas.</p></div>
+          <div class="scrim center">
+            <div class="dialog">
+              <h3 class="dialog-title">¿Descartar la tirada?</h3>
+              <div class="dialog-body"><p>Se perderán las tres posiciones abiertas y la nota que escribiste.</p></div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Conservar</button>
+                <button class="btn btn-danger focus-ring">Descartar<span class="focus-tag">foco</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann no">Sin escala 0.97 → 1</span>
+        <span class="ann no">La hoja no se desliza: aparece en su sitio</span>
+        <span class="ann yes">Fundido ≤ 120 ms o cambio inmediato</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 10. DEC-235 ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>10 · DEC-235 — el overlay no trae fondo propio</h2>
+    <div class="reqs"><span class="req">REQ-10</span></div>
+  </div>
+  <p class="sec-note">Comparación para la revisión de Diseño (QA-01-05-04): a la izquierda el comportamiento correcto; a la derecha lo que la revisión rechaza.</p>
+
+  <div class="grid grid-2">
+    <div class="case">
+      <p class="case-label" style="color:var(--ok)">Correcto · se ve el fondo de la vista anfitriona</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet</span><span>correcto</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tablero de tirada</span></div>
+          <div class="host-card"><h4>Posición 1</h4><p>La pregunta.</p></div>
+          <div class="host-card"><h4>Posición 2</h4><p>El obstáculo.</p></div>
+          <div class="scrim center">
+            <div class="dialog">
+              <h3 class="dialog-title">Cerrar la lectura</h3>
+              <div class="dialog-body"><p>La tirada queda guardada tal como está. Puedes volver a abrirla desde «Mis tiradas» cuando quieras seguir.</p></div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Seguir leyendo</button>
+                <button class="btn btn-primary focus-ring">Cerrar<span class="focus-tag">foco</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann yes">El trazado del fondo de la vista se ve bajo el scrim</span>
+        <span class="ann yes">Texto largo sobre superficie opaca</span>
+      </div>
+    </div>
+
+    <div class="case">
+      <p class="case-label" style="color:var(--danger)">Rechazado · el overlay impone su propio fondo</p>
+      <div class="device tablet">
+        <div class="device-bar"><span>Tablet</span><span>rechazado</span></div>
+        <div class="host">
+          <div class="host-appbar"><span class="icon-btn">‹</span><span>Tablero de tirada</span></div>
+          <div class="host-card"><h4>Posición 1</h4><p>La pregunta.</p></div>
+          <div class="host-card"><h4>Posición 2</h4><p>El obstáculo.</p></div>
+          <!-- fondo de familia propio: tapa la vista anfitriona -->
+          <div class="scrim center" style="background:linear-gradient(160deg,#3A3026,#241F18)">
+            <div class="dialog" style="background:rgba(255,253,248,.62)">
+              <h3 class="dialog-title">Cerrar la lectura</h3>
+              <div class="dialog-body"><p>La tirada queda guardada tal como está. Puedes volver a abrirla desde «Mis tiradas» cuando quieras seguir.</p></div>
+              <div class="dialog-actions">
+                <button class="btn btn-ghost">Seguir leyendo</button>
+                <button class="btn btn-primary">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="anns">
+        <span class="ann no">El overlay declara fondo de familia propio</span>
+        <span class="ann no">Superficie translúcida bajo texto largo</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:22px">
+    <div class="case">
+      <p class="case-label" style="color:var(--ok)">Correcto · viñeta integrada al papel</p>
+      <div style="background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r-m);padding:22px;text-align:center">
+        <svg class="vignette" viewBox="0 0 220 170" role="img" aria-label="Tres cartas apoyadas sobre una mesa">
+          <g fill="none" stroke="#8B8274" stroke-width="2.4" stroke-linejoin="round">
+            <rect x="34" y="50" width="54" height="80" rx="6" transform="rotate(-9 61 90)"/>
+            <rect x="83" y="42" width="54" height="80" rx="6"/>
+            <rect x="132" y="50" width="54" height="80" rx="6" transform="rotate(9 159 90)"/>
+          </g>
+          <g fill="none" stroke="#B4A78C" stroke-width="1.8" stroke-linecap="round"><path d="M96 62h28M96 72h20M96 100h28"/><path d="M26 142h168"/></g>
+          <circle cx="110" cy="86" r="7" fill="none" stroke="#7A5B2E" stroke-width="2.2"/>
+        </svg>
+        <p style="font-size:12.5px;color:var(--ink-2);margin:0">Sin marco, sin borde, sin sombra, sin fondo gris.</p>
+      </div>
+    </div>
+    <div class="case">
+      <p class="case-label" style="color:var(--danger)">Rechazado · viñeta enmarcada y deformada</p>
+      <div style="background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r-m);padding:22px;text-align:center">
+        <svg viewBox="0 0 220 170" preserveAspectRatio="none" role="img" aria-label="Tres cartas apoyadas sobre una mesa, deformadas"
+             style="display:block;width:210px;height:112px;margin:0 auto 18px;background:#DCD6CA;border:1px solid #BFB6A4;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.18)">
+          <g fill="none" stroke="#8B8274" stroke-width="2.4" stroke-linejoin="round">
+            <rect x="34" y="50" width="54" height="80" rx="6" transform="rotate(-9 61 90)"/>
+            <rect x="83" y="42" width="54" height="80" rx="6"/>
+            <rect x="132" y="50" width="54" height="80" rx="6" transform="rotate(9 159 90)"/>
+          </g>
+          <g fill="none" stroke="#B4A78C" stroke-width="1.8" stroke-linecap="round"><path d="M96 62h28M96 72h20M96 100h28"/><path d="M26 142h168"/></g>
+        </svg>
+        <p style="font-size:12.5px;color:var(--danger);margin:0">Marco, borde, sombra, fondo gris y relación de aspecto rota.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== 11. CATÁLOGO ====================== -->
+<section class="block">
+  <div class="sec-title">
+    <h2>11 · Casos del catálogo Widgetbook</h2>
+    <div class="reqs"><span class="req">REQ-11</span><span class="req">REQ-12</span></div>
+  </div>
+  <p class="sec-note">Cada overlay y estado tiene su caso. Ningún widget declara tokens, duraciones ni medidas nuevas: todo viene de lo ya publicado por el módulo.</p>
+
+  <table class="rules">
+    <thead><tr><th>Caso</th><th>Variantes</th><th>Qué verifica la revisión</th></tr></thead>
+    <tbody>
+      <tr><td>Diálogo</td><td>Teléfono · tablet · confirmación crítica · movimiento reducido</td><td>560/24, scrim 65 %, 180/240/180, foco atrapado y devuelto, título anunciado</td></tr>
+      <tr><td>Diálogo de operación</td><td>Paso 1 · paso 2 (mismo slot)</td><td>El contenido cambia y no se apila un segundo modal</td></tr>
+      <tr><td>Hoja inferior</td><td>Opciones · lectura breve · movimiento reducido</td><td>Entrada 280 ms, cierre y foco iguales al diálogo</td></tr>
+      <tr><td>Pantalla completa</td><td>Formulario · lectura · teléfono y tablet</td><td>Sin fondo de familia propio, texto largo sobre superficie opaca</td></tr>
+      <tr><td>Banner persistente</td><td>Error · conflicto · sin conexión · bloqueo · reintento fallido</td><td>Persiste hasta resolverse; el error sustituye, no acumula</td></tr>
+      <tr><td>Snackbar</td><td>Con «Deshacer» · sin acción</td><td>180/3500/180 y la regla de uso acotado</td></tr>
+      <tr><td>Estado vacío</td><td>Sin viñeta · con viñeta · por filtro · sin acción</td><td>Título, explicación y acción; viñeta sin marco y con contain</td></tr>
+      <tr><td>Skeleton</td><td>Animado · estático · bajo el umbral</td><td>Umbral 300 ms, ciclo 1200 ms, geometría final</td></tr>
+    </tbody>
+  </table>
+
+  <p class="legend" style="margin-top:14px">
+    Fuentes reusadas: tokens visuales (HU-01-01) · tokens de movimiento y servicio de reducción de movimiento (HU-01-07) ·
+    claves ARB de i18n (HU-01-06) · resolvedor de imágenes para la viñeta · átomos de botón.
+    Los textos de esta maqueta son los visibles del producto y deben existir como claves ARB.
+  </p>
+</section>
+
+</div>
+</body>
+</html>
