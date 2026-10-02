@@ -82,19 +82,19 @@ Contrato: rollback: Borrar `app/lib/design_system/motion/animation_phase.dart` y
 Contrato: rollback: Borrar los dos archivos de test creados en esta tarea.. Status: done
 
 #### S3.T1 — Implementar los helpers de transición ordinaria en `app/lib/design_system/motion/transitions.dart` sobre `flutter_animate`, apoyados en la máquina de estados y en el servicio de reducción: con movimiento normal aplican duración, curva y distancia de los tokens generados; con movimiento reducido eliminan traslación y escala y dejan un fundido de 120 ms o menos (o cambio inmediato), con el mismo estado final. Sin duraciones ni offsets literales en la implementación.
-Contrato: rollback: Borrar `app/lib/design_system/motion/transitions.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: pending
+Contrato: rollback: Borrar `app/lib/design_system/motion/transitions.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: done
 
 #### S3.T2 — Crear las pantallas y el diálogo de muestra que usan los helpers, bajo `app/test/design_system/motion/support/`, para que los widget tests y la evidencia visual usen el mismo material: dos pantallas de navegación (QA-01-07-01) y un diálogo (QA-01-07-03). No agregar rutas ni entradas al árbol de la app de producción.
-Contrato: rollback: Borrar el directorio `app/test/design_system/motion/support/`.. Status: pending
+Contrato: rollback: Borrar el directorio `app/test/design_system/motion/support/`.. Status: done
 
 #### S3.T3 — Publicar el par normal/reducido en el catálogo Widgetbook del repo (app separada creada por HU-00-12, confirmar la ruta antes de tocarla) reutilizando las pantallas de muestra, para la revisión de diseño pedida en el handoff: misma transición en movimiento normal y en movimiento reducido, lado a lado.
-Contrato: rollback: Revertir los archivos agregados al catálogo Widgetbook con `git checkout --` sobre su directorio.. Status: pending
+Contrato: rollback: Revertir los archivos agregados al catálogo Widgetbook con `git checkout --` sobre su directorio.. Status: done
 
 #### S3.T4 — Extender `app/tool/check_design_literals.dart` (la guarda ya ejecutada en CI, `.github/workflows/ci-pr.yml:278`) agregando a su lista de `ForbiddenPattern` un patron que detecte un literal numérico, por ejemplo `Duration(milliseconds: 300)`, en `app/lib`, con la misma exclusion del Dart generado de tokens (`app/lib/design_system/tokens/tokens.g.dart`). El patron debe marcar solo literales numericos (por ejemplo `Duration(milliseconds: 300)`) y NO las duraciones que leen tokens (`Duration(milliseconds: TaoMotion.reduced.toInt())` en `app/lib/design_system/motion.dart:117-121`). El chequeo falla con codigo distinto de 0 nombrando archivo y linea de cada infraccion. No se crea un script nuevo: `scripts/check-motion-durations.sh` no existe ni debe existir. Los tests en `app/test/tool/check_design_literals_test.dart` cubren los casos de REQ-05: (1) el arbol actual de `app/lib` pasa sin infracciones, incluido `motion.dart:117-121` que lee tokens; (2) un literal numerico sembrado en un archivo temporal bajo `app/lib` hace fallar el chequeo nombrando archivo y linea; (3) `Duration(milliseconds: TaoMotion.fast.toInt())` no se marca; (4) `app/lib/design_system/tokens/tokens.g.dart` esta exento aunque contenga literales; (5) `app/test` queda fuera del alcance del chequeo.
-Contrato: rollback: Quitar el `ForbiddenPattern` de `Duration(milliseconds: ...)` de `app/tool/check_design_literals.dart` y sus casos en `app/test/tool/check_design_literals_test.dart`; la guarda queda con su lista de patrones previa.. Status: pending
+Contrato: rollback: Quitar el `ForbiddenPattern` de `Duration(milliseconds: ...)` de `app/tool/check_design_literals.dart` y sus casos en `app/test/tool/check_design_literals_test.dart`; la guarda queda con su lista de patrones previa.. Status: done
 
 #### S3.T5 — Ampliar la regresion de transiciones en `app/test/design_system/motion/transitions_test.dart` con los dos criterios de aceptacion que faltan, ademas de los casos que ya cubre: (a) caso de 120 Hz: con `WidgetTester` en un binding cuyo `SchedulerBinding` avanza a 120 Hz (bombeo de frames cada ~8.33 ms), una transicion ordinaria declarada en 240 ms dura 240 ms de tiempo de animacion (no depende de la cantidad de frames ni de la tasa de refresco); (b) QA-01-07-03: un dialogo de muestra que se abre y se cierra con movimiento reducido activo usa solo un fundido de 120 ms o menos, sin traslacion ni escala (se verifica que no haya `Transform`/`SlideTransition`/`ScaleTransition` con desplazamiento y que el opacity vaya de 0 a 1 dentro de la ventana de `TaoMotion.reduced`). Citar en la descripcion de cada test el criterio que cubre.
-Contrato: rollback: Revertir los casos agregados en `app/test/design_system/motion/transitions_test.dart` (120 Hz y QA-01-07-03) y en `app/test/tool/check_design_literals_test.dart`; si esta tarea creo `transitions_test.dart`, borrarlo.. Status: pending
+Contrato: rollback: Revertir los casos agregados en `app/test/design_system/motion/transitions_test.dart` (120 Hz y QA-01-07-03) y en `app/test/tool/check_design_literals_test.dart`; si esta tarea creo `transitions_test.dart`, borrarlo.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por Tokens de movimiento y servicio de reducción de movimiento (HU-01-07)
@@ -195,14 +195,14 @@ Contrato: rollback: Revertir los casos agregados en `app/test/design_system/moti
 
 **Gate (auto)**: Los tests unitarios del servicio de reducción y de la máquina de estados pasan: la tabla de combinación de preferencias (sistema por un lado, preferencia local por dispositivo por el otro) da reducido en los tres casos esperados, y la máquina recorre idle, entering, settled, exiting, interrupted y disposed sin dejar temporizadores vivos.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
-- [ ] S3.T5
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
+- [x] S3.T5
 
 **Gate (auto)**: Con `disableAnimations: true` el widget test de navegación entre dos pantallas de muestra no registra desplazamiento y cierra en 120 ms o menos, el mismo recorrido en movimiento normal termina con el mismo contenido, foco y datos, el par normal/reducido se ve en el catálogo Widgetbook, y sembrar un `Duration(milliseconds: 300)` en `app/lib` hace fallar el chequeo de lint nombrando archivo y línea.
 
