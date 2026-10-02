@@ -92,22 +92,22 @@ Contrato: rollback: Quitar el errorBuilder/redirect y el logger; el router vuelv
 Contrato: rollback: Borrar `app/test/navigation/app_router_test.dart`.. Status: done
 
 #### S2.T1 — Implementar la pagina de transicion compartida (CustomTransitionPage) en `app/lib/navigation/`: saliente con desvanecido de 180 ms y desplazamiento de 12 px en telefono (8 a 12 px en tablet, segun ancho), entrante de 240 ms, y sentido invertido al volver. Las duraciones y curvas se toman de los tokens de movimiento de HU-01-07; prohibido escribir `Duration(milliseconds: ...)` literal.
-Contrato: rollback: Volver a las paginas por defecto de go_router (MaterialPage) borrando el archivo de transiciones.. Status: pending
+Contrato: rollback: Volver a las paginas por defecto de go_router (MaterialPage) borrando el archivo de transiciones.. Status: done
 
 #### S2.T2 — Aplicar movimiento reducido a las transiciones consultando el servicio de reduccion de movimiento de HU-01-07 (unico origen de la decision; no leer MediaQuery directo en las paginas): fundido de hasta 120 ms o cambio inmediato, con desplazamiento 0 px en ambos sentidos, y respuesta al cambio de preferencia sin reiniciar la app.
-Contrato: rollback: Quitar la rama de movimiento reducido; las transiciones vuelven a usar siempre las duraciones completas.. Status: pending
+Contrato: rollback: Quitar la rama de movimiento reducido; las transiciones vuelven a usar siempre las duraciones completas.. Status: done
 
 #### S2.T3 — Mantener el encabezado provisional estable durante la transicion (misma key/identidad de widget, sin reconstruccion que lo haga parpadear) y hacer que Atras durante una transicion en curso la cancele y retroceda desde el valor visual actual, sin duplicar la navegacion ni dejar rutas huerfanas en la pila.
-Contrato: rollback: Revertir el manejo de interrupcion y la key del encabezado; vuelve el comportamiento por defecto del navigator.. Status: pending
+Contrato: rollback: Revertir el manejo de interrupcion y la key del encabezado; vuelve el comportamiento por defecto del navigator.. Status: done
 
 #### S2.T4 — Agregar la guarda de navegacion idempotente: un doble toque rapido sobre un elemento navegable abre una sola ruta (dedupe por destino en vuelo mientras dura la transicion), sin bloquear una navegacion legitima posterior ni el Atras.
-Contrato: rollback: Quitar la guarda; cada toque vuelve a invocar la navegacion directamente.. Status: pending
+Contrato: rollback: Quitar la guarda; cada toque vuelve a invocar la navegacion directamente.. Status: done
 
 #### S2.T5 — Mover el foco al titulo de la vista entrante al terminar la transicion y devolverlo al elemento navegable de origen al volver; si el elemento de origen ya no existe, el foco cae en el titulo de la vista de retorno. El cambio de foco no debe disparar navegacion ni reconstruir el encabezado.
-Contrato: rollback: Quitar el manejo de FocusNode/foco automatico; el foco vuelve al comportamiento por defecto de Flutter.. Status: pending
+Contrato: rollback: Quitar el manejo de FocusNode/foco automatico; el foco vuelve al comportamiento por defecto de Flutter.. Status: done
 
 #### S2.T6 — Widget tests de transiciones y accesibilidad en `app/test/navigation/app_transitions_test.dart`: tiempos y desplazamiento de ida y vuelta medidos con pump por intervalos, desplazamiento dentro de 8-12 px en ancho de tablet, interrupcion con Atras a los 90 ms (una sola ruta y arranque desde el valor visual actual), movimiento reducido (<=120 ms y 0 px) y su regresion con movimiento normal, doble toque (una sola instancia; segundo toque a los 400 ms si navega), encabezado sin reconstruccion, y foco al titulo al entrar / al origen al volver.
-Contrato: rollback: Borrar `app/test/navigation/app_transitions_test.dart`.. Status: pending
+Contrato: rollback: Borrar `app/test/navigation/app_transitions_test.dart`.. Status: done
 
 #### S3.T1 — Implementar la reconstruccion de pila para enlaces profundos internos: al abrir una ruta de segundo nivel (con la app cerrada o abierta), la pila queda destino principal + detalle, de modo que Atras va al destino principal y no fuera de la app; un enlace a un destino de primer nivel no apila nada por debajo.
 Contrato: rollback: Quitar la construccion de pila (volver a push plano de la ruta destino).. Status: pending
@@ -152,15 +152,15 @@ Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`
 
 **Gate (auto)**: En el emulador, la app arranca en el marcador de Inicio (ya no en la pantalla provisional), navega a cada uno de los seis destinos principales con su titulo del ARB, y una ruta inventada muestra Inicio con un log de desarrollo en consola y sin excepcion.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
-- [ ] S2.T6
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
+- [x] S2.T6
 
 **Gate (auto)**: En el emulador se ve la transicion de ida (saliente que se va en 180 ms desplazandose 12 px, entrante en 240 ms) y la inversa al volver, con el encabezado quieto; Atras a mitad de transicion retrocede sin duplicar ruta, el doble toque rapido abre una sola vista, con movimiento reducido solo hay fundido corto, y el lector de pantalla anuncia el titulo al entrar y devuelve el foco al origen al volver.
 
