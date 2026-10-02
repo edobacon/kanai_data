@@ -144,4 +144,4 @@ Contrato: rollback: No aplica: no modifica código; si falla, se revierte el cam
 
 **Gate (auto)**: Los goldens de las cinco moléculas por estado, en teléfono y tablet a 100 % y 200 %, están comiteados y pasan; la guarda de tokens falla ante un color o duración hardcodeados; el catálogo publicado por el PR queda listo para la revisión de Diseño contra la maqueta (DEC-235).
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
