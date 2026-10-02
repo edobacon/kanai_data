@@ -88,16 +88,16 @@ Contrato: rollback: Quitar los casos agregados; los casos de tarjeta y fila de l
 Contrato: rollback: Eliminar los archivos de test agregados; el código de producción queda igual.. Status: done
 
 #### S3.T1 — Agregar la guarda de reuso: un test que recorre `app/lib/design_system/molecules/` y falla si encuentra literales `Color(0x...)`, duraciones numéricas fuera de los tokens de movimiento o rutas de asset literales, y que verifica que `app/lib/design_system/tokens/tokens.g.dart` no cambió respecto del baseline.
-Contrato: rollback: Eliminar el archivo de la guarda; las moléculas siguen funcionando.. Status: pending
+Contrato: rollback: Eliminar el archivo de la guarda; las moléculas siguen funcionando.. Status: done
 
 #### S3.T2 — Generar y comitear los goldens por molécula y estado representativo en teléfono y tablet, a escala de texto 100 % y 200 %, con el set acotado (cinco moléculas por estados representativos por dos tamaños por dos escalas; sin combinatoria abierta) y verificar que un overflow introducido a propósito hace fallar el golden.
-Contrato: rollback: Borrar los goldens y el archivo de test de goldens; los tests de comportamiento de las sesiones previas siguen verdes.. Status: pending
+Contrato: rollback: Borrar los goldens y el archivo de test de goldens; los tests de comportamiento de las sesiones previas siguen verdes.. Status: done
 
 #### S3.T3 — Verificar que el catálogo de Widgetbook compila y lista las cinco moléculas con sus siete estados, en teléfono y tablet, y dejar en el PR la referencia de revisión de Diseño (QA-01-04-04): comparar el preview contra `docs/assets/mockups/navegacion-y-acciones/maqueta-direccion-consolidada.png` y doc 43 §8 y §9.
-Contrato: rollback: Revertir la nota del PR; el catálogo queda como estaba.. Status: pending
+Contrato: rollback: Revertir la nota del PR; el catálogo queda como estaba.. Status: done
 
 #### S3.T4 — Regresión del paquete de moléculas e imágenes: correr los tests de las moléculas junto con los de ilustración editorial y resolvedor para confirmar que el reuso de `TaoEditorialIllustration` y de las fixtures no alteró su comportamiento.
-Contrato: rollback: No aplica: no modifica código; si falla, se revierte el cambio que introdujo la regresión.. Status: pending
+Contrato: rollback: No aplica: no modifica código; si falla, se revierte el cambio que introdujo la regresión.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Tarjeta base componible: superficie `surface`, radio 14, borde de 1 px, padding de 16 a 20, con acción o affordance explícito; al tocarse responde con cambio de superficie y escala 0.985 en 120 ms, y la tarjeta completa nunca se expone como un botón sin etiqueta.
@@ -134,13 +134,13 @@ Contrato: rollback: No aplica: no modifica código; si falla, se revierte el cam
 
 **Gate (auto)**: En Widgetbook, el caso de formulario de muestra marca el error debajo del campo al salir sin mover el foco y, al confirmar con dos campos inválidos, lleva el foco al primero sin enviar; los chips muestran check y cambio de forma, se retiran de a uno, y las etiquetas de estado combinan texto e icono.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: Los goldens de las cinco moléculas por estado, en teléfono y tablet a 100 % y 200 %, están comiteados y pasan; la guarda de tokens falla ante un color o duración hardcodeados; el catálogo publicado por el PR queda listo para la revisión de Diseño contra la maqueta (DEC-235).
 
