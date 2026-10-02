@@ -1,0 +1,370 @@
+{
+  "run_id": "kanai-commits-registro-tardio-inline-2026-10-02-r1",
+  "plan_id": "kanai-commits-registro-tardio-inline-2026-10-02",
+  "ts_start": "2026-10-02T15:40:00Z",
+  "ts_end": "2026-10-02T15:50:00Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "eb253e1",
+  "head_ref": "a84ef0d",
+  "repo": "kanai-app",
+  "judge_scope": "full",
+  "plan_phase_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5"
+  ],
+  "calibration": "comportamiento",
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 1,
+    "S3": 2,
+    "consulta": 2
+  },
+  "max_severity": "S2",
+  "verdict": "aprobable_con_reservas",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "Juez desactualizado se compara contra la hora del veredicto, no del brief",
+      "where": "server/inlinePlan/state.ts:135",
+      "evidence": "finalJudgeStale y phaseJudgeStale comparan lateRecords contra judge.ts. Un registro tardío entre el brief (judge_requested) y el veredicto queda cubierto por un veredicto que no lo vio: done=true sin juzgarlo.",
+      "phase": "F1",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "Siguiente paso dice 'Antes del juez final' aunque el juez sea por fase o esté apagado",
+      "where": "server/inlinePlan/next.ts:110",
+      "evidence": "buildNextBrief sin fase actual usa 'Antes del juez final' sin mirar plan.settings.judge.",
+      "phase": "F2",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "Juez de fase desactualizado no se avisa en el siguiente paso mientras hay otra fase en curso",
+      "where": "server/inlinePlan/next.ts:96",
+      "evidence": "El aviso de judgeStale solo está en finishedStep (sin fase actual); nextStepText no lo revisa.",
+      "phase": "F2",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "Commits de una fase cerrada se pueden registrar como evento commits normal en la fase actual",
+      "where": "server/inlinePlan/advance.ts:65",
+      "evidence": "No se valida que el commit pertenezca a la fase (fecha o rama): el freno contra saltear el registro tardío está solo en la guía y la skill.",
+      "phase": "F1",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f5",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "La red de git cuenta merges de la base y cherry-picks como commits sin registrar",
+      "where": "server/inlinePlan/commitGuard.ts:39",
+      "evidence": "git log --since base..work sin --no-merges: un merge de develop a la rama de trabajo o cherry-picks a -secure frenan el cierre hasta registrarlos.",
+      "phase": "F2",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 30,
+    "read_full": 30,
+    "skimmed": 0,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "server/inlinePlan/commitGuard.ts",
+        "server/inlinePlan/schema.ts",
+        "server/inlinePlan/types.ts",
+        "server/inlinePlan/advance.ts",
+        "server/inlinePlan/caseView.ts",
+        "server/inlinePlan/eventSummary.ts",
+        "server/inlinePlan/lint.ts",
+        "server/inlinePlan/metricsPlan.ts",
+        "server/inlinePlan/next.ts",
+        "server/inlinePlan/readModel.ts",
+        "server/inlinePlan/readTimeline.ts",
+        "server/inlinePlan/render.ts",
+        "server/inlinePlan/service.ts",
+        "server/inlinePlan/state.ts",
+        "server/inlinePlan/validate.ts",
+        "server/mcp/inlinePlanTools.ts",
+        "app/components/InlineCaseSummary.vue",
+        "app/components/InlinePhaseDetail.vue",
+        "app/components/InlinePlanProgress.vue",
+        "app/utils/inlineCase.ts",
+        "skills/claude/kn-inline-case/SKILL.md",
+        "tests/unit/inline-plan-commit-guard.test.ts",
+        "tests/unit/inline-plan-create-case.test.ts",
+        "tests/unit/inline-plan-import.test.ts",
+        "tests/unit/inline-plan-late.test.ts",
+        "tests/unit/inline-plan-schema.test.ts",
+        "tests/unit/inline-plan-service.test.ts",
+        "docs/planes-inline.md",
+        "docs/README.md",
+        "docs/plan/implementacion/plan-commits-registro-tardio-inline.md"
+      ],
+      "skimmed": [],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "app/components/InlineCaseSummary.vue",
+        "lines": 9,
+        "blob": "a720b30af853b5f53ee8dcff7d535597bb3bdff9",
+        "deleted": false
+      },
+      {
+        "path": "app/components/InlinePhaseDetail.vue",
+        "lines": 12,
+        "blob": "b72e7f86deef0435ae3d87f0bfc19cc489fc56d1",
+        "deleted": false
+      },
+      {
+        "path": "app/components/InlinePlanProgress.vue",
+        "lines": 7,
+        "blob": "8bda395f5ecc91186f849076dce1b363285a6047",
+        "deleted": false
+      },
+      {
+        "path": "app/utils/inlineCase.ts",
+        "lines": 2,
+        "blob": "d8d51beea53b7f4b33779d3b3745d3a75a45e6bb",
+        "deleted": false
+      },
+      {
+        "path": "docs/plan/implementacion/plan-commits-registro-tardio-inline.md",
+        "lines": 91,
+        "blob": "82b2dc992d93bc579ae7ecdad1514b22d0872db4",
+        "deleted": false
+      },
+      {
+        "path": "docs/planes-inline.md",
+        "lines": 46,
+        "blob": "5d2c5ced46a39fcb0a802d840ba47a5c81c5a44f",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "976b96843132a4bd22acf08d7af8d13c3040b93e",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/advance.ts",
+        "lines": 45,
+        "blob": "595e1af8765c6c6a2e949de22be4e9c71ed793a3",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/caseView.ts",
+        "lines": 3,
+        "blob": "94332e0d2a51f49e90bd69732898424aa2e6adfb",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/commitGuard.ts",
+        "lines": 103,
+        "blob": "658d1cb1c3fbd2203a4ccde3dae2773cdd827d49",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/eventSummary.ts",
+        "lines": 33,
+        "blob": "ad4c12fc52ae4c31779a8d6b6e4d92edca0a8615",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/lint.ts",
+        "lines": 2,
+        "blob": "fdfd3d9fe439fcd0bee72e3f9045093568873fd7",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/metricsPlan.ts",
+        "lines": 3,
+        "blob": "c08e1a697117d4e4776fdf6063245b03f0a56305",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/next.ts",
+        "lines": 19,
+        "blob": "55854132119d06b8e4c0703a52182306aef09624",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/readModel.ts",
+        "lines": 14,
+        "blob": "da315bd9170ef4349964ca5e5a61e35ad86abbb3",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/readTimeline.ts",
+        "lines": 23,
+        "blob": "b39d517955a217476b8ae7464459ccb3d04ca365",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/render.ts",
+        "lines": 10,
+        "blob": "cc3fdcbd705f3b1d167f488099ef76b9a1357d9a",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/schema.ts",
+        "lines": 14,
+        "blob": "e58a8edc424a287308b27bc50344b945de7d25ec",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/service.ts",
+        "lines": 40,
+        "blob": "5c9a486cd4e19a870bc384a49394bfd76e948cba",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/state.ts",
+        "lines": 41,
+        "blob": "2f03f9af1029648cc9fc501010310114520d355e",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/types.ts",
+        "lines": 15,
+        "blob": "c4eeb700f4d705404c80bc1ba14d27465c51b32c",
+        "deleted": false
+      },
+      {
+        "path": "server/inlinePlan/validate.ts",
+        "lines": 14,
+        "blob": "e68ad32be2551dcdec371860f701ceb888964518",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/inlinePlanTools.ts",
+        "lines": 6,
+        "blob": "64dfbaf60ce888966d9a86eedcf67d16eace38b1",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-inline-case/SKILL.md",
+        "lines": 18,
+        "blob": "1c8d392b456395b0ed29e7160b55a598f4214838",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-commit-guard.test.ts",
+        "lines": 113,
+        "blob": "e7acb242ce623070e9085f3d5d031cb581ba2a36",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-create-case.test.ts",
+        "lines": 2,
+        "blob": "2f5f5c1b236e112c9444a574dec15e723c86992e",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-import.test.ts",
+        "lines": 1,
+        "blob": "c088cc1da82e00c59b33d4f17e99f56d3d8151f0",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-late.test.ts",
+        "lines": 172,
+        "blob": "66b8149448f507ccc5e4be215dc753ab0cf79c7e",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-schema.test.ts",
+        "lines": 3,
+        "blob": "1e6f816e81a3dc2499cb6b663fe2148ade48ee94",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/inline-plan-service.test.ts",
+        "lines": 4,
+        "blob": "86b31d3d9b3b2be5a8f86cf572cac53eb05c6bbe",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "server/inlinePlan/commitGuard.ts": "658d1cb1c3fbd2203a4ccde3dae2773cdd827d49",
+      "server/inlinePlan/schema.ts": "e58a8edc424a287308b27bc50344b945de7d25ec",
+      "server/inlinePlan/types.ts": "c4eeb700f4d705404c80bc1ba14d27465c51b32c",
+      "server/inlinePlan/advance.ts": "595e1af8765c6c6a2e949de22be4e9c71ed793a3",
+      "server/inlinePlan/caseView.ts": "94332e0d2a51f49e90bd69732898424aa2e6adfb",
+      "server/inlinePlan/eventSummary.ts": "ad4c12fc52ae4c31779a8d6b6e4d92edca0a8615",
+      "server/inlinePlan/lint.ts": "fdfd3d9fe439fcd0bee72e3f9045093568873fd7",
+      "server/inlinePlan/metricsPlan.ts": "c08e1a697117d4e4776fdf6063245b03f0a56305",
+      "server/inlinePlan/next.ts": "55854132119d06b8e4c0703a52182306aef09624",
+      "server/inlinePlan/readModel.ts": "da315bd9170ef4349964ca5e5a61e35ad86abbb3",
+      "server/inlinePlan/readTimeline.ts": "b39d517955a217476b8ae7464459ccb3d04ca365",
+      "server/inlinePlan/render.ts": "cc3fdcbd705f3b1d167f488099ef76b9a1357d9a",
+      "server/inlinePlan/service.ts": "5c9a486cd4e19a870bc384a49394bfd76e948cba",
+      "server/inlinePlan/state.ts": "2f03f9af1029648cc9fc501010310114520d355e",
+      "server/inlinePlan/validate.ts": "e68ad32be2551dcdec371860f701ceb888964518",
+      "server/mcp/inlinePlanTools.ts": "64dfbaf60ce888966d9a86eedcf67d16eace38b1",
+      "app/components/InlineCaseSummary.vue": "a720b30af853b5f53ee8dcff7d535597bb3bdff9",
+      "app/components/InlinePhaseDetail.vue": "b72e7f86deef0435ae3d87f0bfc19cc489fc56d1",
+      "app/components/InlinePlanProgress.vue": "8bda395f5ecc91186f849076dce1b363285a6047",
+      "app/utils/inlineCase.ts": "d8d51beea53b7f4b33779d3b3745d3a75a45e6bb",
+      "skills/claude/kn-inline-case/SKILL.md": "1c8d392b456395b0ed29e7160b55a598f4214838",
+      "tests/unit/inline-plan-commit-guard.test.ts": "e7acb242ce623070e9085f3d5d031cb581ba2a36",
+      "tests/unit/inline-plan-create-case.test.ts": "2f5f5c1b236e112c9444a574dec15e723c86992e",
+      "tests/unit/inline-plan-import.test.ts": "c088cc1da82e00c59b33d4f17e99f56d3d8151f0",
+      "tests/unit/inline-plan-late.test.ts": "66b8149448f507ccc5e4be215dc753ab0cf79c7e",
+      "tests/unit/inline-plan-schema.test.ts": "1e6f816e81a3dc2499cb6b663fe2148ade48ee94",
+      "tests/unit/inline-plan-service.test.ts": "86b31d3d9b3b2be5a8f86cf572cac53eb05c6bbe",
+      "docs/planes-inline.md": "5d2c5ced46a39fcb0a802d840ba47a5c81c5a44f",
+      "docs/README.md": "976b96843132a4bd22acf08d7af8d13c3040b93e",
+      "docs/plan/implementacion/plan-commits-registro-tardio-inline.md": "82b2dc992d93bc579ae7ecdad1514b22d0872db4"
+    },
+    "summary": {
+      "files": 30,
+      "reviewed_files": 30,
+      "lines": 866,
+      "reviewed_lines": 866,
+      "pct_lines": 100,
+      "excluded": []
+    }
+  },
+  "batches": 1,
+  "consumers": 30,
+  "lines_judged": 866,
+  "scope_creep": [],
+  "unfulfilled_phases": [],
+  "intent_gaps": [],
+  "ticket": {
+    "resolution": "none"
+  },
+  "verdict_expected_by_rubric": "aprobable_con_reservas"
+}

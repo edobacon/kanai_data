@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HU-01-04 · Moléculas del sistema de diseño</title>
+<style>
+  :root{
+    --ivory100:#FBF8F2;
+    --ivory200:#F4EFE4;
+    --surface:#FFFFFF;
+    --paper:#FDFBF6;
+    --ink900:#1E1B16;
+    --ink700:#403A31;
+    --ink500:#6B6256;
+    --ink300:#9A9184;
+    --line:#E3DCCD;
+    --line-strong:#CFC5B0;
+    --accent:#6B4F2A;
+    --accent-soft:#F0E6D4;
+    --danger:#9A2B21;
+    --danger-soft:#FBEDEA;
+    --ok:#2F6B46;
+    --ok-soft:#EAF3ED;
+    --warn:#8A6410;
+    --warn-soft:#FBF2DE;
+    --info:#2B5577;
+    --info-soft:#E9F0F6;
+    --r-card:14px;
+    --r-chip:999px;
+    --r-chip-sel:10px;
+    --focus:#2B5577;
+    --dur:120ms;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--ivory100);
+    color:var(--ink900);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+  header.page{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+  header.page .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink500);font-weight:700}
+  header.page h1{margin:8px 0 6px;font-size:26px;line-height:1.25;letter-spacing:-.01em}
+  header.page p{margin:0;color:var(--ink500);max-width:70ch;font-size:14px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .pill{font-size:12px;border:1px solid var(--line-strong);background:var(--ivory200);color:var(--ink700);border-radius:999px;padding:4px 10px;font-weight:600}
+
+  section.block{margin:0 0 44px}
+  .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:6px;padding-top:8px;border-top:2px solid var(--ink900)}
+  .sec-head h2{margin:10px 0 0;font-size:19px;letter-spacing:-.01em}
+  .sec-head .req{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:3px 7px;margin-top:10px}
+  .sec-note{margin:4px 0 20px;color:var(--ink500);font-size:13.5px;max-width:76ch}
+
+  .grid{display:grid;gap:18px}
+  .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media (max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+
+  /* ---- Marco de estado de Widgetbook ---- */
+  .state{border:1px solid var(--line);border-radius:10px;background:var(--paper);overflow:hidden}
+  .state > h3{
+    margin:0;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+    color:var(--ink500);background:var(--ivory200);border-bottom:1px solid var(--line);padding:8px 12px;
+    display:flex;justify-content:space-between;gap:8px;align-items:center;
+  }
+  .state > h3 .tag{font-size:10.5px;letter-spacing:0;text-transform:none;color:var(--ink300);font-weight:600}
+  .state .canvas{padding:16px;background:var(--ivory100)}
+  .state .foot{padding:8px 12px 12px;font-size:12px;color:var(--ink500);border-top:1px dashed var(--line);background:var(--paper)}
+
+  /* ---- Tarjeta base (REQ-01) ---- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    border-radius:var(--r-card);
+    padding:18px;
+  }
+  .card + .card{margin-top:12px}
+  .card h4{margin:0 0 4px;font-size:16px;line-height:1.3}
+  .card p.body{margin:0;color:var(--ink500);font-size:13.5px}
+  .card .card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+  .card--pressed{background:var(--ivory200);transform:scale(.985);border-color:var(--line-strong)}
+  .card--focus{outline:3px solid var(--focus);outline-offset:3px}
+  .card--disabled{opacity:.45}
+  .card--empty{display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left}
+  .card--error{border-color:var(--danger)}
+
+  .btn{
+    font:inherit;font-size:13.5px;font-weight:650;
+    border-radius:10px;border:1px solid var(--accent);
+    background:var(--accent);color:#fff;
+    padding:9px 14px;min-height:44px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  }
+  .btn.sec{background:transparent;color:var(--accent)}
+  .btn.ghost{background:transparent;color:var(--ink700);border-color:var(--line-strong)}
+  .btn[disabled]{cursor:not-allowed}
+  .link{font-size:13.5px;font-weight:650;color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent)}
+
+  /* ---- Fila navegable (REQ-02) ---- */
+  .rows{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-card);overflow:hidden}
+  .row{
+    display:flex;align-items:center;gap:12px;
+    min-height:56px;padding:10px 14px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface);
+  }
+  .row:last-child{border-bottom:0}
+  .row .ico{flex:0 0 24px;width:24px;height:24px;color:var(--ink500)}
+  .row .txt{flex:1 1 auto;min-width:0}
+  .row .title{font-size:15px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+  .row .metaline{font-size:13px;color:var(--ink500);line-height:1.35;overflow-wrap:anywhere}
+  .row .chev{flex:0 0 auto;color:var(--ink300)}
+  .row--pressed{background:var(--ivory200)}
+  .row--focus{outline:3px solid var(--focus);outline-offset:-3px}
+  .row--disabled{opacity:.45}
+  /* ilustración de acción: máx. 1/3 del ancho, sin marco ni sombra, contain */
+  .row .art{
+    flex:0 0 auto;width:33.333%;max-width:33.333%;aspect-ratio:16/9;
+    border:0;box-shadow:none;background:transparent;border-radius:0;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .row .art svg{width:100%;height:100%;object-fit:contain}
+  .row--tall{min-height:84px}
+
+  /* ---- Formulario (REQ-03) ---- */
+  .form{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-card);padding:18px}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13.5px;font-weight:650;margin-bottom:6px}
+  .field .hint{font-size:12.5px;color:var(--ink500);margin:0 0 6px}
+  .field input,.field select{
+    width:100%;font:inherit;font-size:15px;min-height:48px;
+    padding:10px 12px;border-radius:10px;border:1px solid var(--line-strong);
+    background:var(--paper);color:var(--ink900);
+  }
+  .field.is-error input{border-color:var(--danger);border-width:2px;background:#fff}
+  .field.is-focus input{outline:3px solid var(--focus);outline-offset:2px}
+  .field.is-disabled input{opacity:.5}
+  .err{display:flex;gap:7px;align-items:flex-start;margin-top:7px;color:var(--danger);font-size:13px;line-height:1.4}
+  .err svg{flex:0 0 16px;margin-top:2px}
+  .form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .sr-note{margin-top:12px;font-size:12.5px;color:var(--ink500);border-left:3px solid var(--line-strong);padding-left:10px}
+
+  /* ---- Chips (REQ-04) ---- */
+  .chipbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .chip{
+    display:inline-flex;align-items:center;gap:7px;
+    height:38px;padding:0 14px;border-radius:var(--r-chip);
+    border:1px solid var(--line-strong);background:var(--surface);color:var(--ink700);
+    font-size:13.5px;font-weight:600;position:relative;cursor:pointer;
+  }
+  /* área táctil 44: el alto visual es 38, el hit area crece con pseudo-elemento */
+  .chip::before{content:"";position:absolute;left:0;right:0;top:-3px;bottom:-3px}
+  .chip--sel{
+    background:var(--accent-soft);border-color:var(--accent);color:var(--accent);
+    border-radius:var(--r-chip-sel);border-width:2px;font-weight:700;
+  }
+  .chip--focus{outline:3px solid var(--focus);outline-offset:2px}
+  .chip--disabled{opacity:.45;cursor:not-allowed}
+  .chip--pressed{background:var(--ivory200)}
+  .chip .x{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:rgba(107,79,42,.14)}
+  .chip .long{max-width:200px;overflow-wrap:anywhere}
+  .hit{position:relative;display:inline-flex;align-items:center;min-height:44px}
+  .hit-guide{position:absolute;left:-2px;right:-2px;top:0;bottom:0;border:1px dashed var(--info);border-radius:12px;pointer-events:none}
+
+  /* ---- Etiquetas de estado (REQ-04) ---- */
+  .tag-state{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;border-radius:8px;padding:5px 9px;border:1px solid transparent}
+  .t-ok{background:var(--ok-soft);color:var(--ok);border-color:#C6DDCF}
+  .t-warn{background:var(--warn-soft);color:var(--warn);border-color:#E9D9AE}
+  .t-err{background:var(--danger-soft);color:var(--danger);border-color:#EFC9C3}
+  .t-info{background:var(--info-soft);color:var(--info);border-color:#C9DAE8}
+  .t-neutral{background:var(--ivory200);color:var(--ink700);border-color:var(--line-strong)}
+
+  /* ---- Phone frame 360x800 ---- */
+  .phones{display:flex;gap:20px;flex-wrap:wrap}
+  .phone{width:360px;flex:0 0 360px}
+  .phone .screen{width:360px;height:800px;overflow:auto;background:var(--ivory100);border:1px solid var(--line-strong);border-radius:18px;padding:14px}
+  .phone .cap{font-size:12px;color:var(--ink500);margin:0 0 6px;font-weight:650}
+  .scale200{font-size:30px}
+  .scale200 .row .title{font-size:30px}
+  .scale200 .row .metaline{font-size:26px}
+  .scale200 .card h4{font-size:32px}
+  .scale200 .card p.body{font-size:27px}
+  .scale200 .chip{height:auto;min-height:72px;padding:10px 18px;font-size:26px;border-radius:20px}
+  .scale200 .btn{font-size:26px;min-height:72px}
+  .scale200 .tag-state{font-size:25px}
+  @media (max-width:820px){.phone,.phone .screen{width:100%;flex-basis:auto}.phone .screen{height:620px}}
+
+  table.spec{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden}
+  table.spec th,table.spec td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.spec th{background:var(--ivory200);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink500)}
+  table.spec tr:last-child td{border-bottom:0}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--ivory200);padding:1px 5px;border-radius:4px}
+  .legend{font-size:12.5px;color:var(--ink500);display:flex;gap:16px;flex-wrap:wrap;margin:0 0 18px}
+  .legend b{color:var(--ink700)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page">
+  <div class="kicker">TAO-175 · HU-01-04 · EP-01</div>
+  <h1>Moléculas del sistema de diseño: tarjetas, filas navegables, formularios, chips y etiquetas de estado</h1>
+  <p>Maqueta de verificación del catálogo de Widgetbook. Cada molécula se muestra en sus estados publicados (default, pressed, focus, disabled, error, vacío, texto largo) sobre <code>ivory100</code>, mas las pantallas de 360 × 800 con escala de texto 100 % y 200 %.</p>
+  <div class="meta-row">
+    <span class="pill">Ready · 5 pts · P1 · M0</span>
+    <span class="pill">DEC-189 · DEC-174 · DEC-080 · DEC-075 · DEC-235</span>
+    <span class="pill">Bloquea HU-01-08</span>
+  </div>
+</header>
+
+<p class="legend">
+  <span><b>Marco gris claro</b> = estado de Widgetbook, no es parte del componente.</span>
+  <span><b>Línea punteada azul</b> = área táctil, invisible en producción.</span>
+  <span><b>Contorno azul grueso</b> = anillo de foco.</span>
+</p>
+
+<!-- ============ REQ-01 TARJETA ============ -->
+<section class="block">
+  <div class="sec-head"><h2>1 · Tarjeta base</h2><span class="req">REQ-01</span></div>
+  <p class="sec-note">Superficie <code>surface</code>, radio 14, borde 1 px, padding 18. Siempre con una acción visible y etiquetada: la tarjeta completa nunca se expone como un botón sin etiqueta. Al tocarse, cambia de superficie y escala a 0.985 en 120 ms.</p>
+
+  <div class="grid g3">
+
+    <div class="state">
+      <h3>Default <span class="tag">teléfono / tablet</span></h3>
+      <div class="canvas">
+        <div class="card">
+          <h4>Dirección consolidada</h4>
+          <p class="body">Resumen de las últimas tres semanas de práctica y los apuntes del maestro.</p>
+          <div class="card-foot">
+            <span class="tag-state t-info">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M8 7.2v4M8 5h.01"/></svg>
+              Actualizado hoy
+            </span>
+            <button class="btn sec">Abrir resumen</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Acción explícita: «Abrir resumen». La superficie no es el botón.</div>
+    </div>
+
+    <div class="state">
+      <h3>Pressed <span class="tag">scale 0.985 · 120 ms</span></h3>
+      <div class="canvas">
+        <div class="card card--pressed">
+          <h4>Dirección consolidada</h4>
+          <p class="body">Resumen de las últimas tres semanas de práctica y los apuntes del maestro.</p>
+          <div class="card-foot">
+            <span class="tag-state t-info">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M8 7.2v4M8 5h.01"/></svg>
+              Actualizado hoy
+            </span>
+            <button class="btn sec">Abrir resumen</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Cambia superficie y escala. Con movimiento reducido: cambio inmediato, sin escala.</div>
+    </div>
+
+    <div class="state">
+      <h3>Focus</h3>
+      <div class="canvas">
+        <div class="card card--focus">
+          <h4>Dirección consolidada</h4>
+          <p class="body">Resumen de las últimas tres semanas de práctica y los apuntes del maestro.</p>
+          <div class="card-foot">
+            <span class="tag-state t-info">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M8 7.2v4M8 5h.01"/></svg>
+              Actualizado hoy
+            </span>
+            <button class="btn sec">Abrir resumen</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Anillo de 3 px por fuera del borde, sin recortar la superficie.</div>
+    </div>
+
+    <div class="state">
+      <h3>Disabled</h3>
+      <div class="canvas">
+        <div class="card card--disabled">
+          <h4>Dirección consolidada</h4>
+          <p class="body">Disponible cuando se registre la primera práctica de la semana.</p>
+          <div class="card-foot">
+            <span class="tag-state t-neutral">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M5 8h6"/></svg>
+              No disponible
+            </span>
+            <button class="btn sec" disabled>Abrir resumen</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot">El lector anuncia «no disponible»; el estado no depende solo de la opacidad.</div>
+    </div>
+
+    <div class="state">
+      <h3>Error</h3>
+      <div class="canvas">
+        <div class="card card--error">
+          <h4>Dirección consolidada</h4>
+          <p class="body">No se pudo cargar el resumen.</p>
+          <div class="err">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2.5 1.8 13.5h12.4z"/><path d="M8 6.6v3.2M8 11.6h.01"/></svg>
+            <span>Revisa la conexión y vuelve a intentar.</span>
+          </div>
+          <div class="card-foot">
+            <span class="tag-state t-err">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6"/><path d="M8 5v4M8 11h.01"/></svg>
+              Con error
+            </span>
+            <button class="btn">Reintentar</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Mensaje accionable, no solo «error».</div>
+    </div>
+
+    <div class="state">
+      <h3>Vacío</h3>
+      <div class="canvas">
+        <div class="card card--empty">
+          <h4>Todavía no hay resumen</h4>
+          <p class="body">Registra tres prácticas y aquí vas a ver la dirección consolidada de tu mes.</p>
+          <button class="btn">Registrar práctica</button>
+        </div>
+      </div>
+      <div class="foot">El vacío conserva padding y acción; no se colapsa la superficie.</div>
+    </div>
+
+    <div class="state">
+      <h3>Texto largo <span class="tag">título 120 car.</span></h3>
+      <div class="canvas">
+        <div class="card">
+          <h4>Dirección consolidada del periodo con todas las observaciones registradas por el maestro durante las últimas semanas</h4>
+          <p class="body">Resumen extendido con observaciones, apuntes de corrección postural y las notas de seguimiento acumuladas.</p>
+          <div class="card-foot">
+            <span class="tag-state t-warn">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2.5 1.8 13.5h12.4z"/><path d="M8 6.6v3.2M8 11.6h.01"/></svg>
+              Pendiente de revisión
+            </span>
+            <button class="btn sec">Abrir resumen</button>
+          </div>
+        </div>
+      </div>
+      <div class="foot">El título envuelve; la acción nunca se empuja fuera de la tarjeta.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ REQ-02 FILA ============ -->
+<section class="block">
+  <div class="sec-head"><h2>2 · Fila navegable</h2><span class="req">REQ-02</span></div>
+  <p class="sec-note">Alto mínimo 56, icono opcional, título, metadato y chevrón. El lector anuncia título y metadato como un solo elemento accionable. La ilustración de acción ocupa como máximo un tercio del ancho, sin marco, borde, sombra ni fondo gris, integrada al papel y con <code>contain</code>.</p>
+
+  <div class="grid g2">
+
+    <div class="state">
+      <h3>Default · lista plana con pictograma</h3>
+      <div class="canvas">
+        <div class="rows">
+          <div class="row">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <div class="txt">
+              <div class="title">Secuencia matinal</div>
+              <div class="metaline">12 posturas · 25 min</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+          <div class="row">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+            <div class="txt">
+              <div class="title">Respiración guiada</div>
+              <div class="metaline">8 min · nivel inicial</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+          <div class="row">
+            <div class="txt">
+              <div class="title">Notas del maestro</div>
+              <div class="metaline">Actualizadas el 28 de septiembre</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Lector: «Secuencia matinal, 12 posturas, 25 minutos. Botón.» — un solo elemento.</div>
+    </div>
+
+    <div class="state">
+      <h3>Con ilustración de acción <span class="tag">≤ 1/3 · contain · sin marco</span></h3>
+      <div class="canvas">
+        <div class="rows">
+          <div class="row row--tall">
+            <div class="txt">
+              <div class="title">Práctica de equilibrio</div>
+              <div class="metaline">Serie de pie · 18 min</div>
+            </div>
+            <div class="art" aria-hidden="true">
+              <svg viewBox="0 0 160 90" fill="none">
+                <path d="M62 70c6-14 4-24 0-33" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="63" cy="27" r="8" stroke="#6B4F2A" stroke-width="3"/>
+                <path d="M62 44c8 3 16 1 22-5M62 48c-7 4-12 3-17-2" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <path d="M62 70c9 2 16 6 20 12M62 70c-8 4-13 8-15 12" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <path d="M30 86h100" stroke="#CFC5B0" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+          <div class="row row--tall">
+            <div class="txt">
+              <div class="title">Estiramiento de cierre</div>
+              <div class="metaline">Serie en suelo · 10 min</div>
+            </div>
+            <div class="art" aria-hidden="true">
+              <svg viewBox="0 0 160 90" fill="none">
+                <circle cx="52" cy="40" r="8" stroke="#6B4F2A" stroke-width="3"/>
+                <path d="M52 56c14 0 26 6 34 14M52 56c-10 2-16 8-18 14" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <path d="M30 86h100" stroke="#CFC5B0" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="foot">La ilustración se apoya sobre el papel de la fila: sin recuadro, sin sombra, sin fondo gris.</div>
+    </div>
+
+    <div class="state">
+      <h3>Pressed</h3>
+      <div class="canvas">
+        <div class="rows">
+          <div class="row row--pressed">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <div class="txt">
+              <div class="title">Secuencia matinal</div>
+              <div class="metaline">12 posturas · 25 min</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Solo cambio de superficie; la fila no escala.</div>
+    </div>
+
+    <div class="state">
+      <h3>Focus</h3>
+      <div class="canvas">
+        <div class="rows">
+          <div class="row row--focus">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <div class="txt">
+              <div class="title">Secuencia matinal</div>
+              <div class="metaline">12 posturas · 25 min</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Anillo hacia adentro para no solapar la fila vecina.</div>
+    </div>
+
+    <div class="state">
+      <h3>Disabled</h3>
+      <div class="canvas">
+        <div class="rows">
+          <div class="row row--disabled">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+            <div class="txt">
+              <div class="title">Respiración avanzada</div>
+              <div class="metaline">Se habilita al completar el nivel inicial</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="foot">Sin chevrón: la fila no navega. El motivo va en el metadato, no en un tooltip.</div>
+    </div>
+
+    <div class="state">
+      <h3>Error · Vacío</h3>
+      <div class="canvas">
+        <div class="rows" style="margin-bottom:12px">
+          <div class="row">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#9A2B21" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 8v4M12 16h.01"/></svg>
+            <div class="txt">
+              <div class="title">Secuencia matinal</div>
+              <div class="metaline" style="color:var(--danger)">No se pudo sincronizar. Toca para reintentar.</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="rows">
+          <div class="row" style="min-height:56px;color:var(--ink500)">
+            <div class="txt"><div class="metaline">Todavía no hay prácticas registradas.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="foot">La lista vacía conserva el alto de fila y no muestra chevrón.</div>
+    </div>
+
+  </div>
+
+  <div class="state" style="margin-top:18px">
+    <h3>Texto largo <span class="tag">título de 120 caracteres</span></h3>
+    <div class="canvas">
+      <div class="rows" style="max-width:360px">
+        <div class="row">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <div class="txt">
+            <div class="title">Secuencia matinal completa de movilidad articular, respiración guiada y cierre en suelo para días de poca energía</div>
+            <div class="metaline">24 posturas · 45 min · requiere cinturón y bloque de apoyo</div>
+          </div>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="foot">QA-01-04-03: el chevrón sigue visible y el texto se ajusta sin cortarse.</div>
+  </div>
+</section>
+
+<!-- ============ REQ-03 FORMULARIO ============ -->
+<section class="block">
+  <div class="sec-head"><h2>3 · Formulario compuesto</h2><span class="req">REQ-03</span></div>
+  <p class="sec-note">Validación al salir del campo o al confirmar. El error aparece debajo del campo, con icono y un mensaje que dice cómo corregirlo, sin mover el foco. Al confirmar con dos campos inválidos, el foco va al primero y el envío no se ejecuta.</p>
+
+  <div class="grid g2">
+
+    <div class="state">
+      <h3>Default</h3>
+      <div class="canvas">
+        <form class="form" onsubmit="return false">
+          <div class="field">
+            <label for="f1">Nombre del practicante</label>
+            <input id="f1" type="text" value="Ana Rivas">
+          </div>
+          <div class="field">
+            <label for="f2">Correo de contacto</label>
+            <p class="hint">Lo usamos para enviarte el recordatorio de la sesión.</p>
+            <input id="f2" type="text" value="ana.rivas@ejemplo.com">
+          </div>
+          <div class="form-actions">
+            <button class="btn">Confirmar</button>
+            <button class="btn ghost">Cancelar</button>
+          </div>
+        </form>
+      </div>
+      <div class="foot">Sin errores visibles antes de interactuar.</div>
+    </div>
+
+    <div class="state">
+      <h3>Focus <span class="tag">campo activo, aún sin validar</span></h3>
+      <div class="canvas">
+        <form class="form" onsubmit="return false">
+          <div class="field">
+            <label for="f3">Nombre del practicante</label>
+            <input id="f3" type="text" value="Ana Rivas">
+          </div>
+          <div class="field is-focus">
+            <label for="f4">Correo de contacto</label>
+            <p class="hint">Lo usamos para enviarte el recordatorio de la sesión.</p>
+            <input id="f4" type="text" value="ana.rivas@">
+          </div>
+          <div class="form-actions">
+            <button class="btn">Confirmar</button>
+            <button class="btn ghost">Cancelar</button>
+          </div>
+        </form>
+      </div>
+      <div class="foot">Mientras se escribe no se valida: el error llega al salir del campo.</div>
+    </div>
+
+    <div class="state">
+      <h3>Error al salir del campo <span class="tag">foco no se mueve</span></h3>
+      <div class="canvas">
+        <form class="form" onsubmit="return false">
+          <div class="field is-error">
+            <label for="f5">Correo de contacto</label>
+            <p class="hint">Lo usamos para enviarte el recordatorio de la sesión.</p>
+            <input id="f5" type="text" value="ana.rivas@">
+            <div class="err">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+              <span>Falta el dominio. Escribe el correo completo, por ejemplo <strong>ana.rivas@ejemplo.com</strong>.</span>
+            </div>
+          </div>
+          <div class="field is-focus">
+            <label for="f6">Teléfono</label>
+            <input id="f6" type="text" value="">
+          </div>
+          <div class="form-actions">
+            <button class="btn">Confirmar</button>
+            <button class="btn ghost">Cancelar</button>
+          </div>
+        </form>
+      </div>
+      <div class="foot">El error aparece en el campo que se abandonó; el foco ya está en «Teléfono» y ahí se queda.</div>
+    </div>
+
+    <div class="state">
+      <h3>Confirmar con dos errores <span class="tag">QA-01-04-01</span></h3>
+      <div class="canvas">
+        <form class="form" onsubmit="return false">
+          <div class="field is-error is-focus">
+            <label for="f7">Correo de contacto</label>
+            <input id="f7" type="text" value="ana.rivas@">
+            <div class="err">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+              <span>Falta el dominio. Escribe el correo completo, por ejemplo <strong>ana.rivas@ejemplo.com</strong>.</span>
+            </div>
+          </div>
+          <div class="field is-error">
+            <label for="f8">Teléfono</label>
+            <input id="f8" type="text" value="123">
+            <div class="err">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+              <span>El teléfono necesita 9 dígitos. Agrega los 6 que faltan.</span>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn">Confirmar</button>
+            <button class="btn ghost">Cancelar</button>
+          </div>
+          <p class="sr-note">Lector de pantalla al confirmar: «Correo de contacto, inválido. Falta el dominio. Escribe el correo completo, por ejemplo ana punto rivas arroba ejemplo punto com.» El foco queda en ese campo y el envío no se ejecuta.</p>
+        </form>
+      </div>
+      <div class="foot">El foco salta al primer error en orden de lectura, no al último tocado.</div>
+    </div>
+
+    <div class="state">
+      <h3>Disabled</h3>
+      <div class="canvas">
+        <form class="form" onsubmit="return false">
+          <div class="field is-disabled">
+            <label for="f9">Correo de contacto</label>
+            <p class="hint">Se edita desde el perfil del practicante.</p>
+            <input id="f9" type="text" value="ana.rivas@ejemplo.com" disabled>
+          </div>
+          <div class="form-actions">
+            <button class="btn" disabled>Confirmar</button>
+          </div>
+        </form>
+      </div>
+      <div class="foot">El motivo se escribe como ayuda; no queda implícito en el gris.</div>
+    </div>
+
+    <div class="state">
+      <h3>Vacío <span class="tag">sin datos previos</span></h3>
+      <div class="canvas">
+        <form class="form" onsubmit="return false">
+          <div class="field">
+            <label for="f10">Nombre del practicante</label>
+            <input id="f10" type="text" placeholder="Escribe el nombre completo">
+          </div>
+          <div class="field">
+            <label for="f11">Correo de contacto</label>
+            <input id="f11" type="text" placeholder="nombre@ejemplo.com">
+          </div>
+          <div class="form-actions">
+            <button class="btn">Confirmar</button>
+          </div>
+        </form>
+      </div>
+      <div class="foot">El marcador de posición nunca reemplaza a la etiqueta.</div>
+    </div>
+
+    <div class="state">
+      <h3>Texto largo <span class="tag">etiqueta y error extensos</span></h3>
+      <div class="canvas">
+        <form class="form" style="max-width:360px" onsubmit="return false">
+          <div class="field is-error">
+            <label for="f12">Correo de contacto para los recordatorios de sesión y las comunicaciones del centro de práctica</label>
+            <input id="f12" type="text" value="ana.rivas@">
+            <div class="err">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+              <span>Falta el dominio después del símbolo arroba. Escribe el correo completo, por ejemplo ana.rivas@ejemplo.com, y vuelve a confirmar.</span>
+            </div>
+          </div>
+          <div class="form-actions"><button class="btn">Confirmar</button></div>
+        </form>
+      </div>
+      <div class="foot">Etiqueta y error envuelven en varias líneas sin recortarse ni desbordar.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ REQ-04 CHIPS ============ -->
+<section class="block">
+  <div class="sec-head"><h2>4 · Chips de filtro</h2><span class="req">REQ-04</span></div>
+  <p class="sec-note">Alto visual 38 (rango 36 a 40) y área táctil de 44 o más. La selección se señala con check y cambio de forma (radio de 999 a 10, borde de 2 px) además del color. Cada chip se retira por separado.</p>
+
+  <div class="grid g2">
+
+    <div class="state">
+      <h3>Default · sin filtros aplicados</h3>
+      <div class="canvas">
+        <div class="chipbar">
+          <span class="chip">Mañana</span>
+          <span class="chip">Tarde</span>
+          <span class="chip">Nivel inicial</span>
+          <span class="chip">Menos de 20 min</span>
+        </div>
+      </div>
+      <div class="foot">Forma de píldora, borde 1 px, sin check.</div>
+    </div>
+
+    <div class="state">
+      <h3>Seleccionado <span class="tag">check + forma + color</span></h3>
+      <div class="canvas">
+        <div class="chipbar">
+          <span class="chip chip--sel">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>
+            Mañana
+            <span class="x"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5"/></svg></span>
+          </span>
+          <span class="chip">Tarde</span>
+          <span class="chip chip--sel">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>
+            Nivel inicial
+            <span class="x"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5"/></svg></span>
+          </span>
+          <span class="chip">Menos de 20 min</span>
+        </div>
+      </div>
+      <div class="foot">La «x» retira ese filtro y solo ese; los demás quedan aplicados.</div>
+    </div>
+
+    <div class="state">
+      <h3>Área táctil <span class="tag">QA-01-04-02 · alto 38 → táctil 44</span></h3>
+      <div class="canvas">
+        <div class="chipbar">
+          <span class="hit"><span class="hit-guide"></span><span class="chip">Mañana</span></span>
+          <span class="hit"><span class="hit-guide"></span><span class="chip chip--sel">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>
+            Tarde
+          </span></span>
+        </div>
+      </div>
+      <div class="foot">La línea punteada marca los 44 de alto del área táctil; no se dibuja en producción.</div>
+    </div>
+
+    <div class="state">
+      <h3>Pressed · Focus · Disabled</h3>
+      <div class="canvas">
+        <div class="chipbar">
+          <span class="chip chip--pressed">Pressed</span>
+          <span class="chip chip--focus">Focus</span>
+          <span class="chip chip--sel chip--focus">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>
+            Focus seleccionado
+          </span>
+          <span class="chip chip--disabled">Sin resultados</span>
+        </div>
+      </div>
+      <div class="foot">El chip deshabilitado corresponde a un filtro que no devuelve prácticas.</div>
+    </div>
+
+    <div class="state">
+      <h3>Error <span class="tag">filtro no aplicable</span></h3>
+      <div class="canvas">
+        <div class="chipbar">
+          <span class="chip chip--sel" style="border-color:var(--danger);background:var(--danger-soft);color:var(--danger)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+            Sede norte
+            <span class="x" style="background:rgba(154,43,33,.14)"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5"/></svg></span>
+          </span>
+        </div>
+        <div class="err" style="margin-top:10px">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+          <span>Esa sede ya no está activa. Retira el filtro para ver el resto de las prácticas.</span>
+        </div>
+      </div>
+      <div class="foot">El error dice la acción concreta: retirar el chip.</div>
+    </div>
+
+    <div class="state">
+      <h3>Vacío · Texto largo</h3>
+      <div class="canvas">
+        <p style="margin:0 0 14px;font-size:13.5px;color:var(--ink500)">Sin filtros disponibles para esta vista.</p>
+        <div class="chipbar">
+          <span class="chip chip--sel">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>
+            <span class="long">Prácticas de respiración guiada de nivel inicial por la mañana</span>
+            <span class="x"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5"/></svg></span>
+          </span>
+        </div>
+      </div>
+      <div class="foot">Con texto largo el chip crece en alto; el check y la «x» no se recortan.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ REQ-04 ETIQUETAS ============ -->
+<section class="block">
+  <div class="sec-head"><h2>5 · Etiquetas de estado</h2><span class="req">REQ-04</span></div>
+  <p class="sec-note">Siempre texto breve más icono. Nunca un punto de color solo: el estado tiene que leerse sin distinguir color.</p>
+
+  <div class="grid g2">
+    <div class="state">
+      <h3>Variantes</h3>
+      <div class="canvas">
+        <div class="chipbar">
+          <span class="tag-state t-ok"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>Completada</span>
+          <span class="tag-state t-warn"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2.5 1.8 13.5h12.4z"/><path d="M8 6.6v3.2M8 11.6h.01"/></svg>Pendiente</span>
+          <span class="tag-state t-err"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>Con error</span>
+          <span class="tag-state t-info"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 5h.01"/></svg>En revisión</span>
+          <span class="tag-state t-neutral"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.2"/><path d="M5 8h6"/></svg>No disponible</span>
+        </div>
+      </div>
+      <div class="foot">Cinco variantes; el icono distingue cada una en escala de grises.</div>
+    </div>
+
+    <div class="state">
+      <h3>Disabled · Vacío · Texto largo</h3>
+      <div class="canvas">
+        <div class="chipbar" style="align-items:flex-start">
+          <span class="tag-state t-neutral" style="opacity:.45"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.2"/><path d="M5 8h6"/></svg>Inactiva</span>
+          <span class="tag-state t-neutral"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.2"/><path d="M5 8h6"/></svg>Sin estado</span>
+          <span class="tag-state t-warn" style="max-width:240px;align-items:flex-start"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="flex:0 0 13px;margin-top:3px"><path d="M8 2.5 1.8 13.5h12.4z"/><path d="M8 6.6v3.2M8 11.6h.01"/></svg><span style="overflow-wrap:anywhere">Pendiente de revisión por el maestro desde el 28 de septiembre</span></span>
+        </div>
+      </div>
+      <div class="foot">Con texto largo la etiqueta envuelve y el icono se alinea arriba.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GOLDENS 360x800 ============ -->
+<section class="block">
+  <div class="sec-head"><h2>6 · Goldens en 360 × 800</h2><span class="req">REQ-07</span></div>
+  <p class="sec-note">Las tres moléculas con texto largo en la pantalla más estrecha, con escala de texto 100 % y 200 %. El golden falla ante cualquier desborde o texto oculto.</p>
+
+  <div class="phones">
+    <div class="phone">
+      <p class="cap">Teléfono 360 × 800 · escala 100 %</p>
+      <div class="screen">
+        <div class="chipbar" style="margin-bottom:14px">
+          <span class="chip chip--sel"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>Mañana<span class="x"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2.5 9.5 9.5M9.5 2.5 2.5 9.5"/></svg></span></span>
+          <span class="chip">Nivel inicial</span>
+          <span class="chip">Menos de 20 min</span>
+        </div>
+
+        <div class="card" style="margin-bottom:14px">
+          <h4>Dirección consolidada del periodo con todas las observaciones registradas</h4>
+          <p class="body">Resumen de las últimas tres semanas de práctica y los apuntes del maestro.</p>
+          <div class="card-foot">
+            <span class="tag-state t-warn"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2.5 1.8 13.5h12.4z"/><path d="M8 6.6v3.2M8 11.6h.01"/></svg>Pendiente</span>
+            <button class="btn sec">Abrir</button>
+          </div>
+        </div>
+
+        <div class="rows" style="margin-bottom:14px">
+          <div class="row">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <div class="txt">
+              <div class="title">Secuencia matinal completa de movilidad articular, respiración guiada y cierre en suelo</div>
+              <div class="metaline">24 posturas · 45 min</div>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+          <div class="row row--tall">
+            <div class="txt">
+              <div class="title">Práctica de equilibrio</div>
+              <div class="metaline">Serie de pie · 18 min</div>
+            </div>
+            <div class="art" aria-hidden="true">
+              <svg viewBox="0 0 160 90" fill="none">
+                <path d="M62 70c6-14 4-24 0-33" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="63" cy="27" r="8" stroke="#6B4F2A" stroke-width="3"/>
+                <path d="M62 44c8 3 16 1 22-5M62 48c-7 4-12 3-17-2" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <path d="M62 70c9 2 16 6 20 12M62 70c-8 4-13 8-15 12" stroke="#6B4F2A" stroke-width="3" stroke-linecap="round"/>
+                <path d="M30 86h100" stroke="#CFC5B0" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+
+        <form class="form" onsubmit="return false">
+          <div class="field is-error">
+            <label for="p1">Correo de contacto</label>
+            <input id="p1" type="text" value="ana.rivas@">
+            <div class="err">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.2"/><path d="M8 5v4M8 11h.01"/></svg>
+              <span>Falta el dominio. Escribe el correo completo, por ejemplo ana.rivas@ejemplo.com.</span>
+            </div>
+          </div>
+          <div class="form-actions"><button class="btn">Confirmar</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="phone">
+      <p class="cap">Teléfono 360 × 800 · escala 200 %</p>
+      <div class="screen scale200">
+        <div class="chipbar" style="margin-bottom:16px">
+          <span class="chip chip--sel"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 8.5 3.4 3.4L13 5"/></svg>Mañana</span>
+          <span class="chip">Nivel inicial</span>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <h4>Dirección consolidada del periodo</h4>
+          <p class="body">Resumen de las últimas tres semanas.</p>
+          <div class="card-foot" style="flex-direction:column;align-items:flex-start;gap:14px">
+            <span class="tag-state t-warn"><svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2.5 1.8 13.5h12.4z"/><path d="M8 6.6v3.2M8 11.6h.01"/></svg>Pendiente</span>
+            <button class="btn sec">Abrir</button>
+          </div>
+        </div>
+
+        <div class="rows">
+          <div class="row" style="min-height:112px">
+            <div class="txt">
+              <div class="title">Secuencia matinal completa de movilidad articular y cierre en suelo</div>
+              <div class="metaline">24 posturas · 45 min</div>
+            </div>
+            <svg class="chev" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 5 7 7-7 7"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="sec-note" style="margin-top:14px">En escala 200 % la tarjeta apila etiqueta y acción, el chip crece en alto y la fila sube su alto mínimo; el chevrón se mantiene visible y nada se recorta.</p>
+</section>
+
+<!-- ============ MATRIZ ============ -->
+<section class="block">
+  <div class="sec-head"><h2>7 · Matriz de registro en Widgetbook</h2><span class="req">REQ-06</span></div>
+  <p class="sec-note">Cada molécula queda registrada con los siete estados, visibles en teléfono y tablet. El catálogo se publica desde el PR para la revisión de Diseño (QA-01-04-04).</p>
+  <table class="spec">
+    <thead>
+      <tr><th>Molécula</th><th>Default</th><th>Pressed</th><th>Focus</th><th>Disabled</th><th>Error</th><th>Vacío</th><th>Texto largo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Tarjeta base</td><td>✓</td><td>✓ scale 0.985 / 120 ms</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Fila navegable</td><td>✓</td><td>✓ solo superficie</td><td>✓</td><td>✓ sin chevrón</td><td>✓</td><td>✓</td><td>✓ 120 car.</td></tr>
+      <tr><td>Fila con ilustración</td><td>✓ ≤ 1/3 · contain</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓ sin ilustración</td><td>✓</td></tr>
+      <tr><td>Formulario compuesto</td><td>✓</td><td>—</td><td>✓</td><td>✓</td><td>✓ al salir y al confirmar</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Chip de filtro</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓ sin filtros</td><td>✓</td></tr>
+      <tr><td>Etiqueta de estado</td><td>✓ 5 variantes</td><td>—</td><td>—</td><td>✓</td><td>✓</td><td>✓ sin estado</td><td>✓</td></tr>
+    </tbody>
+  </table>
+
+  <p class="sec-note" style="margin-top:20px"><strong>Movimiento reducido:</strong> con la preferencia activa, los cambios de estado son inmediatos o un fundido de hasta 120 ms; la tarjeta no escala y el chip no anima su cambio de forma.</p>
+</section>
+
+</div>
+</body>
+</html>

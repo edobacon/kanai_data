@@ -2,7 +2,7 @@ plan_id: usuite-15425
 title: "USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles)"
 intent: Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 created: 2026-10-01T17:50:36.527Z
-updated: 2026-10-02T15:39:13.238Z
+updated: 2026-10-02T16:21:59.614Z
 tags:
   projects: []
   repos:
@@ -554,12 +554,12 @@ phases:
           expect: "Sin salida (grep termina con código 1). Evidencia: tabla archivo → cantidad de F5.0 → 0."
           exit_code: 1
       - id: F5.c2
-        text: Tests del helper en verde y suite existente sin fallos nuevos respecto de la línea base (se corre después de cada archivo convertido).
+        text: "Después de cada archivo convertido: tests del helper en verde y `node --check` del archivo en Docker con la imagen de producción. Suite existente sin fallos nuevos respecto de la línea base una vez por grupo: (1) `authentication/auth.js`; (2) `multiAuth/ad.js`, `multiAuth/azureSaml.js`, `multiAuth/openIdConnect.js`; (3) `index.js` y `services.js`; (4) `custom/ucalTls.js`, `userInfoMethod/ldap.js`, `userInfoMethod/userInfoMethod1.js`, `seeds/seeds.js` y `seeds/seed-helper.js`. Se registra una corrida por grupo."
         kind: command
         run:
           command: docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js" && MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md. Primero corren los tests del helper (deben terminar con 0) y después la suite existente.
+          how: Desde la raíz de sandbox-api, con Docker corriendo, el túnel de develop abierto en el puerto 5500, Redis local en el 6379 y la app abajo (límite de 5 conexiones del usuario). Usuario y clave salen de local.env.js; la base es suite_dev. El node -e del contenedor reenvía 127.0.0.1:6379 a Redis del Mac porque core-api/helpers/redis.helper.js:47 fija 127.0.0.1. Ver ambiente-local.md. Primero corren los tests del helper (deben terminar con 0) y después la suite existente. Se corre al terminar cada grupo (4 corridas), no después de cada archivo.
           expect: "Helper: 0 failing. Suite existente: mismo resultado que la línea base de F0.9: 15 tests, 14 passing y 1 failing (userdetail.test.js:14, preexistente, depende de los datos de suite_dev); mocha termina con código 1 = cantidad de fallos."
           exit_code: 1
       - id: F5.c3
