@@ -159,16 +159,16 @@ Contrato: rollback: Borrar los goldens y el test que los compara.. Status: done
 Contrato: rollback: No aplica: es una verificación, no deja artefactos.. Status: done
 
 #### S3.T1 — Construir el campo de texto en `app/lib/design_system/atoms/`: etiqueta persistente sobre el campo (el placeholder no la reemplaza), texto de ayuda, alto mínimo 48, separación etiqueta-campo de 8 y borde desde el token `border` del contrato `AppThemeData`.
-Contrato: rollback: Borrar el campo agregado; no hay consumidores aún.. Status: pending
+Contrato: rollback: Borrar el campo agregado; no hay consumidores aún.. Status: done
 
 #### S3.T2 — Implementar el estado de error del campo: mensaje debajo con icono y texto, transición de 180 ms sin desplazamiento horizontal (sin sacudida) y respetando la reducción de movimiento; el estado se comunica por texto e icono además del color.
-Contrato: rollback: Revertir el campo a su versión sin estado de error animado.. Status: pending
+Contrato: rollback: Revertir el campo a su versión sin estado de error animado.. Status: done
 
 #### S3.T3 — Agregar a Widgetbook los casos del campo (default, foco, ayuda, error, deshabilitado, texto largo) en teléfono y tablet con escala 100 % y 200 %, y dejar la sección de átomos completa para la revisión de Diseño contra doc 43 §8 y `maqueta-direccion-consolidada.png`.
-Contrato: rollback: Quitar los casos del campo del catálogo.. Status: pending
+Contrato: rollback: Quitar los casos del campo del catálogo.. Status: done
 
 #### S3.T4 — Tests y regresión del campo: etiqueta y placeholder coexistentes, alto ≥48 y separación 8 medidos, error con icono y duración 180 ms sin variación de posición horizontal, prueba de contraste por luminancia del token `border` contra `background` y `canvas` (≥3.0:1, falla con el valor medido en el mensaje), y goldens del campo en teléfono y tablet a 100 % y 200 %.
-Contrato: rollback: Borrar los tests y goldens agregados.. Status: pending
+Contrato: rollback: Borrar los tests y goldens agregados.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Existen cinco variantes de botón (Primario, Secundario, Terciario, Destructivo e Icono) con forma y color derivados de tokens: Primario con fondo `actionPrimary`, texto `actionPrimaryText`, estilo `labelLarge`, alto mínimo 48 y radio `sm`; Destructivo con `error` y sin `brand`;
@@ -224,13 +224,13 @@ Contrato: rollback: Borrar los tests y goldens agregados.. Status: pending
 
 **Gate (auto)**: En Widgetbook, las cinco variantes de botón se recorren con teclado mostrando el contorno de foco de 3 px, el loading no duplica la acción al tocar dos veces, el deshabilitado se anuncia como no disponible, y los goldens de teléfono y tablet a 100 % y 200 % pasan.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: En Widgetbook, el campo de texto muestra etiqueta persistente, ayuda y error con icono en 180 ms sin sacudida, mide al menos 48 de alto con separación 8, y la prueba de contraste confirma que su borde alcanza ≥3:1 sobre `background` y `canvas`.
 

@@ -48,6 +48,7 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | ambiente-local.md | referencia | Cómo levantar suite-api en local (Apple Silicon) y validar con login local | Rosetta para Node 10, túneles por puerto (5502 QA uvmcl, 5504 producción), pool en 3, lo que inyecta gulp, base de la suite en Docker y el login local como validación de F5 y F6 |
+| decision-deteccion-en-texto.md | decision | Decisión F2: dónde se aplica la detección de datos dentro de textos | La detección en texto se aplica solo a textos sin estrategia por nombre (A); dentro de un XML cada etiqueta se oculta según la estrategia de su nombre (B) |
 | decision-niveles-y-archivos-helper.md | decision | Decisión F1: regla de niveles proporcional con tope, rangos numéricos y helper en dos archivos | Niveles light/medium/strong según el largo con tope (B), maxDepth 1 a 50, maxTextLength 256 a 1 MB, helper en dos archivos, tipo_documento excluido del catálogo id y estilo ajustado a mano según .eslintrc.js |
 | plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
 | usuite-15425-claves-en-logs-uvmcl.md | analisis | USUITE-15425: contraseñas en los logs de suite-api (uvmcl). Análisis, plan de prueba y esfuerzo | Análisis inicial: por qué la clave de uvmcl sale en los logs y flujo del login |
@@ -56,4 +57,4 @@
 
 ## Plan
 
-2 de 11 fases cerradas, fase actual F2. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+3 de 11 fases cerradas, fase actual F3. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md

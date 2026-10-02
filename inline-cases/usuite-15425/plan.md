@@ -4,7 +4,7 @@
 
 **Intención:** Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 **Tags:** repos: user-api, sandbox-api · tickets: USUITE-15425 · labels: suite-legacy
-**Estado:** 2 de 11 fases cerradas. Juez final: pendiente.
+**Estado:** 3 de 11 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -12,7 +12,7 @@
 |---|---|---|---|---|---|---|
 | F0 Verificación previa | antes de escribir código, confirmar que los supuestos del plan siguen siendo ciertos y tener listo todo lo necesario para desarrollar y probar: ramas, Docker, usuario de prueba y fixtures. | Hecho | 2026-10-02 → 2026-10-02 | - | 5/5 | - |
 | F1 Helper de ofuscación (logSanitizer.js) | tener un helper que, dado cualquier dato, devuelva una copia con contraseñas y secretos bloqueados y correos, documentos y nombres ocultos según el nivel configurado, sin modificar el original y sin lanzar excepciones nunca. | Hecho | 2026-10-02 → 2026-10-02 | - | 4/4 | - |
-| F2 Detección de datos dentro de texto | que las claves, correos y (opcionalmente) RUT que vienen **dentro de un texto** (XML, cadenas `clave=...`, JSON serializado, comandos `curl`, mensajes libres) también se oculten, no solo los que vienen como campo con nombre. | Pendiente | - → - | - | 0/3 | F2.1; F2.2; F2.3; F2.4; F2.5 |
+| F2 Detección de datos dentro de texto | que las claves, correos y (opcionalmente) RUT que vienen **dentro de un texto** (XML, cadenas `clave=...`, JSON serializado, comandos `curl`, mensajes libres) también se oculten, no solo los que vienen como campo con nombre. | Hecho | 2026-10-02 → 2026-10-02 | b3cc26f, 3d25f1b | 3/3 | - |
 | F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | Pendiente | - → - | - | 0/2 | F3.1; F3.2; F3.3; F3.4; F3.5 |
 | F4 Conversión del login de uvmcl (loginServices.js) | que el archivo donde se detectó la fuga (`loginServices.js`) deje de escribir la clave y cualquier dato sensible: todos sus logs pasan por `authLog` y el navegador ya no recibe errores crudos. | Pendiente | - → - | - | 0/4 | F4.0; F4.1; F4.2; F4.3; F4.4; F4.5 |
 | F5 Conversión del resto de user-api | que **todo** el módulo de autenticación escriba sus logs solo a través de `authLog`, para todos los tipos de login (WSDL, POST, SAML, AD, ADAL, ADB2C, LDAP, OIDC). | Pendiente | - → - | - | 0/5 | F5.0; F5.1; F5.2; F5.3; F5.4; F5.5; F5.6; F5.7; F5.8 |
@@ -148,32 +148,33 @@
 **Responsable sugerido:** dev del ticket.
 **Esfuerzo:** 0,75 a 1 día.
 
-**Registro F2** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F2** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-02 · fin 2026-10-02
 - **Antes de empezar:**
-  - [ ] F2.pre1: Registro de F1 completo y T1 a T29 en verde.
-  - [ ] F2.preR: Rama de trabajo al día en user-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo.
+  - [x] F2.pre1: Registro de F1 completo y T1 a T29 en verde. (F1 cerrada el 2026-10-02 (evento phase_closed de F1) con T1 a T29 en verde sobre los commits 60b366a y 824d2f2 (registro de F1.c1).)
+  - [x] F2.preR: Rama de trabajo al día en user-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo. (2026-10-02, tras git fetch origin en user-api: '## USUITE-15425-logs-auth-seguros' sin 'behind' y git log HEAD..origin/develop con 0 commits.)
 - **Commits:**
-  - Sin commits registrados.
+  - `b3cc26f` · USUITE-15425 feat: ocultar claves, correos y RUT dentro de textos en los logs · user-api/USUITE-15425-logs-auth-seguros (verificado)
+  - `3d25f1b` · USUITE-15425 test: agregar tests de la detección de datos dentro de textos · user-api/USUITE-15425-logs-auth-seguros (verificado)
 - **Qué se hizo:**
-  - **F2.1** pendiente: En un archivo nuevo `helpers/logTextDetection.js` (ver decision-niveles-y-archivos-helper.md#archivos): `textDetection.block` con patrones fijos construidos desde los campos de `block`: `<clave>...</clave>`, `clave=...`, `"clave":"..."`, `-u usuario:secreto`.
-  - **F2.2** pendiente: `textDetection.email`: correos dentro de cualquier texto, ocultos con el nivel de `email`.
-  - **F2.3** pendiente: `textDetection.id` (apagado por defecto): RUT con formato dentro de texto.
-  - **F2.4** pendiente: Corte por `maxTextLength` antes de buscar. Sin lookbehind ni funciones de expresiones regulares posteriores a Node 10.
-  - **F2.5** pendiente: Tests T30 a T36.
+  - **F2.1** → Código de F2 commiteado con OK del dev (sin push): detección en texto en el archivo nuevo, con la decisión B del XML (cada etiqueta se oculta según la estrategia de su nombre), integración en logSanitizer.js y carga de configuración y avisos en logMaskingConfig.js. Este commit también contiene F2.2, F2.3 y F2.4.. Dónde: user-api, rama USUITE-15425-logs-auth-seguros: helpers/logTextDetection.js (79 líneas nuevas), helpers/logSanitizer.js y helpers/logMaskingConfig.js (160 líneas agregadas, 31 quitadas). Cómo se comprobó: 36 passing en la corrida del agente del 2026-10-02 sobre el código de este commit, con T30 comprobando el XML completo de uvmcl; node --check sin errores en los 3 archivos en node:10.24.1-alpine3.11. Las comprobaciones del dev se registran en F2.5, F2.c1 y F2.c2.
+  - **F2.2** → textDetection.email: cada correo dentro de un texto sin estrategia se oculta con el nivel configurado de email (por defecto light); cubre el mensaje de univalle y el atributo SAML .../claims/name.. Dónde: helpers/logTextDetection.js (EMAIL_IN_TEXT) y helpers/logSanitizer.js (maskEmail pasado al detector). Cómo se comprobó: T33 (incluido nivel medium) y T28 en verde en la corrida del agente del 2026-10-02.
+  - **F2.3** → textDetection.id, apagado por defecto: RUT con formato y verificador (18.456.789-K o 18456789-K) dentro de texto, ocultado con el nivel de id; un número sin guion no se toca.. Dónde: helpers/logTextDetection.js (RUT_IN_TEXT) y helpers/logSanitizer.js (maskFormattedRut pasado al detector). Cómo se comprobó: T34 apagado y encendido en verde en la corrida del agente del 2026-10-02.
+  - **F2.4** → El texto se corta por maxTextLength antes de la detección; las expresiones son fijas, sin lookbehind ni funciones posteriores a Node 10 (sin matchAll ni flags nuevos).. Dónde: helpers/logSanitizer.js (truncate antes de detectText) y helpers/logTextDetection.js. Cómo se comprobó: T35 en verde y grep -nE '\(\?<[=!]' sobre helpers/*.js sin coincidencias (código de salida 1) en la corrida del agente del 2026-10-02; node --check sin errores en los 3 archivos en node:10.24.1-alpine3.11.
+  - **F2.5** → Tests T30 a T36 de la detección en texto escritos y en verde, con T14 y T28 de F1 ajustados al comportamiento nuevo; T30 comprueba el XML completo de uvmcl con la estrategia por nombre de etiqueta.. Dónde: user-api: test/helpers/logTextDetection.test.js (nuevo) y test/helpers/logSanitizer.test.js. Cómo se comprobó: Salida de mocha impresa al dev el 2026-10-02 sobre los commits b3cc26f y 3d25f1b: 36 passing (25 ms), sin fallos. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"`, salida 0, 36 passing (29 de logSanitizer y 7 de logTextDetection), 0 failing, 25 ms. El dev lo corrió con 'cd ~/Workspace/uplanner/sandbox-api && ' adelante.
 - **Criterios cumplidos:**
-  - **F2.c1** pendiente (command): T1 a T36 en verde en Docker con la imagen de producción (F2 no rompe F1). *Evidencia:* conteo de mocha.
-  - **F2.c2** pendiente (command): Ninguna expresión regular con lookbehind (`(?<=`, `(?<!`) en los archivos del helper: `grep -nE '\(\?<[=!]' server/api/user-api/helpers/*.js` sin resultados.
-  - **F2.c3** pendiente (command): Dos commits propios según COMMITS.md: `feat` solo con la detección en texto y `test` solo con T30 a T36.
+  - **F2.c1** T1 a T36 en verde en Docker con la imagen de producción (F2 no rompe F1). *Evidencia:* conteo de mocha. → 2026-10-02, sandbox-api en node:10.24.1-alpine3.11 sobre los commits b3cc26f y 3d25f1b de user-api: server/api/user-api/test/helpers/logSanitizer.test.js (T1 a T29) y logTextDetection.test.js (T30 a T36) en verde; F2 no rompe F1. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"`, salida 0, 36 passing, 0 failing, 25 ms.
+  - **F2.c2** Ninguna expresión regular con lookbehind (`(?<=`, `(?<!`) en los archivos del helper: `grep -nE '\(\?<[=!]' server/api/user-api/helpers/*.js` sin resultados. → 2026-10-02, sandbox-api sobre el commit b3cc26f de user-api: grep sin coincidencias de lookbehind en server/api/user-api/helpers/logMaskingConfig.js, logSanitizer.js y logTextDetection.js. · ejecutó: dev, `grep -nE '\(\?<[=!]' server/api/user-api/helpers/*.js`, salida 1, 0 coincidencias en 3 archivos, exit=1. El dev lo corrió con 'cd ~/Workspace/uplanner/sandbox-api && ' adelante y '; echo "exit=$?"' al final.
+  - **F2.c3** Dos commits propios según COMMITS.md: `feat` solo con la detección en texto y `test` solo con T30 a T36. → 2026-10-02, user-api · USUITE-15425-logs-auth-seguros: 4 commits sobre origin/develop. F2: b3cc26f feat toca solo helpers/ (logMaskingConfig.js, logSanitizer.js, logTextDetection.js; 160+ 31-) y 3d25f1b test toca solo test/helpers/ (logSanitizer.test.js, logTextDetection.test.js; 81+ 2-). F1: 60b366a feat y 824d2f2 test. · ejecutó: dev, `git log --oneline --stat origin/develop..HEAD`, salida 0, 4 commits: 2 de F1 y 2 de F2; el feat de F2 con 3 archivos y el test con 2. El dev lo corrió desde la raíz de sandbox-api como 'git -C server/api/user-api --no-pager log ...', el mismo repo del plan.
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
-  - Sin registros.
+  - Los commits de F1 no quedaron asociados a ninguna tarea en el registro (campo commits vacío; las métricas muestran 0 commits en F1). Son 60b366a 'USUITE-15425 feat: agregar helper de ofuscación de datos sensibles para logs de autenticación' (helpers/logMaskingConfig.js, helpers/logSanitizer.js) y 824d2f2 'USUITE-15425 test: agregar tests del helper de ofuscación de logs' (test/helpers/), repo user-api, rama USUITE-15425-logs-auth-seguros, sin push. Constan como evidencia en el registro de F1.c4.. Por qué: Omisión del agente al registrar F1; Kanai no admite registros nuevos en una fase cerrada, así que se deja constancia en la fase actual.. Cambia la decisión: Desde F2 cada commit se asocia con su SHA, repo y rama a la tarea que lo produjo.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · server/api/user-api/helpers/logSanitizer.js (findStrategy): Al integrar la detección en texto, un campo con exclusión global (exclude/excludePatterns) quedaba sin estrategia y la detección le ocultaba los correos de su texto, contra la regla 'deja visibles esos campos en cualquier estrategia'. Lo detectó T15. Corregido el 2026-10-02: los campos con exclusión global reciben la estrategia interna VISIBLE (nivel none, sin revisar el texto por dentro).
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** F2 cerrada el 2026-10-02. Detección de datos dentro de textos en helpers/logTextDetection.js, aplicada solo a textos sin estrategia por nombre (decisión A): dentro de un XML cada etiqueta se oculta según la estrategia de su nombre (decisión B), claves de block en formularios, JSON serializado (también escapado), curl -u y Bearer/Basic, correos con el nivel de email y RUT con formato si textDetection.id está encendido. Hallazgo introducido y corregido: los campos con exclusión global se ocultaban por la detección (T15). Carga de LOG_MASKING y avisos movidos a logMaskingConfig.js. Commits b3cc26f (feat) y 3d25f1b (test), asociados a F2.1 y F2.5 y verificados; sin push. Validado: 36 passing, 0 coincidencias de lookbehind, commits separados. Los commits de F1 (60b366a y 824d2f2) quedaron registrados como desvío en esta fase porque Kanai no admite registros en una fase cerrada.. Siguiente: Iniciar F3 (función de log authLog.js) el 2026-10-02.
 
 ### F3. Función de log authLog.js
 
