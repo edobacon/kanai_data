@@ -57,4 +57,4 @@
 
 ## Plan
 
-3 de 11 fases cerradas, fase actual F3. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+4 de 11 fases cerradas, fase actual F4. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md

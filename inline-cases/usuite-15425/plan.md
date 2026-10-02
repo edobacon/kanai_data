@@ -4,7 +4,7 @@
 
 **Intención:** Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 **Tags:** repos: user-api, sandbox-api · tickets: USUITE-15425 · labels: suite-legacy
-**Estado:** 3 de 11 fases cerradas. Juez final: pendiente.
+**Estado:** 4 de 11 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -13,7 +13,7 @@
 | F0 Verificación previa | antes de escribir código, confirmar que los supuestos del plan siguen siendo ciertos y tener listo todo lo necesario para desarrollar y probar: ramas, Docker, usuario de prueba y fixtures. | Hecho | 2026-10-02 → 2026-10-02 | - | 5/5 | - |
 | F1 Helper de ofuscación (logSanitizer.js) | tener un helper que, dado cualquier dato, devuelva una copia con contraseñas y secretos bloqueados y correos, documentos y nombres ocultos según el nivel configurado, sin modificar el original y sin lanzar excepciones nunca. | Hecho | 2026-10-02 → 2026-10-02 | - | 4/4 | - |
 | F2 Detección de datos dentro de texto | que las claves, correos y (opcionalmente) RUT que vienen **dentro de un texto** (XML, cadenas `clave=...`, JSON serializado, comandos `curl`, mensajes libres) también se oculten, no solo los que vienen como campo con nombre. | Hecho | 2026-10-02 → 2026-10-02 | b3cc26f, 3d25f1b | 3/3 | - |
-| F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | En curso | 2026-10-02 → - | - | 0/2 | F3.1; F3.2; F3.3; F3.4; F3.5 |
+| F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | Hecho | 2026-10-02 → 2026-10-02 | 102dfb9, 65799c5 | 2/2 | - |
 | F4 Conversión del login de uvmcl (loginServices.js) | que el archivo donde se detectó la fuga (`loginServices.js`) deje de escribir la clave y cualquier dato sensible: todos sus logs pasan por `authLog` y el navegador ya no recibe errores crudos. | Pendiente | - → - | - | 0/4 | F4.0; F4.1; F4.2; F4.3; F4.4; F4.5 |
 | F5 Conversión del resto de user-api | que **todo** el módulo de autenticación escriba sus logs solo a través de `authLog`, para todos los tipos de login (WSDL, POST, SAML, AD, ADAL, ADB2C, LDAP, OIDC). | Pendiente | - → - | - | 0/5 | F5.0; F5.1; F5.2; F5.3; F5.4; F5.5; F5.6; F5.7; F5.8 |
 | F6 Sentry (sandbox-api/server/app.js) | que los eventos que se envían a Sentry (que adjuntan el body del request, como el formulario de login) lleguen sin claves ni datos sensibles, y que el código siga funcionando aunque el helper de `user-api` no esté disponible. | Pendiente | - → - | - | 0/4 | F6.1; F6.2; F6.3; F6.4; F6.5 |
@@ -182,31 +182,33 @@
 **Responsable sugerido:** dev del ticket.
 **Esfuerzo:** 0,5 días.
 
-**Registro F3** (estado: En curso)
-- **Fecha real:** inicio 2026-10-02 · fin -
+**Registro F3** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-02 · fin 2026-10-02
 - **Antes de empezar:**
   - [x] F3.pre1: Registro de F2 completo y T1 a T36 en verde. (F2 cerrada en el log del plan con 5/5 tareas y 3/3 criterios; F2.c1 registrado con mocha en Docker node:10.24.1-alpine3.11: 36 passing, 0 failing (visible también en la terminal del dev el 2026-10-02). Commits de F2 en user-api rama USUITE-15425-logs-auth-seguros: b3cc26f (feat) y 3d25f1b (test).)
   - [x] F3.preR: Rama de trabajo al día en user-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo. (user-api (2026-10-02): git fetch origin sin errores; git status -sb muestra '## USUITE-15425-logs-auth-seguros' (la rama no sigue a ninguna rama remota, por eso status no puede indicar 'behind'); git log --oneline HEAD..origin/develop sin commits (el pager solo mostró (END)), así que develop no avanzó respecto a la base de la rama. No hace falta integrar la base.)
 - **Commits:**
-  - Sin commits registrados.
+  - `102dfb9` · USUITE-15425 feat: agregar función de log única para el módulo de autenticación · user-api/USUITE-15425-logs-auth-seguros (verificado)
+  - `65799c5` · USUITE-15425 test: agregar tests de la función de log authLog · user-api/USUITE-15425-logs-auth-seguros (verificado)
 - **Qué se hizo:**
-  - **F3.1** pendiente: `info`, `warn`, `error`: sanitizan y llaman al logger global con 2 argumentos y los datos en `{ data }`.
-  - **F3.2** pendiente: `error` reenvía a Sentry mensaje y error sanitizados, si Sentry está disponible.
-  - **F3.3** pendiente: `try/catch` general: ante falla escribe un log mínimo (`'authLog error'`) y no propaga.
-  - **F3.4** pendiente: JSDoc completo (contenido en F8.1).
-  - **F3.5** pendiente: Tests T37 a T42 (`authLog.test.js`).
+  - **F3.1** → Commit de la función de log: authLog.js con info, warn y error (F3.1 a F3.4), confirmado por el dev el 2026-10-02.. Dónde: user-api helpers/authLog.js. Cómo se comprobó: git log --oneline --stat origin/develop..HEAD: 102dfb9 toca solo helpers/authLog.js (128 líneas agregadas).
+  - **F3.2** → error reenvía a Sentry (diseño A): si data es un Error o trae uno en una propiedad de primer nivel, se rearma un Error con name, message y stack ya ofuscados y se envía con captureException(error, { extra: { message, data } }); si no hay Error, captureMessage(texto, { level: 'error', extra }). Solo si Sentry existe y tiene captureException y captureMessage.. Dónde: user-api helpers/authLog.js (findErrorKey, toSentryError, reportToSentry). Cómo se comprobó: T41 (Sentry falso recibe Error con message 'clave=[OCULTO]', stack sin la clave, extra.data.password = [OCULTO]; captureMessage con contexto exacto; info y warn no llaman a Sentry) y T42: verdes en Docker node 10 corrido por el dev el 2026-10-02.
+  - **F3.3** → try/catch general en write: ante cualquier falla escribe solo FALLBACK_MESSAGE ('authLog error') con logger.error y no propaga; si el logger también falla se omite (catch comentado con el motivo).. Dónde: user-api helpers/authLog.js (write, writeFallback). Cómo se comprobó: T40 (sanitizador que lanza: no lanza y el logger recibe exactamente [{ level: 'error', args: ['authLog error'] }]; logger que lanza: no lanza) verde en Docker node 10 corrido por el dev el 2026-10-02.
+  - **F3.4** → JSDoc del módulo (propósito, garantía de no lanzar, referencia a LOGGING.md), de createAuthLog (dependencias y retorno) y de cada método info/warn/error (message se ofusca, data queda dentro de { data }). La guía LOGGING.md se escribe en F8.1.. Dónde: user-api helpers/authLog.js. Cómo se comprobó: Revisión del archivo: cada función exportada tiene JSDoc con @param y @returns.
+  - **F3.5** → Commit de los tests T37 a T42 (authLog.test.js), confirmado por el dev el 2026-10-02.. Dónde: user-api test/helpers/authLog.test.js. Cómo se comprobó: 65799c5 toca solo test/helpers/authLog.test.js (198 líneas agregadas); la corrida en Docker que hizo el dev el 2026-10-02 dio T1 a T42 en verde. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha server/api/user-api/test/helpers/authLog.test.js`, salida 0, Corrido con $PWD = /Users/edobacon/Workspace/uplanner/sandbox-api escrito como ruta absoluta y sobre toda la carpeta test/helpers: 42 passing, 0 failing; authLog T37 a T42: 6 de 6 en verde
 - **Criterios cumplidos:**
-  - **F3.c1** pendiente (command): T1 a T42 en verde en Docker con la imagen de producción. *Evidencia:* conteo de mocha.
-  - **F3.c2** pendiente (command): Dos commits propios según COMMITS.md: `feat` solo con `authLog.js` y `test` solo con T37 a T42.
+  - **F3.c1** T1 a T42 en verde en Docker con la imagen de producción. *Evidencia:* conteo de mocha. → Mocha en Docker node:10.24.1-alpine3.11 sobre server/api/user-api/test/helpers/**/*.test.js: 42 passing, 0 failing (T1 a T42), corrido por el dev el 2026-10-02. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"`, salida 0, Corrido con $PWD = /Users/edobacon/Workspace/uplanner/sandbox-api escrito como ruta absoluta: 42 passing (42ms), 0 failing
+  - **F3.c2** Dos commits propios según COMMITS.md: `feat` solo con `authLog.js` y `test` solo con T37 a T42. → En user-api rama USUITE-15425-logs-auth-seguros, 6 commits sobre origin/develop el 2026-10-02: 60b366a feat y 824d2f2 test (F1), b3cc26f feat y 3d25f1b test (F2), 102dfb9 feat solo helpers/authLog.js (128 líneas) y 65799c5 test solo test/helpers/authLog.test.js (198 líneas) (F3). Mensajes con formato USUITE-15425 {tipo}: según rules/COMMITS.md. · ejecutó: dev, `git log --oneline --stat origin/develop..HEAD`, salida 0, 6 commits; los 2 de F3 tocan 1 archivo cada uno: 128 y 198 inserciones
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
-  - Sin registros.
+  - El 2026-10-02 el dev corrió el comando del plan con "$PWD" reemplazado por la ruta absoluta /Users/edobacon/Workspace/uplanner/sandbox-api, y corrió la suite completa del helper (que incluye authLog.test.js) en vez de solo authLog.test.js para F3.5.. Por qué: La primera corrida con "$PWD" falló con 'Cannot find module /w/node_modules/.bin/mocha' porque la terminal no estaba en la raíz de sandbox-api. Con la ruta absoluta el montaje es el mismo que el del plan (raíz de sandbox-api en /w), así que el resultado es equivalente; la suite completa cubre T37 a T42 y además T1 a T36.
+  - Enmienda: En F4, F5, F6, F7 y F10, los 10 comandos de Docker montan la raíz de sandbox-api por ruta absoluta (-v /Users/edobacon/Workspace/uplanner/sandbox-api:/w) en vez de -v "$PWD":/w. F0 a F3 no se tocan porque ya tienen registro; F8 y F9 no tienen comandos de Docker.. Motivo: El 2026-10-02, en F3, el comando con "$PWD" falló con 'Cannot find module /w/node_modules/.bin/mocha' porque la terminal no estaba en la raíz de sandbox-api. Con la ruta absoluta el montaje no depende de la carpeta actual. Pedido explícito del dev.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · user-api test/helpers/authLog.test.js (require de ../../../../config/logger): T37 a T39 cargan server/config/logger.js, que requiere server/config/local.env.js; ese archivo está en el .gitignore de sandbox-api. En un checkout sin local.env.js el archivo de test falla al cargar. Al 2026-10-02 no afecta: el pipeline de user-api solo construye la imagen, y en la máquina del dev y en Docker el archivo existe.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** authLog.js listo en user-api (102dfb9): info, warn y error ofuscan mensaje y datos, escriben en winston con los datos en { data }, error reenvía a Sentry ya ofuscado (captureException con el Error rearmado o captureMessage) y nunca lanza (log mínimo 'authLog error'). Diseño A, A, A acordado con el dev. Tests T37 a T42 (65799c5) y T1 a T42 en verde en Docker node 10 (42 passing, 0 failing). Hallazgo: T37 a T39 dependen de server/config/local.env.js. Enmienda: los comandos de Docker de F4 a F10 montan sandbox-api por ruta absoluta.. Siguiente: 2026-10-02: iniciar F4 (conversión de loginServices.js): rama al día en user-api y línea base de logs del archivo (F4.0).
 
 ### F4. Conversión del login de uvmcl (loginServices.js)
 

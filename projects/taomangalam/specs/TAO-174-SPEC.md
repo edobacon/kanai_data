@@ -169,6 +169,12 @@ Contrato: rollback: Quitar los casos del campo del catálogo.. Status: done
 
 #### S3.T4 — Tests y regresión del campo: etiqueta y placeholder coexistentes, alto ≥48 y separación 8 medidos, error con icono y duración 180 ms sin variación de posición horizontal, prueba de contraste por luminancia del token `border` contra `background` y `canvas` (≥3.0:1, falla con el valor medido en el mensaje), y goldens del campo en teléfono y tablet a 100 % y 200 %.
 Contrato: rollback: Borrar los tests y goldens agregados.. Status: done
+
+#### S3.T5 — Corregir la resolución de fuentes cuando `tao_mangalam` se consume como dependencia (catálogo Widgetbook): en `app/lib/design_system/typography.dart` declarar en cada estilo de `typography.style` un `fontFamilyFallback` con la familia prefijada por paquete (`packages/tao_mangalam/Zen Old Mincho`, `packages/tao_mangalam/Spectral`, `packages/tao_mangalam/IBM Plex Mono`) manteniendo `fontFamily` sin prefijo para el consumo interno de la app, y en `app/lib/design_system/atoms/tao_icon.dart` hacer lo mismo con la familia de Material Symbols (`packages/tao_mangalam/<familia>` como `fontFamilyFallback`). No tocar `tokens.g.dart` ni el generador: es solo la resolución de familia. Sin literales nuevos: las familias salen de las constantes ya definidas en esos archivos.
+Contrato: rollback: Revertir el `fontFamilyFallback` agregado en `app/lib/design_system/typography.dart` y en `app/lib/design_system/atoms/tao_icon.dart` (git checkout de ambos archivos al commit previo); los átomos vuelven a resolver solo por `fontFamily` sin prefijo.. Status: done
+
+#### S3.T6 — Agregar el test de regresión `app/test/design_system/font_package_fallback_test.dart`: por cada uno de los doce estilos de `typography.style` verificar que `fontFamilyFallback` contiene la familia prefijada `packages/tao_mangalam/<familia>` correspondiente a su fuente (Zen Old Mincho, Spectral o IBM Plex Mono), y que el icono de `tao_icon.dart` declara el fallback `packages/tao_mangalam/<familia de Material Symbols>`. El test debe fallar si alguno de los estilos o el icono queda sin el prefijo de paquete (es decir, si se revierte la corrección el test se pone rojo).
+Contrato: rollback: Borrar `app/test/design_system/font_package_fallback_test.dart`; no hay otro archivo afectado.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Existen cinco variantes de botón (Primario, Secundario, Terciario, Destructivo e Icono) con forma y color derivados de tokens: Primario con fondo `actionPrimary`, texto `actionPrimaryText`, estilo `labelLarge`, alto mínimo 48 y radio `sm`; Destructivo con `error` y sin `brand`;
@@ -231,7 +237,18 @@ Contrato: rollback: Borrar los tests y goldens agregados.. Status: done
 - [x] S3.T2
 - [x] S3.T3
 - [x] S3.T4
+- [x] S3.T5
+- [x] S3.T6
 
 **Gate (auto)**: En Widgetbook, el campo de texto muestra etiqueta persistente, ayuda y error con icono en 180 ms sin sacudida, mide al menos 48 de alto con separación 8, y la prueba de contraste confirma que su borde alcanza ≥3:1 sobre `background` y `canvas`.
 
 ### Session 4 · T0 · continue
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+
+**Tasks agregadas:**
+
+- S3: Corregir la resolución de fuentes cuando `tao_mangalam` se consume como dependencia (catálogo Widgetbook): en `app/lib/design_system/typography.dart` declarar en cada estilo de `typography.style` un `fontFamilyFallback` con la familia prefijada por paquete (`packages/tao_mangalam/Zen Old Mincho`, `packages/tao_mangalam/Spectral`, `packages/tao_mangalam/IBM Plex Mono`) manteniendo `fontFamily` sin prefijo para el consumo interno de la app, y en `app/lib/design_system/atoms/tao_icon.dart` hacer lo mismo con la familia de Material Symbols (`packages/tao_mangalam/<familia>` como `fontFamilyFallback`). No tocar `tokens.g.dart` ni el generador: es solo la resolución de familia. Sin literales nuevos: las familias salen de las constantes ya definidas en esos archivos. (valida: REQ-02, REQ-03, REQ-07; rollback: Revertir el `fontFamilyFallback` agregado en `app/lib/design_system/typography.dart` y en `app/lib/design_system/atoms/tao_icon.dart` (git checkout de ambos archivos al commit previo); los átomos vuelven a resolver solo por `fontFamily` sin prefijo.)
+- S3: Agregar el test de regresión `app/test/design_system/font_package_fallback_test.dart`: por cada uno de los doce estilos de `typography.style` verificar que `fontFamilyFallback` contiene la familia prefijada `packages/tao_mangalam/<familia>` correspondiente a su fuente (Zen Old Mincho, Spectral o IBM Plex Mono), y que el icono de `tao_icon.dart` declara el fallback `packages/tao_mangalam/<familia de Material Symbols>`. El test debe fallar si alguno de los estilos o el icono queda sin el prefijo de paquete (es decir, si se revierte la corrección el test se pone rojo). (valida: REQ-02, REQ-03, REQ-07, test; rollback: Borrar `app/test/design_system/font_package_fallback_test.dart`; no hay otro archivo afectado.)
+
