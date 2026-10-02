@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAO-173 · HU-01-02 · Resolvedor de imágenes</title>
+<style>
+  :root{
+    --ivory100:#FBF7EF;
+    --ivory200:#F3ECDF;
+    --ivory300:#E8DFCE;
+    --ink900:#1F1B16;
+    --ink700:#3D362C;
+    --ink500:#6B6253;
+    --ink300:#9A9081;
+    --line:#DED4C0;
+    --accent:#7A5C3E;
+    --accent-soft:#C9A227;
+    --ok:#2F6B4F;
+    --warn:#8A6A1E;
+    --err:#8C3B2E;
+
+    /* tokens de respaldo por familia (fallbackSurfaceToken) */
+    --surface-recorrido:#E6E0D2;
+    --surface-permanencia:#E3E2D8;
+    --surface-ashura:#E8DDD4;
+    --surface-materiales:#E1E3DC;
+    --surface-objetos:#E9E1D6;
+    --surface-acciones:#E4DEDA;
+
+    --radius:10px;
+    --radius-sm:6px;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--ivory200);
+    color:var(--ink900);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+  /* ---------- encabezado de la maqueta ---------- */
+  .doc-head{
+    border:1px solid var(--line);
+    background:var(--ivory100);
+    border-radius:var(--radius);
+    padding:20px 22px;
+    margin-bottom:26px;
+  }
+  .doc-head h1{font-size:20px;margin:0 0 6px;letter-spacing:-.01em}
+  .doc-head p{margin:0;color:var(--ink500);font-size:13.5px;max-width:78ch}
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .badge{
+    font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+    border:1px solid var(--line);background:var(--ivory200);
+    color:var(--ink700);border-radius:999px;padding:3px 9px;
+  }
+  .badge.req{background:#EFE7D6;border-color:#DCCFB2;color:#5E4A2A}
+
+  /* ---------- secciones ---------- */
+  section{margin:0 0 42px}
+  .sec-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .sec-head h2{font-size:16.5px;margin:0;letter-spacing:-.01em}
+  .sec-head .req-list{display:flex;gap:5px;flex-wrap:wrap}
+  .sec-note{color:var(--ink500);font-size:13px;margin:10px 0 18px;max-width:86ch}
+
+  h3.sub{font-size:13.5px;margin:26px 0 10px;color:var(--ink700);letter-spacing:.01em}
+  h3.sub::before{content:"▸ ";color:var(--ink300)}
+
+  /* ---------- grilla de dispositivos ---------- */
+  .devices{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+  .device{display:flex;flex-direction:column;gap:7px}
+  .device-cap{font-family:var(--mono);font-size:11px;color:var(--ink500)}
+  .device-cap b{color:var(--ink700);font-weight:600}
+
+  .screen{
+    position:relative;overflow:hidden;
+    border:1px solid var(--ink300);
+    border-radius:14px;
+    background:var(--ivory100);
+    box-shadow:0 1px 0 rgba(0,0,0,.04);
+  }
+  .screen.phone{width:260px;height:520px}
+  .screen.tabletP{width:330px;height:440px}
+  .screen.tabletL{width:460px;height:345px}
+  .screen.mini{width:210px;height:300px}
+
+  /* capa de fondo a pantalla completa (REQ-06) */
+  .bg-layer{position:absolute;inset:0;z-index:0;overflow:hidden}
+  .bg-layer .bg-img{
+    position:absolute;inset:0;
+    background-size:cover;background-position:center;
+    opacity:.15; /* 12–18 % */
+  }
+  .bg-layer .bg-tint{position:absolute;inset:0;background:var(--ivory100);opacity:.35}
+
+  /* texturas que simulan los fondos de familia (sin assets externos) */
+  .fam-recorrido{background-image:
+    repeating-linear-gradient(118deg,#6E5A3A 0 2px,transparent 2px 15px),
+    radial-gradient(circle at 30% 20%,#9C8352 0 38%,transparent 60%),
+    linear-gradient(160deg,#B49C6B,#7C6540);}
+  .fam-permanencia{background-image:
+    repeating-linear-gradient(0deg,#5B6350 0 1px,transparent 1px 12px),
+    radial-gradient(circle at 70% 75%,#8C9478 0 35%,transparent 62%),
+    linear-gradient(200deg,#A3AC8C,#616A52);}
+  .fam-ashura{background-image:
+    repeating-radial-gradient(circle at 50% 50%,#8A5E46 0 2px,transparent 2px 16px),
+    linear-gradient(140deg,#C09A7D,#7A513A);}
+  .fam-materiales{background-image:
+    repeating-linear-gradient(45deg,#5F6A64 0 3px,transparent 3px 18px),
+    linear-gradient(180deg,#9AA8A0,#5E6A63);}
+
+  /* superficie de respaldo (REQ-02 / REQ-04) */
+  .fallback-surface{position:absolute;inset:0;z-index:0}
+  .fallback-surface .fb-base{position:absolute;inset:0;background:var(--surface-recorrido)}
+  .fallback-surface .fb-overlay{position:absolute;inset:0;background:var(--accent);opacity:.08}
+  .fallback-surface.permanencia .fb-base{background:var(--surface-permanencia)}
+  .fallback-surface.ashura .fb-base{background:var(--surface-ashura)}
+  .fallback-surface.materiales .fb-base{background:var(--surface-materiales)}
+
+  /* marca de agua que identifica la superficie en la maqueta */
+  .fb-mark{
+    position:absolute;left:0;right:0;bottom:12px;text-align:center;
+    font-family:var(--mono);font-size:10px;color:var(--ink500);
+    letter-spacing:.04em;
+  }
+
+  /* contenido de la pantalla por encima del fondo */
+  .screen-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column}
+  .status-bar{
+    height:22px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 10px;font-family:var(--mono);font-size:9.5px;color:var(--ink500);
+  }
+  .app-bar{
+    padding:6px 14px 10px;
+  }
+  .app-bar .kicker{font-family:var(--mono);font-size:9.5px;color:var(--ink500);letter-spacing:.08em;text-transform:uppercase}
+  .app-bar h4{margin:2px 0 0;font-size:17px;letter-spacing:-.01em}
+  .screen-body{flex:1;padding:8px 14px 14px;overflow:hidden}
+
+  .paper-card{
+    background:rgba(251,247,239,.82);
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;margin-bottom:10px;
+  }
+  .paper-card p{margin:0;font-size:12.5px;color:var(--ink700)}
+  .paper-card .t{font-size:12.5px;font-weight:600;margin:0 0 4px}
+
+  .line{height:7px;border-radius:4px;background:var(--ink300);opacity:.28;margin:6px 0}
+  .line.w90{width:90%}.line.w70{width:70%}.line.w50{width:50%}.line.w35{width:35%}
+
+  .sys-bar{height:18px;display:flex;align-items:center;justify-content:center}
+  .sys-bar span{width:84px;height:3px;border-radius:2px;background:var(--ink300);opacity:.5}
+
+  /* etiqueta flotante de anotación */
+  .annot{
+    position:absolute;z-index:3;
+    font-family:var(--mono);font-size:9.5px;
+    background:var(--ink900);color:var(--ivory100);
+    padding:2px 6px;border-radius:4px;opacity:.9;
+  }
+  .annot.tl{top:8px;left:8px}
+  .annot.tr{top:8px;right:8px}
+  .annot.br{bottom:8px;right:8px}
+
+  /* ---------- ilustración editorial (REQ-07) ---------- */
+  .illus-row{display:flex;flex-wrap:wrap;gap:18px}
+  .illus-box{
+    width:190px;
+    background:var(--ivory100);
+    border:1px dashed var(--line);
+    border-radius:var(--radius-sm);
+    padding:12px;
+  }
+  .illus-box .caption{font-family:var(--mono);font-size:10.5px;color:var(--ink500);margin-top:8px}
+  .illus-art{
+    height:120px;display:flex;align-items:center;justify-content:center;
+    /* sin marco, sin borde, sin sombra, sin fondo gris: mismo tono del papel */
+    background:transparent;
+  }
+  .illus-art svg{max-width:100%;max-height:100%}
+  /* contraejemplo prohibido */
+  .illus-box.bad{border-color:var(--err)}
+  .illus-box.bad .illus-art{
+    background:#DDD8D2;border:2px solid #B9B1A6;border-radius:6px;
+    box-shadow:0 3px 7px rgba(0,0,0,.25);
+  }
+  .verdict{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:4px;display:inline-block;margin-top:8px}
+  .verdict.ok{background:#E2EFE7;color:var(--ok)}
+  .verdict.no{background:#F5E3E0;color:var(--err)}
+
+  /* ---------- estados ---------- */
+  .state-grid{display:flex;flex-wrap:wrap;gap:18px}
+  .state{
+    width:244px;background:var(--ivory100);border:1px solid var(--line);
+    border-radius:var(--radius-sm);padding:12px;
+  }
+  .state .state-title{font-size:12.5px;font-weight:600;margin:0 0 2px}
+  .state .state-sub{font-family:var(--mono);font-size:10px;color:var(--ink500);margin:0 0 10px}
+  .state .box{
+    height:132px;border-radius:var(--radius-sm);position:relative;overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .state .box .center{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--ink500);text-align:center;padding:0 10px;
+  }
+  .shimmer{
+    position:absolute;inset:0;
+    background:linear-gradient(100deg,var(--ivory300) 30%,var(--ivory100) 50%,var(--ivory300) 70%);
+    background-size:220% 100%;
+    animation:sh 1.6s linear infinite;
+  }
+  @keyframes sh{0%{background-position:120% 0}100%{background-position:-120% 0}}
+  @media (prefers-reduced-motion: reduce){.shimmer{animation:none}}
+  .state p.desc{margin:9px 0 0;font-size:12px;color:var(--ink700)}
+
+  /* ---------- tabla de contrato / decisión ---------- */
+  table{width:100%;border-collapse:collapse;background:var(--ivory100);border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;font-size:12.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--ivory300);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink700);font-weight:600}
+  tr:last-child td{border-bottom:none}
+  td.mono,th.mono{font-family:var(--mono);font-size:11.5px}
+  .pill{font-family:var(--mono);font-size:10.5px;padding:2px 6px;border-radius:4px;display:inline-block}
+  .pill.ok{background:#E2EFE7;color:var(--ok)}
+  .pill.fb{background:#F6EEDA;color:var(--warn)}
+  .pill.err{background:#F5E3E0;color:var(--err)}
+  .pill.null{background:var(--ivory300);color:var(--ink500)}
+
+  /* ---------- log de desarrollo ---------- */
+  .log{
+    background:#242019;color:#E8DFCE;border-radius:var(--radius-sm);
+    font-family:var(--mono);font-size:11.5px;line-height:1.75;
+    padding:12px 14px;overflow-x:auto;border:1px solid #3A332A;
+  }
+  .log .lv{color:var(--accent-soft)}
+  .log .k{color:#9CC2A6}
+  .log .c{color:#8A8070}
+
+  /* ---------- lector de pantalla ---------- */
+  .sr-demo{display:flex;flex-wrap:wrap;gap:18px}
+  .sr-card{width:300px;background:var(--ivory100);border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px}
+  .sr-card .sr-label{font-family:var(--mono);font-size:10px;color:var(--ink500)}
+  .sr-say{
+    margin-top:8px;border-left:3px solid var(--accent);background:var(--ivory200);
+    padding:7px 10px;font-size:12.5px;color:var(--ink700);border-radius:0 4px 4px 0;
+  }
+  .sr-say.silent{border-left-color:var(--ink300);color:var(--ink500);font-style:italic}
+
+  .footnote{color:var(--ink500);font-size:12px;margin-top:10px}
+  code{font-family:var(--mono);font-size:12px;background:var(--ivory300);padding:1px 5px;border-radius:4px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 0;font-size:12px;color:var(--ink500)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <h1>TAO-173 · HU-01-02 — Resolvedor de imágenes por familia, tamaño, orientación y tema</h1>
+    <p>Maqueta de verificación de las superficies visibles del resolvedor: la capa de fondo a pantalla completa, el componente de ilustración editorial sin marco, la superficie de respaldo y los estados de carga y de error. Todos los fondos de esta maqueta son texturas generadas con CSS que ocupan el lugar de los derivados reales de <code>app/assets/fondos-vistas/</code>; el objetivo es verificar composición, opacidad, recorte y respaldo, no el arte final.</p>
+    <div class="badges">
+      <span class="badge">Hito M0</span>
+      <span class="badge">P1 · 3 puntos</span>
+      <span class="badge">DEC-173 · DEC-189 · DEC-196 · DEC-230 · DEC-235</span>
+      <span class="badge req">REQ-01 … REQ-09</span>
+    </div>
+  </header>
+
+  <!-- ============ 1. CAPA DE FONDO A PANTALLA COMPLETA ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>1 · Capa de fondo a pantalla completa</h2>
+      <div class="req-list"><span class="badge req">REQ-06</span><span class="badge req">REQ-02</span></div>
+    </div>
+    <p class="sec-note">El fondo de la familia ocupa la pantalla entera por detrás de todo el contenido, también bajo el encabezado y las barras del sistema, con recorte <code>cover</code> centrado y opacidad visual del 12 al 18 %. Nunca se dibuja como franja, recuadro ni tarjeta. Cada tamaño lógico y orientación toma su propia variante.</p>
+
+    <div class="devices">
+
+      <!-- teléfono vertical -->
+      <div class="device">
+        <div class="screen phone">
+          <span class="annot tl">light.phonePortrait · 3x</span>
+          <div class="bg-layer">
+            <div class="bg-img fam-recorrido"></div>
+            <div class="bg-tint"></div>
+          </div>
+          <div class="screen-content">
+            <div class="status-bar"><span>9:41</span><span>▮▮▮ ▲ ▰</span></div>
+            <div class="app-bar">
+              <div class="kicker">Familia recorrido</div>
+              <h4>Tu camino de hoy</h4>
+            </div>
+            <div class="screen-body">
+              <div class="paper-card">
+                <p class="t">Llegada a Mangalam</p>
+                <div class="line w90"></div><div class="line w70"></div>
+              </div>
+              <div class="paper-card">
+                <p class="t">Permanencia</p>
+                <div class="line w90"></div><div class="line w50"></div>
+              </div>
+              <div class="paper-card">
+                <p class="t">Materiales del día</p>
+                <div class="line w70"></div><div class="line w35"></div>
+              </div>
+            </div>
+            <div class="sys-bar"><span></span></div>
+          </div>
+        </div>
+        <div class="device-cap"><b>Teléfono vertical</b> · 390 × 844 dp · densidad 3x<br>variante <code>light.phonePortrait</code> · <code>cover</code> centrado</div>
+      </div>
+
+      <!-- tablet vertical -->
+      <div class="device">
+        <div class="screen tabletP">
+          <span class="annot tl">light.tabletPortrait · 2x</span>
+          <div class="bg-layer">
+            <div class="bg-img fam-permanencia"></div>
+            <div class="bg-tint"></div>
+          </div>
+          <div class="screen-content">
+            <div class="status-bar"><span>9:41</span><span>▮▮▮ ▲ ▰</span></div>
+            <div class="app-bar">
+              <div class="kicker">Familia permanencia</div>
+              <h4>Permanencias</h4>
+            </div>
+            <div class="screen-body">
+              <div class="paper-card">
+                <p class="t">Estadía larga</p>
+                <div class="line w90"></div><div class="line w70"></div>
+              </div>
+              <div class="paper-card">
+                <p class="t">Rutina diaria</p>
+                <div class="line w90"></div><div class="line w50"></div>
+              </div>
+            </div>
+            <div class="sys-bar"><span></span></div>
+          </div>
+        </div>
+        <div class="device-cap"><b>Tablet vertical</b> · 834 × 1112 dp · densidad 2x<br>variante <code>light.tabletPortrait</code></div>
+      </div>
+
+      <!-- tablet horizontal -->
+      <div class="device">
+        <div class="screen tabletL">
+          <span class="annot tl">light.tabletLandscape · 2x</span>
+          <div class="bg-layer">
+            <div class="bg-img fam-ashura"></div>
+            <div class="bg-tint"></div>
+          </div>
+          <div class="screen-content">
+            <div class="status-bar"><span>9:41</span><span>▮▮▮ ▲ ▰</span></div>
+            <div class="app-bar">
+              <div class="kicker">Familia Ashura</div>
+              <h4>Animales Ashura</h4>
+            </div>
+            <div class="screen-body" style="display:flex;gap:10px">
+              <div style="flex:1">
+                <div class="paper-card"><p class="t">Reconocer</p><div class="line w90"></div><div class="line w70"></div></div>
+                <div class="paper-card"><p class="t">Cuidar</p><div class="line w70"></div></div>
+              </div>
+              <div style="flex:1">
+                <div class="paper-card"><p class="t">Acompañar</p><div class="line w90"></div><div class="line w50"></div></div>
+              </div>
+            </div>
+            <div class="sys-bar"><span></span></div>
+          </div>
+        </div>
+        <div class="device-cap"><b>Tablet horizontal</b> · 1194 × 834 dp · densidad 2x<br>variante <code>light.tabletLandscape</code></div>
+      </div>
+
+    </div>
+
+    <div class="legend">
+      <span><i class="sw" style="background:var(--ivory100)"></i> Papel <code>ivory100</code> del contenido</span>
+      <span><i class="sw fam-recorrido" style="opacity:.15"></i> Fondo de familia al 15 % (rango 12–18 %)</span>
+      <span><i class="sw" style="background:var(--surface-recorrido)"></i> <code>fallbackSurfaceToken</code></span>
+    </div>
+    <p class="footnote">Nota de verificación: la capa de fondo se extiende por detrás de la barra de estado y de la barra de navegación del sistema. En la maqueta esas zonas están dibujadas dentro de la pantalla para que se vea la continuidad del fondo.</p>
+  </section>
+
+  <!-- ============ 2. SUPERFICIE DE RESPALDO ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>2 · Superficie de respaldo cuando falta la variante</h2>
+      <div class="req-list"><span class="badge req">REQ-02</span><span class="badge req">REQ-04</span><span class="badge req">REQ-09</span></div>
+    </div>
+    <p class="sec-note">Cuando la variante pedida falta, es nula o falla la carga, se dibuja la superficie de respaldo de la familia (<code>fallbackSurfaceToken</code> más <code>overlayToken</code>, ambos tomados del tema claro forzado de HU-01-01) en lugar de estirar otra variante. El contenido queda legible y conserva exactamente el mismo lugar: la proporción está reservada, así que no hay salto de layout.</p>
+
+    <h3 class="sub">Caso QA-01-02-01 · <code>familia-recorrido</code> solo tiene <code>light.phonePortrait</code>, se pide en tablet horizontal</h3>
+    <div class="devices">
+
+      <div class="device">
+        <div class="screen tabletL">
+          <span class="annot tl">tabletLandscape = null</span>
+          <span class="annot br">respaldo, no estirado</span>
+          <div class="fallback-surface">
+            <div class="fb-base"></div>
+            <div class="fb-overlay"></div>
+          </div>
+          <div class="fb-mark">fallbackSurfaceToken · familia-recorrido + overlayToken</div>
+          <div class="screen-content">
+            <div class="status-bar"><span>9:41</span><span>▮▮▮ ▲ ▰</span></div>
+            <div class="app-bar">
+              <div class="kicker">Familia recorrido</div>
+              <h4>Tu camino de hoy</h4>
+            </div>
+            <div class="screen-body" style="display:flex;gap:10px">
+              <div style="flex:1">
+                <div class="paper-card"><p class="t">Llegada a Mangalam</p><div class="line w90"></div><div class="line w70"></div></div>
+                <div class="paper-card"><p class="t">Avance</p><div class="line w70"></div></div>
+              </div>
+              <div style="flex:1">
+                <div class="paper-card"><p class="t">Permanencia</p><div class="line w90"></div><div class="line w50"></div></div>
+              </div>
+            </div>
+            <div class="sys-bar"><span></span></div>
+          </div>
+        </div>
+        <div class="device-cap"><b>Tablet horizontal, 1024 × 768</b> · variante nula<br>resultado: superficie de respaldo con overlay de familia</div>
+      </div>
+
+      <div class="device">
+        <div class="screen tabletL" style="border-color:var(--err)">
+          <span class="annot tl" style="background:var(--err)">lo que NO debe pasar</span>
+          <div class="bg-layer">
+            <div class="bg-img fam-recorrido" style="opacity:.15;background-size:100% 100%;transform:scaleX(1.9);transform-origin:center"></div>
+            <div class="bg-tint"></div>
+          </div>
+          <div class="screen-content">
+            <div class="status-bar"><span>9:41</span><span>▮▮▮ ▲ ▰</span></div>
+            <div class="app-bar">
+              <div class="kicker">Familia recorrido</div>
+              <h4>Tu camino de hoy</h4>
+            </div>
+            <div class="screen-body" style="display:flex;gap:10px">
+              <div style="flex:1"><div class="paper-card"><p class="t">Llegada a Mangalam</p><div class="line w90"></div><div class="line w70"></div></div></div>
+              <div style="flex:1"><div class="paper-card"><p class="t">Permanencia</p><div class="line w90"></div><div class="line w50"></div></div></div>
+            </div>
+            <div class="sys-bar"><span></span></div>
+          </div>
+        </div>
+        <div class="device-cap"><b>Contraejemplo</b> · el vertical estirado al ancho horizontal<br><span class="verdict no">deformado · rechazado</span></div>
+      </div>
+
+    </div>
+
+    <h3 class="sub">Lo que el resolvedor devuelve por combinación</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Familia</th>
+          <th>Tema pedido</th>
+          <th>Tamaño y orientación</th>
+          <th class="mono">Variante en el manifiesto</th>
+          <th>Resultado dibujado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>familia-recorrido</td><td>claro</td><td>Teléfono vertical</td>
+          <td class="mono">light.phonePortrait</td>
+          <td><span class="pill ok">derivado</span> <code>cover</code> centrado</td>
+        </tr>
+        <tr>
+          <td>familia-recorrido</td><td>claro</td><td>Tablet vertical</td>
+          <td class="mono"><span class="pill null">null</span></td>
+          <td><span class="pill fb">superficie de respaldo</span> + overlay</td>
+        </tr>
+        <tr>
+          <td>familia-recorrido</td><td>claro</td><td>Tablet horizontal</td>
+          <td class="mono"><span class="pill null">null</span></td>
+          <td><span class="pill fb">superficie de respaldo</span> + overlay</td>
+        </tr>
+        <tr>
+          <td>familia-permanencia</td><td>claro</td><td>Tablet vertical</td>
+          <td class="mono">light.tabletPortrait</td>
+          <td><span class="pill ok">derivado</span></td>
+        </tr>
+        <tr>
+          <td>familia-ashura</td><td>claro</td><td>Teléfono vertical</td>
+          <td class="mono">dark.phonePortrait presente</td>
+          <td><span class="pill fb">superficie de respaldo</span> — en tema claro nunca se devuelve <code>dark.*</code></td>
+        </tr>
+        <tr>
+          <td>familia-materiales</td><td>claro</td><td>Teléfono vertical</td>
+          <td class="mono">light.phonePortrait (archivo ausente)</td>
+          <td><span class="pill err">falla de carga</span> → <span class="pill fb">superficie de respaldo</span> + log</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="footnote">Ninguna celda de esta tabla es una pantalla de la app: es el resumen de decisión que la maqueta ilustra, para que Diseño pueda contrastar cada caso con la superficie correspondiente.</p>
+  </section>
+
+  <!-- ============ 3. ESTADOS ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>3 · Estados de la imagen resuelta</h2>
+      <div class="req-list"><span class="badge req">REQ-03</span><span class="badge req">REQ-04</span></div>
+    </div>
+    <p class="sec-note">Los cuatro estados ocupan exactamente el mismo espacio reservado por la proporción de la familia. Entre uno y otro no hay salto de layout: el contenido alrededor no se mueve. No existe un estado vacío con texto de disculpa: la ausencia de imagen se resuelve siempre como superficie de respaldo, que es una superficie válida, no un error visible para la persona.</p>
+
+    <div class="state-grid">
+
+      <div class="state">
+        <p class="state-title">Carga</p>
+        <p class="state-sub">decodificando el derivado</p>
+        <div class="box"><div class="shimmer"></div></div>
+        <p class="desc">Superficie del token de la familia con un brillo suave mientras se decodifica. Sin indicador giratorio ni porcentaje: el empaquetado resuelve en milisegundos.</p>
+      </div>
+
+      <div class="state">
+        <p class="state-title">Resuelto</p>
+        <p class="state-sub">variante correcta, <code>cover</code></p>
+        <div class="box">
+          <div class="bg-img fam-recorrido" style="position:absolute;inset:0;opacity:.15"></div>
+          <div style="position:absolute;inset:0;background:var(--ivory100);opacity:.35"></div>
+        </div>
+        <p class="desc">El derivado de la variante que corresponde al tamaño lógico, la orientación y el tema, dibujado al 12–18 % de opacidad.</p>
+      </div>
+
+      <div class="state">
+        <p class="state-title">Variante ausente o nula</p>
+        <p class="state-sub">respaldo planificado</p>
+        <div class="box">
+          <div class="fallback-surface"><div class="fb-base"></div><div class="fb-overlay"></div></div>
+        </div>
+        <p class="desc">Superficie de respaldo de la familia con su overlay. Para la persona es indistinguible de un fondo intencional: no hay cartel, icono roto ni hueco.</p>
+      </div>
+
+      <div class="state">
+        <p class="state-title">Falla de carga</p>
+        <p class="state-sub">archivo inexistente o corrupto</p>
+        <div class="box">
+          <div class="fallback-surface materiales"><div class="fb-base"></div><div class="fb-overlay"></div></div>
+          <div class="annot br" style="position:absolute">log de desarrollo</div>
+        </div>
+        <p class="desc">Misma superficie de respaldo, sin excepción que escape. La diferencia con el caso anterior no está en la pantalla, sino en el log de desarrollo.</p>
+      </div>
+
+    </div>
+
+    <h3 class="sub">Log de desarrollo ante falla de carga · REQ-04</h3>
+    <div class="log">
+<span class="c">// visible solo en compilación de desarrollo; nunca en producción</span>
+<span class="lv">[kanai.images]</span> <span class="k">assetId</span>=familia-materiales.background <span class="k">requestedVariant</span>=light.phonePortrait <span class="k">density</span>=3.0x <span class="k">reason</span>=asset_not_found <span class="k">fallback</span>=surface
+<span class="lv">[kanai.images]</span> <span class="k">assetId</span>=familia-objetos.illustration.arrival <span class="k">requestedVariant</span>=light.phonePortrait <span class="k">density</span>=2.0x <span class="k">reason</span>=decode_failed <span class="k">fallback</span>=surface
+<span class="c">// sin rutas del dispositivo, sin datos personales</span>
+    </div>
+    <p class="footnote">El log registra el id del asset y la variante pedida. No incluye rutas del sistema de archivos del dispositivo ni ningún dato de la persona.</p>
+  </section>
+
+  <!-- ============ 4. ILUSTRACIÓN EDITORIAL ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>4 · Componente de ilustración editorial sin marco</h2>
+      <div class="req-list"><span class="badge req">REQ-07</span><span class="badge req">REQ-03</span></div>
+    </div>
+    <p class="sec-note">Las ilustraciones de llegada o avance, permanencia, animales Ashura, materiales, objetos y acciones se dibujan con <code>contain</code>, sin marco, borde, sombra ni fondo gris, integradas al papel (transparencia o el mismo tono <code>ivory100</code>) y sin deformar. Los recuadros punteados de esta maqueta marcan el área asignada a cada ilustración y no se dibujan en la app.</p>
+
+    <div class="illus-row">
+
+      <div class="illus-box">
+        <div class="illus-art">
+          <svg viewBox="0 0 160 110" role="img" aria-label="Figura caminando hacia una puerta">
+            <path d="M12 92 H148" stroke="#7A5C3E" stroke-width="2" fill="none"/>
+            <path d="M104 92 V36 h30 v56" stroke="#7A5C3E" stroke-width="2.5" fill="none"/>
+            <path d="M112 92 V52 h14 v40" fill="#C9A227" opacity=".35"/>
+            <circle cx="48" cy="40" r="9" fill="none" stroke="#3D362C" stroke-width="2.5"/>
+            <path d="M48 49 v26 M48 58 l-13 10 M48 58 l14 6 M48 75 l-10 17 M48 75 l11 17" stroke="#3D362C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M20 86 q10 -8 20 -2" stroke="#9A9081" stroke-width="1.6" fill="none"/>
+          </svg>
+        </div>
+        <div class="caption">Llegada o avance</div>
+        <span class="verdict ok">sin marco · contain</span>
+      </div>
+
+      <div class="illus-box">
+        <div class="illus-art">
+          <svg viewBox="0 0 160 110" role="img" aria-label="Figura sentada junto a una lámpara">
+            <path d="M14 94 H146" stroke="#7A5C3E" stroke-width="2" fill="none"/>
+            <rect x="34" y="62" width="44" height="32" rx="4" fill="#C9A227" opacity=".3"/>
+            <circle cx="56" cy="46" r="9" fill="none" stroke="#3D362C" stroke-width="2.5"/>
+            <path d="M56 55 v10 M56 62 l-12 6 M56 62 l12 4" stroke="#3D362C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <path d="M118 94 V64" stroke="#7A5C3E" stroke-width="2.5"/>
+            <path d="M106 64 l12 -22 l12 22 z" fill="#C9A227" opacity=".45" stroke="#7A5C3E" stroke-width="1.6"/>
+          </svg>
+        </div>
+        <div class="caption">Permanencia</div>
+        <span class="verdict ok">sin marco · contain</span>
+      </div>
+
+      <div class="illus-box">
+        <div class="illus-art">
+          <svg viewBox="0 0 160 110" role="img" aria-label="Animal Ashura estilizado">
+            <ellipse cx="78" cy="68" rx="40" ry="24" fill="#C09A7D" opacity=".45" stroke="#7A513A" stroke-width="2"/>
+            <circle cx="46" cy="46" r="14" fill="#C09A7D" opacity=".6" stroke="#7A513A" stroke-width="2"/>
+            <path d="M36 36 l-4 -12 l12 6 M56 36 l4 -12 l-12 6" fill="none" stroke="#7A513A" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="42" cy="46" r="2" fill="#3D362C"/>
+            <path d="M58 76 v16 M78 82 v12 M98 78 v14 M118 62 q18 -12 14 -28" stroke="#7A513A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="caption">Animal Ashura</div>
+        <span class="verdict ok">sin marco · contain</span>
+      </div>
+
+      <div class="illus-box">
+        <div class="illus-art">
+          <svg viewBox="0 0 160 110" role="img" aria-label="Materiales de trabajo apilados">
+            <rect x="26" y="58" width="48" height="34" rx="3" fill="#9AA8A0" opacity=".45" stroke="#5E6A63" stroke-width="2"/>
+            <rect x="34" y="44" width="48" height="16" rx="3" fill="#C9A227" opacity=".35" stroke="#7A5C3E" stroke-width="2"/>
+            <path d="M96 92 V48 h34 v44 z" fill="none" stroke="#5E6A63" stroke-width="2"/>
+            <path d="M96 60 H130 M96 74 H130" stroke="#9A9081" stroke-width="1.6"/>
+            <path d="M14 92 H148" stroke="#7A5C3E" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="caption">Materiales</div>
+        <span class="verdict ok">sin marco · contain</span>
+      </div>
+
+      <div class="illus-box bad">
+        <div class="illus-art">
+          <svg viewBox="0 0 160 110" role="img" aria-label="Misma ilustración con marco, sombra y fondo gris">
+            <ellipse cx="78" cy="68" rx="36" ry="22" fill="#C09A7D" opacity=".45" stroke="#7A513A" stroke-width="2"/>
+            <circle cx="48" cy="48" r="13" fill="#C09A7D" opacity=".6" stroke="#7A513A" stroke-width="2"/>
+            <circle cx="44" cy="48" r="2" fill="#3D362C"/>
+            <path d="M60 78 v12 M80 82 v8 M98 78 v12" stroke="#7A513A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="caption">Contraejemplo prohibido</div>
+        <span class="verdict no">marco, borde, sombra y fondo gris</span>
+      </div>
+
+    </div>
+
+    <h3 class="sub">No se amplía por encima del tamaño intrínseco</h3>
+    <div class="illus-row">
+      <div class="illus-box" style="width:260px">
+        <div class="illus-art" style="height:150px;position:relative">
+          <div style="position:absolute;inset:0;border:1px dashed var(--ink300);border-radius:4px"></div>
+          <svg viewBox="0 0 160 110" style="width:96px;height:66px" role="img" aria-label="Objeto pequeño centrado">
+            <rect x="40" y="38" width="80" height="48" rx="4" fill="#C9A227" opacity=".3" stroke="#7A5C3E" stroke-width="2"/>
+            <path d="M40 54 H120" stroke="#7A5C3E" stroke-width="1.8"/>
+          </svg>
+        </div>
+        <div class="caption">Espacio 260 × 150 dp · derivado intrínseco 96 × 66 dp</div>
+        <span class="verdict ok">se centra, no se amplía</span>
+      </div>
+      <div class="illus-box bad" style="width:260px">
+        <div class="illus-art" style="height:150px">
+          <svg viewBox="0 0 160 110" style="width:100%;height:100%" role="img" aria-label="Mismo objeto ampliado y borroso">
+            <rect x="40" y="38" width="80" height="48" rx="4" fill="#C9A227" opacity=".3" stroke="#7A5C3E" stroke-width="2"/>
+            <path d="M40 54 H120" stroke="#7A5C3E" stroke-width="1.8"/>
+          </svg>
+        </div>
+        <div class="caption">Contraejemplo: el mismo derivado estirado a todo el espacio</div>
+        <span class="verdict no">ampliado por encima del intrínseco</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5. DENSIDAD Y DECODIFICACIÓN ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>5 · Densidad empaquetada y límite de decodificación</h2>
+      <div class="req-list"><span class="badge req">REQ-03</span></div>
+    </div>
+    <p class="sec-note">La selección de densidad la resuelven las variantes empaquetadas de Flutter (1x, 2x, 3x). Lo que sí es visible para quien verifica es el ancho de decodificación: nunca mayor que el tamaño que realmente se dibuja. Esta sección no tiene pantalla propia; es la evidencia que acompaña a cada superficie dibujada.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Caso</th>
+          <th>Espacio dibujado</th>
+          <th>Densidad</th>
+          <th class="mono">Variante cargada</th>
+          <th class="mono">cacheWidth aplicado</th>
+          <th>Verificación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>QA-01-02-03</td><td>160 dp</td><td>3x</td>
+          <td class="mono">derivado de 640 px</td><td class="mono">480 px</td>
+          <td><span class="pill ok">≤ 480 px</span></td>
+        </tr>
+        <tr>
+          <td>Densidad alta</td><td>160 dp</td><td>3x</td>
+          <td class="mono">3.0x</td><td class="mono">480 px</td>
+          <td><span class="pill ok">variante exacta</span></td>
+        </tr>
+        <tr>
+          <td>Densidad media</td><td>160 dp</td><td>2x</td>
+          <td class="mono">2.0x</td><td class="mono">320 px</td>
+          <td><span class="pill ok">variante exacta</span></td>
+        </tr>
+        <tr>
+          <td>QA-01-02-04 · borde</td><td>160 dp</td><td>3x</td>
+          <td class="mono">2.0x (no hay 3.0x)</td><td class="mono">480 px</td>
+          <td><span class="pill fb">más cercana disponible, sin deformar</span></td>
+        </tr>
+        <tr>
+          <td>Espacio mayor que el derivado</td><td>420 dp</td><td>2x</td>
+          <td class="mono">derivado de 320 px</td><td class="mono">320 px (intrínseco)</td>
+          <td><span class="pill ok">no se amplía</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ============ 6. SEMÁNTICA ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>6 · Semántica para el lector de pantalla</h2>
+      <div class="req-list"><span class="badge req">REQ-05</span></div>
+    </div>
+    <p class="sec-note">Las imágenes decorativas quedan fuera del árbol de accesibilidad y no se anuncian. Las informativas se anuncian con el <code>alt</code> que trae el manifiesto. La función de cada pantalla se entiende sin imagen.</p>
+
+    <div class="sr-demo">
+
+      <div class="sr-card">
+        <div class="sr-label">Capa de fondo de familia · decorativa</div>
+        <div class="screen mini" style="width:100%;height:150px;margin-top:8px">
+          <div class="bg-layer"><div class="bg-img fam-recorrido"></div><div class="bg-tint"></div></div>
+          <div class="screen-content">
+            <div class="app-bar" style="padding-top:12px"><h4 style="font-size:14px">Tu camino de hoy</h4></div>
+            <div class="screen-body"><div class="paper-card"><div class="line w90"></div><div class="line w50"></div></div></div>
+          </div>
+        </div>
+        <div class="sr-say silent">El lector de pantalla no anuncia nada: avanza directo a «Tu camino de hoy, encabezado».</div>
+      </div>
+
+      <div class="sr-card">
+        <div class="sr-label">Ilustración editorial informativa · con <code>alt</code> del manifiesto</div>
+        <div style="margin-top:8px;background:var(--ivory100);border-radius:var(--radius-sm);height:150px;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 160 110" style="width:150px" role="img" aria-label="Diagrama del recorrido de llegada en tres tramos">
+            <circle cx="28" cy="80" r="7" fill="#C9A227" opacity=".5" stroke="#7A5C3E" stroke-width="2"/>
+            <circle cx="80" cy="52" r="7" fill="#C9A227" opacity=".5" stroke="#7A5C3E" stroke-width="2"/>
+            <circle cx="132" cy="34" r="7" fill="#C9A227" opacity=".5" stroke="#7A5C3E" stroke-width="2"/>
+            <path d="M35 76 L73 56 M87 48 L125 38" stroke="#7A5C3E" stroke-width="2" stroke-dasharray="5 4"/>
+          </svg>
+        </div>
+        <div class="sr-say">«Diagrama del recorrido de llegada en tres tramos, imagen.»</div>
+      </div>
+
+      <div class="sr-card">
+        <div class="sr-label">Superficie de respaldo · decorativa</div>
+        <div class="screen mini" style="width:100%;height:150px;margin-top:8px">
+          <div class="fallback-surface"><div class="fb-base"></div><div class="fb-overlay"></div></div>
+          <div class="screen-content">
+            <div class="app-bar" style="padding-top:12px"><h4 style="font-size:14px">Tu camino de hoy</h4></div>
+            <div class="screen-body"><div class="paper-card"><div class="line w90"></div><div class="line w50"></div></div></div>
+          </div>
+        </div>
+        <div class="sr-say silent">Tampoco se anuncia. El respaldo no agrega ningún aviso de falla al recorrido del lector de pantalla.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 7. PREVIEW DE WIDGETBOOK ============ -->
+  <section>
+    <div class="sec-head">
+      <h2>7 · Preview de verificación (QA-01-02-05)</h2>
+      <div class="req-list"><span class="badge req">REQ-06</span><span class="badge req">REQ-07</span></div>
+    </div>
+    <p class="sec-note">Pantalla de catálogo que Diseño usa para comparar contra la maqueta consolidada y doc 43 §9. Agrupa cada familia en sus tres tamaños lógicos, con el resultado real del resolvedor: derivado o superficie de respaldo.</p>
+
+    <div style="background:var(--ivory100);border:1px solid var(--line);border-radius:var(--radius);padding:16px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+        <span class="badge">Tema: claro forzado</span>
+        <span class="badge">Densidad: 3x</span>
+        <span class="badge">Opacidad del fondo: 15 %</span>
+        <span class="badge">Variantes <code>dark.*</code>: ocultas en V1</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Familia</th>
+            <th>Teléfono vertical</th>
+            <th>Tablet vertical</th>
+            <th>Tablet horizontal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>familia-recorrido</td>
+            <td><span class="pill ok">derivado</span></td>
+            <td><span class="pill fb">respaldo</span></td>
+            <td><span class="pill fb">respaldo</span></td>
+          </tr>
+          <tr>
+            <td>familia-permanencia</td>
+            <td><span class="pill ok">derivado</span></td>
+            <td><span class="pill ok">derivado</span></td>
+            <td><span class="pill fb">respaldo</span></td>
+          </tr>
+          <tr>
+            <td>familia-ashura</td>
+            <td><span class="pill ok">derivado</span></td>
+            <td><span class="pill fb">respaldo</span></td>
+            <td><span class="pill ok">derivado</span></td>
+          </tr>
+          <tr>
+            <td>familia-materiales</td>
+            <td><span class="pill err">falla de carga</span> → <span class="pill fb">respaldo</span></td>
+            <td><span class="pill fb">respaldo</span></td>
+            <td><span class="pill fb">respaldo</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="footnote">Las variantes de tablet llegan recién con HU-02-08; hasta entonces la mayoría de las celdas de tablet muestran, con toda intención, la superficie de respaldo. Esa es la evidencia de que el respaldo se ve bien, no una carencia de la maqueta.</p>
+
+      <h3 class="sub">Textos visibles del preview</h3>
+      <table>
+        <thead><tr><th>Lugar</th><th>Texto</th></tr></thead>
+        <tbody>
+          <tr><td>Título del catálogo</td><td>Resolvedor de imágenes</td></tr>
+          <tr><td>Sección 1</td><td>Capa de fondo a pantalla completa</td></tr>
+          <tr><td>Sección 2</td><td>Ilustración editorial</td></tr>
+          <tr><td>Selector de familia</td><td>Familia</td></tr>
+          <tr><td>Selector de tamaño</td><td>Tamaño lógico</td></tr>
+          <tr><td>Selector de densidad</td><td>Densidad</td></tr>
+          <tr><td>Etiqueta de resultado con derivado</td><td>Variante resuelta</td></tr>
+          <tr><td>Etiqueta de resultado con respaldo</td><td>Superficie de respaldo</td></tr>
+          <tr><td>Nota al pie del catálogo</td><td>Tema claro forzado. Las variantes oscuras no se resuelven en esta versión.</td></tr>
+        </tbody>
+      </table>
+      <p class="footnote">Ninguno de estos textos aparece en la app para la persona usuaria: pertenecen al catálogo interno de verificación. La app no muestra ningún texto propio del resolvedor, porque un fondo o una ilustración que falla se reemplaza por una superficie, no por un mensaje.</p>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

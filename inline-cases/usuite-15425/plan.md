@@ -10,7 +10,7 @@
 
 | Fase | Meta | Estado | Fecha real | Commits | Criterios | Pendiente |
 |---|---|---|---|---|---|---|
-| F0 Verificación previa | antes de escribir código, confirmar que los supuestos del plan siguen siendo ciertos y tener listo todo lo necesario para desarrollar y probar: ramas, Docker, usuario de prueba y fixtures. | Pendiente | - → - | - | 0/5 | F0.1; F0.2; F0.3; F0.4; F0.5; F0.6; F0.7; F0.8; F0.9 |
+| F0 Verificación previa | antes de escribir código, confirmar que los supuestos del plan siguen siendo ciertos y tener listo todo lo necesario para desarrollar y probar: ramas, Docker, usuario de prueba y fixtures. | En curso | 2026-10-02 → - | - | 0/5 | F0.1; F0.2; F0.3; F0.4; F0.5; F0.6; F0.7; F0.8; F0.9 |
 | F1 Helper de ofuscación (logSanitizer.js) | tener un helper que, dado cualquier dato, devuelva una copia con contraseñas y secretos bloqueados y correos, documentos y nombres ocultos según el nivel configurado, sin modificar el original y sin lanzar excepciones nunca. | Pendiente | - → - | - | 0/4 | F1.1; F1.2; F1.3; F1.4; F1.5; F1.6; F1.7; F1.8 |
 | F2 Detección de datos dentro de texto | que las claves, correos y (opcionalmente) RUT que vienen **dentro de un texto** (XML, cadenas `clave=...`, JSON serializado, comandos `curl`, mensajes libres) también se oculten, no solo los que vienen como campo con nombre. | Pendiente | - → - | - | 0/3 | F2.1; F2.2; F2.3; F2.4; F2.5 |
 | F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | Pendiente | - → - | - | 0/2 | F3.1; F3.2; F3.3; F3.4; F3.5 |
@@ -60,11 +60,11 @@
 **Responsable sugerido:** dev del ticket.
 **Esfuerzo:** 0,25 a 0,5 días.
 
-**Registro F0** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F0** (estado: En curso)
+- **Fecha real:** inicio 2026-10-02 · fin -
 - **Antes de empezar:**
-  - [ ] F0.pre1: Leídas "Decisiones tomadas" y "Estrategia de entrega (D6)" del plan original (plan-original.md#decisiones-tomadas y plan-original.md#estrategia-de-entrega-d6). No hace falta leer el plan original completo: cada tarea cita su sección. Se registra en el plan (registro validado), no en las tablas ni plantillas de plan-original.md: esa es la copia congelada del import y no se edita.
-  - [ ] F0.pre2: Acceso a Sentry y a los repos `user-api` y `sandbox-api` en Bitbucket.
+  - [x] F0.pre1: Leídas "Decisiones tomadas" y "Estrategia de entrega (D6)" del plan original (plan-original.md#decisiones-tomadas y plan-original.md#estrategia-de-entrega-d6). No hace falta leer el plan original completo: cada tarea cita su sección. Se registra en el plan (registro validado), no en las tablas ni plantillas de plan-original.md: esa es la copia congelada del import y no se edita. (Leídas el 2026-10-02 las secciones plan-original.md#decisiones-tomadas (alcance, authLog, D1 a D7) y plan-original.md#estrategia-de-entrega-d6 (estado de ramas, 4 ramas y 8 PR, estructura de commits, orden de entrega, despliegue solo uvmcl).)
+  - [x] F0.pre2: Acceso a Sentry y a los repos `user-api` y `sandbox-api` en Bitbucket. (Parcial, con decisión del dev el 2026-10-02: acceso a Bitbucket confirmado (git fetch origin sin errores en sandbox-api y user-api el 2026-10-02). Sin acceso a Sentry: el dev decidió avanzar sin él y verificar Sentry al final (ver desvío del 2026-10-02).)
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
@@ -86,6 +86,7 @@
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
+  - 1) F0.1 (filtro de datos del servidor de Sentry) no se responde en F0: se verifica al final, en la QA de F9.2 (evento de Sentry) o con quien tenga acceso. 2) Se agregó la rama local feature/secure-develop siguiendo a origin/feature/secure-develop en ambos repos (sandbox-api 7fd983d, user-api 148c4af), sin cambiar la rama actual.. Por qué: El dev no tiene acceso a Sentry; el filtro propio de F6 (beforeSend) se aplica igual, esté o no activo el de Sentry. La rama secure local la pidió el dev para revisarla antes de F10.. Cambia la decisión: F0.1 pasa a verificación final; F0.pre2 queda cumplido solo para los repos.
   - Enmienda: F1.c3 pasa a comando completo (node --check de logSanitizer.js en la imagen node:10.24.1-alpine3.11); F7.c2 pasa a evidencia (la lista de archivos varía, el comando está en F7.2); F9.c1 pasa a manual (resume criterios de F1 a F8); rollback agregado en F9 y F10; riesgo aceptado: actor y juez los declara el host.. Motivo: Ajustes aprobados por el dev el 2026-10-01 tras revisar la vista previa de la importación: el importador tomó "node --check" sin archivo como comando en tres criterios, el lint avisó que F9 y F10 entregan sin rollback, y la consulta abierta de la revisión de planes inline se registra como riesgo aceptado.
   - Enmienda: F2.c2 espera código de salida 1 (grep sin coincidencias termina con 1) y se corre desde la raíz de sandbox-api; F8.c1 pasa a un comando concreto con salida en /tmp/usuite-15425-jsdoc (fuera del repo) y se corre desde la raíz de sandbox-api.. Motivo: Aprobado por el dev el 2026-10-01 al re-registrar el caso por el MCP: con código esperado 0, F2.c2 se rechazaría justo cuando se cumple (grep sin coincidencias termina con 1); F8.c1 no decía dónde correrlo y dejaba el marcador sin completar, así que el comando registrado nunca coincidiría con el del plan.
   - Enmienda: Se agrega a los riesgos el riesgo aceptado que anuncia e0001: quién ejecutó (actor, executed_by) y que el juez final corrió ciego lo declara el host; mitigación con brief_id y log auditado.. Motivo: Completar e0001: al re-registrar el caso por el MCP el 2026-10-01, la enmienda e0001 se aplicó con su texto original, que menciona el riesgo aceptado, pero sin agregarlo a la lista de riesgos; el plan creado por CLI sí lo tenía.
