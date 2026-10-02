@@ -73,19 +73,19 @@ Contrato: rollback: Quitar los casos agregados del catálogo; los casos de los �
 Contrato: rollback: Eliminar los archivos de test agregados; el código de producción queda igual.. Status: done
 
 #### S2.T1 — Implementar la lógica de validación y foco del formulario compuesto como unidad testeable sin UI (estado de campos, orden de declaración, primer campo inválido, limpieza de error al corregir) en `app/lib/design_system/molecules/`, de modo que el widget solo la consuma.
-Contrato: rollback: Borrar el archivo de lógica y su export; nada más lo consume todavía.. Status: pending
+Contrato: rollback: Borrar el archivo de lógica y su export; nada más lo consume todavía.. Status: done
 
 #### S2.T2 — Implementar el widget de formulario compuesto sobre el campo de texto de HU-01-03: valida al salir del campo o al confirmar, muestra el error debajo con icono y mensaje de corrección sin mover el foco, y al confirmar con errores lleva el foco al primer campo inválido y no invoca el callback de envío.
-Contrato: rollback: Borrar el widget del formulario y su caso de catálogo; la lógica queda sin consumidor y puede removerse después.. Status: pending
+Contrato: rollback: Borrar el widget del formulario y su caso de catálogo; la lógica queda sin consumidor y puede removerse después.. Status: done
 
 #### S2.T3 — Implementar el chip de filtro (alto visual 36-40, área táctil >= 44 de alto, selección con check y cambio de forma además del color, affordance de retiro que reporta solo su id) y la etiqueta de estado (texto breve más icono; sin texto, assert) en `app/lib/design_system/molecules/`.
-Contrato: rollback: Borrar los archivos de chip y etiqueta y sus casos de catálogo; formulario, tarjeta y fila no los consumen.. Status: pending
+Contrato: rollback: Borrar los archivos de chip y etiqueta y sus casos de catálogo; formulario, tarjeta y fila no los consumen.. Status: done
 
 #### S2.T4 — Registrar en Widgetbook los casos de formulario, chip y etiqueta de estado con los estados default, pressed, focus, disabled, error, vacío y texto largo, en teléfono y tablet.
-Contrato: rollback: Quitar los casos agregados; los casos de tarjeta y fila de la sesión anterior siguen intactos.. Status: pending
+Contrato: rollback: Quitar los casos agregados; los casos de tarjeta y fila de la sesión anterior siguen intactos.. Status: done
 
 #### S2.T5 — Tests de formulario, chip y etiqueta: envío válido invoca el callback una vez; salir de campo inválido muestra mensaje con icono sin mover el foco; dos campos inválidos al confirmar no envían y el foco queda en el primero (QA-01-04-01); chip de 36 con área táctil medida >= 44 (QA-01-04-02); retiro de un chip de tres deja los otros dos; etiqueta sin texto falla; formulario y chip con texto largo a 200 % en 360x800 sin desborde.
-Contrato: rollback: Eliminar los archivos de test agregados; el código de producción queda igual.. Status: pending
+Contrato: rollback: Eliminar los archivos de test agregados; el código de producción queda igual.. Status: done
 
 #### S3.T1 — Agregar la guarda de reuso: un test que recorre `app/lib/design_system/molecules/` y falla si encuentra literales `Color(0x...)`, duraciones numéricas fuera de los tokens de movimiento o rutas de asset literales, y que verifica que `app/lib/design_system/tokens/tokens.g.dart` no cambió respecto del baseline.
 Contrato: rollback: Eliminar el archivo de la guarda; las moléculas siguen funcionando.. Status: pending
@@ -123,14 +123,14 @@ Contrato: rollback: No aplica: no modifica código; si falla, se revierte el cam
 
 **Gate (auto)**: En Widgetbook se ven la tarjeta base y la fila navegable con sus estados, en teléfono y tablet: la tarjeta responde al toque con cambio de superficie y escala 0.985 en 120 ms, y la fila con ilustración muestra el pictograma sin marco ocupando como máximo un tercio del ancho.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: En Widgetbook, el caso de formulario de muestra marca el error debajo del campo al salir sin mover el foco y, al confirmar con dos campos inválidos, lleva el foco al primero sin enviar; los chips muestran check y cambio de forma, se retiran de a uno, y las etiquetas de estado combinan texto e icono.
 
