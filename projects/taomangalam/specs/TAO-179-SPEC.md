@@ -174,4 +174,4 @@ Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`
 
 **Gate (auto)**: Con la app cerrada, el enlace profundo abierto desde la terminal del emulador muestra la vista de detalle y Atras lleva al destino principal (y recien el segundo Atras sale de la app); y en la lista de marcador con filtro activo desplazada 40 elementos, abrir un detalle y volver deja la lista exactamente en el mismo offset, filtro, seleccion y texto de busqueda, sin verla animar.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
