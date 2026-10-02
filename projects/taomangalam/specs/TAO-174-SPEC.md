@@ -234,4 +234,4 @@ Contrato: rollback: Borrar los tests y goldens agregados.. Status: done
 
 **Gate (auto)**: En Widgetbook, el campo de texto muestra etiqueta persistente, ayuda y error con icono en 180 ms sin sacudida, mide al menos 48 de alto con separación 8, y la prueba de contraste confirma que su borde alcanza ≥3:1 sobre `background` y `canvas`.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue

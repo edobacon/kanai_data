@@ -13,7 +13,7 @@
 | F0 Verificación previa | antes de escribir código, confirmar que los supuestos del plan siguen siendo ciertos y tener listo todo lo necesario para desarrollar y probar: ramas, Docker, usuario de prueba y fixtures. | Hecho | 2026-10-02 → 2026-10-02 | - | 5/5 | - |
 | F1 Helper de ofuscación (logSanitizer.js) | tener un helper que, dado cualquier dato, devuelva una copia con contraseñas y secretos bloqueados y correos, documentos y nombres ocultos según el nivel configurado, sin modificar el original y sin lanzar excepciones nunca. | Hecho | 2026-10-02 → 2026-10-02 | - | 4/4 | - |
 | F2 Detección de datos dentro de texto | que las claves, correos y (opcionalmente) RUT que vienen **dentro de un texto** (XML, cadenas `clave=...`, JSON serializado, comandos `curl`, mensajes libres) también se oculten, no solo los que vienen como campo con nombre. | Hecho | 2026-10-02 → 2026-10-02 | b3cc26f, 3d25f1b | 3/3 | - |
-| F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | Pendiente | - → - | - | 0/2 | F3.1; F3.2; F3.3; F3.4; F3.5 |
+| F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | En curso | 2026-10-02 → - | - | 0/2 | F3.1; F3.2; F3.3; F3.4; F3.5 |
 | F4 Conversión del login de uvmcl (loginServices.js) | que el archivo donde se detectó la fuga (`loginServices.js`) deje de escribir la clave y cualquier dato sensible: todos sus logs pasan por `authLog` y el navegador ya no recibe errores crudos. | Pendiente | - → - | - | 0/4 | F4.0; F4.1; F4.2; F4.3; F4.4; F4.5 |
 | F5 Conversión del resto de user-api | que **todo** el módulo de autenticación escriba sus logs solo a través de `authLog`, para todos los tipos de login (WSDL, POST, SAML, AD, ADAL, ADB2C, LDAP, OIDC). | Pendiente | - → - | - | 0/5 | F5.0; F5.1; F5.2; F5.3; F5.4; F5.5; F5.6; F5.7; F5.8 |
 | F6 Sentry (sandbox-api/server/app.js) | que los eventos que se envían a Sentry (que adjuntan el body del request, como el formulario de login) lleguen sin claves ni datos sensibles, y que el código siga funcionando aunque el helper de `user-api` no esté disponible. | Pendiente | - → - | - | 0/4 | F6.1; F6.2; F6.3; F6.4; F6.5 |
@@ -182,11 +182,11 @@
 **Responsable sugerido:** dev del ticket.
 **Esfuerzo:** 0,5 días.
 
-**Registro F3** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F3** (estado: En curso)
+- **Fecha real:** inicio 2026-10-02 · fin -
 - **Antes de empezar:**
-  - [ ] F3.pre1: Registro de F2 completo y T1 a T36 en verde.
-  - [ ] F3.preR: Rama de trabajo al día en user-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo.
+  - [x] F3.pre1: Registro de F2 completo y T1 a T36 en verde. (F2 cerrada en el log del plan con 5/5 tareas y 3/3 criterios; F2.c1 registrado con mocha en Docker node:10.24.1-alpine3.11: 36 passing, 0 failing (visible también en la terminal del dev el 2026-10-02). Commits de F2 en user-api rama USUITE-15425-logs-auth-seguros: b3cc26f (feat) y 3d25f1b (test).)
+  - [x] F3.preR: Rama de trabajo al día en user-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo. (user-api (2026-10-02): git fetch origin sin errores; git status -sb muestra '## USUITE-15425-logs-auth-seguros' (la rama no sigue a ninguna rama remota, por eso status no puede indicar 'behind'); git log --oneline HEAD..origin/develop sin commits (el pager solo mostró (END)), así que develop no avanzó respecto a la base de la rama. No hace falta integrar la base.)
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
