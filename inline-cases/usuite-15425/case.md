@@ -48,7 +48,7 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | ambiente-local.md | referencia | Cómo levantar suite-api en local (Apple Silicon) y validar con login local | Rosetta para Node 10, túneles por puerto (5502 QA uvmcl, 5504 producción), pool en 3, lo que inyecta gulp, base de la suite en Docker y el login local como validación de F5 y F6 |
-| decision-niveles-y-archivos-helper.md | decision | Decisión F1: regla de niveles proporcional con tope, rangos numéricos y helper en dos archivos | Niveles light/medium/strong según el largo con tope (B), maxDepth 1 a 50, maxTextLength 256 a 1 MB, helper en logMaskingConfig.js y logSanitizer.js |
+| decision-niveles-y-archivos-helper.md | decision | Decisión F1: regla de niveles proporcional con tope, rangos numéricos y helper en dos archivos | Niveles light/medium/strong según el largo con tope (B), maxDepth 1 a 50, maxTextLength 256 a 1 MB, helper en dos archivos, tipo_documento excluido del catálogo id y estilo ajustado a mano según .eslintrc.js |
 | plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
 | usuite-15425-claves-en-logs-uvmcl.md | analisis | USUITE-15425: contraseñas en los logs de suite-api (uvmcl). Análisis, plan de prueba y esfuerzo | Análisis inicial: por qué la clave de uvmcl sale en los logs y flujo del login |
 | usuite-15425-niveles-de-solucion.md | analisis | USUITE-15425: niveles de solución (consolidado con verificación en uvmcl) | Vulnerabilidades, estado verificado de uvmcl y niveles de solución |
@@ -56,4 +56,4 @@
 
 ## Plan
 
-1 de 11 fases cerradas, fase actual F1. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+2 de 11 fases cerradas, fase actual F2. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md

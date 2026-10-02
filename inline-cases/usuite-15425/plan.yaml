@@ -2,7 +2,7 @@ plan_id: usuite-15425
 title: "USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles)"
 intent: Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 created: 2026-10-01T17:50:36.527Z
-updated: 2026-10-02T14:23:24.015Z
+updated: 2026-10-02T14:58:21.601Z
 tags:
   projects: []
   repos:
@@ -169,6 +169,7 @@ phases:
         kb:
           - plan-original.md#estrategias-y-niveles
           - plan-original.md#catalogo-base-dentro-del-helper
+          - decision-niveles-y-archivos-helper.md#regla-de-niveles-opcion-b-tercio-con-tope
       - code: F1.2
         text: Comparación por `keys` normalizadas, `patterns` y último tramo de nombres tipo URL.
         kb:
@@ -208,7 +209,7 @@ phases:
           | T7 | Lista `CORREOS` | Cada correo según nivel |
           | T8 | Booleano en campo que coincide con un patrón (`mail_enabled: true`) | Sin cambios |
           | T9 | Patrones por defecto: `correo_institucional`, `correo_alterno`, `EMAILUVM`, `NMEMAIL`, `ds_mail` | Todos como `email` |
-          | T10 | `ds_name` en `email` con correo, RUT y usuario simple | `pablo.pe***@uvm.cl`, `184567***`, `jpe***` |
+          | T10 | `ds_name` en `email` con correo, RUT y usuario simple | `pablo.pe***@uvm.cl`, `184567***`, `jper**` (regla de niveles de decision-niveles-y-archivos-helper.md) |
           | T11 | Atributos SAML con nombre tipo URL (`.../claims/emailaddress`, `.../claims/name`) | Coinciden por el último tramo |
           | T12 | Sin `LOG_MASKING` | Catálogo base |
           | T13 | Config mal formada | Lo inválido al default, el resto aplicado, un solo aviso |
@@ -230,6 +231,7 @@ phases:
           | T29 | Fixture `users->` | `ds_mail` y `ds_name` según `email`; `ds_fullname` visible |
         kb:
           - plan-original.md#como-correr-los-tests
+          - decision-niveles-y-archivos-helper.md#regla-de-niveles-opcion-b-tercio-con-tope
         run:
           command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha server/api/user-api/test/helpers/logSanitizer.test.js
           repo: sandbox-api
@@ -256,22 +258,22 @@ phases:
           expect: "Mismo resultado que la línea base de F0.9: 15 tests, 14 passing y 1 failing (userdetail.test.js:14, preexistente, depende de los datos de suite_dev); mocha termina con código 1 = cantidad de fallos. Los tests del helper que también toma el patrón pasan todos; contarlos aparte."
           exit_code: 1
       - id: F1.c3
-        text: "`node --check` de `logSanitizer.js` sin errores en la imagen de producción (Node 10)."
+        text: "`node --check` de `logMaskingConfig.js` y `logSanitizer.js` sin errores en la imagen de producción (Node 10)."
         kind: command
         run:
-          command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node --check server/api/user-api/helpers/logSanitizer.js
+          command: docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 sh -c 'node --check server/api/user-api/helpers/logMaskingConfig.js && node --check server/api/user-api/helpers/logSanitizer.js'
           repo: sandbox-api
           how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo.
           expect: Sin salida y código de salida 0.
           exit_code: 0
       - id: F1.c4
-        text: "Dos commits separados según uplanner/rules/COMMITS.md: `USUITE-15425 feat:` solo con el helper (`logSanitizer.js`) y `USUITE-15425 test:` solo con sus tests y los fixtures de F0.8."
+        text: "Dos commits separados según uplanner/rules/COMMITS.md: `USUITE-15425 feat:` solo con el helper (`logMaskingConfig.js` y `logSanitizer.js`) y `USUITE-15425 test:` solo con sus tests y los fixtures de F0.8."
         kind: command
         run:
           command: git log --oneline --stat origin/develop..HEAD
           repo: user-api
           how: Desde la raíz del repo, en la rama de trabajo.
-          expect: "Exactamente 2 commits: uno feat que toca solo server/api/user-api/helpers/logSanitizer.js y uno test que toca solo archivos de test/ (tests y fixtures)."
+          expect: "Exactamente 2 commits: uno feat que toca solo helpers/logMaskingConfig.js y helpers/logSanitizer.js, y uno test que toca solo archivos de test/ (tests y fixtures)."
     effort: 2 a 2,5 días.
   - code: F2
     title: Detección de datos dentro de texto
@@ -284,7 +286,7 @@ phases:
         text: 'Rama de trabajo al día en user-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo.'
     tasks:
       - code: F2.1
-        text: '`textDetection.block`: patrones fijos construidos desde los campos de `block`: `<clave>...</clave>`, `clave=...`, `"clave":"..."`, `-u usuario:secreto`.'
+        text: 'En un archivo nuevo `helpers/logTextDetection.js` (ver decision-niveles-y-archivos-helper.md#archivos): `textDetection.block` con patrones fijos construidos desde los campos de `block`: `<clave>...</clave>`, `clave=...`, `"clave":"..."`, `-u usuario:secreto`.'
         kb:
           - plan-original.md#configuracion-log-masking-en-local-env-js-todo-opcional
           - usuite-15425-plan-helper-ofuscacion-y-mapa-logger.md#b-11-deteccion-de-texto-incrustado-evaluacion-por-esfuerzo
@@ -331,10 +333,10 @@ phases:
           expect: 36 passing (o el número real) y 0 failing.
           exit_code: 0
       - id: F2.c2
-        text: "Ninguna expresión regular con lookbehind (`(?<=`, `(?<!`): `grep -nE '\\(\\?<[=!]' server/api/user-api/helpers/logSanitizer.js` sin resultados."
+        text: "Ninguna expresión regular con lookbehind (`(?<=`, `(?<!`) en los archivos del helper: `grep -nE '\\(\\?<[=!]' server/api/user-api/helpers/*.js` sin resultados."
         kind: command
         run:
-          command: grep -nE '\(\?<[=!]' server/api/user-api/helpers/logSanitizer.js
+          command: grep -nE '\(\?<[=!]' server/api/user-api/helpers/*.js
           repo: sandbox-api
           how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api).
           expect: "Sin coincidencias: grep no imprime nada y termina con código de salida 1."
@@ -714,7 +716,7 @@ phases:
         text: 'Rama de trabajo al día en user-api y sandbox-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo.'
     tasks:
       - code: F8.1
-        text: "**JSDoc** en `logSanitizer.js` y `authLog.js` (descripciones en español):"
+        text: "**JSDoc** en `logMaskingConfig.js`, `logSanitizer.js`, `logTextDetection.js` y `authLog.js` (descripciones en español):"
         detail: |-
           - encabezado de módulo con el propósito y un enlace a `LOGGING.md`;
           - `@typedef` de `LogMaskingConfig`, `MaskingStrategyConfig`, `MaskLevel`, `MaskStrategy` y `TextDetectionConfig`, con cada opción, su tipo y su default;

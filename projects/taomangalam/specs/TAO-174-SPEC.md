@@ -87,76 +87,76 @@ Contrato: rollback: Quitar los casos de Widgetbook agregados; el catálogo vuelv
 Contrato: rollback: Borrar los archivos de test agregados.. Status: done
 
 #### S2.T1 — Construir las cinco variantes de botón en `app/lib/design_system/atoms/` sobre una base común que resuelve forma y color desde tokens (doc 43 §8). Esta task no se ejecuta directamente: se completa con sus subtasks.
-Contrato: rollback: Borrar el directorio de botones agregado; no hay consumidores todavía.. Status: pending
+Contrato: rollback: Borrar el directorio de botones agregado; no hay consumidores todavía.. Status: done
 
 #### S2.T1.1 — Base compartida del botón: API (etiqueta, icono opcional, `onPressed`, estado), alto mínimo 48, radio `sm`, estilo `labelLarge` y lectura de la paleta vía `Theme.of(context).extension<TaoAppColors>()`, sin literales.
-Contrato: rollback: Borrar el archivo base; las variantes aún no existen.. Status: pending
+Contrato: rollback: Borrar el archivo base; las variantes aún no existen.. Status: done
 
 #### S2.T1.2 — Variantes Primario, Secundario y Terciario: Primario con fondo `actionPrimary` y texto `actionPrimaryText`; Secundario sobre `actionSecondary`; Terciario sin relleno con borde/texto de token, manteniendo alto 48 y radio `sm`.
-Contrato: rollback: Borrar las tres variantes y conservar solo la base.. Status: pending
+Contrato: rollback: Borrar las tres variantes y conservar solo la base.. Status: done
 
 #### S2.T1.3 — Variante Destructivo con el color `error` y verificación explícita de que no referencia el color `brand`.
-Contrato: rollback: Borrar la variante Destructivo.. Status: pending
+Contrato: rollback: Borrar la variante Destructivo.. Status: done
 
 #### S2.T1.4 — Variante Icono: área táctil mínima 44×44 (`touchMin`), etiqueta semántica obligatoria y tooltip, reusando el átomo de icono de la sesión anterior.
-Contrato: rollback: Borrar la variante Icono; el átomo de icono queda intacto.. Status: pending
+Contrato: rollback: Borrar la variante Icono; el átomo de icono queda intacto.. Status: done
 
 #### S2.T2 — Implementar los estados de los botones: pressed escala 0.985 en 120 ms (`scalePressed`, `fast`) consumiendo el servicio de reducción de movimiento de HU-01-07 (con movimiento reducido solo cambia la superficie); foco con contorno exterior de 3 px (`stroke.focus`) y color `focus`; disabled con opacidad 0.38, sin ejecutar la acción y anunciado como no disponible; loading que conserva la etiqueta junto al indicador e ignora toques adicionales; success donde corresponda. Esta task no se ejecuta directamente: se completa con sus subtasks.
-Contrato: rollback: Revertir el controlador de estados a un botón sin animación ni loading; las variantes siguen dibujándose.. Status: pending
+Contrato: rollback: Revertir el controlador de estados a un botón sin animación ni loading; las variantes siguen dibujándose.. Status: done
 
 #### S2.T2.1 — Modelo de estado del botón: enumerar default, pressed, focus, disabled, loading y success en un tipo único y cablearlo a la base compartida, de modo que cada variante reciba el estado vigente sin duplicar lógica.
-Contrato: rollback: Quitar el tipo de estado y dejar la base con solo enabled/disabled.. Status: pending
+Contrato: rollback: Quitar el tipo de estado y dejar la base con solo enabled/disabled.. Status: done
 
 #### S2.T2.2 — Estado pressed: escala 0.985 durante 120 ms leyendo `scalePressed` y `fast` de `tokens.g.dart`, consumiendo el servicio de reducción de movimiento de HU-01-07; con movimiento reducido no se anima la escala y cambia solo la superficie.
-Contrato: rollback: Quitar la animación de escala; el botón responde al toque sin transformación.. Status: pending
+Contrato: rollback: Quitar la animación de escala; el botón responde al toque sin transformación.. Status: done
 
 #### S2.T2.3 — Estado focus: contorno exterior de 3 px (`stroke.focus`) con color `focus` dibujado fuera del borde del botón, visible con foco de teclado y con lector de pantalla, sin alterar el tamaño de layout de la variante.
-Contrato: rollback: Quitar el contorno de foco; el botón vuelve al indicador de foco por defecto de Flutter.. Status: pending
+Contrato: rollback: Quitar el contorno de foco; el botón vuelve al indicador de foco por defecto de Flutter.. Status: done
 
 #### S2.T2.4 — Estado disabled: opacidad 0.38 desde token, el callback no se invoca y la semántica expone `enabled: false` para que el lector lo anuncie como no disponible.
-Contrato: rollback: Quitar el tratamiento de disabled; el botón usa el deshabilitado por defecto del framework.. Status: pending
+Contrato: rollback: Quitar el tratamiento de disabled; el botón usa el deshabilitado por defecto del framework.. Status: done
 
 #### S2.T2.5 — Estado loading: indicador junto a la etiqueta (la etiqueta permanece visible) y bloqueo de la acción mientras dura, de modo que un segundo toque no encola ni ejecuta una segunda llamada al callback.
-Contrato: rollback: Quitar el estado loading; el botón queda siempre accionable.. Status: pending
+Contrato: rollback: Quitar el estado loading; el botón queda siempre accionable.. Status: done
 
 #### S2.T2.6 — Estado success: la confirmación reemplaza al indicador sin alterar el ancho del botón, respetando la reducción de movimiento, y se aplica solo a las variantes donde el estado corresponde.
-Contrato: rollback: Quitar el estado success; loading vuelve directo a default.. Status: pending
+Contrato: rollback: Quitar el estado success; loading vuelve directo a default.. Status: done
 
 #### S2.T3 — Agregar a Widgetbook una entrada por variante de botón y por estado (default, pressed, focus, disabled, loading, success donde aplique) en teléfono y tablet, incluyendo el caso de etiqueta de 60 caracteres con escala de texto 200 % en 360×800. Esta task no se ejecuta directamente: se completa con sus subtasks.
-Contrato: rollback: Quitar los casos de botón del catálogo.. Status: pending
+Contrato: rollback: Quitar los casos de botón del catálogo.. Status: done
 
 #### S2.T3.1 — Casos base del catálogo: una entrada por cada una de las cinco variantes de botón en estado default, agrupadas bajo la sección de átomos ya creada en la sesión de fundación.
-Contrato: rollback: Quitar las cinco entradas de botón del catálogo.. Status: pending
+Contrato: rollback: Quitar las cinco entradas de botón del catálogo.. Status: done
 
 #### S2.T3.2 — Variación por estado: cada entrada expone pressed, focus, disabled, loading y success (donde aplique) como knobs o casos separados, de modo que Diseño pueda recorrer todos los estados sin tocar código.
-Contrato: rollback: Dejar solo el estado default en cada entrada.. Status: pending
+Contrato: rollback: Dejar solo el estado default en cada entrada.. Status: done
 
 #### S2.T3.3 — Dispositivos y escala: teléfono y tablet con escala de texto 100 % y 200 % aplicadas a las entradas de botón, usando los mismos addons de la sección de átomos.
-Contrato: rollback: Dejar las entradas con el dispositivo y la escala por defecto.. Status: pending
+Contrato: rollback: Dejar las entradas con el dispositivo y la escala por defecto.. Status: done
 
 #### S2.T3.4 — Caso de texto largo: etiqueta de 60 caracteres en 360×800 con escala 200 %, verificable a ojo en el catálogo, que no trunca ni superpone (QA-01-03-03).
-Contrato: rollback: Quitar el caso de texto largo del catálogo.. Status: pending
+Contrato: rollback: Quitar el caso de texto largo del catálogo.. Status: done
 
 #### S2.T4 — Tests y regresión de botones: widget tests de variantes (colores desde tokens, alto 48, radio `sm`, Destructivo sin `brand`), de estados (escala y duración, contorno de foco de 3 px, disabled sin callback y `enabled:false`, doble toque en loading con un solo callback), área táctil 44×44 del botón Icono, prueba estática de ausencia de literales, y goldens por variante/estado en teléfono y tablet a 100 % y 200 %. Esta task no se ejecuta directamente: se completa con sus subtasks.
-Contrato: rollback: Borrar los tests y goldens agregados.. Status: pending
+Contrato: rollback: Borrar los tests y goldens agregados.. Status: done
 
 #### S2.T4.1 — Widget tests de variantes: Primario con fondo `actionPrimary`, texto `actionPrimaryText` y `labelLarge`; alto ≥48 y radio `sm` en las cinco; Destructivo con `error` y sin ninguna referencia a `brand`; Secundario y Terciario distinguidos por `actionSecondary` y `border`.
-Contrato: rollback: Borrar `tao_button_variants_test.dart`.. Status: pending
+Contrato: rollback: Borrar `tao_button_variants_test.dart`.. Status: done
 
 #### S2.T4.2 — Widget tests de estados: escala 0.985 en 120 ms y sin escala con movimiento reducido, contorno de foco de 3 px con color `focus`, disabled sin invocar el callback y con `enabled:false` en la semántica, y doble toque rápido en loading que ejecuta el callback una sola vez conservando la etiqueta (QA-01-03-01, QA-01-03-02).
-Contrato: rollback: Borrar `tao_button_states_test.dart`.. Status: pending
+Contrato: rollback: Borrar `tao_button_states_test.dart`.. Status: done
 
 #### S2.T4.3 — Test del botón Icono: área táctil medida de al menos 44×44, etiqueta semántica presente en el árbol de accesibilidad y tooltip expuesto.
-Contrato: rollback: Borrar `tao_icon_button_test.dart`.. Status: pending
+Contrato: rollback: Borrar `tao_icon_button_test.dart`.. Status: done
 
 #### S2.T4.4 — Prueba estática de tokens: recorrer los archivos de los átomos de botón y fallar si aparece `Color(0x`, `Colors.` o un literal numérico de duración fuera de los tokens, reportando archivo y línea.
-Contrato: rollback: Borrar el test estático de literales.. Status: pending
+Contrato: rollback: Borrar el test estático de literales.. Status: done
 
 #### S2.T4.5 — Goldens de botones: una imagen por variante y estado en teléfono y tablet a escala 100 % y 200 %, generadas y versionadas, con la corrida comparando contra la referencia.
-Contrato: rollback: Borrar los goldens y el test que los compara.. Status: pending
+Contrato: rollback: Borrar los goldens y el test que los compara.. Status: done
 
 #### S2.T4.6 — Regresión del tema: confirmar que `app_theme_test.dart` y las pruebas de HU-01-07 siguen verdes y que `tokens.g.dart` regenerado no difiere del versionado tras los cambios de la sesión.
-Contrato: rollback: No aplica: es una verificación, no deja artefactos.. Status: pending
+Contrato: rollback: No aplica: es una verificación, no deja artefactos.. Status: done
 
 #### S3.T1 — Construir el campo de texto en `app/lib/design_system/atoms/`: etiqueta persistente sobre el campo (el placeholder no la reemplaza), texto de ayuda, alto mínimo 48, separación etiqueta-campo de 8 y borde desde el token `border` del contrato `AppThemeData`.
 Contrato: rollback: Borrar el campo agregado; no hay consumidores aún.. Status: pending
@@ -194,33 +194,33 @@ Contrato: rollback: Borrar los tests y goldens agregados.. Status: pending
 
 **Gate (auto)**: En Widgetbook, la sección de átomos muestra los doce estilos de `typography.style` dibujados con las fuentes empaquetadas y la galería de iconos en caja de 24 con etiqueta accesible; los archivos de licencia OFL y Apache 2.0 están en `app/` junto a los assets y la app no pide red.
 
-### Session 2 · T3 · open
+### Session 2 · T3 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T1.4
-- [ ] S2.T2
-- [ ] S2.T2.1
-- [ ] S2.T2.2
-- [ ] S2.T2.3
-- [ ] S2.T2.4
-- [ ] S2.T2.5
-- [ ] S2.T2.6
-- [ ] S2.T3
-- [ ] S2.T3.1
-- [ ] S2.T3.2
-- [ ] S2.T3.3
-- [ ] S2.T3.4
-- [ ] S2.T4
-- [ ] S2.T4.1
-- [ ] S2.T4.2
-- [ ] S2.T4.3
-- [ ] S2.T4.4
-- [ ] S2.T4.5
-- [ ] S2.T4.6
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T1.4
+- [x] S2.T2
+- [x] S2.T2.1
+- [x] S2.T2.2
+- [x] S2.T2.3
+- [x] S2.T2.4
+- [x] S2.T2.5
+- [x] S2.T2.6
+- [x] S2.T3
+- [x] S2.T3.1
+- [x] S2.T3.2
+- [x] S2.T3.3
+- [x] S2.T3.4
+- [x] S2.T4
+- [x] S2.T4.1
+- [x] S2.T4.2
+- [x] S2.T4.3
+- [x] S2.T4.4
+- [x] S2.T4.5
+- [x] S2.T4.6
 
 **Gate (auto)**: En Widgetbook, las cinco variantes de botón se recorren con teclado mostrando el contorno de foco de 3 px, el loading no duplica la acción al tocar dos veces, el deshabilitado se anuncia como no disponible, y los goldens de teléfono y tablet a 100 % y 200 % pasan.
 

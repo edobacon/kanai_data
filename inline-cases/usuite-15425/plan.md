@@ -4,14 +4,14 @@
 
 **Intención:** Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 **Tags:** repos: user-api, sandbox-api · tickets: USUITE-15425 · labels: suite-legacy
-**Estado:** 1 de 11 fases cerradas. Juez final: pendiente.
+**Estado:** 2 de 11 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
 | Fase | Meta | Estado | Fecha real | Commits | Criterios | Pendiente |
 |---|---|---|---|---|---|---|
 | F0 Verificación previa | antes de escribir código, confirmar que los supuestos del plan siguen siendo ciertos y tener listo todo lo necesario para desarrollar y probar: ramas, Docker, usuario de prueba y fixtures. | Hecho | 2026-10-02 → 2026-10-02 | - | 5/5 | - |
-| F1 Helper de ofuscación (logSanitizer.js) | tener un helper que, dado cualquier dato, devuelva una copia con contraseñas y secretos bloqueados y correos, documentos y nombres ocultos según el nivel configurado, sin modificar el original y sin lanzar excepciones nunca. | En curso | 2026-10-02 → - | - | 0/4 | F1.1; F1.2; F1.3; F1.4; F1.5; F1.6; F1.7; F1.8 |
+| F1 Helper de ofuscación (logSanitizer.js) | tener un helper que, dado cualquier dato, devuelva una copia con contraseñas y secretos bloqueados y correos, documentos y nombres ocultos según el nivel configurado, sin modificar el original y sin lanzar excepciones nunca. | Hecho | 2026-10-02 → 2026-10-02 | - | 4/4 | - |
 | F2 Detección de datos dentro de texto | que las claves, correos y (opcionalmente) RUT que vienen **dentro de un texto** (XML, cadenas `clave=...`, JSON serializado, comandos `curl`, mensajes libres) también se oculten, no solo los que vienen como campo con nombre. | Pendiente | - → - | - | 0/3 | F2.1; F2.2; F2.3; F2.4; F2.5 |
 | F3 Función de log authLog.js | una única función de log para todo el módulo de autenticación que sanitiza siempre, escribe en el logger de siempre con niveles visibles (`info`, `warn`, `error`), reenvía los errores a Sentry ya sanitizados y nunca rompe el login. | Pendiente | - → - | - | 0/2 | F3.1; F3.2; F3.3; F3.4; F3.5 |
 | F4 Conversión del login de uvmcl (loginServices.js) | que el archivo donde se detectó la fuga (`loginServices.js`) deje de escribir la clave y cualquier dato sensible: todos sus logs pasan por `authLog` y el navegador ya no recibe errores crudos. | Pendiente | - → - | - | 0/4 | F4.0; F4.1; F4.2; F4.3; F4.4; F4.5 |
@@ -109,8 +109,8 @@
 **Responsable sugerido:** dev del ticket.
 **Esfuerzo:** 2 a 2,5 días.
 
-**Registro F1** (estado: En curso)
-- **Fecha real:** inicio 2026-10-02 · fin -
+**Registro F1** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-02 · fin 2026-10-02
 - **Antes de empezar:**
   - [x] F1.pre1: Registro de F0 completo. (F0 cerrada el 2026-10-02 (evento phase_closed de F0): 9 de 9 tareas y 5 de 5 criterios registrados, sin no cumplidos abiertos.)
   - [x] F1.pre2: Fixtures de F0.8 disponibles. (Fixtures de F0.8 en server/api/user-api/test/helpers/fixtures/ (uvmcl-wsdl.js, univalle-post.js, users-response.js, saml-profile.js, axios-error.js, token-error.js), validados con node --check y require en node:10.24.1-alpine3.11 el 2026-10-02.)
@@ -119,28 +119,28 @@
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
-  - **F1.1** pendiente: Catálogo por estrategia (`block`, `email`, `id`, `text`) con niveles, y respaldo a `text` cuando el valor no tiene la forma esperada.
-  - **F1.2** pendiente: Comparación por `keys` normalizadas, `patterns` y último tramo de nombres tipo URL.
-  - **F1.3** pendiente: Lectura protegida de `LOG_MASKING`, combinación y validación por opción, con un único aviso; compilación protegida de expresiones.
-  - **F1.4** pendiente: Avisos de protección reducida al cargar.
-  - **F1.5** pendiente: Recorrido recursivo con todas las garantías de la tabla "Garantías".
-  - **F1.6** pendiente: `maskValue`.
-  - **F1.7** pendiente: JSDoc completo (contenido en F8.1).
-  - **F1.8** pendiente: Tests T1 a T29 (`server/api/user-api/test/helpers/logSanitizer.test.js`).
+  - **F1.1** → Catálogo por estrategia (block, email, id, text) con niveles y regla B de la decisión (tercio con tope); email sin forma de correo e id sin forma de RUT o documento se ocultan como texto con el mismo nivel.. Dónde: server/api/user-api/helpers/logMaskingConfig.js (DEFAULT_MASKING) y helpers/logSanitizer.js (visibleCount, maskEmail, maskId, maskFormattedRut). Cómo se comprobó: Salida de la tabla de niveles en node:10.24.1-alpine3.11 el 2026-10-02 (ver decision-niveles-y-archivos-helper.md); cubierto por T3 a T6, T10 y T18 (29 passing en la corrida del agente).
+  - **F1.2** → Comparación de nombres de campo: keys contra el nombre normalizado (minúsculas, sin tildes, sin _ - ni espacios), patterns contra el nombre original sin distinguir mayúsculas, y último tramo de nombres con / o #. Resultado guardado en un mapa por nombre.. Dónde: helpers/logMaskingConfig.js (normalizeKey) y helpers/logSanitizer.js (candidateNames, strategyMatches, findStrategy, findCachedStrategy). Cómo se comprobó: T1, T9 y T11 (atributos SAML por último tramo) en verde en la corrida del agente del 2026-10-02.
+  - **F1.3** → Lectura protegida de LOG_MASKING (require de local.env en try/catch), validación por opción con vuelta al default de lo inválido, rangos maxDepth 1 a 50 y maxTextLength 256 a 1.048.576, expresiones compiladas una vez en try/catch con tope de 200 caracteres, y un único aviso que lista lo ignorado.. Dónde: helpers/logMaskingConfig.js (buildMaskingConfig y lectores) y helpers/logSanitizer.js (loadLocalMaskingConfig, reportConfig). Cómo se comprobó: T12, T13, T16 y T26 en verde en la corrida del agente del 2026-10-02.
+  - **F1.4** → Aviso al cargar 'Ofuscación de logs reducida por configuración' cuando enabled es false, cuando se excluyen campos de block (en la estrategia o con exclude global que alcanza una key de block) o cuando textDetection.block es false.. Dónde: helpers/logMaskingConfig.js (findReductions) y helpers/logSanitizer.js (reportConfig). Cómo se comprobó: T19 en verde en la corrida del agente del 2026-10-02.
+  - **F1.5** → Recorrido recursivo que arma una copia nueva: ciclos detectados por camino actual ([Circular] solo en ciclo real), Error recorrido con Object.getOwnPropertyNames más name, Buffer como [Buffer N bytes], Date en ISO, funciones omitidas, null y undefined conservados, getter que lanza como [SANITIZE_ERROR], [MaxDepth] y ...[truncado]; block aplica a cualquier tipo y los niveles parciales solo a textos y números; listas y objetos heredan la estrategia del campo que los contiene; try/catch general.. Dónde: helpers/logSanitizer.js (walk, walkPrimitive, walkSpecialObject, walkContainer, walkProperties, readProperty). Cómo se comprobó: T2, T7, T8, T22 a T25 en verde en la corrida del agente del 2026-10-02.
+  - **F1.6** → maskValue(valor, estrategia) con el nivel configurado; estrategia desconocida tratada como block; con la ofuscación apagada o valor null/undefined devuelve el valor; nunca lanza.. Dónde: helpers/logSanitizer.js (createSanitizer: maskValue). Cómo se comprobó: T3 y T18 (tabla completa de niveles con maskValue) en verde en la corrida del agente del 2026-10-02.
+  - **F1.7** → JSDoc inicial en español: encabezado de módulo con enlace a LOGGING.md en ambos archivos, y @param/@returns en normalizeKey, buildMaskingConfig, visibleCount, createSanitizer, sanitizeForLog y maskValue. Los @typedef y @example completos quedan para F8.1, como indica la tarea.. Dónde: helpers/logMaskingConfig.js y helpers/logSanitizer.js. Cómo se comprobó: Revisión del agente de los comentarios /** */ en ambos archivos el 2026-10-02; la generación con jsdoc se valida en F8.c1.
+  - **F1.8** → Tests T1 a T29 del helper escritos y en verde en la imagen de producción.. Dónde: server/api/user-api/test/helpers/logSanitizer.test.js (usa los fixtures de test/helpers/fixtures/). Cómo se comprobó: Salida de mocha impresa al dev el 2026-10-02: 29 passing (17 ms), sin fallos. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha server/api/user-api/test/helpers/logSanitizer.test.js`, salida 0, 29 passing, 0 failing, 17 ms.
 - **Criterios cumplidos:**
-  - **F1.c1** pendiente (command): T1 a T29 en verde en Docker con la imagen de producción. *Evidencia:* salida de mocha con `29 passing` (o el número real) y `0 failing`.
-  - **F1.c2** pendiente (command): Suite existente (`test:user-api`) sin fallos nuevos respecto de la línea base de F0.9.
-  - **F1.c3** pendiente (command): `node --check` de `logSanitizer.js` sin errores en la imagen de producción (Node 10).
-  - **F1.c4** pendiente (command): Dos commits separados según uplanner/rules/COMMITS.md: `USUITE-15425 feat:` solo con el helper (`logSanitizer.js`) y `USUITE-15425 test:` solo con sus tests y los fixtures de F0.8.
+  - **F1.c1** T1 a T29 en verde en Docker con la imagen de producción. *Evidencia:* salida de mocha con `29 passing` (o el número real) y `0 failing`. → Nueva corrida del 2026-10-02 sobre los commits 60b366a (feat) y 824d2f2 (test) de user-api, después de excluir tipo_documento y ajustar el estilo: server/api/user-api/test/helpers/logSanitizer.test.js con T1 a T29 en verde. Reemplaza la corrida anterior a esos cambios. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"`, salida 0, 29 passing, 0 failing, 20 ms. El dev lo corrió con 'cd ~/Workspace/uplanner/sandbox-api && ' adelante, desde la raíz de sandbox-api como pide el plan.
+  - **F1.c2** Suite existente (`test:user-api`) sin fallos nuevos respecto de la línea base de F0.9. → Nueva corrida del 2026-10-02 sobre los commits 60b366a y 824d2f2 de user-api: 44 tests (29 del helper y 15 de la línea base), 43 passing y 1 failing. El único fallo es el preexistente de F0.9 (server/api/user-api/test/userdetail.test.js:14). Sin fallos nuevos. Reemplaza la corrida anterior a los últimos cambios. · ejecutó: dev, `MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v "$PWD":/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'`, salida 1, 43 passing (19 s), 1 failing (userdetail.test.js:14, preexistente); código de salida 1. El dev lo corrió con 'cd ~/Workspace/uplanner/sandbox-api && ' adelante.
+  - **F1.c3** `node --check` de `logMaskingConfig.js` y `logSanitizer.js` sin errores en la imagen de producción (Node 10). → Nueva corrida del 2026-10-02 sobre el commit 60b366a de user-api: node --check sin errores en server/api/user-api/helpers/logMaskingConfig.js y server/api/user-api/helpers/logSanitizer.js en node:10.24.1-alpine3.11. Reemplaza la corrida anterior a la exclusión de tipo_documento y al ajuste de estilo. · ejecutó: dev, `docker run --rm -v "$PWD":/w -w /w node:10.24.1-alpine3.11 sh -c 'node --check server/api/user-api/helpers/logMaskingConfig.js && node --check server/api/user-api/helpers/logSanitizer.js'`, salida 0, 2 archivos revisados, 0 errores, exit=0. El dev lo corrió con 'cd ~/Workspace/uplanner/sandbox-api && ' adelante y '; echo "exit=$?"' al final.
+  - **F1.c4** Dos commits separados según uplanner/rules/COMMITS.md: `USUITE-15425 feat:` solo con el helper (`logMaskingConfig.js` y `logSanitizer.js`) y `USUITE-15425 test:` solo con sus tests y los fixtures de F0.8. → 2026-10-02, user-api · USUITE-15425-logs-auth-seguros: 2 commits sobre origin/develop. 60b366a 'USUITE-15425 feat: agregar helper de ofuscación de datos sensibles para logs de autenticación' toca solo helpers/logMaskingConfig.js (313) y helpers/logSanitizer.js (396). 824d2f2 'USUITE-15425 test: agregar tests del helper de ofuscación de logs' toca solo test/helpers/logSanitizer.test.js (336) y 6 fixtures en test/helpers/fixtures/ (272). · ejecutó: dev, `git log --oneline --stat origin/develop..HEAD`, salida 0, 2 commits: feat con 2 archivos y 709 líneas, test con 7 archivos y 608 líneas. El dev lo corrió desde la raíz de sandbox-api como 'git -C server/api/user-api log ...', que es el mismo repo del plan.
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
-  - Sin registros.
+  - Enmienda: Helper en dos archivos (logMaskingConfig.js y logSanitizer.js) y detección en texto en un tercero (logTextDetection.js): F1.c3 revisa los dos archivos con node --check, F1.c4 espera el commit feat con los dos archivos, F2.1 crea logTextDetection.js, F2.c2 busca lookbehind en todos los archivos de helpers/ y F8.1 documenta los cuatro archivos. Regla de niveles B (tercio con tope): el T10 espera jperez como jper** y F1.1 y F1.8 citan la decisión en el KB.. Motivo: Decisión del dev el 2026-10-02 (decision-niveles-y-archivos-helper.md): con una regla fija los valores cortos quedaban casi ocultos completos; la regla B escala con el largo y coincide con la tabla de niveles del plan. Un solo archivo superaba el límite de unas 400 líneas por archivo.
 - **Hallazgos:**
   - Sin registros.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** F1 cerrada el 2026-10-02. Helper de ofuscación en dos archivos de user-api (helpers/logMaskingConfig.js y helpers/logSanitizer.js): catálogo por estrategia, regla de niveles B (tercio con tope), lectura y validación de LOG_MASKING con un único aviso, avisos de protección reducida, recorrido recursivo con todas las garantías del plan, maskValue y createSanitizer. tipo_documento queda fuera de id en el catálogo base. Tests T1 a T29 con fixtures anonimizados. Commits 60b366a (feat) y 824d2f2 (test), sin push. Validado sobre esos commits: 29 passing del helper, node --check exit 0 en Node 10 y suite existente con 43 passing y el único fallo preexistente. Estilo ajustado a mano según .eslintrc.js (eslint no está instalado). Pendiente para F2: correos dentro de textos (SAML claims/name, mensaje de univalle, URL de axios).. Siguiente: Iniciar F2 (detección de datos dentro de texto en helpers/logTextDetection.js) el 2026-10-02.
 
 ### F2. Detección de datos dentro de texto
 
@@ -156,14 +156,14 @@
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
-  - **F2.1** pendiente: `textDetection.block`: patrones fijos construidos desde los campos de `block`: `<clave>...</clave>`, `clave=...`, `"clave":"..."`, `-u usuario:secreto`.
+  - **F2.1** pendiente: En un archivo nuevo `helpers/logTextDetection.js` (ver decision-niveles-y-archivos-helper.md#archivos): `textDetection.block` con patrones fijos construidos desde los campos de `block`: `<clave>...</clave>`, `clave=...`, `"clave":"..."`, `-u usuario:secreto`.
   - **F2.2** pendiente: `textDetection.email`: correos dentro de cualquier texto, ocultos con el nivel de `email`.
   - **F2.3** pendiente: `textDetection.id` (apagado por defecto): RUT con formato dentro de texto.
   - **F2.4** pendiente: Corte por `maxTextLength` antes de buscar. Sin lookbehind ni funciones de expresiones regulares posteriores a Node 10.
   - **F2.5** pendiente: Tests T30 a T36.
 - **Criterios cumplidos:**
   - **F2.c1** pendiente (command): T1 a T36 en verde en Docker con la imagen de producción (F2 no rompe F1). *Evidencia:* conteo de mocha.
-  - **F2.c2** pendiente (command): Ninguna expresión regular con lookbehind (`(?<=`, `(?<!`): `grep -nE '\(\?<[=!]' server/api/user-api/helpers/logSanitizer.js` sin resultados.
+  - **F2.c2** pendiente (command): Ninguna expresión regular con lookbehind (`(?<=`, `(?<!`) en los archivos del helper: `grep -nE '\(\?<[=!]' server/api/user-api/helpers/*.js` sin resultados.
   - **F2.c3** pendiente (command): Dos commits propios según COMMITS.md: `feat` solo con la detección en texto y `test` solo con T30 a T36.
 - **No cumplido:**
   - Sin registros.
@@ -361,7 +361,7 @@
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
-  - **F8.1** pendiente: **JSDoc** en `logSanitizer.js` y `authLog.js` (descripciones en español):
+  - **F8.1** pendiente: **JSDoc** en `logMaskingConfig.js`, `logSanitizer.js`, `logTextDetection.js` y `authLog.js` (descripciones en español):
   - **F8.2** pendiente: **Guía `server/api/user-api/helpers/LOGGING.md`:**
   - **F8.3** pendiente: **Plantilla de ejemplo** `sandbox-api/server/config/local.env.sample.backend.js`: bloque `LOG_MASKING` comentado con los defaults y `loggerLevel: 'info'`, con un comentario que apunte a la guía.
   - **F8.4** pendiente: **KB del caso:** si el comportamiento final cambió respecto del análisis, agregar al KB del caso un documento de tipo decisión o revisión con lo que cambió y por qué. No se edita plan-original.md (copia congelada del import).
