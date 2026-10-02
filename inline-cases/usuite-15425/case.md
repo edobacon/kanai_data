@@ -12,15 +12,14 @@
 
 ## Avisos
 
-- la rama de trabajo USUITE-15425-logs-auth-seguros-secure todavía no existe en user-api (se crea al empezar el trabajo)
-- la rama de trabajo USUITE-15425-logs-auth-seguros-secure todavía no existe en sandbox-api (se crea al empezar el trabajo)
+- Sin avisos.
 
 ## Repos
 
 | Repo | Ruta local | Rama base | Ramas de trabajo | Para qué |
 |---|---|---|---|---|
-| user-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros, USUITE-15425-logs-auth-seguros-secure (por crear) | módulo de autenticación: helper de ofuscación, authLog y conversión de los logs |
-| sandbox-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros, USUITE-15425-logs-auth-seguros-secure (por crear) | filtro de Sentry (beforeSend) y plantilla de configuración LOG_MASKING |
+| user-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros, USUITE-15425-logs-auth-seguros-secure | módulo de autenticación: helper de ofuscación, authLog y conversión de los logs |
+| sandbox-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros, USUITE-15425-logs-auth-seguros-secure | filtro de Sentry (beforeSend) y plantilla de configuración LOG_MASKING |
 
 ## Ambientes
 
@@ -48,9 +47,11 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | ambiente-local.md | referencia | Cómo levantar suite-api en local (Apple Silicon) y validar con login local | Rosetta para Node 10, túneles por puerto (5502 QA uvmcl, 5504 producción), pool en 3, lo que inyecta gulp, base de la suite en Docker y el login local como validación de F5 y F6 |
+| borrador-aviso-lead-secretos.md | registro | Borrador: aviso al lead sobre secretos escritos en el código (hallazgos de USUITE-15425) | Borrador sin enviar del aviso al lead: clave de cifrado en user-api services.js:263 y dos CLIENT_SECRET en la plantilla de sandbox-api, con propuesta de rotación; sin valores |
 | decision-deteccion-en-texto.md | decision | Decisión F2: dónde se aplica la detección de datos dentro de textos | La detección en texto se aplica solo a textos sin estrategia por nombre (A); dentro de un XML cada etiqueta se oculta según la estrategia de su nombre (B) |
 | decision-niveles-y-archivos-helper.md | decision | Decisión F1: regla de niveles proporcional con tope, rangos numéricos y helper en dos archivos | Niveles light/medium/strong según el largo con tope (B), maxDepth 1 a 50, maxTextLength 256 a 1 MB, helper en dos archivos, tipo_documento excluido del catálogo id y estilo ajustado a mano según .eslintrc.js |
 | plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
+| revision-comportamiento-final.md | revision | Revisión F8: comportamiento final frente al análisis y al plan original | Qué cambió respecto del plan (niveles, catálogo, detección en texto, ejemplos de configuración corregidos, datos visibles por defecto, verificación) y los hallazgos de seguridad para el lead |
 | smoke-f7.md | registro | Smoke F7: salida real del logger con authLog (USUITE-15425) | Tres escenarios del smoke de F7 (sin config, config mal formada, info con niveles propios) con 0 claves ficticias, el script para repetirlo en F10 y las salidas completas |
 | usuite-15425-claves-en-logs-uvmcl.md | analisis | USUITE-15425: contraseñas en los logs de suite-api (uvmcl). Análisis, plan de prueba y esfuerzo | Análisis inicial: por qué la clave de uvmcl sale en los logs y flujo del login |
 | usuite-15425-niveles-de-solucion.md | analisis | USUITE-15425: niveles de solución (consolidado con verificación en uvmcl) | Vulnerabilidades, estado verificado de uvmcl y niveles de solución |
@@ -58,4 +59,4 @@
 
 ## Plan
 
-8 de 11 fases cerradas, fase actual F8. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+9 de 11 fases cerradas, fase actual F9. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md

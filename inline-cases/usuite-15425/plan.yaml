@@ -2,7 +2,7 @@ plan_id: usuite-15425
 title: "USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles)"
 intent: Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
 created: 2026-10-01T17:50:36.527Z
-updated: 2026-10-02T18:55:43.052Z
+updated: 2026-10-02T19:23:51.680Z
 tags:
   projects: []
   repos:
@@ -30,8 +30,8 @@ risks:
   - "Ambientes sin config o con config errónea: Defaults + validación por opción (T12, T13, Q5)"
   - "Configuración que reduce la protección: Aviso visible al arrancar (T19)"
   - 'Ambientes futuros con datos o logins no vistos en uvmcl: El código cubre todos los tipos de login, config por ambiente sin cambiar código y QA mínima por ambiente (ver "Despliegue")'
-  - "Conflictos al reaplicar en secure que rompan el login con cookies: Un commit por archivo, resolución archivo por archivo, tests y QA propios de la línea secure con logout (F10)"
-  - "Logs que solo existen en secure quedan sin convertir: Búsqueda dedicada y chequeo estático en la rama secure (F10)"
+  - "Conflictos al reaplicar en secure que rompan el login con cookies: Un commit por archivo, resolución archivo por archivo, tests y QA propios de la línea secure con logout (F9)"
+  - "Logs que solo existen en secure quedan sin convertir: Búsqueda dedicada y chequeo estático en la rama secure (F9)"
   - "Las líneas cambian antes de entregar (nuevos merges): Ramas actualizadas al empezar cada fase y antes de cada PR (`git fetch` + integrar base), con tests de nuevo"
   - "Confundir un fallo existente con uno introducido: Línea base de tests por línea (F0.9 y F10.1) y comparación en cada fase"
   - "La suite existente no corre por falta de base de pruebas: Se registra en F0.9 con motivo y ambiente alternativo; la suite del helper no depende de la base"
@@ -810,9 +810,6 @@ phases:
           how: Desde la raíz de sandbox-api. La salida va a /tmp/usuite-15425-jsdoc, fuera del repo, para no dejar archivos generados en el repo.
           expect: Sin errores ni advertencias y con los @typedef en la salida.
           exit_code: 0
-      - id: F8.c2
-        text: "`LOGGING.md` revisado por otra persona del equipo. *Evidencia:* quién revisó, fecha y observaciones atendidas."
-        kind: evidence
       - id: F8.c3
         text: Commits de documentación en `user-api` y `sandbox-api`.
         kind: command
@@ -825,27 +822,120 @@ phases:
     effort: 0,5 a 0,75 días.
     changes_code: true
   - code: F9
-    title: QA y entrega a master (línea normal)
-    goal: llevar el cambio a `master` en ambos repos, validado en la QA de uvmcl, para que quede listo para cualquier ambiente de la línea normal.
-    owner: dev del ticket. El despliegue en QA y producción lo hace quien despliega y lo informa (queda en despliegue-uvmcl.md del KB del caso).
+    title: Paso a la línea secure (preparación)
+    goal: dejar en `USUITE-15425-logs-auth-seguros-secure` de user-api y sandbox-api el mismo cambio de la línea normal, con los logs propios de secure convertidos y las mismas verificaciones en verde, para abrir los PR de las dos líneas en el mismo momento (F10). Sin PR en esta fase.
+    owner: dev del ticket.
     prerequisites:
       - id: F9.pre1
-        text: Registros de F0 a F8 completos (fases cerradas).
+        text: F8 cerrada.
       - id: F9.pre2
-        text: "Si F0.2 dijo que uvmcl está en la línea secure: F10 se hace en paralelo y la QA de uvmcl se hace con lo de F10."
+        text: Lista de SHA de la línea normal a reaplicar, en orden (git log --reverse origin/develop..USUITE-15425-logs-auth-seguros en cada repo), para el cherry-pick de F9.2.
     tasks:
       - code: F9.1
-        text: 'Antes de abrir los PR: `git fetch`, integrar lo último de `origin/develop` en las ramas 1 y 2 y volver a correr las dos suites. Después, PR de la rama 1 (`user-api`) y de la rama 2 (`sandbox-api`) a `develop`. *Responder:* salida de "Rama actualizada", resultado de las suites, enlace de cada PR, revisores y estado.'
+        text: "`git fetch` y crear `USUITE-15425-logs-auth-seguros-secure` desde `origin/feature/secure-develop` actualizado en `user-api` y `sandbox-api`. Antes de aplicar commits, tomar la línea base de la suite existente en esta rama. *Responder* en el registro de la tarea: commit base por repo y la línea base (total, pasan, fallan, omitidos y fallos preexistentes). Se registra en el plan (registro validado), no en las tablas ni plantillas de plan-original.md: esa es la copia congelada del import y no se edita."
+        detail: |-
+          Comandos (los ejecuta el dev desde la raíz de sandbox-api; se registran los números, sin control automático del código de salida porque la línea secure todavía no tiene línea base):
+          ```bash
+          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git checkout -b USUITE-15425-logs-auth-seguros-secure origin/feature/secure-develop && git rev-parse --short HEAD && git status -sb) || exit 1; done
+          MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
+          ```
+          Mismas condiciones que la suite de F0.9 (túnel 5500, Redis local, app abajo; ver ambiente-local.md). *Responder:* commit base por repo y total, pasan, fallan, omitidos y fallos preexistentes de esta línea.
+        kb:
+          - plan-original.md#linea-base-de-tests
+          - plan-original.md#tests-que-ya-existen-verificado-el-2026-10-01
+      - code: F9.2
+        text: "`git cherry-pick -x` de los commits de la línea normal, en orden. Resolver conflictos archivo por archivo, conservando el comportamiento propio de secure (cookies `httpOnly`, logout con `req.jwt.userId`). *Responder:* por cada commit: SHA original → SHA en secure → con o sin conflicto → cómo se resolvió."
+        kb:
+          - plan-original.md#estrategia-de-entrega-d6
+          - plan-original.md#estructura-de-commits-para-que-el-cherry-pick-sea-simple
+          - plan-original.md#precedente
+      - code: F9.3
+        text: Buscar logs que **solo existen en secure** (código de USUITE-12513 en `authentication/auth.js`, `index.js`, `loginServices.js`, `multiAuth/*`) y convertirlos en un commit propio de esta rama. *Responder:* archivo:línea de cada log convertido.
+        kb:
+          - plan-original.md#estado-de-las-ramas-verificado-el-2026-10-01
+      - code: F9.4
+        text: "Repetir en la línea secure las verificaciones de la normal: chequeo estático (F7.1), sintaxis Node 10 contra `origin/feature/secure-develop` (F7.2), tests del helper y del filtro de Sentry, suite existente comparada con **su** línea base de F9.1 (con la inyección de gulp y `FAKE_PASSWORD` comentado, ver ambiente-local.md) y smoke en tres escenarios (script en /Users/edobacon/Workspace/claude_temp/kanai-USUITE-15425-smoke/smoke-f7.js; contenido en smoke-f7.md). Guardar las salidas del smoke en el KB del caso como `smoke-f9-secure.md`."
+        kb:
+          - plan-original.md#como-correr-los-tests
+          - smoke-f7.md
+          - ambiente-local.md
+    criteria:
+      - id: F9.c1
+        text: Chequeo estático en cero en la rama secure de user-api.
+        kind: command
+        run:
+          command: grep -rnE "console\.(log|error|warn|info)\(|logger\.(error|warn|info|http|verbose|debug|silly)\(|Sentry\.capture(Exception|Message)\(" server/api/user-api --include='*.js' | grep -vE "/(test|helpers)/"
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api, con las ramas -secure en ambos repos.
+          expect: Sin salida (código de salida 1).
+          exit_code: 1
+      - id: F9.c2
+        text: Sintaxis Node 10 sin errores en todos los archivos modificados respecto de `origin/feature/secure-develop`.
+        kind: command
+        run:
+          command: L() { git diff --name-only origin/feature/secure-develop...HEAD -- '*.js'; git -C server/api/user-api diff --name-only origin/feature/secure-develop...HEAD -- '*.js' | sed 's#^#server/api/user-api/#'; }; L | xargs grep -LE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 sh -c 'for f in "$@"; do node --check "$f" || exit 1; echo "ok $f"; done' _ && L | xargs grep -lE '^[[:space:]]*(import|export) ' | xargs docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node -e "var b=require('babel-core'),vm=require('vm');process.argv.slice(1).forEach(function(f){new vm.Script(b.transformFileSync(f).code,{filename:f});console.log('babel ok '+f)})"
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api, con las ramas -secure en ambos repos. Mismo criterio que F7.2 (babel para los archivos con import).
+          expect: Una línea "ok" o "babel ok" por archivo modificado y ningún error.
+          exit_code: 0
+      - id: F9.c3
+        text: Tests del helper (T1 a T42) y del filtro de Sentry (T43 a T45) en verde en la rama secure.
+        kind: command
+        run:
+          command: docker run --rm --platform linux/amd64 -v "$PWD":/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js" server/test/unit/sentryBeforeSend.test.js
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api, con las ramas -secure en ambos repos.
+          expect: 46 passing (42 del helper y 4 del filtro de Sentry), 0 failing.
+          exit_code: 0
+      - id: F9.c4
+        text: Suite existente sin fallos nuevos respecto de la línea base de secure tomada en F9.1. *Evidencia:* conteo antes (F9.1) y después, y cada fallo con su clasificación.
+        kind: evidence
+      - id: F9.c5
+        text: Smoke en los tres escenarios sin claves visibles, guardado en `smoke-f9-secure.md`.
+        kind: command
+        run:
+          command: for s in 1 2 3; do docker run --rm --platform linux/amd64 -v "$PWD":/w -v /Users/edobacon/Workspace/claude_temp/kanai-USUITE-15425-smoke:/smoke -w /w node:10.24.1-alpine3.11 node /smoke/smoke-f7.js $s > /tmp/smoke-f9-$s.txt 2>&1; echo "escenario $s exit=$?"; tail -1 /tmp/smoke-f9-$s.txt; done
+          repo: sandbox-api
+          how: Desde la raíz de sandbox-api, con las ramas -secure en ambos repos. Deja cada salida en /tmp/smoke-f9-<n>.txt.
+          expect: 'Los tres escenarios con exit=0 y "Claves ficticias encontradas en la salida: 0".'
+          exit_code: 0
+      - id: F9.c6
+        text: "Cada commit de la línea normal reaplicado con `cherry-pick -x` y registrado: SHA original, SHA en secure, con o sin conflicto y cómo se resolvió; más el commit propio de F9.3 si hubo logs solo de secure."
+        kind: evidence
+    effort: 1 a 1,5 días.
+    changes_code: true
+  - code: F10
+    title: PR, QA y entrega en las dos líneas
+    goal: abrir en el mismo momento los PR de las dos líneas, cada uno contra su rama (develop y feature/secure-develop, en user-api y sandbox-api), validarlos en QA y llevarlos a master y feature/secure-master, para que la solución quede lista para todos los clientes, salgan de la línea que salgan.
+    owner: dev del ticket. El despliegue en QA y producción lo hace quien despliega y lo informa (queda en despliegue-uvmcl.md del KB del caso).
+    prerequisites:
+      - id: F10.pre1
+        text: F9 cerrada (las dos líneas preparadas y verificadas).
+      - id: F10.pre2
+        text: Usuario de prueba de uvmcl para la QA (F0.6), sin escribir la clave en el registro.
+    tasks:
+      - code: F10.1
+        text: "Antes de abrir los PR: `git fetch` e integrar lo último de `origin/develop` en las ramas normales y de `origin/feature/secure-develop` en las ramas -secure, en ambos repos, y volver a correr las suites en las dos líneas si alguna base avanzó. *Responder:* salida de los dos comandos y, si se integró algo, el resultado de las suites."
+        detail: |-
+          ```bash
+          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git status -sb && git log --oneline HEAD..origin/develop) || exit 1; done
+          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git status -sb && git --no-pager log --oneline HEAD..origin/feature/secure-develop) || exit 1; done
+          ```
         kb:
           - plan-original.md#ramas-y-pr
           - plan-original.md#orden-de-entrega
         run:
           command: for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git status -sb && git log --oneline HEAD..origin/develop) || exit 1; done
           repo: sandbox-api
-          how: Desde la raíz de sandbox-api, antes de abrir los PR. Si el git log no sale vacío, integrar origin/develop y volver a correr las dos suites.
+          how: "Desde la raíz de sandbox-api: primero con las ramas normales y después, con las ramas -secure, el mismo chequeo contra origin/feature/secure-develop (segundo comando del detalle)."
           expect: 'Por repo: rama sin "behind" y git log vacío.'
           exit_code: 0
-      - code: F9.2
+      - code: F10.2
+        text: "Push de las 4 ramas y apertura de los 4 PR en el mismo momento, cada uno contra su rama: user-api y sandbox-api `USUITE-15425-logs-auth-seguros` → `develop`; user-api y sandbox-api `USUITE-15425-logs-auth-seguros-secure` → `feature/secure-develop`. La descripción de cada PR enlaza a los otros tres y pide revisar `helpers/LOGGING.md`. Antes, correr los chequeos de CI de cada repo en local si los tiene. *Responder:* enlace de cada PR, revisores y estado."
+        kb:
+          - plan-original.md#ramas-y-pr
+          - plan-original.md#estrategia-de-entrega-d6
+      - code: F10.3
         text: 'Con `uvmcl-retention-qa` desplegado (lo informa quien despliega: fecha, ambiente y rama por repo; guardarlo en el KB del caso como documento de tipo registro `despliegue-uvmcl.md`), ejecutar Q1 a Q10 (evidencia: `kubectl logs` filtrado por `clave|password|Login user response|OCULTO` y, solo si hay acceso a Sentry y sigue en uso en el ambiente, el evento de Sentry; si no, "No aplica: <motivo>" en lo que toca a Sentry).'
         detail: |-
           | # | Caso | Esperado |
@@ -862,8 +952,17 @@ phases:
           | Q10 | Regresión | Navegar el módulo de retención y cerrar sesión sin errores nuevos |
         kb:
           - plan-original.md#despliegue-manual-fuera-de-la-guia-de-ejecucion
-      - code: F9.3
-        text: PR de `develop` a `master` en cada repo, confirmando antes que `develop` solo suma este ticket respecto de `master` (`git log --oneline origin/master..origin/develop`). *Responder:* salida de ese comando, enlaces y SHA del merge.
+      - code: F10.4
+        text: "QA de la línea secure en un ambiente de esa línea (si uvmcl corre en secure, el mismo de F10.3): Q1 a Q3, Q5, Q8 y Q10, más el logout (las cookies se borran y no hay errores nuevos)."
+        kb:
+          - plan-original.md#despliegue-manual-fuera-de-la-guia-de-ejecucion
+      - code: F10.5
+        text: PR de `develop` a `master` y de `feature/secure-develop` a `feature/secure-master`, en ambos repos y en el mismo momento, confirmando antes que cada base solo suma este ticket respecto de su master. *Responder:* salida de los comandos, enlaces y SHA de cada merge.
+        detail: |-
+          ```bash
+          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git log --oneline origin/master..origin/develop) || exit 1; done
+          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git --no-pager log --oneline origin/feature/secure-master..origin/feature/secure-develop) || exit 1; done
+          ```
         kb:
           - plan-original.md#ramas-y-pr
         run:
@@ -873,78 +972,24 @@ phases:
           expect: "Por repo: solo commits de USUITE-15425."
           exit_code: 0
     criteria:
-      - id: F9.c1
-        text: Tests T1 a T45 en verde en la imagen de producción, chequeo estático en cero, `node --check` sin errores, smoke guardado, JSDoc sin errores y `LOGGING.md` revisado (de F1 a F8). *Evidencia:* referencia a los criterios registrados de F1 a F8.
-        kind: evidence
-      - id: F9.c2
-        text: Q1 a Q10 aprobados, cada uno con su evidencia.
-        kind: evidence
-      - id: F9.c3
-        text: PR a `master` mergeados en ambos repos. *Evidencia:* enlace de cada PR y SHA del merge.
-        kind: evidence
-    effort: 0,75 a 1 día.
-    delivers: true
-    rollback: En cada repo afectado, PR con `git revert -m 1 <SHA del merge>` a `develop` y, si ya llegó, otro a `master`; luego volver a desplegar en uvmcl la rama anterior (quien despliega). El cambio solo toca logs y no modifica datos, así que revertir no deja residuos.
-  - code: F10
-    title: Paso a la línea secure
-    goal: llevar el mismo cambio a `feature/secure-master` en ambos repos sin romper el login con cookies propio de esa línea, para que quede listo para cualquier ambiente de la línea secure.
-    owner: dev del ticket. Si la QA necesita un ambiente secure desplegado, lo hace quien despliega y queda en despliegue-uvmcl.md del KB del caso.
-    prerequisites:
-      - id: F10.pre1
-        text: F9.1 a F9.3 con registro (o F7 completo, si F10 se adelantó por F0.2).
-      - id: F10.pre2
-        text: Lista de SHA de la línea normal a reaplicar, en el orden de "Estructura de commits".
-    tasks:
-      - code: F10.1
-        text: "`git fetch` y crear `USUITE-15425-logs-auth-seguros-secure` desde `origin/feature/secure-develop` actualizado en `user-api` y `sandbox-api`. Antes de aplicar commits, tomar la línea base de la suite existente en esta rama. *Responder* en el registro de la tarea: commit base por repo y la línea base (total, pasan, fallan, omitidos y fallos preexistentes). Se registra en el plan (registro validado), no en las tablas ni plantillas de plan-original.md: esa es la copia congelada del import y no se edita."
-        detail: |-
-          Comandos (los ejecuta el dev desde la raíz de sandbox-api; se registran los números, sin control automático del código de salida porque la línea secure todavía no tiene línea base):
-          ```bash
-          for r in . server/api/user-api; do echo "== $r"; (cd "$r" && git fetch origin && git checkout -b USUITE-15425-logs-auth-seguros-secure origin/feature/secure-develop && git rev-parse --short HEAD && git status -sb) || exit 1; done
-          MARIADB_TEST_USERNAME="$(node -p "require('./server/config/local.env.js').MARIADB_USERNAME")" MARIADB_TEST_PASSWORD="$(node -p "require('./server/config/local.env.js').MARIADB_PASSWORD")" docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w -e NODE_ENV=test -e MARIADB_TEST_HOST=host.docker.internal -e MARIADB_TEST_PORT=5500 -e MARIADB_TEST_DATABASE=suite_dev -e MARIADB_TEST_USERNAME -e MARIADB_TEST_PASSWORD node:10.24.1-alpine3.11 sh -c 'node -e "var n=require(\"net\");n.createServer(function(c){var u=n.connect(6379,\"host.docker.internal\");c.pipe(u).pipe(c);u.on(\"error\",function(){c.destroy()});c.on(\"error\",function(){u.destroy()})}).listen(6379,\"127.0.0.1\")" & sleep 1; node node_modules/.bin/mocha --opts server/test/mocha-opts/mocha.user.opts'
-          ```
-          Mismas condiciones que la suite de F0.9 (túnel 5500, Redis local, app abajo; ver ambiente-local.md). *Responder:* commit base por repo y total, pasan, fallan, omitidos y fallos preexistentes de esta línea.
-        kb:
-          - plan-original.md#linea-base-de-tests
-          - plan-original.md#tests-que-ya-existen-verificado-el-2026-10-01
-      - code: F10.2
-        text: "`git cherry-pick -x` de los commits de la línea normal, en orden. Resolver conflictos archivo por archivo, conservando el comportamiento propio de secure (cookies `httpOnly`, logout con `req.jwt.userId`). *Responder:* por cada commit: SHA original → SHA en secure → con o sin conflicto → cómo se resolvió."
-        kb:
-          - plan-original.md#estrategia-de-entrega-d6
-          - plan-original.md#estructura-de-commits-para-que-el-cherry-pick-sea-simple
-          - plan-original.md#precedente
-      - code: F10.3
-        text: Buscar logs que **solo existen en secure** (código de USUITE-12513 en `authentication/auth.js`, `index.js`, `loginServices.js`, `multiAuth/*`) y convertirlos en un commit propio de esta rama. *Responder:* archivo:línea de cada log convertido.
-        kb:
-          - plan-original.md#estado-de-las-ramas-verificado-el-2026-10-01
-      - code: F10.4
-        text: "Repetir en esta rama: tests T1 a T45 en Docker, suite existente comparada con **su** línea base (la de `feature/secure-develop`), chequeo estático de F7 en cero, `node --check` y smoke local."
-        kb:
-          - plan-original.md#como-correr-los-tests
-      - code: F10.5
-        text: "Antes del PR: `git fetch`, integrar lo último de `origin/feature/secure-develop` y volver a correr las suites. PR a `feature/secure-develop` → QA → PR a `feature/secure-master`, confirmando antes que `feature/secure-develop` solo suma este ticket respecto de `feature/secure-master`."
-        kb:
-          - plan-original.md#ramas-y-pr
-      - code: F10.6
-        text: "QA en un ambiente de la línea secure: Q1 a Q3, Q5, Q8 y Q10 de F9, más el logout (las cookies se borran y no hay errores nuevos)."
-        kb:
-          - plan-original.md#despliegue-manual-fuera-de-la-guia-de-ejecucion
-    criteria:
       - id: F10.c1
-        text: Chequeo estático en cero en la rama secure y tests T1 a T45 en verde.
-        kind: command
-        run:
-          command: grep -rnE "console\.(log|error|warn|info)\(|logger\.(error|warn|info|http|verbose|debug|silly)\(|Sentry\.capture(Exception|Message)\(" server/api/user-api --include='*.js' | grep -vE "/(test|helpers)/"; docker run --rm -v /Users/edobacon/Workspace/uplanner/sandbox-api:/w -w /w node:10.24.1-alpine3.11 node node_modules/.bin/mocha "server/api/user-api/test/helpers/**/*.test.js"
-          repo: sandbox-api
-          how: Desde la raíz de sandbox-api, en la rama secure de ambos repos.
-          expect: El grep sin salida y los tests del helper con 45 passing (o el número real) y 0 failing.
-          exit_code: 0
+        text: "`LOGGING.md` revisado por otra persona del equipo en el PR de user-api. *Evidencia:* quién revisó, fecha, enlace al PR y observaciones atendidas (con sus commits)."
+        kind: evidence
       - id: F10.c2
-        text: QA de F10.6 aprobada con evidencia, incluido el logout.
+        text: Los 4 PR a develop y feature/secure-develop aprobados y mergeados. *Evidencia:* enlace de cada PR y SHA del merge.
         kind: evidence
       - id: F10.c3
-        text: PR a `feature/secure-master` mergeados en ambos repos. *Evidencia:* enlace de cada PR y SHA del merge.
+        text: Q1 a Q10 de F10.3 aprobados, cada uno con su evidencia.
         kind: evidence
-    effort: 1 a 1,5 días.
+      - id: F10.c4
+        text: QA de la línea secure (F10.4) aprobada con evidencia, incluido el logout.
+        kind: evidence
+      - id: F10.c5
+        text: Los 4 PR a master y feature/secure-master mergeados. *Evidencia:* enlace de cada PR y SHA del merge.
+        kind: evidence
+      - id: F10.c6
+        text: "Verificaciones de F1 a F9 registradas en las dos líneas: tests en verde en la imagen de producción, chequeo estático en cero, sintaxis Node 10 sin errores, smoke guardado (smoke-f7.md y smoke-f9-secure.md) y JSDoc sin errores. *Evidencia:* referencia a los criterios registrados."
+        kind: evidence
+    effort: 1,25 a 2 días.
     delivers: true
-    rollback: En cada repo afectado, PR con `git revert -m 1 <SHA del merge>` a `feature/secure-develop` y, si ya llegó, otro a `feature/secure-master`; luego volver a desplegar la rama anterior en el ambiente secure afectado (quien despliega). Sin cambios de datos que deshacer.
+    rollback: En cada repo y línea afectados, PR con `git revert -m 1 <SHA del merge>` a `develop` o `feature/secure-develop` y, si ya llegó, otro a `master` o `feature/secure-master`; luego volver a desplegar la rama anterior en el ambiente afectado (quien despliega). El cambio solo toca logs y no modifica datos, así que revertir no deja residuos.

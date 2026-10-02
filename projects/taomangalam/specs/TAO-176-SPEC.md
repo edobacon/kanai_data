@@ -100,16 +100,16 @@ Contrato: rollback: Quitar el caso del catalogo; el resto de Widgetbook sigue co
 Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status: done
 
 #### S2.T1 — Implementar la hoja inferior (entrada desde su borde natural en 280 ms) y la pantalla completa para lectura o formularios reusando la base de overlay y su contrato de cierre, foco y anuncio, sin declarar duraciones de salida propias ni fondo de familia propio (DEC-235).
-Contrato: rollback: Borrar los dos widgets nuevos y sus exports; el dialogo de la etapa anterior sigue intacto.. Status: pending
+Contrato: rollback: Borrar los dos widgets nuevos y sus exports; el dialogo de la etapa anterior sigue intacto.. Status: done
 
 #### S2.T2 — Implementar el banner persistente para bloqueos, conflictos y avisos sin conexion, con accion Reintentar que sustituye el estado anterior: un error nuevo reemplaza al banner visible en vez de apilarse, y el exito del reintento lo retira. Textos y etiqueta Reintentar desde las claves ARB del catalogo i18n del modulo.
-Contrato: rollback: Borrar el widget de banner y su controlador de estado; las vistas no lo consumen todavia.. Status: pending
+Contrato: rollback: Borrar el widget de banner y su controlador de estado; las vistas no lo consumen todavia.. Status: done
 
 #### S2.T3 — Implementar el snackbar de confirmacion no critica y reversible (entrada 180 ms, permanencia 3500 ms, reemplazo de la confirmacion anterior reiniciando el tiempo) con guarda en modo debug que falla si se usa para un bloqueo o una accion irreversible, y documentar esa regla en el caso de Widgetbook.
-Contrato: rollback: Borrar el widget de snackbar y su guarda; el banner sigue cubriendo los avisos.. Status: pending
+Contrato: rollback: Borrar el widget de snackbar y su guarda; el banner sigue cubriendo los avisos.. Status: done
 
 #### S2.T4 — Tests de la etapa: widget tests de la hoja inferior (280 ms de entrada, cierre con Atras y foco devuelto) y de la pantalla completa (foco atrapado con formulario, titulo anunciado); test del reemplazo de banner con dos fallos seguidos de Reintentar dejando un solo banner (QA-01-05-02) y del retiro al reintentar con exito; tests de tiempos del snackbar (180/3500, reemplazo) y del error en debug ante un uso de bloqueo.
-Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status: done
 
 #### S3.T1 — Implementar el estado vacio con titulo, explicacion, accion (atomo de boton del modulo) y viñeta opcional: la viñeta se pide al resolvedor de imagenes por familia y tamaño, se dibuja con ajuste contain sin marco, borde, sombra ni fondo gris, y si el resolvedor no la encuentra el estado se dibuja completo igual sin reservar hueco.
 Contrato: rollback: Borrar el widget de estado vacio y su caso de Widgetbook.. Status: pending
@@ -156,13 +156,13 @@ Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status
 
 **Gate (auto)**: En Widgetbook, el caso Dialogo abre sobre una vista con fondo, se cierra por boton, toque exterior, Escape y Atras con la misma salida de 180 ms, devuelve el foco al control que lo abrio, anuncia su titulo y, al pedir otra decision, cambia su contenido sin apilar un segundo modal ni un segundo scrim.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: En Widgetbook: la hoja inferior entra desde el borde inferior en 280 ms y la pantalla completa abre para formulario, ambas cierran con Atras devolviendo el foco; dos errores seguidos con Reintentar dejan un solo banner visible; el snackbar de confirmacion se retira solo a los 3500 ms y el caso documenta que bloqueos e irreversibles no lo usan.
 
