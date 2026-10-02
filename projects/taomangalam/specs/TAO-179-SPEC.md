@@ -110,16 +110,16 @@ Contrato: rollback: Quitar el manejo de FocusNode/foco automatico; el foco vuelv
 Contrato: rollback: Borrar `app/test/navigation/app_transitions_test.dart`.. Status: done
 
 #### S3.T1 — Implementar la reconstruccion de pila para enlaces profundos internos: al abrir una ruta de segundo nivel (con la app cerrada o abierta), la pila queda destino principal + detalle, de modo que Atras va al destino principal y no fuera de la app; un enlace a un destino de primer nivel no apila nada por debajo.
-Contrato: rollback: Quitar la construccion de pila (volver a push plano de la ruta destino).. Status: pending
+Contrato: rollback: Quitar la construccion de pila (volver a push plano de la ruta destino).. Status: done
 
 #### S3.T2 — Agregar en el marcador que lo requiere (Consultas o Biblioteca y Productos) una lista de al menos 60 elementos generados en memoria con filtro de texto, campo de busqueda y seleccion, suficiente para desplazar 40 elementos. Lista acotada y en memoria: nada de datos reales ni de red (la navegacion no depende de red).
-Contrato: rollback: Reemplazar la lista por el contenido de marcador simple anterior.. Status: pending
+Contrato: rollback: Reemplazar la lista por el contenido de marcador simple anterior.. Status: done
 
 #### S3.T3 — Conservar el estado de la vista anterior al volver: posicion de scroll, filtro activo, seleccion y texto de busqueda, usando restauracion de estado (PageStorage/RestorationMixin) y aplicando el offset ya en el primer frame del remontaje, sin animar la restauracion. Al REEMPLAZAR la ruta (no apilar) el estado conservado se descarta.
-Contrato: rollback: Quitar el mixin/claves de restauracion; la lista vuelve a montarse en offset 0 y sin filtro.. Status: pending
+Contrato: rollback: Quitar el mixin/claves de restauracion; la lista vuelve a montarse en offset 0 y sin filtro.. Status: done
 
 #### S3.T4 — Tests de enlace profundo y retorno conservado en `app/test/navigation/deep_link_restoration_test.dart` (y la prueba de integracion equivalente): QA-01-09-01 (enlace profundo con app cerrada, Atras al destino principal y luego salida), enlace profundo con app abierta sin apilar el destino anterior, enlace profundo a ruta de segundo nivel inexistente que cae en Inicio con pila de un destino, QA-01-09-03 (offset y filtro identicos al volver), busqueda y seleccion conservadas, offset final en el primer frame del regreso, caso base en offset 0 sin filtro, y descarte del estado al reemplazar la ruta.
-Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`.. Status: pending
+Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La app declara una tabla de rutas go_router con nombres estables y parametros tipados, con una pantalla de marcador por destino principal del consultor (Inicio, Consultas, Biblioteca y Productos, Ajustes, Cuenta, Ayuda), montada en TaoApp reemplazando la pantalla provisional de
@@ -164,13 +164,13 @@ Contrato: rollback: Borrar `app/test/navigation/deep_link_restoration_test.dart`
 
 **Gate (auto)**: En el emulador se ve la transicion de ida (saliente que se va en 180 ms desplazandose 12 px, entrante en 240 ms) y la inversa al volver, con el encabezado quieto; Atras a mitad de transicion retrocede sin duplicar ruta, el doble toque rapido abre una sola vista, con movimiento reducido solo hay fundido corto, y el lector de pantalla anuncia el titulo al entrar y devuelve el foco al origen al volver.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: Con la app cerrada, el enlace profundo abierto desde la terminal del emulador muestra la vista de detalle y Atras lleva al destino principal (y recien el segundo Atras sale de la app); y en la lista de marcador con filtro activo desplazada 40 elementos, abrir un detalle y volver deja la lista exactamente en el mismo offset, filtro, seleccion y texto de busqueda, sin verla animar.
 
