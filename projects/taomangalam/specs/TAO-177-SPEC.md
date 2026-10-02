@@ -21,66 +21,70 @@ Datos a confirmar antes de ejecutar:
 
 ## Requirements
 
-#### REQ-01 `confirmed`
+### REQ-01 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:121
-> Necesidad: build
+
 La app expone un modelo declarativo de destinos de navegación del consultor con dos grupos (principal: Inicio, Consultas, Biblioteca, Productos; pie: Ajustes, Cuenta, Ayuda), cada uno con id estable, clave de etiqueta i18n, icono y ruta, de forma que HU-01-11 pueda filtrarlo sin tocar el shell.
 
-#### REQ-02 `confirmed`
+### REQ-02 `confirmed`
 > Fuente: taomangalam/app/lib/design_system/tokens/tokens.g.dart:212
-> Necesidad: build
+
 El encabezado mide 64 de alto en teléfono y 72 en tablet, muestra volver cuando hay historial, título o contexto, y un botón hamburguesa de 48x48 que abre el panel; el botón desaparece cuando el panel persistente está visible y reaparece cuando se oculta.
 
-#### REQ-03 `confirmed`
-> Fuente: taomangalam/app/lib/design_system/tokens/tokens.g.dart:214
-> Necesidad: build
-En composición compacta/media el panel es superpuesto: entra desde el borde inicial en 260 ms ocupando 80% del ancho con máximo 360 (TaoSize.drawerPhoneMax), con scrim que aparece en 180 ms, es desplazable, y al abrirse el foco pasa al primer destino.
+### REQ-03 `confirmed`
+> Fuente: HU-01-08 · Alcance (panel lateral superpuesto) y criterios de aceptación 1 y 11 (escala de texto 200 % en 360 × 800); pedido de refine dirigido opción A, punto 2
 
-#### REQ-04 `confirmed`
+En composición compacta/media el panel es superpuesto: entra desde el borde inicial en 260 ms ocupando 80% del ancho con máximo 360 (TaoSize.drawerPhoneMax), con scrim que aparece en 180 ms, es desplazable, y al abrirse el foco pasa al primer destino; con escala de texto 200 % en 360 x 800 ninguna etiqueta del encabezado ni del menú se trunca ni se superpone: el panel crece y se desplaza para que los siete destinos sigan legibles y accionables.
+
+### REQ-04 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:122
-> Necesidad: build
+
 El panel superpuesto se cierra en 200 ms por su control, por toque fuera (scrim), por Escape y por el gesto/acción Atrás, y en los cuatro casos el foco vuelve al botón hamburguesa; mientras está abierto el foco queda atrapado dentro del panel.
 
-#### REQ-05 `confirmed`
+### REQ-05 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:123
-> Necesidad: build
+
 El destino activo se marca con barra lateral o fondo tonal más peso tipográfico además del color, y se expone a lectores de pantalla como seleccionado.
 
-#### REQ-06 `confirmed`
+### REQ-06 `confirmed`
 > Fuente: taomangalam/app/lib/design_system/tokens/tokens.g.dart:228
-> Necesidad: build
+
 Desde 840 de ancho disponible (TaoBreakpoint.expandedMin) el panel es persistente junto al contenido y cambiar de destino solo mueve el indicador activo, sin animación del panel (DEC-230); por debajo de 840 el panel es superpuesto, conservando el destino activo al cruzar el límite.
 
-#### REQ-07 `inferred`
-> Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:128
-> Necesidad: build
-Con movimiento reducido activo, abrir y cerrar el menú no usa los 260/200 ms: solo hay fundido de hasta 120 ms o cambio inmediato, reusando los tokens y el servicio de reducción de movimiento de HU-01-07.
+### REQ-07 `confirmed`
+> Fuente: HU-01-08 · criterio de aceptación 10 (movimiento reducido) y requisito transversal de accesibilidad; pedido de refine dirigido opción A, punto 3
 
-#### REQ-08 `confirmed`
+Con movimiento reducido activo, abrir y cerrar el menú no usa los 260/200 ms: solo hay fundido de hasta 120 ms o cambio inmediato, reusando los tokens de duración y el servicio de reducción de movimiento ya entregado por HU-01-07 (no se crea uno nuevo). Datos a confirmar: el nombre exacto de ese servicio/API de HU-01-07 se lee del código al implementar; es la única incertidumbre y no afecta el comportamiento exigido.
+
+### REQ-08 `confirmed`
 > Fuente: taomangalam/app/lib/design_system/tokens/tokens.g.dart:226
-> Necesidad: build
+
 La orientación se fija por tipo de dispositivo según el lado más corto: dispositivos con lado corto menor a 600 (TaoBreakpoint.mediumMin) quedan solo en vertical; desde 600 se permiten ambas orientaciones y la composición se readapta al girar.
 
-#### REQ-09 `confirmed`
+### REQ-09 `confirmed` `enforcement`
 > Fuente: taomangalam/app/test/core/images/image_family_resolver_test.dart:251
-> Necesidad: build
+
 El shell no inventa superficie ni estilos: el panel es una sola superficie marfil opaca sin paisaje ni ilustración de fondo ni cajas por pictograma, el fondo de la vista anfitriona solo se ve detrás del scrim, y todas las medidas, colores, tipografías, iconos y duraciones salen de los tokens generados y de los átomos de HU-01-01/03/07 (sin literales de color, sin Colors.*, sin números mágicos).
 
-#### REQ-10 `confirmed`
+### REQ-10 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:435
-> Necesidad: build
+
 Los siete destinos llevan icono acompañado de texto, el grupo de pie (Ajustes, Cuenta, Ayuda) aparece separado visualmente del grupo principal, y las etiquetas salen de claves i18n (HU-01-06), no de cadenas literales en el widget.
 
+### REQ-11 `confirmed`
+> Fuente: Pedido de refine dirigido opción A, punto 1 (decisión del dev); archivos app/lib/app.dart y app/lib/features/home/presentation/home_screen.dart; QA-01-08-01 de HU-01-08
+
+El shell (encabezado + panel lateral) está montado en la app: `TaoApp` (app/lib/app.dart) usa el shell como `home` en lugar de la pantalla provisional `app/lib/features/home/presentation/home_screen.dart`, y cada uno de los siete destinos (Inicio, Consultas, Biblioteca, Productos, Ajustes, Cuenta, Ayuda) muestra una pantalla de marcador simple cuyo título sale del ARB (claves i18n de HU-01-06, sin textos fijos). La navegación es PROVISIONAL: el shell guarda el destino activo en su propio estado y renderiza el marcador correspondiente; no se agrega `go_router` ni ningún otro paquete de rutas (las rutas reales y los enlaces profundos son de HU-01-09 / TAO-179, que reemplazará esta selección por rutas reusando los mismos marcadores). `TaoApp` sigue aceptando `builder` y `navigatorKey` del entrypoint de development (panel interno). Con esto QA-01-08-01 y el caso de borde de REQ-05 quedan ejecutables de punta a punta.
 ## Tasks
 
 #### S1.T1 — Crear el modelo declarativo de destinos del consultor en app/lib/ (grupo principal: Inicio, Consultas, Biblioteca, Productos; grupo de pie: Ajustes, Cuenta, Ayuda), con id estable, clave i18n, icono de los átomos de HU-01-03 y ruta a pantalla de marcador; sin filtrado por capacidades (eso es HU-01-11). Agregar las claves ARB de los siete rótulos siguiendo la infraestructura de i18n de HU-01-06.
 Contrato: rollback: Borrar el archivo del modelo de destinos y revertir las claves agregadas al ARB; nada más del shell lo importa todavía.. Status: pending
 
 #### S1.T2 — Construir el encabezado compacto: alto TaoSize.headerPhone (64) en teléfono y TaoSize.headerTablet (72) en tablet (tokens.g.dart:212-213), control de volver condicionado al historial, título/contexto y botón hamburguesa de 48x48 (TaoSize.touchPreferred) reusando el botón de HU-01-03. Sin literales de medida ni de color.
-Contrato: rollback: Eliminar el widget de encabezado y su export; el shell todavía no está montado en la app.. Status: pending
+Contrato: rollback: Revertir con git los archivos tocados por esta task. Si el shell queda inutilizable, volver a `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`) como `home` de `TaoApp` en `app/lib/app.dart`. No hay shell, router, menú ni barra inferior anteriores que restaurar: verificado en `origin/epic/EP-01` que no existen.. Status: pending
 
 #### S1.T3 — Construir el panel lateral superpuesto con scrim: ancho 80% del disponible con tope TaoSize.drawerPhoneMax (tokens.g.dart:214), entrada 260 ms desde el borde inicial, scrim en 180 ms, salida 200 ms, contenido desplazable, grupo de pie separado del principal y cada destino con icono + texto. Al abrir, el foco pasa al primer destino.
-Contrato: rollback: Eliminar el widget del panel y revertir el encabezado a no abrir nada (la hamburguesa queda sin handler).. Status: pending
+Contrato: rollback: Revertir con git los archivos tocados por esta task. Si el shell queda inutilizable, volver a `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`) como `home` de `TaoApp` en `app/lib/app.dart`. No hay shell, router, menú ni barra inferior anteriores que restaurar: verificado en `origin/epic/EP-01` que no existen.. Status: pending
 
 #### S1.T4 — Implementar cierre por los cuatro mecanismos (control propio, toque en el scrim, tecla Escape, acción Atrás del sistema sin hacer pop de la ruta anfitriona) en 200 ms, con el foco atrapado dentro del panel mientras está abierto y devuelto al botón hamburguesa al cerrar.
 Contrato: rollback: Quitar el manejo de Escape/Atrás y la trampa de foco, dejando solo el cierre por control y scrim.. Status: pending
@@ -90,6 +94,9 @@ Contrato: rollback: Quitar el indicador y la semántica de selección; los desti
 
 #### S1.T6 — Escribir los tests de esta etapa y la regresión: unit del modelo de destinos (orden, ids duplicados, claves no vacías), widget de encabezado (64/72, área 48x48, volver condicional), widget del panel (ancho 80%/tope 360, 260 ms, foco al primer destino, scroll a 200% en 360x800), widget de cierre por los cuatro mecanismos con retorno de foco y ciclo de Tab contenido, y widget del destino activo con semántica selected.
 Contrato: rollback: Borrar los archivos de test agregados en esta sesión.. Status: pending
+
+#### S1.T7 — Montar el shell en la app y crear los marcadores de destino. (a) En `app/lib/app.dart`, reemplazar `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`, pantalla provisional) por el shell como `home` de `TaoApp`, conservando intactos los parámetros `builder` y `navigatorKey` que pasa el entrypoint de development (panel interno). (b) Crear una pantalla de marcador simple por cada uno de los siete destinos del modelo declarativo de REQ-01 (Inicio, Consultas, Biblioteca, Productos, Ajustes, Cuenta, Ayuda), cuyo título sale de la clave i18n del ARB (HU-01-06), sin cadenas literales. (c) Navegación PROVISIONAL: el shell mantiene el destino activo en su propio estado (sin `go_router` ni ningún otro paquete de rutas en `app/pubspec.yaml`) y renderiza el marcador correspondiente; al elegir un destino en el panel superpuesto, el panel se cierra y el indicador activo se mueve. HU-01-09 / TAO-179 reemplazará esta selección por rutas reusando estos mismos marcadores, así que el mapa destino → widget debe quedar declarativo y en un solo lugar. Dejar ejecutables de punta a punta QA-01-08-01 y el caso de borde de REQ-05 (navegar de Inicio a Biblioteca).
+Contrato: rollback: Volver a `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`) como `home` de `TaoApp` en `app/lib/app.dart` y revertir los marcadores creados. No hay shell, router, menú ni barra inferior anteriores que restaurar: verificado en `origin/epic/EP-01` que no existen.. Status: pending
 
 #### S2.T1 — Derivar la composición del shell desde el ancho disponible usando TaoBreakpoint.expandedMin (840) para persistente y TaoBreakpoint.mediumMin (600) para el tipo de dispositivo (tokens.g.dart:226-228), alineado con la derivación ya existente de imageLayoutFor (image_family_resolver_test.dart:264-285); el cálculo debe leer el ancho disponible, no el tamaño físico de pantalla, para que pantalla dividida funcione.
 Contrato: rollback: Eliminar la función de derivación de composición; el shell vuelve a comportarse siempre como superpuesto.. Status: pending
@@ -109,12 +116,11 @@ Contrato: rollback: Borrar los archivos de test agregados en esta sesión.. Stat
 #### S3.T1 — Agregar el test de fidelidad estructural del panel: una sola superficie marfil opaca, sin Image/DecorationImage en el subárbol del panel y sin cajas por pictograma, con el fondo de la vista anfitriona visible solo detrás del scrim (doc 43 §7 y §9, DEC-235).
 Contrato: rollback: Borrar el archivo de test de fidelidad.. Status: pending
 
-#### S3.T2 — Agregar el test de no-literales del shell siguiendo el patrón de image_family_resolver_test.dart:251-260: los fuentes del shell no contienen 'Color(0x' ni 'Colors.', y no usan 64, 72, 360, 840 ni 600 como medidas literales (deben referenciar TaoSize.headerPhone/headerTablet/drawerPhoneMax y TaoBreakpoint.expandedMin/mediumMin).
+#### S3.T2 — Test que falla si en los fuentes del shell aparecen los números 64, 72, 360, 840 o 600 usados como MEDIDA, es decir como argumento de `height`, `width`, `maxWidth`, `minWidth`, `minHeight`, `maxHeight`, `BoxConstraints`, `SizedBox`, `Size` o como umbral de breakpoint. El matcher debe acotarse a esos usos para no dar falsos positivos: ignora índices, opacidades, duraciones, números dentro de strings y nombres de archivo de goldens (p.ej. `360x800.png`, `1024x768.png`). Esas medidas deben salir de `TaoSize.drawerPhoneMax` (360), `TaoBreakpoint.expandedMin` (840), `TaoBreakpoint.mediumMin` (600) y de los tokens de altura del encabezado (64 / 72).
 Contrato: rollback: Borrar el archivo de test de no-literales.. Status: pending
 
 #### S3.T3 — Agregar los goldens del shell en 360x800, 390x844, 768x1024 y 1024x768 con escala de texto 100% y 200%, con el panel abierto en las composiciones compactas y persistente en 1024x768, y generar las imágenes de referencia para la comparación de Diseño (QA-01-08-05).
 Contrato: rollback: Borrar el archivo de goldens y las imágenes generadas bajo test/navigation/goldens/.. Status: pending
-
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: El encabezado mide 64 de alto en teléfono y 72 en tablet, muestra volver cuando hay historial, título o contexto, y un botón hamburguesa de 48x48 que abre el panel; el botón desaparece cuando el panel persistente está visible y reaparece cuando se oculta.
@@ -126,3 +132,60 @@ Contrato: rollback: Borrar el archivo de goldens y las imágenes generadas bajo 
 3. **Qué:** Verificar en runtime: El destino activo se marca con barra lateral o fondo tonal más peso tipográfico además del color, y se expone a lectores de pantalla como seleccionado.
    - **Se debe ver:** La vista renderiza sin errores de consola y el comportamiento esperado es visible.
    - **Dónde:** vista afectada por el ticket
+
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-03 (edit) `confirmed`: En composición compacta/media el panel es superpuesto: entra desde el borde inicial en 260 ms ocupando 80% del ancho con máximo 360 (TaoSize
+- REQ-07 (edit) `confirmed`: Con movimiento reducido activo, abrir y cerrar el menú no usa los 260/200 ms: solo hay fundido de hasta 120 ms o cambio inmediato, reusando 
+- REQ-11 (add) `confirmed`: El shell (encabezado + panel lateral) está montado en la app: `TaoApp` (app/lib/app.dart) usa el shell como `home` en lugar de la pantalla p
+
+**Tasks agregadas:**
+
+- S1: Montar el shell en la app y crear los marcadores de destino. (a) En `app/lib/app.dart`, reemplazar `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`, pantalla provisional) por el shell como `home` de `TaoApp`, conservando intactos los parámetros `builder` y `navigatorKey` que pasa el entrypoint de development (panel interno). (b) Crear una pantalla de marcador simple por cada uno de los siete destinos del modelo declarativo de REQ-01 (Inicio, Consultas, Biblioteca, Productos, Ajustes, Cuenta, Ayuda), cuyo título sale de la clave i18n del ARB (HU-01-06), sin cadenas literales. (c) Navegación PROVISIONAL: el shell mantiene el destino activo en su propio estado (sin `go_router` ni ningún otro paquete de rutas en `app/pubspec.yaml`) y renderiza el marcador correspondiente; al elegir un destino en el panel superpuesto, el panel se cierra y el indicador activo se mueve. HU-01-09 / TAO-179 reemplazará esta selección por rutas reusando estos mismos marcadores, así que el mapa destino → widget debe quedar declarativo y en un solo lugar. Dejar ejecutables de punta a punta QA-01-08-01 y el caso de borde de REQ-05 (navegar de Inicio a Biblioteca). (valida: REQ-11; rollback: Volver a `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`) como `home` de `TaoApp` en `app/lib/app.dart` y revertir los marcadores creados. No hay shell, router, menú ni barra inferior anteriores que restaurar: verificado en `origin/epic/EP-01` que no existen.)
+
+**Task ops:**
+
+- edit S1.T2 { rollback="Revertir con git los archivos tocados por esta task. Si el shell queda inutilizable, volver a `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`) como `home` de `TaoApp` en `app/lib/app.dart`. No hay shell, router, menú ni barra inferior anteriores que restaurar: verificado en `origin/epic/EP-01` que no existen." }
+- edit S1.T3 { rollback="Revertir con git los archivos tocados por esta task. Si el shell queda inutilizable, volver a `HomeScreen` (`app/lib/features/home/presentation/home_screen.dart`) como `home` de `TaoApp` en `app/lib/app.dart`. No hay shell, router, menú ni barra inferior anteriores que restaurar: verificado en `origin/epic/EP-01` que no existen." }
+- edit S3.T2 { desc="Test que falla si en los fuentes del shell aparecen los números 64, 72, 360, 840 o 600 usados como MEDIDA, es decir como argumento de `height`, `width`, `maxWidth`, `minWidth`, `minHeight`, `maxHeight`, `BoxConstraints`, `SizedBox`, `Size` o como umbral de breakpoint. El matcher debe acotarse a esos usos para no dar falsos positivos: ignora índices, opacidades, duraciones, números dentro de strings y nombres de archivo de goldens (p.ej. `360x800.png`, `1024x768.png`). Esas medidas deben salir de `TaoSize.drawerPhoneMax` (360), `TaoBreakpoint.expandedMin` (840), `TaoBreakpoint.mediumMin` (600) y de los tokens de altura del encabezado (64 / 72)." }
+
+## Sessions
+
+### Session 1 · T2 · open
+
+**Tasks:**
+- [ ] S1.T1
+- [ ] S1.T2
+- [ ] S1.T3
+- [ ] S1.T4
+- [ ] S1.T5
+- [ ] S1.T6
+- [ ] S1.T7
+
+**Gate (auto)**: En un emulador de 390x844 (o en el widgetbook del shell) la hamburguesa abre el panel con los siete destinos, el foco entra al primero y queda atrapado, el destino activo se marca y anuncia como seleccionado, y el panel cierra por control, scrim, Escape y Atrás devolviendo el foco al botón.
+
+### Session 2 · T2 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+- [ ] S2.T4
+- [ ] S2.T5
+
+**Gate (auto)**: En 1024x768 el panel queda fijo junto al contenido, cambiar de destino solo mueve el indicador (sin animación del panel) y el control del encabezado lo oculta/muestra reflowing el contenido; reducido a 839 pasa a superpuesto conservando el destino; con movimiento reducido la apertura es un fundido de <=120 ms; un teléfono girado permanece en vertical.
+
+### Session 3 · T1 · open
+
+**Tasks:**
+- [ ] S3.T1
+- [ ] S3.T2
+- [ ] S3.T3
+
+**Gate (auto)**: La suite de goldens del shell genera las ocho imágenes (360x800, 390x844, 768x1024, 1024x768 x escala 100% y 200%) listas para comparar contra maqueta-direccion-consolidada.png, y el test de no-literales falla si alguien mete un Color(0x, un Colors.* o una medida mágica en el shell.
+
+### Session 4 · T0 · open
+

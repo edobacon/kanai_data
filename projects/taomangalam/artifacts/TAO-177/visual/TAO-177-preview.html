@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HU-01-08 · Encabezado y menú de navegación</title>
+<style>
+  :root{
+    /* Superficie marfil única (doc 43 §7) */
+    --marfil:#F7F3EA;
+    --marfil-alt:#FBF8F2;
+    --tinta:#2E2A24;
+    --tinta-media:#5C564C;
+    --tinta-suave:#8A8275;
+    --borde:#E3DCCD;
+    --acento:#6B5B3E;
+    --acento-tonal:#EAE0CA;
+    --scrim:rgba(46,42,36,.48);
+    --foco:#3B6FB5;
+    --ok:#3F6B4A;
+    --warn:#8A6A1F;
+    --err:#9B3B32;
+
+    /* Tokens de medida citados por la historia */
+    --header-phone:64px;
+    --header-tablet:72px;
+    --touch:48px;
+    --drawer-phone-max:360px;
+    --drawer-tablet:320px;
+
+    /* Chrome de la maqueta (fuera del producto) */
+    --page:#1C1A17;
+    --page-2:#262320;
+    --page-txt:#E8E2D6;
+    --page-txt-dim:#A9A195;
+    --page-borde:#3A352F;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--page);
+    color:var(--page-txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- Chrome de la maqueta ---------- */
+  .wrap{max-width:1360px;margin:0 auto;padding:32px 20px 96px}
+  .doc-head{border-bottom:1px solid var(--page-borde);padding-bottom:24px;margin-bottom:32px}
+  .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--page-txt-dim);margin:0 0 8px}
+  .doc-head h1{margin:0 0 10px;font-size:26px;line-height:1.25;font-weight:650;letter-spacing:-.01em}
+  .doc-head p{margin:0;max-width:72ch;color:var(--page-txt-dim);font-size:14px}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .tag{font-size:11px;letter-spacing:.04em;padding:3px 9px;border:1px solid var(--page-borde);border-radius:999px;color:var(--page-txt-dim)}
+
+  section.block{margin:0 0 44px}
+  section.block > h2{
+    font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#C9BFA8;
+    margin:0 0 4px;font-weight:600;
+  }
+  section.block > .sub{margin:0 0 18px;color:var(--page-txt-dim);font-size:13.5px;max-width:84ch}
+
+  .grid{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start}
+
+  figure.spec{margin:0}
+  figure.spec figcaption{
+    font-size:12px;color:var(--page-txt-dim);margin-top:10px;max-width:420px;line-height:1.45;
+  }
+  figure.spec figcaption b{color:var(--page-txt);font-weight:600}
+
+  .device{
+    background:var(--page-2);
+    border:1px solid var(--page-borde);
+    border-radius:14px;
+    padding:10px;
+  }
+  .device .label{
+    display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+    font-size:11.5px;color:var(--page-txt-dim);padding:2px 4px 10px;
+    letter-spacing:.03em;
+  }
+  .device .label strong{color:var(--page-txt);font-weight:600;letter-spacing:0}
+
+  /* Viewport simulado */
+  .vp{
+    position:relative;overflow:hidden;background:var(--marfil);
+    border-radius:8px;border:1px solid #0C0B09;
+    color:var(--tinta);
+    font-size:14px;
+  }
+  .vp-390{width:390px;height:560px}
+  .vp-360{width:360px;height:560px}
+  .vp-768{width:384px;height:512px}      /* 768×1024 a 50% */
+  .vp-1024{width:512px;height:384px}     /* 1024×768 a 50% */
+  .vp-839{width:419px;height:384px}      /* 839 de ancho a 50% */
+  .scaled{position:relative}
+  .scaled::after{
+    content:attr(data-scale);
+    position:absolute;right:6px;bottom:6px;z-index:40;
+    background:rgba(28,26,23,.78);color:#E8E2D6;border-radius:4px;
+    font-size:10px;padding:2px 6px;letter-spacing:.04em;
+  }
+
+  /* ---------- Producto: fondo anfitrión ---------- */
+  .host{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    background:var(--marfil);
+  }
+  .host-body{
+    flex:1;overflow:hidden;padding:18px 16px;background:var(--marfil);
+  }
+  .host-body.tinted{background:#F2EFE6}
+
+  /* ---------- Encabezado ---------- */
+  .appbar{
+    flex:0 0 auto;display:flex;align-items:center;gap:4px;
+    padding:0 8px;background:var(--marfil);
+    border-bottom:1px solid var(--borde);
+    height:var(--header-phone);
+  }
+  .appbar.tablet{height:var(--header-tablet)}
+  .appbar .title{
+    flex:1;min-width:0;font-size:17px;font-weight:620;letter-spacing:-.01em;
+    padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .appbar .title .ctx{display:block;font-size:11.5px;font-weight:500;color:var(--tinta-suave);letter-spacing:0}
+  .iconbtn{
+    width:var(--touch);height:var(--touch);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+    border:0;background:transparent;border-radius:12px;color:var(--tinta);cursor:default;
+  }
+  .iconbtn svg{width:22px;height:22px;display:block}
+  .iconbtn.focus-ring{box-shadow:0 0 0 2px var(--marfil),0 0 0 4px var(--foco)}
+
+  /* ---------- Contenido anfitrión de relleno ---------- */
+  .ph-line{height:10px;border-radius:5px;background:#E7E1D3;margin-bottom:10px}
+  .ph-line.w70{width:70%} .ph-line.w90{width:90%} .ph-line.w45{width:45%}
+  .ph-card{
+    border:1px solid var(--borde);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--marfil-alt);
+  }
+  .ph-card h4{margin:0 0 8px;font-size:14px;font-weight:620}
+  .ph-card p{margin:0;font-size:12.5px;color:var(--tinta-media)}
+  .host-title{margin:0 0 4px;font-size:19px;font-weight:650;letter-spacing:-.01em}
+  .host-sub{margin:0 0 16px;font-size:12.5px;color:var(--tinta-suave)}
+
+  /* ---------- Scrim ---------- */
+  .scrim{position:absolute;inset:0;background:var(--scrim);z-index:10}
+
+  /* ---------- Panel lateral ---------- */
+  .drawer{
+    position:absolute;top:0;bottom:0;left:0;z-index:20;
+    width:80%;max-width:var(--drawer-phone-max);
+    background:var(--marfil);                 /* una sola superficie marfil opaca */
+    border-right:1px solid var(--borde);
+    box-shadow:2px 0 18px rgba(28,26,23,.18);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .drawer.persistent{
+    position:relative;box-shadow:none;width:var(--drawer-tablet);max-width:none;
+    flex:0 0 var(--drawer-tablet);
+  }
+  .drawer-head{
+    flex:0 0 auto;display:flex;align-items:center;gap:8px;
+    height:var(--header-phone);padding:0 6px 0 14px;border-bottom:1px solid var(--borde);
+  }
+  .drawer-head .brand{flex:1;font-size:16px;font-weight:650;letter-spacing:-.01em}
+  .drawer-head .brand small{display:block;font-size:11px;font-weight:500;color:var(--tinta-suave);letter-spacing:.02em}
+  .drawer-scroll{flex:1;overflow:auto;padding:8px 8px 0}
+  .drawer-foot{
+    flex:0 0 auto;border-top:1px solid var(--borde);padding:8px;background:var(--marfil);
+  }
+
+  .navitem{
+    position:relative;display:flex;align-items:center;gap:12px;
+    min-height:var(--touch);padding:0 12px 0 14px;border-radius:12px;
+    color:var(--tinta-media);font-size:14.5px;font-weight:500;
+    margin-bottom:2px;
+  }
+  .navitem svg{width:20px;height:20px;flex:0 0 auto}
+  .navitem .lbl{flex:1;min-width:0}
+  .navitem[aria-selected="true"]{
+    background:var(--acento-tonal);color:var(--acento);font-weight:700;   /* fondo tonal + peso, no solo color */
+  }
+  .navitem[aria-selected="true"]::before{
+    content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;   /* barra lateral */
+    border-radius:0 3px 3px 0;background:var(--acento);
+  }
+  .navitem.focus-ring{box-shadow:0 0 0 2px var(--marfil),0 0 0 4px var(--foco)}
+  .navitem .sr{font-size:10.5px;font-weight:600;color:var(--acento);letter-spacing:.04em;text-transform:uppercase}
+
+  .group-sep{height:1px;background:var(--borde);margin:10px 6px}
+  .group-cap{
+    font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-suave);
+    padding:6px 14px 4px;font-weight:600;
+  }
+
+  /* ---------- Anotaciones sobre la maqueta ---------- */
+  .note{
+    position:absolute;z-index:60;background:#1C1A17;color:#F0EADC;
+    border:1px solid #4A443B;border-radius:6px;font-size:10.5px;line-height:1.35;
+    padding:4px 7px;max-width:190px;letter-spacing:.01em;
+  }
+  .note b{color:#F7E6B8;font-weight:650}
+  .arrow{position:absolute;z-index:59;background:#6E6557}
+
+  /* ---------- Tablas y listas de especificación ---------- */
+  table.spec-table{border-collapse:collapse;width:100%;max-width:980px;font-size:13px;margin-top:4px}
+  table.spec-table th,table.spec-table td{
+    border:1px solid var(--page-borde);padding:8px 10px;text-align:left;vertical-align:top;
+  }
+  table.spec-table th{background:#2B2824;color:#D8CFBB;font-weight:600;font-size:12px;letter-spacing:.04em}
+  table.spec-table td{color:var(--page-txt-dim)}
+  table.spec-table td code,table.spec-table th code{color:#E9D9AF;font-size:12px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#2E2A26;border-radius:4px;padding:1px 5px;font-size:12.5px;color:#E9D9AF}
+
+  ul.plain{margin:6px 0 0;padding-left:18px;color:var(--page-txt-dim);font-size:13.5px}
+  ul.plain li{margin-bottom:5px}
+  ul.plain li b{color:var(--page-txt);font-weight:600}
+
+  .legend{
+    display:flex;flex-wrap:wrap;gap:16px;align-items:center;
+    border:1px dashed var(--page-borde);border-radius:10px;padding:12px 14px;margin-bottom:26px;
+    font-size:12.5px;color:var(--page-txt-dim);
+  }
+  .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+
+  .state-card{
+    background:var(--page-2);border:1px solid var(--page-borde);border-radius:12px;
+    padding:14px 16px;max-width:320px;
+  }
+  .state-card h4{margin:0 0 6px;font-size:13.5px;color:var(--page-txt)}
+  .state-card p{margin:0;font-size:12.5px;color:var(--page-txt-dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="doc-head">
+    <p class="kicker">TAO-177 · HU-01-08 · EP-01 · M0</p>
+    <h1>Encabezado con menú y panel lateral de navegación del consultor</h1>
+    <p>Maqueta de verificación del shell: encabezado compacto, panel lateral superpuesto en teléfono y media,
+    panel persistente desde 840 de ancho disponible, destino activo, grupo de pie, foco, movimiento reducido,
+    escala 200 % y orientación. Los destinos llevan a pantallas de marcador en M0.</p>
+    <div class="tags">
+      <span class="tag">DEC-075</span><span class="tag">DEC-051</span><span class="tag">DEC-021</span>
+      <span class="tag">DEC-080</span><span class="tag">DEC-189</span><span class="tag">DEC-230</span>
+      <span class="tag">DEC-235</span><span class="tag">doc 43 §6 · §7 · §9</span>
+    </div>
+  </header>
+
+  <div class="legend">
+    <span><span class="sw" style="background:#F7F3EA;border:1px solid #6b6356"></span>Superficie marfil única (panel y encabezado)</span>
+    <span><span class="sw" style="background:#EAE0CA"></span>Fondo tonal del destino activo</span>
+    <span><span class="sw" style="background:#6B5B3E"></span>Barra lateral del activo</span>
+    <span><span class="sw" style="background:#3B6FB5"></span>Anillo de foco</span>
+    <span><span class="sw" style="background:rgba(46,42,36,.48)"></span>Scrim</span>
+    <span>Las maquetas de tablet están a <b>50 %</b>; las de teléfono a <b>100 %</b>.</span>
+  </div>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>1 · Teléfono 390 × 844 — encabezado cerrado y panel abierto</h2>
+    <p class="sub">REQ-02, REQ-03, REQ-05, REQ-10. Encabezado de 64 con volver cuando hay historial, título o contexto y
+    hamburguesa de 48 × 48. El panel entra desde el borde inicial en 260 ms ocupando 80 % del ancho (máximo 360);
+    el scrim aparece en 180 ms y el foco pasa al primer destino.</p>
+
+    <div class="grid">
+
+      <!-- 1a: cerrado, sin historial -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>1a · Cerrado, sin historial</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp vp-390">
+            <div class="host">
+              <div class="appbar">
+                <div class="title">Inicio</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+              </div>
+              <div class="host-body">
+                <h3 class="host-title">Buenos días, Lucía</h3>
+                <p class="host-sub">Vista anfitriona · pantalla de marcador en M0</p>
+                <div class="ph-card"><h4>Consultas recientes</h4><p>El contenido de cada destino llega en EP-05, EP-10, EP-11 y EP-03b.</p></div>
+                <div class="ph-line w90"></div><div class="ph-line w70"></div><div class="ph-line w45"></div>
+              </div>
+            </div>
+            <div class="note" style="top:6px;right:62px">Sin volver: no hay historial</div>
+            <div class="note" style="top:70px;right:8px"><b>48 × 48</b> hamburguesa<br>Encabezado <b>64</b></div>
+          </div>
+        </div>
+        <figcaption><b>Cerrado.</b> El botón hamburguesa es el único control de navegación. No hay barra inferior (DEC-230).</figcaption>
+      </figure>
+
+      <!-- 1b: cerrado, con volver -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>1b · Cerrado, con volver y contexto</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp vp-390">
+            <div class="host">
+              <div class="appbar">
+                <button class="iconbtn" aria-label="Volver">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+                </button>
+                <div class="title">Detalle de la consulta<span class="ctx">Consultas · folio 4821</span></div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+              </div>
+              <div class="host-body tinted">
+                <div class="ph-card"><h4>Folio 4821</h4><p>Contexto bajo el título cuando la vista lo aporta.</p></div>
+                <div class="ph-line w90"></div><div class="ph-line w70"></div>
+                <div class="ph-card"><h4>Seguimiento</h4><p>Marcador de contenido.</p></div>
+                <div class="ph-line w45"></div>
+              </div>
+            </div>
+            <div class="note" style="top:70px;left:8px">Volver aparece<br>solo con historial</div>
+          </div>
+        </div>
+        <figcaption><b>Con historial.</b> Volver a la izquierda, título con contexto secundario, hamburguesa siempre al final.</figcaption>
+      </figure>
+
+      <!-- 1c: panel abierto -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>1c · Panel abierto · foco en el primer destino</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp vp-390">
+            <div class="host">
+              <div class="appbar">
+                <div class="title">Consultas</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+              </div>
+              <div class="host-body"><div class="ph-line w90"></div><div class="ph-line w70"></div><div class="ph-line w45"></div></div>
+            </div>
+            <div class="scrim"></div>
+            <aside class="drawer" aria-label="Navegación principal">
+              <div class="drawer-head">
+                <div class="brand">Tao Mangalam<small>Consultor</small></div>
+                <button class="iconbtn" aria-label="Cerrar menú">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+              </div>
+              <div class="drawer-scroll">
+                <div class="navitem focus-ring" aria-selected="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+                  <span class="lbl">Inicio</span>
+                </div>
+                <div class="navitem" aria-selected="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg>
+                  <span class="lbl">Consultas</span>
+                  <span class="sr">Seleccionado</span>
+                </div>
+                <div class="navitem" aria-selected="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg>
+                  <span class="lbl">Biblioteca</span>
+                </div>
+                <div class="navitem" aria-selected="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
+                  <span class="lbl">Productos</span>
+                </div>
+              </div>
+              <div class="drawer-foot">
+                <div class="group-cap">Tu cuenta</div>
+                <div class="navitem" aria-selected="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1V3h-4v2.1a7 7 0 0 0-1.7 1l-2.3-1-2 3.4L6.1 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1V21h4v-2.1a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.07-.33.1-.66.1-1z"/></svg>
+                  <span class="lbl">Ajustes</span>
+                </div>
+                <div class="navitem" aria-selected="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                  <span class="lbl">Cuenta</span>
+                </div>
+                <div class="navitem" aria-selected="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.3 2.4c-.7.3-.8.8-.8 1.6"/><path d="M12 17h.01"/></svg>
+                  <span class="lbl">Ayuda</span>
+                </div>
+              </div>
+            </aside>
+            <div class="note" style="top:6px;right:8px">Scrim en <b>180 ms</b>.<br>Tocarlo cierra.</div>
+            <div class="note" style="top:104px;left:112px">Foco inicial:<br>primer destino</div>
+            <div class="note" style="top:206px;left:150px">Activo: barra + fondo tonal<br>+ peso · “Seleccionado”</div>
+            <div class="note" style="bottom:118px;left:160px">Pie separado<br>por línea y rótulo</div>
+          </div>
+        </div>
+        <figcaption><b>Abierto.</b> 80 % del ancho (312 en 390), tope <code>drawerPhoneMax</code> 360. Entrada 260 ms desde el borde inicial; salida 200 ms. El panel se desplaza si el contenido no cabe.</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>2 · Destino activo y anuncio del lector</h2>
+    <p class="sub">REQ-05. El activo no depende del color: barra lateral de 4 en el borde inicial, fondo tonal y peso
+    tipográfico más alto. El rótulo “Seleccionado” de la maqueta representa <code>aria-selected</code> /
+    <code>Semantics(selected: true)</code>, no texto visible en el producto.</p>
+
+    <div class="grid">
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>2a · Inicio activo</strong><span>fragmento del panel</span></div>
+          <div class="vp" style="width:312px;height:240px">
+            <aside class="drawer" style="width:100%;max-width:none;box-shadow:none;border-right:0">
+              <div class="drawer-scroll" style="padding-top:12px">
+                <div class="navitem" aria-selected="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+                  <span class="lbl">Inicio</span><span class="sr">Seleccionado</span>
+                </div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg><span class="lbl">Biblioteca</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <figcaption>Estado por defecto al entrar a la app.</figcaption>
+      </figure>
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>2b · Biblioteca activa + foco de teclado</strong><span>fragmento del panel</span></div>
+          <div class="vp" style="width:312px;height:240px">
+            <aside class="drawer" style="width:100%;max-width:none;box-shadow:none;border-right:0">
+              <div class="drawer-scroll" style="padding-top:12px">
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span class="lbl">Inicio</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span></div>
+                <div class="navitem focus-ring" aria-selected="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg>
+                  <span class="lbl">Biblioteca</span><span class="sr">Seleccionado</span>
+                </div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <figcaption>Anillo de foco y marca de activo son señales distintas y pueden coincidir (QA-01-08-01).</figcaption>
+      </figure>
+
+      <div class="state-card">
+        <h4>Texto anunciado</h4>
+        <p>“Biblioteca, seleccionado, elemento 3 de 4, menú de navegación”. El grupo de pie se anuncia como lista aparte:
+        “Tu cuenta, 3 elementos”.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>3 · Tablet — panel persistente desde 840 y superpuesto por debajo</h2>
+    <p class="sub">REQ-06, REQ-02. Desde <code>expandedMin</code> 840 de ancho disponible el panel vive junto al contenido;
+    cambiar de destino solo mueve el indicador activo, sin animación del panel (DEC-230). La hamburguesa desaparece
+    mientras el panel persistente está visible y reaparece al ocultarlo.</p>
+
+    <div class="grid">
+
+      <!-- 3a: 1024x768 persistente -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>3a · Persistente visible</strong><span>1024 × 768 · 50 %</span></div>
+          <div class="vp vp-1024 scaled" data-scale="50 %">
+            <div class="host" style="flex-direction:row">
+              <aside class="drawer persistent" aria-label="Navegación principal">
+                <div class="drawer-head" style="height:36px;padding-left:10px">
+                  <div class="brand" style="font-size:13px">Tao Mangalam<small style="font-size:9px">Consultor</small></div>
+                </div>
+                <div class="drawer-scroll" style="padding:6px 6px 0">
+                  <div class="navitem" style="min-height:34px;font-size:12px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span class="lbl">Inicio</span></div>
+                  <div class="navitem" style="min-height:34px;font-size:12px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span></div>
+                  <div class="navitem" aria-selected="true" style="min-height:34px;font-size:12px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg><span class="lbl">Biblioteca</span></div>
+                  <div class="navitem" style="min-height:34px;font-size:12px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+                </div>
+                <div class="drawer-foot" style="padding:6px">
+                  <div class="group-cap" style="padding:4px 10px 2px;font-size:9px">Tu cuenta</div>
+                  <div class="navitem" style="min-height:30px;font-size:11.5px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Ajustes</span></div>
+                  <div class="navitem" style="min-height:30px;font-size:11.5px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">Cuenta</span></div>
+                  <div class="navitem" style="min-height:30px;font-size:11.5px;border-radius:9px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/></svg><span class="lbl">Ayuda</span></div>
+                </div>
+              </aside>
+              <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                <div class="appbar tablet" style="height:36px">
+                  <button class="iconbtn" aria-label="Ocultar panel de navegación" style="width:28px;height:28px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+                  </button>
+                  <div class="title" style="font-size:13px">Biblioteca</div>
+                </div>
+                <div class="host-body" style="padding:10px">
+                  <div class="ph-card" style="padding:8px"><h4 style="font-size:11px">Marcador de Biblioteca</h4><p style="font-size:9.5px">El contenido llega en EP-11.</p></div>
+                  <div class="ph-line w90" style="height:7px"></div><div class="ph-line w70" style="height:7px"></div><div class="ph-line w45" style="height:7px"></div>
+                </div>
+              </div>
+            </div>
+            <div class="note" style="top:4px;left:168px;max-width:150px">Sin hamburguesa:<br>control de <b>ocultar</b></div>
+            <div class="note" style="bottom:6px;left:170px;max-width:170px">Cambiar de destino: solo<br>se mueve el indicador. <b>Sin animación</b></div>
+          </div>
+        </div>
+        <figcaption><b>840 o más.</b> Encabezado de 72, panel fijo de 320, contenido a la derecha. Sin scrim: el panel no es modal y no atrapa el foco.</figcaption>
+      </figure>
+
+      <!-- 3b: persistente oculto -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>3b · Persistente oculto</strong><span>1024 × 768 · 50 %</span></div>
+          <div class="vp vp-1024 scaled" data-scale="50 %">
+            <div class="host">
+              <div class="appbar tablet" style="height:36px">
+                <button class="iconbtn" aria-label="Mostrar panel de navegación" style="width:28px;height:28px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+                <div class="title" style="font-size:13px">Biblioteca</div>
+              </div>
+              <div class="host-body" style="padding:10px">
+                <div class="ph-card" style="padding:8px"><h4 style="font-size:11px">Marcador de Biblioteca</h4><p style="font-size:9.5px">El contenido ocupa el ancho liberado.</p></div>
+                <div class="ph-line w90" style="height:7px"></div><div class="ph-line w70" style="height:7px"></div><div class="ph-line w45" style="height:7px"></div>
+              </div>
+            </div>
+            <div class="note" style="top:4px;left:48px;max-width:170px">Vuelve la <b>hamburguesa</b>;<br>el contenido toma el ancho</div>
+          </div>
+        </div>
+        <figcaption>Ocultar y mostrar desde el encabezado conserva el destino activo.</figcaption>
+      </figure>
+
+      <!-- 3c: 768 vertical superpuesto -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>3c · Tablet vertical 768 — superpuesto</strong><span>768 × 1024 · 50 %</span></div>
+          <div class="vp vp-768 scaled" data-scale="50 %">
+            <div class="host">
+              <div class="appbar tablet" style="height:36px">
+                <div class="title" style="font-size:13px">Consultas</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación" style="width:28px;height:28px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+              </div>
+              <div class="host-body" style="padding:10px"><div class="ph-line w90" style="height:7px"></div><div class="ph-line w70" style="height:7px"></div></div>
+            </div>
+            <div class="scrim"></div>
+            <aside class="drawer" style="max-width:180px" aria-label="Navegación principal">
+              <div class="drawer-head" style="height:36px;padding-left:10px">
+                <div class="brand" style="font-size:12px">Tao Mangalam<small style="font-size:9px">Consultor</small></div>
+                <button class="iconbtn" aria-label="Cerrar menú" style="width:26px;height:26px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+              </div>
+              <div class="drawer-scroll" style="padding:6px 6px 0">
+                <div class="navitem" style="min-height:32px;font-size:11.5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span class="lbl">Inicio</span></div>
+                <div class="navitem" aria-selected="true" style="min-height:32px;font-size:11.5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span></div>
+                <div class="navitem" style="min-height:32px;font-size:11.5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg><span class="lbl">Biblioteca</span></div>
+                <div class="navitem" style="min-height:32px;font-size:11.5px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+              </div>
+              <div class="drawer-foot" style="padding:6px">
+                <div class="group-cap" style="padding:4px 10px 2px;font-size:9px">Tu cuenta</div>
+                <div class="navitem" style="min-height:28px;font-size:11px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Ajustes</span></div>
+                <div class="navitem" style="min-height:28px;font-size:11px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">Cuenta</span></div>
+                <div class="navitem" style="min-height:28px;font-size:11px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px"><circle cx="12" cy="12" r="9"/></svg><span class="lbl">Ayuda</span></div>
+              </div>
+            </aside>
+            <div class="note" style="bottom:6px;right:6px;max-width:150px">768 &lt; 840 → <b>superpuesto</b><br>con scrim, no persistente</div>
+          </div>
+        </div>
+        <figcaption>Encabezado de 72 por ser tablet; el panel es superpuesto porque el ancho disponible no alcanza 840.</figcaption>
+      </figure>
+
+      <!-- 3d: 839 pantalla dividida -->
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>3d · 839 en pantalla dividida (QA-01-08-04)</strong><span>839 de ancho · 50 %</span></div>
+          <div class="vp vp-839 scaled" data-scale="50 %">
+            <div class="host">
+              <div class="appbar tablet" style="height:36px">
+                <button class="iconbtn" aria-label="Abrir menú de navegación" style="width:28px;height:28px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+                </button>
+                <div class="title" style="font-size:13px">Biblioteca</div>
+              </div>
+              <div class="host-body" style="padding:10px">
+                <div class="ph-card" style="padding:8px"><h4 style="font-size:11px">Marcador de Biblioteca</h4><p style="font-size:9.5px">Destino activo conservado al cruzar el límite.</p></div>
+                <div class="ph-line w90" style="height:7px"></div><div class="ph-line w45" style="height:7px"></div>
+              </div>
+            </div>
+            <div class="note" style="top:4px;left:48px;max-width:190px">De 840 a <b>839</b>: el panel pasa a superpuesto<br>y vuelve la hamburguesa. Biblioteca sigue activo.</div>
+          </div>
+        </div>
+        <figcaption>El límite se evalúa sobre el <b>ancho disponible</b>, no sobre el tamaño físico del dispositivo (doc 43 §6).</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>4 · Cierre, foco atrapado y movimiento reducido</h2>
+    <p class="sub">REQ-04, REQ-07. Cuatro mecanismos de cierre, todos en 200 ms y todos devuelven el foco al botón hamburguesa.
+    Con movimiento reducido no se usan 260 / 200 ms: fundido de hasta 120 ms o cambio inmediato.</p>
+
+    <div class="grid">
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>4a · Foco atrapado · último elemento</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp vp-390">
+            <div class="host">
+              <div class="appbar"><div class="title">Consultas</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+              </div>
+              <div class="host-body"><div class="ph-line w90"></div><div class="ph-line w70"></div></div>
+            </div>
+            <div class="scrim"></div>
+            <aside class="drawer" aria-label="Navegación principal">
+              <div class="drawer-head">
+                <div class="brand">Tao Mangalam<small>Consultor</small></div>
+                <button class="iconbtn" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+              </div>
+              <div class="drawer-scroll">
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span class="lbl">Inicio</span></div>
+                <div class="navitem" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span><span class="sr">Seleccionado</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg><span class="lbl">Biblioteca</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+              </div>
+              <div class="drawer-foot">
+                <div class="group-cap">Tu cuenta</div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Ajustes</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">Cuenta</span></div>
+                <div class="navitem focus-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 17h.01"/></svg><span class="lbl">Ayuda</span></div>
+              </div>
+            </aside>
+            <div class="note" style="bottom:12px;right:8px;max-width:180px">Tab desde <b>Ayuda</b> vuelve al<br>control de cerrar, no sale al fondo</div>
+          </div>
+        </div>
+        <figcaption>El ciclo de foco es: cerrar → Inicio → Consultas → Biblioteca → Productos → Ajustes → Cuenta → Ayuda → cerrar.</figcaption>
+      </figure>
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>4b · Movimiento reducido · fundido</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp vp-390">
+            <div class="host">
+              <div class="appbar"><div class="title">Inicio</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+              </div>
+              <div class="host-body"><div class="ph-line w90"></div><div class="ph-line w70"></div></div>
+            </div>
+            <div class="scrim" style="opacity:.55"></div>
+            <aside class="drawer" style="opacity:.58" aria-label="Navegación principal">
+              <div class="drawer-head"><div class="brand">Tao Mangalam<small>Consultor</small></div>
+                <button class="iconbtn" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+              </div>
+              <div class="drawer-scroll">
+                <div class="navitem" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span class="lbl">Inicio</span><span class="sr">Seleccionado</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg><span class="lbl">Biblioteca</span></div>
+                <div class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+              </div>
+            </aside>
+            <div class="note" style="top:96px;right:8px;max-width:180px">Fotograma intermedio: el panel<br><b>no se desplaza</b>, solo funde (≤ 120 ms)</div>
+          </div>
+        </div>
+        <figcaption>Sin movimiento reducido el panel entra desde el borde inicial; con movimiento reducido aparece en su posición final y solo cambia la opacidad.</figcaption>
+      </figure>
+
+      <div class="state-card">
+        <h4>Cierre: cuatro vías, un resultado</h4>
+        <p>Control de cerrar · toque sobre el scrim · Escape · gesto o acción Atrás. Los cuatro cierran en 200 ms
+        (o fundido ≤ 120 ms con movimiento reducido) y devuelven el foco al botón hamburguesa (QA-01-08-02).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>5 · Escala de texto 200 % en 360 × 800 y orientación</h2>
+    <p class="sub">REQ-03, REQ-08. Con escala 200 % todos los destinos siguen legibles y el panel se desplaza si no caben.
+    Teléfono (lado corto &lt; 600) queda solo en vertical; tablet (lado corto ≥ 600, <code>mediumMin</code>) admite ambas.</p>
+
+    <div class="grid">
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>5a · Escala 200 % · panel desplazable</strong><span>360 × 800 · 100 %</span></div>
+          <div class="vp vp-360">
+            <div class="host">
+              <div class="appbar" style="height:64px">
+                <div class="title" style="font-size:24px">Inicio</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+              </div>
+              <div class="host-body"><div class="ph-line w90"></div></div>
+            </div>
+            <div class="scrim"></div>
+            <aside class="drawer" aria-label="Navegación principal">
+              <div class="drawer-head" style="height:72px">
+                <div class="brand" style="font-size:22px">Tao Mangalam<small style="font-size:15px">Consultor</small></div>
+                <button class="iconbtn" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+              </div>
+              <div class="drawer-scroll">
+                <div class="navitem" aria-selected="true" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg><span class="lbl">Inicio</span></div>
+                <div class="navitem" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Consultas</span></div>
+                <div class="navitem" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M4 5a2 2 0 0 1 2-2h11v18H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/></svg><span class="lbl">Biblioteca</span></div>
+                <div class="navitem" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg><span class="lbl">Productos</span></div>
+                <div class="group-sep"></div>
+                <div class="group-cap" style="font-size:16px">Tu cuenta</div>
+                <div class="navitem" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:28px;height:28px"><circle cx="12" cy="12" r="3"/></svg><span class="lbl">Ajustes</span></div>
+                <div class="navitem" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:28px;height:28px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span class="lbl">Cuenta</span></div>
+                <div class="navitem" style="font-size:25px;min-height:62px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:28px;height:28px"><circle cx="12" cy="12" r="9"/></svg><span class="lbl">Ayuda</span></div>
+              </div>
+            </aside>
+            <div class="note" style="bottom:8px;right:8px;max-width:150px">El pie se vuelve <b>parte del flujo</b><br>desplazable y se separa<br>con línea y rótulo</div>
+          </div>
+        </div>
+        <figcaption>A 200 % el pie deja de estar anclado y se desplaza con la lista; la separación visual se mantiene con línea y rótulo, no con posición.</figcaption>
+      </figure>
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>5b · Teléfono girado (QA-01-08-03)</strong><span>844 × 390 físico · 100 %</span></div>
+          <div class="vp" style="width:390px;height:300px;background:#141210;display:flex;align-items:center;justify-content:center">
+            <div style="width:170px;height:280px;border-radius:8px;overflow:hidden;position:relative;background:var(--marfil);border:1px solid #0C0B09">
+              <div class="host">
+                <div class="appbar" style="height:44px;padding:0 4px">
+                  <div class="title" style="font-size:13px">Inicio</div>
+                  <button class="iconbtn" style="width:32px;height:32px" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+                </div>
+                <div class="host-body" style="padding:10px"><div class="ph-line w90" style="height:7px"></div><div class="ph-line w70" style="height:7px"></div></div>
+              </div>
+            </div>
+            <div class="note" style="top:10px;left:10px;max-width:160px">Lado corto <b>390 &lt; 600</b>:<br>la app permanece en vertical<br>aunque el aparato gire</div>
+            <div class="note" style="bottom:10px;right:10px;max-width:150px">El panel no se deforma:<br>sigue a 80 % del ancho <b>vertical</b></div>
+          </div>
+        </div>
+        <figcaption>El dispositivo gira; la composición no. El fondo oscuro de esta lámina representa el aparato fuera del área de la app, no una superficie del producto.</figcaption>
+      </figure>
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>5c · Tablet girada · se readapta</strong><span>768 × 1024 ↔ 1024 × 768</span></div>
+          <div class="vp" style="width:390px;height:300px;background:var(--page-2);display:flex;align-items:center;justify-content:center;gap:14px;border-color:var(--page-borde)">
+            <div style="width:116px;height:155px;border:1px solid var(--borde);border-radius:6px;background:var(--marfil);overflow:hidden">
+              <div style="height:18px;border-bottom:1px solid var(--borde);display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-size:8px;font-weight:650">Consultas <span>≡</span></div>
+              <div style="padding:6px"><div class="ph-line w90" style="height:5px"></div><div class="ph-line w70" style="height:5px"></div></div>
+            </div>
+            <div style="color:var(--page-txt-dim);font-size:18px">→</div>
+            <div style="width:170px;height:128px;border:1px solid var(--borde);border-radius:6px;background:var(--marfil);display:flex;overflow:hidden">
+              <div style="width:52px;border-right:1px solid var(--borde);padding:5px 4px">
+                <div style="background:var(--acento-tonal);border-left:3px solid var(--acento);height:12px;border-radius:0 4px 4px 0;margin-bottom:4px"></div>
+                <div style="height:12px;background:#EFEADC;border-radius:4px;margin-bottom:4px"></div>
+                <div style="height:12px;background:#EFEADC;border-radius:4px;margin-bottom:4px"></div>
+                <div style="height:12px;background:#EFEADC;border-radius:4px"></div>
+              </div>
+              <div style="flex:1;padding:6px">
+                <div style="height:14px;border-bottom:1px solid var(--borde);font-size:8px;font-weight:650;margin:-2px -6px 6px;padding:0 6px 2px">Consultas</div>
+                <div class="ph-line w90" style="height:5px"></div><div class="ph-line w45" style="height:5px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Vertical 768 (superpuesto) → horizontal 1024 (persistente). El destino activo se conserva en el giro.</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>6 · Destinos de marcador, carga y error</h2>
+    <p class="sub">El menú funciona sin red: es una lista declarativa en memoria, no depende de una respuesta. En M0 los
+    siete destinos llevan a pantallas de marcador; el error y la carga pertenecen a la <b>vista anfitriona</b>, nunca al panel.</p>
+
+    <div class="grid">
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>6a · Destino de marcador</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp" style="width:390px;height:300px">
+            <div class="host">
+              <div class="appbar"><div class="title">Productos</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+              </div>
+              <div class="host-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px;margin-bottom:12px"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/></svg>
+                <h4 style="margin:0 0 6px;font-size:16px;font-weight:650">Productos</h4>
+                <p style="margin:0;font-size:13px;color:var(--tinta-media);max-width:30ch">Esta sección llega más adelante. Ya puedes navegar hasta aquí desde el menú.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Texto visible del marcador. El fondo de familia lo monta HU-01-10; aquí se ve la superficie base.</figcaption>
+      </figure>
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>6b · Carga de la vista anfitriona</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp" style="width:390px;height:300px">
+            <div class="host">
+              <div class="appbar"><div class="title">Consultas</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+              </div>
+              <div class="host-body">
+                <div class="ph-card"><div class="ph-line w70" style="margin-bottom:8px"></div><div class="ph-line w90" style="height:8px"></div></div>
+                <div class="ph-card"><div class="ph-line w45" style="margin-bottom:8px"></div><div class="ph-line w90" style="height:8px"></div></div>
+              </div>
+            </div>
+            <div class="note" style="bottom:8px;left:8px;max-width:200px">El encabezado y el menú <b>no esperan</b> a la vista:<br>están disponibles durante la carga</div>
+          </div>
+        </div>
+        <figcaption>El shell nunca entra en estado de carga; la hamburguesa responde desde el primer fotograma.</figcaption>
+      </figure>
+
+      <figure class="spec">
+        <div class="device">
+          <div class="label"><strong>6c · Error de la vista, menú intacto</strong><span>390 × 844 · 100 %</span></div>
+          <div class="vp" style="width:390px;height:300px">
+            <div class="host">
+              <div class="appbar"><div class="title">Consultas</div>
+                <button class="iconbtn" aria-label="Abrir menú de navegación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+              </div>
+              <div class="host-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9B3B32" stroke-width="1.5" stroke-linecap="round" style="width:34px;height:34px;margin-bottom:10px"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg>
+                <h4 style="margin:0 0 6px;font-size:15px;font-weight:650">No pudimos cargar tus consultas</h4>
+                <p style="margin:0 0 12px;font-size:13px;color:var(--tinta-media);max-width:30ch">Revisa tu conexión e inténtalo de nuevo. El menú sigue disponible.</p>
+                <span style="display:inline-flex;align-items:center;height:40px;padding:0 18px;border:1px solid var(--acento);border-radius:999px;font-size:13.5px;font-weight:620;color:var(--acento)">Reintentar</span>
+              </div>
+            </div>
+            <div class="note" style="top:6px;right:62px;max-width:150px">El error vive en la vista,<br><b>nunca en el panel</b></div>
+          </div>
+        </div>
+        <figcaption>Sin red, el menú abre y navega igual: la lista de destinos es declarativa y local.</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>7 · Modelo declarativo de destinos (REQ-01, REQ-10)</h2>
+    <p class="sub">Los siete destinos con id estable, clave i18n, icono y ruta. HU-01-11 filtra esta lista sin tocar el shell;
+    en M0 no hay filtrado. Ninguna etiqueta es literal en el widget.</p>
+    <table class="spec-table">
+      <thead>
+        <tr><th>Grupo</th><th>Id estable</th><th>Clave i18n</th><th>Etiqueta en español</th><th>Icono</th><th>Ruta (M0)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>principal</td><td><code>home</code></td><td><code>nav.home</code></td><td>Inicio</td><td>casa</td><td><code>/inicio</code></td></tr>
+        <tr><td>principal</td><td><code>consultations</code></td><td><code>nav.consultations</code></td><td>Consultas</td><td>globo de diálogo</td><td><code>/consultas</code></td></tr>
+        <tr><td>principal</td><td><code>library</code></td><td><code>nav.library</code></td><td>Biblioteca</td><td>libro</td><td><code>/biblioteca</code></td></tr>
+        <tr><td>principal</td><td><code>products</code></td><td><code>nav.products</code></td><td>Productos</td><td>caja</td><td><code>/productos</code></td></tr>
+        <tr><td>pie</td><td><code>settings</code></td><td><code>nav.settings</code></td><td>Ajustes</td><td>engranaje</td><td><code>/ajustes</code></td></tr>
+        <tr><td>pie</td><td><code>account</code></td><td><code>nav.account</code></td><td>Cuenta</td><td>persona</td><td><code>/cuenta</code></td></tr>
+        <tr><td>pie</td><td><code>help</code></td><td><code>nav.help</code></td><td>Ayuda</td><td>interrogación</td><td><code>/ayuda</code></td></tr>
+      </tbody>
+    </table>
+    <ul class="plain">
+      <li><b>Rótulo del grupo de pie:</b> clave <code>nav.group.account</code> → “Tu cuenta”. Es la separación visible además de la línea.</li>
+      <li><b>Encabezado del panel:</b> <code>nav.drawer.brand</code> → “Tao Mangalam”, <code>nav.drawer.role</code> → “Consultor”.</li>
+      <li><b>Controles:</b> <code>nav.open</code> → “Abrir menú de navegación”, <code>nav.close</code> → “Cerrar menú”,
+          <code>nav.back</code> → “Volver”, <code>nav.hide</code> → “Ocultar panel de navegación”,
+          <code>nav.show</code> → “Mostrar panel de navegación”.</li>
+      <li><b>Iconos:</b> en M0 son los operativos de HU-01-03; los pictogramas ilustrados están marcados como faltante y no se inventan aquí.</li>
+    </ul>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>8 · Medidas, duraciones y límites usados en esta maqueta</h2>
+    <p class="sub">REQ-09. Todo sale de tokens: ningún color literal, ningún número mágico. Esta tabla es el contrato que la
+    implementación debe respetar y contra el que se comparan los goldens.</p>
+    <table class="spec-table">
+      <thead><tr><th>Concepto</th><th>Token</th><th>Valor</th><th>Dónde se ve</th></tr></thead>
+      <tbody>
+        <tr><td>Alto del encabezado, teléfono</td><td><code>TaoSize.headerCompact</code></td><td>64</td><td>1a, 1b, 1c, 4a, 5a</td></tr>
+        <tr><td>Alto del encabezado, tablet</td><td><code>TaoSize.headerMedium</code></td><td>72</td><td>3a, 3b, 3c, 3d</td></tr>
+        <tr><td>Área táctil de los controles</td><td><code>TaoSize.touchTarget</code></td><td>48 × 48</td><td>todos los encabezados</td></tr>
+        <tr><td>Ancho del panel superpuesto</td><td>80 % · <code>TaoSize.drawerPhoneMax</code></td><td>80 % con tope 360</td><td>1c, 3c, 4a, 5a</td></tr>
+        <tr><td>Ancho del panel persistente</td><td><code>TaoSize.drawerPersistent</code></td><td>320</td><td>3a</td></tr>
+        <tr><td>Entrada del panel</td><td><code>TaoDuration.drawerIn</code></td><td>260 ms</td><td>1c</td></tr>
+        <tr><td>Aparición del scrim</td><td><code>TaoDuration.scrimIn</code></td><td>180 ms</td><td>1c</td></tr>
+        <tr><td>Salida del panel</td><td><code>TaoDuration.drawerOut</code></td><td>200 ms</td><td>4a</td></tr>
+        <tr><td>Movimiento reducido</td><td><code>TaoDuration.reducedFade</code></td><td>≤ 120 ms o inmediato</td><td>4b</td></tr>
+        <tr><td>Panel persistente desde</td><td><code>TaoBreakpoint.expandedMin</code></td><td>840 de ancho disponible</td><td>3a vs 3d</td></tr>
+        <tr><td>Se considera tablet desde</td><td><code>TaoBreakpoint.mediumMin</code></td><td>600 de lado más corto</td><td>5b vs 5c</td></tr>
+        <tr><td>Barra del destino activo</td><td><code>TaoSize.activeIndicator</code></td><td>4 de ancho</td><td>2a, 2b, 3a</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ====================================================== -->
+  <section class="block">
+    <h2>9 · Lo que esta maqueta NO muestra</h2>
+    <p class="sub">Para que la comparación visual de QA-01-08-05 no reclame algo fuera de alcance.</p>
+    <ul class="plain">
+      <li><b>Paisaje, ilustración de fondo o cajas por pictograma en el panel:</b> excluidos a propósito. El panel es una sola
+      superficie marfil opaca (doc 43 §7 y §9, DEC-235); el fondo de la vista anfitriona solo asoma detrás del scrim.</li>
+      <li><b>Filtrado de destinos por manifiesto de la cuenta:</b> HU-01-11 (M1a). Aquí se ven los siete siempre.</li>
+      <li><b>Contenido real de cada destino:</b> EP-05, EP-10, EP-11 y EP-03b. En M0 solo marcadores.</li>
+      <li><b>Franja de impersonación:</b> EP-14b. No hay espacio reservado para ella en este shell.</li>
+      <li><b>Menús de Productor y Administrador:</b> EP-13 y EP-14a / EP-14b. Este menú es el del consultor (doc 36, sección I).</li>
+      <li><b>Pictogramas ilustrados de navegación:</b> marcados como faltante en contenido/assets. Los iconos de esta maqueta
+      son los operativos de HU-01-03 y son provisionales.</li>
+    </ul>
+  </section>
+
+</div>
+</body>
+</html>
