@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "2026-10-01-taomangalam-f5",
+  "project_id": "taomangalam",
+  "ts": "2026-10-01T20:40:00-03:00",
+  "kind": "findings",
+  "scope": {
+    "tickets": ["TAO-171"],
+    "dredd_runs": ["tao171-n3-integral-2026-10-01"],
+    "note": "Hallazgos tardios del gate integral (N3) de TAO-171, no de kn-dredd (el review de PR se omitio a proposito al cerrar). El ticket abrio 2 tarjetas de sondas (privilegios-de-rol y lint-de-docs), ambas reusadas con decision 'no aplica': falsos positivos. Los 4 hallazgos caen fuera de las sondas POR DISENO: las sondas leen objetos del catalogo OpenAPI, migraciones y el baseline de lint de docs; estos hallazgos son de tooling de lint, alcance de una regla y documentacion. La clasificacion inicial de un subagente limpio habia forzado categorias de modelo de objetos (vias-de-escritura, consumidores-cruzados) para f1-f3; se re-juzgaron con el contexto del codigo."
+  },
+  "classifier": {
+    "model": "subagente limpio (inicial) + re-juez del host con contexto del codigo",
+    "reverify_model": null,
+    "tokens": null
+  },
+  "findings": [
+    {
+      "dredd_run": "tao171-n3-integral-2026-10-01",
+      "finding_id": "f1-literales-en-widgets-propios",
+      "ticket": "TAO-171",
+      "severity": "S1",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "la guarda de lint de la app solo inspeccionaba una lista fija de widgets de Flutter y dejo pasar textos visibles pasados a widgets propios; es tooling de lint, ninguna sonda lee reglas de lint ni constructores de UI"
+    },
+    {
+      "dredd_run": "tao171-n3-integral-2026-10-01",
+      "finding_id": "f2-regla-eslint-demasiado-amplia",
+      "ticket": "TAO-171",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "media",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "la regla ESLint marcaba cualquier objeto con title/detail literal, no solo respuestas de error del contrato (falsos positivos posibles en DTOs de dominio); es alcance de una configuracion de lint, fuera del catalogo de sondas"
+    },
+    {
+      "dredd_run": "tao171-n3-integral-2026-10-01",
+      "finding_id": "f3-doc-del-catalogo-servidor",
+      "ticket": "TAO-171",
+      "severity": "S2",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "faltaba documentar la convencion de claves junto al catalogo del servidor; la sonda de docs solo valida markdownlint del baseline, no la existencia ni la simetria de documentacion"
+    },
+    {
+      "dredd_run": "tao171-n3-integral-2026-10-01",
+      "finding_id": "f4-ids-internos-en-docs",
+      "ticket": "TAO-171",
+      "probe_category": "sin-sonda",
+      "confidence": "alta",
+      "card_status": "sin-tarjeta",
+      "card": null,
+      "rationale": "ids internos de proceso en documentos versionados nuevos; higiene documental, sin mecanismo de dato que una sonda anticipe"
+    }
+  ],
+  "unattributed": 0,
+  "backtest": null,
+  "proposals": [
+    {
+      "type": "noise",
+      "probe": "privilegios-de-rol",
+      "description": "acotar schemaWords para que 'migracion' suelta (p. ej. 'compatibilidad/migracion') no dispare la tarjeta: schema|tabla|columna|prisma|ddl|migracion seguida de contexto tecnico (prisma|sql|postgres|de base|de esquema|de schema|desde cero)",
+      "from": ["TAO-171:card-privilegios-de-rol-b4cc421145"],
+      "measured": {
+        "cases": ["TAO-171", "control-schema"],
+        "before": { "recall_pct": 100, "useful_pct": 33, "cards": 3 },
+        "after": { "recall_pct": 100, "useful_pct": 50, "cards": 2 },
+        "caught": ["control-schema:card-privilegios-de-rol"],
+        "lost": [],
+        "new_noise": 0
+      }
+    },
+    {
+      "type": "noise",
+      "probe": "lint-de-docs",
+      "description": "el matching del kind docs-lint-baseline usa substring sin limites de palabra: el stem 'plan' de docs/PLAN.md matchea dentro de 'planificacion' del pedido y abre una tarjeta falsa; exigir palabra completa (o que el doc venga como ruta explicita en el pedido)",
+      "from": ["TAO-171:card-lint-de-docs-4d9deffd06"],
+      "unmeasured_reason": "no es expresable en probes.yaml: la funcion mentioned() vive en el motor (server/probes/kinds/docs.ts) y exige un cambio en kanai-app; el backtest vigente reproduce el falso positivo en TAO-171 (la tarjeta lint-de-docs sigue apareciendo con el yaml actual y con el borrador), pero medir el ajuste requiere parchear el motor, fuera del alcance de esta evaluacion"
+    }
+  ]
+}
