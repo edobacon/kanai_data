@@ -57,4 +57,4 @@
 
 ## Plan
 
-6 de 11 fases cerradas, fase actual F6. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+7 de 11 fases cerradas, fase actual F7. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
