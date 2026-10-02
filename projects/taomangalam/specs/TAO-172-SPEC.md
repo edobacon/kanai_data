@@ -73,13 +73,13 @@ Contrato: rollback: Borrar `app/lib/design_system/motion_curves.dart` y revertir
 Contrato: rollback: Borrar `app/test/design_system/motion_curves_test.dart`.. Status: done
 
 #### S2.T1 — Implementar el servicio de reducción de movimiento en `app/lib/design_system/motion/reduced_motion_service.dart`: valor efectivo = preferencia del sistema (`MediaQuery.disableAnimations`, que cubre Reducir movimiento de iOS y Quitar animaciones de Android) OR preferencia local por dispositivo leída de `preferencia_local` (tecnologia/20, clave de movimiento por dispositivo). Tratar el almacenamiento vacío o con valor no booleano como movimiento normal, sin lanzar. No escribir la preferencia local: el interruptor de Ajustes es HU-01-17.
-Contrato: rollback: Borrar `app/lib/design_system/motion/reduced_motion_service.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: pending
+Contrato: rollback: Borrar `app/lib/design_system/motion/reduced_motion_service.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: done
 
 #### S2.T2 — Implementar la máquina de estados común de animación en `app/lib/design_system/motion/animation_phase.dart`: estados idle, entering, settled, exiting, disposed e interrupted, con transiciones válidas explícitas, salto al estado final ante la reanudación de la app desde segundo plano (observador del ciclo de vida) y liberación de controladores y temporizadores al desmontar. Pedir una transición en disposed es un no-op, no una excepción.
-Contrato: rollback: Borrar `app/lib/design_system/motion/animation_phase.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: pending
+Contrato: rollback: Borrar `app/lib/design_system/motion/animation_phase.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: done
 
 #### S2.T3 — Tests y regresión de la fundación: crear `app/test/design_system/motion/reduced_motion_service_test.dart` con la matriz de REQ-02 (sistema activo con local apagada, sistema apagado con local sembrada, ambas apagadas, almacenamiento vacío o con valor inválido, preferencia local no sobrescrita por una sincronización) y `app/test/design_system/motion/animation_phase_test.dart` con la matriz de REQ-04 (recorrido completo, interrupción a mitad, desmontaje a los 100 ms sin tickers activos, pausa y reanudación con estado final aplicado de una vez, transición en disposed sin efecto).
-Contrato: rollback: Borrar los dos archivos de test creados en esta tarea.. Status: pending
+Contrato: rollback: Borrar los dos archivos de test creados en esta tarea.. Status: done
 
 #### S3.T1 — Implementar los helpers de transición ordinaria en `app/lib/design_system/motion/transitions.dart` sobre `flutter_animate`, apoyados en la máquina de estados y en el servicio de reducción: con movimiento normal aplican duración, curva y distancia de los tokens generados; con movimiento reducido eliminan traslación y escala y dejan un fundido de 120 ms o menos (o cambio inmediato), con el mismo estado final. Sin duraciones ni offsets literales en la implementación.
 Contrato: rollback: Borrar `app/lib/design_system/motion/transitions.dart` y revertir su export en `app/lib/design_system/motion.dart`.. Status: pending
@@ -186,12 +186,12 @@ Contrato: rollback: Revertir los casos agregados en `app/test/design_system/moti
 
 **Gate (auto)**: `cd app && fvm flutter test test/design_system/motion_curves_test.dart test/tool/generate_design_tokens_test.dart` pasa: cada curva de TaoMotionCurve se traduce a la Curve de Flutter con los valores del tokens.v1.json (y un texto no reconocido falla con error explícito), y el test del generador verifica duraciones, distancias y escalas ya generadas; `flutter_animate` figura en app/pubspec.yaml y app/pubspec.lock.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Los tests unitarios del servicio de reducción y de la máquina de estados pasan: la tabla de combinación de preferencias (sistema por un lado, preferencia local por dispositivo por el otro) da reducido en los tres casos esperados, y la máquina recorre idle, entering, settled, exiting, interrupted y disposed sin dejar temporizadores vivos.
 
