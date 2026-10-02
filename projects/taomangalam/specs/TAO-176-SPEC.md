@@ -112,16 +112,16 @@ Contrato: rollback: Borrar el widget de snackbar y su guarda; el banner sigue cu
 Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status: done
 
 #### S3.T1 — Implementar el estado vacio con titulo, explicacion, accion (atomo de boton del modulo) y viñeta opcional: la viñeta se pide al resolvedor de imagenes por familia y tamaño, se dibuja con ajuste contain sin marco, borde, sombra ni fondo gris, y si el resolvedor no la encuentra el estado se dibuja completo igual sin reservar hueco.
-Contrato: rollback: Borrar el widget de estado vacio y su caso de Widgetbook.. Status: pending
+Contrato: rollback: Borrar el widget de estado vacio y su caso de Widgetbook.. Status: done
 
 #### S3.T2 — Implementar el skeleton con la geometria final del contenido: no se dibuja si la espera no supera 300 ms, anima con ciclo de 1200 ms cuando aparece, se vuelve estatico con movimiento reducido y cancela su temporizador de umbral al desmontarse.
-Contrato: rollback: Borrar el widget de skeleton y su temporizador; las vistas vuelven a mostrar el contenido sin estado intermedio.. Status: pending
+Contrato: rollback: Borrar el widget de skeleton y su temporizador; las vistas vuelven a mostrar el contenido sin estado intermedio.. Status: done
 
 #### S3.T3 — Agregar al catalogo Widgetbook los casos de hoja inferior, pantalla completa, banner, snackbar, estado vacio con y sin viñeta y skeleton, cada uno con interruptor de movimiento reducido y montados sobre la vista anfitriona con fondo, y generar los goldens de los siete casos en telefono y tablet para la comparacion de Diseño contra navegacion-y-acciones/maqueta-direccion-consolidada.png y vistas-clave/propuesta-01-inicio-tablero-tirada.png (doc 43 seccion 9, DEC-235).
-Contrato: rollback: Quitar los casos nuevos del catalogo y borrar los goldens generados en esta task.. Status: pending
+Contrato: rollback: Quitar los casos nuevos del catalogo y borrar los goldens generados en esta task.. Status: done
 
 #### S3.T4 — Tests de la etapa: unitarias del umbral del skeleton (200 ms sin skeleton segun QA-01-05-03, 300 ms sin skeleton, 301 ms con skeleton, ciclo de 1200 ms, cancelacion del timer al desmontar); widget tests del estado vacio sin viñeta, con viñeta 2:1 que no se deforma y con viñeta ausente; test de movimiento reducido con skeleton estatico entre el frame 0 y el de 1200 ms; regresion de la base de overlay (las cuatro vias de cierre siguen en 180 ms tras los cambios de la etapa).
-Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: El cierre del overlay es unico para boton, toque exterior, Escape y Atras: misma salida de 180 ms, foco atrapado mientras esta abierto, foco devuelto al control que lo abrio y titulo anunciado al abrir; en una confirmacion critica el dato se actualiza antes de iniciar la salida
@@ -166,13 +166,13 @@ Contrato: rollback: Borrar los archivos de test agregados en esta etapa.. Status
 
 **Gate (auto)**: En Widgetbook: la hoja inferior entra desde el borde inferior en 280 ms y la pantalla completa abre para formulario, ambas cierran con Atras devolviendo el foco; dos errores seguidos con Reintentar dejan un solo banner visible; el snackbar de confirmacion se retira solo a los 3500 ms y el caso documenta que bloqueos e irreversibles no lo usan.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: En Widgetbook: el estado vacio sin viñeta muestra titulo, explicacion y accion y se entiende igual; con viñeta la imagen se ve sin marco ni fondo gris y sin deformarse; una carga de 200 ms no dibuja skeleton y una de 1000 ms si, con ciclo de 1200 ms; con movimiento reducido el skeleton queda quieto. Los goldens de telefono y tablet de los siete casos quedan generados para la comparacion de Diseño (QA-01-05-04).
 
