@@ -12,17 +12,15 @@
 
 ## Avisos
 
-- la rama de trabajo USUITE-15425-logs-auth-seguros todavía no existe en user-api (se crea al empezar el trabajo)
 - la rama de trabajo USUITE-15425-logs-auth-seguros-secure todavía no existe en user-api (se crea al empezar el trabajo)
-- la rama de trabajo USUITE-15425-logs-auth-seguros todavía no existe en sandbox-api (se crea al empezar el trabajo)
 - la rama de trabajo USUITE-15425-logs-auth-seguros-secure todavía no existe en sandbox-api (se crea al empezar el trabajo)
 
 ## Repos
 
 | Repo | Ruta local | Rama base | Ramas de trabajo | Para qué |
 |---|---|---|---|---|
-| user-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros (por crear), USUITE-15425-logs-auth-seguros-secure (por crear) | módulo de autenticación: helper de ofuscación, authLog y conversión de los logs |
-| sandbox-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros (por crear), USUITE-15425-logs-auth-seguros-secure (por crear) | filtro de Sentry (beforeSend) y plantilla de configuración LOG_MASKING |
+| user-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros, USUITE-15425-logs-auth-seguros-secure (por crear) | módulo de autenticación: helper de ofuscación, authLog y conversión de los logs |
+| sandbox-api | configurada | develop (existe) | USUITE-15425-logs-auth-seguros, USUITE-15425-logs-auth-seguros-secure (por crear) | filtro de Sentry (beforeSend) y plantilla de configuración LOG_MASKING |
 
 ## Ambientes
 
@@ -49,6 +47,7 @@
 
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
+| ambiente-local.md | referencia | Cómo levantar suite-api en local (Apple Silicon) y validar con login local | Rosetta para Node 10, túnel de develop en 5500, pool en 3, lo que inyecta gulp y el login local como validación de F5 y F6 |
 | plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
 | usuite-15425-claves-en-logs-uvmcl.md | analisis | USUITE-15425: contraseñas en los logs de suite-api (uvmcl). Análisis, plan de prueba y esfuerzo | Análisis inicial: por qué la clave de uvmcl sale en los logs y flujo del login |
 | usuite-15425-niveles-de-solucion.md | analisis | USUITE-15425: niveles de solución (consolidado con verificación en uvmcl) | Vulnerabilidades, estado verificado de uvmcl y niveles de solución |

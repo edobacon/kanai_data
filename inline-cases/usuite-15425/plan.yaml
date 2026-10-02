@@ -1,8 +1,6 @@
 plan_id: usuite-15425
 title: "USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles)"
 intent: Que ningún log del módulo de autenticación exponga contraseñas, claves o tokens, conservando la utilidad de los logs para soporte (quién inició sesión, cuándo y con qué resultado), con una solución configurable que funcione en cualquier ambiente aunque no tenga configuración.
-created: 2026-10-01T17:50:36.527Z
-updated: 2026-10-02T11:57:16.344Z
 tags:
   projects: []
   repos:
@@ -54,7 +52,7 @@ phases:
         text: Acceso a Sentry y a los repos `user-api` y `sandbox-api` en Bitbucket.
     tasks:
       - code: F0.1
-        text: Revisar en el proyecto de Sentry si el filtro de datos del servidor está activo. *Responder:* activo o no, y qué campos filtra (lista literal).
+        text: 'Solo si se consigue acceso a Sentry antes de cerrar el caso: revisar en el proyecto de Sentry si el filtro de datos del servidor está activo y confirmar que Sentry sigue en uso en uvmcl-retention (hubo cambios de ambiente; lo confirma quien despliega o quien tenga acceso). *Responder:* en uso o no, filtro activo o no, y qué campos filtra (lista literal). Si no hay acceso o Sentry ya no está en uso, registrar "No aplica: <motivo>" con fecha; no bloquea el plan.'
         kb:
           - plan-original.md#restricciones-tecnicas-verificadas
           - usuite-15425-plan-helper-ofuscacion-y-mapa-logger.md#a-4-salidas-de-log-que-no-controla-loggerlevel
@@ -263,13 +261,13 @@ phases:
           expect: Sin salida y código de salida 0.
           exit_code: 0
       - id: F1.c4
-        text: Un solo commit con el helper y sus tests (commit 1 de "Estructura de commits").
+        text: "Dos commits separados según uplanner/rules/COMMITS.md: `USUITE-15425 feat:` solo con el helper (`logSanitizer.js`) y `USUITE-15425 test:` solo con sus tests y los fixtures de F0.8."
         kind: command
         run:
           command: git log --oneline --stat origin/develop..HEAD
           repo: user-api
           how: Desde la raíz del repo, en la rama de trabajo.
-          expect: 'Exactamente 1 commit (commit 1 de "Estructura de commits"): el helper y sus tests.'
+          expect: "Exactamente 2 commits: uno feat que toca solo server/api/user-api/helpers/logSanitizer.js y uno test que toca solo archivos de test/ (tests y fixtures)."
     effort: 2 a 2,5 días.
   - code: F2
     title: Detección de datos dentro de texto
@@ -338,13 +336,13 @@ phases:
           expect: "Sin coincidencias: grep no imprime nada y termina con código de salida 1."
           exit_code: 1
       - id: F2.c3
-        text: Un commit propio (commit 2 de "Estructura de commits").
+        text: "Dos commits propios según COMMITS.md: `feat` solo con la detección en texto y `test` solo con T30 a T36."
         kind: command
         run:
           command: git log --oneline --stat origin/develop..HEAD
           repo: user-api
           how: Desde la raíz del repo, en la rama de trabajo.
-          expect: '2 commits en total: el de F1 y uno propio de F2 (commit 2 de "Estructura de commits").'
+          expect: "4 commits en total: los 2 de F1 y 2 propios de F2 (feat solo código, test solo test/)."
     effort: 0,75 a 1 día.
   - code: F3
     title: Función de log authLog.js
@@ -404,13 +402,13 @@ phases:
           expect: 42 passing (o el número real) y 0 failing.
           exit_code: 0
       - id: F3.c2
-        text: Un commit propio (commit 3 de "Estructura de commits").
+        text: "Dos commits propios según COMMITS.md: `feat` solo con `authLog.js` y `test` solo con T37 a T42."
         kind: command
         run:
           command: git log --oneline --stat origin/develop..HEAD
           repo: user-api
           how: Desde la raíz del repo, en la rama de trabajo.
-          expect: '3 commits en total: F1, F2 y uno propio de F3 (commit 3 de "Estructura de commits").'
+          expect: "6 commits en total: 2 de F1, 2 de F2 y 2 propios de F3 (feat solo código, test solo test/)."
     effort: 0,5 días.
   - code: F4
     title: Conversión del login de uvmcl (loginServices.js)
@@ -567,6 +565,9 @@ phases:
           repo: user-api
           how: Desde la raíz del repo, en la rama de trabajo.
           expect: Los commits de F5 tocan un archivo cada uno; cada SHA se registra con su archivo.
+      - id: F5.c5
+        text: "Login local en la app levantada (ver ambiente-local.md#login-local-como-validacion-decidido-el-2026-10-02): login correcto y login con clave incorrecta, con la app reiniciada después de los archivos convertidos. *Evidencia:* fecha, usuario de prueba (sin clave), resultado de cada login y extracto del log de consola sin claves ni tokens, con correos e identificadores según su nivel. No reemplaza los tests en Docker ni la QA de uvmcl."
+        kind: manual
     effort: 1,5 a 2 días.
   - code: F6
     title: Sentry (sandbox-api/server/app.js)
@@ -578,7 +579,7 @@ phases:
       - id: F6.pre2
         text: 'Rama de trabajo al día en sandbox-api: tras `git fetch origin`, `git status -sb` sin "behind" y `git log --oneline HEAD..origin/develop` vacío (si la base avanzó, integrarla y volver a correr los tests). Evidencia: esa salida por repo.'
       - id: F6.pre3
-        text: Resultado de F0.1 (filtro del servidor de Sentry) a mano.
+        text: 'Resultado de F0.1 a mano, si se obtuvo. Si F0.1 quedó como "No aplica" (sin acceso a Sentry o Sentry fuera de uso), se avanza igual: el filtro de F6 se aplica de todos modos.'
     tasks:
       - code: F6.1
         text: "Extender el `beforeSend` existente: sanitizar `event.request.data`, `request.headers`, `request.cookies`, `extra` y `contexts`."
@@ -612,13 +613,16 @@ phases:
           how: Desde la raíz de sandbox-api (user-api vive en server/api/user-api), con Docker corriendo. Necesita la base de pruebas de local.env.js.
           expect: "Los 13 casos existentes con el mismo resultado que la línea base de F0.9 (solo fallos preexistentes). El patrón también toma los tests del helper: contarlos aparte."
       - id: F6.c3
-        text: Un commit propio en `sandbox-api`.
+        text: "Dos commits propios en `sandbox-api` según COMMITS.md: `fix` solo con `server/app.js` y `test` solo con T43 a T45."
         kind: command
         run:
           command: git log --oneline --stat origin/develop..HEAD
           repo: sandbox-api
           how: Desde la raíz del repo, en la rama de trabajo.
-          expect: Un commit propio de F6 en sandbox-api (server/app.js y sus tests).
+          expect: "Dos commits de F6 en sandbox-api: uno fix que toca solo server/app.js y uno test que toca solo sus tests."
+      - id: F6.c4
+        text: "Login local en la app levantada con el server/app.js nuevo (ver ambiente-local.md#login-local-como-validacion-decidido-el-2026-10-02): la app arranca sin errores nuevos, login correcto y login con clave incorrecta funcionan, y el log de consola no muestra claves ni tokens. *Evidencia:* fecha, resultado de cada login y extracto del log. Antes del commit, descartar la inyección de gulp en server/app.js y server/routes.js y el ajuste local del pool."
+        kind: manual
     effort: 0,5 días.
   - code: F7
     title: Chequeo estático y smoke local
@@ -779,7 +783,7 @@ phases:
           expect: 'Por repo: rama sin "behind" y git log vacío.'
           exit_code: 0
       - code: F9.2
-        text: "Con `uvmcl-retention-qa` desplegado (lo informa quien despliega: fecha, ambiente y rama por repo; guardarlo en el KB del caso como documento de tipo registro `despliegue-uvmcl.md`), ejecutar Q1 a Q10 (evidencia: `kubectl logs` filtrado por `clave|password|Login user response|OCULTO` y evento de Sentry si aplica)."
+        text: 'Con `uvmcl-retention-qa` desplegado (lo informa quien despliega: fecha, ambiente y rama por repo; guardarlo en el KB del caso como documento de tipo registro `despliegue-uvmcl.md`), ejecutar Q1 a Q10 (evidencia: `kubectl logs` filtrado por `clave|password|Login user response|OCULTO` y, solo si hay acceso a Sentry y sigue en uso en el ambiente, el evento de Sentry; si no, "No aplica: <motivo>" en lo que toca a Sentry).'
         detail: |-
           | # | Caso | Esperado |
           |---|---|---|
@@ -790,7 +794,7 @@ phases:
           | Q5 | Ambiente **sin** `LOG_MASKING` | Funciona con defaults, sin errores ni avisos |
           | Q6 | Con `LOG_MASKING` de prueba (`text: light`, `id: medium`, un `addPatterns`) y reinicio | Cada estrategia con su nivel |
           | Q7 | Con `loggerLevel: 'info'` (configurado en el despliegue) | Logs de auth visibles; `silly` y `debug` no |
-          | Q8 | Error del WebService (simulado) | Mensaje de siempre; navegador sin error crudo; Sentry sanitizado |
+          | Q8 | Error del WebService (simulado) | Mensaje de siempre; navegador sin error crudo; Sentry sanitizado (solo si hay acceso y Sentry está en uso; si no, No aplica con motivo) |
           | Q9 | Relevamiento de campos repetido en QA | Ningún campo de `block` con valor visible |
           | Q10 | Regresión | Navegar el módulo de retención y cerrar sesión sin errores nuevos |
         kb:
@@ -879,3 +883,5 @@ phases:
     effort: 1 a 1,5 días.
     delivers: true
     rollback: En cada repo afectado, PR con `git revert -m 1 <SHA del merge>` a `feature/secure-develop` y, si ya llegó, otro a `feature/secure-master`; luego volver a desplegar la rama anterior en el ambiente secure afectado (quien despliega). Sin cambios de datos que deshacer.
+created: 2026-10-01T17:50:36.527Z
+updated: 2026-10-02T12:58:33.279Z

@@ -89,16 +89,16 @@ Contrato: rollback: Quitar la regla/entrada de configuración agregada; el lint 
 Contrato: rollback: Borrar los archivos de test agregados; el código de producción queda intacto.. Status: done
 
 #### S2.T1 — Implementar la capa de fondo a pantalla completa (DEC-235): widget que dibuja el fondo de la familia detrás de todo el contenido, incluidas las zonas del encabezado y de las barras del sistema (sin recorte por `SafeArea`), con `cover` centrado por defecto, opacidad visual entre 12 y 18 % y superficie de respaldo con el `overlayToken` de la familia cuando la variante falta. Es la única forma de dibujar un fondo de familia: nunca franja, recuadro ni tarjeta. La montan las plantillas de HU-01-10, que no se tocan en este ticket.
-Contrato: rollback: Borrar el widget de capa de fondo; nada lo consume todavía (HU-01-10 es posterior), así que no hay consumidores que romper.. Status: pending
+Contrato: rollback: Borrar el widget de capa de fondo; nada lo consume todavía (HU-01-10 es posterior), así que no hay consumidores que romper.. Status: done
 
 #### S2.T2 — Implementar el componente de ilustración editorial sin marco (DEC-235): dibuja llegadas o avance, permanencias, animales Ashura, materiales, objetos y acciones con `contain`, sin marco, borde, sombra ni fondo gris, integrado al papel (transparencia o el mismo tono `ivory100`), sin deformar y sin ampliar sobre el intrínseco. Reusa el dibujo y el camino de respaldo de la sesión anterior.
-Contrato: rollback: Borrar el componente de ilustración; el resolvedor y la capa de fondo siguen funcionando sin él.. Status: pending
+Contrato: rollback: Borrar el componente de ilustración; el resolvedor y la capa de fondo siguen funcionando sin él.. Status: done
 
 #### S2.T3 — Publicar el preview visual de ambos widgets para la comparación de Diseño de QA-01-02-05: casos en teléfono vertical, tablet vertical y tablet horizontal, con imagen y con superficie de respaldo, para contrastar contra `navegacion-y-acciones/maqueta-direccion-consolidada.png` y doc 43 §9. Si Widgetbook no está instalado en el monorepo, dejar en su lugar una pantalla de preview de desarrollo y las capturas correspondientes en el PR.
-Contrato: rollback: Quitar las entradas de preview agregadas; no afectan el código de producción de los widgets.. Status: pending
+Contrato: rollback: Quitar las entradas de preview agregadas; no afectan el código de producción de los widgets.. Status: done
 
 #### S2.T4 — Tests y regresión de los widgets: widget tests de la capa de fondo (cubre la pantalla completa incluido lo que queda bajo encabezado y barras del sistema, opacidad dentro de 0.12-0.18, respaldo con overlay cuando falta la variante, contenido legible por encima del fondo), widget tests de la ilustración (sin borde, sombra ni fondo distinto de transparente o `ivory100`; `contain` sin deformar; respaldo sin marco ante archivo faltante) y goldens de una plantilla con fondo y con respaldo en teléfono y tablet. Correr además la suite del resolvedor de la sesión anterior para confirmar que no se rompió.
-Contrato: rollback: Borrar los tests y los archivos golden agregados; el código de producción queda intacto.. Status: pending
+Contrato: rollback: Borrar los tests y los archivos golden agregados; el código de producción queda intacto.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La capa de fondo a pantalla completa dibuja el fondo de la familia detrás de todo el contenido, incluidas las zonas del encabezado y de las barras del sistema, con `cover` centrado por defecto, opacidad visual de 12 a 18 % y superficie de respaldo; es la única forma de dibujar 
@@ -120,13 +120,13 @@ Contrato: rollback: Borrar los tests y los archivos golden agregados; el código
 
 **Gate (auto)**: La suite de tests del resolvedor pasa mostrando por nombre los casos QA-01-02-01 a QA-01-02-04 con sus valores concretos, y el lint falla ante un archivo de prueba con `isDark` o ruta literal fuera del resolvedor y pasa con el código final.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: En el preview de Widgetbook (o en las capturas del PR) se ve, en teléfono y tablet, el fondo de familia a pantalla completa detrás del contenido —también bajo encabezado y barras del sistema— con opacidad 12-18 %, la misma vista con superficie de respaldo cuando falta la variante, y la ilustración editorial sin marco; los goldens de plantilla con fondo y con respaldo quedan congelados y pasan.
 
