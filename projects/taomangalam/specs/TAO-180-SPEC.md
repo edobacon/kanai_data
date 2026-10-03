@@ -50,9 +50,9 @@ Las pruebas de foco verifican que el orden de foco coincide con el orden visual,
 La ejecucion en CI reusa el job de Flutter existente en .github/workflows/ci-pr.yml:349 (flutter test --coverage --reporter expanded > coverage/pruebas.txt y el upload-artifact de la linea 366): la suite nueva app/test/accessibility queda descubierta por ese mismo flutter test, se preserva la propagacion del exit code y el upload con if: always(), y el reporte de accesibilidad queda identificable en el artifact. No se crea un job de test duplicado ni un quality-gate nuevo. Un cambio que agregue un componente sin etiqueta semantica hace fallar ese job.
 
 ### REQ-06 `confirmed`
-> Fuente: docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1783-1889 (criterio de auditoria manual y casos QA-01-15-01 a QA-01-15-03) + pedido de enmienda (tarea humana, sin aprobaciones asumidas)
+> Fuente: Pedido de cambio del dev (recorte de alcance registrado en Kanai); HU-01-15 seccion Alcance y Pruebas/evidencia; duenos HU-01-12 (TAO-183) y HU-01-13 (TAO-185)
 
-La auditoria manual con TalkBack (Android) y VoiceOver (iPhone y iPad) sobre el shell, V-31, V-51 y Ajustes es trabajo HUMANO con evidencia real de dispositivo; su informe clasifica cada hallazgo en bloqueante o no bloqueante y enlaza su issue cuando existe. Mientras no se ejecute, sus tareas quedan en pending: no se dan por obtenidos ni la auditoria, ni los hallazgos, ni la aprobacion de Diseno, y no se inventan hallazgos ni identificadores de issue. El cierre de la historia exige que ningun bloqueante de EP-01 quede abierto.
+La auditoria manual con TalkBack (Android) y VoiceOver (iPhone y iPad) queda DIFERIDA fuera de esta historia y pasa a las historias duenas de las vistas sobre las que se ejecuta: V-31 en HU-01-12 (TAO-183), V-51 en HU-01-13 (TAO-185) y Ajustes cuando esa vista exista. Esta historia NO ejecuta ni declara auditoria de lectores de pantalla, no registra hallazgos, no inventa identificadores de issue y no da por obtenida la aprobacion de Diseno. El contrato de la auditoria se conserva para cuando se ejecute en esas historias: informe con cada hallazgo, su severidad (bloqueante o no bloqueante) y su issue enlazado, y ningun bloqueante de EP-01 abierto al cierre de la historia duena. El cierre de HU-01-15 se sostiene solo con lo entregable aqui: la utilidad, las suites automaticas y la puerta de CI.
 
 ### REQ-07 `confirmed` `enforcement`
 > Fuente: app/README.md (archivo existente) + pedido de enmienda S1.T3
@@ -65,9 +65,9 @@ La guia breve de uso de la utilidad se agrega como una seccion de accesibilidad 
 La utilidad y las suites reusan lo que ya existe en el repo: los valores del tema (TaoStrokes.focus desde theme_tokens.dart, sin el literal 3), el helper de literales tool/check_design_literals.dart y el patrón de ensureSemantics de los tests actuales, sin duplicar helpers ni introducir números mágicos; su firma pública queda estable para que otras épicas la adopten sin cambios.
 
 ### REQ-09 `confirmed` `enforcement`
-> Fuente: Pedido de enmienda (pre-intake: TAO-178 en curso, V-31/V-51 como marcadores provisionales) + docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1783-1889 (bloqueada por HU-01-08)
+> Fuente: Pedido de cambio del dev (recorte de alcance registrado en Kanai); estado actual de V-31/V-51 como marcadores provisionales; HU-01-10 (TAO-178) en curso
 
-Las dependencias por etapa quedan explicitas y respetadas: la cobertura de plantillas depende de las tres plantillas de HU-01-10 (TAO-178) integradas; la auditoria fisica de V-31 (HU-01-12, TAO-183) y V-51 (HU-01-13, TAO-185) depende de esas vistas reales, hoy solo marcadores provisionales. Esta historia no implementa HU-01-12 ni HU-01-13 ni sustituye una vista real por un stub o marcador para dar por cumplida una cobertura. El trabajo que no depende de ellas (utilidad, documentacion y componentes ya existentes) puede avanzar en paralelo.
+Las dependencias por etapa quedan explicitas y respetadas: la cobertura automatica de plantillas depende de las tres plantillas de HU-01-10 (TAO-178) integradas y se ejecuta sobre las plantillas reales, sin fixtures ni maquetas locales. La cobertura de V-31 y V-51 NO forma parte de esta historia: hoy son marcadores provisionales y su verificacion de accesibilidad queda diferida a sus historias duenas, HU-01-12 (TAO-183) y HU-01-13 (TAO-185). Esta historia no implementa esas vistas, no audita stubs ni marcadores, y no sustituye una vista real por un placeholder para dar por cumplida una cobertura. El trabajo que no depende de ellas (utilidad, documentacion, componentes existentes, shell y puerta de CI) avanza completo en esta historia.
 
 ### REQ-10 `confirmed` `enforcement`
 > Fuente: docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1783-1889 (seccion "No incluye") + pedido de enmienda (no inventar hallazgos ni tocar trabajo ajeno)
@@ -117,26 +117,11 @@ Contrato: rollback: git checkout .github/workflows/ci-pr.yml para volver al job 
 #### S4.T2 — Verificar la puerta negativa de CI: introducir temporalmente un componente táctil de muestra sin etiqueta semántica, comprobar que la suite y por lo tanto el job fallan nombrando el componente, y revertir el componente de muestra dejando el caso cubierto por el test de la utilidad.
 Contrato: rollback: Eliminar el componente de muestra temporal; no queda rastro en el árbol.. Status: done
 
-#### S4.T3 — Tarea HUMANA de auditoria fisica con lectores de pantalla (TalkBack en Android, VoiceOver en iPhone y iPad) sobre el shell, V-31, V-51 y Ajustes. DEPENDENCIA: requiere las vistas reales de V-31 (HU-01-12, TAO-183) y V-51 (HU-01-13, TAO-185); hoy existen solo marcadores provisionales y esas historias NO se implementan dentro de TAO-180. Mientras falten, la tarea y sus derivadas quedan trazables en pending: no se auditan stubs, no se dan por obtenidos hallazgos ni la aprobacion de Diseno, y no se inventan hallazgos ni identificadores de issue.
-Contrato: rollback: Volver la tarea a pending y retirar cualquier registro de evidencia parcial; no hay cambio de codigo asociado.. Status: pending
+#### S4.T5 — Regresion de cierre de la sesion sin auditoria manual: correr la suite de accesibilidad (app/test/accessibility) sobre componentes de Widgetbook, shell y plantillas reales en telefono 390x844 y tablet 768x1024 y 1024x768 con textScaleFactor 1.0 y 2.0, y verificar que el job Flutter existente de .github/workflows/ci-pr.yml (flutter test --coverage --reporter expanded > coverage/pruebas.txt, linea 349, y el upload-artifact con if: always() de la linea 366) la descubre y propaga el exit code. El criterio de aprobacion de esta sesion es la corrida REAL de CI con su reporte publicado como artifact; no se exige informe de auditoria manual con TalkBack/VoiceOver, que queda diferida a TAO-183 (V-31) y TAO-185 (V-51).
+Contrato: rollback: Si la regresion falla, revertir solo el ultimo commit de la suite de accesibilidad con git revert sin tocar la utilidad ni los cambios de otras historias; si el fallo viene de una regla automatizada, desactivar unicamente esa regla dejando registrado el defecto.. Status: done
 
-#### S4.T4 — Corregir los hallazgos bloqueantes que pertenecen a EP-01 y abrir issues enlazados para los que pertenecen a otra épica, actualizando el informe hasta que no quede ningún bloqueante de EP-01 abierto.
-Contrato: rollback: Revertir las correcciones de código y reabrir los hallazgos en el informe con su estado anterior.. Status: pending
-
-#### S4.T5 — Regresión de cierre: correr los archivos de test de accesibilidad escritos en la historia más el test de estados del botón, y ajustar los casos que cubren los bloqueantes corregidos para que fallen si la corrección se revierte.
-Contrato: rollback: Revertir los ajustes de test de esta task.. Status: pending
-
-#### S5.T1 — Reproducir localmente el reporte de la suite de accesibilidad tal como lo publica CI y dejar la evidencia: correr la suite app/test/accessibility con el mismo comando del job de .github/workflows/ci-pr.yml:349 (flutter test --coverage --reporter expanded > coverage/pruebas.txt) y confirmar que los casos de accesibilidad aparecen identificables en coverage/pruebas.txt y que el exit code se propaga. Adjuntar el nombre del artifact del step de la linea 366 que lo transporta. Queda pending hasta contar con la corrida real de CI del PR.
-Contrato: rollback: Borrar app/coverage/pruebas.txt y la nota de evidencia; no se modifica codigo ni workflow en esta tarea, asi que no hay revert de fuente.. Status: pending
-
-#### S5.T2 — Tarea HUMANA: recorrer con lectores de pantalla reales el shell, V-31, V-51 y Ajustes (TalkBack en Android, VoiceOver en iPhone y en iPad) ejecutando QA-01-15-01, QA-01-15-02 y QA-01-15-03, y registrar la evidencia por dispositivo. Depende de las vistas reales de V-31 (HU-01-12, TAO-183) y V-51 (HU-01-13, TAO-185), hoy marcadores provisionales: mientras no existan, la tarea permanece pending y no se sustituyen por stubs. No se registran resultados no observados.
-Contrato: rollback: Marcar la evidencia como no valida y volver la tarea a pending; no hay cambio de codigo que revertir.. Status: pending
-
-#### S5.T3 — Tarea HUMANA: consolidar el informe de auditoria con cada hallazgo clasificado en bloqueante o no bloqueante y su issue enlazado cuando exista (sin inventar identificadores), y comprobar contra el tablero de EP-01 que ningun hallazgo bloqueante queda abierto antes del cierre. Los hallazgos que pertenecen a otra epica se registran como issues enlazados, no se corrigen aqui. Queda pending hasta que la auditoria con lectores se haya ejecutado.
-Contrato: rollback: Retirar el informe consolidado y volver la tarea a pending, conservando los hallazgos individuales ya registrados.. Status: pending
-
-#### S5.T4 — Tarea HUMANA: obtener de Diseno la aprobacion explicita de los hallazgos visuales de la auditoria contra el doc 43 y dejarla registrada con autor y fecha. No se da por obtenida ni se infiere de la ausencia de objeciones; la tarea queda pending hasta contar con la aprobacion real.
-Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pending.. Status: pending
+#### S5.T1 — Reproducir el reporte real de CI del PR ya mergeado: verificar en la ejecucion del workflow .github/workflows/ci-pr.yml que el job de Flutter corrio la suite app/test/accessibility, que el exit code se propago y que coverage/pruebas.txt quedo subido como artifact e identifica los casos de accesibilidad. El criterio de aprobacion de esta sesion es esa verificacion de la suite en CI y la reproducibilidad local del mismo reporte; la auditoria con lectores de pantalla queda diferida a TAO-183 y TAO-185 y no se evalua aqui.
+Contrato: rollback: Si el reporte de CI no es reproducible, no modificar el workflow: registrar el defecto y dejar la verificacion pendiente, conservando la suite y el job existentes sin cambios.. Status: pending
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por Suite automática de accesibilidad (objetivo táctil, etiqueta, contraste, escala y foco) con auditoría manual de EP-01
@@ -171,6 +156,21 @@ Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pendin
 - edit S4.T1 { desc="Integrar la suite de accesibilidad al job de Flutter YA EXISTENTE en .github/workflows/ci-pr.yml:349, que corre flutter test --coverage --reporter expanded > coverage/pruebas.txt y sube el resultado con upload-artifact en la linea 366: la suite app/test/accessibility queda descubierta por ese mismo flutter test sin invocacion adicional. Ajustar solo los steps necesarios para que el reporte de accesibilidad sea identificable en el artifact si hoy no queda cubierto, preservando la propagacion del exit code y el if: always() del upload. NO crear un job de test duplicado ni un quality-gate nuevo.", rollback="git checkout .github/workflows/ci-pr.yml para volver al job original; la suite local sigue corriendo con flutter test sin depender del cambio de workflow.", validates=["REQ-05","REQ-08"], isTest=false, verify=["grep -n -e 'flutter test' -e 'upload-artifact' -e 'always()' .github/workflows/ci-pr.yml","cd app && flutter test test/accessibility/ --reporter expanded"] }
 - edit S4.T3 { desc="Tarea HUMANA de auditoria fisica con lectores de pantalla (TalkBack en Android, VoiceOver en iPhone y iPad) sobre el shell, V-31, V-51 y Ajustes. DEPENDENCIA: requiere las vistas reales de V-31 (HU-01-12, TAO-183) y V-51 (HU-01-13, TAO-185); hoy existen solo marcadores provisionales y esas historias NO se implementan dentro de TAO-180. Mientras falten, la tarea y sus derivadas quedan trazables en pending: no se auditan stubs, no se dan por obtenidos hallazgos ni la aprobacion de Diseno, y no se inventan hallazgos ni identificadores de issue.", rollback="Volver la tarea a pending y retirar cualquier registro de evidencia parcial; no hay cambio de codigo asociado.", validates=["REQ-06","REQ-09","REQ-10"], isTest=false, verify=[] }
 
+### Enmienda 2
+**REQs:**
+
+- REQ-06 (edit) `confirmed`: La auditoria manual con TalkBack (Android) y VoiceOver (iPhone y iPad) queda DIFERIDA fuera de esta historia y pasa a las historias duenas d
+- REQ-09 (edit) `confirmed`: Las dependencias por etapa quedan explicitas y respetadas: la cobertura automatica de plantillas depende de las tres plantillas de HU-01-10 
+
+**Task ops:**
+
+- delete S4.T3
+- delete S4.T4
+- delete S5.T2
+- delete S5.T3
+- delete S5.T4
+- edit S4.T5 { desc="Regresion de cierre de la sesion sin auditoria manual: correr la suite de accesibilidad (app/test/accessibility) sobre componentes de Widgetbook, shell y plantillas reales en telefono 390x844 y tablet 768x1024 y 1024x768 con textScaleFactor 1.0 y 2.0, y verificar que el job Flutter existente de .github/workflows/ci-pr.yml (flutter test --coverage --reporter expanded > coverage/pruebas.txt, linea 349, y el upload-artifact con if: always() de la linea 366) la descubre y propaga el exit code. El criterio de aprobacion de esta sesion es la corrida REAL de CI con su reporte publicado como artifact; no se exige informe de auditoria manual con TalkBack/VoiceOver, que queda diferida a TAO-183 (V-31) y TAO-185 (V-51).", rollback="Si la regresion falla, revertir solo el ultimo commit de la suite de accesibilidad con git revert sin tocar la utilidad ni los cambios de otras historias; si el fallo viene de una regla automatizada, desactivar unicamente esa regla dejando registrado el defecto.", validates=["REQ-02","REQ-03","REQ-05","REQ-09"], isTest=true, verify=["cd app && flutter test test/accessibility --reporter expanded"] }
+- edit S5.T1 { desc="Reproducir el reporte real de CI del PR ya mergeado: verificar en la ejecucion del workflow .github/workflows/ci-pr.yml que el job de Flutter corrio la suite app/test/accessibility, que el exit code se propago y que coverage/pruebas.txt quedo subido como artifact e identifica los casos de accesibilidad. El criterio de aprobacion de esta sesion es esa verificacion de la suite en CI y la reproducibilidad local del mismo reporte; la auditoria con lectores de pantalla queda diferida a TAO-183 y TAO-185 y no se evalua aqui.", rollback="Si el reporte de CI no es reproducible, no modificar el workflow: registrar el defecto y dejar la verificacion pendiente, conservando la suite y el job existentes sin cambios.", validates=["REQ-05","REQ-06"], isTest=true, verify=["gh run list --workflow=ci-pr.yml --limit 5","cd app && flutter test test/accessibility --reporter expanded"] }
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -203,23 +203,18 @@ Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pendin
 
 **Gate (auto)**: Las pruebas de shell y plantillas pasan en teléfono y tablet a 100 % y 200 %, y el test de foco demuestra en verde que un diálogo atrapa el foco y lo devuelve al control que lo abrió.
 
-### Session 4 · T2 · open
+### Session 4 · T2 · continue
 
 **Tasks:**
 - [x] S4.T1
 - [x] S4.T2
-- [ ] S4.T3
-- [ ] S4.T4
-- [ ] S4.T5
+- [x] S4.T5
 
-**Gate (auto)**: La corrida de CI del PR muestra el job de accesibilidad con su reporte adjunto como artifact, y el informe de auditoría manual queda publicado con cada hallazgo, su severidad y su issue, sin bloqueantes abiertos en EP-01.
+**Gate (auto)**: La corrida real de CI del PR #125 (job de Flutter existente) corre la suite app/test/accessibility sobre componentes, shell y plantillas en teléfono/tablet a 100 % y 200 %, el reporte queda publicado como artifact identificable y el exit code se propaga; sin informe de auditoría manual, diferida a TAO-183 (V-31) y TAO-185 (V-51).
 
 ### Session 5 · T0 · open
 
 **Tasks:**
 - [ ] S5.T1
-- [ ] S5.T2
-- [ ] S5.T3
-- [ ] S5.T4
 
 **Gate (strong)**: Verificación humana con evidencias reales. No cerrar hasta contar con suite completa en CI, auditoría en dispositivos sobre vistas implementadas, hallazgos bloqueantes resueltos y aprobación de Diseño registrada.
