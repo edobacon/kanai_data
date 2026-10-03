@@ -112,10 +112,10 @@ Contrato: rollback: Revertir los casos de modal del test y los ajustes de diálo
 Contrato: rollback: Revertir los ajustes de test de esta task.. Status: done
 
 #### S4.T1 — Integrar la suite de accesibilidad al job de Flutter YA EXISTENTE en .github/workflows/ci-pr.yml:349, que corre flutter test --coverage --reporter expanded > coverage/pruebas.txt y sube el resultado con upload-artifact en la linea 366: la suite app/test/accessibility queda descubierta por ese mismo flutter test sin invocacion adicional. Ajustar solo los steps necesarios para que el reporte de accesibilidad sea identificable en el artifact si hoy no queda cubierto, preservando la propagacion del exit code y el if: always() del upload. NO crear un job de test duplicado ni un quality-gate nuevo.
-Contrato: rollback: git checkout .github/workflows/ci-pr.yml para volver al job original; la suite local sigue corriendo con flutter test sin depender del cambio de workflow.. Status: pending
+Contrato: rollback: git checkout .github/workflows/ci-pr.yml para volver al job original; la suite local sigue corriendo con flutter test sin depender del cambio de workflow.. Status: done
 
 #### S4.T2 — Verificar la puerta negativa de CI: introducir temporalmente un componente táctil de muestra sin etiqueta semántica, comprobar que la suite y por lo tanto el job fallan nombrando el componente, y revertir el componente de muestra dejando el caso cubierto por el test de la utilidad.
-Contrato: rollback: Eliminar el componente de muestra temporal; no queda rastro en el árbol.. Status: pending
+Contrato: rollback: Eliminar el componente de muestra temporal; no queda rastro en el árbol.. Status: done
 
 #### S4.T3 — Tarea HUMANA de auditoria fisica con lectores de pantalla (TalkBack en Android, VoiceOver en iPhone y iPad) sobre el shell, V-31, V-51 y Ajustes. DEPENDENCIA: requiere las vistas reales de V-31 (HU-01-12, TAO-183) y V-51 (HU-01-13, TAO-185); hoy existen solo marcadores provisionales y esas historias NO se implementan dentro de TAO-180. Mientras falten, la tarea y sus derivadas quedan trazables en pending: no se auditan stubs, no se dan por obtenidos hallazgos ni la aprobacion de Diseno, y no se inventan hallazgos ni identificadores de issue.
 Contrato: rollback: Volver la tarea a pending y retirar cualquier registro de evidencia parcial; no hay cambio de codigo asociado.. Status: pending
@@ -206,8 +206,8 @@ Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pendin
 ### Session 4 · T2 · open
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
+- [x] S4.T1
+- [x] S4.T2
 - [ ] S4.T3
 - [ ] S4.T4
 - [ ] S4.T5
