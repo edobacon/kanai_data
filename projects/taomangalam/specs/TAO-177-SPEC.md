@@ -127,16 +127,16 @@ Contrato: rollback: Quitar la llamada de bloqueo de orientación; la app vuelve 
 Contrato: rollback: Borrar los archivos de test agregados en esta sesión.. Status: done
 
 #### S3.T1 — Agregar el test de fidelidad estructural del panel: una sola superficie marfil opaca, sin Image/DecorationImage en el subárbol del panel y sin cajas por pictograma, con el fondo de la vista anfitriona visible solo detrás del scrim (doc 43 §7 y §9, DEC-235).
-Contrato: rollback: Borrar el archivo de test de fidelidad.. Status: pending
+Contrato: rollback: Borrar el archivo de test de fidelidad.. Status: done
 
 #### S3.T2 — Test que falla si en los fuentes del shell aparecen los números 64, 72, 360, 840 o 600 usados como MEDIDA, es decir como argumento de `height`, `width`, `maxWidth`, `minWidth`, `minHeight`, `maxHeight`, `BoxConstraints`, `SizedBox`, `Size` o como umbral de breakpoint. El matcher debe acotarse a esos usos para no dar falsos positivos: ignora índices, opacidades, duraciones, números dentro de strings y nombres de archivo de goldens (p.ej. `360x800.png`, `1024x768.png`). Esas medidas deben salir de `TaoSize.drawerPhoneMax` (360), `TaoBreakpoint.expandedMin` (840), `TaoBreakpoint.mediumMin` (600) y de los tokens de altura del encabezado (64 / 72).
-Contrato: rollback: Borrar el archivo de test de no-literales.. Status: pending
+Contrato: rollback: Borrar el archivo de test de no-literales.. Status: done
 
 #### S3.T3 — Agregar los goldens del shell en 360x800, 390x844, 768x1024 y 1024x768 con escala de texto 100% y 200%, con el panel abierto en las composiciones compactas y persistente en 1024x768, y generar las imágenes de referencia para la comparación de Diseño (QA-01-08-05).
-Contrato: rollback: Borrar el archivo de goldens y las imágenes generadas bajo test/navigation/goldens/.. Status: pending
+Contrato: rollback: Borrar el archivo de goldens y las imágenes generadas bajo test/navigation/goldens/.. Status: done
 
 #### S3.T4 — Regresión de integración que SUSTITUYE a la prueba obsoleta que exigía que `app/pubspec.yaml` no declarara `go_router`. Crear `app/test/navigation/shell_route_integration_test.dart`: (1) montado `TaoApp`, la ubicación inicial es `/home`, se dibuja el shell con el encabezado definitivo y `HomeScreen` sigue siendo la pantalla de la ruta; (2) elegir Biblioteca en el panel navega a `/biblioteca` por el nombre `AppRouteNames.biblioteca` y el destino activo se deriva de la ubicación del router (un `go('/biblioteca')` sin tocar el menú mueve igual el indicador) — QA-01-08-01; (3) `TaoApp` con `builder` y `navigatorKey` (como `main_development.dart`) aplica ambos y una ruta empujada con ese `navigatorKey` se dibuja por encima del shell; (4) `app/pubspec.yaml` declara `go_router: ^18.0.2` como única dependencia de enrutado y el shell no agrega otra ni crea `GoRoute` nuevos. BORRAR el test que prohibía `go_router`. Correr además, sin modificarlas, las suites de TAO-179 `app_router_test.dart` y `deep_link_restoration_test.dart` para confirmar enlaces profundos, reconstrucción de pila y ruta desconocida → Inicio con el shell montado.
-Contrato: rollback: Borrar `app/test/navigation/shell_route_integration_test.dart`; las suites de TAO-179 no se modifican en esta task.. Status: pending
+Contrato: rollback: Borrar `app/test/navigation/shell_route_integration_test.dart`; las suites de TAO-179 no se modifican en esta task.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: El encabezado mide 64 de alto en teléfono y 72 en tablet, muestra volver cuando hay historial, título o contexto, y un botón hamburguesa de 48x48 que abre el panel; el botón desaparece cuando el panel persistente está visible y reaparece cuando se oculta.
@@ -217,13 +217,13 @@ Contrato: rollback: Borrar `app/test/navigation/shell_route_integration_test.dar
 
 **Gate (auto)**: En 1024x768 el panel queda fijo junto al contenido, cambiar de destino solo mueve el indicador (sin animación del panel) y el control del encabezado lo oculta/muestra reflowing el contenido; reducido a 839 pasa a superpuesto conservando el destino; con movimiento reducido la apertura es un fundido de <=120 ms; un teléfono girado permanece en vertical.
 
-### Session 3 · T1 · open
+### Session 3 · T1 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: La suite de goldens del shell genera las ocho imágenes (360x800, 390x844, 768x1024, 1024x768 x escala 100% y 200%) listas para comparar contra maqueta-direccion-consolidada.png, y el test de no-literales falla si alguien mete un Color(0x, un Colors.* o una medida mágica en el shell.
 
