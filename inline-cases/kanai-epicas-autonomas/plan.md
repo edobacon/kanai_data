@@ -4,7 +4,7 @@
 
 **Intención:** Implementar el plan acordado de épicas autónomas en Kanai, con permisos por harness, Teach/Skip, seguimiento de tickets, recuperación y métricas desde el inicio; evaluar piloto Tao Mangalam. Registrar el plan no inicia ejecución.
 **Tags:** projects: kanai_self · repos: kanai-app · labels: epicas, autonomia, harness, metricas, piloto-taomangalam
-**Estado:** 7 de 10 fases cerradas. Juez final: pendiente.
+**Estado:** 9 de 10 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -17,9 +17,9 @@
 | F5 Harnesses, permisos y aprobaciones | Comprobar autonomía efectiva antes de iniciar y respetar las restricciones del host. | Hecho | 2026-10-03 → 2026-10-03 | de910a6a9dcb6586943b1efced79a1023154a127 | 2/2 | - |
 | F6 Orquestación, Teach y recuperación | Encadenar tickets con intake individual y avance dentro del alcance autorizado. | Hecho | 2026-10-03 → 2026-10-03 | e86dbbed17280f857d1560aaf72391d0f0988a41 | 2/2 | - |
 | F7 Revisión integral y cierre | Concentrar revisión amplia y CI final sin perder evidencia ni autorización. | Hecho | 2026-10-03 → 2026-10-03 | c19285df5aa8f2a3b149bce415ab96cf47858512 | 2/2 | - |
-| F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | En curso | 2026-10-03 → - | - | 0/2 | F8.1; F8.2; F8.3 |
-| F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Pendiente | - → - | - | 0/2 | F9.1; F9.2; F9.3 |
-| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Pendiente | - → - | - | 0/2 | F10.1; F10.2; F10.3 |
+| F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | Hecho | 2026-10-03 → 2026-10-03 | e6d5a6a103a184773e3e038b56a0e8647f3c83ac | 2/2 | - |
+| F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Hecho | 2026-10-03 → 2026-10-03 | 1d716b440eb4ae9b112f4ba75f47dacb288b0ef0 | 2/2 | - |
+| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.) | 2026-10-03 → - | - | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
 
 ## Riesgos
 
@@ -260,22 +260,22 @@
 **Cómo deshacerla:** Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F8** (estado: En curso)
-- **Fecha real:** inicio 2026-10-03 · fin -
+**Registro F8** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-03 · fin 2026-10-03
 - **Antes de empezar:**
   - [x] F8-P1: F3 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F8-P2: F5 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F8-P3: F6 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F8-P4: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
-  - Sin commits registrados.
+  - `e6d5a6a103a184773e3e038b56a0e8647f3c83ac` · feat(epics): expose planning and execution through UI and MCP · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
-  - **F8.1** pendiente: Implementar listado y detalle de épica: tickets, orden, dependencias justificadas, progreso, rama y bloqueos; enlace desde cada ticket.
-  - **F8.2** pendiente: Implementar revisión del plan, preflight, permisos, Teach y controles de inicio/pausa/reanudación/cancelación.
-  - **F8.3** pendiente: Exponer operaciones MCP equivalentes, vista de revisión/CI/merge y validación de recorridos y consistencia UI/MCP.
+  - **F8.1** → feat(epics): expose planning and execution through UI and MCP; paquete 1 verificado en los archivos de la fase.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/server/epics/service.ts; app/pages/epicas/[id].vue; tests/e2e/epicas.spec.ts. Cómo se comprobó: 45 pruebas unitarias/regresión aprobadas; navegación E2E 1/1; typecheck y check:ui sin errores. Autorizaciones humanas y elección Teach permanecen obligatorias. · ejecutó: llm
+  - **F8.2** → feat(epics): expose planning and execution through UI and MCP; paquete 2 verificado en los archivos de la fase.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/server/epics/service.ts; app/pages/epicas/[id].vue; tests/e2e/epicas.spec.ts. Cómo se comprobó: 45 pruebas unitarias/regresión aprobadas; navegación E2E 1/1; typecheck y check:ui sin errores. Autorizaciones humanas y elección Teach permanecen obligatorias. · ejecutó: llm
+  - **F8.3** → feat(epics): expose planning and execution through UI and MCP; paquete 3 verificado en los archivos de la fase.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/server/epics/service.ts; app/pages/epicas/[id].vue; tests/e2e/epicas.spec.ts. Cómo se comprobó: 45 pruebas unitarias/regresión aprobadas; navegación E2E 1/1; typecheck y check:ui sin errores. Autorizaciones humanas y elección Teach permanecen obligatorias. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F8-C1** pendiente (evidence): La vista muestra ticket actual/siguiente, pausas y distinción validado frente a entregado.
-  - **F8-C2** pendiente (evidence): UI y MCP aplican los mismos guards; recorridos de preparación, ejecución y cierre verificados.
+  - **F8-C1** La vista muestra ticket actual/siguiente, pausas y distinción validado frente a entregado. → /Users/edobacon/Workspace/kanai/kanai-app/server/epics/service.ts; app/pages/epicas/[id].vue; tests/e2e/epicas.spec.ts; 45 pruebas unitarias/regresión aprobadas; navegación E2E 1/1; typecheck y check:ui sin errores. Autorizaciones humanas y elección Teach permanecen obligatorias.; commit e6d5a6a103a184773e3e038b56a0e8647f3c83ac
+  - **F8-C2** UI y MCP aplican los mismos guards; recorridos de preparación, ejecución y cierre verificados. → /Users/edobacon/Workspace/kanai/kanai-app/server/epics/service.ts; app/pages/epicas/[id].vue; tests/e2e/epicas.spec.ts; 45 pruebas unitarias/regresión aprobadas; navegación E2E 1/1; typecheck y check:ui sin errores. Autorizaciones humanas y elección Teach permanecen obligatorias.; commit e6d5a6a103a184773e3e038b56a0e8647f3c83ac
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
@@ -284,7 +284,7 @@
   - Sin registros.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** feat(epics): expose planning and execution through UI and MCP. 45 pruebas unitarias/regresión aprobadas; navegación E2E 1/1; typecheck y check:ui sin errores. Autorizaciones humanas y elección Teach permanecen obligatorias.. Siguiente: 2026-10-03: continuar con la siguiente fase según prerequisitos.
 
 ### F9. Tablero y exportación de métricas
 
@@ -293,33 +293,35 @@
 **Cómo deshacerla:** Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F9** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F9** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-03 · fin 2026-10-03
 - **Antes de empezar:**
-  - [ ] F9-P1: F2 cerrada con sus criterios y evidencia verificados.
-  - [ ] F9-P2: F3 cerrada con sus criterios y evidencia verificados.
-  - [ ] F9-P3: F4 cerrada con sus criterios y evidencia verificados.
-  - [ ] F9-P4: F5 cerrada con sus criterios y evidencia verificados.
-  - [ ] F9-P5: F6 cerrada con sus criterios y evidencia verificados.
-  - [ ] F9-P6: F7 cerrada con sus criterios y evidencia verificados.
+  - [x] F9-P1: F2 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F9-P2: F3 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F9-P3: F4 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F9-P4: F5 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F9-P5: F6 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F9-P6: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
-  - Sin commits registrados.
+  - `1d716b440eb4ae9b112f4ba75f47dacb288b0ef0` · feat(epics): add auditable metrics and validate lifecycle integration · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
-  - **F9.1** pendiente: Agregar tiempos por fase, CI, espera humana, intervenciones, permisos/dependencias tardíos, Teach, retrabajo, calidad, recuperación y costos disponibles.
-  - **F9.2** pendiente: Implementar segmentación por proyecto, versión, harness, tamaño y política; mostrar muestras, cobertura y datos no disponibles; exportar eventos y resumen.
-  - **F9.3** pendiente: Probar fórmulas con reloj controlado, deduplicación y solapamientos; separar aprobaciones previstas de imprevistas y espera de trabajo humano.
+  - **F9.1** → Agregar partición temporal por lifecycle y fase, motivos de pausa, reanudaciones/fallos, Teach, evidencia y mediciones idempotentes de CI/retrabajo/defectos/tokens/costos. Corregir gate de dependencia para checkpoint de épica y revalidación de permisos.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/server/epics/metrics.ts; server/epics/service.ts; server/repo/dependencyIntegration.ts. Cómo se comprobó: 21 pruebas de épicas aprobadas, incluyendo reloj fijo, deduplicación, cadena Git A→B→C y dependencia canónica sin cierre. Datos no disponibles permanecen null. · ejecutó: llm
+  - **F9.2** → Vista y exports JSON/CSV con dimensiones proyecto/plan/harness/Teach/tickets, muestra/fuentes y comparación sólo cuando tickets de baseline coinciden; conservar historial y corridas canceladas.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/app/pages/epicas/[id].vue; server/api/epics/[id]/metrics.get.ts; server/mcp/epicTools.ts. Cómo se comprobó: E2E tests/e2e/epicas.spec.ts 1/1 verifica tablero y enlace export CSV; typecheck, check:ui, docs:check y build aprobados. · ejecutó: llm
+  - **F9.3** → Probar intervalos mutuamente exclusivos, pausas repetidas, reanudación, revisión y final; deduplicación de IDs y claves de medición; fuente y desconocidos; distinción entre calendario de espera y trabajo humano declarado.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/tests/unit/epic-metrics.test.ts; tests/unit/epic-runner.test.ts; tests/unit/epic-service.test.ts. Cómo se comprobó: Regresión completa 2637/2637 en 333 archivos; pruebas dirigidas 54/54 y luego suite épicas 21/21. Hallazgo de primera corrida monorepo conservado; repetición completa aprobada. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F9-C1** pendiente (evidence): Métricas reconciliables incluyen fallidas y canceladas; no se inventan ceros ni costos.
-  - **F9-C2** pendiente (evidence): Pruebas de eventos y duraciones pasan; acceso/retención definidos y exportación sin secretos.
+  - **F9-C1** Métricas reconciliables incluyen fallidas y canceladas; no se inventan ceros ni costos. → /Users/edobacon/Workspace/kanai/kanai-app/server/epics/metrics.ts; tests/unit/epic-metrics.test.ts: partición de calendario, historial, fallos/pausas y null en ausencia de consumo; 21/21 pruebas épicas. Commit 1d716b440eb4ae9b112f4ba75f47dacb288b0ef0.
+  - **F9-C2** Pruebas de eventos y duraciones pasan; acceso/retención definidos y exportación sin secretos. → /Users/edobacon/Workspace/kanai/kanai-app/docs/development/epic-execution.md: acceso local, conservación sin borrado automático, fuentes sin secretos; server/api/epics/[id]/metrics.get.ts export JSON/CSV con escape de fórmulas. Tests con reloj fijo, dedup e idempotencia pasan. /private/tmp/kanai-epics-full-tests.txt: 2637/2637; build/typecheck/UI/docs aprobados.
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
-  - Sin registros.
+  - preexistente · /Users/edobacon/Workspace/kanai/kanai-app/tests/unit/gate-monorepo-integral.test.ts:74: Regresión general: 2635/2636 pasan; un delta Git del test monorepo devuelve [] bajo carga. El test y sessionDiff.ts no fueron modificados por esta implementación. Reejecución aislada 12/12 pasa; se conserva resultado fallido y evidencia, no se borra ni se atribuye éxito general.
+  - preexistente · /Users/edobacon/Workspace/kanai/kanai-app/nuxt.config.ts; app/utils/ticketFlow.ts:12: El build SSR externaliza shared/session-policy.ts como ruta relativa inválida en el chunk generado. Se configura empaquetado explícito de esa fuente compartida para verificar producción; el import y política preceden los cambios de épicas.
+  - introducido · /Users/edobacon/Workspace/kanai/kanai-app/server/repo/dependencyIntegration.ts; server/epics/runner.ts; tests/unit/epic-service.test.ts: La revisión de integración detectó que el gate canónico seguía usando rama de proyecto; se conecta temporalmente a rama/checkpoints de épica sin cerrar tickets. También se revalidan autorización y runId tras observación asíncrona, evidencia antes de cierre y dependencia previamente validada. Pruebas dirigidas 54/54 y suite completa 2637/2637 pasan; registros conservan la primera ejecución fallida del test preexistente.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Tablero, export y métricas auditables implementados con fuentes/muestras/desconocidos. Integración canónica y guardas reforzadas; regresión completa 2637/2637, épicas 21/21, E2E 1/1, build/typecheck/checkUI/docs aprobados. Árbol limpio y commit registrado.. Siguiente: 2026-10-03: preparar F10; selección explícita de tickets, baseline y permisos. Seguimiento de 14 días a partir del merge real, no de fixtures.
 
 ### F10. Piloto, evaluación y mejoras
 
@@ -327,12 +329,12 @@
 **Esfuerzo:** Por estimar en F1 tras revisar el código y las capacidades existentes.
 **Cómo deshacerla:** Conservar documentos y evidencia; corregir decisiones mediante enmienda auditada, sin modificar código ni borrar historial.
 
-**Registro F10** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F10** (estado: Bloqueado (Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.))
+- **Fecha real:** inicio 2026-10-03 · fin -
 - **Antes de empezar:**
-  - [ ] F10-P1: F7 cerrada con sus criterios y evidencia verificados.
-  - [ ] F10-P2: F8 cerrada con sus criterios y evidencia verificados.
-  - [ ] F10-P3: F9 cerrada con sus criterios y evidencia verificados.
+  - [x] F10-P1: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F10-P2: F8 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F10-P3: F9 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
@@ -343,11 +345,15 @@
   - **F10-C1** pendiente (evidence): Informe con muestra y cobertura; cero avances fuera de autorización y cero efectos duplicados; cualquier incumplimiento impide expansión.
   - **F10-C2** pendiente (evidence): Comparación no atribuye causalidad con muestra insuficiente; seguimiento de 14 días completado y decisión de siguientes mejoras registrada.
 - **No cumplido:**
-  - Sin registros.
+  - ABIERTO · F10.1: Seleccionar tickets, baseline y ambiente del piloto. Por qué: La selección de 3–5 tickets, rama base y Teach/Skip está solicitada a la persona; no hay respuesta ni baseline comparable y permisos del ambiente todavía.. Impacto: Sin esto no se inicia corrida real en Tao Mangalam ni se mide ahorro.. Fecha: 2026-10-04. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
+  - ABIERTO · F10.3: Evaluar resultados y priorizar expansión. Por qué: Falta muestra real comparable posterior a DEC-239 y observación de defectos.. Impacto: No hay evidencia para afirmar aceleración o decidir expansión.. Fecha: 2026-10-18. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
+  - ABIERTO · F10-C1: Informe de piloto con muestra y cumplimiento. Por qué: Pruebas de implementación pasan, pero no hay datos de operación real de los tickets del piloto.. Impacto: La autorización y ausencia de duplicados no se pueden certificar para un piloto no ejecutado.. Fecha: 2026-10-18. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
+  - ABIERTO · F10-C2: Comparación y seguimiento de 14 días. Por qué: No existe fecha de integración real ni ventana de seguimiento cumplida.. Impacto: El plan y juez final permanecen abiertos, sin atribuir causalidad ni inventar muestras.. Fecha: 2026-10-18. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
+  - ABIERTO · F10.2: Ejecutar piloto y observar defectos 14 días. Por qué: Al 2026-10-03 no existe corrida piloto autorizada ni merge de referencia. Fixtures no reemplazan trabajo real; el seguimiento empieza después del merge.. Impacto: No se puede verificar calidad posintegración ni completar observación al 2026-10-03. La fecha de revisión es provisional y se ajustará al merge real.. Fecha: 2026-10-18. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
   - Sin registros.
 - **Bloqueos:**
-  - Sin registros.
+  - 2026-10-03 bloqueada: Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.
 - **Cierre y siguiente paso:** Sin cerrar.

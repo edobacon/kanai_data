@@ -46,8 +46,9 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | contrato-f1.md | decision | Contrato de implementación F1 | Host MCP visible, datos separados, cierre humano, instrumentación inicial y piloto real separado. |
+| operacion-y-piloto.md | registro | Operación implementada y preparación del piloto | Guía de uso, evidencia de validación y requisitos pendientes del piloto real; no equivale a cierre F10. |
 | plan-implementacion-epicas-autonomas.md | analisis | Plan de implementación de épicas autónomas, permisos por harness y métricas | Plan presentado y autorizado para registro: alcance, dependencias, ramas, autonomía, Teach, recuperación, vistas, paquetes P0–P9, aceptación y piloto medido en Tao Mangalam. |
 
 ## Plan
 
-7 de 10 fases cerradas, fase actual F8. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md
+9 de 10 fases cerradas, fase actual F10. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md
