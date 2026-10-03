@@ -227,4 +227,4 @@ Contrato: rollback: Borrar `app/test/navigation/shell_route_integration_test.dar
 
 **Gate (auto)**: La suite de goldens del shell genera las ocho imágenes (360x800, 390x844, 768x1024, 1024x768 x escala 100% y 200%) listas para comparar contra maqueta-direccion-consolidada.png, y el test de no-literales falla si alguien mete un Color(0x, un Colors.* o una medida mágica en el shell.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
