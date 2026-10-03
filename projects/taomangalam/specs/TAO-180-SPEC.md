@@ -218,3 +218,22 @@ Contrato: rollback: Si el reporte de CI no es reproducible, no modificar el work
 - [x] S5.T1
 
 **Gate (strong)**: Verificación humana con evidencias reales. No cerrar hasta contar con suite completa en CI, auditoría en dispositivos sobre vistas implementadas, hallazgos bloqueantes resueltos y aprobación de Diseño registrada.
+
+## Criterios de aceptación
+
+- [x] Dado un botón de muestra de 40 × 40, cuando corre la utilidad de accesibilidad, entonces el
+  test falla indicando el objetivo táctil.
+- [x] Dados todos los componentes registrados en Widgetbook, cuando corre la suite en CI, entonces
+  ninguno incumple objetivo táctil, etiqueta ni contraste de texto.
+- [x] Dada la escala de texto 200 %, cuando corren las pruebas de componentes y plantillas, entonces
+  no hay desbordes ni acciones ocultas.
+- [x] Dado un diálogo abierto con teclado, cuando se recorre, entonces el foco no sale del diálogo y
+  al cerrarlo vuelve al control que lo abrió.
+- [ ] Dada la auditoría manual, cuando termina, entonces existe un informe con cada hallazgo, su
+  severidad y su issue, y ningún bloqueante queda abierto en EP-01. — DIFERIDA por recorte
+  registrado (adenda 1; REQ-06 enmendado): se ejecuta en las historias dueñas de V-31 (TAO-183) y
+  V-51 (TAO-185) y en Ajustes cuando exista; no se auditan marcadores provisionales ni se declara
+  auditoría hecha en esta historia.
+- [x] Dado un PR que agrega un componente sin etiqueta semántica, cuando corre CI, entonces el job
+  falla.
+
