@@ -100,16 +100,16 @@ Contrato: rollback: Revertir los cambios en los componentes afectados; la suite 
 Contrato: rollback: Revertir los ajustes de test de esta task; las correcciones de componentes se evalúan aparte.. Status: done
 
 #### S3.T1 — Cubrir las tres plantillas de HU-01-10 con la utilidad en 390x844, 768x1024 y 1024x768 a escalas 1.0 y 2.0, verificando que no hay desbordes ni acciones ocultas. DEPENDENCIA: requiere las tres plantillas de TAO-178 (HU-01-10) integradas y publicas; TAO-178 esta en curso con las plantillas sin integrar, asi que esta tarea no se ejecuta contra fixtures propios ni maquetas locales. Si al llegar aqui las plantillas no estan integradas, dejar la tarea bloqueada y declarado el motivo, y continuar con el resto de las sesiones. No tocar los cambios dirty de TAO-178.
-Contrato: rollback: Eliminar el archivo de cobertura de plantillas de app/test/accessibility; la suite de componentes y el helper quedan intactos.. Status: pending
+Contrato: rollback: Eliminar el archivo de cobertura de plantillas de app/test/accessibility; la suite de componentes y el helper quedan intactos.. Status: done
 
 #### S3.T2 — Crear app/test/accessibility/focus_order_test.dart con el orden de foco del shell recorrido por Tab comparado contra el orden visual, y la verificación de que el anillo de foco usa el grosor TaoStrokes.focus leído del tema (theme_tokens.dart:170) sin cambiar el tamaño de layout del control enfocado.
-Contrato: rollback: Borrar app/test/accessibility/focus_order_test.dart.. Status: pending
+Contrato: rollback: Borrar app/test/accessibility/focus_order_test.dart.. Status: done
 
 #### S3.T3 — Agregar al test de foco los casos de modal: el diálogo expone su título en la semántica de la ruta, el recorrido por teclado no sale del diálogo, y al cerrarlo el foco vuelve al control que lo abrió. Corregir en el shell o en el componente de diálogo lo que falle, si el arreglo pertenece a EP-01.
-Contrato: rollback: Revertir los casos de modal del test y los ajustes de diálogo asociados; los demás casos de foco siguen en pie.. Status: pending
+Contrato: rollback: Revertir los casos de modal del test y los ajustes de diálogo asociados; los demás casos de foco siguen en pie.. Status: done
 
 #### S3.T4 — Regresión de la sesión: correr las pruebas de shell, plantillas y foco junto con el caso de foco existente de TaoButton, confirmando que el anillo y los estados previos no cambiaron.
-Contrato: rollback: Revertir los ajustes de test de esta task.. Status: pending
+Contrato: rollback: Revertir los ajustes de test de esta task.. Status: done
 
 #### S4.T1 — Integrar la suite de accesibilidad al job de Flutter YA EXISTENTE en .github/workflows/ci-pr.yml:349, que corre flutter test --coverage --reporter expanded > coverage/pruebas.txt y sube el resultado con upload-artifact en la linea 366: la suite app/test/accessibility queda descubierta por ese mismo flutter test sin invocacion adicional. Ajustar solo los steps necesarios para que el reporte de accesibilidad sea identificable en el artifact si hoy no queda cubierto, preservando la propagacion del exit code y el if: always() del upload. NO crear un job de test duplicado ni un quality-gate nuevo.
 Contrato: rollback: git checkout .github/workflows/ci-pr.yml para volver al job original; la suite local sigue corriendo con flutter test sin depender del cambio de workflow.. Status: pending
@@ -193,13 +193,13 @@ Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pendin
 
 **Gate (auto)**: La suite de componentes corre sobre todas las entradas del registro de Widgetbook en teléfono y tablet a escala 100 % y 200 % y termina en verde, con el listado de casos visible en la salida del test.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: Las pruebas de shell y plantillas pasan en teléfono y tablet a 100 % y 200 %, y el test de foco demuestra en verde que un diálogo atrapa el foco y lo devuelve al control que lo abrió.
 
