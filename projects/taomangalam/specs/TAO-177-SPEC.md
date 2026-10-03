@@ -112,19 +112,19 @@ Contrato: rollback: Revertir el `ShellRoute` dejando la tabla de rutas plana tal
 Contrato: rollback: Devolver el `AppBar` a `ProvisionalScreenScaffold` y restaurar `app/test/navigation/app_transitions_test.dart` con `git checkout`. No se tocan el router, las rutas ni las pantallas de destino de TAO-179.. Status: done
 
 #### S2.T1 — Derivar la composición del shell desde el ancho disponible usando TaoBreakpoint.expandedMin (840) para persistente y TaoBreakpoint.mediumMin (600) para el tipo de dispositivo (tokens.g.dart:226-228), alineado con la derivación ya existente de imageLayoutFor (image_family_resolver_test.dart:264-285); el cálculo debe leer el ancho disponible, no el tamaño físico de pantalla, para que pantalla dividida funcione.
-Contrato: rollback: Eliminar la función de derivación de composición; el shell vuelve a comportarse siempre como superpuesto.. Status: pending
+Contrato: rollback: Eliminar la función de derivación de composición; el shell vuelve a comportarse siempre como superpuesto.. Status: done
 
 #### S2.T2 — Montar el panel persistente desde 840: el panel se dibuja junto al contenido (no sobre él, sin scrim), cambiar de destino no dispara animación del panel (DEC-230) y el control del encabezado lo oculta y vuelve a mostrarlo, con el contenido ocupando el ancho liberado y el botón hamburguesa reapareciendo al ocultarlo. Al cruzar de persistente a superpuesto se conserva el destino activo.
-Contrato: rollback: Quitar la rama persistente del shell y dejar siempre el panel superpuesto de la sesión anterior.. Status: pending
+Contrato: rollback: Quitar la rama persistente del shell y dejar siempre el panel superpuesto de la sesión anterior.. Status: done
 
 #### S2.T3 — Aplicar movimiento reducido al panel reusando los tokens de movimiento y el servicio ya existente: `resolveReducedMotionFromContext(context)` de `app/lib/design_system/motion/reduced_motion_preference.dart:87` (el mismo que usa `AppTransitionPage` en el router), respetando el override local de `localReducedMotionPreference` (`:69`). Con reducción activa la apertura y el cierre son fundido de hasta 120 ms o cambio inmediato, en vez de 260/200 ms. No se crea un servicio nuevo ni se lee `MediaQuery.disableAnimations` directamente en el shell.
-Contrato: rollback: Quitar la consulta a `resolveReducedMotionFromContext` en el shell; el panel vuelve a usar siempre 260/200 ms. El servicio y su uso en `AppTransitionPage` no se tocan.. Status: pending
+Contrato: rollback: Quitar la consulta a `resolveReducedMotionFromContext` en el shell; el panel vuelve a usar siempre 260/200 ms. El servicio y su uso en `AppTransitionPage` no se tocan.. Status: done
 
 #### S2.T4 — Aplicar el bloqueo de orientación por lado corto en el arranque de la app: lado corto < TaoBreakpoint.mediumMin (600) fija solo las orientaciones verticales; desde 600 se permiten las cuatro y la composición se readapta al girar.
-Contrato: rollback: Quitar la llamada de bloqueo de orientación; la app vuelve a aceptar todas las orientaciones en todos los dispositivos.. Status: pending
+Contrato: rollback: Quitar la llamada de bloqueo de orientación; la app vuelve a aceptar todas las orientaciones en todos los dispositivos.. Status: done
 
 #### S2.T5 — Escribir los tests de esta etapa y la regresión: derivación de composición en los límites 599/600/839/840 (incluido 768 vertical como superpuesto y ancho reducido por pantalla dividida), persistencia sin animación al cambiar de destino y conservación del destino activo al cruzar 840, ocultar/mostrar desde el encabezado, movimiento reducido (<=120 ms) contra movimiento normal (260/200 ms), y bloqueo de orientación en 390 vs 600.
-Contrato: rollback: Borrar los archivos de test agregados en esta sesión.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en esta sesión.. Status: done
 
 #### S3.T1 — Agregar el test de fidelidad estructural del panel: una sola superficie marfil opaca, sin Image/DecorationImage en el subárbol del panel y sin cajas por pictograma, con el fondo de la vista anfitriona visible solo detrás del scrim (doc 43 §7 y §9, DEC-235).
 Contrato: rollback: Borrar el archivo de test de fidelidad.. Status: pending
@@ -206,14 +206,14 @@ Contrato: rollback: Borrar `app/test/navigation/shell_route_integration_test.dar
 
 **Gate (auto)**: En un emulador de 390x844 (o en el widgetbook del shell) la hamburguesa abre el panel con los siete destinos, el foco entra al primero y queda atrapado, el destino activo se marca y anuncia como seleccionado, y el panel cierra por control, scrim, Escape y Atrás devolviendo el foco al botón.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: En 1024x768 el panel queda fijo junto al contenido, cambiar de destino solo mueve el indicador (sin animación del panel) y el control del encabezado lo oculta/muestra reflowing el contenido; reducido a 839 pasa a superpuesto conservando el destino; con movimiento reducido la apertura es un fundido de <=120 ms; un teléfono girado permanece en vertical.
 
