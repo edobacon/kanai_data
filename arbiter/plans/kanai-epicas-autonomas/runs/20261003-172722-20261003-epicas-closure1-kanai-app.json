@@ -1,0 +1,562 @@
+{
+  "run_id": "20261003-epicas-closure1-kanai-app",
+  "plan_id": "kanai-epicas-autonomas",
+  "ts_start": "2026-10-03T17:12:33.912Z",
+  "ts_end": "2026-10-03T17:27:22.194Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "78e9f9abb9212fa21c9bc10ecdfe471233fd0587",
+  "head_ref": "80c2d51dcced57d84e5e1802eb9a50ed40689ab4",
+  "repo": "kanai-app",
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 1,
+    "S3": 0,
+    "consulta": 0
+  },
+  "max_severity": "S2",
+  "verdict": "aprobable_con_reservas",
+  "verdict_expected_by_rubric": "aprobable_con_reservas",
+  "findings_detail": [
+    {
+      "id": "c2-closure-b2-f1",
+      "severity": "S2",
+      "severity_rationale": "Regla R-SEV-8: una falla de infraestructura se convierte en resultado de negocio en el camino principal de dependencias; impacto de diagnóstico y recuperación, alcance del gate compartido de intake/aprobación/arranque, certeza confirmada por trazado y fault injection temporal.",
+      "kind": "error_handling",
+      "title": "Preservar las fallas de infraestructura al verificar los commits canónicos",
+      "where": "server/repo/dependencyIntegration.ts:224",
+      "evidence": "En el head 80c2d51dcced57d84e5e1802eb9a50ed40689ab4, dependencyIntegration (server/repo/dependencyIntegration.ts:219–225) engloba canonicalCommitHashes en catch sin discriminar errores y convierte cualquier excepción en state=not_integrated, reason=\"Checkpoint de épica perdió elegibilidad o integrac",
+      "phase": "F4",
+      "confidence": "confirmed",
+      "info_class": "none",
+      "info_escalates": false,
+      "info_floor": false,
+      "needs_reverify": true,
+      "base_ref": "78e9f9abb9212fa21c9bc10ecdfe471233fd0587",
+      "evidence_full": "En el head 80c2d51dcced57d84e5e1802eb9a50ed40689ab4, dependencyIntegration (server/repo/dependencyIntegration.ts:219–225) engloba canonicalCommitHashes en catch sin discriminar errores y convierte cualquier excepción en state=not_integrated, reason=\"Checkpoint de épica perdió elegibilidad o integración\". canonicalCommitHashes (server/epics/commits.ts:10–11,14) ejecuta consultas de sesiones/repositorios que pueden fallar por infraestructura; no sólo valida prueba de dominio. Reproducción aislada /private/tmp/kanai-epics-closure-j2-code/tests/unit/closure-j2-infrastructure.test.ts: se inyecta Error(\"SQLITE_BUSY: canonical session proof unavailable\") en ese lector; dependencyIntegration resuelve normalmente con [{ticketId:\"A\",state:\"not_integrated\",reason:\"Checkpoint de épica perdió elegibilidad o integración\"}], sin conservar el error (1 test pasa). El consumidor evaluateDependencyGate (server/repo/dependencyGate.ts:43–48, igual en la BASE original) lo agrega a pending; dependencyGateStop (server/dispatch/planTicket.ts:122–134, igual en BASE) devuelve needs_dependencies y sugiere integrar/esperar o dependencyAck, aunque el hecho observado fue imposibilidad de leer/verificar. La BASE original, server/repo/dependencyIntegration.ts:127–129, consultaba sesiones sin absorber ese error de DB; el interdiff introduce este catch. Mantener el bloqueo conservador es correcto; separar fallo de verificación de prueba ausente/cambiada y propagar/presentar la causa evita atribuir pérdida de integración e inducir un override innecesario.",
+      "outcome": "fixed",
+      "stuck_rounds": 0,
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 19,
+    "read_full": 19,
+    "skimmed": 0,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "server/epics/schema.ts",
+        "server/dispatch/context.ts",
+        "server/epics/bridge.ts",
+        "server/epics/checkpoint.ts",
+        "server/epics/commits.ts",
+        "server/epics/final.ts",
+        "server/epics/git.ts",
+        "server/epics/runner.ts",
+        "server/epics/service.ts",
+        "server/mcp/tools.ts",
+        "server/repo/dependencyIntegration.ts",
+        "server/repo/preGate.ts",
+        "tests/unit/epic-chain.test.ts",
+        "tests/unit/epic-checkpoint.test.ts",
+        "tests/unit/epic-corrections.test.ts",
+        "tests/unit/epic-runner.test.ts",
+        "tests/unit/epic-service.test.ts",
+        "tests/unit/human-authorization.test.ts",
+        "docs/development/epic-execution.md"
+      ],
+      "skimmed": [],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "app/layouts/default.vue",
+        "lines": 1,
+        "blob": "0d1f00c00d65d700627a82e76edcf35c3ce7b45f",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/epicas/[id].vue",
+        "lines": 104,
+        "blob": "1d08d2573009f6039f96139d1ea4eb0d0d158feb",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/epicas/index.vue",
+        "lines": 46,
+        "blob": "e0fd0b641db9d3760cb6a314fefa4e86a5ab3c86",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/tickets/[id].vue",
+        "lines": 2,
+        "blob": "e8e3947bfced1f09c61cf8b97169f4ca148b08b0",
+        "deleted": false
+      },
+      {
+        "path": "app/utils/epicLabels.ts",
+        "lines": 4,
+        "blob": "63b0c2a5959aa6aa30369e9fbe2732bc47d0dd45",
+        "deleted": false
+      },
+      {
+        "path": "app/utils/ticketFlow.ts",
+        "lines": 2,
+        "blob": "a5a9efdf3984adb7097ff5c5252c4bab93db2183",
+        "deleted": false
+      },
+      {
+        "path": "docs/development/epic-execution.md",
+        "lines": 102,
+        "blob": "926b7371510b067945a793ed7f701ca868694c2c",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp-catalogo.md",
+        "lines": 10,
+        "blob": "11e38f58ed66de122f8d0ad3f129cef5c7548851",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "c2e60ec17255368efd05b2320f9bb475add93ff7",
+        "deleted": false
+      },
+      {
+        "path": "server/api/epics/[id]/index.get.ts",
+        "lines": 3,
+        "blob": "137f996d857f75ce4911080f4c624e760ea2f8fc",
+        "deleted": false
+      },
+      {
+        "path": "server/api/epics/[id]/metrics.get.ts",
+        "lines": 7,
+        "blob": "4f63c94b585d7e1af7bae072c7e2317b246a5a2a",
+        "deleted": false
+      },
+      {
+        "path": "server/api/epics/[id]/operation.post.ts",
+        "lines": 9,
+        "blob": "5de06cb9ab774bcfbafbb13e767fab45045e730b",
+        "deleted": false
+      },
+      {
+        "path": "server/api/epics/index.get.ts",
+        "lines": 6,
+        "blob": "f4f8226556651d854e68e5fb12c8a177a185d7f4",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/context.ts",
+        "lines": 11,
+        "blob": "5ba4ff6967e10ec5d4dea56be0ccf53f621b6990",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/closure.ts",
+        "lines": 2,
+        "blob": "199598b71b56bdcdf29e0dcd9b4a7655109ae36f",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/intake.ts",
+        "lines": 2,
+        "blob": "cd2c2fd3a355c419eed58b58f63f5c0affef5f61",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/bridge.ts",
+        "lines": 54,
+        "blob": "46182c858c0d4bb3124fb837680552ec494caf25",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/checkpoint.ts",
+        "lines": 36,
+        "blob": "48e4c28698b3f378d70f0fe2bf1bbf8ed4ad1be4",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/commits.ts",
+        "lines": 16,
+        "blob": "9ecc550f3b325f56ea512ebe9dda6d664ad52df4",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/final.ts",
+        "lines": 78,
+        "blob": "9d0a35c4e4d7900062f0d94254feaeb854b5dc27",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/git.ts",
+        "lines": 52,
+        "blob": "6fe563e08b451c49c9f5cfe73a5ad8839d98a492",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/metrics.ts",
+        "lines": 42,
+        "blob": "3456b156799fdce1df290410944a5db5016161ea",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/permissions.ts",
+        "lines": 42,
+        "blob": "e8a161848a0a50e3967aa046fa12f167467b48ea",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/planner.ts",
+        "lines": 62,
+        "blob": "f7b4d683f0add27a39a2f8b0cd900f0f5748e9e0",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/policy.ts",
+        "lines": 14,
+        "blob": "9182c4eef7fd3e2a115fefb45096e298c1d27df5",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/runner.ts",
+        "lines": 127,
+        "blob": "d83584b5f431549f39564df0c81fa353e4f86eed",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/schema.ts",
+        "lines": 62,
+        "blob": "496ca36471910916340a665912497b113f7b33be",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/service.ts",
+        "lines": 139,
+        "blob": "8803068c9dc9be9d3dd8b7b81dc49094c85f2796",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/store.ts",
+        "lines": 61,
+        "blob": "6306af892f0b7629739e7015a52b636b9021aba0",
+        "deleted": false
+      },
+      {
+        "path": "server/llm/nextAction.ts",
+        "lines": 4,
+        "blob": "426ea4e44f256e00edcacfc2214331dce4f41ea4",
+        "deleted": false
+      },
+      {
+        "path": "server/llm/nextActionState.ts",
+        "lines": 3,
+        "blob": "7a56e1bdeb1173dd2c7c072d7389b5492a660efe",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/epicTools.ts",
+        "lines": 20,
+        "blob": "170387246eb96825bc2291a00eaba5e2c227e1ff",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/toolProfiles.ts",
+        "lines": 1,
+        "blob": "df326ad4bf14605bb25a7ec3da47481253aed5bd",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 13,
+        "blob": "aef51ad2394f3b5feaa0127644d27cf60dc6f69e",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/dependencyIntegration.ts",
+        "lines": 35,
+        "blob": "505d2ad34fe6070ca9fe0f3c691b25b80514f3f9",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/preGate.ts",
+        "lines": 10,
+        "blob": "fb0169c5557198291771b9857e8d8793998536fd",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/tickets.ts",
+        "lines": 4,
+        "blob": "4c0b5eae62fbddd2e5246f372055340b2f4f2467",
+        "deleted": false
+      },
+      {
+        "path": "tests/e2e/epicas.spec.ts",
+        "lines": 17,
+        "blob": "92cde0d6658b1154c91544e32b594d20c5e6b6dd",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-chain.test.ts",
+        "lines": 29,
+        "blob": "9e7e782ff26fff9b5f9ea8ce35f649ec6ca9ab3a",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-checkpoint.test.ts",
+        "lines": 22,
+        "blob": "9472b2cf35686fa88162b333feaf21b781be91b1",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-corrections.test.ts",
+        "lines": 132,
+        "blob": "87cf3094bd58b759135b96fba52de0571204201d",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-final.test.ts",
+        "lines": 20,
+        "blob": "69303c2e16fc447ebaa17e04fad39134a9361618",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-git.test.ts",
+        "lines": 23,
+        "blob": "ac9a444afecbd82997ff00819dbae6a55fa3819d",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-metrics.test.ts",
+        "lines": 17,
+        "blob": "b1c7eb49b6be4e473776fb1c7beb2681634e87a3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-permissions.test.ts",
+        "lines": 19,
+        "blob": "f13b248ea24d6b39489b38c4318366ddec39c276",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-planner.test.ts",
+        "lines": 21,
+        "blob": "d79ae70b10405c8450e9b3c4945e5ed1653a4e20",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-runner.test.ts",
+        "lines": 54,
+        "blob": "b27da40c6740b82a997c7f1f892bcec5ff954ac9",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-service.test.ts",
+        "lines": 57,
+        "blob": "d92e6996719eff674172163c06eda511f4a4a60a",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-store.test.ts",
+        "lines": 26,
+        "blob": "5e273ac4535467aa8dc44b9005851fff24cbedcb",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/human-authorization.test.ts",
+        "lines": 23,
+        "blob": "109d457764be67e444ee9106da7d2194c52e4b3e",
+        "deleted": false
+      },
+      {
+        "path": "vitest.config.ts",
+        "lines": 2,
+        "blob": "3991bfc9d8484b036a9222a57609558a25ba3b7d",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "server/epics/schema.ts": "496ca36471910916340a665912497b113f7b33be",
+      "server/dispatch/context.ts": "5ba4ff6967e10ec5d4dea56be0ccf53f621b6990",
+      "server/epics/bridge.ts": "46182c858c0d4bb3124fb837680552ec494caf25",
+      "server/epics/checkpoint.ts": "48e4c28698b3f378d70f0fe2bf1bbf8ed4ad1be4",
+      "server/epics/commits.ts": "9ecc550f3b325f56ea512ebe9dda6d664ad52df4",
+      "server/epics/final.ts": "9d0a35c4e4d7900062f0d94254feaeb854b5dc27",
+      "server/epics/git.ts": "6fe563e08b451c49c9f5cfe73a5ad8839d98a492",
+      "server/epics/runner.ts": "d83584b5f431549f39564df0c81fa353e4f86eed",
+      "server/epics/service.ts": "8803068c9dc9be9d3dd8b7b81dc49094c85f2796",
+      "server/mcp/tools.ts": "aef51ad2394f3b5feaa0127644d27cf60dc6f69e",
+      "server/repo/dependencyIntegration.ts": "505d2ad34fe6070ca9fe0f3c691b25b80514f3f9",
+      "server/repo/preGate.ts": "fb0169c5557198291771b9857e8d8793998536fd",
+      "tests/unit/epic-chain.test.ts": "9e7e782ff26fff9b5f9ea8ce35f649ec6ca9ab3a",
+      "tests/unit/epic-checkpoint.test.ts": "9472b2cf35686fa88162b333feaf21b781be91b1",
+      "tests/unit/epic-corrections.test.ts": "87cf3094bd58b759135b96fba52de0571204201d",
+      "tests/unit/epic-runner.test.ts": "b27da40c6740b82a997c7f1f892bcec5ff954ac9",
+      "tests/unit/epic-service.test.ts": "d92e6996719eff674172163c06eda511f4a4a60a",
+      "tests/unit/human-authorization.test.ts": "109d457764be67e444ee9106da7d2194c52e4b3e",
+      "docs/development/epic-execution.md": "926b7371510b067945a793ed7f701ca868694c2c"
+    },
+    "summary": {
+      "files": 51,
+      "reviewed_files": 51,
+      "lines": 1649,
+      "reviewed_lines": 1649,
+      "pct_lines": 100,
+      "excluded": []
+    }
+  },
+  "batches": 3,
+  "judges_completed": 3,
+  "reverify_judges": 0,
+  "consumers": 100,
+  "consumers_truncated": true,
+  "lines_judged": 326,
+  "plan_phase_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9"
+  ],
+  "judge_scope": "interdiff",
+  "interdiff_base": "1d716b440eb4ae9b112f4ba75f47dacb288b0ef0",
+  "recheck": [
+    {
+      "prev_id": "b1-f1",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "canonicalBridge.observe en server/epics/bridge.ts:30-36 ahora obtiene supersededSessionIds, filtra las sesiones reemplazadas antes de comprobar gates y consulta tasks sólo para las sesiones restantes. canonicalCommitHashes en server/epics/commits.ts:10-12 usa el mismo filtro. El interdiff del commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 agrega explícitamente esas exclusiones respecto de prev_head. tests/unit/epic-corrections.test.ts:43-52 conserva sesión old en iterate con task pending y confirma observación exitosa con el reemplazo continue; también confirma rechazo al perder continue el reemplazo. Caso ejecutado y aprobado en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b1-f2",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "executeEpicOperation integrate en server/epics/service.ts:119 transmite observed.commits del bridge canónico a confirmIntegration; canonicalBridge.observe en server/epics/bridge.ts:32 y :38 obtiene y devuelve prueba de sesiones mediante canonicalCommitHashes. recordIntegration en server/epics/checkpoint.ts:28-29 sólo guarda validated después de assertTicketIntegrated. server/epics/git.ts:37-48 rechaza prueba vacía y exige cada commit canónico como ancestro del SHA recibido, además de exigir dicho SHA integrado en la rama de épica. El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 reemplaza la comprobación de mera ascendencia. tests/unit/epic-corrections.test.ts:53-67 verifica rechazo de SHA base, trabajo fuera de rama y prueba parcial; acepta integración real y repetición idempotente. Caso ejecutado y aprobado en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b1-f3",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "recordIntegration en server/epics/checkpoint.ts:16-19 compara deadline bajo el lock de store.mutate antes de escribir validated/avanzar; al vencerse persiste paused/reason deadline y lanza después de la escritura en :34. confirmIntegration en server/epics/runner.ts:122-126 desemboca en ese guard. El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 agrega ese control y los checks después de observación asíncrona en runner.ts:98 y :108. tests/unit/epic-corrections.test.ts:68-79 verifica grants vigentes con plazo vencido, current intacto, validated vacío y pausa persistida, más expiración durante observe. Casos ejecutados y aprobados en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b1-f4",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "buildPlanGrounding en server/dispatch/context.ts:330 ahora pasa fetcher: policy ? null : opts.fetcher. En la BASE original server/repo/accumulatorBranch.ts:38-48, null deshabilita el fetcher y sólo undefined elige fetchBaseRef; esa implementación no cambió en el interdiff. Por ello el grounding de épica usa refs locales sin ninguna llamada git fetch. El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 introduce la selección explícita null para la política activa. tests/unit/epic-corrections.test.ts:100-103 inyecta un fetcher y confirma que no se llama mientras lee código local de la rama acumulada. Caso ejecutado y aprobado en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b2-f1",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "approve_artifact en server/mcp/tools.ts:4013-4023 usa getTicket en vez de la selección cruda de tickets.autopilot; getTicket en server/repo/tickets.ts:334-337 aplica activeEpicPolicy al cuerpo actual y devuelve autopilot efectivo. activeEpicPolicy en server/epics/policy.ts:7-13 exige corrida running/ticket actual y permisos/plazo válidos y devuelve autonomous. Además approveCurrent vuelve a consultar getTicket antes de aprobar. El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 cambia ambos caminos (artefacto individual y lista) a approveCurrent. tests/unit/human-authorization.test.ts:411-432 ejecuta la tool como agent sobre ticket manual con épica autorizada y confirma aprobación sin otra confirmación, configuración persistida manual y rechazo al denegar kanai_tools. Caso ejecutado y aprobado en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b2-f2",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "proposeBranchSetup en server/repo/preGate.ts:274-275 ahora descarta cualquier repo cuyo nombre difiera de epicPolicy.repo antes de las ramas confirmed/module/statements (:280-285). Ninguna de esas heurísticas puede añadir un repo externo al conjunto que ensureWorkBranch entrega al guard establishBranches. El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 agrega ese filtro previo. tests/unit/epic-corrections.test.ts:94-99 combina metadata preGateRepos, módulo y explicitRepos de other y confirma que sólo repo figura en propuesta y usa baseRef epic/demo. Caso ejecutado y aprobado en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b2-f3",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "executeEpicOperation update en server/epics/service.ts:65-68 revalida bajo store.mutate versión, run.id, run.state y último evento contra el snapshot anterior; además exige que el estado actual permita replanificación antes de cancelar. Si resume se intercala durante canonicalDraft/repoRoot, cambia estado/evento y update lanza antes de cancelar o sustituir el plan. El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 agrega ambas validaciones dentro del lock. tests/unit/epic-corrections.test.ts:80-93 construye una barrera de lectura DB, reanuda la corrida durante el await y verifica rechazo de update, run running conservada y versión intacta. Caso ejecutado y aprobado en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    },
+    {
+      "prev_id": "b3-f1",
+      "verdict": "corregido",
+      "severity": null,
+      "severity_rationale": null,
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "El commit 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 agrega tests/unit/epic-corrections.test.ts:105-126 que llama reviewFinal y confirmDelivery como human con Git temporal y DB migrada: rechaza CI failure/in_progress, alcanza review→ready, rechaza entrega antes de integración y por merge denied, provoca error en B después de cerrar A y reintenta hasta integrated comprobando exactamente dos cierres canónicos y un delivered. :127-132 revisa y luego mueve la rama para comprobar rechazo por deriva antes de cerrar. Las llamadas atraviesan los guards humanos de server/epics/final.ts:31 y :52 y ejercitan :33-43/:54-68. Se cerró la ausencia de cobertura acusada; ambos casos ejecutados y aprobados en archive exacto del head.",
+      "matches_current": null,
+      "prev_run_id": "20261003-epicas-review1-kanai-app"
+    }
+  ],
+  "ticket": {
+    "resolution": "none",
+    "kanai_id": null,
+    "external_ref": null,
+    "project": null,
+    "scope": "partial",
+    "context_path": "/private/tmp/kanai-epics-arbiter/intent-context.md",
+    "context_bytes": 2547
+  },
+  "source_case": "kanai-epicas-autonomas",
+  "scope_note": "Implementation F1–F9, correction delta F11; real pilot F10 remains outside code review. All prior findings separately rechecked. One new S2 keeps correction loop open.",
+  "verified_ok": [
+    "server/epics/bridge.ts:29–37 y commits.ts:9–16: las sesiones reemplazadas sólo se excluyen cuando supersededSessionIds confirma sustitución exitosa; concuerda con DET-20 y DET-28 en la base original. canonicalBridge devuelve commits del store, rechaza registros malformados o ambiguos y conserva los gates pendientes. Probado en runtime con DB en memoria y Git temporal.",
+    "server/epics/git.ts:37–50 y checkpoint.ts:23–30: el SHA de integración debe pertenecer a la rama de épica y contener todos los commits canónicos resueltos; el checkpoint persiste la lista normalizada. Se probaron rechazo de SHA base, trabajo no integrado y recibo parcial, aceptación válida y replay sin avance/evento duplicado.",
+    "server/epics/checkpoint.ts:16–20,35: el plazo vencido se persiste como pausa antes de devolver error y no agrega checkpoint ni avanza current. Probado en runtime con grants aún vigentes.",
+    "server/epics/final.ts:36: revisión final revalida alcance Git de los commits persistidos antes de comprobar CI del head candidato. Sus consumidores service.ts y runner.ts suministran o contrastan commits canónicos y el run esperado; cierre agregado y deriva de rama probados en runtime.",
+    "server/dispatch/context.ts:330: una política activa de épica fuerza fetcher=null; accumulatorTargets en la base distingue null de undefined, por lo que no invoca fetchBaseRef. El grounding continúa resolviendo y leyendo la rama local de épica. Test con fetcher explícito confirma cero llamadas.",
+    "server/epics/schema.ts:29: commits es opcional para lectura de registros anteriores y se preserva como lista en checkpoints nuevos. Los consumidores UI y métricas usan validated para conteo o presencia y no dependen de una forma cerrada del registro.",
+    "Leídos imports, llamadas y citas pertinentes de todos los consumers del brief; no se confirmó ruptura atribuible al delta. Funciones context exportadas conservan sus firmas.",
+    "F4/F6: runner.ts:85–89 exige alcance Git tanto del checkpoint como de los commits canónicos actuales, normalizados por assertTicketIntegrated; la igualdad detecta deriva de commits de una dependencia. El camino A→B→C sigue pasando con prueba Git por ticket (epic-chain).",
+    "F4/F7: service.ts:119 transmite commits canónicos y expectedRunId al registro de integración; service.ts:128–130 contrasta los commits actuales con el recibo antes de cerrar. Comprobado por trazado del head exacto, bridge.ts, checkpoint.ts y final.ts; no afirmo haber ejercitado el callback de entrega del servicio completo en runtime.",
+    "F5/F6: runner.ts:98,108 revalida deadline dentro de la mutación después de la observación asíncrona. Test epic-corrections de vencimiento durante observación y tests epic-runner de cambio de permisos pasan.",
+    "F2/F6: service.ts:66–67 vuelve a comprobar versión, corrida, estado y último evento bajo el lock del store; el test de update comenzado pausado mientras se reanuda la corrida pasa y conserva la corrida activa.",
+    "F5/F8: tools.ts:4013–4021 obtiene autonomía efectiva mediante getTicket y la vuelve a comprobar antes de cada aprobación. Tests de human-authorization pasan para ticket manual dentro de épica autorizada, sin confirmación por ticket ni cambio de configuración persistida, y rechazan aprobación con capability denegada.",
+    "F5/F8: preGate.ts:275 limita la propuesta al repositorio de la épica incluso con módulo, metadatos o repos explícitos antiguos de otro repositorio. La reproducción de epic-corrections y los ocho tests previos de set confirmado pasan.",
+    "F4: dependencyIntegration.ts:130–132 excluye sólo sesiones reemplazadas mediante supersededSessionIds; BASE original relations.ts:41–66 ya define cadenas resueltas por una sesión en continue para los guards. El helper conserva esa semántica.",
+    "Tests del lote: epic-chain mantiene la prueba real de ramas y avance único; epic-checkpoint conserva asserts de replay idempotente e incompatibilidad y añade los commits necesarios para el contrato estricto. El mock queda limitado al test de checkpoint.",
+    "Compatibilidad: los consumidores indicados conservan TOOLS, KanaiTool y las firmas de preGate/service; los argumentos nuevos de confirmIntegration son opcionales y el servicio aporta evidencia canónica. Las citas documentales pertinentes siguen nombrando archivos/exports existentes.",
+    "Atribución: todos los hunks del lote corresponden a correcciones de F2/F4/F5/F6/F7/F8; no se detecta scope_creep en el interdiff.",
+    "F4/F6: tests/unit/epic-corrections.test.ts:43–67 comprueba exclusión de sesiones realmente superseded, rechazo de SHA base, commits pendientes y recibos parciales, integración real y deduplicación. Concuerda con canonicalBridge, canonicalCommitHashes, assertTicketIntegrated y recordIntegration en el head exacto; la semántica de supersededSessionIds y sessionPolicy se contrastó con la base original.",
+    "F5/F6: tests/unit/epic-corrections.test.ts:68–93 reproduce plazo vencido con grants todavía válidos, vencimiento durante observación async y reanudación concurrente durante update. La pausa se persiste sin avance y la actualización rechaza el cambio concurrente; assertions concordantes con runner/checkpoint/service del head.",
+    "F4/F5/F8: tests/unit/epic-corrections.test.ts:94–104 comprueba que metadata, módulo y explicitRepos no amplían los repos autorizados, y que el grounding de una corrida activa no invoca el fetcher. Se contrastaron preGate/context/accumulatorBranch con la base original y el interdiff previo.",
+    "F7: tests/unit/epic-corrections.test.ts:105–132 ejerce CI fallido/pendiente, autorización humana, merge todavía ausente, capability merge denegada, fallo parcial de cierre y recuperación sin duplicar transiciones ni delivered; también bloquea deriva posterior a revisión antes de cerrar. Coincide con reviewFinal, confirmDelivery y closeCanonicalTicket; ejecución temporal confirmada.",
+    "F4/F6: tests/unit/epic-runner.test.ts:50 y tests/unit/epic-service.test.ts:40–41 agregan commits a observaciones/checkpoints y una sesión canónica a la fixture, manteniendo las assertions de evidencia y dependencia integrada. No debilitan las verificaciones existentes para aceptar un resultado incorrecto.",
+    "F5/F8: tests/unit/human-authorization.test.ts:411–432 confirma aprobación de draft para un ticket manual mediante política temporal de épica, sin persistir autopilot autónomo, y rechazo ante capability kanai_tools denegada sin aprobar el draft. Se trazó approve_artifact → getTicket → activeEpicPolicy y su relectura antes de approveOne; la base original confirma el contrato previo de confirmación y autonomía.",
+    "F1/F4/F5/F6/F7: los hunks de docs/development/epic-execution.md describen correctamente el requisito de commits canónicos/ancestry, exclusión de sesiones superseded, rechazo concurrente de actualización, restricción de repos, ausencia de fetch implícito, política temporal y comprobaciones de plazo. La nota de lint coincide con la configuración mínima existente en la base; F10 se mantiene explícitamente como piloto pendiente.",
+    "Verificación runtime del head 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 en /private/tmp/kanai-closure-judge3-head: Node 24.21.0, Vitest 2.1.9, cuatro suites del lote, 56/56 tests aprobados. DB en memoria, raíces de datos/Git temporales y autocommit off."
+  ],
+  "intent_gaps": [],
+  "unfulfilled_phases": [],
+  "scope_creep": [],
+  "verification": "Independent judges read all 19 delta files. Real temporary Git/DB tests on archives of exact head. New S2 confirmed by synthetic infrastructure fault injection; S2 does not require adversarial S0/S1 pass. No real pilot/harness/remote CI claimed."
+}

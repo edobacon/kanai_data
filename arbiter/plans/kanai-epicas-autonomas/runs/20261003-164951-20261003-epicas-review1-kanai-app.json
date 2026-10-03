@@ -38,13 +38,15 @@
       "seen_by": [
         "b1"
       ],
-      "outcome": "pending",
+      "outcome": "fixed",
       "evidence_full": "canonicalBridge.observe incluye todas las sesiones y exige continue a cada coding (bridge.ts:28-29), y exige done a todas sus tasks (31-32). Un ticket ready_to_close con S1 en iterate o tasks pendientes, reemplazada por S2 en continue, se rechaza aun cuando su reemplazo ya pasó. En la base, det20TicketSessionGates (server/engine/guards/ticket.ts:74-75) excluye supersededSessionIds; det28TasksDone (server/engine/guards/closure.ts:71-77) excluye esas sesiones y sus tasks; server/repo/relations.ts:41-59 resuelve cadenas de reemplazo. nextEpicAction (head server/epics/runner.ts:91,111-115) convierte ese rechazo en pausa, y integrate/deliver en service.ts vuelven a usar la misma observación. Conservar historial de un reintento válido bloquea integrar y entregar la épica. Evidencia por trazado estático, sin reproducción runtime.",
       "reverify": {
         "id": "b1-f1",
         "result": "sostenido",
         "evidence": "Trazado estático, sin reproducción runtime. Intenté refutar mediante la política por kind y el estado canónico: base shared/session-policy.ts:19 exige continue a coding, pero base server/engine/guards/ticket.ts:74-76 y server/engine/guards/closure.ts:72-79 excluyen sesiones superseded; base server/repo/relations.ts:41-59 conserva su estado y resuelve cadenas terminadas en continue. El diff de closure sólo añade política teach, no retira esa excepción. En head server/epics/bridge.ts:28-32 observe vuelve a consultar todas las sesiones/tasks sin supersededSessionIds. Por eso S1 iterate reemplazada por S2 continue sigue disparando error aun con estado ready_to_close obtenido legalmente. Head server/epics/runner.ts:91,111-115 convierte el error en pausa y service.ts:113,121 vuelve a observar para integrar/entregar; ninguna de esas capas elimina el historial."
-      }
+      },
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b1-f2",
@@ -64,7 +66,7 @@
       "seen_by": [
         "b1"
       ],
-      "outcome": "pending",
+      "outcome": "fixed",
       "evidence_full": "recordIntegration sólo assertIntegrated(root, epic.branch, sha) antes de asignar run.validated[ticketId] y avanzar current (checkpoint.ts:21-25). En head server/epics/git.ts:26-33 assertIntegrated sólo comprueba que el SHA exista y sea ancestro. service.ts operación integrate observa estado/body del ticket pero acepta payload.sha sin cotejar PR, rama, commits de sesión o SHA de evidencia; bridge.ts:34-35 produce evidencia de estado y test cases sin commits. Por tanto un ticket listo cuyo trabajo está en su rama/PR sin integrar puede confirmarse con el SHA base, que ya es ancestro de la rama de épica. El dependiente se desbloquea (runner.ts:83-88) aunque el código requerido nunca ingresó. F4 exige vincular commits/evidencia por ticket e integración Git real. En la base app/pages/tickets/[id].vue ya define SessionCommit y muestra commits por sesión; la nueva ruta no coteja esa evidencia canónica con sha. Evidencia por trazado estático, sin reproducción runtime.",
       "reverify": {
         "id": "b1-f2",
@@ -76,7 +78,9 @@
         "log": "/private/tmp/kanai-epics-arbiter/repro-checkpoint.log",
         "result": "SHA base accepted, real ticket work not integrated, run enters review",
         "limit": "Synthetic HostBridge; real temporary Git; not full canonical service"
-      }
+      },
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b1-f3",
@@ -96,13 +100,15 @@
       "seen_by": [
         "b1"
       ],
-      "outcome": "pending",
+      "outcome": "fixed",
       "evidence_full": "recordIntegration comprueba assertFresh y assertAuthorized y después estado/orden, pero nunca run.deadline (checkpoint.ts:11-25). La ruta normal service.ts operation integrate llama confirmIntegration (head runner.ts:118-122), que tampoco comprueba deadline. Si el host obtiene la acción integrate antes del plazo y termina Git después, con grants todavía vigentes, la confirmación avanza current y puede entrar en review. nextEpicAction sí bloquea por deadline (runner.ts:76), pero no se vuelve a consultar antes de confirmar, y al entrar review ya no revisa el plazo (runner.ts:73). F6 pide comprobar límites en cada paso y pausar al excederlos. El límite es parte de runSchema (schema.ts:35) y preflight de permissions.ts sólo mira expiresAt de grants, que puede ser posterior. Evidencia por trazado estático, sin reproducción runtime.",
       "reverify": {
         "id": "b1-f3",
         "result": "sostenido",
         "evidence": "Trazado estático, sin reproducción runtime. La posible refutación era assertAuthorized o activeEpicPolicy: head permissions.ts:6-22 sólo exige capacidades y grants no vencidos, no deadline; bridge.ts:25-35 no llama política efectiva en la observación ready_to_close. service.ts:111-117 integra directamente después de observar; runner.ts:118-122 y checkpoint.ts:11-25 tampoco cotejan deadline. El plazo sí se controla en startRun runner.ts:31, resumeRun:55 y nextEpicAction:76, pero una acción integrate emitida antes del vencimiento puede confirmarse después con grants aún válidos. current avanza y el último ticket pasa a review (:25), estado que nextEpicAction retorna antes del check (:73). La validación datetime del schema.ts:34 no valida vigencia. Ruta epics nueva respecto de base."
-      }
+      },
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b1-f4",
@@ -122,8 +128,10 @@
       "seen_by": [
         "b1"
       ],
-      "outcome": "pending",
-      "evidence_full": "La nueva condición policy || accumulatorBranchEnabled fuerza accumulatorTargets durante una épica aunque la política previa esté apagada (context.ts:329-335). En la base, server/repo/accumulatorBranch.ts:32-35 fetchBaseRef ejecuta git fetch origin y :38-48 accumulatorTargets lo usa por defecto si opts.fetcher es undefined. El consumidor base server/dispatch/planTicket.ts:228 pasa opts.fetcher opcional, así que el recorrido normal usa red. activeEpicPolicy sólo assertAuthorized EXECUTION_ACTIONS (head policy.ts:10); permissions.ts:4 no incluye network. Una corrida puede tener network desconocida o denegada y seguir lista en preflight, pero planificar dispara fetch. El guard de network se usa recién en reviewFinal, sin proteger este paso. F5 exige que permisos desconocidos no concedan acciones y preflight por acciones. Evidencia por trazado estático; no se ejecutó red."
+      "outcome": "fixed",
+      "evidence_full": "La nueva condición policy || accumulatorBranchEnabled fuerza accumulatorTargets durante una épica aunque la política previa esté apagada (context.ts:329-335). En la base, server/repo/accumulatorBranch.ts:32-35 fetchBaseRef ejecuta git fetch origin y :38-48 accumulatorTargets lo usa por defecto si opts.fetcher es undefined. El consumidor base server/dispatch/planTicket.ts:228 pasa opts.fetcher opcional, así que el recorrido normal usa red. activeEpicPolicy sólo assertAuthorized EXECUTION_ACTIONS (head policy.ts:10); permissions.ts:4 no incluye network. Una corrida puede tener network desconocida o denegada y seguir lista en preflight, pero planificar dispara fetch. El guard de network se usa recién en reviewFinal, sin proteger este paso. F5 exige que permisos desconocidos no concedan acciones y preflight por acciones. Evidencia por trazado estático; no se ejecutó red.",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b2-f1",
@@ -143,13 +151,15 @@
       "seen_by": [
         "b2"
       ],
-      "outcome": "pending",
+      "outcome": "fixed",
       "evidence_full": "readWorkState incorpora activeEpicPolicy(...).autopilot en nextActionState.ts:98 y repairFor DET-18 propone approve_artifact (línea 176). Sin embargo server/mcp/tools.ts:4013–4017 consulta tickets.autopilot directamente para byPerson, sin getTicket ni activeEpicPolicy. Ticket persistido manual + corrida autorizada autónoma + draft pendiente: next propone aprobación autónoma, pero ejecutar la llamada exige nueva confirmación humana; sin ella no aprueba y next repite la misma reparación. En la base approve_artifact:4012–4015 y repairFor:172 eran coherentes porque ambos usaban autopilot persistido. Trazado estático; no reproducido en runtime. Unificar lectura de política efectiva en el handler canónico.",
       "reverify": {
         "id": "b2-f1",
         "result": "sostenido",
         "evidence": "Trazado estático, sin reproducción runtime. Head policy.ts:7-13 limita la política a ticket actual, corrida running y grants/plazo válidos, pero devuelve autonomous sin persistirlo. Head nextActionState.ts:98 consume ese override y repairFor:172/designRepair:153-156 propone approve_artifact. Intenté refutar por autorización humana heredada: handler approve_artifact, sin cambios funcionales frente a base (head tools.ts:4013-4017), consulta tickets.autopilot crudo y para manual llama withHumanAuthorization con flags approveDesign y requireConfirmation. Base humanAuthTools.ts:42-45 no ejecuta fn si no confirma; base humanConfirm.ts:204-221 pide confirmación o código y no consulta grants de épica ni reutiliza autorización de inicio. Así la misma llamada canónica propuesta autónoma requiere otra intervención para un ticket manual."
-      }
+      },
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b2-f2",
@@ -169,13 +179,15 @@
       "seen_by": [
         "b2"
       ],
-      "outcome": "pending",
+      "outcome": "fixed",
       "evidence_full": "El cambio sustituye explicitRepos por [epicPolicy.repo] en preGate.ts:272 pero conserva ramas de selección confirmed/modulo/statements en :279–285. Un segundo repo habilitado, con ruta local y confirmado previamente o citado en un REQ como modificación, sigue con tier modifica. ensureWorkBranch:543–548 pasa todos esos targets a establishBranches, que en :504 ahora lanza si cualquiera difiere de epicPolicy.repo. Antes (base :500–515) establish aceptaba ese conjunto. Consumidor base server/dispatch/gateAutofix.ts:76 llama ensureWorkBranch y aborta la corrección si falla. Filtrar o reclasificar los repos ajenos durante la propuesta para que coincida con el guard. Trazado estático, sin ejecución.",
       "reverify": {
         "id": "b2-f2",
         "result": "sostenido",
         "evidence": "Trazado estático, sin reproducción runtime. Busqué reclasificación por set confirmado/defaults y guardas de compatibilidad: head preGate.ts:272 sólo reemplaza explicit por repo de épica; :279 sigue haciendo modifica al segundo repo confirmado, y :283-284 hacen lo mismo con módulo/statement sin set confirmado. El filtro ensureWorkBranch:553 elimina sólo referencia/sin ruta, por lo que :555 entrega también el segundo repo a establishBranches. El nuevo guard :504 rechaza cualquiera diferente del repo de épica antes de preparar ramas. Base gateAutofix.ts:72-85 consume ensureWorkBranch y aborta también si lanza. Head planner.ts:19 coteja ticket.repo, pero service.ts:32 lo asigna al repo del draft, sin revisar meta.preGateRepos/module/statements; no hace inalcanzable este caso. Base establishBranches carecía del guard añadido, así la inconsistencia propuesta/ejecutor es introducida."
-      }
+      },
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b2-f3",
@@ -195,13 +207,15 @@
       "seen_by": [
         "b2"
       ],
-      "outcome": "pending",
+      "outcome": "fixed",
       "evidence_full": "executeEpicOperation update comprueba current.run.state en service.ts:61–62, después await canonicalDraft (:63) y await repoRoot (:64), y finalmente mutate (:65–68) cancela cualquier e.run sin volver a validar estado ni versión. Secuencia posible: update lee paused; mientras espera DB, resumeRun (runner.ts:49–56) deja running; update adquiere lock y cancela esa corrida activa/reemplaza contrato. EpicStore.mutate store.ts:39–45 sólo bloquea lectura/escritura dentro del callback, no los awaits previos. Hermanos nextEpicAction runner.ts:95–96/107–108 vuelven a comprobar id/estado dentro de mutate. Revalidar versión y estado bajo lock antes de cancelar. Trazado estático, sin reproducción runtime.",
       "reverify": {
         "id": "b2-f3",
         "result": "sostenido",
         "evidence": "Trazado estático, sin reproducción runtime. Intenté refutar por exclusión global, versión o schema: head store.ts:26-30,40-45 sólo toma writer-lock alrededor de read/callback/write síncronos de mutate. Head service.ts:61-64 lee paused y después hace awaits de canonicalDraft/repoRoot fuera del lock; :65-68 no vuelve a comprobar estado, id de run ni version. Una operación resume intercalada usa runner.ts:51-57 para cambiar paused a running bajo su propio lock, después el update cancela esa corrida y sustituye plan. service.ts:38/HUMAN_OPERATIONS:18 no serializa update/resume; MCP epicTools.ts:15-16 los ejecuta directamente y sin mutex envolvente. schema.ts:25 acepta tanto running como cancelled y no impide la sustitución. No hay preexistencia: servicio/store/runner epics son archivos nuevos respecto de base."
-      }
+      },
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     },
     {
       "id": "b3-f1",
@@ -221,8 +235,10 @@
       "seen_by": [
         "b3"
       ],
-      "outcome": "pending",
-      "evidence_full": "tests/unit/epic-final.test.ts:5-10 sólo ejercita verifyChecks y :16-19 invoca reviewFinal/confirmDelivery exclusivamente como agent; ambos terminan en el primer guard humano de server/epics/final.ts:31 y :52, antes de leer una épica. No existe llamada con actor human a estas funciones en tests del head (git grep reviewFinal|confirmDelivery), ni pruebas operateEpic review/deliver. Por tanto quedan sin ejecutar la transición review→ready (:33-43), la invalidación por SHA cambiado (:56-57 y :61), los permisos de merge (:55 y :59), el loop de cierre (:58-62) y la entrega (:64-68); tampoco se inyecta un fallo después de cerrar un primer ticket y se reintenta. F7 exige precisamente CI/revisión fallidos impidan entrega, cambios posteriores invaliden resultados y reconciliación idempotente de cierre parcial. En la base tests/unit/closure-integrity.test.ts prueba cierres canónicos rechazados por sesiones/spec y tests/unit/human-authorization.test.ts prueba cierre confirmado; ninguno puede cubrir el nuevo final.ts, inexistente en base. Añadir recorrido humano con Git/DB temporales, CI inyectado, rechazo de deriva y recuperación después de efecto de cierre. Es ausencia de cobertura comprobada, no afirmación de que el código necesariamente cierre mal."
+      "outcome": "fixed",
+      "evidence_full": "tests/unit/epic-final.test.ts:5-10 sólo ejercita verifyChecks y :16-19 invoca reviewFinal/confirmDelivery exclusivamente como agent; ambos terminan en el primer guard humano de server/epics/final.ts:31 y :52, antes de leer una épica. No existe llamada con actor human a estas funciones en tests del head (git grep reviewFinal|confirmDelivery), ni pruebas operateEpic review/deliver. Por tanto quedan sin ejecutar la transición review→ready (:33-43), la invalidación por SHA cambiado (:56-57 y :61), los permisos de merge (:55 y :59), el loop de cierre (:58-62) y la entrega (:64-68); tampoco se inyecta un fallo después de cerrar un primer ticket y se reintenta. F7 exige precisamente CI/revisión fallidos impidan entrega, cambios posteriores invaliden resultados y reconciliación idempotente de cierre parcial. En la base tests/unit/closure-integrity.test.ts prueba cierres canónicos rechazados por sesiones/spec y tests/unit/human-authorization.test.ts prueba cierre confirmado; ninguno puede cubrir el nuevo final.ts, inexistente en base. Añadir recorrido humano con Git/DB temporales, CI inyectado, rechazo de deriva y recuperación después de efecto de cierre. Es ausencia de cobertura comprobada, no afirmación de que el código necesariamente cierre mal.",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
     }
   ],
   "coverage": {

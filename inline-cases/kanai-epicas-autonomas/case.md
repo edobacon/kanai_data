@@ -46,10 +46,11 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | contrato-f1.md | decision | Contrato de implementación F1 | Host MCP visible, datos separados, cierre humano, instrumentación inicial y piloto real separado. |
-| correcciones-arbiter.md | registro | Correcciones y revisión de implementación | Ocho hallazgos corregidos; pruebas pasaron y revisión independiente de cierre en curso. |
-| operacion-y-piloto.md | registro | Operación implementada y preparación del piloto | Guía de uso, evidencia de validación y requisitos pendientes del piloto real; no equivale a cierre F10. |
+| correcciones-arbiter.md | registro | Correcciones y revisión de implementación | F11 cerrada: revisión aprobada, diez hallazgos resueltos, tres commits, 2652 pruebas. F10 piloto pendiente. |
+| operacion-y-piloto.md | registro | Operación implementada y preparación del piloto | Revisión aprobada, diez hallazgos resueltos, tres commits registrados y 2652 pruebas; piloto pendiente. |
+| piloto-ep01-preparacion-y-parser.md | analisis | Piloto EP-01: preparación y hallazgo del planificador | Épica nativa creada con TAO-181–188; preintake registrado. Parser produce referencias contextuales/IDs truncados y auto-referencias. Hallazgo pendiente antes de aprobación y ejecución. |
 | plan-implementacion-epicas-autonomas.md | analisis | Plan de implementación de épicas autónomas, permisos por harness y métricas | Plan presentado y autorizado para registro: alcance, dependencias, ramas, autonomía, Teach, recuperación, vistas, paquetes P0–P9, aceptación y piloto medido en Tao Mangalam. |
 
 ## Plan
 
-9 de 11 fases cerradas, fase actual F11. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md
+10 de 11 fases cerradas, fase actual F10. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md

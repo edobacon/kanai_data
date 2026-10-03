@@ -4,7 +4,7 @@
 
 **Intención:** Implementar el plan acordado de épicas autónomas en Kanai, con permisos por harness, Teach/Skip, seguimiento de tickets, recuperación y métricas desde el inicio; evaluar piloto Tao Mangalam. Registrar el plan no inicia ejecución.
 **Tags:** projects: kanai_self · repos: kanai-app · labels: epicas, autonomia, harness, metricas, piloto-taomangalam
-**Estado:** 9 de 11 fases cerradas. Juez final: pendiente.
+**Estado:** 10 de 11 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -19,8 +19,8 @@
 | F7 Revisión integral y cierre | Concentrar revisión amplia y CI final sin perder evidencia ni autorización. | Hecho | 2026-10-03 → 2026-10-03 | c19285df5aa8f2a3b149bce415ab96cf47858512 | 2/2 | - |
 | F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | Hecho | 2026-10-03 → 2026-10-03 | e6d5a6a103a184773e3e038b56a0e8647f3c83ac | 2/2 | - |
 | F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Hecho | 2026-10-03 → 2026-10-03 | 1d716b440eb4ae9b112f4ba75f47dacb288b0ef0 | 2/2 | - |
-| F11 Correcciones de revisión de implementación | Resolver los ocho hallazgos de arbiter antes del piloto, con evidencia y revisión de cierre. | En curso | 2026-10-03 → - | 80c2d51dcced57d84e5e1802eb9a50ed40689ab4 | 0/2 | F11.3 |
-| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Arbiter de implementación F1–F9 devuelve iterar con 7 hallazgos altos y 1 medio pendientes; 6 defectos de comportamiento sostenidos en comprobación adversarial. Corregir y re-juzgar antes de iniciar piloto. Se mantienen selección de 3–5 tickets/baseline/Teach-permisos pendientes y seguimiento de 14 días desde merge real. Informe y cobertura registrados en área arbiter del mismo plan, con enlace en finding F10.) | 2026-10-03 → - | - | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
+| F11 Correcciones de revisión de implementación | Resolver los ocho hallazgos originales de arbiter y los adicionales de los ciclos de revisión antes del piloto, con evidencia y registro. | Hecho | 2026-10-03 → 2026-10-03 | 80c2d51dcced57d84e5e1802eb9a50ed40689ab4, bd004db5261a4e72dc49a64155823b9bb4cdaa8d, 364eb16afcd35f7fe8879f20f645c00a76e7561e | 2/2 | - |
+| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Piloto real pendiente de selección humana de 3–5 tickets Tao Mangalam, baseline posterior a DEC-239, rama, host/versión, responsables y permisos efectivos. Además faltan ejecución real y observación de defectos durante 14 días desde merge. No hay bloqueo de revisión de código: F11 cerrada y arbiter aprobado.) | 2026-10-03 → - | - | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
 
 ## Riesgos
 
@@ -326,33 +326,39 @@
 
 ### F11. Correcciones de revisión de implementación
 
-**Meta:** Resolver los ocho hallazgos de arbiter antes del piloto, con evidencia y revisión de cierre.
+**Meta:** Resolver los ocho hallazgos originales de arbiter y los adicionales de los ciclos de revisión antes del piloto, con evidencia y registro.
 **Esfuerzo:** Corrección guiada por revisión; se registra ejecución real.
 **Cómo deshacerla:** Revertir commits de corrección sin eliminar historial ni datos de corridas.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F11** (estado: En curso)
-- **Fecha real:** inicio 2026-10-03 · fin -
+**Registro F11** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-03 · fin 2026-10-03
 - **Antes de empezar:**
   - [x] F11-P1: F9 cerrada y revisión arbiter registrada con ocho hallazgos pendientes. (F9 cerrada. Revisión registrada en /Users/edobacon/.kanai/data/kanai_data/arbiter/plans/kanai-epicas-autonomas/ledger.md: corrida 20261003-epicas-review1-kanai-app, siete S1 y un S2.)
 - **Commits:**
   - `80c2d51dcced57d84e5e1802eb9a50ed40689ab4` · fix(epics): enforce canonical integration and autonomous run boundaries · kanai-app/codex/epicas-autonomas (verificado)
+  - `bd004db5261a4e72dc49a64155823b9bb4cdaa8d` · fix(epics): surface canonical proof infrastructure failures · kanai-app/codex/epicas-autonomas (verificado)
+  - `364eb16afcd35f7fe8879f20f645c00a76e7561e` · fix(epics): preserve Git ancestry verifier errors · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
   - **F11.1** → Corregidas sesiones superseded, prueba de commits canónicos y vencimiento de plazo; commit de F11 ya registrado.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/tests/unit/epic-corrections.test.ts:53. Cómo se comprobó: pnpm test: 2648/2648, 334 archivos, exit 0; regresión canónica posterior 15/15, exit 0. Logs /private/tmp/kanai-epic-corrections-full.log y /private/tmp/kanai-epic-corrections-canonical.log. El SHA base sin trabajo integrado se rechaza por el servicio canónico completo. · ejecutó: llm
   - **F11.2** → Corregidos artefactos, repos, carrera de update y fetch; probado cierre humano y recuperación sin duplicar auditoría; commit de F11 registrado.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/tests/unit/epic-corrections.test.ts:96; /Users/edobacon/Workspace/kanai/kanai-app/tests/unit/human-authorization.test.ts:410. Cómo se comprobó: Regresiones 70/70, exit 0, /private/tmp/kanai-epic-corrections-rerun.log; suite completa 2648/2648. Primer intento falló por helper de test fuera de scope, corregido y repetido con éxito. · ejecutó: llm
-  - **F11.3** pendiente: Ejecutar verificaciones, documentar cambios, registrar commits y repetir arbiter con re-chequeo de los ocho hallazgos.
+  - **F11.3** → Completados tres ciclos de corrección/revisión, diez hallazgos resueltos, tres commits registrados; documentación del repositorio y KB operativo actualizados.. Dónde: /Users/edobacon/Workspace/kanai/kanai-app/docs/development/epic-execution.md; /Users/edobacon/.kanai/data/kanai_data/arbiter/plans/kanai-epicas-autonomas/ledger.md. Cómo se comprobó: Node24 pnpm test: 2652/2652, 335 archivos, exit 0. Regresiones Git 41/41, exit 0. pnpm typecheck, build y docs:check pasan. check:ui pasó tras correcciones iniciales. Logs /private/tmp/kanai-epic-git-infra-*.log. Arbiter closure3 aprobado, cobertura 52/52 archivos y 1710/1710 líneas, diez fixed y cero pending; revisores limpios y re-chequeos separados. No se declara piloto ni compatibilidad real de todos los harnesses. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F11-C1** pendiente (evidence): Los ocho hallazgos tienen corrección y evidencia verificable, sin omitir controles ni inventar integración.
-  - **F11-C2** pendiente (evidence): Verificaciones relevantes y revisión de cierre aprobadas; commits y limitaciones registrados.
+  - **F11-C1** Los ocho hallazgos tienen corrección y evidencia verificable, sin omitir controles ni inventar integración. → Diez hallazgos (ocho originales y dos adicionales) reconciliados como fixed, ninguno descartado ni aceptado sin corregir. Evidencia individual en /Users/edobacon/.kanai/data/kanai_data/arbiter/plans/kanai-epicas-autonomas/ledger.md, corrida 20261003-epicas-closure3-kanai-app; Git/DB temporales y guards canónicos ejercitados en tests/unit/epic-corrections.test.ts y epic-git-infrastructure.test.ts. · ejecutó: llm
+  - **F11-C2** Verificaciones relevantes y revisión de cierre aprobadas; commits y limitaciones registrados. → Arbiter aprobado con cobertura 52/52 y sin huecos. Commits 80c2d51, bd004db y 364eb16 registrados y verificados en F11. Suite final 2652/2652, tipos/build/docs aprobados: /private/tmp/kanai-epic-git-infra-{tests,types,build,docs}.log. Documentación actualizada en /Users/edobacon/Workspace/kanai/kanai-app/docs/development/epic-execution.md y KB del caso correcciones-arbiter.md/operacion-y-piloto.md. Piloto F10 sigue pendiente. · ejecutó: llm
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
   - Enmienda: Agregar fase de correcciones F11 antes del piloto F10.. Motivo: La persona pidió corregir los ocho hallazgos de arbiter y registrarlos en el caso inline correspondiente.
+  - Enmienda: Vincular tareas de corrección con los documentos operativos del caso y explicitar el ciclo de hallazgos adicionales.. Motivo: La persona pidió repetir corrección/revisión si aparecen más casos y actualizar documentación afectada; el ciclo detectó un S2 adicional ya corregido y en revisión.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · /Users/edobacon/Workspace/kanai/kanai-app/server/repo/dependencyIntegration.ts:224: Revisión independiente del lote 2 confirmó S2: catch absorbe excepciones de lectura canónica/infraestructura y las convierte en estado not_integrated, ocultando la causa de verificación. Se corregirá y revisará en siguiente ciclo.
+  - introducido · /Users/edobacon/.kanai/data/kanai_data/arbiter/plans/kanai-epicas-autonomas/ledger.md: Corrida closure1 registró ocho hallazgos originales corregidos con re-chequeo individual. Nuevo S2 de diagnóstico de infraestructura fue registrado, corregido en bd004db5261a4e72dc49a64155823b9bb4cdaa8d y está en revisión de cierre2. Suite final 2649/2649, 334 archivos, exit 0; tipos y documentación pasan. No se declara piloto realizado.
+  - introducido · /Users/edobacon/Workspace/kanai/kanai-app/docs/development/epic-execution.md:85: Segunda revisión independiente detectó S2: la nueva garantía de conservar errores incluye verificación Git, cuyos helpers aún absorbían errores de merge-base. Se distinguirá salida 1 (no ancestor) de errores de infraestructura y se repetirán pruebas y revisión.
+  - introducido · /Users/edobacon/Workspace/kanai/kanai-app/server/epics/git.ts:31: Hallazgo informativo de cierre2 corregido reforzando implementación: merge-base sólo interpreta status 1 como no-ancestor; errores de infraestructura se propagan también al verificar commits contra el recibo. Tercer commit registrado. Tres nuevas pruebas ejercitan error Git, resultado negativo y error en segundo chequeo. Regresiones 41/41, exit 0. Revisión cierre3 en curso.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Diez hallazgos corregidos y reconciliados; arbiter aprobado, pruebas y documentación actualizadas; tres commits verificados.. Siguiente: 2026-10-04: F10 sigue pendiente de selección explícita de piloto Tao Mangalam, baseline y permisos. Seguimiento de 14 días se calcula desde el merge real, aún sin fecha.
 
 ### F10. Piloto, evaluación y mejoras
 
@@ -360,7 +366,7 @@
 **Esfuerzo:** Por estimar en F1 tras revisar el código y las capacidades existentes.
 **Cómo deshacerla:** Conservar documentos y evidencia; corregir decisiones mediante enmienda auditada, sin modificar código ni borrar historial.
 
-**Registro F10** (estado: Bloqueado (Arbiter de implementación F1–F9 devuelve iterar con 7 hallazgos altos y 1 medio pendientes; 6 defectos de comportamiento sostenidos en comprobación adversarial. Corregir y re-juzgar antes de iniciar piloto. Se mantienen selección de 3–5 tickets/baseline/Teach-permisos pendientes y seguimiento de 14 días desde merge real. Informe y cobertura registrados en área arbiter del mismo plan, con enlace en finding F10.))
+**Registro F10** (estado: Bloqueado (Piloto real pendiente de selección humana de 3–5 tickets Tao Mangalam, baseline posterior a DEC-239, rama, host/versión, responsables y permisos efectivos. Además faltan ejecución real y observación de defectos durante 14 días desde merge. No hay bloqueo de revisión de código: F11 cerrada y arbiter aprobado.))
 - **Fecha real:** inicio 2026-10-03 · fin -
 - **Antes de empezar:**
   - [x] F10-P1: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
@@ -388,4 +394,6 @@
 - **Bloqueos:**
   - 2026-10-03 bloqueada: Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.
   - 2026-10-03 bloqueada: Arbiter de implementación F1–F9 devuelve iterar con 7 hallazgos altos y 1 medio pendientes; 6 defectos de comportamiento sostenidos en comprobación adversarial. Corregir y re-juzgar antes de iniciar piloto. Se mantienen selección de 3–5 tickets/baseline/Teach-permisos pendientes y seguimiento de 14 días desde merge real. Informe y cobertura registrados en área arbiter del mismo plan, con enlace en finding F10.
+  - 2026-10-03 desbloqueada: Resuelto el bloqueo de revisión de implementación: arbiter closure3 aprobado, diez hallazgos fixed, F11 cerrada y tres commits registrados. Permanecen pendientes los requisitos reales del piloto.
+  - 2026-10-03 bloqueada: Piloto real pendiente de selección humana de 3–5 tickets Tao Mangalam, baseline posterior a DEC-239, rama, host/versión, responsables y permisos efectivos. Además faltan ejecución real y observación de defectos durante 14 días desde merge. No hay bloqueo de revisión de código: F11 cerrada y arbiter aprobado.
 - **Cierre y siguiente paso:** Sin cerrar.

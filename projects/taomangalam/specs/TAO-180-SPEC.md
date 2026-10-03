@@ -88,16 +88,16 @@ Contrato: rollback: Revertir la seccion agregada en app/README.md con git checko
 Contrato: rollback: Borrar app/test/accessibility/accessibility_guidelines_test.dart.. Status: done
 
 #### S2.T1 — Crear app/test/accessibility/components_accessibility_test.dart que enumere las entradas del registro de Widgetbook de los componentes de HU-01-03 a HU-01-05 y genere un caso por entrada aplicando la utilidad. Mantener la forma acotada: un caso por entrada, sin producto cartesiano anidado, con timeout por caso, y viewport y escala como parámetros del caso.
-Contrato: rollback: Borrar app/test/accessibility/components_accessibility_test.dart; no hay cambios en lib/.. Status: pending
+Contrato: rollback: Borrar app/test/accessibility/components_accessibility_test.dart; no hay cambios en lib/.. Status: done
 
 #### S2.T2 — Extender la suite de componentes a los cuatro contextos exigidos: teléfono 390 x 844 y tablet, cada uno con TextScaler.linear(1) y TextScaler.linear(2), fallando el caso ante excepción de overflow o control con tamaño cero, e incluir el caso del campo con mensaje de error a escala 200 % leyendo el mensaje completo del árbol semántico (QA-01-15-02).
-Contrato: rollback: Dejar la suite solo con el contexto de teléfono a escala 100 % (estado de la task anterior).. Status: pending
+Contrato: rollback: Dejar la suite solo con el contexto de teléfono a escala 100 % (estado de la task anterior).. Status: done
 
 #### S2.T3 — Corregir los incumplimientos de componentes que la suite detecte y que sean bloqueantes de EP-01 (tamaño de objetivo táctil, etiqueta semántica faltante, contraste de texto), tomando los valores del tema y sin introducir literales. Si un incumplimiento pertenece a otra épica, no tocarlo: anotarlo para el informe de la sesión final.
-Contrato: rollback: Revertir los cambios en los componentes afectados; la suite vuelve a marcar el incumplimiento y queda como hallazgo registrado.. Status: pending
+Contrato: rollback: Revertir los cambios en los componentes afectados; la suite vuelve a marcar el incumplimiento y queda como hallazgo registrado.. Status: done
 
 #### S2.T4 — Regresión de la sesión: correr la suite de componentes junto con las pruebas de design system afectadas y dejar ambas en verde, verificando que las correcciones no alteraron estados ni tamaños ya cubiertos.
-Contrato: rollback: Revertir los ajustes de test de esta task; las correcciones de componentes se evalúan aparte.. Status: pending
+Contrato: rollback: Revertir los ajustes de test de esta task; las correcciones de componentes se evalúan aparte.. Status: done
 
 #### S3.T1 — Cubrir las tres plantillas de HU-01-10 con la utilidad en 390x844, 768x1024 y 1024x768 a escalas 1.0 y 2.0, verificando que no hay desbordes ni acciones ocultas. DEPENDENCIA: requiere las tres plantillas de TAO-178 (HU-01-10) integradas y publicas; TAO-178 esta en curso con las plantillas sin integrar, asi que esta tarea no se ejecuta contra fixtures propios ni maquetas locales. Si al llegar aqui las plantillas no estan integradas, dejar la tarea bloqueada y declarado el motivo, y continuar con el resto de las sesiones. No tocar los cambios dirty de TAO-178.
 Contrato: rollback: Eliminar el archivo de cobertura de plantillas de app/test/accessibility; la suite de componentes y el helper quedan intactos.. Status: pending
@@ -183,13 +183,13 @@ Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pendin
 
 **Gate (auto)**: Un archivo de test ejecutable donde un botón de muestra de 40 x 40 falla nombrando el objetivo táctil y un TaoButton real pasa las cuatro guías, más la guía de uso visible en la documentación de la app.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: La suite de componentes corre sobre todas las entradas del registro de Widgetbook en teléfono y tablet a escala 100 % y 200 % y termina en verde, con el listado de casos visible en la salida del test.
 
