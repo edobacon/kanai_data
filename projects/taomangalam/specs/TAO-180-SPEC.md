@@ -121,7 +121,7 @@ Contrato: rollback: Eliminar el componente de muestra temporal; no queda rastro 
 Contrato: rollback: Si la regresion falla, revertir solo el ultimo commit de la suite de accesibilidad con git revert sin tocar la utilidad ni los cambios de otras historias; si el fallo viene de una regla automatizada, desactivar unicamente esa regla dejando registrado el defecto.. Status: done
 
 #### S5.T1 — Reproducir el reporte real de CI del PR ya mergeado: verificar en la ejecucion del workflow .github/workflows/ci-pr.yml que el job de Flutter corrio la suite app/test/accessibility, que el exit code se propago y que coverage/pruebas.txt quedo subido como artifact e identifica los casos de accesibilidad. El criterio de aprobacion de esta sesion es esa verificacion de la suite en CI y la reproducibilidad local del mismo reporte; la auditoria con lectores de pantalla queda diferida a TAO-183 y TAO-185 y no se evalua aqui.
-Contrato: rollback: Si el reporte de CI no es reproducible, no modificar el workflow: registrar el defecto y dejar la verificacion pendiente, conservando la suite y el job existentes sin cambios.. Status: pending
+Contrato: rollback: Si el reporte de CI no es reproducible, no modificar el workflow: registrar el defecto y dejar la verificacion pendiente, conservando la suite y el job existentes sin cambios.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por Suite automática de accesibilidad (objetivo táctil, etiqueta, contraste, escala y foco) con auditoría manual de EP-01
@@ -212,9 +212,9 @@ Contrato: rollback: Si el reporte de CI no es reproducible, no modificar el work
 
 **Gate (auto)**: La corrida real de CI del PR #125 (job de Flutter existente) corre la suite app/test/accessibility sobre componentes, shell y plantillas en teléfono/tablet a 100 % y 200 %, el reporte queda publicado como artifact identificable y el exit code se propaga; sin informe de auditoría manual, diferida a TAO-183 (V-31) y TAO-185 (V-51).
 
-### Session 5 · T0 · open
+### Session 5 · T0 · continue
 
 **Tasks:**
-- [ ] S5.T1
+- [x] S5.T1
 
 **Gate (strong)**: Verificación humana con evidencias reales. No cerrar hasta contar con suite completa en CI, auditoría en dispositivos sobre vistas implementadas, hallazgos bloqueantes resueltos y aprobación de Diseño registrada.
