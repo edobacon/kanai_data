@@ -1,0 +1,620 @@
+Revisaré el contrato y las referencias locales para preparar la maqueta de las tres plantillas y sus estados.
+La referencia usa marfil, azul noche y oro tenue, con paisaje detrás de toda la vista. La maqueta mostrará las tres composiciones, sus estados y controles para cambiar el ancho y la escala de texto.
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tao Mangalam · Plantillas responsive · HU-01-10</title>
+<style>
+:root{
+  --background:#FAF7F0;--surface:#FFFDF8;--muted:#F3EFE4;
+  --ink:#141A37;--secondary:#6B665B;--night:#071A33;--gold:#785D33;
+  --divider:#E4DDD1;--red:#7F0E06;--error:#A23A32;--success:#3F6B4A;
+  --contentMax:1200px;--editorialMax:720px;
+  --detailDuration:200ms;--stepExit:180ms;--stepEnter:240ms;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#EDE8DB;color:var(--ink);font:16px/1.5 Georgia,"Times New Roman",serif}
+button,input,textarea,select{font:inherit}
+button,a,input,textarea,select{-webkit-tap-highlight-color:transparent}
+button{cursor:pointer}
+button,a{touch-action:manipulation}
+button:disabled{cursor:default;opacity:.55}
+:focus-visible{outline:3px solid #946E2F;outline-offset:4px}
+[hidden]{display:none!important}
+h1,h2,h3,p{margin-top:0}
+h1{font-size:2em;line-height:1.2;font-weight:500;margin-bottom:12px}
+h2{font-size:1.5em;line-height:1.3;font-weight:500}
+h3{font-size:1.18em;line-height:1.4}
+p{margin-bottom:16px}
+button{color:inherit}
+.review{max-width:1440px;margin:auto;padding:28px 24px 20px}
+.review-top{display:flex;justify-content:space-between;align-items:start;gap:20px;flex-wrap:wrap}
+.review h1{font-size:28px;margin:4px 0 10px}
+.eyebrow,.mono{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.eyebrow{color:var(--gold);letter-spacing:.12em;text-transform:uppercase}
+.review p{color:var(--secondary);max-width:740px;font:14px/1.6 system-ui,sans-serif}
+.ticket{border:1px solid #C8BEAB;padding:7px 12px;border-radius:999px;font:12px system-ui,sans-serif}
+.controls{display:flex;gap:16px;flex-wrap:wrap;align-items:end;margin-top:20px}
+.control{display:grid;gap:6px;font:12px system-ui,sans-serif}
+.control select{background:var(--surface);border:1px solid #A69D8E;border-radius:8px;min-height:44px;padding:8px 30px 8px 12px;font:14px system-ui,sans-serif;max-width:100%}
+.check{display:flex;align-items:center;gap:8px;min-height:44px;font:13px system-ui,sans-serif}
+.check input{width:18px;height:18px}
+.preview-wrap{padding:0 12px 28px}
+.frame{width:100%;max-width:1440px;margin:auto;background:var(--background);border:1px solid #CEC4B3;border-radius:16px;box-shadow:0 12px 36px #07101b0d;container-type:inline-size;position:relative;isolation:isolate;overflow:clip;font-size:16px}
+.frame.large-text{font-size:32px}
+.family-art{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.family-art svg{width:100%;height:100%;min-height:100%;display:block;opacity:.15}
+.frame[data-family="biblioteca"] .family-art{color:#2C4E69}
+.frame[data-family="consultas"] .family-art{color:#485846}
+.frame[data-family="recorrido"] .family-art{color:#785D33}
+.app-header{min-height:64px;padding:8px 16px;display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--divider);background:var(--background);flex-wrap:wrap}
+.brand{display:flex;gap:10px;align-items:center;flex:1;min-width:0;font-size:1.1em;line-height:1.25}
+.enso{width:40px;height:40px;border:4px solid var(--night);border-right-width:2px;border-radius:50%;position:relative;flex:none;transform:rotate(-14deg)}
+.enso:after{content:"";position:absolute;inset:9px;background:var(--red);border-radius:50%}
+.icon-button{border:0;background:transparent;min-width:48px;min-height:48px;padding:8px;border-radius:10px;font-size:1.3em}
+.icon-button:hover{background:var(--muted)}
+.header-context{display:block;font:12px/1.4 ui-monospace,monospace;color:var(--secondary);margin-top:4px}
+.template-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--divider);padding:8px 16px;background:var(--background)}
+.template-tabs button{border:0;background:none;padding:10px 14px;min-height:48px;border-radius:8px;color:var(--secondary)}
+.template-tabs button[aria-pressed="true"]{background:var(--muted);color:var(--ink);box-shadow:inset 0 -3px var(--red)}
+.content{--columns:4;--margin:16px;--gutter:16px;padding:28px var(--margin) 40px;max-width:calc(var(--contentMax) + 2 * var(--margin));margin:auto;position:relative}
+.grid-overlay{position:absolute;inset:0 var(--margin);display:none;grid-template-columns:repeat(var(--columns),minmax(0,1fr));gap:var(--gutter);pointer-events:none;z-index:5}
+.grid-overlay i{background:#946e2f0b;border-inline:1px solid #946e2f20}
+.show-grid .grid-overlay{display:grid}
+.grid-overlay i:nth-child(n+5){display:none}
+.intro{margin-bottom:24px}
+.intro .eyebrow{margin-bottom:10px}
+.intro p{color:var(--secondary);max-width:var(--editorialMax)}
+.status-note{font-size:.82em;color:var(--secondary)}
+.surface{background:var(--surface);border:1px solid var(--divider);border-radius:14px;min-width:0}
+.list-detail,.form-layout,.board-layout{display:grid;gap:var(--gutter);align-items:start}
+.list-panel{overflow:hidden}
+.panel-head{padding:20px;border-bottom:1px solid var(--divider)}
+.panel-head h2{margin-bottom:12px;font-size:1.2em}
+.search{display:flex;align-items:center;gap:10px;border:1px solid #ADA393;background:var(--surface);border-radius:8px;padding:10px 12px}
+.search input{border:0;background:transparent;min-width:0;width:100%;outline-offset:7px}
+.list-count{color:var(--secondary);font-size:.8em;margin:12px 0 0}
+.items{max-height:560px;overflow:auto;scrollbar-gutter:stable}
+.item{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--divider);background:var(--surface);padding:20px;min-height:88px;text-decoration:none;color:var(--ink);position:relative}
+.item:last-child{border-bottom:0}
+.item:hover{background:var(--muted)}
+.item.selected{background:var(--muted);box-shadow:inset 4px 0 var(--gold)}
+.item strong{display:block;line-height:1.4;margin:4px 0 8px}
+.item small{display:block;color:var(--secondary);font-size:.82em}
+.item-kicker{font:.7em/1.5 ui-monospace,monospace;color:var(--gold);letter-spacing:.03em}
+.item-arrow{float:right;margin-left:8px}
+.detail-panel{display:none}
+.detail-inner{padding:24px;max-width:var(--editorialMax);margin:auto}
+.detail-inner h2{font-size:1.65em;margin:14px 0}
+.tag{display:inline-block;border:1px solid var(--divider);background:var(--muted);border-radius:999px;padding:4px 10px;font-size:.75em}
+.detail-inner p{line-height:1.65}
+.meta-line{font:.75em/1.6 ui-monospace,monospace;color:var(--secondary);margin-bottom:24px}
+.rule{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--gold)}
+.rule:before,.rule:after{content:"";height:1px;background:var(--divider);flex:1}
+.quote{border-left:2px solid var(--gold);padding:4px 0 4px 18px;color:var(--gold);margin:24px 0}
+.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:24px}
+.btn{min-height:48px;border-radius:999px;padding:11px 20px;border:1px solid var(--gold);background:transparent;color:var(--gold);font-weight:600;line-height:1.4;text-align:center;white-space:normal;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--night);border-color:var(--night);color:var(--surface)}
+.btn.danger{background:var(--red);border-color:var(--red);color:var(--surface)}
+.btn.quiet{border-color:var(--divider);color:var(--ink)}
+.mobile-back{display:none;margin-bottom:18px}
+.frame.detail-open .list-panel{display:none}
+.frame.detail-open .detail-panel{display:block}
+.frame.detail-open .mobile-back{display:inline-flex}
+.form-main,.summary-panel,.result-panel{padding:24px}
+.form-top{display:flex;align-items:start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.step-counter{color:var(--gold);font:.8em/1.5 ui-monospace,monospace}
+.progress{height:3px;background:var(--divider);margin:16px 0 24px;border-radius:4px}
+.progress span{display:block;height:100%;width:33.333%;background:var(--gold);transition:width var(--stepEnter)}
+.steps-nav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 24px;padding:0;list-style:none}
+.steps-nav li{flex:1;min-width:100px;padding:8px 0;border-bottom:2px solid var(--divider);font-size:.8em;color:var(--secondary)}
+.steps-nav .active{color:var(--ink);font-weight:bold;border-color:var(--gold)}
+.field{display:grid;gap:8px;margin-bottom:24px}
+.field label{font-weight:600}
+.field input,.field textarea,.field select{min-width:0;width:100%;padding:12px;border:1px solid #ADA393;border-radius:8px;background:var(--surface);color:var(--ink);min-height:48px}
+.field textarea{resize:vertical;min-height:150px;line-height:1.5}
+.field small{font-size:.82em;line-height:1.5;color:var(--secondary)}
+.required{color:var(--red)}
+.field-error{color:var(--error)!important}
+.summary-panel{display:none}
+.summary-panel h2,.result-panel h2{font-size:1.25em}
+dl{margin:0}
+dl div{padding:12px 0;border-bottom:1px solid var(--divider)}
+dl div:last-child{border-bottom:0}
+dt{color:var(--secondary);font-size:.8em}
+dd{margin:5px 0 0;overflow-wrap:anywhere}
+.helper-box{margin-top:20px;padding:16px;border-radius:10px;background:var(--muted);font-size:.88em}
+.board-surface{padding:24px}
+.board-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.board-top h2{font-size:1.2em;margin:0}
+.board-art{display:block;width:100%;max-width:530px;height:auto;margin:0 auto}
+.board-caption{font-size:.8em;color:var(--secondary);text-align:center;margin:18px 0 0}
+.result-number{font:2.5em/1.2 ui-monospace,monospace;color:var(--gold);margin:10px 0}
+.result-panel p{line-height:1.65}
+.state-view{padding:36px 24px;max-width:var(--editorialMax);margin:auto;text-align:center}
+.state-icon{font-size:2em;color:var(--gold);margin-bottom:12px}
+.state-view .actions{justify-content:center}
+.error-state .state-icon,.error-state h2{color:var(--error)}
+.skeleton{height:14px;border-radius:5px;background:var(--divider);margin-bottom:14px;animation:pulse 1.2s ease-in-out infinite}
+.skeleton.title{height:26px;width:60%}
+.skeleton.short{width:72%}
+.loading-tiles{padding:24px;display:grid;gap:24px}
+.loading-tile{padding:20px;border:1px solid var(--divider);border-radius:10px}
+.loading-text{padding:0 24px 24px;color:var(--secondary)}
+.detail-panel.changing{animation:detail-in var(--detailDuration) ease-out}
+.step-body.exiting{animation:step-out var(--stepExit) ease-in forwards}
+.step-body.entering{animation:step-in var(--stepEnter) ease-out}
+@keyframes detail-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes step-out{to{opacity:0;transform:translateY(-8px)}}
+@keyframes step-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{50%{opacity:.45}}
+.editorial{max-width:var(--editorialMax);margin:32px auto 0;padding:24px}
+.editorial summary{min-height:48px;cursor:pointer;color:var(--gold);font-weight:600}
+.editorial p{line-height:1.7}
+.review-footer{max-width:1200px;margin:0 auto;padding:0 24px 32px;font:12px/1.7 system-ui,sans-serif;color:var(--secondary)}
+.live-note{margin-top:24px;font-size:.8em;color:var(--secondary);border-top:1px solid var(--divider);padding-top:16px}
+.menu-popover{margin-left:auto;background:var(--surface);border:1px solid var(--divider);border-radius:12px;padding:12px;width:100%}
+.menu-popover a{display:block;min-height:48px;padding:12px;color:var(--ink)}
+dialog{border:1px solid var(--divider);background:var(--surface);color:var(--ink);border-radius:20px;padding:28px;max-width:calc(100% - 32px);width:480px;max-height:calc(100dvh - 32px);overflow:auto;font:inherit;box-shadow:0 16px 48px #07101b38}
+dialog::backdrop{background:#07101ba6}
+dialog h2{font-size:1.5em}
+dialog .actions{justify-content:flex-end}
+dialog p{line-height:1.6}
+.dialog-symbol{color:var(--gold);font-size:1.6em;margin-bottom:12px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@container (min-width:600px){
+ .content{--columns:8;--margin:24px;--gutter:20px}
+ .app-header{min-height:72px;padding-inline:24px}
+ .grid-overlay i:nth-child(-n+8){display:block}
+ .form-layout{grid-template-columns:minmax(0,5fr) minmax(0,3fr)}
+ .summary-panel{display:block}
+}
+@container (min-width:840px){
+ .content{--columns:12;--margin:32px;--gutter:24px}
+ .grid-overlay i:nth-child(-n+12){display:block}
+ .list-detail{grid-template-columns:minmax(0,4fr) minmax(0,8fr)}
+ .detail-panel{display:block}
+ .frame.detail-open .list-panel{display:block}
+ .frame.detail-open .mobile-back{display:none}
+ .board-layout{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+ .form-layout{grid-template-columns:minmax(0,8fr) minmax(0,4fr)}
+}
+@container (min-width:1200px){.content{--margin:40px}}
+@container (max-width:599px){
+ .detail-inner,.form-main,.summary-panel,.result-panel,.board-surface{padding:20px}
+ .actions .btn{flex:1 1 140px}
+ .template-tabs{gap:0}
+ .template-tabs button{flex:1 1 100px;padding:10px 8px}
+ .steps-nav{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media(max-width:440px){
+ .review{padding:20px 16px}
+ .preview-wrap{padding:0 0 24px}
+ .frame{border-radius:0;border-inline:0}
+ .controls{gap:12px}
+ .control{flex:1 1 140px}
+}
+</style>
+</head>
+<body>
+<header class="review">
+  <div class="review-top">
+    <div>
+      <div class="eyebrow">Tao Mangalam · Revisión de diseño</div>
+      <h1>Un espacio, tres formas de habitarlo</h1>
+      <p>Lista y detalle, preparación por etapas y tablero con resultado. Cambia el ancho para revisar cómo se recompone cada plantilla conservando lo que estabas haciendo.</p>
+    </div>
+    <span class="ticket">HU-01-10 · TAO-178</span>
+  </div>
+  <div class="controls" aria-label="Controles de la maqueta">
+    <label class="control">Ancho disponible
+      <select id="width">
+        <option value="auto">Adaptar a esta ventana</option>
+        <option value="360">360 · teléfono pequeño</option>
+        <option value="390">390 · teléfono</option>
+        <option value="768">768 · tablet vertical</option>
+        <option value="1024">1024 · tablet horizontal</option>
+        <option value="1440" selected>1440 · pantalla amplia</option>
+      </select>
+    </label>
+    <label class="control">Estado de la vista
+      <select id="state">
+        <option value="ready">Con contenido</option>
+        <option value="empty">Vacío</option>
+        <option value="loading">Cargando</option>
+        <option value="error">Error</option>
+      </select>
+    </label>
+    <label class="check"><input id="scale" type="checkbox">Texto al 200 %</label>
+    <label class="check"><input id="grid" type="checkbox">Mostrar retícula</label>
+  </div>
+</header>
+
+<div class="preview-wrap">
+<div class="frame" id="frame" data-family="biblioteca">
+  <!-- Capa única del anfitrión. Ilustración vectorial de fixture; no contiene assets externos. -->
+  <div class="family-art" aria-hidden="true">
+    <svg viewBox="0 0 1440 1100" preserveAspectRatio="xMaxYMax slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="wash" x2="0" y2="1"><stop stop-color="currentColor" stop-opacity=".6"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient>
+      </defs>
+      <circle cx="1280" cy="185" r="66" fill="#7F0E06" opacity=".55"/>
+      <g fill="url(#wash)" stroke="currentColor" stroke-width="1.2">
+        <path d="M850 1100 965 990 1000 1015 1115 825 1170 919 1204 875 1375 1100Z"/>
+        <path d="M1020 1100 1120 987 1174 1008 1267 932 1360 1040 1440 998 1440 1100Z"/>
+        <path d="M0 1100 60 1010 100 1045 180 930 235 1012 310 976 435 1100Z"/>
+      </g>
+      <g fill="none" stroke="currentColor" stroke-linecap="round">
+        <path d="m1115 825-18 123-42 61m60-174 37 135-18 66m-954-106-16 82-30 54m46-125 22 113" stroke-width="2"/>
+        <path d="M1440 1072c-51-89-55-164-41-244m16 109-86-55m72-12-68-78m74 225-112-39" stroke-width="9"/>
+        <path d="m0 1090 65-80 35-80m-45 95 87-12m-64-41-54-38" stroke-width="6"/>
+      </g>
+      <g fill="currentColor">
+        <ellipse cx="1328" cy="878" rx="28" ry="7" transform="rotate(24 1328 878)"/>
+        <ellipse cx="1352" cy="890" rx="25" ry="7" transform="rotate(-15 1352 890)"/>
+        <ellipse cx="1336" cy="797" rx="27" ry="7" transform="rotate(40 1336 797)"/>
+        <ellipse cx="1298" cy="978" rx="35" ry="8" transform="rotate(-10 1298 978)"/>
+        <ellipse cx="1315" cy="998" rx="30" ry="7" transform="rotate(24 1315 998)"/>
+        <ellipse cx="143" cy="1014" rx="30" ry="7" transform="rotate(-18 143 1014)"/>
+        <ellipse cx="28" cy="939" rx="25" ry="6" transform="rotate(26 28 939)"/>
+      </g>
+    </svg>
+  </div>
+
+  <header class="app-header">
+    <div class="brand"><span class="enso" aria-hidden="true"></span><div>Tao Mangalam<span class="header-context" id="header-context">Biblioteca · Consultor</span></div></div>
+    <button class="icon-button" id="menu-button" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="menu">☰</button>
+    <nav id="menu" class="menu-popover" aria-label="Navegación principal" hidden>
+      <a href="#biblioteca" data-menu-view="library">Biblioteca</a>
+      <a href="#preparar" data-menu-view="form">Preparar sesión</a>
+      <a href="#tablero" data-menu-view="board">Tablero</a>
+    </nav>
+  </header>
+
+  <nav class="template-tabs" aria-label="Plantillas de la maqueta">
+    <button data-view="library" aria-pressed="true">Lista y detalle</button>
+    <button data-view="form" aria-pressed="false">Formulario por etapas</button>
+    <button data-view="board" aria-pressed="false">Tablero y resultado</button>
+  </nav>
+
+  <main class="content">
+    <div class="grid-overlay" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+    <section id="library-view" aria-labelledby="library-title">
+      <div class="intro">
+        <div class="eyebrow">Biblioteca / Aprendizaje</div>
+        <h1 id="library-title">Lecturas para tu recorrido</h1>
+        <p>Una pausa para comprender, volver a mirar y acompañar tu práctica.</p>
+      </div>
+      <div class="ready-content list-detail">
+        <section class="surface list-panel" aria-labelledby="list-title">
+          <div class="panel-head">
+            <h2 id="list-title">Explorar lecturas</h2>
+            <label class="search"><span aria-hidden="true">⌕</span><span class="sr-only">Buscar una lectura</span><input id="search" type="search" placeholder="Buscar por título"></label>
+            <p class="list-count" id="list-count">4 lecturas disponibles</p>
+          </div>
+          <div class="items" id="items">
+            <a href="#biblioteca/escucha" class="item selected" data-item="0" aria-current="true"><span class="item-arrow" aria-hidden="true">›</span><span class="item-kicker">PRÁCTICA · 5 MIN DE LECTURA</span><strong>El arte de escuchar antes de avanzar</strong><small>Dar lugar a lo que aparece, sin apresurar una respuesta.</small></a>
+            <a href="#biblioteca/pausa" class="item" data-item="1"><span class="item-arrow" aria-hidden="true">›</span><span class="item-kicker">REFLEXIÓN · 4 MIN DE LECTURA</span><strong>La pausa también forma parte del camino</strong><small>Reconocer el ritmo que necesita cada proceso.</small></a>
+            <a href="#biblioteca/intencion" class="item" data-item="2"><span class="item-arrow" aria-hidden="true">›</span><span class="item-kicker">PREPARACIÓN · 6 MIN DE LECTURA</span><strong>Una intención clara para una pregunta que todavía está tomando forma</strong><small>Preparar una sesión con apertura y atención.</small></a>
+            <a href="#biblioteca/integracion" class="item" data-item="3"><span class="item-arrow" aria-hidden="true">›</span><span class="item-kicker">INTEGRACIÓN · 7 MIN DE LECTURA</span><strong>Llevar lo aprendido a los pequeños gestos de cada día</strong><small>Del encuentro a una práctica sostenible.</small></a>
+          </div>
+          <div id="search-empty" class="state-view" hidden><h3>No encontramos esa lectura</h3><p>Prueba con otra palabra o vuelve a ver la biblioteca completa.</p><button class="btn" id="clear-search">Limpiar búsqueda</button></div>
+        </section>
+
+        <article class="surface detail-panel" id="detail" aria-labelledby="detail-title">
+          <div class="detail-inner">
+            <button class="btn quiet mobile-back" id="back-list">← Volver a las lecturas</button>
+            <span class="tag">Lectura de práctica</span>
+            <h2 id="detail-title">El arte de escuchar antes de avanzar</h2>
+            <div class="meta-line" id="detail-meta">5 min de lectura · Biblioteca</div>
+            <div class="rule" aria-hidden="true">◇</div>
+            <p id="detail-lead">Escuchar no siempre significa encontrar una respuesta. A veces significa hacer suficiente espacio para reconocer lo que ya está presente.</p>
+            <p>Antes de comenzar una práctica, toma un momento para observar cómo llegas. Puedes sentir entusiasmo, cansancio o incertidumbre. Ninguna de estas experiencias necesita desaparecer para que puedas dar el siguiente paso.</p>
+            <blockquote class="quote">¿Qué necesita atención hoy, antes de intentar cambiarlo?</blockquote>
+            <p>Permite que esta pregunta te acompañe sin exigir una conclusión inmediata. Vuelve a ella con curiosidad y deja que tu experiencia encuentre sus propias palabras.</p>
+            <div class="actions"><button class="btn primary" id="save-reading" aria-pressed="false">Guardar lectura</button><button class="btn" id="open-editorial">Leer versión extendida</button></div>
+            <p class="status-note" id="reading-status" role="status"></p>
+          </div>
+        </article>
+      </div>
+      <details class="surface editorial" id="editorial" hidden>
+        <summary>Lectura extendida · Un espacio para escuchar</summary>
+        <h2>La atención comienza con una pausa</h2>
+        <p>En ocasiones llegamos a una sesión con una pregunta precisa. En otras, sentimos una inquietud que todavía no podemos nombrar. Ambas formas de llegar merecen un espacio de escucha. No es necesario convertir inmediatamente cada sensación en una tarea ni cada duda en una respuesta.</p>
+        <p>Observar con paciencia permite distinguir entre lo urgente y lo significativo. Una práctica pequeña y sostenida puede ayudarte a reconocer tus propios ritmos, cuidar tus límites y volver a aquello que te importa. Si algo no encuentra palabras hoy, puedes dejarlo abierto y retomarlo en otro momento.</p>
+        <p>El recorrido no termina al cerrar la sesión. Continúa en los gestos cotidianos: una conversación más atenta, una decisión tomada con calma o un descanso que antes habrías postergado. Elige una acción posible y dale el tiempo que necesita.</p>
+        <p class="status-note">Columna editorial centrada · ancho máximo 720 px.</p>
+      </details>
+    </section>
+
+    <section id="form-view" aria-labelledby="form-title" hidden>
+      <div class="intro">
+        <div class="eyebrow">Consultas / Personas</div>
+        <h1 id="form-title">Preparar una sesión</h1>
+        <p>Define el contexto y la intención. Puedes revisar todo antes de confirmar.</p>
+      </div>
+      <div class="ready-content form-layout">
+        <form class="surface form-main" id="session-form" novalidate>
+          <div class="form-top">
+            <span class="step-counter" id="step-counter" role="status">Paso 1 de 3</span>
+            <button class="btn quiet" type="button" id="exit-form">Salir</button>
+          </div>
+          <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+          <ol class="steps-nav" aria-label="Etapas"><li class="active">1. Contexto</li><li>2. Intención</li><li>3. Revisión</li></ol>
+          <div class="step-body" id="step-body">
+            <section data-step="0" aria-labelledby="step-title-0">
+              <h2 id="step-title-0" tabindex="-1">¿A quién acompaña esta sesión?</h2>
+              <div class="field"><label for="name">Nombre de la persona <span class="required" aria-hidden="true">*</span></label><input id="name" name="name" autocomplete="name" required placeholder="Escribe un nombre" aria-describedby="name-help name-error"><small id="name-help">Usa el nombre con el que prefiera ser acompañada.</small><small class="field-error" id="name-error" hidden>Escribe un nombre para continuar.</small></div>
+              <div class="field"><label for="context">Contexto de la sesión</label><textarea id="context" name="context" placeholder="¿Qué te gustaría tener presente?"></textarea><small>Comparte solo lo que sea necesario para preparar el encuentro.</small></div>
+            </section>
+            <section data-step="1" aria-labelledby="step-title-1" hidden>
+              <h2 id="step-title-1" tabindex="-1">Dale espacio a tu intención</h2>
+              <div class="field"><label for="intention">¿Qué quieres explorar? <span class="required" aria-hidden="true">*</span></label><textarea id="intention" name="intention" required placeholder="Quiero comprender…" aria-describedby="intention-help intention-error"></textarea><small id="intention-help">No necesitas una pregunta perfecta. Puedes comenzar con una inquietud.</small><small class="field-error" id="intention-error" hidden>Comparte una intención para continuar.</small></div>
+              <div class="field"><label for="approach">Enfoque de la sesión</label><select id="approach" name="approach"><option>Escucha y exploración</option><option>Integración de una experiencia</option><option>Preparación de un nuevo ciclo</option></select></div>
+            </section>
+            <section data-step="2" aria-labelledby="step-title-2" hidden>
+              <h2 id="step-title-2" tabindex="-1">Revisa antes de comenzar</h2>
+              <p>Comprueba que el contexto refleja lo que deseas acompañar. Puedes volver a cualquier etapa para modificarlo.</p>
+              <dl id="final-summary"></dl>
+              <div class="helper-box">La sesión se prepara al confirmar. Tus cambios siguen aquí mientras revisas.</div>
+            </section>
+          </div>
+          <div class="actions">
+            <button class="btn quiet" type="button" id="previous-step" hidden>Anterior</button>
+            <button class="btn primary" type="submit" id="next-step">Continuar</button>
+          </div>
+          <p class="status-note" id="draft-status" role="status">Sin cambios pendientes.</p>
+        </form>
+
+        <aside class="surface summary-panel" aria-labelledby="summary-title">
+          <div class="eyebrow">Tu preparación</div>
+          <h2 id="summary-title">Resumen de la sesión</h2>
+          <dl><div><dt>Persona</dt><dd id="summary-name">Por completar</dd></div><div><dt>Contexto</dt><dd id="summary-context">Sin contexto adicional</dd></div><div><dt>Intención</dt><dd id="summary-intention">Por completar</dd></div><div><dt>Enfoque</dt><dd id="summary-approach">Escucha y exploración</dd></div></dl>
+          <div class="helper-box">Un paso a la vez. Este resumen se actualiza mientras completas la preparación.</div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="board-view" aria-labelledby="board-title" hidden>
+      <div class="intro">
+        <div class="eyebrow">Recorrido</div>
+        <h1 id="board-title">Un momento del camino</h1>
+        <p>Observa el tablero y encuentra una pregunta para acompañar tu siguiente paso.</p>
+      </div>
+      <div class="ready-content board-layout">
+        <section class="surface board-surface" aria-labelledby="board-zone-title">
+          <div class="board-top"><h2 id="board-zone-title">Tablero de la sesión</h2><span class="tag">Ejemplo · Casa 5</span></div>
+          <svg class="board-art" viewBox="0 0 500 500" role="img" aria-labelledby="board-svg-title board-svg-desc" xmlns="http://www.w3.org/2000/svg">
+            <title id="board-svg-title">Tablero ilustrativo, Casa 5 seleccionada</title>
+            <desc id="board-svg-desc">Doce casas alrededor de un centro circular. Un recorrido de ejemplo llega a la Casa 5. Esta ilustración es contenido de muestra.</desc>
+            <defs><radialGradient id="board-bg"><stop stop-color="#162A3F"/><stop offset="1" stop-color="#07101B"/></radialGradient></defs>
+            <circle cx="250" cy="250" r="239" fill="url(#board-bg)" stroke="#B5863A" stroke-width="2"/>
+            <g fill="none" stroke="#B5863A">
+              <circle cx="250" cy="250" r="222" stroke-width="1.5"/>
+              <circle cx="250" cy="250" r="195" opacity=".6"/>
+              <circle cx="250" cy="250" r="165" opacity=".6"/>
+              <circle cx="250" cy="250" r="135" opacity=".6"/>
+              <circle cx="250" cy="250" r="104" opacity=".6"/>
+              <path d="M250 28v444M28 250h444M139 58l222 384M58 139l384 222M58 361l384-222M139 442 361 58" opacity=".8"/>
+            </g>
+            <g fill="#F9D788" font-family="Georgia,serif" font-size="21" text-anchor="middle">
+              <text x="299" y="94">12</text><text x="369" y="139">11</text><text x="408" y="213">10</text>
+              <text x="408" y="299">9</text><text x="369" y="375">8</text><text x="296" y="418">7</text>
+              <text x="205" y="418">6</text><text x="132" y="375">5</text><text x="90" y="299">4</text>
+              <text x="90" y="213">3</text><text x="132" y="139">2</text><text x="205" y="94">1</text>
+            </g>
+            <circle cx="132" cy="368" r="23" fill="none" stroke="#F9D788" stroke-width="3"/>
+            <path d="m366 315-46 46-68 23-65-10-38-22" fill="none" stroke="#DDA447" stroke-width="3"/>
+            <g fill="#FFFDF8" stroke="#DDA447" stroke-width="2"><circle cx="366" cy="315" r="5"/><circle cx="320" cy="361" r="5"/><circle cx="252" cy="384" r="5"/><circle cx="187" cy="374" r="5"/><circle cx="149" cy="352" r="8"/></g>
+            <circle cx="250" cy="250" r="65" fill="#071A33" stroke="#F9D788" stroke-width="2"/>
+            <path d="M250 192a58 58 0 0 1 0 116 29 29 0 0 1 0-58 29 29 0 0 0 0-58" fill="#F9D788"/>
+            <circle cx="250" cy="221" r="9" fill="#071A33"/><circle cx="250" cy="279" r="9" fill="#F9D788"/>
+            <g fill="#F9D788"><circle cx="250" cy="28" r="6"/><circle cx="472" cy="250" r="6"/><circle cx="250" cy="472" r="6"/><circle cx="28" cy="250" r="6"/></g>
+          </svg>
+          <p class="board-caption">Recorrido ilustrativo · La selección y el resultado se conservan al cambiar el ancho.</p>
+        </section>
+        <aside class="surface result-panel" aria-labelledby="result-title">
+          <div class="eyebrow">Resultado de ejemplo</div>
+          <div class="result-number">05</div>
+          <h2 id="result-title">Casa 5 · Una pausa consciente</h2>
+          <p>Hay momentos en los que avanzar comienza por detenerse. Observa qué necesita cuidado antes de decidir tu siguiente movimiento.</p>
+          <div class="rule" aria-hidden="true">◇</div>
+          <h3>Pregunta para integrar</h3>
+          <p>¿Qué podrías hacer de una manera más amable contigo, sin renunciar a lo que es importante?</p>
+          <dl><div><dt>Movimiento</dt><dd>Permanencia · ejemplo</dd></div><div><dt>Práctica sugerida</dt><dd>Dedica unos minutos a escribir lo que deseas cuidar durante esta semana.</dd></div></dl>
+          <div class="actions"><button class="btn primary" id="practice-button" aria-pressed="false">Guardar práctica</button></div>
+          <p class="status-note" id="practice-status" role="status"></p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="surface" id="global-state" hidden aria-labelledby="state-title">
+      <div id="empty-state" class="state-view" hidden><div class="state-icon" aria-hidden="true">◇</div><h2 id="state-title">Todavía no hay lecturas</h2><p id="empty-copy">Las lecturas aparecerán aquí cuando estén disponibles. Puedes seguir explorando las otras secciones.</p><div class="actions"><button class="btn primary" id="empty-action">Ver ejemplo con contenido</button></div></div>
+      <div id="loading-state" hidden role="status" aria-busy="true">
+        <div class="loading-tiles" aria-hidden="true"><div class="loading-tile"><div class="skeleton title"></div><div class="skeleton"></div><div class="skeleton short"></div></div><div class="loading-tile"><div class="skeleton title"></div><div class="skeleton"></div><div class="skeleton short"></div></div></div>
+        <p class="loading-text" id="loading-copy">Cargando lecturas… El menú sigue disponible.</p>
+      </div>
+      <div id="error-state" class="state-view error-state" hidden role="alert"><div class="state-icon" aria-hidden="true">!</div><h2 id="error-title">No pudimos cargar la biblioteca</h2><p id="error-copy">Revisa tu conexión e inténtalo de nuevo. El menú sigue disponible.</p><div class="actions"><button class="btn primary" id="retry">Reintentar</button></div></div>
+    </section>
+
+    <p class="live-note" id="composition" role="status"></p>
+  </main>
+</div>
+</div>
+
+<footer class="review-footer">
+  Maqueta con contenido de muestra. En un contenedor más estrecho, el ancho efectivo se limita al espacio disponible.
+  El paisaje vectorial es un fixture provisional a 15 % de opacidad; las variantes de tablet usan la superficie marfil de respaldo.
+  La aprobación contra los assets de familia definitivos queda pendiente.
+  La navegación de detalle usa rutas hash locales; el tablero es una ilustración estática.
+</footer>
+
+<dialog id="discard-dialog" aria-labelledby="discard-title" aria-describedby="discard-copy">
+  <div class="dialog-symbol" aria-hidden="true">◇</div>
+  <h2 id="discard-title">¿Descartar la preparación?</h2>
+  <p id="discard-copy">Tienes cambios sin confirmar. Si sales, se perderán. Puedes seguir editando para conservar lo que escribiste.</p>
+  <div class="actions"><button class="btn quiet" id="cancel-discard" autofocus>Seguir editando</button><button class="btn danger" id="confirm-discard">Descartar y salir</button></div>
+</dialog>
+<dialog id="success-dialog" aria-labelledby="success-title">
+  <div class="dialog-symbol" aria-hidden="true">✓</div>
+  <h2 id="success-title">Tu sesión está preparada</h2>
+  <p>Has completado las tres etapas. En esta maqueta, la confirmación se muestra como ejemplo y no crea una sesión real.</p>
+  <div class="actions"><button class="btn primary" id="close-success" autofocus>Volver a la preparación</button></div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const frame=$("frame"),form=$("session-form"),discard=$("discard-dialog");
+  const views={library:$("library-view"),form:$("form-view"),board:$("board-view")};
+  const families={library:"biblioteca",form:"consultas",board:"recorrido"};
+  const contexts={library:"Biblioteca · Consultor",form:"Preparación · Consultor",board:"Recorrido · Consultor"};
+  const routes=["escucha","pausa","intencion","integracion"];
+  const titles=["El arte de escuchar antes de avanzar","La pausa también forma parte del camino","Una intención clara para una pregunta que todavía está tomando forma","Llevar lo aprendido a los pequeños gestos de cada día"];
+  const leads=["Escuchar no siempre significa encontrar una respuesta. A veces significa hacer suficiente espacio para reconocer lo que ya está presente.","Detenerte puede ayudarte a reconocer qué necesita tiempo. La pausa es una parte valiosa del recorrido.","Una intención puede empezar como una inquietud. Dale palabras sin exigir que llegue resuelta a la sesión.","Lo aprendido encuentra lugar en los gestos cotidianos. Elige una práctica pequeña que puedas sostener con amabilidad."];
+  const minutes=[5,4,6,7];
+  let current="library",selected=0,step=0,dirty=false,pendingExit=null,exitTrigger=null,transitioning=false;
+  const saved=new Set();
+  function writeRoute(route){if(location.hash!==route)history.pushState(null,"",route)}
+  function routeForView(view){return view==="library"?"#biblioteca":view==="form"?"#preparar":"#tablero"}
+  function showView(view,updateRoute=true){
+    current=view;
+    Object.entries(views).forEach(([key,node])=>node.hidden=key!==view);
+    document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.view===view)));
+    frame.dataset.family=families[view];
+    $("header-context").textContent=contexts[view];
+    frame.classList.remove("detail-open");
+    $("editorial").hidden=true;
+    if(updateRoute)writeRoute(routeForView(view));
+    closeMenu();
+    applyState();
+    describeComposition();
+  }
+  function requestExit(action,trigger){
+    if(current==="form"&&dirty){
+      pendingExit=action;exitTrigger=trigger||document.activeElement;discard.showModal();
+    }else action();
+  }
+  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>requestExit(()=>showView(b.dataset.view),b)));
+  document.querySelectorAll("[data-menu-view]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();requestExit(()=>showView(a.dataset.menuView),a)}));
+  function closeMenu(){$("menu").hidden=true;$("menu-button").setAttribute("aria-expanded","false");$("menu-button").setAttribute("aria-label","Abrir menú de navegación")}
+  $("menu-button").addEventListener("click",()=>{const open=$("menu").hidden;$("menu").hidden=!open;$("menu-button").setAttribute("aria-expanded",String(open));$("menu-button").setAttribute("aria-label",open?"Cerrar menú de navegación":"Abrir menú de navegación")});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("menu").hidden){closeMenu();$("menu-button").focus()}});
+  function selectItem(index,route=true){
+    selected=index;
+    document.querySelectorAll("[data-item]").forEach(a=>{const active=Number(a.dataset.item)===index;a.classList.toggle("selected",active);if(active)a.setAttribute("aria-current","true");else a.removeAttribute("aria-current")});
+    $("detail-title").textContent=titles[index];$("detail-lead").textContent=leads[index];$("detail-meta").textContent=minutes[index]+" min de lectura · Biblioteca";
+    $("save-reading").textContent=saved.has(index)?"Lectura guardada":"Guardar lectura";
+    $("save-reading").setAttribute("aria-pressed",String(saved.has(index)));
+    $("reading-status").textContent="";
+    frame.classList.add("detail-open");
+    $("detail").classList.remove("changing");void $("detail").offsetWidth;$("detail").classList.add("changing");
+    if(route)writeRoute("#biblioteca/"+routes[index]);
+    if(frame.clientWidth<840){$("detail-title").tabIndex=-1;$("detail-title").focus({preventScroll:true});$("detail").scrollIntoView({block:"start",behavior:"auto"})}
+  }
+  document.querySelectorAll("[data-item]").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();selectItem(Number(a.dataset.item))}));
+  $("back-list").addEventListener("click",()=>{frame.classList.remove("detail-open");writeRoute("#biblioteca");document.querySelector('[data-item="'+selected+'"]').focus({preventScroll:true})});
+  $("save-reading").addEventListener("click",()=>{if(saved.has(selected))saved.delete(selected);else saved.add(selected);const on=saved.has(selected);$("save-reading").setAttribute("aria-pressed",String(on));$("save-reading").textContent=on?"Lectura guardada":"Guardar lectura";$("reading-status").textContent=on?"Guardada en esta maqueta.":"Se quitó de tus lecturas guardadas."});
+  $("open-editorial").addEventListener("click",()=>{$("editorial").hidden=false;$("editorial").open=true;$("editorial").querySelector("summary").focus();$("editorial").scrollIntoView({block:"start"})});
+  function search(){
+    const query=$("search").value.trim().toLocaleLowerCase("es");
+    let count=0;document.querySelectorAll("[data-item]").forEach(a=>{a.hidden=!a.textContent.toLocaleLowerCase("es").includes(query);if(!a.hidden)count++});
+    $("list-count").textContent=count+" "+(count===1?"lectura disponible":"lecturas disponibles");$("search-empty").hidden=count!==0;
+  }
+  $("search").addEventListener("input",search);
+  $("clear-search").addEventListener("click",()=>{$("search").value="";search();$("search").focus()});
+  function summary(){
+    $("summary-name").textContent=$("name").value.trim()||"Por completar";
+    $("summary-context").textContent=$("context").value.trim()||"Sin contexto adicional";
+    $("summary-intention").textContent=$("intention").value.trim()||"Por completar";
+    $("summary-approach").textContent=$("approach").value;
+    $("final-summary").replaceChildren();
+    [["Persona",$("summary-name").textContent],["Contexto",$("summary-context").textContent],["Intención",$("summary-intention").textContent],["Enfoque",$("summary-approach").textContent]].forEach(([label,value])=>{const div=document.createElement("div"),dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=label;dd.textContent=value;div.append(dt,dd);$("final-summary").append(div)});
+  }
+  form.addEventListener("input",()=>{dirty=true;$("draft-status").textContent="Cambios pendientes de confirmar.";summary()});
+  form.addEventListener("change",()=>{dirty=true;$("draft-status").textContent="Cambios pendientes de confirmar.";summary()});
+  function paintStep(focus=true){
+    document.querySelectorAll("[data-step]").forEach(s=>s.hidden=Number(s.dataset.step)!==step);
+    document.querySelectorAll(".steps-nav li").forEach((li,i)=>li.classList.toggle("active",i===step));
+    $("previous-step").hidden=step===0;$("next-step").textContent=step===2?"Confirmar preparación":"Continuar";
+    if(focus)$("step-title-"+step).focus({preventScroll:true});
+  }
+  function changeStep(next,animate=true){
+    if(transitioning)return;
+    step=next;$("step-counter").textContent="Paso "+(step+1)+" de 3";$("progress-bar").style.width=((step+1)/3*100)+"%";
+    const body=$("step-body"),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(!animate||reduced){paintStep(animate);return}
+    transitioning=true;$("next-step").disabled=true;$("previous-step").disabled=true;body.classList.add("exiting");
+    setTimeout(()=>{body.classList.remove("exiting");paintStep();body.classList.add("entering");setTimeout(()=>{body.classList.remove("entering");transitioning=false;$("next-step").disabled=false;$("previous-step").disabled=false},240)},180);
+  }
+  form.addEventListener("submit",e=>{
+    e.preventDefault();if(transitioning)return;
+    const field=step===0?$("name"):step===1?$("intention"):null;
+    if(field){const bad=!field.value.trim();$(field.id+"-error").hidden=!bad;field.setAttribute("aria-invalid",String(bad));if(bad){field.focus();return}}
+    if(step<2){summary();changeStep(step+1)}
+    else{dirty=false;$("draft-status").textContent="Preparación confirmada en esta maqueta.";$("success-dialog").showModal()}
+  });
+  $("previous-step").addEventListener("click",()=>changeStep(Math.max(0,step-1)));
+  $("exit-form").addEventListener("click",()=>requestExit(()=>showView("library"),$("exit-form")));
+  $("cancel-discard").addEventListener("click",()=>{pendingExit=null;discard.close();exitTrigger?.focus()});
+  discard.addEventListener("cancel",()=>{pendingExit=null;setTimeout(()=>exitTrigger?.focus(),0)});
+  $("confirm-discard").addEventListener("click",()=>{
+    const action=pendingExit;pendingExit=null;dirty=false;discard.close();form.reset();summary();changeStep(0,false);
+    $("name-error").hidden=true;$("intention-error").hidden=true;$("name").removeAttribute("aria-invalid");$("intention").removeAttribute("aria-invalid");$("draft-status").textContent="Sin cambios pendientes.";
+    if(action)action();
+  });
+  $("close-success").addEventListener("click",()=>{$("success-dialog").close();$("next-step").focus()});
+  $("practice-button").addEventListener("click",()=>{const on=$("practice-button").getAttribute("aria-pressed")!=="true";$("practice-button").setAttribute("aria-pressed",String(on));$("practice-button").textContent=on?"Práctica guardada":"Guardar práctica";$("practice-status").textContent=on?"La práctica quedó guardada en esta maqueta.":""});
+  const stateCopy={
+    library:{empty:"Todavía no hay lecturas",copy:"Las lecturas aparecerán aquí cuando estén disponibles. Puedes seguir explorando las otras secciones.",loading:"Cargando lecturas… El menú sigue disponible.",error:"No pudimos cargar la biblioteca"},
+    form:{empty:"Empieza una nueva preparación",copy:"Todavía no has definido una sesión. Comienza con el contexto y completa la intención a tu ritmo.",loading:"Cargando preparación… El menú sigue disponible.",error:"No pudimos cargar la preparación"},
+    board:{empty:"El recorrido aún no ha comenzado",copy:"Cuando haya un resultado, verás el tablero y una propuesta de práctica para acompañarte.",loading:"Cargando tablero y resultado… El menú sigue disponible.",error:"No pudimos cargar el recorrido"}
+  };
+  function applyState(){
+    const state=$("state").value,copy=stateCopy[current];
+    document.querySelectorAll(".ready-content").forEach(node=>node.hidden=state!=="ready");
+    $("global-state").hidden=state==="ready";
+    ["empty","loading","error"].forEach(s=>$(s+"-state").hidden=state!==s);
+    $("state-title").textContent=copy.empty;$("empty-copy").textContent=copy.copy;$("loading-copy").textContent=copy.loading;$("error-title").textContent=copy.error;
+    $("error-copy").textContent=current==="form"?"No pudimos actualizar esta vista. Tus cambios de esta maqueta se conservan. Inténtalo de nuevo.":"Revisa tu conexión e inténtalo de nuevo. El menú sigue disponible.";
+    $("editorial").hidden=state!=="ready"||!$("editorial").open||current!=="library";
+  }
+  $("state").addEventListener("change",applyState);
+  function ready(){$("state").value="ready";applyState()}
+  $("retry").addEventListener("click",()=>{$("state").value="loading";applyState();setTimeout(ready,900)});
+  $("empty-action").addEventListener("click",ready);
+  $("width").addEventListener("change",()=>{const width=$("width").value;frame.style.maxWidth=width==="auto"?"1440px":width+"px"});
+  $("scale").addEventListener("change",()=>{frame.classList.toggle("large-text",$("scale").checked);[discard,$("success-dialog")].forEach(d=>d.style.fontSize=$("scale").checked?"32px":"16px")});
+  $("grid").addEventListener("change",()=>frame.classList.toggle("show-grid",$("grid").checked));
+  function describeComposition(){
+    const w=Math.round(frame.clientWidth),cols=w<600?4:w<840?8:12,margin=w<600?16:w<840?24:w<1200?32:40;
+    const mode=current==="library"?(w<840?"Lista y detalle en rutas separadas":"Lista y detalle juntos"):current==="form"?(w<600?"Etapas, una a la vez":"Formulario con resumen"):(w<840?"Tablero y resultado debajo":"Tablero y panel lateral");
+    $("composition").textContent=w+" px disponibles · "+cols+" columnas · margen "+margin+" px · "+mode;
+  }
+  new ResizeObserver(describeComposition).observe(frame);
+  function handleRoute(){
+    const hash=location.hash;
+    if(hash.startsWith("#biblioteca/")){
+      const index=routes.indexOf(hash.split("/")[1]);showView("library",false);selectItem(index<0?0:index,false);
+    }else if(hash==="#preparar")showView("form",false);
+    else if(hash==="#tablero")showView("board",false);
+    else showView("library",false);
+  }
+  window.addEventListener("popstate",()=>{
+    if(current==="form"&&dirty){
+      const target=location.hash;history.pushState(null,"","#preparar");
+      requestExit(()=>{writeRoute(target);handleRoute()},$("exit-form"));
+    }else handleRoute();
+  });
+  summary();handleRoute();describeComposition();
+})();
+</script>
+</body>
+</html>

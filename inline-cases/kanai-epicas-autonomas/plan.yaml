@@ -1,0 +1,363 @@
+plan_id: kanai-epicas-autonomas
+title: Épicas con planificación y ejecución autónoma encadenada
+intent: Implementar el plan acordado de épicas autónomas en Kanai, con permisos por harness, Teach/Skip, seguimiento de tickets, recuperación y métricas desde el inicio; evaluar piloto Tao Mangalam. Registrar el plan no inicia ejecución.
+created: 2026-10-03T14:48:59.957Z
+updated: 2026-10-03T15:05:17.694Z
+tags:
+  projects:
+    - kanai_self
+  repos:
+    - kanai-app
+  tickets: []
+  branches: []
+  folders: []
+  labels:
+    - epicas
+    - autonomia
+    - harness
+    - metricas
+    - piloto-taomangalam
+settings:
+  judge: final
+risks:
+  - Cierre humano actual por ticket requiere diseño explícito para cierre agregado.
+  - Un harness puede exigir intervención que no permite anticipar; no prometer autonomía universal.
+  - Validación tardía puede aumentar retrabajo; mantener comprobación por ticket.
+  - Cambios de alcance o permisos invalidan autorización/evidencia afectada.
+  - Muestras pequeñas no permiten concluir ahorro causal ni estabilidad.
+out_of_scope:
+  - Ejecución paralela en el MVP.
+  - Coordinación multirrepositorio en el MVP.
+  - Importación masiva de backlog.
+  - Despliegue/publicación o merge sin la autorización aplicable.
+  - Escritura directa al store o bypass de guards.
+phases:
+  - code: F1
+    title: Contrato y preparación
+    goal: Resolver las decisiones de diseño y establecer la base verificable antes de implementar.
+    prerequisites:
+      - id: F1-P1
+        text: Plan registrado para revisión; antes de ejecutar, confirmar alcance, estado del repositorio y autorizaciones necesarias.
+    tasks:
+      - code: F1.1
+        text: Inspeccionar modelo, FSM, rama acumuladora, Teach, permisos, UI y métricas existentes; documentar capacidades reutilizables y solapamientos con KANAI-KB009.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F1.2
+        text: Definir contrato funcional, cierre agregado, semántica de Teach, primeros harnesses y política de revisión/CI. Seleccionar rama de trabajo y ambientes de validación, preservando cambios ajenos.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F1.3
+        text: Definir esquema de eventos, fórmulas de métricas, baseline y plan de pruebas; registrar decisiones y estimar esfuerzo tras la inspección.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F1-C1
+        text: Inventario y decisiones documentados con evidencia de código; incertidumbres visibles.
+        kind: evidence
+      - id: F1-C2
+        text: Contrato revisado, rama de trabajo y ambientes definidos; no se confunde aprobación del plan con permisos efectivos.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: false
+    rollback: Conservar documentos y evidencia; corregir decisiones mediante enmienda auditada, sin modificar código ni borrar historial.
+  - code: F2
+    title: Modelo de épica, plan y corrida
+    goal: Persistir composición, planes versionados y progreso recuperable.
+    prerequisites:
+      - id: F2-P1
+        text: F1 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F2.1
+        text: Implementar entidades de épica, plan versionado y corrida con objetivo, alcance, tickets, repositorio, ramas y referencias externas.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F2.2
+        text: Implementar estados y transiciones mediante el motor, distinción de validado en épica frente a entregado y bloqueo de corridas incompatibles.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F2.3
+        text: Instrumentar eventos de estados y probar persistencia, compatibilidad, versionado y exclusión mutua.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F2-C1
+        text: Modelo y transiciones verificados; corridas incompatibles no escriben simultáneamente.
+        kind: evidence
+      - id: F2-C2
+        text: Eventos versionados y deduplicables; recuperación de estado sin escrituras directas al store.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F3
+    title: Composición y dependencias
+    goal: Validar viabilidad y orden, contrastando declaraciones con el cuerpo de los tickets.
+    prerequisites:
+      - id: F3-P1
+        text: F2 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F3.1
+        text: Implementar evaluación de contribución al objetivo, criterios y requisitos; resultado ejecutable/bloqueado/requiere ajuste por ticket.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F3.2
+        text: Contrastar dependencias declaradas con cuerpo y criterios; registrar inferencias justificadas para decisión; detectar ciclos y requisitos externos.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F3.3
+        text: Implementar orden determinista y revalidación por deriva; instrumentar decisiones y dependencias tardías.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F3-C1
+        text: Ciclo, dependencia externa e incompatibilidad impiden aprobar el plan afectado.
+        kind: evidence
+      - id: F3-C2
+        text: Inferencias no se aprueban automáticamente; compartir archivos no se trata por sí solo como dependencia; cambios relevantes invalidan el plan.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F4
+    title: Ramas, integración y checkpoints
+    goal: Vincular evidencia por ticket al estado real de la rama acumuladora.
+    prerequisites:
+      - id: F4-P1
+        text: F2 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F4.1
+        text: Implementar creación o selección segura de rama de épica desde base definida, conservando trabajo existente.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F4.2
+        text: Conservar inicialmente ramas/PR por ticket; asociar commits, pruebas y evidencia; comprobar integración por Git y no sólo por estado declarado.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F4.3
+        text: Implementar checkpoints, claves de idempotencia y reconciliación tras fallos de commit/PR/merge; instrumentar integración y recuperación.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F4-C1
+        text: Ticket sólo desbloquea dependientes cuando está verificado e integrado en la rama seleccionada.
+        kind: evidence
+      - id: F4-C2
+        text: Fallos inyectados después de efectos Git no duplican commits, PR ni integraciones; conflictos se reportan.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F5
+    title: Harnesses, permisos y aprobaciones
+    goal: Comprobar autonomía efectiva antes de iniciar y respetar las restricciones del host.
+    prerequisites:
+      - id: F5-P1
+        text: F1 cerrada con sus criterios y evidencia verificados.
+      - id: F5-P2
+        text: F2 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F5.1
+        text: Implementar contrato de capacidades y adaptadores, informando disponible, denegado o desconocido; verificar continuidad y recuperación.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F5.2
+        text: Implementar preflight de acciones, permisos, autorizaciones, vigencia y límites; mostrar lista para autonomía/requiere preparación/requiere intervención.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F5.3
+        text: Implementar revocación y revalidación al cambiar de harness; tests de conformidad y eventos de autorización sin secretos.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F5-C1
+        text: Permiso desconocido no se concede; aprobación de plan no concede permiso del harness.
+        kind: evidence
+      - id: F5-C2
+        text: Adaptadores soportados superan pruebas de conformidad; permiso tardío o revocado pausa y queda registrado.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F6
+    title: Orquestación, Teach y recuperación
+    goal: Encadenar tickets con intake individual y avance dentro del alcance autorizado.
+    prerequisites:
+      - id: F6-P1
+        text: F3 cerrada con sus criterios y evidencia verificados.
+      - id: F6-P2
+        text: F4 cerrada con sus criterios y evidencia verificados.
+      - id: F6-P3
+        text: F5 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F6.1
+        text: Implementar arranque con elección explícita Teach/Skip teach y herencia temporal por corrida; reanudación conserva decisión y controles.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F6.2
+        text: Implementar recorrido intake→planificación/spec→ejecución→verificación→integración→siguiente ticket, comprobando deriva y límites en cada paso.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F6.3
+        text: Implementar pausas, cancelación, reintentos acotados y recuperación por checkpoints; emitir eventos de fases, espera, intervención y consumo disponible.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F6-C1
+        text: A→B→C avanza sólo con prerequisitos verificados; Skip teach no omite intake, spec o gates.
+        kind: evidence
+      - id: F6-C2
+        text: Fallos, cambios de alcance y límites pausan; reanudar no repite efectos ni inventa aprobación humana.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F7
+    title: Revisión integral y cierre
+    goal: Concentrar revisión amplia y CI final sin perder evidencia ni autorización.
+    prerequisites:
+      - id: F7-P1
+        text: F6 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F7.1
+        text: Preparar resumen por ticket, diff acumulado, riesgos y evidencia para la revisión integral.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F7.2
+        text: Integrar gate completo final sobre el estado exacto candidato; invalidar evidencia afectada si cambia; separar validación en épica de entrega.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F7.3
+        text: Implementar cierre agregado autorizado, integración y reconciliación idempotente de cierre parcial; conservar controles humanos acordados y eventos de calidad.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F7-C1
+        text: CI/revisión fallidos impiden entrega; cambios posteriores invalidan resultados que ya no aplican.
+        kind: evidence
+      - id: F7-C2
+        text: Sólo se cierran tickets elegibles con autorización registrada; no se simulan aprobaciones humanas.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F8
+    title: Vistas y operaciones MCP
+    goal: Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP.
+    prerequisites:
+      - id: F8-P1
+        text: F3 cerrada con sus criterios y evidencia verificados.
+      - id: F8-P2
+        text: F5 cerrada con sus criterios y evidencia verificados.
+      - id: F8-P3
+        text: F6 cerrada con sus criterios y evidencia verificados.
+      - id: F8-P4
+        text: F7 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F8.1
+        text: "Implementar listado y detalle de épica: tickets, orden, dependencias justificadas, progreso, rama y bloqueos; enlace desde cada ticket."
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F8.2
+        text: Implementar revisión del plan, preflight, permisos, Teach y controles de inicio/pausa/reanudación/cancelación.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F8.3
+        text: Exponer operaciones MCP equivalentes, vista de revisión/CI/merge y validación de recorridos y consistencia UI/MCP.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F8-C1
+        text: La vista muestra ticket actual/siguiente, pausas y distinción validado frente a entregado.
+        kind: evidence
+      - id: F8-C2
+        text: UI y MCP aplican los mismos guards; recorridos de preparación, ejecución y cierre verificados.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F9
+    title: Tablero y exportación de métricas
+    goal: Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables.
+    prerequisites:
+      - id: F9-P1
+        text: F2 cerrada con sus criterios y evidencia verificados.
+      - id: F9-P2
+        text: F3 cerrada con sus criterios y evidencia verificados.
+      - id: F9-P3
+        text: F4 cerrada con sus criterios y evidencia verificados.
+      - id: F9-P4
+        text: F5 cerrada con sus criterios y evidencia verificados.
+      - id: F9-P5
+        text: F6 cerrada con sus criterios y evidencia verificados.
+      - id: F9-P6
+        text: F7 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F9.1
+        text: Agregar tiempos por fase, CI, espera humana, intervenciones, permisos/dependencias tardíos, Teach, retrabajo, calidad, recuperación y costos disponibles.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F9.2
+        text: Implementar segmentación por proyecto, versión, harness, tamaño y política; mostrar muestras, cobertura y datos no disponibles; exportar eventos y resumen.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F9.3
+        text: Probar fórmulas con reloj controlado, deduplicación y solapamientos; separar aprobaciones previstas de imprevistas y espera de trabajo humano.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F9-C1
+        text: Métricas reconciliables incluyen fallidas y canceladas; no se inventan ceros ni costos.
+        kind: evidence
+      - id: F9-C2
+        text: Pruebas de eventos y duraciones pasan; acceso/retención definidos y exportación sin secretos.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
+  - code: F10
+    title: Piloto, evaluación y mejoras
+    goal: Validar el conjunto en Tao Mangalam y decidir expansión con evidencia.
+    prerequisites:
+      - id: F10-P1
+        text: F7 cerrada con sus criterios y evidencia verificados.
+      - id: F10-P2
+        text: F8 cerrada con sus criterios y evidencia verificados.
+      - id: F10-P3
+        text: F9 cerrada con sus criterios y evidencia verificados.
+    tasks:
+      - code: F10.1
+        text: Seleccionar 3–5 tickets relacionados, rama corta y baseline del flujo actual con CI liviano; completar ambientes, roles y autorizaciones del piloto.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F10.2
+        text: Ejecutar piloto según permisos y controles aprobados; registrar datos de éxito/fallo, interrupciones y reanudación y observar defectos durante 14 días posteriores a integración.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+      - code: F10.3
+        text: Comparar tiempos, intervenciones, CI, retrabajo y calidad; separar ahorro previo de DEC-239; registrar mejoras priorizadas y decisión de expansión o ajuste.
+        kb:
+          - plan-implementacion-epicas-autonomas.md
+    criteria:
+      - id: F10-C1
+        text: Informe con muestra y cobertura; cero avances fuera de autorización y cero efectos duplicados; cualquier incumplimiento impide expansión.
+        kind: evidence
+      - id: F10-C2
+        text: Comparación no atribuye causalidad con muestra insuficiente; seguimiento de 14 días completado y decisión de siguientes mejoras registrada.
+        kind: evidence
+    effort: Por estimar en F1 tras revisar el código y las capacidades existentes.
+    delivers: false
+    changes_code: false
+    rollback: Conservar documentos y evidencia; corregir decisiones mediante enmienda auditada, sin modificar código ni borrar historial.
+registered_project_ack:
+  project: kanai_self
+  reason: La persona eligió expresamente caso inline y solicitó corregir el registro al formato estructurado visible en la app.

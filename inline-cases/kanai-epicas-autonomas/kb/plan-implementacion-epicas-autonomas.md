@@ -1,0 +1,182 @@
+# Plan de implementación: épicas con ejecución autónoma encadenada
+
+Fecha: 2026-10-03.
+Estado: propuesta de implementación; no constituye aprobación de especificaciones ni autorización de ejecución.
+Origen: requisitos acordados con la persona usuaria en la conversación de Tao Mangalam del 3 de octubre de 2026.
+Proyecto de implementación: Kanai. Piloto propuesto: Tao Mangalam.
+
+## 1. Resultado esperado y alcance
+Una persona prepara una épica, selecciona sus tickets y rama, revisa un plan de dependencias y permisos, aprueba un alcance de autonomía y elige Teach o Skip teach. Kanai ejecuta los tickets secuencialmente sobre la rama acumuladora, con intake y verificación por ticket. Avanza automáticamente entre tickets validados; concentra revisión amplia, CI completo y merge en el cierre del conjunto. Pausa ante excepciones y reanuda sin repetir efectos.
+
+Incluye modelo de épica, planificación, dependencias, ramas, ejecución, permisos por harness, elección Teach, interfaz, revisión final y métricas.
+MVP: un repositorio y una rama de épica, ejecución secuencial, tickets existentes seleccionados explícitamente. Tickets de otros repositorios se detectan como incompatibles con este MVP.
+Fuera del MVP: ejecución paralela, importación masiva del backlog, migración automática de todos los proyectos y ejecución coordinada multirrepositorio. GitHub puede conservar su función de backlog canónico; Kanai guarda la selección operativa y referencias, sin crear una segunda cola de backlog.
+
+## 2. Punto de partida verificado y trabajo de descubrimiento
+La descripción del motor expuesta por Kanai el 2026-10-03 incluye:
+- Modo autónomo por ticket, ejecución canónica mediante el motor y registro de evidencia.
+- Comprobación de dependencias integradas en una rama acumuladora mediante Git.
+- Políticas Teach y excepciones auditadas; omitir Teach no equivale a omitir intake o gates.
+- Cierre humano obligatorio por ticket, incluso en autónomo.
+- Catálogo de herramientas sin operaciones específicas de épica expuestas en este host.
+
+Tao Mangalam tiene DEC-239 y CI diferenciado: PRs hacia epic/** omiten varios jobs pesados; el cierre hacia main corre el gate completo aplicable. Esto no demuestra que exista ya un orquestador de épicas.
+El trabajo registrado como KANAI-KB009 cubre ejecución canónica e integración con hosts Git. Coordinar ese alcance y verificar su estado real; su texto histórico no prueba carencias actuales.
+
+Antes de implementar: inspeccionar código, persistencia, FSM, permisos, políticas Teach, interfaz, telemetría, adaptadores y tests. Producir inventario de capacidades reutilizables y huecos. No fijar nombres de archivos, estimaciones o compatibilidad de harness sin esa inspección.
+
+## 3. Modelo y estados
+Épica: identidad estable, proyecto, objetivo, alcance y exclusiones, criterios globales, repositorio, rama base, rama acumuladora, tickets seleccionados, dependencias, política de revisión/CI, responsable y referencias externas.
+Plan versionado: revisión de cada ticket y su cuerpo, grafo aprobado, orden determinista, bloqueos externos, controles anticipados, permisos y capacidades requeridos.
+Corrida: versión del plan, harness y versión, modelo si está disponible, opción Teach, autorizaciones y vigencia, estado, ticket actual, checkpoints, evidencia y eventos.
+
+Estados de épica propuestos: borrador, planificada, lista, en ejecución, pausada, en revisión final, lista para integrar, integrada y cancelada.
+El estado de un ticket dentro de la corrida (pendiente, intake, ejecutando, verificando, validado en épica, bloqueado) es distinto de su estado actual en la FSM y de su entrega a main.
+Un ticket validado e integrado en la rama acumuladora puede desbloquear dependientes sin cierre definitivo.
+Mantener el cierre humano actual hasta implementar y aprobar expresamente la política de cierre agregado. El orquestador no debe simular aprobaciones humanas ni usar overrides generales.
+Para el MVP, la persona confirma el cierre del conjunto; el motor registra la autorización y cierra únicamente tickets elegibles. Un fallo parcial se recupera de forma idempotente.
+Bloquear corridas simultáneas sobre la misma rama y la participación simultánea de un ticket en corridas activas incompatibles.
+
+## 4. Planificación de composición y dependencias
+Para cada ticket, contrastar campos de dependencias con cuerpo, criterios, contratos, diseños, datos y entregables requeridos.
+Registrar cada arista con origen declarado o inferido, justificación, referencia y decisión humana. Una inferencia no se convierte en requisito aprobado automáticamente.
+Detectar ciclos, requisitos externos pendientes, tickets faltantes, tickets ajenos al objetivo, criterios incompatibles y cambios que excedan el alcance.
+Compartir archivos es señal de coordinación; no es por sí solo una dependencia.
+Mostrar resultado por ticket: ejecutable, bloqueado o requiere ajuste, con motivos y acciones.
+Orden topológico determinista, con regla explícita de desempate; validar que cada prerequisito esté disponible cuando le toque ejecutarse.
+Las dependencias externas requieren evidencia de disponibilidad; las internas se satisfacen mediante verificación y comprobación real de integración en la rama.
+Cambiar composición, alcance, cuerpo relevante, dependencia o rama invalida las partes afectadas del plan. Antes de continuar, revalidar y obtener aprobación de cambios que alteren el contrato autorizado.
+Antes de cada intake, comprobar deriva del plan y vigencia de los prerequisitos.
+
+## 5. Ramas y política de integración
+Establecer repositorio, rama base y rama de épica antes del inicio. Validar existencia, permisos y estado; crear la rama si se autorizó o reutilizar una existente sin resetearla.
+MVP recomendado para el piloto: conservar ramas cortas y PRs por ticket hacia la épica, automatizando el avance cuando permisos y protecciones lo permitan.
+Modelar como política futura la escritura de commits por ticket directamente en la rama de épica, con validación y trazabilidad equivalentes; no activarla implícitamente.
+Asignar commits, PRs y evidencia a cada ticket; distinguir referencias de cierre de entrega a main.
+Planificar sincronización con main, detección de conflictos y revalidación de evidencia tras cambios. No hacer force-push ni resolver conflictos de forma destructiva por defecto.
+La verificación de integración usa Git y la identidad del commit/merge/squash, no sólo el estado declarado del ticket.
+CI completo y revisión final validan el estado exacto que se va a integrar; si cambia ese estado, invalidar la aprobación o evidencia afectada.
+Reintentos pueden exigir varias corridas del CI final: reducir gates completos por ticket no significa garantizar una única corrida total.
+
+## 6. Autonomía, harness y aprobaciones
+Definir contrato común de capacidades: lectura/escritura, comandos, herramientas MCP, red, credenciales mediante referencias seguras, Git, PR, merge, ejecución de tests, continuidad de sesión, presupuesto y recuperación.
+Cada adaptador informa capacidad disponible, autorización efectiva, mecanismo de aprobación y posibilidad de anticiparla. Capacidad desconocida no se considera concedida.
+Preflight cruza acciones requeridas por los tickets y cierre con capacidades del harness y políticas del proyecto. No confundir aprobación del plan con permiso efectivo del host.
+Mostrar tres diagnósticos: lista para autonomía, requiere preparación o requiere intervención durante la corrida.
+La persona autoriza alcance y categorías concretas de acciones, ramas/recursos, vigencia, límites de costo/tiempo/reintentos y política de merge. Conservar procedencia, alcance y revocación.
+La autorización de ejecución no implica aprobación automática de merge, publicación o despliegue; explicitar cada categoría aplicable.
+Kanai nunca elude restricciones del harness ni crea overrides para sostener la autonomía.
+Pausar ante permiso nuevo, autorización revocada, cambio de alcance, bloqueo de guard, credencial no disponible, conflicto, límite de presupuesto o intervención requerida.
+Cambiar de harness conserva el avance, pero obliga a repetir el preflight y comprobar autorizaciones aplicables.
+Proporcionar una interfaz común independiente del harness; anunciar compatibilidad únicamente para adaptadores que superen la suite de conformidad. No prometer autonomía universal si un host no permite anticipar aprobaciones.
+
+## 7. Teach y arranque
+Al iniciar cada nueva corrida preguntar Teach o Skip teach; no preseleccionar silenciosamente Skip.
+Registrar elección, actor, momento, corrida y versión del plan. Definir su aplicación a teach-intake y teach-close de los tickets; mostrarla antes de confirmar el arranque.
+Teach: producir y revisar el contexto antes de empezar, según la política configurada.
+Skip teach: omitir sólo esos pasos mediante la política canónica del motor, conservando intake, evidencias y gates.
+Reanudar una misma corrida conserva la decisión. Un cambio sustancial de contexto requiere revisar su aplicabilidad, sin repetir la pregunta innecesariamente.
+La herencia a tickets no debe cambiar permanentemente su configuración fuera de la corrida.
+
+## 8. Orquestación y recuperación
+Flujo: preflight → autorización/Teach → intake del siguiente ticket elegible → planificación/spec según tipo → ejecución → verificación corta → integración a épica → checkpoint → siguiente ticket → revisión integral → CI final → aprobación e integración.
+El plan de épica aprueba límites y políticas; no equivale a preaprobar especificaciones todavía inexistentes. Definir cómo los pasos automáticos del motor y jueces pueden avanzar dentro de esos límites y cuáles siguen siendo decisiones humanas.
+Intake contra el estado que dejó el ticket anterior. Reutilizar KB y decisiones; no regenerar contexto compartido sin necesidad.
+Todos los cambios de estado y registros pasan por el motor y sus guards. Los reportes de agentes requieren verificación independiente.
+Persistir checkpoints en cada transición y antes de efectos externos. Usar claves de idempotencia y reconciliación para commits, PR, integración y cierres.
+Recuperar tras caída del harness, pérdida de contexto o reinicio del servicio comprobando rama, estado y evidencia; no repetir operaciones ya realizadas.
+Un fallo de ticket detiene la cadena secuencial. Reintentos acotados por política; cambios de alcance o aceptación de riesgos requieren decisión explícita.
+Cancelación conserva trabajo y evidencia; ofrecer reversión por ticket o conjunto, respetando cambios de otras personas.
+La épica no se entrega mientras falten criterios, tests o gates exigidos. La revisión final recibe resumen por ticket, diff acumulado, riesgos y evidencia.
+
+## 9. Interfaz y operaciones
+Vista de épicas: objetivo, rama, número de tickets, progreso, estado, autonomía efectiva y bloqueos.
+Detalle: selección de tickets, orden, grafo o tabla de dependencias con justificación, diagnóstico de preparación, permisos/aprobaciones, revisión del plan y elección Teach.
+Durante corrida: ticket actual y siguiente, validaciones, pausas y motivo, límites y consumo conocido; acciones de pausa, reanudación y cancelación.
+Desde el ticket: enlace a la épica, posición, dependencias, evidencia y estado de integración.
+Cierre: resumen acumulado, revisión, CI, aprobaciones pendientes y merge.
+No presentar "validado en épica" como "entregado en main". Mostrar datos desconocidos como no disponibles.
+Exponer operaciones equivalentes por interfaz y MCP, con autorizaciones y guards consistentes.
+
+## 10. Métricas desde la primera corrida
+Emitir eventos versionados desde el motor y adaptadores, no sólo desde UI o self-report.
+Campos comunes: eventId, schemaVersion, epicId, planVersion, runId, ticketId cuando aplique, phase, attempt, timestamp UTC, resultado, motivo categorizado, harness/version y referencia de evidencia. Deduplicar por eventId.
+Eventos: planificación, dependencia propuesta/decidida, preflight, autorización/denegación/revocación, elección Teach, inicio/fin de fase, integración de ticket, pausa/reanudación, reintento, CI/PR, revisión final, merge/cierre y cancelación.
+No registrar secretos, credenciales ni prompts completos por defecto. Definir retención, acceso y exportación con el proyecto. Métricas sin datos suficientes se muestran como no disponibles; nunca cero inventado.
+
+| Métrica | Definición y utilidad |
+|---|---|
+| Tiempo total | Desde arranque hasta integración/cancelación; separar preparación previa y tiempo hasta entrega. Corridas activas se reportan como en curso. |
+| Desglose de tiempo | Intervalos de ejecución, intake, verificación, espera de CI, espera humana, conflictos y recuperación; evitar doble conteo de intervalos solapados. |
+| Autonomía completa | Corridas finalizadas sin intervención imprevista después del arranque / corridas finalizadas; separar aprobación final prevista y publicar canceladas/fallidas por separado. |
+| Intervenciones | Conteo y minutos de espera por corrida/ticket, clasificados por permisos, alcance, dependencias, fallos, harness y aprobación prevista. No inferir minutos de trabajo humano desde espera. |
+| Calidad del preflight | Bloqueos anticipados y permisos/dependencias descubiertos después del arranque; tasa tardía por corrida y categoría. |
+| Precisión de dependencias | Inferencias aceptadas/rechazadas, aristas omitidas descubiertas y ciclos; no afirmar recall sin evaluación etiquetada. |
+| CI | Número de corridas livianas/completas, cola, duración de feedback y minutos de runner acumulados, incluidos fallos y reintentos. |
+| Revisión | Rondas, espera, tiempo activo si se registra y hallazgos; separar revisión corta por ticket y revisión integral. |
+| Calidad final | Aprobación del gate final al primer intento / corridas que llegaron al gate; defectos, tickets reabiertos y rollback en ventana de seguimiento de 14 días. |
+| Retrabajo | Tiempo/intentonas dedicados a corregir tickets ya validados, motivo y ticket de origen si hay evidencia. |
+| Recuperación | Reanudaciones correctas / reanudaciones intentadas; tiempo hasta continuar, checkpoints inconsistentes y efectos duplicados. |
+| Rendimiento | Tickets validados y entregados por corrida; reportar tamaño/complejidad y no premiar sólo volumen. |
+| Costos | Tokens y costo monetario cuando el proveedor los informa, CI y límites consumidos; separar medición real de estimación. |
+| Teach | Duración y resultados por Teach/Skip; análisis descriptivo segmentado, sin atribuir causalidad por selección voluntaria. |
+
+Tablero por épica y agregados por proyecto, versión, harness, modo, tamaño, tipo de tickets y política CI. Mostrar muestra, cobertura de datos, mediana y p90 cuando haya volumen suficiente.
+Exportar eventos y resumen en formatos reutilizables para auditoría y evaluación posterior.
+Pruebas de métricas con reloj controlado: deduplicación, pausas, fallos, reanudaciones y solapamiento.
+
+## 11. Paquetes de implementación y dependencias propuestas
+Los códigos siguientes identifican paquetes del plan, no tickets ya creados.
+
+| Paquete | Entrega | Depende de |
+|---|---|---|
+| P0 | Inventario de código/capacidades, contrato funcional, política de cierre y diseño de eventos | — |
+| P1 | Modelo versionado de épica/plan/corrida, FSM, selección y persistencia | P0 |
+| P2 | Validación de composición, dependencias, grafo y deriva | P1 |
+| P3 | Ramas, integración verificable, checkpoints e idempotencia Git | P1 |
+| P4 | Contrato de harness, adaptadores, preflight y autorizaciones | P0, P1 |
+| P5 | Orquestador secuencial, Teach/Skip, intake y recuperación | P2, P3, P4 |
+| P6 | Revisión/cierre agregado, CI final, aprobación y entrega | P5 |
+| P7 | Vistas de épica, tickets, permisos y controles de corrida; operaciones MCP | P2, P4, P5, P6 |
+| P8 | Tablero/exportación de métricas y validación de datos | Instrumentación de P1–P6 |
+| P9 | Piloto Tao Mangalam, conformidad de harness y evaluación | P6, P7, P8 |
+
+La emisión de eventos y tests correspondientes forman parte de cada paquete desde P1; P8 sólo agrega consulta y presentación. No postergar instrumentación al final.
+Implementar primero un recorrido vertical con adaptador de prueba, después el primer harness real y posteriormente otro harness con distinta política de permisos.
+Reutilizar los gates actuales y coordinar solapamientos con KANAI-KB009; no declarar esa dependencia como satisfecha ni obligatoria sin revisar implementación.
+
+## 12. Criterios de aceptación y validación
+- Tres tickets A → B → C se ejecutan con intake individual; B no arranca si A no está validado e integrado en la rama elegida.
+- Un ciclo, dependencia externa pendiente o incompatibilidad se explica y bloquea el plan correspondiente.
+- Inferencias se justifican y aprueban; cambio de cuerpo relevante invalida el plan afectado.
+- Crear/reutilizar rama respeta cambios existentes; dos corridas no escriben concurrentemente en ella.
+- Arranque exige elección Teach/Skip, plan válido y permisos efectivos; Skip no elimina guards.
+- Harness que no permite anticipar un permiso aparece como intervención requerida. Otro que lo permite continúa sin nuevas preguntas dentro del alcance autorizado.
+- Revocación, cambio de harness o acción fuera de alcance pausa y revalida; nunca escapa de la política del host.
+- Caída después de commit/PR/merge se recupera sin duplicar efectos; preservar evidencia y estado.
+- Tickets validados desbloquean dependientes sin inventar cierres humanos. El cierre agregado aplica sólo tras aprobación y verificación del conjunto.
+- CI/revisión final fallidos impiden entrega; cambios posteriores invalidan evidencia asociada al estado anterior.
+- UI y MCP muestran los mismos estados y aplican los mismos guards.
+- Todas las corridas, incluidas fallidas/canceladas, tienen trazabilidad y métricas reconciliables.
+Verificar con tests unitarios de grafo/FSM, integración Git en repos temporales, contrato de adaptadores, fallos inyectados, métricas con reloj controlado y recorrido UI. Ejecutar los checks del repositorio que correspondan tras inspeccionarlo.
+
+## 13. Piloto y evaluación posterior
+Tao Mangalam: conjunto de 3–5 tickets relacionados y rama corta, conservando inicialmente PR por ticket hacia la épica.
+Recolectar baseline del flujo actual con CI liviano por ticket; comparar por separado ahorro adicional de orquestación y ahorro de agrupar CI completo. No atribuir a esta funcionalidad ahorros ya logrados por DEC-239.
+Comparar conjuntos semejantes en tamaño, áreas, riesgo, caches/cola de CI y harness. Registrar factores que impidan comparación; una corrida piloto no prueba causalidad ni estabilidad.
+Objetivos de evaluación propuestos, pendientes de calibrar contra baseline:
+- Cero efectos externos duplicados y cero avances fuera de autorización.
+- Trazabilidad completa de estados, autorizaciones y evidencia en todas las corridas del piloto.
+- Menor mediana de tiempo hasta integración y de espera humana, sin aumento de retrabajo/defectos.
+No fijar porcentajes de ahorro ni umbrales de expansión sin baseline. Tras el piloto revisar muestras, fallos finales y ventana de 14 días; decidir mejoras y siguiente cohorte.
+Orden de mejoras por evidencia: permisos tardíos → preflight; dependencias tardías → planner; fallos acumulados → controles intermedios; espera CI → política/cache; reanudación fallida → checkpoints.
+Activación gradual por proyecto, con modo existente como alternativa y conservación de corridas/evidencia al desactivar la funcionalidad.
+
+## 14. Decisiones para resolver en P0
+- Compatibilidad de cierre agregado con los contratos humanos actuales.
+- Semántica exacta de Teach para intake/cierre y mecanismo de herencia temporal.
+- Primeros harnesses soportados y requisitos reales de continuidad.
+- Política de PR por ticket versus commits directos; autorización del merge final.
+- Alcance de análisis de dependencias y aprobación de inferencias.
+- Retención de eventos, acceso, costos disponibles y baseline.
+Estas decisiones no bloquean registrar este plan; sí deben resolverse antes de aprobar implementación o iniciar una corrida real.

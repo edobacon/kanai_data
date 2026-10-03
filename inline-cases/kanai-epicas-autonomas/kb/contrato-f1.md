@@ -1,0 +1,1 @@
+Contrato versionado en kanai-app: docs/development/epic-execution.md, commit d7802b51d7f35f17f14bdd0a5368463caafedf4f. Se reusan guards existentes, acumuladora y autopilot. El protocolo no anuncia capacidad autónoma del host sin preflight; el cierre humano permanece. Tests usan datos y Git temporales. F10 necesita tickets reales y seguimiento de 14 días.
