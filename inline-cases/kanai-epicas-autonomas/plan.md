@@ -19,7 +19,7 @@
 | F7 Revisión integral y cierre | Concentrar revisión amplia y CI final sin perder evidencia ni autorización. | Hecho | 2026-10-03 → 2026-10-03 | c19285df5aa8f2a3b149bce415ab96cf47858512 | 2/2 | - |
 | F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | Hecho | 2026-10-03 → 2026-10-03 | e6d5a6a103a184773e3e038b56a0e8647f3c83ac | 2/2 | - |
 | F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Hecho | 2026-10-03 → 2026-10-03 | 1d716b440eb4ae9b112f4ba75f47dacb288b0ef0 | 2/2 | - |
-| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.) | 2026-10-03 → - | - | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
+| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Arbiter de implementación F1–F9 devuelve iterar con 7 hallazgos altos y 1 medio pendientes; 6 defectos de comportamiento sostenidos en comprobación adversarial. Corregir y re-juzgar antes de iniciar piloto. Se mantienen selección de 3–5 tickets/baseline/Teach-permisos pendientes y seguimiento de 14 días desde merge real. Informe y cobertura registrados en área arbiter del mismo plan, con enlace en finding F10.) | 2026-10-03 → - | - | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
 
 ## Riesgos
 
@@ -329,7 +329,7 @@
 **Esfuerzo:** Por estimar en F1 tras revisar el código y las capacidades existentes.
 **Cómo deshacerla:** Conservar documentos y evidencia; corregir decisiones mediante enmienda auditada, sin modificar código ni borrar historial.
 
-**Registro F10** (estado: Bloqueado (Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.))
+**Registro F10** (estado: Bloqueado (Arbiter de implementación F1–F9 devuelve iterar con 7 hallazgos altos y 1 medio pendientes; 6 defectos de comportamiento sostenidos en comprobación adversarial. Corregir y re-juzgar antes de iniciar piloto. Se mantienen selección de 3–5 tickets/baseline/Teach-permisos pendientes y seguimiento de 14 días desde merge real. Informe y cobertura registrados en área arbiter del mismo plan, con enlace en finding F10.))
 - **Fecha real:** inicio 2026-10-03 · fin -
 - **Antes de empezar:**
   - [x] F10-P1: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
@@ -353,7 +353,8 @@
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · /Users/edobacon/.kanai/data/kanai_data/arbiter/plans/kanai-epicas-autonomas/ledger.md: Arbiter revisó implementación F1–F9 contra pedido original y base del primer commit: 48/48 archivos, 1397 líneas modificadas, 3 jueces completos y reverify adversarial de 6 defectos de comportamiento. Veredicto iterar: 7 S1 y 1 S2, todos pendientes. SHA ajeno al ticket aceptado por checkpoint (además reproducido con Git temporal/HostBridge sintético); sesiones reemplazadas bloquean recuperación; integración no comprueba deadline; autonomía temporal no llega a aprobación de artefactos; propuesta selecciona repos fuera de épica; update tiene carrera con resume; falta prueba positiva/recuperación parcial de cierre conjunto; grounding provoca fetch sin permiso de red. El historial arbiter conserva trazas, cobertura y resultados. No se cambió código ni se cerró juez final/piloto.
 - **Bloqueos:**
   - 2026-10-03 bloqueada: Implementación F1–F9 cerrada con 11 commits registrados. Piloto requiere selección explícita de tickets, baseline posterior a DEC-239, Teach/Skip y permisos efectivos; solicitud de selección presentada. Luego necesita 14 días desde merge real. No iniciar trabajo no seleccionado ni cerrar el plan/juez con fixtures.
+  - 2026-10-03 bloqueada: Arbiter de implementación F1–F9 devuelve iterar con 7 hallazgos altos y 1 medio pendientes; 6 defectos de comportamiento sostenidos en comprobación adversarial. Corregir y re-juzgar antes de iniciar piloto. Se mantienen selección de 3–5 tickets/baseline/Teach-permisos pendientes y seguimiento de 14 días desde merge real. Informe y cobertura registrados en área arbiter del mismo plan, con enlace en finding F10.
 - **Cierre y siguiente paso:** Sin cerrar.

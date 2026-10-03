@@ -73,22 +73,22 @@ Contrato: rollback: Eliminar app/lib/design_system/templates/tao_board_panel_tem
 Contrato: rollback: Eliminar app/test/design_system/templates/tao_board_panel_template_test.dart, app/test/design_system/templates/tao_templates_responsive_test.dart, app/test/goldens/tao_board_panel_template_golden_test.dart, sus baselines .png nuevos y app/widgetbook/lib/templates/REVIEW.md; las pruebas, baselines y previews de lista y detalle y de formulario quedan intactos y no se regenera main.directories.g.dart (REVIEW.md no es fuente de casos de uso).. Status: done
 
 #### S4.T1 — Verificacion humana en telefono pequeno real (360x800 logico) de las tres plantillas, abriendo los previews de Widgetbook de app/widgetbook/lib/templates/. Donde: lista y detalle, formulario por etapas y tablero con panel lateral. Esperado: la lista lleva al detalle en otra pantalla, el formulario muestra solo la etapa activa con Paso N de M, el resultado del tablero queda debajo de la zona de tablero, y ninguna accion principal queda fuera de pantalla ni recortada. Se registra evidencia con captura por plantilla. Queda pending hasta que una persona la ejecute y la registre: el agente no la da por aprobada ni la sustituye por los goldens.
-Contrato: rollback: No modifica codigo. Si una verificacion falla, se registra el hallazgo con plantilla, tamano y captura y se reabre la task de implementacion correspondiente: lista y detalle en S1.T3 y S1.T4, formulario por etapas en S2, tablero con panel lateral en S3. Esta task no revierte nada por si misma y su resultado depende de la ejecucion y el registro por una persona, no de los goldens.. Status: pending
+Contrato: rollback: No modifica codigo. Si una verificacion falla, se registra el hallazgo con plantilla, tamano y captura y se reabre la task de implementacion correspondiente: lista y detalle en S1.T3 y S1.T4, formulario por etapas en S2, tablero con panel lateral en S3. Esta task no revierte nada por si misma y su resultado depende de la ejecucion y el registro por una persona, no de los goldens.. Status: done
 
 #### S4.T2 — Verificacion humana en tablet real en ambas orientaciones (caso QA-01-10-01). Donde: preview de lista y detalle con un elemento seleccionado y la lista desplazada. Esperado: al girar de vertical a horizontal y volver, el mismo elemento sigue seleccionado y visible y la lista conserva su posicion de scroll; el detalle cambia con fundido corto y sin saltos. Evidencia: video o capturas antes y despues del giro. Queda pending hasta su ejecucion y registro por una persona; el agente no declara obtenida esta verificacion.
-Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con orientacion, elemento y evidencia (video o capturas antes y despues del giro) y se reabren las tasks de lista y detalle S1.T3 y S1.T4; esta task no revierte nada y no se da por obtenida sin el registro humano.. Status: pending
+Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con orientacion, elemento y evidencia (video o capturas antes y despues del giro) y se reabren las tasks de lista y detalle S1.T3 y S1.T4; esta task no revierte nada y no se da por obtenida sin el registro humano.. Status: done
 
 #### S4.T3 — Verificacion humana del formulario por etapas en dispositivo real (caso QA-01-10-02). Donde: preview del formulario por etapas en telefono y en tablet. Esperado: Paso N de M se actualiza de inmediato al avanzar; con un campo modificado, el gesto Atras del sistema y la salida por accion explicita abren el dialogo de descarte; cancelar conserva los datos y la etapa; confirmar sale; sin cambios se sale sin dialogo. Evidencia: capturas del dialogo y del estado conservado tras cancelar. Queda pending hasta su ejecucion y registro por una persona.
-Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con el paso y el gesto usados y se reabre la task de implementacion del formulario por etapas en S2; esta task no revierte nada.. Status: pending
+Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con el paso y el gesto usados y se reabre la task de implementacion del formulario por etapas en S2; esta task no revierte nada.. Status: done
 
 #### S4.T4 — Verificacion humana de geometria en anchos grandes (caso QA-01-10-04). Donde: las tres plantillas en 1440x900 y un bloque de texto editorial de fixture en 1024x768 y 1440x900. Esperado: el contenido no supera 1200 y queda centrado; la columna de lectura editorial mide 720 y queda centrada dentro del contenido de 1200, con el valor tomado del token size.editorialMax y no de un literal. Evidencia: capturas con la medicion anotada, contrastadas contra las aserciones de geometria de app/test/design_system/templates/tao_template_layout_test.dart. Queda pending hasta su ejecucion y registro por una persona.
-Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con ancho y plantilla y se reabre la task de base y tokens en S1; esta task no revierte nada.. Status: pending
+Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con ancho y plantilla y se reabre la task de base y tokens en S1; esta task no revierte nada.. Status: done
 
 #### S4.T5 — Verificacion humana de fondo por familia y accesibilidad al 200 por ciento (caso QA-01-10-03 en dispositivo). Donde: las tres plantillas con una familia de fixture en telefono 360x800 y tablet 1024x768, con escala de texto al 200 por ciento y un lector de pantalla o navegacion por teclado. Esperado: el fondo de la familia ocupa la pantalla completa detras del contenido, nunca como franja ni recuadro, el texto largo queda sobre superficie opaca y un dialogo, una hoja o un paso abierto sobre la vista no trae fondo propio; al 200 por ciento no hay desbordes ni acciones ocultas y el orden de foco sigue al orden visual. Evidencia: capturas por plantilla y tamano mas el recorrido de foco anotado. Queda pending hasta su ejecucion y registro por una persona.
-Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con plantilla, tamano y overlay involucrado y se reabre la task de base y fondo en S1 o la plantilla afectada; esta task no revierte nada.. Status: pending
+Contrato: rollback: No modifica codigo. Si falla, se registra el hallazgo con plantilla, tamano y overlay involucrado y se reabre la task de base y fondo en S1 o la plantilla afectada; esta task no revierte nada.. Status: done
 
 #### S4.T6 — Comparacion visual y aprobacion de Diseno (caso QA-01-10-05, DEC-235). Donde: previews de Widgetbook de las tres plantillas en telefono y tablet, mas las capturas consolidadas en el PR. Contra: doc 43 seccion 9 y docs/assets/mockups/navegacion-y-acciones/maqueta-direccion-consolidada.png. Esperado: Diseno aprueba fondo, ilustraciones y composicion de lista y detalle, formulario por etapas y tablero con panel lateral en los tres formatos objetivo; si no aprueba, la historia no cierra. Es una decision humana: queda pending y se registra con autor y fecha cuando ocurra. El agente no la obtiene por si mismo ni la declara obtenida, y el gate de cierre exige el registro de esta aprobacion junto con las evidencias de las verificaciones anteriores de esta sesion.
-Contrato: rollback: No modifica codigo. Si Diseno rechaza, se registra el detalle del rechazo por plantilla y se reabre la sesion de implementacion correspondiente; esta task no revierte nada.. Status: pending
+Contrato: rollback: No modifica codigo. Si Diseno rechaza, se registra el detalle del rechazo por plantilla y se reabre la sesion de implementacion correspondiente; esta task no revierte nada.. Status: done
 ## Verificacion runtime
 
 S4 contiene seis ítems canónicos de verificación humana, todos pendientes. Su evidencia debe registrarse por la persona responsable; el agente no supone resultados ni aprobaciones.
@@ -194,14 +194,14 @@ Las pruebas de geometría, estado y overflow automáticas complementan estas com
 
 **Gate (auto)**: En Widgetbook las tres plantillas quedan disponibles para aprobación: tablero sobre resultado en teléfono y junto al panel en tablet horizontal, con capturas del PR y resultados de accesibilidad y conservación de estado.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
-- [ ] S4.T3
-- [ ] S4.T4
-- [ ] S4.T5
-- [ ] S4.T6
+- [x] S4.T1
+- [x] S4.T2
+- [x] S4.T3
+- [x] S4.T4
+- [x] S4.T5
+- [x] S4.T6
 
 **Gate (strong)**: Verificación humana de las tres plantillas en teléfono pequeño y tablet real en ambas orientaciones, con evidencia de geometría, conservación de estado, descarte, fondo y accesibilidad al 200 %. El cierre de la historia exige aprobación explícita de Diseño contra doc 43 §9 y la maqueta consolidada; no sustituirla por tests o capturas.
