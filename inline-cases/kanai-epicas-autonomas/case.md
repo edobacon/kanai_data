@@ -50,4 +50,4 @@
 
 ## Plan
 
-4 de 10 fases cerradas, fase actual F5. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md
+7 de 10 fases cerradas, fase actual F8. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md

@@ -4,7 +4,7 @@
 
 **Intención:** Implementar el plan acordado de épicas autónomas en Kanai, con permisos por harness, Teach/Skip, seguimiento de tickets, recuperación y métricas desde el inicio; evaluar piloto Tao Mangalam. Registrar el plan no inicia ejecución.
 **Tags:** projects: kanai_self · repos: kanai-app · labels: epicas, autonomia, harness, metricas, piloto-taomangalam
-**Estado:** 4 de 10 fases cerradas. Juez final: pendiente.
+**Estado:** 7 de 10 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -14,10 +14,10 @@
 | F2 Modelo de épica, plan y corrida | Persistir composición, planes versionados y progreso recuperable. | Hecho | 2026-10-03 → 2026-10-03 | 0de9f9cc5df1592a3cf3242c1cb8cdc8e4a1f619 | 2/2 | - |
 | F3 Composición y dependencias | Validar viabilidad y orden, contrastando declaraciones con el cuerpo de los tickets. | Hecho | 2026-10-03 → 2026-10-03 | 89dc3cfc3bfc1b8935e88580960d064cc7118fad | 2/2 | - |
 | F4 Ramas, integración y checkpoints | Vincular evidencia por ticket al estado real de la rama acumuladora. | Hecho | 2026-10-03 → 2026-10-03 | a2a49360d25eb80f651bbb5077b8b5895cbc65df, a471da5289bd0439a158a0e1ca616c13956dccd8, 5dde60d4d6368c9d322f1f800f4c262c6e4065f7 | 2/2 | - |
-| F5 Harnesses, permisos y aprobaciones | Comprobar autonomía efectiva antes de iniciar y respetar las restricciones del host. | En curso | 2026-10-03 → - | de910a6a9dcb6586943b1efced79a1023154a127 | 0/2 | - |
-| F6 Orquestación, Teach y recuperación | Encadenar tickets con intake individual y avance dentro del alcance autorizado. | Pendiente | - → - | - | 0/2 | F6.1; F6.2; F6.3 |
-| F7 Revisión integral y cierre | Concentrar revisión amplia y CI final sin perder evidencia ni autorización. | Pendiente | - → - | - | 0/2 | F7.1; F7.2; F7.3 |
-| F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | Pendiente | - → - | - | 0/2 | F8.1; F8.2; F8.3 |
+| F5 Harnesses, permisos y aprobaciones | Comprobar autonomía efectiva antes de iniciar y respetar las restricciones del host. | Hecho | 2026-10-03 → 2026-10-03 | de910a6a9dcb6586943b1efced79a1023154a127 | 2/2 | - |
+| F6 Orquestación, Teach y recuperación | Encadenar tickets con intake individual y avance dentro del alcance autorizado. | Hecho | 2026-10-03 → 2026-10-03 | e86dbbed17280f857d1560aaf72391d0f0988a41 | 2/2 | - |
+| F7 Revisión integral y cierre | Concentrar revisión amplia y CI final sin perder evidencia ni autorización. | Hecho | 2026-10-03 → 2026-10-03 | c19285df5aa8f2a3b149bce415ab96cf47858512 | 2/2 | - |
+| F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | En curso | 2026-10-03 → - | - | 0/2 | F8.1; F8.2; F8.3 |
 | F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Pendiente | - → - | - | 0/2 | F9.1; F9.2; F9.3 |
 | F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Pendiente | - → - | - | 0/2 | F10.1; F10.2; F10.3 |
 
@@ -167,8 +167,8 @@
 **Cómo deshacerla:** Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F5** (estado: En curso)
-- **Fecha real:** inicio 2026-10-03 · fin -
+**Registro F5** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-03 · fin 2026-10-03
 - **Antes de empezar:**
   - [x] F5-P1: F1 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F5-P2: F2 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
@@ -179,8 +179,8 @@
   - **F5.2** → Preflight y permisos efectivos por recurso/harness; paquete 2 verificado en los archivos de la fase.. Dónde: server/epics/permissions.ts; tests/unit/epic-permissions.test.ts. Cómo se comprobó: 2 tests pasan: capability desconocida/denegada/interactiva, autorización vencida/revocada/otro recurso y merge no implícito. No se anuncia ningún harness real como plenamente autónomo. · ejecutó: llm
   - **F5.3** → Preflight y permisos efectivos por recurso/harness; paquete 3 verificado en los archivos de la fase.. Dónde: server/epics/permissions.ts; tests/unit/epic-permissions.test.ts. Cómo se comprobó: 2 tests pasan: capability desconocida/denegada/interactiva, autorización vencida/revocada/otro recurso y merge no implícito. No se anuncia ningún harness real como plenamente autónomo. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F5-C1** pendiente (evidence): Permiso desconocido no se concede; aprobación de plan no concede permiso del harness.
-  - **F5-C2** pendiente (evidence): Adaptadores soportados superan pruebas de conformidad; permiso tardío o revocado pausa y queda registrado.
+  - **F5-C1** Permiso desconocido no se concede; aprobación de plan no concede permiso del harness. → server/epics/permissions.ts; tests/unit/epic-permissions.test.ts; 2 tests pasan: capability desconocida/denegada/interactiva, autorización vencida/revocada/otro recurso y merge no implícito. No se anuncia ningún harness real como plenamente autónomo.; commit de910a6a9dcb6586943b1efced79a1023154a127
+  - **F5-C2** Adaptadores soportados superan pruebas de conformidad; permiso tardío o revocado pausa y queda registrado. → server/epics/permissions.ts; tests/unit/epic-permissions.test.ts; 2 tests pasan: capability desconocida/denegada/interactiva, autorización vencida/revocada/otro recurso y merge no implícito. No se anuncia ningún harness real como plenamente autónomo.; commit de910a6a9dcb6586943b1efced79a1023154a127
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
@@ -189,7 +189,7 @@
   - Sin registros.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Preflight y permisos efectivos por recurso/harness. 2 tests pasan: capability desconocida/denegada/interactiva, autorización vencida/revocada/otro recurso y merge no implícito. No se anuncia ningún harness real como plenamente autónomo.. Siguiente: 2026-10-03: continuar con la siguiente fase según prerequisitos.
 
 ### F6. Orquestación, Teach y recuperación
 
@@ -198,30 +198,30 @@
 **Cómo deshacerla:** Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F6** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F6** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-03 · fin 2026-10-03
 - **Antes de empezar:**
-  - [ ] F6-P1: F3 cerrada con sus criterios y evidencia verificados.
-  - [ ] F6-P2: F4 cerrada con sus criterios y evidencia verificados.
-  - [ ] F6-P3: F5 cerrada con sus criterios y evidencia verificados.
+  - [x] F6-P1: F3 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F6-P2: F4 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F6-P3: F5 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
-  - Sin commits registrados.
+  - `e86dbbed17280f857d1560aaf72391d0f0988a41` · Orquestación canónica y política temporal de autonomía/Teach · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
-  - **F6.1** pendiente: Implementar arranque con elección explícita Teach/Skip teach y herencia temporal por corrida; reanudación conserva decisión y controles.
-  - **F6.2** pendiente: Implementar recorrido intake→planificación/spec→ejecución→verificación→integración→siguiente ticket, comprobando deriva y límites en cada paso.
-  - **F6.3** pendiente: Implementar pausas, cancelación, reintentos acotados y recuperación por checkpoints; emitir eventos de fases, espera, intervención y consumo disponible.
+  - **F6.1** → Orquestación canónica y política temporal de autonomía/Teach; paquete 1 verificado en los archivos de la fase.. Dónde: server/epics/runner.ts; server/epics/bridge.ts; server/epics/policy.ts; /private/tmp/kanai-epics-typecheck.txt; /private/tmp/kanai-epics-regressions.txt. Cómo se comprobó: 12 tests de épicas y 55 regresiones del motor pasan; typecheck exit 0. Lint no cubre TS, hallazgo preexistente registrado. El host visible ejecuta las llamadas canónicas devueltas. · ejecutó: llm
+  - **F6.2** → Orquestación canónica y política temporal de autonomía/Teach; paquete 2 verificado en los archivos de la fase.. Dónde: server/epics/runner.ts; server/epics/bridge.ts; server/epics/policy.ts; /private/tmp/kanai-epics-typecheck.txt; /private/tmp/kanai-epics-regressions.txt. Cómo se comprobó: 12 tests de épicas y 55 regresiones del motor pasan; typecheck exit 0. Lint no cubre TS, hallazgo preexistente registrado. El host visible ejecuta las llamadas canónicas devueltas. · ejecutó: llm
+  - **F6.3** → Orquestación canónica y política temporal de autonomía/Teach; paquete 3 verificado en los archivos de la fase.. Dónde: server/epics/runner.ts; server/epics/bridge.ts; server/epics/policy.ts; /private/tmp/kanai-epics-typecheck.txt; /private/tmp/kanai-epics-regressions.txt. Cómo se comprobó: 12 tests de épicas y 55 regresiones del motor pasan; typecheck exit 0. Lint no cubre TS, hallazgo preexistente registrado. El host visible ejecuta las llamadas canónicas devueltas. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F6-C1** pendiente (evidence): A→B→C avanza sólo con prerequisitos verificados; Skip teach no omite intake, spec o gates.
-  - **F6-C2** pendiente (evidence): Fallos, cambios de alcance y límites pausan; reanudar no repite efectos ni inventa aprobación humana.
+  - **F6-C1** A→B→C avanza sólo con prerequisitos verificados; Skip teach no omite intake, spec o gates. → server/epics/runner.ts; server/epics/bridge.ts; server/epics/policy.ts; /private/tmp/kanai-epics-typecheck.txt; /private/tmp/kanai-epics-regressions.txt; 12 tests de épicas y 55 regresiones del motor pasan; typecheck exit 0. Lint no cubre TS, hallazgo preexistente registrado. El host visible ejecuta las llamadas canónicas devueltas.; commit e86dbbed17280f857d1560aaf72391d0f0988a41
+  - **F6-C2** Fallos, cambios de alcance y límites pausan; reanudar no repite efectos ni inventa aprobación humana. → server/epics/runner.ts; server/epics/bridge.ts; server/epics/policy.ts; /private/tmp/kanai-epics-typecheck.txt; /private/tmp/kanai-epics-regressions.txt; 12 tests de épicas y 55 regresiones del motor pasan; typecheck exit 0. Lint no cubre TS, hallazgo preexistente registrado. El host visible ejecuta las llamadas canónicas devueltas.; commit e86dbbed17280f857d1560aaf72391d0f0988a41
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
-  - Sin registros.
+  - preexistente · eslint.config.mjs; /private/tmp/kanai-epics-lint.txt: El lint actual no configura archivos TypeScript y rechaza server/epics como ignorado. El caso kanai-eslint-real ya cubre habilitar lint real; no se declara que lint haya pasado.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Orquestación canónica y política temporal de autonomía/Teach. 12 tests de épicas y 55 regresiones del motor pasan; typecheck exit 0. Lint no cubre TS, hallazgo preexistente registrado. El host visible ejecuta las llamadas canónicas devueltas.. Siguiente: 2026-10-03: continuar con la siguiente fase según prerequisitos.
 
 ### F7. Revisión integral y cierre
 
@@ -230,19 +230,19 @@
 **Cómo deshacerla:** Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F7** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F7** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-03 · fin 2026-10-03
 - **Antes de empezar:**
-  - [ ] F7-P1: F6 cerrada con sus criterios y evidencia verificados.
+  - [x] F7-P1: F6 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
-  - Sin commits registrados.
+  - `c19285df5aa8f2a3b149bce415ab96cf47858512` · CI por SHA exacto y cierre agregado autorizado · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
-  - **F7.1** pendiente: Preparar resumen por ticket, diff acumulado, riesgos y evidencia para la revisión integral.
-  - **F7.2** pendiente: Integrar gate completo final sobre el estado exacto candidato; invalidar evidencia afectada si cambia; separar validación en épica de entrega.
-  - **F7.3** pendiente: Implementar cierre agregado autorizado, integración y reconciliación idempotente de cierre parcial; conservar controles humanos acordados y eventos de calidad.
+  - **F7.1** → CI por SHA exacto y cierre agregado autorizado; paquete 1 verificado en los archivos de la fase.. Dónde: server/epics/final.ts; server/epics/bridge.ts; tests/unit/epic-final.test.ts; /private/tmp/kanai-epics-typecheck.txt. Cómo se comprobó: 2 tests pasan: CI ausente/fallido/en nueva ejecución y SHA distinto bloquean; agente no puede autoaprobar revisión ni cierre. Cierre canónico conserva guards y reconcilia tickets ya cerrados; typecheck pasa. · ejecutó: llm
+  - **F7.2** → CI por SHA exacto y cierre agregado autorizado; paquete 2 verificado en los archivos de la fase.. Dónde: server/epics/final.ts; server/epics/bridge.ts; tests/unit/epic-final.test.ts; /private/tmp/kanai-epics-typecheck.txt. Cómo se comprobó: 2 tests pasan: CI ausente/fallido/en nueva ejecución y SHA distinto bloquean; agente no puede autoaprobar revisión ni cierre. Cierre canónico conserva guards y reconcilia tickets ya cerrados; typecheck pasa. · ejecutó: llm
+  - **F7.3** → CI por SHA exacto y cierre agregado autorizado; paquete 3 verificado en los archivos de la fase.. Dónde: server/epics/final.ts; server/epics/bridge.ts; tests/unit/epic-final.test.ts; /private/tmp/kanai-epics-typecheck.txt. Cómo se comprobó: 2 tests pasan: CI ausente/fallido/en nueva ejecución y SHA distinto bloquean; agente no puede autoaprobar revisión ni cierre. Cierre canónico conserva guards y reconcilia tickets ya cerrados; typecheck pasa. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F7-C1** pendiente (evidence): CI/revisión fallidos impiden entrega; cambios posteriores invalidan resultados que ya no aplican.
-  - **F7-C2** pendiente (evidence): Sólo se cierran tickets elegibles con autorización registrada; no se simulan aprobaciones humanas.
+  - **F7-C1** CI/revisión fallidos impiden entrega; cambios posteriores invalidan resultados que ya no aplican. → server/epics/final.ts; server/epics/bridge.ts; tests/unit/epic-final.test.ts; /private/tmp/kanai-epics-typecheck.txt; 2 tests pasan: CI ausente/fallido/en nueva ejecución y SHA distinto bloquean; agente no puede autoaprobar revisión ni cierre. Cierre canónico conserva guards y reconcilia tickets ya cerrados; typecheck pasa.; commit c19285df5aa8f2a3b149bce415ab96cf47858512
+  - **F7-C2** Sólo se cierran tickets elegibles con autorización registrada; no se simulan aprobaciones humanas. → server/epics/final.ts; server/epics/bridge.ts; tests/unit/epic-final.test.ts; /private/tmp/kanai-epics-typecheck.txt; 2 tests pasan: CI ausente/fallido/en nueva ejecución y SHA distinto bloquean; agente no puede autoaprobar revisión ni cierre. Cierre canónico conserva guards y reconcilia tickets ya cerrados; typecheck pasa.; commit c19285df5aa8f2a3b149bce415ab96cf47858512
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
@@ -251,7 +251,7 @@
   - Sin registros.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** CI por SHA exacto y cierre agregado autorizado. 2 tests pasan: CI ausente/fallido/en nueva ejecución y SHA distinto bloquean; agente no puede autoaprobar revisión ni cierre. Cierre canónico conserva guards y reconcilia tickets ya cerrados; typecheck pasa.. Siguiente: 2026-10-03: continuar con la siguiente fase según prerequisitos.
 
 ### F8. Vistas y operaciones MCP
 
@@ -260,13 +260,13 @@
 **Cómo deshacerla:** Revertir únicamente los commits de esta fase mediante el flujo acordado; conservar datos, eventos y evidencia. Si afecta persistencia, verificar compatibilidad y respaldos antes de aplicar cambios; no borrar corridas ni sobrescribir trabajo ajeno.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F8** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F8** (estado: En curso)
+- **Fecha real:** inicio 2026-10-03 · fin -
 - **Antes de empezar:**
-  - [ ] F8-P1: F3 cerrada con sus criterios y evidencia verificados.
-  - [ ] F8-P2: F5 cerrada con sus criterios y evidencia verificados.
-  - [ ] F8-P3: F6 cerrada con sus criterios y evidencia verificados.
-  - [ ] F8-P4: F7 cerrada con sus criterios y evidencia verificados.
+  - [x] F8-P1: F3 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F8-P2: F5 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F8-P3: F6 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [x] F8-P4: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
   - Sin commits registrados.
 - **Qué se hizo:**
