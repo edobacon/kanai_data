@@ -76,16 +76,16 @@ El alcance queda acotado a esta historia: no se generan hallazgos ni identificad
 ## Tasks
 
 #### S1.T1 — Crear la utilidad común en app/test/support/accessibility_guidelines.dart con una función que reciba el WidgetTester y aplique con expectLater las guías de Flutter androidTapTargetGuideline (48 x 48), iOSTapTargetGuideline (44 x 44), labeledTapTargetGuideline y textContrastGuideline, con parámetro de plataforma y mensajes de fallo que nombren la guía incumplida. No duplicar helpers: reusar el patrón de ensureSemantics y SemanticsHandle de test/design_system/tao_button_states_test.dart:187 y dejar la firma pública estable para otras épicas.
-Contrato: rollback: Borrar app/test/support/accessibility_guidelines.dart; ningún archivo existente queda modificado.. Status: pending
+Contrato: rollback: Borrar app/test/support/accessibility_guidelines.dart; ningún archivo existente queda modificado.. Status: done
 
 #### S1.T2 — Dejar la utilidad de accesibilidad como helper reutilizable con matriz de ejecucion concreta: telefono 390x844 y tablet 768x1024 y 1024x768, con textScaleFactor 1.0 y 2.0, expuestos como constantes compartidas en app/test/accessibility (sin literales dispersos y sin ningun tamano "a confirmar"). Mantener las pruebas negativas del helper: un boton de 40x40 falla por objetivo tactil Android (48x48) y un boton de 44x44 pasa iOS pero falla Android, y el mensaje de fallo nombra la guia incumplida. La firma publica del helper queda estable para que otras epicas la adopten sin cambios.
-Contrato: rollback: Revertir app/test/accessibility al commit anterior (las constantes de viewport y las pruebas negativas son del mismo commit); el helper vuelve a su version previa sin afectar otras suites.. Status: pending
+Contrato: rollback: Revertir app/test/accessibility al commit anterior (las constantes de viewport y las pruebas negativas son del mismo commit); el helper vuelve a su version previa sin afectar otras suites.. Status: done
 
 #### S1.T3 — Agregar la guia breve como seccion de accesibilidad dentro de app/README.md EXISTENTE (no crear archivo nuevo): como invocar la utilidad en una historia nueva, ejemplo minimo de invocacion sobre un widget bajo test, y las escalas (1.0 y 2.0) y viewports (390x844, 768x1024, 1024x768) a cubrir. No modificar .docs-baseline.txt por este cambio.
-Contrato: rollback: Revertir la seccion agregada en app/README.md con git checkout del archivo; no hay otros archivos de documentacion tocados.. Status: pending
+Contrato: rollback: Revertir la seccion agregada en app/README.md con git checkout del archivo; no hay otros archivos de documentacion tocados.. Status: done
 
 #### S1.T4 — Tests de la utilidad en app/test/accessibility/accessibility_guidelines_test.dart: botón de muestra de 40 x 40 que falla por objetivo táctil, control táctil sin Semantics.label que falla por etiqueta, texto de bajo contraste que falla por contraste, control de 44 x 44 que pasa en iOS y falla en Android, y TaoButton real que pasa las cuatro guías.
-Contrato: rollback: Borrar app/test/accessibility/accessibility_guidelines_test.dart.. Status: pending
+Contrato: rollback: Borrar app/test/accessibility/accessibility_guidelines_test.dart.. Status: done
 
 #### S2.T1 — Crear app/test/accessibility/components_accessibility_test.dart que enumere las entradas del registro de Widgetbook de los componentes de HU-01-03 a HU-01-05 y genere un caso por entrada aplicando la utilidad. Mantener la forma acotada: un caso por entrada, sin producto cartesiano anidado, con timeout por caso, y viewport y escala como parámetros del caso.
 Contrato: rollback: Borrar app/test/accessibility/components_accessibility_test.dart; no hay cambios en lib/.. Status: pending
@@ -173,13 +173,13 @@ Contrato: rollback: Retirar el registro de aprobacion y volver la tarea a pendin
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
 
 **Gate (auto)**: Un archivo de test ejecutable donde un botón de muestra de 40 x 40 falla nombrando el objetivo táctil y un TaoButton real pasa las cuatro guías, más la guía de uso visible en la documentación de la app.
 
