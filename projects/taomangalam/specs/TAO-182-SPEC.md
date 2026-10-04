@@ -89,22 +89,22 @@ Contrato: rollback: Borrar `app/test/golden/goldens/overlays/` y sus entradas en
 Contrato: rollback: Borrar `components_golden_test.dart`; los goldens quedan sin comparación automatizada.. Status: done
 
 #### S3.T1 — Generar los goldens del shell con el panel superpuesto y con el panel persistente en tablet vertical (768x1024) y horizontal (1024x768), con la matriz aplicada.
-Contrato: rollback: Borrar `app/test/golden/goldens/shell/` y sus entradas en la suite.. Status: pending
+Contrato: rollback: Borrar `app/test/golden/goldens/shell/` y sus entradas en la suite.. Status: done
 
 #### S3.T1.1 — Golden del shell en 1024x768: el panel persistente está visible.
-Contrato: rollback: Borrar el golden del shell en 1024x768.. Status: pending
+Contrato: rollback: Borrar el golden del shell en 1024x768.. Status: done
 
 #### S3.T1.2 — Golden del shell en 768x1024: el panel superpuesto está cerrado.
-Contrato: rollback: Borrar el golden del shell en 768x1024.. Status: pending
+Contrato: rollback: Borrar el golden del shell en 768x1024.. Status: done
 
 #### S3.T2 — Generar los goldens de las tres plantillas de HU-01-10 en los cinco tamaños, comprobando que la plantilla de lista y detalle cambia de composición en 840 y no en otro ancho.
 Contrato: rollback: Borrar `app/test/golden/goldens/templates/` y sus entradas en la suite.. Status: pending
 
 #### S3.T2.1 — Golden de la plantilla de lista en los cinco tamaños, con el cambio de composición en 840.
-Contrato: rollback: Borrar el golden de la plantilla de lista.. Status: pending
+Contrato: rollback: Borrar el golden de la plantilla de lista.. Status: done
 
 #### S3.T2.2 — Golden de la plantilla de detalle en los cinco tamaños.
-Contrato: rollback: Borrar el golden de la plantilla de detalle.. Status: pending
+Contrato: rollback: Borrar el golden de la plantilla de detalle.. Status: done
 
 #### S3.T2.3 — Golden de la tercera plantilla de HU-01-10 en los cinco tamaños.
 Contrato: rollback: Borrar el golden de la tercera plantilla.. Status: pending
@@ -146,12 +146,12 @@ Contrato: rollback: Borrar `shell_golden_test.dart` y `templates_golden_test.dar
 ### Session 3 · T2 · open
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T1.1
-- [ ] S3.T1.2
+- [x] S3.T1
+- [x] S3.T1.1
+- [x] S3.T1.2
 - [ ] S3.T2
-- [ ] S3.T2.1
-- [ ] S3.T2.2
+- [x] S3.T2.1
+- [x] S3.T2.2
 - [ ] S3.T2.3
 - [ ] S3.T3
 - [ ] S3.T4

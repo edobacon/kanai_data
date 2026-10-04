@@ -1,0 +1,310 @@
+plan_id: kanai-ejecucion-ticket
+title: "Ejecución de ticket: por sesión contra por tarea, medido, con el testigo inline"
+intent: Decidir con un experimento comparable si conviene seguir ejecutando una tarea por subagente en frío o llevar la sesión a un solo agente con las tareas encadenadas, y dejar la revisión a la altura de ese cambio. Primero se mide lo que hoy no se mide (utilización del ticket y relación entrada/salida), después se aísla el arranque en frío y se caracteriza el testigo del camino inline, después se habilita la sesión en un solo agente detrás de bandera y se refuerza la revisión, y recién entonces se corre la comparación de tres patas y se decide.
+created: 2026-10-04T21:47:28.429Z
+updated: 2026-10-04T22:05:02.189Z
+tags:
+  projects: []
+  repos:
+    - kanai-app
+  tickets: []
+  branches:
+    - codex/epicas-autonomas
+  folders: []
+  labels:
+    - ejecucion
+    - sesion
+    - arranque-en-frio
+    - revision
+    - experimento
+    - metricas
+    - testigo-inline
+settings:
+  judge: final
+risks:
+  - "Encadenar sin disciplina de contexto puede subir el costo en vez de bajarlo: ya se midió que re-hacer una tarea cuesta 1,7x el tiempo y 1,5x los tokens."
+  - "Un diff más grande baja la precisión del juez: el juez es el mismo modelo que ejecuta y hoy aprueba en el modo más laxo. Ampliar la unidad sin reforzar la revisión es cambiar velocidad por calidad."
+  - "Una falla a mitad de sesión obliga a re-correr la sesión entera: se acota con checkpoint por tarea y con el registro de commits por tarea."
+  - "Los tokens de entrada que reporta el host incluyen la lectura de caché: el ahorro monetario puede ser menor que el de tokens. El reloj no se ve afectado."
+  - "Cambiar la granularidad afecta a todos los proyectos: entra detrás de bandera, se prueba primero en un ticket aislado y se declara la reversión."
+  - "Si la telemetría no llega al 90%, ninguna comparación es válida por la regla del roadmap 10 (M9): es requisito previo, no un detalle."
+  - "El camino inline parece más barato porque no registra tokens ni corre gates: compararlo sin declarar ese hueco hace ganar a la forma que no lleva la cuenta."
+  - "El reloj del caso inline no está en el plan: las fases se registran retroactivamente (en kanai-epicas-autonomas los commits son tres horas anteriores a la apertura). Leerlo del plan infla la velocidad aparente."
+out_of_scope:
+  - Modificar la épica nativa de taomangalam ni su piloto, ni sus tickets, specs, tareas, sesiones o estados.
+  - Re-planificar o re-ejecutar tickets ya cerrados.
+  - Reescribir la máquina de estados, los guards o los contratos DET.
+  - Cambiar la matriz de casos de test por requisito.
+  - "Construir de nuevo lo que ya existe: la aprobación con evidencia, el canario, el refutador, el review por tarea, el presupuesto de diff y la ejecución en paralelo ya están en el código. Acá se encienden, se miden y, solo si hace falta, se ajustan."
+  - "Cambiar el contrato del caso inline ni convertirlo en el camino de producción: el testigo se estudia, no se toca."
+  - Los cambios de motor del caso post-épica que no hagan falta para que esta comparación sea válida.
+phases:
+  - code: F0
+    title: Telemetría y las dos métricas que faltan
+    goal: "Que la comparación del experimento sea válida por la propia regla del proyecto: cerrar el hueco de completitud de telemetría y sumar al desglose de tiempo las dos métricas que hoy no mide ningún caso (utilización del ticket y relación entrada/salida). Entrega las dos métricas nuevas en el desglose, el informe de completitud y la foto base congelada."
+    prerequisites:
+      - id: F0.pre1
+        text: Node 24 y pnpm disponibles, dependencias de kanai-app al día.
+      - id: F0.pre2
+        text: Store vivo accesible en modo de solo lectura y el data repo sin cambios propios pendientes.
+    tasks:
+      - code: F0.1
+        text: Medir y declarar la completitud de telemetría por backend (tokens, duración y modelo) con su porcentaje, y listar los hosts que no la informan.
+        detail: "El piso que la propia regla exige es el 90% de los runs por backend. Sin eso, ninguna comparación entre modos de ejecución es válida. La telemetría de tokens ya existe en los hosts con plugin; el hueco está en los que no lo tienen. Comando reproducible (lo ejecuta el agente): KANAI_DATA_REPO=<url> pnpm tsx scripts/metrics-baseline.mts --all"
+      - code: F0.2
+        text: Sumar al desglose de tiempo del ticket la utilización (minutos de agente sobre minutos de reloj) y la relación tokens de entrada sobre tokens de salida, por ticket y por sesión.
+        detail: "El script de timeline hoy atribuye huecos por categoría y separa la espera mayor a 30 minutos, pero no informa utilización ni relación de tokens: las dos son la vara del experimento. Comando reproducible (lo ejecuta el agente): KANAI_DATA_REPO=<url> pnpm tsx scripts/metrics-ticket-timeline.mts <ticket> --save docs/metrics/ticket-timeline-AAAA-MM-DD.json"
+      - code: F0.3
+        text: Congelar la foto base con las dos métricas nuevas y con el hueco entre corridas de menos de 15 minutos expresado como porcentaje del tiempo activo.
+        detail: "Es la referencia contra la que se compara el experimento. El hueco entre corridas ya se midió en 24% a 55% del tiempo activo, contra el 10% que opt-09 escribió como umbral de revisita. Comando reproducible (lo ejecuta el agente): KANAI_DATA_REPO=<url> pnpm tsx scripts/metrics-ticket-timeline.mts <tickets de la cohorte> --save docs/metrics/ticket-timeline-AAAA-MM-DD.json"
+    criteria:
+      - id: F0.c1
+        text: "`pnpm typecheck` termina con código 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: kanai-app
+          how: Typecheck del proyecto. Lo ejecuta el dev.
+          expect: 0 errores.
+          exit_code: 0
+      - id: F0.c2
+        text: "`pnpm vitest run tests/unit/roadmap-metrics.test.ts tests/unit/telemetry-reliability.test.ts` termina con código 0."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/roadmap-metrics.test.ts tests/unit/telemetry-reliability.test.ts
+          repo: kanai-app
+          cwd: kanai-app
+          how: Tests de las métricas del roadmap y de la fiabilidad de la telemetría. Lo ejecuta el dev.
+          expect: La salida informa la cantidad de tests y 0 fallos.
+          exit_code: 0
+      - id: F0.c3
+        text: "Evidencia: el informe de completitud de telemetría por backend con su porcentaje, y la lista de hosts que quedan por debajo del 90%."
+        kind: evidence
+      - id: F0.c4
+        text: "Evidencia: la foto base congelada con su fecha, su cohorte, la utilización y la relación entrada/salida de cada ticket."
+        kind: evidence
+    effort: 1 día
+    delivers: true
+    changes_code: true
+    rollback: Revertir los commits del script y del informe. No toca el store ni ningún ticket.
+  - code: F1
+    title: Aislar qué parte de cada corrida es re-descubrimiento y caracterizar el testigo inline
+    goal: Separar, con evidencia y no con estimación, el arranque en frío del trabajo real de la tarea, y caracterizar el testigo del camino inline, para saber cuánto hay para ganar antes de tocar el motor. Entrega el informe del arranque en frío con su techo, el informe del testigo inline y la lista de lo que el cambio de granularidad no puede mejorar.
+    prerequisites:
+      - id: F1.pre1
+        text: "F0 cerrada: la foto base existe y las métricas están en el desglose."
+    tasks:
+      - code: F1.1
+        text: "Medir el piso de arranque por sesión: la variación de tokens de entrada dentro de la sesión, el mínimo observado y cuántas corridas tiene la sesión."
+        detail: "Si el piso es plano, el trabajo incremental de cada tarea casi se pierde dentro del arranque. Ya hay un caso de 4% de variación sobre un piso de 640 mil tokens y otro de 390%: el piso no es universal y hay que caracterizarlo. Comando reproducible (lo ejecuta el agente): pnpm tsx scripts/metrics-ticket-timeline.mts <tickets> --idle 15"
+      - code: F1.2
+        text: Comparar la primera y la segunda ejecución de la misma tarea como cota alta de lo que es re-descubrimiento.
+        detail: En las 21 tareas re-ejecutadas la segunda pasada costó 76% menos de entrada y siguió costando 4,8 minutos. La diferencia entre pasadas es lo que el agente vuelve a descubrir; el tiempo que sobrevive es el piso real del trabajo.
+      - code: F1.3
+        text: Calcular el techo del ahorro por sesión con la cantidad real de corridas por sesión, y declararlo como techo y no como resultado.
+        detail: "El techo es (n-1)/n del arranque de la sesión. Con 4,6 corridas por sesión da 78%. El rango realista es 30% a 50% del tiempo de agente de la SESIÓN, no del ticket: la ceremonia bloqueante y la espera no se tocan con este cambio."
+      - code: F1.4
+        text: Caracterizar el camino inline como testigo de la ejecución en caliente, con su reloj leído del historial Git y su hueco de medición declarado.
+        detail: "El testigo limpio es usuite-15425: un ticket real de dos repos hecho como caso inline, con 7,9 h de reloj, 5,7 h activas, 10 fases, 65 tareas, 58 commits, 13 enmiendas y 17 hallazgos, y con cero gates y cero tokens registrados. El segundo testigo es el burst de kanai-epicas-autonomas: 11 commits, 72 archivos y 1.433 líneas en 87 minutos con un agente en contexto caliente. REGLA DE LECTURA: en el camino inline las fases se registran retroactivamente (los commits de F1 a F9 de kanai-epicas-autonomas son tres horas anteriores a la apertura del caso), así que el reloj se lee del historial Git y no del plan. El plan del inline mide la ceremonia, no el trabajo. Comando reproducible (lo ejecuta el agente): git log --since=<inicio> --until=<fin> --format='%h %ad %s' --date=format:'%H:%M' --shortstat"
+    criteria:
+      - id: F1.c1
+        text: "`pnpm typecheck` termina con código 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: kanai-app
+          how: Typecheck del proyecto. Lo ejecuta el dev.
+          expect: 0 errores.
+          exit_code: 0
+      - id: F1.c2
+        text: "Evidencia: el informe con el piso de arranque por sesión, su variación y las sesiones de piso plano y de variación alta, con su archivo y su consulta."
+        kind: evidence
+      - id: F1.c3
+        text: "Evidencia: la comparación entre la primera y la segunda pasada de la misma tarea, con la cantidad de tareas y el rango de la diferencia."
+        kind: evidence
+      - id: F1.c4
+        text: "Evidencia: el techo del ahorro calculado con la cantidad real de corridas por sesión, declarado explícitamente como techo y con lo que queda fuera de su alcance."
+        kind: evidence
+      - id: F1.c5
+        text: "Evidencia: el informe del testigo inline (usuite-15425 y el burst de kanai-epicas-autonomas) con su reloj leído del historial Git, sus commits, sus gates y jueces, y su hueco de medición de tokens declarado."
+        kind: evidence
+    effort: 1 día
+    delivers: true
+    changes_code: true
+    rollback: Revertir el commit del informe y de las consultas de medición. No toca el store.
+  - code: F2
+    title: Ejecutar la sesión en un solo agente, con checkpoint por tarea
+    goal: Que una sesión pueda ejecutarse en un solo subagente con las tareas encadenadas y reporte por tarea, sin cambiar el plan del ticket ni perder el modelo sugerido por tarea. Entrega la ejecución de la sesión en un solo agente con checkpoint por tarea, detrás de bandera y con el plan del ticket intacto.
+    prerequisites:
+      - id: F2.pre1
+        text: "F1 cerrada: el techo del ahorro y el testigo inline están medidos, así que se sabe qué se espera ganar y contra qué se compara."
+      - id: F2.pre2
+        text: "El piloto de la épica cerrado o su comparación ya congelada: el experimento no se corre durante el piloto."
+    tasks:
+      - code: F2.1
+        text: "Armar el alcance de la sesión en la preparación de ejecución: el brief de la sesión lista sus tareas y el subagente reporta por tarea con hitos y resultado."
+        detail: "El plan del ticket no cambia: se agrupa el despacho de las tareas ya definidas, sin reescribirlas ni reordenarlas."
+      - code: F2.2
+        text: "Dejar un checkpoint por tarea: al cerrar cada tarea el agente entrega su resumen, su rebanada de archivos y sus citas caso a test, para que la revisión conserve la granularidad aunque la ejecución no la tenga."
+        detail: Es lo que evita que la sesión encadenada se vuelva un monolito imposible de juzgar, y lo que permite atribuir cada caso de prueba a su tarea.
+      - code: F2.3
+        text: Conservar el modelo sugerido por tarea y la elección de serializar o paralelizar, sin degradar en silencio cuando la sesión va en un solo agente.
+      - code: F2.4
+        text: "Verificación por costo: tests acotados al diff en cada paso y una sola suite completa al cierre de la sesión."
+        detail: "Hoy la suite completa se corre por tarea: 941, 942, 926, 925, 923, 919, 912, 898, 883, 872 y 452 tests en un solo ticket. Ese es el gasto que se mueve al cierre."
+    criteria:
+      - id: F2.c1
+        text: "`pnpm typecheck` termina con código 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: kanai-app
+          how: Typecheck del proyecto. Lo ejecuta el dev.
+          expect: 0 errores.
+          exit_code: 0
+      - id: F2.c2
+        text: "`pnpm vitest run tests/unit/session-sizing.test.ts tests/unit/plan-execution.test.ts` termina con código 0."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/session-sizing.test.ts tests/unit/plan-execution.test.ts
+          repo: kanai-app
+          cwd: kanai-app
+          how: Tests del dimensionado de sesiones y de la preparación de ejecución. Lo ejecuta el dev.
+          expect: La salida informa la cantidad de tests y 0 fallos.
+          exit_code: 0
+      - id: F2.c3
+        text: "Evidencia: una sesión real ejecutada con la bandera encendida, con su reporte por tarea y su checkpoint por tarea."
+        kind: evidence
+      - id: F2.c4
+        text: "Evidencia: el plan del ticket no cambió: el mismo spec, las mismas tareas y las mismas sesiones que antes de la corrida."
+        kind: evidence
+    effort: 3 a 4 días
+    delivers: true
+    changes_code: true
+    rollback: "Apagar la bandera: el comportamiento por defecto vuelve a un subagente por tarea sin revertir nada más. Si además hay que sacar el código, revertir sus commits."
+  - code: F3
+    title: Revisión a la altura del diff más grande
+    goal: "Que ampliar la unidad de ejecución no baje la calidad verificable: encender y medir la revisión que ya está construida, y bajar el punto de control al checkpoint por tarea. Entrega la revisión encendida y medida, con el punto de control por tarea y el presupuesto de diff avisando."
+    prerequisites:
+      - id: F3.pre1
+        text: "F2 cerrada, o en paralelo si los archivos no se solapan: la revisión se diseña contra la forma real del checkpoint."
+    tasks:
+      - code: F3.1
+        text: Encender la aprobación con evidencia en modo exigente, con su medición antes y después y su condición de reversión.
+        detail: "Hoy está en modo de medición: pide la cita pero no la exige. El modo exigente es el que evita que el juez apruebe sin apuntar a una línea real del diff. No se construye de nuevo: ya existe. El testigo inline muestra el otro extremo: usuite-15425 se cerró con cero gates y cero veredictos de juez, así que la verificación es la pieza que NO se copia del camino inline. Comando de verificación (lo ejecuta el dev): pnpm vitest run tests/unit/judge-evidence.test.ts"
+      - code: F3.2
+        text: Encender el refutador en los gates de código y medir la tasa de iterate y los hallazgos nuevos que aporta.
+        detail: "Es un segundo juez del MISMO modelo al que se le pide buscar el defecto en vez de confirmar: descorrelaciona el veredicto sin cambiar de modelo, que es la restricción real de taomangalam. Está apagado. Comando de verificación (lo ejecuta el dev): pnpm vitest run tests/unit/judge-refuter.test.ts tests/unit/judge-canary.test.ts"
+      - code: F3.3
+        text: Evaluar cada tarea de la sesión con su rebanada de archivos y sus citas, en vez del diff completo de la sesión.
+        detail: "El review por tarea ya existe y está apagado en esta instalación: acá se enciende y se apunta al checkpoint de F2.2."
+      - code: F3.4
+        text: Hacer que el presupuesto de diff informe y sugiera dividir cuando la sesión encadenada se pase del umbral, en vez de acumular.
+        detail: "El umbral y el aviso ya existen y no bloquean: la decisión de no partir una unidad coherente se conserva."
+    criteria:
+      - id: F3.c1
+        text: "`pnpm typecheck` termina con código 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: kanai-app
+          how: Typecheck del proyecto. Lo ejecuta el dev.
+          expect: 0 errores.
+          exit_code: 0
+      - id: F3.c2
+        text: "`pnpm vitest run tests/unit/judge-evidence.test.ts tests/unit/judge-refuter.test.ts tests/unit/judge-canary.test.ts` termina con código 0."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/judge-evidence.test.ts tests/unit/judge-refuter.test.ts tests/unit/judge-canary.test.ts
+          repo: kanai-app
+          cwd: kanai-app
+          how: Tests de la evidencia, el refutador y el canario del juez. Lo ejecuta el dev.
+          expect: La salida informa la cantidad de tests y 0 fallos.
+          exit_code: 0
+      - id: F3.c3
+        text: "Evidencia: la tasa de iterate del juez y los hallazgos nuevos que aporta el refutador, medidos antes y después, con la cantidad de gates de la muestra."
+        kind: evidence
+      - id: F3.c4
+        text: "Evidencia: cada tarea de la sesión encadenada con su revisión y sus citas, sin huecos de atribución."
+        kind: evidence
+    effort: 2 a 3 días
+    delivers: true
+    changes_code: true
+    rollback: "Volver el modo de evidencia a medición, apagar el refutador y el review por tarea: los tres son banderas y vuelven sin tocar el código."
+  - code: F4
+    title: El experimento comparado, de tres patas
+    goal: "Producir el dato que hoy no existe: una sesión por tarea contra una sesión encadenada, comparables, con la misma vara y con el tamaño de la muestra declarado, y con el testigo inline al lado. Entrega la comparación medida entre las formas de ejecutar, con su muestra y sus límites."
+    prerequisites:
+      - id: F4.pre1
+        text: "F2 y F3 cerradas: la ejecución por sesión y la revisión reforzada están disponibles."
+      - id: F4.pre2
+        text: La foto base de F0 vigente, el testigo inline de F1 caracterizado y el piloto de la épica cerrado o su comparación ya congelada.
+    tasks:
+      - code: F4.1
+        text: "Elegir el par de sesiones comparables: mismo tamaño, mismo tipo de trabajo y mismos repos, y registrar por qué son comparables."
+        detail: No se comparan dos sesiones distintas por conveniencia. Si no hay un par comparable, se declara y se corre sobre un ticket de prueba aislado, nunca sobre la épica del piloto.
+      - code: F4.2
+        text: Correr la primera sesión por tarea como hoy y la segunda encadenada, con la misma vara de medición.
+        detail: Los commits del ticket de prueba van a su propia rama y se registran en esta fase.
+      - code: F4.3
+        text: Comparar reloj (utilización y tiempo de agente), tokens de entrada y de salida, vueltas de gate, hallazgos reales y escapes, y declarar lo que no se puede atribuir.
+      - code: F4.4
+        text: "Tercera pata: poner el testigo inline al lado de las dos patas del motor."
+        detail: "El testigo es la forma que el caso quiere construir, ya funcionando sobre un ticket real. Si la pata encadenada del motor no mejora al testigo, la conclusión es adoptar la forma y no construir otra cosa. La comparación es de orden de magnitud y con el trabajo no equivalente declarado: no se fuerza un factor de mejora entre proyectos distintos."
+      - code: F4.5
+        text: "Medir y declarar lo que el camino inline no mide: tokens del agente que conduce y escapes."
+        detail: "El camino inline tiene cero filas de ejecución registradas y cero gates: no hay tokens ni escapes que leer. Sin declarar ese hueco, gana por no llevar la cuenta. Si el host puede informar el uso del agente que conduce, se registra; si no, queda escrito como límite de la comparación."
+    criteria:
+      - id: F4.c1
+        text: "Evidencia: las dos corridas lado a lado, con utilización, tiempo de agente, entrada, salida, vueltas de gate y hallazgos por corrida."
+        kind: evidence
+      - id: F4.c2
+        text: "Evidencia: la comparación con el tamaño de la muestra y las diferencias que no se pueden atribuir al cambio, declaradas en vez de omitidas."
+        kind: evidence
+      - id: F4.c3
+        text: La persona confirma que el par de sesiones elegido era efectivamente comparable.
+        kind: manual
+      - id: F4.c4
+        text: Ninguna corrida del experimento tocó tickets, specs, tareas, sesiones o estados de la épica del piloto.
+        kind: evidence
+      - id: F4.c5
+        text: "Evidencia: el testigo inline puesto lado a lado con las dos patas del motor, con su trabajo no equivalente declarado en vez de forzado."
+        kind: evidence
+      - id: F4.c6
+        text: "Evidencia: el hueco de medición del camino inline (tokens del agente que conduce y escapes) cerrado si el host lo permite, o declarado como límite de la comparación."
+        kind: evidence
+    effort: 2 a 3 días (depende del par de sesiones disponible)
+    delivers: true
+    changes_code: false
+    rollback: "No aplica: no cambia código del motor. Las corridas del ticket de prueba quedan en su rama y se descartan o se revierten con el ticket."
+  - code: F5
+    title: Veredicto y decisión registrada
+    goal: Aceptar, ajustar o revertir con números, y dejar la decisión escrita con su motivo. Entrega el veredicto comparado y la decisión registrada.
+    prerequisites:
+      - id: F5.pre1
+        text: F4 cerrada con la comparación de tres patas y su muestra.
+    tasks:
+      - code: F5.1
+        text: "Verificar que la calidad no cayó: hallazgos reales por gate, escapes, casos de prueba citados y promovidos, y tickets que habrían cerrado con menos evidencia."
+        detail: Si la calidad baja, el ahorro no se expande aunque el reloj mejore.
+      - code: F5.2
+        text: "Registrar la decisión: activar por defecto, ajustar el alcance o revertir, con su motivo y las fases afectadas."
+        detail: "Se compara contra la foto base de F0 y contra el testigo inline, no contra impresiones. Si la conclusión es adoptar la forma del testigo, la verificación independiente se conserva: es la pieza que el testigo no tiene y no conviene perder."
+    criteria:
+      - id: F5.c1
+        text: "Evidencia: el informe de calidad contra la foto base, con la tasa de hallazgos reales, los escapes y los casos promovidos."
+        kind: evidence
+      - id: F5.c2
+        text: La decisión queda registrada con su motivo, su muestra y las fases que se activan, se ajustan o se revierten.
+        kind: manual
+      - id: F5.c3
+        text: "Evidencia: si se revierte, la bandera vuelve a su estado anterior y queda constancia de quién lo decidió y por qué."
+        kind: evidence
+    effort: 1 día
+    delivers: true
+    changes_code: false
+    rollback: "No aplica: es la decisión sobre lo ya hecho."

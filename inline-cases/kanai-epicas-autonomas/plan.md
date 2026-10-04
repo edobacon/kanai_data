@@ -20,7 +20,7 @@
 | F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | Hecho | 2026-10-03 → 2026-10-03 | e6d5a6a103a184773e3e038b56a0e8647f3c83ac | 2/2 | - |
 | F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Hecho | 2026-10-03 → 2026-10-03 | 1d716b440eb4ae9b112f4ba75f47dacb288b0ef0 | 2/2 | - |
 | F11 Correcciones de revisión de implementación | Resolver los ocho hallazgos originales de arbiter y los adicionales de los ciclos de revisión antes del piloto, con evidencia y registro. | Hecho | 2026-10-03 → 2026-10-03 | 80c2d51dcced57d84e5e1802eb9a50ed40689ab4, bd004db5261a4e72dc49a64155823b9bb4cdaa8d, 364eb16afcd35f7fe8879f20f645c00a76e7561e | 2/2 | - |
-| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Piloto real pendiente de selección humana de 3–5 tickets Tao Mangalam, baseline posterior a DEC-239, rama, host/versión, responsables y permisos efectivos. Además faltan ejecución real y observación de defectos durante 14 días desde merge. No hay bloqueo de revisión de código: F11 cerrada y arbiter aprobado.) | 2026-10-03 → - | - | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
+| F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Piloto real pendiente de selección humana de 3–5 tickets Tao Mangalam, baseline posterior a DEC-239, rama, host/versión, responsables y permisos efectivos. Además faltan ejecución real y observación de defectos durante 14 días desde merge. No hay bloqueo de revisión de código: F11 cerrada y arbiter aprobado.) | 2026-10-03 → - | 07b7ac7, a43fc9a, 8d4221f, 01e17bf, da26ab3, 70eb4bc, abe6359, c29530d, e6478a7, aacbbca, b7cb29d | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
 
 ## Riesgos
 
@@ -373,7 +373,17 @@
   - [x] F10-P2: F8 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F10-P3: F9 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
 - **Commits:**
-  - Sin commits registrados.
+  - `07b7ac7` · feat(epics): prepare batch decisions and phased dependency execution · kanai-app/codex/epicas-autonomas (verificado)
+  - `a43fc9a` · fix(epics): prepare authorized execution and clarify epic and ticket views · kanai-app/codex/epicas-autonomas (verificado)
+  - `8d4221f` · fix(epics): prioritize local accumulation over ticket PR workflows · kanai-app/codex/epicas-autonomas (verificado)
+  - `01e17bf` · feat(instalacion): registra Kanai en DeepSeek Harness (DSH) · kanai-app/codex/epicas-autonomas (verificado)
+  - `da26ab3` · fix(integridad): el feed de auditoria sin ticket no cuenta en el digest · kanai-app/codex/epicas-autonomas (verificado)
+  - `70eb4bc` · fix(epics): la autoridad de corrida invalida bloquea la aprobacion por MCP · kanai-app/codex/epicas-autonomas (verificado)
+  - `abe6359` · fix(telemetria): guarda el backend del run canonico en agent_runs · kanai-app/codex/epicas-autonomas (verificado)
+  - `c29530d` · fix(epics): el planificador no inventa dependencias por menciones de contexto · kanai-app/codex/epicas-autonomas (verificado)
+  - `e6478a7` · fix(mcp): el protocolo de epica sale de la descripcion de epic_operate a la skill kn-epic · kanai-app/codex/epicas-autonomas (verificado)
+  - `aacbbca` · test(mcp): guarda que epic_operate apunte a la skill kn-epic y que el protocolo siga servido · kanai-app/codex/epicas-autonomas (verificado)
+  - `b7cb29d` · fix(inline): un commit se registra en su fase de destino aunque no este iniciada · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
   - **F10.1** pendiente: Seleccionar 3–5 tickets relacionados, rama corta y baseline del flujo actual con CI liviano; completar ambientes, roles y autorizaciones del piloto.
   - **F10.2** pendiente: Ejecutar piloto según permisos y controles aprobados; registrar datos de éxito/fallo, interrupciones y reanudación y observar defectos durante 14 días posteriores a integración.
@@ -388,7 +398,7 @@
   - ABIERTO · F10-C2: Comparación y seguimiento de 14 días. Por qué: No existe fecha de integración real ni ventana de seguimiento cumplida.. Impacto: El plan y juez final permanecen abiertos, sin atribuir causalidad ni inventar muestras.. Fecha: 2026-10-18. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
   - ABIERTO · F10.2: Ejecutar piloto y observar defectos 14 días. Por qué: Al 2026-10-03 no existe corrida piloto autorizada ni merge de referencia. Fixtures no reemplazan trabajo real; el seguimiento empieza después del merge.. Impacto: No se puede verificar calidad posintegración ni completar observación al 2026-10-03. La fecha de revisión es provisional y se ajustará al merge real.. Fecha: 2026-10-18. Responsable: Persona responsable del piloto Tao Mangalam y agente al recibir selección
 - **Desvíos del plan:**
-  - Sin registros.
+  - Los 8 commits del workstream de aceleracion (instalacion en DSH, integridad del store, telemetria del backend del run, planificador de epicas, protocolo de epica movido a la skill kn-epic y mecanica de registro de commits) no son trabajo de ninguna fase de esta epica: se registran en F10 como constancia de otro workstream, con su evidencia y su plan en el caso inline kanai-pre-epica.. Por qué: Comparten la rama de trabajo, asi que el guard de cierre los ve como faltantes de este plan; sin la constancia la epica no podria cerrar F10 ni pedir el brief del juez, y ninguno pertenece a una fase de esta epica.. Cambia la decisión: No cambia decisiones del plan: es una constancia de workstream ajeno, no un cambio de alcance, de criterios ni de juez.
 - **Hallazgos:**
   - introducido · /Users/edobacon/.kanai/data/kanai_data/arbiter/plans/kanai-epicas-autonomas/ledger.md: Arbiter revisó implementación F1–F9 contra pedido original y base del primer commit: 48/48 archivos, 1397 líneas modificadas, 3 jueces completos y reverify adversarial de 6 defectos de comportamiento. Veredicto iterar: 7 S1 y 1 S2, todos pendientes. SHA ajeno al ticket aceptado por checkpoint (además reproducido con Git temporal/HostBridge sintético); sesiones reemplazadas bloquean recuperación; integración no comprueba deadline; autonomía temporal no llega a aprobación de artefactos; propuesta selecciona repos fuera de épica; update tiene carrera con resume; falta prueba positiva/recuperación parcial de cierre conjunto; grounding provoca fetch sin permiso de red. El historial arbiter conserva trazas, cobertura y resultados. No se cambió código ni se cerró juez final/piloto.
 - **Bloqueos:**
