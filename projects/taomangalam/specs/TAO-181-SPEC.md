@@ -88,16 +88,16 @@ Contrato: rollback: Eliminar el draft y dejar la pantalla sin previsualización.
 Contrato: rollback: Eliminar test/core/preferences/ y sus fixtures.. Status: done
 
 #### S2.T1 — Construir la pantalla Ajustes reachable desde el pie del menú (HU-01-08), a pantalla completa, con apariencia clara fija sin selector (DEC-102) y los tres controles enlazados al estado de previsualización.
-Contrato: rollback: Retirar la pantalla y su ruta del pie del menú; el shell vuelve a su estado anterior.. Status: pending
+Contrato: rollback: Retirar la pantalla y su ruta del pie del menú; el shell vuelve a su estado anterior.. Status: done
 
 #### S2.T2 — Fondo de la familia Cuenta (v-27-cuenta.png) a pantalla completa con el resolvedor de imágenes de HU-01-10: cover con punto focal, opacidad 12-18 %, ≥65 % de zona tranquila y texto largo sobre superficie opaca (doc 43 §9, DEC-235).
-Contrato: rollback: Quitar el fondo de familia de Ajustes; la pantalla vuelve a superficie plana.. Status: pending
+Contrato: rollback: Quitar el fondo de familia de Ajustes; la pantalla vuelve a superficie plana.. Status: done
 
 #### S2.T3 — Controles accesibles de Ajustes: estado anunciado (on/off) al lector de pantalla y escala de texto al 200 % sin cortes en teléfono y tablet.
-Contrato: rollback: Revertir los semánticos y el ajuste de layout de los controles.. Status: pending
+Contrato: rollback: Revertir los semánticos y el ajuste de layout de los controles.. Status: done
 
 #### S2.T4 — Widget tests de Ajustes (previsualización sin aplicar, descarte al salir, controles anunciados) y goldens del preview en teléfono y tablet para la comparación con la maqueta consolidada (QA-01-17-05).
-Contrato: rollback: Eliminar test/settings/ y los goldens generados.. Status: pending
+Contrato: rollback: Eliminar test/settings/ y los goldens generados.. Status: done
 
 #### S3.T1 — Aplicar Reducir movimiento en toda la app combinado con el SO: navegación, menú, tablero, overlays y fondos sin desplazamientos, solo fundidos de hasta 120 ms o cambios inmediatos (consume el servicio de HU-01-07).
 Contrato: rollback: Desactivar la preferencia y recuperar las transiciones previas.. Status: pending
@@ -167,13 +167,13 @@ Contrato: rollback: Eliminar la verificación de actualización en vivo del pane
 
 **Gate (auto)**: Los tests unitarios de preferencias pasan: preferencia_local guarda, lee y descarta con claves versionadas, combina con el SO y cae al default ante clave desconocida.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: Ajustes se ve y se revisa en teléfono y tablet: pantalla completa con fondo de Cuenta, tres controles con estado anunciado y previsualización que no toca el resto de la app.
 
