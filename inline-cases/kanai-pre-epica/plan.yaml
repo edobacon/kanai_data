@@ -1,0 +1,182 @@
+plan_id: kanai-pre-epica
+title: Desbloquear el análisis de la épica y dejar el terreno medido (pre-piloto)
+intent: "Dejar la épica lista para iniciar su piloto: corregir el planificador de dependencias que hoy produce auto-referencias y referencias truncadas, registrar los commits que el plan no tiene, cerrar la telemetría que falta y congelar el baseline del flujo actual. No modifica tickets ni enciende cambios de flujo: es requisito previo del piloto y medición. Cierra con una prueba controlada que mide si la corrección se tradujo en mejora, antes de dar por listo el arranque."
+tags:
+  projects: []
+  repos:
+    - kanai-app
+  tickets: []
+  branches:
+    - codex/epicas-autonomas
+  folders: []
+  labels:
+    - pre-piloto
+    - planificador
+    - telemetria
+    - baseline
+settings:
+  judge: final
+risks:
+  - "Corregir el planificador cambia las aristas inferidas: hay que comparar contra las 126 actuales y revisar que no desaparezcan dependencias reales."
+  - "El baseline puede quedar contaminado si algo del motor cambia después de congelarlo: se congela al final y se anota su fecha y su alcance."
+  - "Tocar la épica nativa de taomangalam está fuera de alcance: la verificación del planificador se hace con los cuerpos canónicos como fixtures."
+  - "Usar el proyecto real como banco de pruebas: la prueba controlada corre sobre un proyecto demo aislado, con identificadores de prueba."
+out_of_scope:
+  - Modificar tickets, specs, estados o sesiones de taomangalam, incluida la épica EP-01 en ejecución.
+  - "Re-planificar la épica nativa: la verificación usa sus cuerpos como fixtures, no corre el planificador sobre la épica real."
+  - "Los cambios de flujo del caso post-épica (evidencia del gate, corte del bucle de auto-corrección, ejecución por sesión): contaminarían la comparación del piloto."
+  - "Declarar mejora sin medirla: la prueba controlada compara antes y después con el mismo instrumento, y si no hay mejora se registra el hallazgo en vez de cerrar."
+phases:
+  - code: F0
+    title: Telemetría y baseline del flujo actual
+    goal: Que el flujo actual quede medido con números propios, para que el piloto tenga contra qué compararse y para que ninguna mejora posterior se atribuya sin dato.
+    owner: dev
+    prerequisites:
+      - id: F0.pre1
+        text: Node 24 y pnpm disponibles, con las dependencias de kanai-app al día.
+      - id: F0.pre2
+        text: Store vivo accesible en modo lectura y el data repo sin cambios propios pendientes.
+    tasks:
+      - code: F0.1
+        text: Cerrar la telemetría por ejecución.
+        detail: El reporte de ejecución ya acepta duración, tokens de entrada y salida, y modelo. El hueco es que DSH no los informa (OpenCode sí, con el plugin que instala el instalador de Kanai), y la métrica de completitud de telemetría da 0 de 3 backends por encima del 90%. Cerrar el hueco en el host.
+      - code: F0.2
+        text: Congelar el baseline del corpus.
+        detail: |-
+          Desglose por tipo de ejecución (developer, gate, intake, plan, refine) y por ticket de TAO-181 y TAO-182, con tokens, ejecuciones, gates, overrides y duración.
+          Sumar la foto del corpus: 44 tickets, 31 cerrados, 1 listo para cerrar, 1 en curso, 11 abiertos, 34 con spec y 10 sin planificar.
+          Va al KB del caso con su fecha de congelamiento.
+      - code: F0.3
+        text: Auditar en solo lectura los planes ya materializados.
+        detail: |-
+          Correr el pre-flight de superficies y assets sobre los 34 planes ya escritos: el resultado es un informe con los casos y su evidencia, no una enmienda.
+          Evidencia de partida: el spec de TAO-181 pide la splash (que es TAO-183) y el tablero (EP-07), ninguno existe: costó 305.199 tokens en una ejecución y obligó al juez a declararlo fuera de alcance en cuatro gates.
+    criteria:
+      - id: F0.c1
+        text: "`pnpm vitest run tests/unit/gate-telemetry-capture.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/gate-telemetry-capture.test.ts
+          expect: "`pnpm vitest run tests/unit/gate-telemetry-capture.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F0.c2
+        text: "Evidencia: el informe de completitud de telemetría con el porcentaje por backend (objetivo: al menos el 90% de las ejecuciones con tokens y duración)."
+        kind: evidence
+      - id: F0.c3
+        text: "Evidencia: el baseline del corpus en el KB del caso, con tokens por tipo y por ticket y su fecha de congelamiento."
+        kind: evidence
+      - id: F0.c4
+        text: "Evidencia: el informe de la auditoría de los 34 planes, con los casos que nombran superficies o assets inexistentes."
+        kind: evidence
+      - id: F0.c5
+        text: "La medición no altera ningún ticket: los datos salen de lectura del store y de las ejecuciones ya registradas."
+        kind: manual
+    effort: 2 días
+  - code: F1
+    title: Desbloquear el análisis de la épica
+    goal: Que el planificador de dependencias deje de producir candidatos falsos y referencias incompletas, y que el plan de la épica quede sin commits sin registrar, para que su análisis pueda cerrarse y el piloto arrancar sobre un plan confiable.
+    owner: dev
+    prerequisites:
+      - id: F1.pre1
+        text: F0.2 cerrada (el baseline registra el estado del que se parte).
+      - id: F1.pre2
+        text: "El hallazgo del planificador leído: 126 aristas inferidas, metadatos propios como dependencias externas, IDs truncados y auto-referencias en los ocho tickets."
+    tasks:
+      - code: F1.1
+        text: Excluir las auto-referencias del planificador.
+        detail: |-
+          La referencia propia del handoff del ticket se resuelve a sí misma: GH-59 se resuelve a TAO-181 y genera TAO-181 hacia TAO-181, y ocurre con los ocho tickets del conjunto.
+          Fuente: la evaluación de menciones y la resolución por aliases del planificador de épicas (`server/epics/planner.ts`).
+      - code: F1.2
+        text: Resolver los identificadores completos y tratar los metadatos propios como contexto.
+        detail: |-
+          HU-01-17 se recorta a HU-01. Y decisiones, vistas, casos de QA y la propia épica (DEC-102, V-51, QA-01, EP-01, HU-01) aparecen como dependencias externas por decidir, cuando son contexto.
+          Las aristas inferidas que sí son reales siguen necesitando decisión humana: el arreglo no las aprueba.
+      - code: F1.3
+        text: Registrar los commits que el plan de la épica no tiene.
+        detail: |-
+          Son 6 en la rama de trabajo, incluidos los 3 del workstream de aceleración (instalación en DSH, integridad del store y autorización de épica).
+          Se registran en la fase que corresponde y, si la fase ya está cerrada, como registro tardío con su motivo; si un commit pertenece a otro workstream, se deja esa constancia.
+          Hoy frenan el cierre de la fase F10 y el brief del juez.
+      - code: F1.4
+        text: Verificar el planificador con los cuerpos canónicos como fixtures.
+        detail: |-
+          Test con los cuerpos de TAO-181 a TAO-188: cero auto-referencias, cero identificadores truncados, y las aristas externas restantes son decisiones humanas legítimas.
+          No se re-planifica la épica real: la verificación es sobre fixtures.
+    criteria:
+      - id: F1.c1
+        text: "`pnpm vitest run tests/unit/epic-planner-references.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/epic-planner-references.test.ts
+          expect: "`pnpm vitest run tests/unit/epic-planner-references.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F1.c2
+        text: "`pnpm typecheck` termina con código 0; esperado: la salida informa la cantidad de errores encontrados (0)."
+        kind: command
+        run:
+          command: pnpm typecheck
+          expect: "`pnpm typecheck` termina con código 0; esperado: la salida informa la cantidad de errores encontrados (0)."
+      - id: F1.c3
+        text: "Evidencia: la comparación de aristas inferidas antes y después (126 contra el conteo nuevo), con las que desaparecen por falsas y las que se conservan porque son reales."
+        kind: evidence
+      - id: F1.c4
+        text: "Evidencia: los 6 commits registrados en el plan de la épica, o la constancia de su workstream cuando no correspondan a una fase."
+        kind: evidence
+      - id: F1.c5
+        text: "La épica nativa y sus tickets quedan intactos: ningún cambio de estado, de spec ni de sesión."
+        kind: manual
+    effort: 2 a 3 días
+  - code: F2
+    title: "Validación post-ejecución: prueba controlada y medición de mejora"
+    goal: Comprobar con una prueba controlada que lo implementado se tradujo en la mejora buscada, midiendo antes y después con el mismo instrumento, antes de dar por listo el arranque del piloto.
+    owner: dev
+    prerequisites:
+      - id: F2.pre1
+        text: "F1 cerrada: el planificador corregido y los commits registrados."
+      - id: F2.pre2
+        text: 'El baseline de F0.2 disponible: es el lado "antes" de la comparación.'
+    tasks:
+      - code: F2.1
+        text: Diseñar la prueba controlada y declarar los valores esperados antes de correrla.
+        detail: |-
+          Proyecto demo aislado, con identificadores de prueba y nunca de un proyecto real, y los cuerpos canónicos de TAO-181 a TAO-188 como entrada: es el escenario exacto del hallazgo.
+          Declarar de antemano qué se espera: cero auto-referencias, cero identificadores truncados, y como aristas externas solo las que son decisiones humanas legítimas.
+      - code: F2.2
+        text: Ejecutar la prueba y capturar los números.
+        detail: |-
+          Correr el planificador de la épica de prueba y un gate con verificación real sobre el proyecto demo, capturando los mismos indicadores que el baseline: aristas inferidas, identificadores truncados, telemetría por ejecución, duración y costo del gate.
+          Nada de esto toca el proyecto real ni sus tickets.
+      - code: F2.3
+        text: Comparar y decidir si hubo mejora.
+        detail: |-
+          Antes contra después, con el mismo instrumento: aristas inferidas (126 contra el conteo nuevo), identificadores truncados (HU-01-17 que se recortaba a HU-01), auto-referencias (ocho de ocho) y el porcentaje de ejecuciones con telemetría completa.
+          Si la mejora no aparece, se registra el hallazgo con su causa y se decide: ajustar y repetir la prueba, o no cerrar el caso todavía.
+      - code: F2.4
+        text: Registrar el resultado y la decisión de arranque del piloto.
+        detail: |-
+          Conclusión explícita (se tradujo en mejora o no se tradujo), con el dato que la sostiene, y la recomendación sobre si el piloto puede arrancar.
+          Registrar además el estado del suite completo: hay un rojo preexistente (la prueba de perfiles de tools, donde el perfil reducido pesa más de un tercio del completo) que no es de este trabajo. Decidir si se corrige acá o queda documentado como excepción, para que "suite verde" signifique algo.
+    criteria:
+      - id: F2.c1
+        text: "`pnpm vitest run tests/unit/epic-planner-references.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/epic-planner-references.test.ts
+          expect: "`pnpm vitest run tests/unit/epic-planner-references.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F2.c2
+        text: "Evidencia: el escenario de la prueba con su proyecto demo aislado y los valores esperados declarados antes de correrla."
+        kind: evidence
+      - id: F2.c3
+        text: "Evidencia: la medición antes y después con el mismo instrumento, con los cuatro indicadores y su comparación."
+        kind: evidence
+      - id: F2.c4
+        text: "Evidencia: la conclusión explícita sobre si hubo mejora, con el dato que la sostiene y la recomendación de arranque del piloto."
+        kind: evidence
+      - id: F2.c5
+        text: "Evidencia: el estado del suite completo y la decisión sobre el rojo preexistente (corregido acá o documentado como excepción)."
+        kind: evidence
+      - id: F2.c6
+        text: "La prueba no toca el proyecto real: se corre sobre un proyecto demo aislado cuyos identificadores no son de un proyecto real."
+        kind: manual
+    effort: 1 a 2 días
+created: 2026-10-04T21:09:42.590Z
+updated: 2026-10-04T21:13:18.187Z

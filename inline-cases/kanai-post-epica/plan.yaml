@@ -1,0 +1,284 @@
+plan_id: kanai-post-epica
+title: "Acelerar el motor después del piloto: gate con evidencia real y menos vueltas por ticket"
+intent: "Reducir a la mitad el costo en tokens y la cantidad de vueltas por ticket sin perder calidad verificable: que el gate verifique de verdad lo que hizo la sesión, que un hallazgo no accionable no dispare un bucle de auto-corrección, que el trabajo se pague por sesión en lugar de por tarea y que la ceremonia de confirmación no cueste vueltas inútiles. El caso está sujeto a análisis de métricas: cada fase se acepta o se revierte comparando contra el baseline congelado del caso pre-épica, y no se activa durante el piloto de la épica. Antes de tocar el motor, una fase de análisis y validación decide si cada cambio es aplicable y con qué alcance: se ejecuta como está, se re-encuadra o se descarta."
+tags:
+  projects: []
+  repos:
+    - kanai-app
+  tickets: []
+  branches:
+    - codex/epicas-autonomas
+  folders: []
+  labels:
+    - post-piloto
+    - gate
+    - evidencia
+    - metricas
+settings:
+  judge: final
+risks:
+  - "El arreglo del gate puede correr la suite de más y encarecer el cierre: se acota con el alcance por sesión y con el cache de checks que ya existe."
+  - "Menos ejecuciones por ticket puede bajar la cobertura de casos citados: se acepta solo si la tasa de hallazgos reales y los escapes no empeoran."
+  - "Un juez único puede volverse complaciente: la escalación a un segundo juez se fija por umbral de riesgo y se sigue midiendo con la métrica de juez complaciente."
+  - "El cambio de comportamiento del gate afecta a todos los proyectos: entra detrás de una bandera, se prueba primero en un ticket de prueba y recién después va por defecto."
+  - "Verificar de verdad puede bloquear tickets cuyos entornos no corren en el sandbox: se ancla a la config de calidad del proyecto antes de encenderlo."
+  - "Una fase puede no ser aplicable tal como está escrita: la validación previa la re-encuadra o la descarta, no la fuerza."
+out_of_scope:
+  - "Modificar tickets existentes, en particular los de la épica del piloto: ni su spec, ni sus tareas, ni sus sesiones, ni su estado."
+  - Re-planificar, reabrir o re-ejecutar tickets ya cerrados.
+  - Reescribir el motor de FSM, los guards o los contratos DET.
+  - "Tocar la matriz de casos de test por REQ y el brief (1.567 tokens promedio: no es el problema)."
+  - "Correr este trabajo durante el piloto de la épica: invalidaría su comparación."
+  - Escribir código de las fases de ejecución antes de que la validación de aplicabilidad esté aprobada.
+phases:
+  - code: F0
+    title: Análisis y validación de aplicabilidad (antes de ejecutar)
+    goal: "Determinar, antes de tocar el motor, si cada cambio es aplicable tal como está escrito y con qué alcance: reproducir el problema en el código actual, inventariar lo que ya existe para reutilizar, medir el impacto sobre los proyectos y los hosts, y decidir fase por fase si se ejecuta, se re-encuadra o se descarta."
+    owner: dev
+    prerequisites:
+      - id: F0.pre1
+        text: "El piloto de la épica cerrado o su comparación ya congelada: la validación no lo altera, pero la decisión de aplicar depende de él."
+      - id: F0.pre2
+        text: "El baseline del caso pre-épica disponible: es la referencia contra la que se decide."
+    tasks:
+      - code: F0.1
+        text: Reproducir el problema central en el código actual y aislar la causa.
+        detail: |-
+          La resolución de cambios de sesión puede fallar por dos motivos distintos: el rango entre la base y HEAD queda vacío con rama acumuladora, o la referencia que exige el detector no es la que usan los commits (interna contra externa). Reproducir con un test que falle y registrar cuál de las dos es la causa real, o si son las dos.
+          Evidencia de partida: todos los gates de TAO-181 y TAO-182 informan que la verificación no corrió por falta de cambios detectables.
+      - code: F0.2
+        text: Inventariar qué existe para reutilizar y qué falta.
+        detail: |-
+          Recorrer con archivo y línea la guarda del auto-fix, la persistencia de hallazgos y overrides, la escalación de jueces, el cache de checks y la config de calidad por proyecto.
+          Mapear cada fase de este plan contra los archivos que toca y separar las que ya tienen base hecha de las que requieren diseño nuevo.
+      - code: F0.3
+        text: Analizar el impacto de encender la verificación real.
+        detail: |-
+          Qué proyectos y hosts quedan afectados, qué pasa cuando el sandbox no puede correr la suite del proyecto (Flutter, Postgres y Python en el caso del piloto), qué necesita la config de calidad para no bloquear, y cuál es la bandera, su alcance y las condiciones de reversión.
+          Incluir el costo estimado por gate con verificación real, comparado con el gate actual de auto-reporte.
+      - code: F0.4
+        text: Decidir la aplicabilidad fase por fase.
+        detail: |-
+          Un go/no-go por fase de las que siguen: se ejecuta como está, se re-encuadra con el alcance corregido, o se descarta con su motivo.
+          La decisión se registra antes de escribir código y la aprueba la persona.
+    criteria:
+      - id: F0.c1
+        text: "Evidencia: la causa aislada del problema central, con el test que la reproduce y su salida en rojo (es el estado que la fase siguiente tiene que cambiar)."
+        kind: evidence
+      - id: F0.c2
+        text: "Evidencia: el inventario de reutilización con archivo y línea por pieza, y el mapa de qué fase toca qué archivo."
+        kind: evidence
+      - id: F0.c3
+        text: "Evidencia: el análisis de impacto con los proyectos y hosts afectados, el costo estimado por gate, la bandera propuesta y las condiciones de reversión."
+        kind: evidence
+      - id: F0.c4
+        text: "Evidencia: el go/no-go por fase, con las que se re-encuadran o se descartan y su motivo."
+        kind: evidence
+      - id: F0.c5
+        text: La decisión de aplicabilidad queda aprobada por la persona antes de escribir código de las fases siguientes.
+        kind: manual
+      - id: F0.c6
+        text: "`pnpm typecheck` termina con código 0; esperado: la salida informa la cantidad de errores encontrados (0)."
+        kind: command
+        run:
+          command: pnpm typecheck
+          expect: "`pnpm typecheck` termina con código 0; esperado: la salida informa la cantidad de errores encontrados (0)."
+    effort: 1 a 2 días
+  - code: F1
+    title: Que el gate vea lo que hizo la sesión
+    goal: El gate de cada sesión corre la verificación real sobre los archivos de esa sesión, de modo que el juez juzgue evidencia ejecutada en lugar de auto-reportes y desaparezcan los hallazgos que hoy se aceptan por criterio.
+    owner: dev
+    prerequisites:
+      - id: F1.pre1
+        text: El piloto de la épica cerrado, o su comparación ya congelada y decidida.
+      - id: F1.pre2
+        text: Los repos y los commits reales de TAO-182 y TAO-181 accesibles en modo lectura, para verificar la resolución de cambios de sesión sin gatear ni modificar esos tickets.
+      - id: F1.pre3
+        text: "F0 cerrada: la aplicabilidad de esta fase decidida y aprobada."
+    tasks:
+      - code: F1.1
+        text: Resolver los commits de la sesión sin depender del rango entre la base y HEAD.
+        detail: |-
+          Cuando la base y HEAD coinciden (rama acumuladora), ese rango queda vacío y la sesión "no existe" aunque sus commits estén a la vista. Orden propuesto: el registro estructurado de la sesión primero; si falta, derivar por la convención de subject sin rango, o desde el punto de divergencia con la base real del repositorio.
+          Archivo principal: `server/repo/preGate.ts`.
+      - code: F1.2
+        text: Aceptar la referencia interna y la externa en el subject del commit.
+        detail: Los commits reales del proyecto usan la referencia externa (por ejemplo GH-60) y la propuesta de rama puede traer la interna. Aceptar ambas, conservando el borde de dígito que evita confundir la sesión 1 con la 11.
+      - code: F1.3
+        text: No degradar en silencio y anclar el sandbox.
+        detail: |-
+          Registrar el motivo cuando no hay cambios detectables, intentar el diff acotado al ticket contra la base, y marcar el gate como "sin evidencia" con una acción explícita, en vez de dejar que el juez lo convierta en un hallazgo del cambio.
+          Antes de encender la verificación real sobre un proyecto de Flutter, Postgres y Python, anclar ese estado a la config de calidad del proyecto (flaky conocidos y checks no bloqueantes): si el sandbox no puede correr la suite, un gate más estricto frena en lugar de acelerar.
+    criteria:
+      - id: F1.c1
+        text: "`pnpm vitest run tests/unit/gate-session-changes.test.ts tests/unit/pre-gate.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/gate-session-changes.test.ts tests/unit/pre-gate.test.ts
+          expect: "`pnpm vitest run tests/unit/gate-session-changes.test.ts tests/unit/pre-gate.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F1.c2
+        text: "`pnpm typecheck` termina con código 0; esperado: la salida informa la cantidad de errores encontrados (0)."
+        kind: command
+        run:
+          command: pnpm typecheck
+          expect: "`pnpm typecheck` termina con código 0; esperado: la salida informa la cantidad de errores encontrados (0)."
+      - id: F1.c3
+        text: "Evidencia: la resolución de cambios de sesión sobre los repos reales de TAO-182 y TAO-181 devuelve los archivos de la sesión (comprobación de solo lectura, sin gatear ni modificar esos tickets)."
+        kind: evidence
+      - id: F1.c4
+        text: "Evidencia: el próximo gate natural de la épica informa evidencia ejecutada, observado sin intervenir el ticket."
+        kind: evidence
+      - id: F1.c5
+        text: La bandera se activa primero en un proyecto o ticket de prueba, y el comportamiento por defecto queda igual hasta que el dev apruebe el cambio.
+        kind: manual
+    effort: 2 a 3 días
+  - code: F2
+    title: Cortar el bucle del gate y el re-litigio
+    goal: Un hallazgo que el agente no puede resolver (revisión humana de Diseño, una superficie que pertenece a otro ticket, arte faltante) deja de disparar una ejecución de auto-corrección y deja de reaparecer en cada gate del mismo ticket.
+    owner: dev
+    prerequisites:
+      - id: F2.pre1
+        text: F1 cerrada y verificada en un ticket de prueba.
+      - id: F2.pre2
+        text: La traza de dos gates consecutivos de TAO-182 disponible para comparar.
+    tasks:
+      - code: F2.1
+        text: Extender la guarda del auto-fix con la clasificación de hallazgos.
+        detail: |-
+          Ya existe una guarda del auto-fix (bloquea cuando hay repos pero no hay directorio de despacho, en `tests/unit/gate-autofix-guard.test.ts`). Se extiende para que la auto-corrección corra únicamente sobre hallazgos accionables por el agente. Criterio de clasificación: ¿existe un cambio de código o de test que cierre el hallazgo? Si la respuesta es no (comparación visual de Diseño, criterio de otro ticket, decisión de producto), es humano.
+          Evidencia de partida: en TAO-182 la sesión 2 encadenó gate, auto-corrección y gate otra vez en dos minutos, con un cierre de gate de 187 segundos.
+      - code: F2.2
+        text: Aceptar y recordar el hallazgo no accionable.
+        detail: |-
+          La persistencia de hallazgos con severidad, origen y decisión ya existe (`gate-findings.test.ts` y `gate-override.test.ts`): lo que falta es suprimir la repetición.
+          Persistir la aceptación por ticket y firma del hallazgo, y no volver a levantarlo en los gates siguientes del mismo ticket, dejándolo visible en el dossier. Evidencia de partida: el mismo hallazgo de fidelidad visual aparece en cuatro gates de TAO-181.
+      - code: F2.3
+        text: Verificar la existencia de las superficies y los assets que el plan nombra, antes de materializarlo.
+        detail: |-
+          Si una tarea o un criterio nombra una vista, un widget o un asset, el pre-flight comprueba que exista o que esté planificado en otro ticket. Si no, la tarea queda marcada como dependiente y se pide confirmación en lugar de crearla.
+          Evidencia de partida: una ejecución de 305.199 tokens para descubrir que la splash no existe, y 415.223 tokens bloqueados por entregables de Diseño faltantes, repetidos después en 460.610.
+    criteria:
+      - id: F2.c1
+        text: "`pnpm vitest run tests/unit/gate-autofix-guard.test.ts tests/unit/gate-findings.test.ts tests/unit/gate-override.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/gate-autofix-guard.test.ts tests/unit/gate-findings.test.ts tests/unit/gate-override.test.ts
+          expect: "`pnpm vitest run tests/unit/gate-autofix-guard.test.ts tests/unit/gate-findings.test.ts tests/unit/gate-override.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F2.c2
+        text: "Evidencia: la traza de TAO-182 posterior al cambio muestra como máximo dos gates por sesión."
+        kind: evidence
+      - id: F2.c3
+        text: "Evidencia: cero hallazgos repetidos entre gates consecutivos del mismo ticket, comparando contra la traza previa."
+        kind: evidence
+      - id: F2.c4
+        text: Ninguna tarea que nombre una superficie inexistente se materializa sin confirmación.
+        kind: manual
+    effort: 3 a 4 días
+  - code: F3
+    title: Menos ejecuciones con el mismo resultado
+    goal: Bajar a la mitad los tokens por ticket moviendo el costo de cada tarea a cada sesión, sin perder casos citados ni evidencia.
+    owner: dev
+    prerequisites:
+      - id: F3.pre1
+        text: "F1 cerrada (el gate ya verifica de verdad: sin eso, este recorte pierde calidad)."
+      - id: F3.pre2
+        text: El baseline del caso pre-épica disponible para comparar.
+    tasks:
+      - code: F3.1
+        text: Ejecutar por sesión en lugar de por tarea.
+        detail: |-
+          La preparación de ejecución acepta el alcance de la sesión y arma un brief con sus tareas; el subagente reporta por tarea con hitos y resultado, con el mismo token de ejecución.
+          El plan del ticket no cambia: se agrupa el despacho de las tareas ya definidas, sin reescribirlas ni reordenarlas.
+          Evidencia de partida: 15 ejecuciones de developer en TAO-181, con un costo de 285.000 a 1.557.000 tokens de entrada cada una; los runs de developer explican el 73% del gasto del ticket.
+      - code: F3.2
+        text: Verificación por costo.
+        detail: |-
+          Tests acotados al diff en cada paso y una sola suite completa por sesión, en el gate. Ajustar la skill de ejecución de tarea en consecuencia.
+          Evidencia de partida: la suite completa de Flutter se corrió una vez por tarea (941, 942, 926, 925, 923, 919, 912, 898, 883, 872 y 452 tests).
+      - code: F3.3
+        text: Juez único por defecto, con escalación a un segundo juez.
+        detail: |-
+          Escala cuando hay discrepancia, cuando el diff toca zonas de riesgo o cuando el ticket es de nivel alto. Configurable por proyecto.
+          Evidencia de partida: los dos jueces son el mismo modelo que ejecutó (deepseek-flash en TAO-181, gpt-6.1-sol en TAO-182).
+      - code: F3.4
+        text: Reducir el churn del store.
+        detail: |-
+          Dejar de re-proyectar el spec en cada mutación (volcarlo al cerrar la sesión) y agrupar las actualizaciones de casos de test.
+          Evidencia de partida: 1.704 re-proyecciones del cuerpo del spec y 738 actualizaciones de casos de test en 44 tickets.
+    criteria:
+      - id: F3.c1
+        text: "`pnpm vitest run tests/unit/session-scoped-execution.test.ts tests/unit/gate-judge-escalation.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/session-scoped-execution.test.ts tests/unit/gate-judge-escalation.test.ts
+          expect: "`pnpm vitest run tests/unit/session-scoped-execution.test.ts tests/unit/gate-judge-escalation.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F3.c2
+        text: "Evidencia: la comparación de tokens por ticket contra el baseline del caso pre-épica muestra una reducción de al menos el 50% en TAO-181 y TAO-182."
+        kind: evidence
+      - id: F3.c3
+        text: La tasa de hallazgos reales por gate no empeora respecto del baseline y la métrica de escapes por modelo no sube.
+        kind: manual
+      - id: F3.c4
+        text: El número de re-proyecciones del spec por ticket baja a una por cierre de sesión.
+        kind: manual
+    effort: 3 a 5 días
+  - code: F4
+    title: Ceremonia de confirmación humana
+    goal: Dejar de pagar vueltas por confirmaciones que el host no puede mostrar, sin perder la trazabilidad de quién autorizó qué.
+    owner: dev
+    prerequisites:
+      - id: F4.pre1
+        text: F1 cerrada, para no mezclar el arreglo de evidencia con el de autorizaciones.
+    tasks:
+      - code: F4.1
+        text: Detectar en el handshake si el host soporta confirmación interactiva y registrar la autorización como declarada por el agente, sin la vuelta del código fuera de banda. Queda auditada igual.
+        detail: "Evidencia de partida: 41 de 93 autorizaciones humanas se resolvieron sin confirmación de la persona."
+      - code: F4.2
+        text: Revisar las autorizaciones que se concedieron y nunca se aplicaron.
+        detail: "Evidencia de partida: 12 autorizaciones concedidas sin efecto."
+    criteria:
+      - id: F4.c1
+        text: "`pnpm vitest run tests/unit/human-authorization.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/human-authorization.test.ts
+          expect: "`pnpm vitest run tests/unit/human-authorization.test.ts` termina con código 0; esperado: la salida informa la cantidad de tests y 0 fallos."
+      - id: F4.c2
+        text: "Evidencia: la métrica de autorizaciones humanas sin confirmación distingue las declaradas por el agente de las pedidas y no mostradas."
+        kind: evidence
+      - id: F4.c3
+        text: Cero autorizaciones concedidas sin aplicación, o cada una con su motivo registrado.
+        kind: manual
+    effort: 1 día
+  - code: F5
+    title: Análisis de métricas y decisión
+    goal: Aceptar, ajustar o revertir lo hecho con números comparables contra el baseline, y dejar registrada la decisión.
+    owner: dev
+    prerequisites:
+      - id: F5.pre1
+        text: F1 a F4 cerradas, con su evidencia registrada.
+      - id: F5.pre2
+        text: El baseline congelado del caso pre-épica accesible.
+    tasks:
+      - code: F5.1
+        text: Comparar el gasto contra el baseline.
+        detail: Mismo desglose que el baseline (tokens por tipo de ejecución y por ticket, ejecuciones, gates, overrides y duración), sobre los tickets que se ejecutaron después del cambio. Sin mezclar cohortes ni atribuir causalidad con muestra insuficiente.
+      - code: F5.2
+        text: Verificar que la calidad no cayó.
+        detail: Tasa de hallazgos reales por gate, escapes por modelo, casos de test citados y promovidos, y tickets que cerraron con menos evidencia que antes. Cualquier caída frena la expansión.
+      - code: F5.3
+        text: Registrar la decisión.
+        detail: Expansión a otros proyectos, ajuste del alcance o reversión, con el motivo y las fases afectadas.
+    criteria:
+      - id: F5.c1
+        text: "Evidencia: la comparación contra el baseline del caso pre-épica, con el porcentaje de reducción de tokens y de vueltas por ticket y el tamaño de la muestra."
+        kind: evidence
+      - id: F5.c2
+        text: "Evidencia: el informe de calidad con la tasa de hallazgos reales, los escapes y los casos promovidos, comparado con el baseline."
+        kind: evidence
+      - id: F5.c3
+        text: La decisión de expansión, ajuste o reversión queda registrada con su motivo, y ninguna fase se da por buena sin su comparación.
+        kind: manual
+    effort: 1 a 2 días
+created: 2026-10-04T21:09:43.079Z
+updated: 2026-10-04T21:12:14.301Z

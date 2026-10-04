@@ -74,19 +74,19 @@ Contrato: rollback: Quitar el job del workflow de PR y el paso de subida de arti
 Contrato: rollback: Borrar `atoms_golden_test.dart` y su baseline; el harness queda sin consumidores.. Status: done
 
 #### S2.T1 — Generar los goldens de los componentes de HU-01-03 a HU-01-05 en todos sus estados, reutilizando el espejo de entradas de componentes y manteniendo su guard de sincronía con las anotaciones @UseCase.
-Contrato: rollback: Borrar los goldens generados y la suite de componentes; el espejo de entradas queda intacto.. Status: pending
+Contrato: rollback: Borrar los goldens generados y la suite de componentes; el espejo de entradas queda intacto.. Status: done
 
 #### S2.T1.1 — Goldens de los átomos (botón, campo de texto, tipografía, iconos) en sus estados y variantes, por cada tamaño y escala de la matriz.
-Contrato: rollback: Borrar `app/test/golden/goldens/atoms/` y sus entradas en la suite.. Status: pending
+Contrato: rollback: Borrar `app/test/golden/goldens/atoms/` y sus entradas en la suite.. Status: done
 
 #### S2.T1.2 — Goldens de las moléculas de HU-01-03 a HU-01-05 en sus siete estados de catálogo, por cada tamaño y escala.
-Contrato: rollback: Borrar `app/test/golden/goldens/molecules/` y sus entradas en la suite.. Status: pending
+Contrato: rollback: Borrar `app/test/golden/goldens/molecules/` y sus entradas en la suite.. Status: done
 
 #### S2.T1.3 — Goldens de los overlays (diálogo incluido), verificando que en 360x800 a escala 200 % las acciones del diálogo son visibles.
-Contrato: rollback: Borrar `app/test/golden/goldens/overlays/` y sus entradas en la suite.. Status: pending
+Contrato: rollback: Borrar `app/test/golden/goldens/overlays/` y sus entradas en la suite.. Status: done
 
 #### S2.T2 — Suite de regresión de componentes: compara todos los goldens generados e incluye el caso de fuente ausente que debe fallar con mensaje claro en vez de usar fuente de reemplazo.
-Contrato: rollback: Borrar `components_golden_test.dart`; los goldens quedan sin comparación automatizada.. Status: pending
+Contrato: rollback: Borrar `components_golden_test.dart`; los goldens quedan sin comparación automatizada.. Status: done
 
 #### S3.T1 — Generar los goldens del shell con el panel superpuesto y con el panel persistente en tablet vertical (768x1024) y horizontal (1024x768), con la matriz aplicada.
 Contrato: rollback: Borrar `app/test/golden/goldens/shell/` y sus entradas en la suite.. Status: pending
@@ -132,14 +132,14 @@ Contrato: rollback: Borrar `shell_golden_test.dart` y `templates_golden_test.dar
 
 **Gate (auto)**: Al correr `cd app && flutter test test/golden` existe un golden de humo del botón por tamaño y escala; un cambio de 1 px en su padding hace fallar el job de CI de PR y publica el artifact de diferencias.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
 
 **Gate (auto)**: Los goldens de todos los componentes de HU-01-03 a HU-01-05 en sus estados, para cada tamaño y escala, quedan versionados y la suite de componentes pasa, fallando si falta cargar una fuente.
 
