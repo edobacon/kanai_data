@@ -49,11 +49,6 @@ Lectura ampliada: al aplicarla, las fichas del método usan un tamaño de texto 
 
 Las preferencias se persisten en preferencia_local por dispositivo con claves versionadas; iniciar sesión o sincronizar no las sobrescribe; una clave desconocida vuelve al valor por defecto.
 
-### REQ-07 `inferred`
-> Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:263
-
-La splash siguiente usa lo guardado y respeta Reducir movimiento.
-
 ### REQ-08 `inferred`
 > Fuente: taomangalam/app/test/navigation/app_shell_golden_test.dart:5
 
@@ -100,16 +95,13 @@ Contrato: rollback: Revertir los semánticos y el ajuste de layout de los contro
 Contrato: rollback: Eliminar test/settings/ y los goldens generados.. Status: done
 
 #### S3.T1 — Aplicar Reducir movimiento en toda la app combinado con el SO: navegación, menú, tablero, overlays y fondos sin desplazamientos, solo fundidos de hasta 120 ms o cambios inmediatos (consume el servicio de HU-01-07).
-Contrato: rollback: Desactivar la preferencia y recuperar las transiciones previas.. Status: pending
-
-#### S3.T2 — La splash siguiente usa lo guardado y respeta Reducir movimiento (sin desplazamientos; fundido de hasta 120 ms o inmediato).
-Contrato: rollback: Revertir la splash a su animación previa.. Status: pending
+Contrato: rollback: Desactivar la preferencia y recuperar las transiciones previas.. Status: done
 
 #### S3.T3 — Lectura ampliada: las fichas del método usan un tamaño de texto mayor y un espaciado de lectura más amplio; el resto de las superficies sigue el tamaño de texto del dispositivo (DEC-233 punto 2).
-Contrato: rollback: Revertir el estilo de las fichas del método al tamaño base.. Status: pending
+Contrato: rollback: Revertir el estilo de las fichas del método al tamaño base.. Status: done
 
 #### S3.T4 — Widget y golden tests: navegación y splash sin desplazamiento con Reducir movimiento aplicado (QA-01-17-01, QA-01-17-02) y ficha del método con Lectura ampliada (QA-01-17-04).
-Contrato: rollback: Eliminar los tests y goldens nuevos.. Status: pending
+Contrato: rollback: Eliminar los tests y goldens nuevos.. Status: done
 
 #### S4.T1 — Integrar el juego de tokens semánticos de contraste aumentado (entregable de Diseño en tokens.v1.json, DEC-232) expuesto por el tema de HU-01-01 sin transparencias tenues, y aplicarlo en todas las plantillas y vistas.
 Contrato: rollback: Revertir tokens.v1.json junto con sus archivos generados para evitar una paleta parcialmente aplicada y desactivar la preferencia.. Status: pending
@@ -177,13 +169,12 @@ Contrato: rollback: Eliminar la verificación de actualización en vivo del pane
 
 **Gate (auto)**: Ajustes se ve y se revisa en teléfono y tablet: pantalla completa con fondo de Cuenta, tres controles con estado anunciado y previsualización que no toca el resto de la app.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: Al aplicar se ve en toda la app: navegación, menú, tablero y overlays sin desplazamiento, splash que respeta lo guardado y fichas del método con lectura ampliada; los goldens/widget tests pasan.
 
@@ -206,3 +197,15 @@ Contrato: rollback: Eliminar la verificación de actualización en vivo del pane
 **Gate (auto)**: Con Contraste aumentado aplicado todas las plantillas usan el juego de mayor contraste sin acciones ocultas, y en tablet el panel y el contenido se actualizan sin reiniciar; los goldens de contraste y la utilidad de HU-01-15 pasan.
 
 ### Session 5 · T0 · open
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+
+**Task ops:**
+
+- delete S3.T2
+
+**REQ ops:**
+
+- remove REQ-07
+
