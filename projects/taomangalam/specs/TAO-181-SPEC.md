@@ -104,40 +104,40 @@ Contrato: rollback: Revertir el estilo de las fichas del método al tamaño base
 Contrato: rollback: Eliminar los tests y goldens nuevos.. Status: done
 
 #### S4.T1 — Integrar el juego de tokens semánticos de contraste aumentado (entregable de Diseño en tokens.v1.json, DEC-232) expuesto por el tema de HU-01-01 sin transparencias tenues, y aplicarlo en todas las plantillas y vistas.
-Contrato: rollback: Revertir tokens.v1.json junto con sus archivos generados para evitar una paleta parcialmente aplicada y desactivar la preferencia.. Status: pending
+Contrato: rollback: Revertir tokens.v1.json junto con sus archivos generados para evitar una paleta parcialmente aplicada y desactivar la preferencia.. Status: done
 
 #### S4.T1.1 — Cablear los tokens semánticos de contraste aumentado en tokens.v1.json y en el tema (app_theme) sin transparencias tenues.
-Contrato: rollback: Revertir el generado de tokens y el tema.. Status: pending
+Contrato: rollback: Revertir el generado de tokens y el tema.. Status: done
 
 #### S4.T1.2 — Aplicar el juego de contraste aumentado en todas las plantillas, paneles y modales y auditar que ninguna acción quede oculta ni recortada.
-Contrato: rollback: Revertir la aplicación del juego en las vistas.. Status: pending
+Contrato: rollback: Revertir la aplicación del juego en las vistas.. Status: done
 
 #### S4.T2 — Actualización en vivo: con panel persistente en tablet, aplicar un ajuste actualiza el panel y el contenido sin reiniciar la app.
-Contrato: rollback: Revertir la propagación de cambios de preferencias al shell.. Status: pending
+Contrato: rollback: Revertir la propagación de cambios de preferencias al shell.. Status: done
 
 #### S4.T2.1 — Exponer las preferencias activas como estado observable (notificador/listenable) que los consumidores puedan escuchar, para que aplicar un ajuste emita el cambio sin reiniciar la app.
-Contrato: rollback: Revertir el notificador de preferencias y sus puntos de emisión.. Status: pending
+Contrato: rollback: Revertir el notificador de preferencias y sus puntos de emisión.. Status: done
 
 #### S4.T2.2 — Sincronizar la splash/arranque y el estado observable de preferencias para que la splash siguiente lea lo guardado (reduceMotion) sin reiniciar.
-Contrato: rollback: Revertir la lectura de preferencias en el arranque y dejar la splash con su estado previo.. Status: pending
+Contrato: rollback: Revertir la lectura de preferencias en el arranque y dejar la splash con su estado previo.. Status: done
 
 #### S4.T2.3 — Conectar el shell y el panel persistente de tablet al estado observable de preferencias para reconstruir el panel y el contenido al aplicar un ajuste, sin reiniciar.
-Contrato: rollback: Revertir la suscripción del shell y del panel al estado de preferencias.. Status: pending
+Contrato: rollback: Revertir la suscripción del shell y del panel al estado de preferencias.. Status: done
 
 #### S4.T2.4 — Widget test: con panel persistente en tablet, aplicar un ajuste actualiza el panel y el contenido sin reiniciar la app.
-Contrato: rollback: Eliminar el test de actualización en vivo del panel.. Status: pending
+Contrato: rollback: Eliminar el test de actualización en vivo del panel.. Status: done
 
 #### S4.T3 — Goldens de plantillas con contraste aumentado (regresión de la vista), utilidad de contraste de HU-01-15 sobre las plantillas y verificación de actualización en vivo del panel en tablet.
-Contrato: rollback: Eliminar los goldens y tests nuevos.. Status: pending
+Contrato: rollback: Eliminar los goldens y tests nuevos.. Status: done
 
 #### S4.T3.1 — Generar los goldens de las plantillas con contraste aumentado aplicado para fijar la regresión visual de la vista.
-Contrato: rollback: Eliminar los goldens de contraste generados.. Status: pending
+Contrato: rollback: Eliminar los goldens de contraste generados.. Status: done
 
 #### S4.T3.2 — Correr la utilidad de contraste de HU-01-15 sobre todas las plantillas y adjuntar la evidencia de que ninguna acción queda oculta ni recortada (QA-01-17-03).
-Contrato: rollback: Quitar la verificación de contraste y su evidencia.. Status: pending
+Contrato: rollback: Quitar la verificación de contraste y su evidencia.. Status: done
 
 #### S4.T3.3 — Verificación en vivo: con panel persistente en tablet, aplicar un ajuste actualiza el panel y el contenido sin reiniciar la app.
-Contrato: rollback: Eliminar la verificación de actualización en vivo del panel.. Status: pending
+Contrato: rollback: Eliminar la verificación de actualización en vivo del panel.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Ajustes es la pantalla destino del pie del menú, a pantalla completa, con apariencia clara fija (sin selector de tema) y los tres controles: Reducir movimiento, Contraste aumentado y Legibilidad (lectura ampliada).
@@ -178,21 +178,21 @@ Contrato: rollback: Eliminar la verificación de actualización en vivo del pane
 
 **Gate (auto)**: Al aplicar se ve en toda la app: navegación, menú, tablero y overlays sin desplazamiento, splash que respeta lo guardado y fichas del método con lectura ampliada; los goldens/widget tests pasan.
 
-### Session 4 · T3 · open
+### Session 4 · T3 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T1.1
-- [ ] S4.T1.2
-- [ ] S4.T2
-- [ ] S4.T2.1
-- [ ] S4.T2.2
-- [ ] S4.T2.3
-- [ ] S4.T2.4
-- [ ] S4.T3
-- [ ] S4.T3.1
-- [ ] S4.T3.2
-- [ ] S4.T3.3
+- [x] S4.T1
+- [x] S4.T1.1
+- [x] S4.T1.2
+- [x] S4.T2
+- [x] S4.T2.1
+- [x] S4.T2.2
+- [x] S4.T2.3
+- [x] S4.T2.4
+- [x] S4.T3
+- [x] S4.T3.1
+- [x] S4.T3.2
+- [x] S4.T3.3
 
 **Gate (auto)**: Con Contraste aumentado aplicado todas las plantillas usan el juego de mayor contraste sin acciones ocultas, y en tablet el panel y el contenido se actualizan sin reiniciar; los goldens de contraste y la utilidad de HU-01-15 pasan.
 
