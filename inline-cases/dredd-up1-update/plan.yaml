@@ -1,0 +1,418 @@
+plan_id: dredd-up1-update
+title: "Dredd up1 1.1: plan de evolución autónoma"
+intent: Una única entrega final 1.1 para Claude Code en macOS, Linux y Windows, con todas las mejoras acordadas y documentación operativa propia. Preservar íntegra la documentación v1 y generar comparación v1/1.1. Planificación actual no inicia implementación, publicación ni cambios de hooks globales.
+tags:
+  projects:
+    - up1
+  repos:
+    - up1
+  tickets: []
+  branches:
+    - feat/dredd-update
+  folders: []
+  labels:
+    - dredd
+    - tooling
+    - autonomo
+    - metricas
+    - investigacion
+settings:
+  judge: final
+risks:
+  - Bash/fcntl y runners POSIX no prueban portabilidad Windows.
+  - Ledger concurrente y guard deben aislar sesiones sin abrir bypass de seguridad.
+  - Tokens/costo incompletos no se inventan; outcomes no equivalen automáticamente a precisión.
+  - Decisiones de jurado, Jira local, rúbrica y retención siguen pendientes hasta F0.
+  - Checkout con cambios ajenos; aislar ejecución sin descartar ni mezclar su trabajo.
+  - Validación real Linux/Windows requiere ambientes y responsables; un test macOS no los sustituye.
+out_of_scope:
+  - Dependencias/referencias a plataformas de gestión o búsqueda excluidas en el producto up1.
+  - Cambios de funcionalidad o repos de módulos de up1.
+  - Codex como cliente objetivo; dashboards o servicios de métricas remotos.
+  - Push, PR, merge, despliegue, comentarios externos o instalación global automática.
+  - Modificar o reemplazar los documentos históricos v1.
+  - Ejecutar ahora la implementación o dar por corridas pruebas futuras.
+phases:
+  - code: F0
+    title: Cerrar contexto y contrato 1.1
+    goal: Resolver decisiones y fijar aceptación antes de cambios de implementación.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F0.P1
+        text: El usuario autoriza el plan; documentos base y repos verificados, sin iniciar implementación.
+    tasks:
+      - code: F0.1
+        text: Resolver políticas pendientes
+        detail: Confirmar jurado/costo, Jira en pre-envío, severidad/veredictos, límite de workers/modelos, presupuesto y retención/anonimización. Registrar propuestas y decisiones humanas por separado.
+        kb:
+          - contexto-y-alcance.md#11-decisiones-abiertas-y-dependencias-del-plan
+      - code: F0.2
+        text: Definir soporte y arquitectura portable
+        detail: Fijar versiones/capacidades Python/git, helper portable, identidad de sesiones, lock o parent escritor, runners por OS y fuente real de tokens. Asignar validación Linux/Windows.
+        kb:
+          - contexto-y-alcance.md#7-arquitectura-autonoma-a-evaluar
+      - code: F0.3
+        text: Congelar baseline y matriz de aceptación
+        detail: Registrar contenido/hashes de ambos docs v1 en 348ea29 y pruebas por requisito. Aislar trabajo futuro sin alterar checkout dirty y registrar commits posteriores al inicio de sus fases.
+        kb:
+          - version-1.1-y-conservacion-v1.md
+          - contexto-y-alcance.md#10-evidencia-requerida-para-aceptar-la-entrega
+    criteria:
+      - id: F0.C1
+        text: Decisiones pendientes resueltas con motivo y responsable; autorización de implementación registrada.
+        kind: manual
+      - id: F0.C2
+        text: Contrato de interfaces, entornos, rúbrica y matriz de pruebas disponibles en el KB.
+        kind: evidence
+      - id: F0.C3
+        text: Hashes/docs v1 congelados y estrategia para preservar cambios ajenos verificable.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 1–2 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: false
+    changes_code: false
+    rollback: "No aplica: fase de análisis/validación sin cambios de código ni publicación."
+  - code: F1
+    title: Base portable y operación segura
+    goal: Helper, sesiones, guard y ejecución aislada coherentes en los tres sistemas.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F1.P1
+        text: F0 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F1.1
+        text: Adaptar helper y prefetch
+        detail: Inventarios paginados, errores HTTP/timeouts/rate-limit explícitos, refs exactos y prefetch único. Núcleo portable acordado; compatibilidad con llamadas previas o migración documentada.
+        kb:
+          - contexto-y-alcance.md#4-problemas-que-condicionan-el-diseno
+      - code: F1.2
+        text: Aislar estado y progreso
+        detail: Run/session IDs y escrituras concurrentes sin pérdidas; TTL/end/close coherentes, cancelación y cleanup propio. Cerrar sólo la corrida que corresponde.
+        kb:
+          - contexto-y-alcance.md#7-arquitectura-autonoma-a-evaluar
+      - code: F1.3
+        text: Resolver guard y verificaciones
+        detail: No instalar por red durante review; runners existentes y comprobación merge no mutante/aislada. Proteger repos originales, secretos y trabajo ajeno; workers no realizan acciones externas.
+        kb:
+          - dredd-operacion-v1.md#11-divergencias-y-aspectos-no-resueltos
+      - code: F1.4
+        text: Añadir fixtures de operación
+        detail: "Repos temporales, HTTP simulado y procesos concurrentes: >100 resultados, credencial fallida, rutas con espacios/Unicode, cleanup y fallos parciales."
+        kb:
+          - contexto-y-alcance.md
+    criteria:
+      - id: F1.C1
+        text: Suite portable registra paginación/HTTP, aislamiento y preservación del checkout.
+        kind: command
+        run:
+          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
+          repo: up1
+          cwd: .
+          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
+          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
+          exit_code: 0
+      - id: F1.C2
+        text: Matriz OS identifica mecanismos usados, límites y resolución de Python/git.
+        kind: evidence
+      - id: F1.C3
+        text: Guard y runners dejan de contradecirse sin ampliar permisos de red/escritura indiscriminadamente.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 3–5 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: true
+    changes_code: true
+    rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
+  - code: F2
+    title: Rigor del protocolo y auditoría de configuración
+    goal: Contrato autónomo por fases, hallazgos estructurados y veredicto reproducible.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F2.P1
+        text: F1 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F2.1
+        text: Fragmentar protocolo y formalizar resultados
+        detail: Coordinador/núcleo/fases/salida; conservar cobertura v1 y contratos findings, evidencia, refs, límites y propuestas de memoria. Retirar proveedores excluidos; KB opcional de archivos.
+        kb:
+          - dredd-capacidades-v1.md
+          - contexto-y-alcance.md#3-que-ya-tiene-dredd-y-debe-preservarse
+      - code: F2.2
+        text: Implementar triage y rúbrica
+        detail: Señales mecánicas y descartes explicados; efecto informativo docs/tests, Consulta sin certeza, dedup por mecanismo y veredicto calculado con umbrales decididos en F0.
+        kb:
+          - contexto-y-alcance.md
+      - code: F2.3
+        text: Auditar configuraciones y layouts
+        detail: Rastrear consumidores UI/servidor y validar relationDisplayFields contra objetos resueltos y refs coherentes; herencia/extensions, anidados, no resuelto y preexistente/nuevo.
+        kb:
+          - contexto-y-alcance.md#6-contexto-especifico-de-up1
+      - code: F2.4
+        text: Validar rigor con casos tabulados
+        detail: S0–S3, consultas, doc contradictoria/faltante, test debilitado, scopes compartidos y discrepancias; no dar como defecto una heurística sin evidencia.
+        kb:
+          - contexto-y-alcance.md
+    criteria:
+      - id: F2.C1
+        text: Suite de triage/rúbrica/configuración pasa con escenarios de evidencia y ausencia.
+        kind: command
+        run:
+          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
+          repo: up1
+          cwd: .
+          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
+          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
+          exit_code: 0
+      - id: F2.C2
+        text: Mapa de fases demuestra preservación de capacidades v1 y autonomía del nuevo protocolo.
+        kind: evidence
+      - id: F2.C3
+        text: Veredicto calculado coincide con fixtures; cada hallazgo incluye mecanismo, ref y fundamento.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 3–5 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: true
+    changes_code: true
+    rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
+  - code: F3
+    title: Concurrencia, jurado y verificación independiente
+    goal: Adaptar esfuerzo al riesgo sin perder evidencia ni control del parent.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F3.P1
+        text: F2 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F3.1
+        text: Orquestar roles por ejes independientes
+        detail: Trivial/acotado sin fanout innecesario; varios ejes en paralelo con límite explícito, prefetch compartido, scope y progreso por lane.
+        kb:
+          - contexto-y-alcance.md
+      - code: F3.2
+        text: Implementar jurado según F0 y síntesis
+        detail: Reviews ciegas, reconciliación/dedup por mecanismo, desacuerdos visibles, falla de worker y cobertura parcial; consenso no sustituye verificación.
+        kb:
+          - contexto-y-alcance.md
+      - code: F3.3
+        text: Implementar verificador condicional
+        detail: Intentar refutar S0/S1 de comportamiento desde contexto fresco; aplicar confirmación/baja/Consulta sin eliminar cobertura pendiente; recalcular veredicto y borrador.
+        kb:
+          - contexto-y-alcance.md
+      - code: F3.4
+        text: Conservar acciones externas en parent
+        detail: Workers devuelven candidatos Core Extension y updates; parent gestiona consentimiento. Simular permisos sin publicar ni instalar hooks globales.
+        kb:
+          - contexto-y-alcance.md
+    criteria:
+      - id: F3.C1
+        text: Suite cubre modelos/roles disponibles, desacuerdo, worker fallido y reverify.
+        kind: command
+        run:
+          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
+          repo: up1
+          cwd: .
+          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
+          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
+          exit_code: 0
+      - id: F3.C2
+        text: Una revisión amplia comparte prefetch y deduplica sin atribuir cobertura inexistente.
+        kind: evidence
+      - id: F3.C3
+        text: Sin consentimiento no hay publicación ni creación externa; hallazgos refutados recalibran resultado.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 2–4 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: true
+    changes_code: true
+    rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
+  - code: F4
+    title: Seguimiento local, pre-envío y revisión del delta
+    goal: Persistir puntos y cobertura para verificar cierres sin olvidar código no leído.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F4.P1
+        text: F3 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F4.1
+        text: Diseñar expediente local versionado
+        detail: IDs por repo/archivo/mecanismo, criterios de cierre, decisiones, AC/refs y migración/backup; no dependencia de servidor de alcance.
+        kb:
+          - contexto-y-alcance.md
+      - code: F4.2
+        text: Implementar cálculo git de scope y cobertura
+        detail: Pendientes + delta + consumidores + huecos; marcas full/partial/not-read por blob. Snapshot de staged/unstaged/untracked según contrato.
+        kb:
+          - contexto-y-alcance.md
+      - code: F4.3
+        text: Integrar rondas y decisiones
+        detail: Pre-envío propio y revisión ajena, cierre con evidencia, defer/accepted sin simular corrección; fallback rebase/force-push/base nueva y escalamiento por falta de avance.
+        kb:
+          - contexto-y-alcance.md
+      - code: F4.4
+        text: Probar invalidación y conservación de historia
+        detail: Interdiff vacío con huecos, renombres, binarios, cambios de base, nuevas refs, abandono y reanudación.
+        kb:
+          - contexto-y-alcance.md#9-seguimiento-y-cobertura-condiciones-de-seguridad-logica
+    criteria:
+      - id: F4.C1
+        text: Suite cubre delta, rebase/force-push, blob cambiado, no leídos y cierre verificable.
+        kind: command
+        run:
+          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
+          repo: up1
+          cwd: .
+          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
+          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
+          exit_code: 0
+      - id: F4.C2
+        text: Expediente y métricas futuras distinguen corrección, decisión y pendiente.
+        kind: evidence
+      - id: F4.C3
+        text: Revisión parcial o archivo ojeado nunca aparecen como cobertura completa.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 3–5 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: true
+    changes_code: true
+    rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
+  - code: F5
+    title: Métricas locales y exportación Markdown
+    goal: Registrar ejecuciones reales y generar reportes compartibles sin servicios externos.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F5.P1
+        text: F4 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F5.1
+        text: Implementar esquema y captura
+        detail: Run ID, versión 1.1/config, refs, duración/roles, verificaciones, límites, findings/veredicto, abortos y cobertura. Datos de tokens/costo sólo de fuente real.
+        kb:
+          - contexto-y-alcance.md
+      - code: F5.2
+        text: Implementar comando report
+        detail: Interfaz dredd-metrics.py report --repo --from --to --output, anonymización según contrato; UTF-8 y Markdown real, sin publicar. Definir archivo existente/filtros/no datos.
+        kb:
+          - contexto-y-alcance.md
+      - code: F5.3
+        text: Implementar agregados y outcomes honestos
+        detail: No promediar costo parcial como completo; dedup separado de costo; outcomes con evidencia y denominador de adjudicación, sin aceptar merge/wont-fix como verdad automática.
+        kb:
+          - contexto-y-alcance.md
+      - code: F5.4
+        text: Probar y generar muestra anonimizada
+        detail: Registros corruptos/incompletos/duplicados, abortos, periodos y rutas privadas; reporte reproducible con fixture publicado como ejemplo.
+        kb:
+          - contexto-y-alcance.md#8-metricas-y-comando-de-reporte
+    criteria:
+      - id: F5.C1
+        text: Suite de captura/exportación valida nulls, parciales, filtros y anonimización.
+        kind: command
+        run:
+          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
+          repo: up1
+          cwd: .
+          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
+          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
+          exit_code: 0
+      - id: F5.C2
+        text: El comando genera un .md legible con sección de datos incompletos y muestra reproducible.
+        kind: evidence
+      - id: F5.C3
+        text: Registros/reportes declaran versión 1.1 y no exponen secretos, rutas personales ni código sensible.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 2–3 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: true
+    changes_code: true
+    rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
+  - code: F6
+    title: Documentación 1.1 y comparación histórica
+    goal: Documentar la implementación real de 1.1 y mantener la referencia v1 íntegra.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F6.P1
+        text: F5 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F6.1
+        text: Crear referencia y guía operativa 1.1
+        detail: "docs/reference/dredd-v1.1.md y docs/guides/dredd-operacion-v1.1.md: flujos/decisiones, instalación por OS, comandos, fallos, límites y política de publicación. No promesas sin verificar."
+        kb:
+          - version-1.1-y-conservacion-v1.md
+      - code: F6.2
+        text: Crear comparación v1 a 1.1 e índice
+        detail: "docs/reference/dredd-v1-a-v1.1.md: cambios/preservaciones/migración y evidencia. Índice nuevo o existente enlaza ambas versiones sin editar docs históricos."
+        kb:
+          - contexto-y-alcance.md
+      - code: F6.3
+        text: Documentar métricas y trazabilidad
+        detail: Incluir comando real, ejemplo anonimizado, esquemas, costos no disponibles y diferencias entre outcomes/cobertura/precisión. Coherencia entre versión skill y docs.
+        kb:
+          - contexto-y-alcance.md
+      - code: F6.4
+        text: Verificar preservación y ejemplos
+        detail: Contrastar ambos docs v1 contra 348ea29, enlaces/JSON/CLI, términos excluidos y correspondencia guía-código; registrar hashes y resultado.
+        kb:
+          - contexto-y-alcance.md
+    criteria:
+      - id: F6.C1
+        text: Documentos 1.1, comparación e índice presentes con enlaces y ejemplos validados.
+        kind: evidence
+      - id: F6.C2
+        text: Ambos documentos v1 coinciden byte a byte con la línea base 348ea29.
+        kind: evidence
+      - id: F6.C3
+        text: Documentación 1.1 describe sólo comportamientos implementados; diferencias por OS y límites explícitos.
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 1–2 días; recalibrar tras F0; no es fecha de entrega."
+    delivers: false
+    changes_code: false
+    rollback: "No aplica: fase de análisis/validación sin cambios de código ni publicación."
+  - code: F7
+    title: Validación integral de tres sistemas y juez final
+    goal: Aceptar una única entrega 1.1 con pruebas reales, documentación y auditoría independiente.
+    owner: Responsable del caso; validación de comandos por el dev
+    prerequisites:
+      - id: F7.P1
+        text: F6 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+    tasks:
+      - code: F7.1
+        text: Ejecutar matriz en macOS, Linux y Windows
+        detail: El dev/responsables asignados ejecutan comandos y smoke Claude Code. Registrar versiones, totales, salidas y estado; no validar Windows por tests macOS.
+        kb:
+          - contexto-y-alcance.md#10-evidencia-requerida-para-aceptar-la-entrega
+      - code: F7.2
+        text: Verificar extremo a extremo y regresión
+        detail: PR/local con/sin KB, decisiones Jira de F0, jurado/verify, cierre delta, API, progreso/hooks, export MD y consentimiento. Fuentes/refs y datos incompletos visibles.
+        kb:
+          - contexto-y-alcance.md
+      - code: F7.3
+        text: Preparar paquete único y revisión independiente
+        detail: Listado de commits/archivos/docs 1.1, comparación, reportes de pruebas y rollback. Pedir brief del juez final y revisarlo en contexto limpio según flujo del caso.
+        kb:
+          - contexto-y-alcance.md
+      - code: F7.4
+        text: Registrar resultado y correcciones necesarias
+        detail: No cerrar con criterios pendientes; si juez requiere cambios, agregar fase de correcciones autorizada y reevaluar. Push/merge/publicación requieren instrucción adicional.
+        kb:
+          - contexto-y-alcance.md
+    criteria:
+      - id: F7.C1
+        text: Suite se ejecuta en los tres sistemas, con evidencia por OS y sin fallos ocultos.
+        kind: command
+        run:
+          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
+          repo: up1
+          cwd: .
+          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
+          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
+          exit_code: 0
+      - id: F7.C2
+        text: Smoke del cliente en los tres sistemas y revisión del reporte Markdown confirmados por el dev.
+        kind: manual
+      - id: F7.C3
+        text: Juez final evalúa alcance completo, conservación v1 y evidencias de compatibilidad; resultado registrado.
+        kind: evidence
+      - id: F7.C4
+        text: Única entrega 1.1 aceptada con commits, docs y rollback, sin publicar por esta fase.
+        kind: manual
+    effort: "Estimación inicial de esfuerzo activo: 1–2 días más disponibilidad de ambientes; recalibrar tras F0; no es fecha de entrega."
+    delivers: false
+    changes_code: false
+    rollback: "No aplica: fase de análisis/validación sin cambios de código ni publicación."
+registered_project_ack:
+  project: up1
+  reason: El usuario pidió explícitamente un caso inline para este trabajo puntual sobre la herramienta Dredd, aislado de los tickets de producto de up1. Se registra la excepción; no se altera el flujo de tickets ni se convierte la herramienta en dependiente de Kanai.
+created: 2026-10-04T18:28:40.002Z
+updated: 2026-10-04T18:28:40.018Z

@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HU-01-16 · Matriz de goldens responsive — TAO-182</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --bg-2:#eceef2;
+    --surface:#ffffff;
+    --surface-2:#fafbfc;
+    --border:#e2e6ec;
+    --border-strong:#cfd5de;
+    --text:#191d24;
+    --text-2:#5b6472;
+    --muted:#8b94a3;
+    --brand:#4f46e5;
+    --brand-2:#6366f1;
+    --brand-soft:#eef0ff;
+    --ok:#148a5a;
+    --ok-soft:#e6f6ee;
+    --warn:#b45309;
+    --warn-soft:#fdf2e0;
+    --danger:#c0392b;
+    --danger-soft:#fdeceb;
+    --info:#0e7490;
+    --info-soft:#e6f6f9;
+    --os-dark:#0c0e13;
+    --os-dark-2:#171a21;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(16,24,40,.05), 0 8px 24px -12px rgba(16,24,40,.18);
+    --shadow-sm:0 1px 2px rgba(16,24,40,.06);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans);
+    color:var(--text);
+    background:
+      radial-gradient(1100px 520px at 8% -6%, #e9ecff 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #e6f7f4 0%, transparent 55%),
+      linear-gradient(180deg,var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+    font-size:15px;
+    line-height:1.5;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:28px 24px 80px}
+
+  /* ---------- top ---------- */
+  .top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px}
+  .brandmark{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)}
+  .brandmark .dot{width:9px;height:9px;border-radius:3px;background:linear-gradient(140deg,var(--brand),#22c1c3);box-shadow:0 0 0 4px rgba(79,70,229,.10)}
+  h1{font-size:26px;line-height:1.25;margin:8px 0 4px;letter-spacing:-.02em;font-weight:800}
+  .sub{color:var(--text-2);font-size:14px;max-width:820px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--border);color:var(--text-2);box-shadow:var(--shadow-sm)}
+  .chip b{color:var(--text)}
+  .chip.ok{background:var(--ok-soft);border-color:#bfe6d3;color:var(--ok)}
+  .chip.brand{background:var(--brand-soft);border-color:#d5d8ff;color:var(--brand)}
+  .chip.warn{background:var(--warn-soft);border-color:#f2ddb6;color:var(--warn)}
+
+  /* ---------- generic section ---------- */
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:12px}
+  .sec-head h2{font-size:17px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:9px}
+  .sec-num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--brand);color:#fff;font-size:12px;font-weight:800}
+  .sec-head p{margin:3px 0 0;color:var(--text-2);font-size:13px;max-width:760px}
+  .req-tag{font-size:11px;font-weight:700;color:var(--brand);background:var(--brand-soft);border:1px solid #d9dcff;border-radius:6px;padding:3px 7px;white-space:nowrap}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .pad{padding:18px}
+
+  /* ---------- banner ---------- */
+  .banner{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(120deg,#1b1e2e,#26294a);color:#e8eaff;border-radius:var(--radius);padding:18px 20px;margin-top:22px;box-shadow:var(--shadow)}
+  .banner .ic{flex:none;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.10);display:grid;place-items:center;font-size:17px}
+  .banner h3{margin:0 0 3px;font-size:14px;letter-spacing:.02em;text-transform:uppercase}
+  .banner p{margin:0;font-size:13.5px;color:#b9bfe0;max-width:900px}
+
+  /* ---------- config ---------- */
+  .cfg{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}
+  @media (max-width:900px){.cfg{grid-template-columns:1fr}}
+  pre.code{margin:0;background:#151827;color:#c9d1f2;border-radius:12px;padding:16px 18px;font-family:var(--mono);font-size:12.5px;line-height:1.65;overflow:auto;border:1px solid #202436}
+  pre.code .k{color:#8be9fd}
+  pre.code .s{color:#a6e3a1}
+  pre.code .c{color:#6b7280;font-style:italic}
+  pre.code .n{color:#f9a8d4}
+  .cfg-list{display:flex;flex-direction:column;gap:9px}
+  .cfg-row{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}
+  .cfg-row .ico{flex:none;width:34px;height:34px;border-radius:9px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:15px}
+  .cfg-row .t{font-weight:700;font-size:13.5px}
+  .cfg-row .d{font-size:12px;color:var(--text-2)}
+  .cfg-row .val{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--brand);background:#fff;border:1px solid var(--border);padding:3px 8px;border-radius:7px;white-space:nowrap}
+
+  /* ---------- device / mini app ---------- */
+  .dev-grid{display:grid;gap:22px}
+  .dev{display:flex;flex-direction:column;align-items:center;gap:9px}
+  .dev-frame{position:relative;overflow:hidden}
+  .dev-scale{transform-origin:top left}
+  .screen{width:100%;height:100%;border-radius:16px;overflow:hidden;background:var(--surface);border:1px solid var(--border-strong);display:flex;flex-direction:column;box-shadow:var(--shadow)}
+  .screen.tall{border-radius:22px}
+  .osbar{flex:none;height:2.4em;display:flex;align-items:center;justify-content:space-between;padding:0 1.1em;font-size:.72em;font-weight:600;letter-spacing:.01em}
+  .os-light .osbar{background:#eef1f5;color:#4b5563;border-bottom:1px solid #e2e6ec}
+  .os-dark  .osbar{background:var(--os-dark);color:#d7dbe6;border-bottom:1px solid #232734}
+  .os-dark  .screen{border-color:#2a2f3d}
+  .osdark-wrap .dev-frame{padding:6px;border-radius:24px;background:linear-gradient(160deg,#30343f,#0c0e13)}
+  .oslight-wrap .dev-frame{padding:6px;border-radius:24px;background:linear-gradient(160deg,#f2f4f7,#cdd3dc)}
+
+  /* mini app internals (em-based so 200% truly scales) */
+  .mini-app{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);color:var(--text);font-size:9px}
+  .mini-app.s200{font-size:15px}
+  .m-appbar{flex:none;display:flex;align-items:center;gap:.8em;padding:0 1em;height:3.4em;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .m-appbar .m-title{font-weight:700;font-size:1.05em}
+  .m-appbar .m-actions{margin-left:auto;display:flex;gap:.5em}
+  .m-body{flex:1;min-height:0;display:flex}
+  .m-rail{flex:none;width:4.4em;border-right:1px solid var(--border);background:var(--surface-2);display:flex;flex-direction:column;align-items:center;gap:.9em;padding:.9em 0}
+  .m-rail span{width:2.3em;height:2.3em;border-radius:.6em;background:#e8ebf1}
+  .m-rail span.on{background:var(--brand-soft);box-shadow:inset 0 0 0 1.5px var(--brand-2)}
+  .m-main{flex:1;min-width:0;padding:1.1em;display:flex;flex-direction:column;gap:.9em;overflow:hidden}
+  .m-main.tight{padding:.7em}
+  .m-panel{flex:none;width:40%;border-left:1px solid var(--border);background:var(--surface-2);padding:1.1em;display:flex;flex-direction:column;gap:.9em}
+  .m-tabbar{flex:none;height:3.6em;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;background:var(--surface-2)}
+  .m-tabbar i{width:2.1em;height:2.1em;border-radius:.55em;background:#dfe3ea;display:block}
+  .m-tabbar i.on{background:var(--brand-2)}
+  .sk{background:linear-gradient(90deg,#eceff3,#dfe4ea,#eceff3);border-radius:.55em}
+  .sk.d{background:#d7dce4}
+  .sk.b{background:var(--brand-soft)}
+  .m-row{display:flex;gap:.8em;align-items:center}
+  .m-col{display:flex;flex-direction:column;gap:.7em;flex:1;min-width:0}
+  .m-card{border:1px solid var(--border);border-radius:.8em;padding:.9em;display:flex;flex-direction:column;gap:.7em;background:var(--surface)}
+  .m-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:.8em}
+  .m-cards.one{grid-template-columns:1fr}
+  .m-line{height:.75em;border-radius:.4em}
+  .m-btn{height:2.4em;border-radius:.6em;background:var(--brand);display:inline-block}
+  .m-btn.ghost{background:#eef0f4}
+  .m-avatar{width:2.6em;height:2.6em;border-radius:50%;background:#dbe0e8;flex:none}
+  .m-scrim{position:absolute;inset:0;background:rgba(15,18,28,.42)}
+  .m-overlay{position:absolute;left:0;right:0;bottom:0;top:14%;background:var(--surface);border-radius:1.4em 1.4em 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.18);padding:1.2em;display:flex;flex-direction:column;gap:.9em}
+  .m-overlay .grab{width:3.4em;height:.45em;border-radius:999px;background:#cfd5de;align-self:center}
+  .m-overlay.aside{top:0;left:24%;border-radius:1.4em 0 0 1.4em}
+  .m-badge{font-size:.72em;font-weight:700;padding:.25em .55em;border-radius:.5em;background:var(--brand-soft);color:var(--brand);align-self:flex-start}
+  .m-warn{font-size:.7em;font-weight:700;color:var(--warn);background:var(--warn-soft);border:1px solid #f0dcb4;border-radius:.5em;padding:.35em .55em}
+  .m-overflow{outline:1.5px dashed var(--danger);outline-offset:2px;border-radius:.6em;position:relative}
+  .m-overflow::after{content:"";position:absolute;top:-3px;right:-3px;width:.7em;height:.7em;border-radius:50%;background:var(--danger)}
+  .dev-cap{font-size:11.5px;color:var(--text-2);text-align:center;font-weight:600}
+  .dev-cap small{display:block;font-weight:500;color:var(--muted);font-family:var(--mono);font-size:10.5px}
+
+  /* matrix table */
+  .matrix{overflow-x:auto}
+  table.mx{border-collapse:separate;border-spacing:0 14px;width:100%}
+  table.mx th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:center;padding:0 8px 4px;font-weight:700}
+  table.mx th:first-child{text-align:left}
+  table.mx td{vertical-align:middle;padding:0 8px}
+  table.mx td.size{white-space:nowrap;width:150px}
+  .size-name{font-weight:700;font-size:13px}
+  .size-dim{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .size-icon{display:inline-block;vertical-align:middle;margin-right:9px;border:2px solid var(--border-strong);border-radius:4px;background:#fff}
+  .thumb-wrap{display:flex;justify-content:center;align-items:flex-start}
+
+  /* shell gallery */
+  .shell-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:end}
+  @media (max-width:1040px){.shell-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:700px){.shell-grid{grid-template-columns:1fr}}
+  .shell-note{font-size:12.5px;color:var(--text-2);margin-top:8px;text-align:center;max-width:280px}
+  .state-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:10px}
+  .state-pill.on{background:var(--ok-soft);color:var(--ok);border:1px solid #bfe6d3}
+  .state-pill.off{background:#eef0f4;color:var(--text-2);border:1px solid var(--border)}
+  .state-pill.persist{background:var(--info-soft);color:var(--info);border:1px solid #b9e2ea}
+
+  /* templates */
+  .tpl-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+  .tpl{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .tpl-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .tpl-head h3{margin:0;font-size:14px}
+  .tpl-head .bp{font-family:var(--mono);font-size:11px;color:var(--brand);background:var(--brand-soft);padding:3px 8px;border-radius:7px}
+  .tpl-body{padding:16px;background:var(--surface-2)}
+  .bp-marker{display:flex;align-items:center;gap:10px;margin:16px 0 0;font-size:12px;color:var(--muted);font-weight:600}
+  .bp-marker .ln{flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--border-strong) 0 6px,transparent 6px 12px)}
+
+  /* component states */
+  .comp-table{overflow-x:auto}
+  table.ct{border-collapse:collapse;width:100%;font-size:13px}
+  table.ct th,table.ct td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+  table.ct thead th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border-strong)}
+  table.ct tbody tr:hover{background:var(--surface-2)}
+  table.ct td.name{font-weight:700;white-space:nowrap}
+  table.ct td.name small{display:block;font-weight:500;color:var(--muted);font-family:var(--mono);font-size:11px}
+  .demo{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+  /* real components */
+  .btn{appearance:none;border:1px solid transparent;font:inherit;font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px;cursor:default;display:inline-flex;align-items:center;gap:7px;line-height:1}
+  .btn.primary{background:var(--brand);color:#fff;box-shadow:0 1px 2px rgba(79,70,229,.35)}
+  .btn.primary.hover{background:#4338ca}
+  .btn.primary.focus{outline:0;box-shadow:0 0 0 3px rgba(99,102,241,.45)}
+  .btn.secondary{background:#fff;color:var(--text);border-color:var(--border-strong)}
+  .btn.secondary.hover{background:#f3f5f8}
+  .btn.ghost{background:transparent;color:var(--brand)}
+  .btn.ghost.hover{background:var(--brand-soft)}
+  .btn.danger{background:var(--danger-soft);color:var(--danger);border-color:#f3c9c5}
+  .btn[aria-disabled="true"]{background:#eef0f4;color:var(--muted);border-color:var(--border);cursor:not-allowed}
+  .btn.load{background:#a5a2ee;color:#fff}
+  .spinner{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .field{display:flex;flex-direction:column;gap:5px;min-width:180px}
+  .field label{font-size:11.5px;font-weight:600;color:var(--text-2)}
+  .field input,.field select{font:inherit;font-size:13px;padding:8px 11px;border-radius:9px;border:1px solid var(--border-strong);background:#fff;color:var(--text)}
+  .field input.focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(99,102,241,.22);outline:0}
+  .field.error input{border-color:var(--danger);background:var(--danger-soft)}
+  .field .msg{font-size:11px;font-weight:600;color:var(--danger)}
+  .field.dis input{background:#f1f3f6;color:var(--muted)}
+  .tag{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--text-2)}
+  .tag.g{background:var(--ok-soft);color:var(--ok);border-color:#bfe6d3}
+  .tag.y{background:var(--warn-soft);color:var(--warn);border-color:#f2ddb6}
+  .tag.r{background:var(--danger-soft);color:var(--danger);border-color:#f3c9c5}
+  .tag.b{background:var(--brand-soft);color:var(--brand);border-color:#d9dcff}
+  .mini-card{border:1px solid var(--border);border-radius:11px;padding:12px;background:#fff;width:180px}
+  .mini-card .l{height:8px;border-radius:4px;background:#e9edf2;margin-bottom:8px}
+  .mini-card .l.w60{width:60%}.mini-card .l.w40{width:40%}
+
+  /* states (empty/loading/error) */
+  .states{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:900px){.states{grid-template-columns:1fr}}
+  .state-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 22px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:220px;justify-content:center}
+  .state-box .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:21px}
+  .state-box h4{margin:0;font-size:14px}
+  .state-box p{margin:0;font-size:12.5px;color:var(--text-2);max-width:240px}
+  .state-box.empty .ic{background:var(--brand-soft);color:var(--brand)}
+  .state-box.error .ic{background:var(--danger-soft);color:var(--danger)}
+  .sk-line{height:9px;border-radius:5px;background:linear-gradient(90deg,#eceff3,#dfe4ea,#eceff3);background-size:200% 100%;animation:sh 1.4s linear infinite}
+  @keyframes sh{to{background-position:-200% 0}}
+  .sk-stack{display:flex;flex-direction:column;gap:9px;width:100%;max-width:220px}
+
+  /* qa */
+  .qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:960px){.qa-grid{grid-template-columns:1fr}}
+  .qa{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px;display:flex;flex-direction:column;gap:9px}
+  .qa .id{font-family:var(--mono);font-size:11px;color:var(--brand);font-weight:700}
+  .qa .txt{font-size:13px;color:var(--text)}
+  .qa .st{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px dashed var(--border);padding-top:9px}
+  .qa .st span{font-size:11.5px;color:var(--muted)}
+  .ok-mark{color:var(--ok);font-weight:700;font-size:12px}
+
+  /* pipeline */
+  .pipe{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .pstep{flex:1 1 150px;min-width:140px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:12px 13px;box-shadow:var(--shadow-sm)}
+  .pstep .n{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  .pstep .t{font-size:13px;font-weight:700;margin-top:3px}
+  .pstep .d{font-size:11.5px;color:var(--text-2);margin-top:2px}
+  .pstep.fail{border-color:#f0c4bf;background:var(--danger-soft)}
+  .arrow{color:var(--border-strong);font-size:18px;font-weight:700}
+  .diff-preview{margin-top:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media (max-width:820px){.diff-preview{grid-template-columns:1fr}}
+  .diff-box{border:1px solid var(--border);border-radius:11px;overflow:hidden;background:var(--surface)}
+  .diff-box .h{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-2);padding:8px 11px;border-bottom:1px solid var(--border);background:var(--surface-2)}
+  .diff-box .b{height:120px;display:grid;place-items:center;font-size:12px;color:var(--muted)}
+  .diff-box .b.delta{background:
+    repeating-linear-gradient(45deg,#fdeceb 0 8px,#fff 8px 16px);
+    color:var(--danger);font-weight:700;font-family:var(--mono)}
+
+  .foot{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;color:var(--muted);font-size:12px}
+  .foot code{font-family:var(--mono);color:var(--text-2)}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:6px}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)}
+  .legend .sw{width:14px;height:14px;border-radius:4px;border:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <span class="brandmark"><span class="dot"></span> Kanai · Maquetador</span>
+  </div>
+  <h1>HU-01-16 · Verificación responsive con goldens de componentes, shell y plantillas</h1>
+  <p class="sub">Teléfono vertical y tablet en ambas orientaciones · escala 100&nbsp;/&nbsp;200&nbsp;% · sistema operativo claro y oscuro sobre tema claro forzado. CI compara cada PR contra la baseline.</p>
+
+  <div class="chips">
+    <span class="chip brand"><b>TAO-182</b> · HU-01-16</span>
+    <span class="chip">GH-60</span>
+    <span class="chip ok">Ready</span>
+    <span class="chip">M1a · Orden 13</span>
+    <span class="chip warn">P1 alta</span>
+    <span class="chip">3 pts</span>
+    <span class="chip">Riesgo bajo</span>
+    <span class="chip">EP-01</span>
+    <span class="chip">Bloqueada por HU-01-10</span>
+  </div>
+
+  <div class="banner">
+    <div class="ic">▦</div>
+    <div>
+      <h3>Sin interfaz propia</h3>
+      <p>Esta historia no agrega vistas: es el arnés de verificación visual. El tablero de abajo muestra la <b>matriz de goldens</b> que la suite captura (shell, plantillas y componentes existentes), para revisar que la cobertura y los estados sean los correctos antes de implementar. Decisiones: DEC-021, DEC-051, DEC-189, DEC-193, DEC-196, DEC-230.</p>
+    </div>
+  </div>
+
+  <!-- ============ 1. CONFIG ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">1</span> Matriz de configuración</h2>
+        <p>Un único archivo declara tamaños, escalas y sistema operativo; las suites lo consumen. Ampliar la matriz no reescribe pruebas.</p>
+      </div>
+      <span class="req-tag">REQ-07</span>
+    </div>
+    <div class="cfg">
+      <pre class="code"><span class="c">// src/testing/goldens/matrix.ts — patrón AccessibilityViewport</span>
+<span class="k">export const</span> GOLDEN_MATRIX = {
+  sizes: [
+    { id: <span class="s">'phone-360'</span>,  w: <span class="n">360</span>,  h: <span class="n">800</span>,  device: <span class="s">'phone'</span> },
+    { id: <span class="s">'phone-390'</span>,  w: <span class="n">390</span>,  h: <span class="n">844</span>,  device: <span class="s">'phone'</span> },
+    { id: <span class="s">'tablet-768'</span>, w: <span class="n">768</span>,  h: <span class="n">1024</span>, device: <span class="s">'tablet'</span> },
+    { id: <span class="s">'tablet-1024'</span>,w: <span class="n">1024</span>, h: <span class="n">768</span>,  device: <span class="s">'tablet'</span> },
+    { id: <span class="s">'wide-1440'</span>,  w: <span class="n">1440</span>, h: <span class="n">900</span>,  device: <span class="s">'desktop'</span> },
+  ],
+  textScale: [<span class="n">1</span>, <span class="n">2</span>],        <span class="c">// 100 % y 200 %</span>
+  os:        [<span class="s">'light'</span>, <span class="s">'dark'</span>], <span class="c">// sobre tema claro forzado (DEC-196)</span>
+  theme:     <span class="s">'light'</span>,
+  motion:    <span class="s">'reduced'</span>,      <span class="c">// estados finales, sin animación</span>
+  platform:  <span class="s">'linux-ci'</span>,     <span class="c">// superficie fija</span>
+  fonts:     <span class="s">'design-system'</span>, <span class="c">// embebidas, no fallback (DEC-230)</span>
+} <span class="k">as const</span>;</pre>
+      <div class="cfg-list">
+        <div class="cfg-row"><span class="ico">📱</span><div><div class="t">Teléfonos</div><div class="d">360×800 · 390×844</div></div><span class="val">vertical</span></div>
+        <div class="cfg-row"><span class="ico">▭</span><div><div class="t">Tablets</div><div class="d">768×1024 · 1024×768</div></div><span class="val">vertical + horizontal</span></div>
+        <div class="cfg-row"><span class="ico">🖥</span><div><div class="t">Ancho máximo</div><div class="d">1440×900</div></div><span class="val">desktop</span></div>
+        <div class="cfg-row"><span class="ico">A</span><div><div class="t">Escala de texto</div><div class="d">100 % y 200 %</div></div><span class="val">rem base ×2</span></div>
+        <div class="cfg-row"><span class="ico">◐</span><div><div class="t">Sistema operativo</div><div class="d">Claro y oscuro · tema claro forzado</div></div><span class="val">DEC-196</span></div>
+        <div class="cfg-row"><span class="ico">✱</span><div><div class="t">Movimiento</div><div class="d">Reducido, siempre activo</div></div><span class="val">reduced</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2. MATRIX ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">2</span> Goldens por tamaño, escala y SO</h2>
+        <p>Un golden por cada combinación. La fila indica el viewport; la columna, sistema operativo y escala de texto. El tema de la app permanece claro.</p>
+      </div>
+      <span class="req-tag">REQ-02 · REQ-08</span>
+    </div>
+    <div class="card pad matrix">
+      <table class="mx">
+        <thead>
+          <tr>
+            <th>Viewport</th>
+            <th>OS claro · 100 %</th>
+            <th>OS oscuro · 100 %</th>
+            <th>OS claro · 200 %</th>
+            <th>OS oscuro · 200 %</th>
+          </tr>
+        </thead>
+        <tbody id="mx-body"></tbody>
+      </table>
+      <div class="legend">
+        <span><span class="sw" style="background:#eef1f5"></span> barra de sistema del SO</span>
+        <span><span class="sw" style="background:#fff;border-color:#cfd5de"></span> app con tema claro forzado</span>
+        <span><span class="sw" style="background:#eef0ff"></span> marca / acción</span>
+        <span><span class="sw" style="background:#fdeceb"></span> señal de desborde (no debe aparecer)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. SHELL ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">3</span> Shell · panel superpuesto y persistente</h2>
+        <p>En teléfono y tablet vertical el panel aparece superpuesto (cerrado por defecto). En tablet horizontal (1024×768) el panel es persistente y está visible.</p>
+      </div>
+      <span class="req-tag">REQ-03</span>
+    </div>
+    <div class="card pad">
+      <div class="shell-grid" id="shell-grid"></div>
+    </div>
+  </section>
+
+  <!-- ============ 4. TEMPLATES ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">4</span> Plantillas de HU-01-10</h2>
+        <p>Tres plantillas capturadas en la matriz de ancho. La composición de lista y detalle cambia en 840&nbsp;px y no en otro ancho.</p>
+      </div>
+      <span class="req-tag">REQ-04 · QA-01-16-01</span>
+    </div>
+
+    <div class="tpl-cols">
+      <div class="tpl">
+        <div class="tpl-head"><h3>Plantilla · Lista y detalle</h3><span class="bp">&lt; 840 px · apilado</span></div>
+        <div class="tpl-body">
+          <div class="dev-frame" style="width:100%;height:190px;border-radius:12px;overflow:hidden;border:1px solid var(--border-strong)">
+            <div class="dev-scale" style="transform:scale(.44);width:360px;height:800px">
+              <div class="screen"><div class="mini-app">
+                <div class="m-appbar"><span class="m-title">Elementos</span><div class="m-actions"><span class="m-btn" style="width:4em"></span></div></div>
+                <div class="m-main">
+                  <div class="m-card"><div class="m-row"><span class="m-avatar"></span><div class="m-col"><div class="sk m-line" style="width:70%"></div><div class="sk m-line" style="width:45%"></div></div></div></div>
+                  <div class="m-card"><div class="m-row"><span class="m-avatar"></span><div class="m-col"><div class="sk m-line" style="width:60%"></div><div class="sk m-line" style="width:40%"></div></div></div></div>
+                  <div class="m-card" style="border-color:var(--brand-2)"><div class="m-badge">Detalle en la misma vista</div><div class="sk m-line" style="width:80%"></div><div class="sk m-line" style="width:55%"></div></div>
+                </div>
+              </div></div>
+            </div>
+          </div>
+          <div class="bp-marker"><span>lista → detalle apilado</span><span class="ln"></span><span class="mono" style="font-family:var(--mono)">840 px</span></div>
+        </div>
+      </div>
+
+      <div class="tpl">
+        <div class="tpl-head"><h3>Plantilla · Lista y detalle</h3><span class="bp">≥ 840 px · dos paneles</span></div>
+        <div class="tpl-body">
+          <div class="dev-frame" style="width:100%;height:190px;border-radius:12px;overflow:hidden;border:1px solid var(--border-strong)">
+            <div class="dev-scale" style="transform:scale(.31);width:1024px;height:768px">
+              <div class="screen"><div class="mini-app">
+                <div class="m-appbar"><span class="m-title">Elementos</span></div>
+                <div class="m-body">
+                  <div class="m-main" style="border-right:1px solid var(--border)">
+                    <div class="m-card"><div class="m-row"><span class="m-avatar"></span><div class="m-col"><div class="sk m-line" style="width:70%"></div><div class="sk m-line" style="width:45%"></div></div></div></div>
+                    <div class="m-card" style="border-color:var(--brand-2)"><div class="m-row"><span class="m-avatar"></span><div class="m-col"><div class="sk m-line" style="width:60%"></div><div class="sk m-line" style="width:40%"></div></div></div></div>
+                  </div>
+                  <div class="m-panel"><div class="m-line d" style="width:60%;height:.9em"></div><div class="sk m-line" style="width:85%"></div><div class="sk m-line" style="width:70%"></div><div class="sk m-line" style="width:78%"></div><span class="m-btn" style="width:50%"></span></div>
+                </div>
+              </div></div>
+            </div>
+          </div>
+          <div class="bp-marker"><span class="ln"></span><span>dos paneles lado a lado</span></div>
+        </div>
+      </div>
+
+      <div class="tpl">
+        <div class="tpl-head"><h3>Plantilla · Formulario</h3><span class="bp">360 → 1440</span></div>
+        <div class="tpl-body">
+          <div class="dev-frame" style="width:100%;height:190px;border-radius:12px;overflow:hidden;border:1px solid var(--border-strong)">
+            <div class="dev-scale" style="transform:scale(.36);width:768px;height:1024px">
+              <div class="screen"><div class="mini-app">
+                <div class="m-appbar"><span class="m-title">Nuevo registro</span></div>
+                <div class="m-main">
+                  <div class="m-card"><div class="sk m-line" style="width:30%;height:.6em"></div><div class="sk d" style="height:2.2em;border-radius:.6em"></div><div class="sk d" style="height:2.2em;border-radius:.6em"></div></div>
+                  <div class="m-card"><div class="sk m-line" style="width:38%;height:.6em"></div><div class="sk d" style="height:2.2em;border-radius:.6em"></div><div class="m-row"><span class="m-btn ghost" style="flex:1"></span><span class="m-btn" style="flex:1"></span></div></div>
+                </div>
+              </div></div>
+            </div>
+          </div>
+          <div class="bp-marker"><span>barra de acciones fija</span><span class="ln"></span></div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12.5px;color:var(--text-2);margin-top:12px">Plantilla 3 · <b>Resumen / tarjetas</b>: reflujo de 1 → 2 → 3 columnas; se incluye en la misma matriz de cinco tamaños.</p>
+  </section>
+
+  <!-- ============ 5. COMPONENTS ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">5</span> Componentes en sus estados · HU-01-03 a HU-01-05</h2>
+        <p>Átomos, moléculas y overlays, generados desde el espejo de entradas del catálogo (el mismo componente real, sin variantes de prueba).</p>
+      </div>
+      <span class="req-tag">REQ-02 · REQ-08</span>
+    </div>
+    <div class="card comp-table">
+      <table class="ct">
+        <thead>
+          <tr><th style="width:190px">Componente</th><th>Estado por defecto</th><th>Hover / foco</th><th>Deshabilitado / error</th><th>Carga</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name">Botón<small>atom/button</small></td>
+            <td><div class="demo"><button class="btn primary">Guardar</button><button class="btn secondary">Cancelar</button></div></td>
+            <td><div class="demo"><button class="btn primary hover">Guardar</button><button class="btn primary focus">Guardar</button></div></td>
+            <td><div class="demo"><button class="btn" aria-disabled="true">Guardar</button></div></td>
+            <td><div class="demo"><button class="btn load"><span class="spinner"></span> Guardando</button></div></td>
+          </tr>
+          <tr>
+            <td class="name">Campo de texto<small>atom/text-field</small></td>
+            <td><div class="demo"><div class="field"><label>Correo</label><input value="ana@ejemplo.com" readonly></div></div></td>
+            <td><div class="demo"><div class="field"><label>Correo</label><input class="focus" value="ana@ejemplo.com" readonly></div></div></td>
+            <td><div class="demo"><div class="field error"><label>Correo</label><input value="ana@" readonly><span class="msg">Formato inválido</span></div></div></td>
+            <td><div class="demo"><div class="field dis"><label>Correo</label><input value="Cargando…" disabled></div></div></td>
+          </tr>
+          <tr>
+            <td class="name">Etiqueta de estado<small>atom/status-tag</small></td>
+            <td><div class="demo"><span class="tag b">En curso</span><span class="tag g">Listo</span></div></td>
+            <td><div class="demo"><span class="tag y">Pendiente</span></div></td>
+            <td><div class="demo"><span class="tag r">Fallido</span></div></td>
+            <td><div class="demo"><span class="tag">—</span></div></td>
+          </tr>
+          <tr>
+            <td class="name">Tarjeta de elemento<small>molecule/item-card</small></td>
+            <td><div class="demo"><div class="mini-card"><div class="l w60"></div><div class="l w40"></div></div></div></td>
+            <td><div class="demo"><div class="mini-card" style="border-color:var(--brand-2);box-shadow:0 0 0 3px rgba(99,102,241,.18)"><div class="l w60"></div><div class="l w40"></div></div></div></td>
+            <td><div class="demo"><div class="mini-card" style="opacity:.5"><div class="l w60"></div><div class="l w40"></div></div></div></td>
+            <td><div class="demo"><div class="mini-card"><div class="sk-line" style="width:60%;margin-bottom:8px"></div><div class="sk-line" style="width:40%"></div></div></div></td>
+          </tr>
+          <tr>
+            <td class="name">Overlay · diálogo<small>overlay/dialog</small></td>
+            <td colspan="4">
+              <div class="demo" style="gap:14px;align-items:stretch">
+                <div style="position:relative;width:230px;border:1px solid var(--border);border-radius:12px;background:#eef0f4;height:150px">
+                  <div class="m-scrim" style="border-radius:12px"></div>
+                  <div class="m-overlay" style="top:22%;border-radius:12px;padding:12px;gap:8px">
+                    <div style="font-size:12.5px;font-weight:700">Confirmar acción</div>
+                    <div style="font-size:11.5px;color:var(--text-2)">Esta operación no se puede deshacer.</div>
+                    <div class="m-row" style="justify-content:flex-end"><button class="btn secondary" style="padding:5px 10px;font-size:11px">Cancelar</button><button class="btn primary" style="padding:5px 10px;font-size:11px">Confirmar</button></div>
+                  </div>
+                </div>
+                <div style="align-self:center;font-size:12px;color:var(--text-2);max-width:320px">
+                  <b>QA-01-16-03:</b> en 360×800 con escala 200 % las acciones del diálogo permanecen visibles y alcanzables.
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 6. EMPTY / LOADING / ERROR ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">6</span> Estados vacío, carga y error</h2>
+        <p>Se capturan como golden en la matriz para las plantillas que los exponen; el texto visible es parte del golden.</p>
+      </div>
+      <span class="req-tag">REQ-02 · REQ-04</span>
+    </div>
+    <div class="states">
+      <div class="state-box empty">
+        <div class="ic">▤</div>
+        <h4>Sin elementos todavía</h4>
+        <p>Cuando se cree el primer registro aparecerá en esta lista.</p>
+        <button class="btn primary" style="font-size:12px;padding:7px 13px">Crear registro</button>
+      </div>
+      <div class="state-box">
+        <div class="ic" style="background:#eef0f4;color:var(--text-2)">◌</div>
+        <h4>Cargando</h4>
+        <div class="sk-stack" style="margin-top:6px">
+          <div class="sk-line" style="width:100%"></div>
+          <div class="sk-line" style="width:88%"></div>
+          <div class="sk-line" style="width:72%"></div>
+        </div>
+      </div>
+      <div class="state-box error">
+        <div class="ic">!</div>
+        <h4>No se pudo cargar</h4>
+        <p>Revisa tu conexión e inténtalo de nuevo.</p>
+        <button class="btn secondary" style="font-size:12px;padding:7px 13px">Reintentar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7. CI ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">7</span> Job de CI y artifact de diferencias</h2>
+        <p>Cada PR ejecuta la suite, falla ante cualquier diferencia y publica la imagen de diferencias adjunta al PR.</p>
+      </div>
+      <span class="req-tag">REQ-05 · REQ-06</span>
+    </div>
+    <div class="card pad">
+      <div class="pipe">
+        <div class="pstep"><div class="n">01 · setup</div><div class="t">Fuentes del sistema</div><div class="d">embebidas · plataforma fija</div></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><div class="n">02 · render</div><div class="t">Matriz de goldens</div><div class="d">tamaños × escalas × SO</div></div>
+        <span class="arrow">→</span>
+        <div class="pstep fail"><div class="n">03 · compare</div><div class="t">Diferencia detectada</div><div class="d">1 px de padding en un botón</div></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><div class="n">04 · artifact</div><div class="t">Imagen de diferencias</div><div class="d">adjunta al PR · retenida</div></div>
+        <span class="arrow">→</span>
+        <div class="pstep"><div class="n">05 · review</div><div class="t">Diff exige revisión</div><div class="d">actualizar baseline a conciencia</div></div>
+      </div>
+
+      <div class="diff-preview">
+        <div class="diff-box"><div class="h">baseline</div><div class="b">referencia aprobada</div></div>
+        <div class="diff-box"><div class="h">actual</div><div class="b">render del PR</div></div>
+        <div class="diff-box"><div class="h">diferencias</div><div class="b delta">Δ padding: 1 px</div></div>
+      </div>
+
+      <div style="margin-top:18px;border:1px solid var(--border);border-radius:11px;padding:14px 16px;background:var(--surface-2)">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:8px">Procedimiento de actualización (REQ-06)</div>
+        <ol style="margin:0;padding-left:20px;font-size:13px;color:var(--text-2);display:flex;flex-direction:column;gap:5px">
+          <li>Ejecutar <code style="font-family:var(--mono);color:var(--brand)">pnpm goldens:update</code> sobre la rama del cambio.</li>
+          <li>Verificar que el diff de goldens corresponda exactamente al cambio intencional.</li>
+          <li>El PR muestra el diff visual y <b>no puede integrarse sin revisión</b> de Diseño.</li>
+          <li>Ante fallo en CI, adjuntar el artifact de diferencias y decidir: corregir el código o actualizar la baseline deliberadamente.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 8. QA ============ -->
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="sec-num">8</span> Casos de prueba cubiertos</h2>
+        <p>Casos de la historia que la suite debe satisfacer, con la señal que los demuestra en el tablero.</p>
+      </div>
+      <span class="req-tag">QA-01-16-*</span>
+    </div>
+    <div class="qa-grid">
+      <div class="qa">
+        <span class="id">QA-01-16-01</span>
+        <span class="txt">La plantilla de lista y detalle cambia de composición en el ancho 840 px y no en otro.</span>
+        <div class="st"><span>sección 4 · breakpoint</span><span class="ok-mark">✓ cubierto</span></div>
+      </div>
+      <div class="qa">
+        <span class="id">QA-01-16-02</span>
+        <span class="txt">Si una fuente no carga, la suite falla con un mensaje claro en vez de generar golden con fuente de reemplazo.</span>
+        <div class="st"><span>REQ-01 · REQ-08</span><span class="ok-mark">✓ guarda</span></div>
+      </div>
+      <div class="qa">
+        <span class="id">QA-01-16-03</span>
+        <span class="txt">En 360×800 con escala 200 %, el diálogo mantiene sus acciones visibles.</span>
+        <div class="st"><span>sección 5 · overlay</span><span class="ok-mark">✓ cubierto</span></div>
+      </div>
+    </div>
+    <div class="card pad" style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:8px">Criterios de aceptación</div>
+        <ul style="margin:0;padding-left:18px;font-size:13px;color:var(--text-2);display:flex;flex-direction:column;gap:5px">
+          <li>Un golden por componente, estado, tamaño y escala.</li>
+          <li>Un cambio de 1 px hace fallar CI y publica el artefacto.</li>
+          <li>SO oscuro produce goldens idénticos a los del SO claro.</li>
+          <li>Escala 200 % en 360×800 sin avisos de desborde.</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:8px">&nbsp;</div>
+        <ul style="margin:0;padding-left:18px;font-size:13px;color:var(--text-2);display:flex;flex-direction:column;gap:5px">
+          <li>Tablet 1024×768: panel persistente visible; 768×1024: superpuesto y cerrado.</li>
+          <li>Regenerar exige que el PR muestre el diff y pase revisión.</li>
+          <li>La matriz se amplía por configuración, sin reescribir pruebas.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>TAO-182 · HU-01-16 · maqueta de verificación — sin interfaz propia (tablero de goldens)</span>
+    <span>Diseño para revisar contra <code>doc 43</code> y la maqueta consolidada · rollback: revertir goldens y matriz solo si la baseline estaba equivocada</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="matrix-config">
+{"sizes":[{"id":"phone-360","w":360,"h":800},{"id":"phone-390","w":390,"h":844},{"id":"tablet-768","w":768,"h":1024},{"id":"tablet-1024","w":1024,"h":768},{"id":"wide-1440","w":1440,"h":900}]}
+</script>
+
+<script>
+/* Render estatico de la matriz y del shell (sin dependencias externas) */
+(function(){
+  var sizes=[
+    {id:'phone-360',label:'Teléfono',dim:'360 × 800',w:360,h:800,sc:0.20,tall:true},
+    {id:'phone-390',label:'Teléfono',dim:'390 × 844',w:390,h:844,sc:0.19,tall:true},
+    {id:'tablet-768',label:'Tablet · vertical',dim:'768 × 1024',w:768,h:1024,sc:0.155,tall:true},
+    {id:'tablet-1024',label:'Tablet · horizontal',dim:'1024 × 768',w:1024,h:768,sc:0.20,tall:false},
+    {id:'wide-1440',label:'Ancho máximo',dim:'1440 × 900',w:1440,h:900,sc:0.165,tall:false}
+  ];
+
+  function miniApp(opts){
+    opts=opts||{};
+    var s200=opts.s200?' s200':'';
+    var extra=opts.s200?'<div class="m-warn m-overflow">desborde: revisar escala 200 %</div>':'';
+    var panel=opts.panel==='persist'
+      ? '<div class="m-panel"><div class="m-line d" style="width:60%;height:.9em"></div><div class="sk m-line" style="width:85%"></div><div class="sk m-line" style="width:70%"></div><div class="sk m-line" style="width:74%"></div></div>'
+      : '';
+    var overlay=opts.panel==='overlay'
+      ? '<div class="m-scrim"></div><div class="m-overlay"><span class="grab"></span><div class="m-line d" style="width:50%;height:.9em"></div><div class="sk m-line" style="width:80%"></div><div class="m-row" style="justify-content:flex-end"><span class="m-btn ghost" style="width:3.5em"></span><span class="m-btn" style="width:3.5em"></span></div></div>'
+      : '';
+    var rail=opts.rail?'<div class="m-rail"><span class="on"></span><span></span><span></span></div>':'';
+    var tabbar=opts.tabbar?'<div class="m-tabbar"><i class="on"></i><i></i><i></i><i></i></div>':'';
+    var body='<div class="m-body">'+rail+'<div class="m-main'+(opts.tight?' tight':'')+'">'
+      +'<div class="sk m-line" style="width:55%"></div>'
+      +'<div class="sk m-line" style="width:38%"></div>'
+      +'<div class="m-card"><div class="sk m-line" style="width:70%"></div><div class="sk m-line" style="width:45%"></div></div>'
+      +extra
+      +'</div>'+panel+'</div>'+tabbar;
+    return '<div class="mini-app'+s200+'"><div class="m-appbar"><span class="m-title">';
+    /* placeholder title injected by caller */
+  }
+
+  function fullApp(o){
+    var s200=o.s200?' s200':'';
+    var extra=o.s200?'<div class="m-warn m-overflow">desborde: revisar escala 200 %</div>':'';
+    var panel = o.panel==='persist'
+      ? '<div class="m-panel"><div class="m-line d" style="width:60%;height:.9em"></div><div class="sk m-line" style="width:85%"></div><div class="sk m-line" style="width:70%"></div><div class="sk m-line" style="width:74%"></div><div class="sk m-line" style="width:60%"></div></div>'
+      : '';
+    var overlay = o.panel==='overlay'
+      ? '<div class="m-scrim"></div><div class="m-overlay '+ (o.orientation==='landscape'?'aside':'') +'"><span class="grab"></span><div class="m-line d" style="width:45%;height:.9em"></div><div class="sk m-line" style="width:80%"></div><div class="sk m-line" style="width:65%"></div><div class="m-row" style="justify-content:flex-end"><span class="m-btn ghost" style="width:3.5em"></span><span class="m-btn" style="width:3.5em"></span></div></div>'
+      : '';
+    var rail=o.rail?'<div class="m-rail"><span class="on"></span><span></span><span></span><span></span></div>':'';
+    var tabbar=o.tabbar?'<div class="m-tabbar"><i class="on"></i><i></i><i></i><i></i></div>':'';
+    return '<div class="screen'+(o.tall?' tall':'')+'">'
+      +'<div class="osbar"><span>'+(o.os==='dark'?'◐ oscuro':'☀ claro')+'</span><span>'+(o.os==='dark'?'21:40':'09:15')+'</span></div>'
+      +'<div class="mini-app'+s200+'">'
+      +  '<div class="m-appbar"><span class="m-title">'+(o.title||'Inicio')+'</span></div>'
+      +  '<div class="m-body">'+rail+'<div class="m-main"><div class="sk m-line" style="width:60%"></div><div class="sk m-line" style="width:42%"></div><div class="m-card"><div class="m-row"><span class="m-avatar"></span><div class="m-col"><div class="sk m-line" style="width:72%"></div><div class="sk m-line" style="width:48%"></div></div></div></div>'+extra+'</div>'+panel+'</div>'
+      +  tabbar
+      +'</div>'+overlay+'</div>';
+  }
+
+  function device(o){
+    var wpx=o.w*o.sc, hpx=o.h*o.sc;
+    return '<div class="dev '+(o.os==='dark'?'osdark-wrap':'oslight-wrap')+'">'
+      +'<div class="dev-frame" style="width:'+(wpx+12)+'px;height:'+(hpx+12)+'px">'
+      +  '<div class="dev-scale" style="transform:scale('+o.sc+');width:'+o.w+'px;height:'+o.h+'px">'
+      +    fullApp(o)
+      +  '</div>'
+      +'</div>'
+      +'<div class="dev-cap">'+o.cap+'<small>'+(o.sub||'')+'</small></div>'
+      +'</div>';
+  }
+
+  /* ---- matrix table ---- */
+  var combos=[
+    {os:'light',s200:false,cap:'CL · 100 %'},
+    {os:'dark', s200:false,cap:'OS · 100 %'},
+    {os:'light',s200:true, cap:'CL · 200 %'},
+    {os:'dark', s200:true, cap:'OS · 200 %'}
+  ];
+  var bodyRows='';
+  sizes.forEach(function(sz){
+    var iconW, iconH;
+    if(sz.w<=390){iconW=9;iconH=16;} else if(sz.h>sz.w){iconW=12;iconH=16;} else if(sz.w<=1024){iconW=18;iconH=13;} else {iconW=22;iconH=14;}
+    var cells='';
+    combos.forEach(function(c){
+      cells+='<td><div class="thumb-wrap">'+device({
+        w:sz.w,h:sz.h,sc:sz.sc,os:c.os,s200:c.s200,
+        orientation:(sz.h>sz.w?'portrait':'landscape'),
+        title: sz.device==='phone'?'Inicio':'Panel',
+        tall: sz.device!=='desktop',
+        rail: sz.w>=768,
+        tabbar: sz.w<768,
+        cap:c.cap
+      })+'</div></td>';
+    });
+    bodyRows+='<tr>'
+      +'<td class="size"><span class="size-icon" style="width:'+iconW+'px;height:'+iconH+'px"></span>'
+      +  '<span class="size-name">'+sz.label+'</span><br><span class="size-dim" style="margin-left:'+(iconW+13)+'px">'+sz.dim+'</span></td>'
+      +cells+'</tr>';
+  });
+  document.getElementById('mx-body').innerHTML=bodyRows;
+
+  /* ---- shell gallery ---- */
+  var shell=[
+    {cap:'Teléfono · 360 × 800',sub:'panel superpuesto · cerrado',w:360,h:800,sc:0.42,os:'light',orientation:'portrait',tall:true,tabbar:true,panel:null,badge:'off',badgeTxt:'Superpuesto · cerrado',title:'Inicio'},
+    {cap:'Teléfono · 360 × 800',sub:'panel superpuesto · abierto',w:360,h:800,sc:0.42,os:'light',orientation:'portrait',tall:true,tabbar:true,panel:'overlay',badge:'off',badgeTxt:'Superpuesto · abierto',title:'Inicio'},
+    {cap:'Tablet vertical · 768 × 1024',sub:'panel superpuesto · cerrado',w:768,h:1024,sc:0.33,os:'light',orientation:'portrait',tall:true,rail:true,panel:null,badge:'off',badgeTxt:'Superpuesto · cerrado',title:'Panel'},
+    {cap:'Tablet horizontal · 1024 × 768',sub:'panel persistente · visible',w:1024,h:768,sc:0.36,os:'light',orientation:'landscape',rail:true,panel:'persist',badge:'persist',badgeTxt:'Persistente · visible',title:'Elementos'}
+  ];
+  var shellHtml='';
+  shell.forEach(function(s){
+    shellHtml+='<div class="dev">'
+      +'<span class="state-pill '+(s.badge==='persist'?'persist':'off')+'">'+s.badgeTxt+'</span>'
+      + device({w:s.w,h:s.h,sc:s.sc,os:s.os,orientation:s.orientation,tall:s.tall,rail:s.rail,tabbar:s.tabbar,panel:s.panel,title:s.title,cap:s.cap,sub:s.sub})
+      +'<div class="shell-note">'+s.sub+'</div>'
+      +'</div>';
+  });
+  document.getElementById('shell-grid').innerHTML=shellHtml;
+})();
+</script>
+</body>
+</html>
