@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAO-181 · Ajustes — reducir movimiento, contraste aumentado y legibilidad</title>
+<style>
+  :root{
+    --ink:#241f1a; --ink-2:#4a4239; --muted:#7b7268; --faint:#a89f94;
+    --paper:#fbf7f1; --card:#ffffff; --line:#e8e0d6; --line-2:#d8cfc4;
+    --accent:#b45309; --accent-2:#92400e; --accent-soft:#fbe9d7;
+    --ok:#2f7d5b;
+    --radius:16px;
+    --shadow:0 14px 40px rgba(0,0,0,.45);
+    /* tokens de contraste aumentado (entregable de Diseño, DEC-232) */
+    --hc-ink:#000000; --hc-bg:#ffffff; --hc-line:#1a1a1a; --hc-accent:#7a2e00; --hc-muted:#333333;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:#17140f; color:#f3efe9;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:36px 22px 96px; -webkit-font-smoothing:antialiased;
+  }
+  .page{max-width:1180px; margin:0 auto}
+  .eyebrow{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#c9a06a; font-weight:700}
+  h1{font-size:26px; line-height:1.25; margin:8px 0 6px; font-weight:750; color:#fff}
+  .sub{color:#c9c2b8; font-size:14px; line-height:1.6; max-width:760px; margin:0 0 18px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 6px}
+  .chip{font-size:12px; font-weight:600; padding:6px 11px; border-radius:999px; background:#2a241d; border:1px solid #3a3128; color:#e7dccb}
+  .chip.accent{background:#3a2716; border-color:#5a3d1e; color:#f0c690}
+
+  section.block{margin:44px 0 0}
+  .block > h2{font-size:15px; font-weight:700; color:#fff; margin:0 0 4px; display:flex; align-items:center; gap:10px}
+  .block > h2 .n{display:inline-flex; width:22px; height:22px; border-radius:6px; background:#c9a06a; color:#1c1408; font-size:12px; align-items:center; justify-content:center; font-weight:800}
+  .block > p.hint{margin:2px 0 18px; color:#a89f94; font-size:13px; line-height:1.55}
+
+  .devices{display:flex; flex-wrap:wrap; gap:30px; align-items:flex-start; justify-content:center}
+
+  /* ---------- marco de dispositivo ---------- */
+  .device{background:#0a0908; border:1px solid #2a241d; border-radius:46px; padding:12px; box-shadow:var(--shadow)}
+  .phone{width:372px}
+  .tablet{width:780px; border-radius:30px; padding:14px}
+  .screen{position:relative; background:var(--paper); overflow:hidden; display:flex; flex-direction:column; color:var(--ink)}
+  .phone .screen{height:726px; border-radius:36px}
+  .tablet .screen{height:600px; border-radius:20px}
+
+  /* fondo familia Cuenta (v-27-cuenta.png): cover, foco, 12–18% opacidad */
+  .bg{position:absolute; inset:0; z-index:0; opacity:.17; pointer-events:none;
+    background:
+      radial-gradient(58% 46% at 80% 16%, #e7ac93 0%, transparent 62%),
+      radial-gradient(52% 58% at 18% 28%, #f0d59f 0%, transparent 62%),
+      radial-gradient(72% 58% at 62% 92%, #b3c8ac 0%, transparent 66%),
+      radial-gradient(42% 40% at 26% 82%, #b6cee0 0%, transparent 66%),
+      #f7efe4;}
+  .bg::after{content:""; position:absolute; width:340px; height:340px; right:-90px; top:120px; border-radius:50%;
+    background:radial-gradient(circle at 40% 40%, #d98d6e, #e9b98f 60%, transparent 72%); opacity:.9}
+  .bg::before{content:""; position:absolute; width:220px; height:220px; left:-60px; bottom:60px; border-radius:46% 54% 60% 40%;
+    background:radial-gradient(circle at 50% 50%, #9fbf9a, transparent 70%); opacity:.85}
+  /* superficie opaca donde va texto largo (doc 43 §9) */
+  .calm{position:absolute; left:0; right:0; bottom:0; height:66%; z-index:0;
+    background:linear-gradient(to top, var(--paper) 62%, rgba(251,247,241,0)); pointer-events:none}
+
+  .statusbar{position:relative; z-index:2; display:flex; justify-content:space-between; align-items:center;
+    padding:12px 22px 4px; font-size:12.5px; font-weight:650; color:var(--ink)}
+  .statusbar .sb-r{display:flex; gap:6px; align-items:center; letter-spacing:.5px}
+  .appbar{position:relative; z-index:2; display:flex; align-items:center; gap:12px; padding:8px 18px 12px; background:transparent}
+  .iconbtn{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.72);
+    border:1px solid var(--line); color:var(--ink); font-size:18px; font-weight:700}
+  .appbar h3{margin:0; font-size:20px; font-weight:750; letter-spacing:-.01em}
+  .appbar .sub2{margin:1px 0 0; font-size:12px; color:var(--muted); font-weight:500}
+
+  .scroll{position:relative; z-index:2; flex:1; overflow:hidden; padding:6px 18px 12px;
+    display:flex; flex-direction:column; gap:16px}
+
+  /* ---------- previsualización ---------- */
+  .prev-box{background:rgba(255,255,255,.82); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px; backdrop-filter:blur(2px)}
+  .prev-tag{display:flex; align-items:center; gap:8px; font-size:11px; font-weight:750; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--accent-2); margin:0 2px 10px}
+  .prev-tag .lock{font-size:12px}
+  .mini-nav{display:flex; gap:8px; align-items:center; padding:9px 10px; border-radius:11px;
+    background:var(--card); border:1px solid var(--line); margin-bottom:10px}
+  .mini-nav .nb{height:8px; border-radius:5px; background:var(--line-2); flex:1}
+  .mini-nav .nb.on{background:var(--accent); flex:0 0 34px}
+  .ficha{background:var(--card); border:1px solid var(--line); border-radius:13px; padding:14px}
+  .ficha .fe{font-size:10.5px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+  .ficha h4{margin:5px 0 7px; font-size:16.5px; font-weight:750; line-height:1.25; color:var(--ink)}
+  .ficha p{margin:0 0 12px; font-size:13px; line-height:1.5; color:var(--ink-2)}
+  .ficha .fbtn{display:inline-flex; align-items:center; gap:7px; background:var(--accent); color:#fff; border:1px solid transparent;
+    font-size:13px; font-weight:700; padding:9px 15px; border-radius:999px}
+  .ficha .frow{display:flex; gap:8px; align-items:center; margin-top:12px}
+  .ficha .frow .mini{font-size:11.5px; color:var(--muted)}
+
+  /* contraste aumentado — tokens semánticos de mayor contraste, sin transparencias */
+  .screen.hc .prev-box{background:#fff; border-color:var(--hc-line); backdrop-filter:none}
+  .screen.hc .bg{opacity:.06}
+  .screen.hc .mini-nav{background:var(--hc-bg); border-color:var(--hc-line)}
+  .screen.hc .mini-nav .nb{background:#c9c9c9}
+  .screen.hc .mini-nav .nb.on{background:var(--hc-accent)}
+  .screen.hc .ficha{background:var(--hc-bg); border:2px solid var(--hc-line)}
+  .screen.hc .ficha .fe{color:var(--hc-accent)}
+  .screen.hc .ficha h4{color:var(--hc-ink)}
+  .screen.hc .ficha p{color:var(--hc-muted)}
+  .screen.hc .ficha .fbtn{background:var(--hc-accent); border-color:var(--hc-line); color:#fff}
+
+  /* lectura ampliada — más tamaño y espaciado de lectura */
+  .screen.lr .ficha{padding:18px}
+  .screen.lr .ficha h4{font-size:20px; line-height:1.3}
+  .screen.lr .ficha p{font-size:16px; line-height:1.95; letter-spacing:.003em}
+  .screen.lr .ficha .fbtn{font-size:14.5px; padding:11px 18px}
+  .screen.lr .ficha .frow{margin-top:16px}
+
+  /* reducir movimiento — anotación de estado */
+  .motion-badge{display:none}
+
+  /* ---------- switches ---------- */
+  .list{background:rgba(255,255,255,.9); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden}
+  .switch{display:flex; align-items:center; gap:14px; padding:15px 15px; border-top:1px solid var(--line); cursor:pointer}
+  .switch:first-child{border-top:0}
+  .switch .txt{flex:1; min-width:0}
+  .switch .txt .t{font-size:14.5px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:8px}
+  .switch .txt .d{font-size:12px; color:var(--muted); line-height:1.45; margin-top:3px}
+  .switch .badge{font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:var(--accent-2);
+    background:var(--accent-soft); border:1px solid #f0d3b4; padding:2px 7px; border-radius:6px}
+  .switch input{position:absolute; opacity:0; width:0; height:0}
+  .track{flex:0 0 auto; width:50px; height:29px; border-radius:999px; background:#d8cfc4; position:relative; transition:background .18s ease}
+  .track::after{content:""; position:absolute; top:3px; left:3px; width:23px; height:23px; border-radius:50%; background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.28); transition:transform .18s ease}
+  .switch input:checked + .track{background:var(--accent)}
+  .switch input:checked + .track::after{transform:translateX(21px)}
+  .switch input:focus-visible + .track{outline:3px solid #6b8afd; outline-offset:2px}
+  .switch .state{font-size:11px; font-weight:700; color:var(--ok); width:78px; text-align:right}
+  .switch .state .s-on{display:none}
+  .switch input:checked ~ .state .s-off{display:none}
+  .switch input:checked ~ .state .s-on{display:inline}
+
+  .persist{display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:13px;
+    background:rgba(255,255,255,.72); border:1px dashed var(--line-2); font-size:12px; color:var(--muted); line-height:1.5}
+  .persist b{color:var(--ink-2)}
+
+  /* ---------- barra de aplicar ---------- */
+  .applybar{position:relative; z-index:3; flex:0 0 auto; padding:12px 18px 16px;
+    background:linear-gradient(to top, var(--paper) 78%, rgba(251,247,241,.4)); border-top:1px solid var(--line);
+    display:flex; align-items:center; gap:10px}
+  .applybar .dirty{flex:1; font-size:12px; font-weight:650; color:var(--accent-2); display:flex; align-items:center; gap:7px}
+  .applybar .dirty .dotlive{width:8px; height:8px; border-radius:50%; background:var(--accent)}
+  .btn{appearance:none; border:1px solid transparent; border-radius:999px; font-size:14px; font-weight:750; padding:12px 20px; cursor:pointer}
+  .btn.ghost{background:transparent; border-color:var(--line-2); color:var(--ink-2)}
+  .btn.primary{background:var(--accent); color:#fff; box-shadow:0 6px 16px rgba(180,83,9,.3)}
+  .btn:disabled{opacity:.45; cursor:not-allowed; box-shadow:none}
+
+  /* ---------- modal de descarte ---------- */
+  .scrim{position:absolute; inset:0; z-index:5; background:rgba(30,24,17,.42); display:flex; align-items:flex-end}
+  .sheet{width:100%; background:var(--paper); border-radius:22px 22px 0 0; padding:18px 18px 20px; border-top:1px solid var(--line)}
+  .sheet h4{margin:0 0 4px; font-size:16px; font-weight:750; color:var(--ink)}
+  .sheet p{margin:0 0 16px; font-size:13px; color:var(--muted); line-height:1.5}
+  .sheet .acts{display:flex; flex-direction:column; gap:9px}
+  .sheet .btn{width:100%; text-align:center}
+
+  /* ---------- tablet con panel persistente ---------- */
+  .tablet .screen{flex-direction:row}
+  .tpanel{position:relative; z-index:2; width:250px; flex:0 0 250px; background:rgba(255,255,255,.9);
+    border-right:1px solid var(--line); padding:16px 14px; display:flex; flex-direction:column; gap:6px; backdrop-filter:blur(3px)}
+  .tpanel .tbrand{font-size:13px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--accent-2); margin:4px 8px 12px}
+  .tpanel .titem{padding:10px 12px; border-radius:10px; font-size:13.5px; font-weight:600; color:var(--ink-2)}
+  .tpanel .titem.on{background:var(--accent-soft); color:var(--accent-2); border:1px solid #f0d3b4}
+  .tmain{position:relative; z-index:1; flex:1; display:flex; flex-direction:column; min-width:0}
+  .thead{position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding:16px 20px 10px}
+  .thead h3{margin:0; font-size:19px; font-weight:750}
+  .thead .pill{font-size:11px; font-weight:750; color:var(--ok); background:#e6f2ec; border:1px solid #c6e2d4; padding:4px 10px; border-radius:999px}
+  .tcols{position:relative; z-index:2; flex:1; overflow:hidden; display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:4px 20px 16px}
+
+  /* estados de carga / vacío */
+  .skeleton{background:linear-gradient(90deg,#ece4d9 25%,#f5efe6 37%,#ece4d9 63%); background-size:400% 100%;
+    animation:shim 1.4s ease infinite; border-radius:8px}
+  @keyframes shim{0%{background-position:100% 0}100%{background-position:0 0}}
+  .empty{display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; padding:22px 12px; color:var(--muted)}
+  .empty .circ{width:46px; height:46px; border-radius:50%; background:var(--accent-soft); border:1px solid #f0d3b4; display:grid; place-items:center; font-size:20px}
+
+  /* ---------- leyendas ---------- */
+  .legend{list-style:none; margin:16px 0 0; padding:0; max-width:400px}
+  .legend li{display:flex; gap:9px; font-size:12.5px; line-height:1.55; color:#cbc4ba; margin-bottom:8px}
+  .legend li .ln{flex:0 0 auto; width:19px; height:19px; border-radius:6px; background:#c9a06a; color:#1c1408;
+    font-size:11px; font-weight:800; display:grid; place-items:center; margin-top:1px}
+  .device-col{display:flex; flex-direction:column; align-items:center}
+  .device-col > .cap{margin-top:14px; font-size:13px; font-weight:700; color:#fff; text-align:center}
+  .device-col > .cap span{display:block; font-weight:500; color:#a89f94; font-size:12px; margin-top:2px}
+
+  /* ---------- comparativa fichas + tokens ---------- */
+  .compare{background:#221d16; border:1px solid #33291d; border-radius:20px; padding:22px; margin-top:8px}
+  .compare h3{margin:0 0 3px; font-size:15px; color:#fff}
+  .compare .cp{color:#a89f94; font-size:12.5px; margin:0 0 18px}
+  .cmp-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px}
+  .cmp-col{background:var(--paper); border-radius:16px; padding:16px; border:1px solid var(--line)}
+  .cmp-col .ctag{font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--accent-2); margin-bottom:12px}
+  .cmp-col.hc-col{background:#fff; border:2px solid #000}
+  .cmp-col.hc-col .ctag{color:#7a2e00}
+  .tok-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
+  .sw{width:46px; height:46px; border-radius:10px; border:1px solid rgba(0,0,0,.12); display:flex; align-items:flex-end; padding:4px; font-size:8.5px; font-weight:700; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .note{font-size:12px; color:#a89f94; margin-top:14px; line-height:1.55}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">TAO-181 · HU-01-17 · EP-01</div>
+  <h1>Ajustes — reducir movimiento, contraste aumentado y legibilidad</h1>
+  <p class="sub">Previsualización y aplicación de preferencias de accesibilidad. La maqueta muestra la pantalla destino del pie del menú a pantalla completa (fondo familia Cuenta), la previsualización que solo cambia dentro de su zona, el descarte al salir sin aplicar y el panel persistente de tablet. Apariencia clara fija, sin selector de tema.</p>
+  <div class="chips">
+    <span class="chip accent">Aplicar rige en toda la app</span>
+    <span class="chip">Persistencia local por dispositivo</span>
+    <span class="chip">Teléfono + tablet · escala 200 %</span>
+    <span class="chip">Estado de controles anunciado</span>
+  </div>
+
+  <!-- ============ 1) TELÉFONO — ESTADO INICIAL ============ -->
+  <section class="block">
+    <h2><span class="n">1</span> Teléfono · Ajustes — estado inicial</h2>
+    <p class="hint">Apariencia clara fija con los tres controles. Sin cambios todavía: la previsualización muestra el estado por defecto y no hay nada que aplicar.</p>
+    <div class="devices">
+
+      <div class="device-col">
+        <div class="device phone">
+          <div class="screen">
+            <div class="bg"></div><div class="calm"></div>
+
+            <div class="statusbar"><span>9:41</span><span class="sb-r">▮▮▮ ⌁ 100%</span></div>
+            <div class="appbar">
+              <span class="iconbtn">‹</span>
+              <div><h3>Ajustes</h3><p class="sub2">Accesibilidad de esta app</p></div>
+            </div>
+
+            <div class="scroll">
+              <div class="prev-box">
+                <div class="prev-tag"><span class="lock">◉</span> Previsualización · solo esta zona cambia</div>
+                <div class="mini-nav"><span class="nb on"></span><span class="nb"></span><span class="nb"></span><span class="nb"></span></div>
+                <div class="ficha">
+                  <div class="fe">Ficha del método</div>
+                  <h4>Respiración en cuatro tiempos</h4>
+                  <p>Inhala contando cuatro, sostén cuatro, exhala cuatro y pausa cuatro. Repite el ciclo con suavidad durante cinco minutos.</p>
+                  <button class="fbtn" type="button">Comenzar ▸</button>
+                </div>
+              </div>
+
+              <div class="list">
+                <label class="switch">
+                  <span class="txt"><span class="t">Reducir movimiento</span>
+                    <span class="d">Quita desplazamientos; solo fundidos de hasta 120 ms.</span></span>
+                  <input type="checkbox" id="rm-a">
+                  <span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+                <label class="switch">
+                  <span class="txt"><span class="t">Contraste aumentado <span class="badge">Tokens</span></span>
+                    <span class="d">Paleta de mayor contraste, sin transparencias tenues.</span></span>
+                  <input type="checkbox" id="hc-a">
+                  <span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+                <label class="switch">
+                  <span class="txt"><span class="t">Legibilidad · lectura ampliada</span>
+                    <span class="d">Las fichas del método usan texto más grande y espaciado amplio.</span></span>
+                  <input type="checkbox" id="lr-a">
+                  <span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+              </div>
+
+              <div class="persist"><span>🔒</span><span>Se guardan <b>solo en este dispositivo</b>. Iniciar sesión o sincronizar no las reemplaza.</span></div>
+            </div>
+
+            <div class="applybar">
+              <span class="dirty" style="color:var(--muted)">Sin cambios que aplicar</span>
+              <button class="btn ghost" type="button">Descartar</button>
+              <button class="btn primary" type="button" disabled>Aplicar</button>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Estado por defecto<span>Nada aplicado</span></p>
+      </div>
+
+      <ul class="legend">
+        <li><span class="ln">1</span> Destino del pie del menú (HU-01-08), a pantalla completa.</li>
+        <li><span class="ln">2</span> Apariencia clara fija: no hay selector de tema ni de idioma.</li>
+        <li><span class="ln">3</span> Cada control anuncia su estado (texto visible + semántica de interruptor).</li>
+        <li><span class="ln">4</span> Fondo familia Cuenta (v-27-cuenta.png): cover con foco, opacidad 12–18 %, gran zona tranquila y texto largo sobre superficie opaca.</li>
+        <li><span class="ln">5</span> Con “Aplicar” deshabilitado mientras no hay cambios en la previsualización.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 2) TELÉFONO — PREVISUALIZACIÓN ACTIVA ============ -->
+  <section class="block">
+    <h2><span class="n">2</span> Teléfono · previsualización activa (sin aplicar)</h2>
+    <p class="hint">El usuario activó <b>Contraste aumentado</b> y <b>Lectura ampliada</b>. Solo cambia la previsualización; el resto de la app sigue igual hasta tocar Aplicar. La barra inferior avisa que hay cambios pendientes.</p>
+    <div class="devices">
+
+      <div class="device-col">
+        <div class="device phone">
+          <div class="screen hc lr">
+            <div class="bg"></div><div class="calm"></div>
+
+            <div class="statusbar"><span>9:41</span><span class="sb-r">▮▮▮ ⌁ 100%</span></div>
+            <div class="appbar">
+              <span class="iconbtn">‹</span>
+              <div><h3>Ajustes</h3><p class="sub2">Accesibilidad de esta app</p></div>
+            </div>
+
+            <div class="scroll">
+              <div class="prev-box">
+                <div class="prev-tag"><span class="lock">◉</span> Previsualización · solo esta zona cambia</div>
+                <div class="mini-nav"><span class="nb on"></span><span class="nb"></span><span class="nb"></span><span class="nb"></span></div>
+                <div class="ficha">
+                  <div class="fe">Ficha del método</div>
+                  <h4>Respiración en cuatro tiempos</h4>
+                  <p>Inhala contando cuatro, sostén cuatro, exhala cuatro y pausa cuatro. Repite el ciclo con suavidad durante cinco minutos.</p>
+                  <div class="frow">
+                    <button class="fbtn" type="button">Comenzar ▸</button>
+                    <span class="mini">Texto ampliado</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="list">
+                <label class="switch">
+                  <span class="txt"><span class="t">Reducir movimiento</span>
+                    <span class="d">Quita desplazamientos; solo fundidos de hasta 120 ms.</span></span>
+                  <input type="checkbox" id="rm-b">
+                  <span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+                <label class="switch">
+                  <span class="txt"><span class="t">Contraste aumentado <span class="badge">Tokens</span></span>
+                    <span class="d">Paleta de mayor contraste, sin transparencias tenues.</span></span>
+                  <input type="checkbox" id="hc-b" checked>
+                  <span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+                <label class="switch">
+                  <span class="txt"><span class="t">Legibilidad · lectura ampliada</span>
+                    <span class="d">Las fichas del método usan texto más grande y espaciado amplio.</span></span>
+                  <input type="checkbox" id="lr-b" checked>
+                  <span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="applybar">
+              <span class="dirty"><span class="dotlive"></span> Cambios sin aplicar</span>
+              <button class="btn ghost" type="button">Descartar</button>
+              <button class="btn primary" type="button">Aplicar</button>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Dos ajustes en preview<span>Solo la previsualización cambió</span></p>
+      </div>
+
+      <ul class="legend">
+        <li><span class="ln">1</span> La ficha de la previsualización usa los tokens de mayor contraste: bordes negros, sin transparencias.</li>
+        <li><span class="ln">2</span> Lectura ampliada: texto más grande y espaciado de lectura más amplio, sin cortes ni acciones ocultas.</li>
+        <li><span class="ln">3</span> Fuera de la previsualización nada cambia hasta “Aplicar”.</li>
+        <li><span class="ln">4</span> “Descartar” revierte el preview; salir sin aplicar también lo descarta.</li>
+        <li><span class="ln">5</span> Al aplicar, el cambio rige de inmediato en vistas, paneles, modales, fondos, controles, tablero y animaciones.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 3) SALIR SIN APLICAR ============ -->
+  <section class="block">
+    <h2><span class="n">3</span> Teléfono · salir sin aplicar — descarte</h2>
+    <p class="hint">Si hay cambios en la previsualización y el usuario retrocede, se confirma el descarte: no se guarda nada en <b>preferencia_local</b>.</p>
+    <div class="devices">
+
+      <div class="device-col">
+        <div class="device phone">
+          <div class="screen hc">
+            <div class="bg"></div><div class="calm"></div>
+
+            <div class="statusbar"><span>9:41</span><span class="sb-r">▮▮▮ ⌁ 100%</span></div>
+            <div class="appbar">
+              <span class="iconbtn">‹</span>
+              <div><h3>Ajustes</h3><p class="sub2">Accesibilidad de esta app</p></div>
+            </div>
+
+            <div class="scroll">
+              <div class="prev-box">
+                <div class="prev-tag"><span class="lock">◉</span> Previsualización</div>
+                <div class="ficha">
+                  <div class="fe">Ficha del método</div>
+                  <h4>Respiración en cuatro tiempos</h4>
+                  <p>Inhala contando cuatro, sostén cuatro, exhala cuatro y pausa cuatro.</p>
+                  <button class="fbtn" type="button">Comenzar ▸</button>
+                </div>
+              </div>
+              <div class="list">
+                <label class="switch">
+                  <span class="txt"><span class="t">Contraste aumentado</span><span class="d">Paleta de mayor contraste.</span></span>
+                  <input type="checkbox" id="hc-c" checked><span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+                <label class="switch">
+                  <span class="txt"><span class="t">Legibilidad · lectura ampliada</span><span class="d">Texto más grande en las fichas.</span></span>
+                  <input type="checkbox" id="lr-c"><span class="track"></span>
+                  <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- modal de descarte -->
+            <div class="scrim">
+              <div class="sheet">
+                <h4>¿Descartar los cambios?</h4>
+                <p>Los ajustes que probaste en la previsualización no se guardarán en este dispositivo.</p>
+                <div class="acts">
+                  <button class="btn primary" type="button">Seguir editando</button>
+                  <button class="btn ghost" type="button">Descartar y salir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Confirmación de descarte<span>No se persiste nada</span></p>
+      </div>
+
+      <ul class="legend">
+        <li><span class="ln">1</span> “Salir sin aplicar” descarta la previsualización completa.</li>
+        <li><span class="ln">2</span> Ningún cambio llega a preferencia_local sin “Aplicar”.</li>
+        <li><span class="ln">3</span> Volver a la app restaura lo último aplicado y guardado.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 4) TABLET — PANEL PERSISTENTE ============ -->
+  <section class="block">
+    <h2><span class="n">4</span> Tablet · panel persistente</h2>
+    <p class="hint">Con panel persistente, aplicar un ajuste actualiza panel y contenido sin reiniciar la app. El estado aplicado rige en toda la superficie.</p>
+    <div class="devices">
+      <div class="device-col" style="width:100%">
+        <div class="device tablet">
+          <div class="screen hc lr">
+            <div class="bg"></div>
+
+            <div class="tpanel">
+              <div class="tbrand">Menú</div>
+              <div class="titem">Inicio</div>
+              <div class="titem">Método</div>
+              <div class="titem">Tablero</div>
+              <div class="titem">Cuenta</div>
+              <div class="titem on">Ajustes</div>
+            </div>
+
+            <div class="tmain">
+              <div class="thead"><h3>Ajustes</h3><span class="pill">Aplicado</span></div>
+              <div class="tcols">
+                <div>
+                  <div class="prev-box" style="margin-bottom:14px">
+                    <div class="prev-tag"><span class="lock">◉</span> Previsualización</div>
+                    <div class="ficha">
+                      <div class="fe">Ficha del método</div>
+                      <h4>Respiración en cuatro tiempos</h4>
+                      <p>Inhala contando cuatro, sostén cuatro, exhala cuatro y pausa cuatro. Repite el ciclo con suavidad durante cinco minutos.</p>
+                      <button class="fbtn" type="button">Comenzar ▸</button>
+                    </div>
+                  </div>
+                  <div class="list">
+                    <label class="switch">
+                      <span class="txt"><span class="t">Reducir movimiento</span><span class="d">Sin desplazamientos.</span></span>
+                      <input type="checkbox" id="rm-d" checked><span class="track"></span>
+                      <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                    </label>
+                    <label class="switch">
+                      <span class="txt"><span class="t">Contraste aumentado</span><span class="d">Tokens de mayor contraste.</span></span>
+                      <input type="checkbox" id="hc-d" checked><span class="track"></span>
+                      <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                    </label>
+                    <label class="switch">
+                      <span class="txt"><span class="t">Legibilidad · lectura ampliada</span><span class="d">Fichas ampliadas.</span></span>
+                      <input type="checkbox" id="lr-d" checked><span class="track"></span>
+                      <span class="state"><span class="s-off">Inactivo</span><span class="s-on">Activo</span></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:14px">
+                  <div class="list" style="padding:14px">
+                    <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--accent-2); margin-bottom:10px">El panel ya refleja lo aplicado</div>
+                    <div class="mini-nav"><span class="nb on"></span><span class="nb"></span><span class="nb"></span></div>
+                    <p style="font-size:12.5px; color:var(--muted); margin:11px 0 0; line-height:1.5">El panel izquierdo y el contenido se actualizan en el mismo instante, sin reiniciar la app.</p>
+                  </div>
+
+                  <div class="list" style="padding:14px">
+                    <div style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--accent-2); margin-bottom:10px">Carga · esqueleto</div>
+                    <div class="skeleton" style="height:12px; width:70%; margin-bottom:9px"></div>
+                    <div class="skeleton" style="height:12px; width:90%; margin-bottom:9px"></div>
+                    <div class="skeleton" style="height:12px; width:55%"></div>
+                  </div>
+
+                  <div class="list" style="padding:6px">
+                    <div class="empty">
+                      <span class="circ">↺</span>
+                      <b style="color:var(--ink-2); font-size:13px">No se pudo leer la preferencia guardada</b>
+                      <span style="font-size:12px">Se usan los valores por defecto. Las claves desconocidas vuelven al valor por defecto.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Panel persistente + contenido<span>Aplicado en vivo, sin reinicio · también estados de carga y error</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5) COMPARATIVA DE TOKENS ============ -->
+  <section class="block">
+    <h2><span class="n">5</span> Contraste aumentado y lectura ampliada — antes / después</h2>
+    <p class="hint">Juego de tokens semánticos de contraste aumentado (entregable de Diseño, DEC-232) y efecto de lectura ampliada sobre una ficha del método.</p>
+    <div class="compare">
+      <h3>Ficha del método</h3>
+      <p class="cp">Misma ficha, sin ajustes vs. con contraste aumentado + lectura ampliada.</p>
+      <div class="cmp-grid">
+        <div class="cmp-col">
+          <div class="ctag">Sin ajustes</div>
+          <div class="ficha" style="border:1px solid var(--line)">
+            <div class="fe">Ficha del método</div>
+            <h4 style="font-size:16.5px">Respiración en cuatro tiempos</h4>
+            <p style="font-size:13px; line-height:1.5">Inhala contando cuatro, sostén cuatro, exhala cuatro y pausa cuatro.</p>
+            <button class="fbtn" type="button">Comenzar ▸</button>
+          </div>
+          <div class="tok-row">
+            <span class="sw" style="background:#ffffff; color:#241f1a; text-shadow:none">superficie</span>
+            <span class="sw" style="background:#241f1a">texto</span>
+            <span class="sw" style="background:#b45309">acento</span>
+            <span class="sw" style="background:#e8e0d6; color:#4a4239; text-shadow:none">borde</span>
+          </div>
+        </div>
+        <div class="cmp-col hc-col">
+          <div class="ctag">Contraste aumentado + lectura ampliada</div>
+          <div class="ficha" style="background:#fff; border:2px solid #000">
+            <div class="fe" style="color:#7a2e00">Ficha del método</div>
+            <h4 style="font-size:20px; color:#000">Respiración en cuatro tiempos</h4>
+            <p style="font-size:16px; line-height:1.95; color:#333">Inhala contando cuatro, sostén cuatro, exhala cuatro y pausa cuatro.</p>
+            <button class="fbtn" style="background:#7a2e00; border-color:#000; font-size:14.5px" type="button">Comenzar ▸</button>
+          </div>
+          <div class="tok-row">
+            <span class="sw" style="background:#ffffff; color:#000; text-shadow:none">superficie</span>
+            <span class="sw" style="background:#000000">texto</span>
+            <span class="sw" style="background:#7a2e00">acento</span>
+            <span class="sw" style="background:#1a1a1a">borde</span>
+          </div>
+        </div>
+      </div>
+      <p class="note">Sin transparencias tenues en la variante de contraste aumentado. Ninguna acción queda oculta ni recortada; el texto escala al 200 % del sistema sin cortes. Este juego de tokens falta como entregable de Diseño (DEC-232), incluida la escala estrecha con patrones del rastro de DEC-188.</p>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
