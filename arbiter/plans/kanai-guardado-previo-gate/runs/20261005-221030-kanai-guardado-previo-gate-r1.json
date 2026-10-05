@@ -1,0 +1,226 @@
+{
+  "run_id": "kanai-guardado-previo-gate-r1",
+  "plan_id": "kanai-guardado-previo-gate",
+  "ts_start": "2026-10-05T22:06:00Z",
+  "ts_end": "2026-10-05T22:10:30Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "3c932f1fc5af45d17880cac8a1127ee35008c6fa",
+  "head_ref": "51deac35f94c459c048b37b562f4134f9512981f",
+  "repo": "kanai-app",
+  "plan_phase_ids": [
+    "F1",
+    "F2",
+    "F3"
+  ],
+  "judge_scope": "full",
+  "calibration": "comportamiento",
+  "batches": 1,
+  "consumers": 10,
+  "lines_judged": 302,
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 3,
+    "S3": 2,
+    "consulta": 0
+  },
+  "max_severity": "S2",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "Si el guardado previo falla en una re-entrada, el gate ve solo lo sin commitear y pierde los commits anteriores de la sesion",
+      "where": "server/dispatch/gate.ts:384",
+      "phase": "F1",
+      "confidence": "confirmed",
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "Ronda 1 commitea C1; en la ronda 2 un hook rechaza el guardado. reposOnWorkBranch (preGate.ts:350-357) usa sessionHashes solo con el arbol limpio: con arbol sucio, tests relacionados y N2 ven solo la correccion, sin C1.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "El docstring de repoChangedFiles todavia dice que el gate commitea recien al aprobar",
+      "where": "server/repo/preGate.ts:395",
+      "phase": "F1",
+      "confidence": "confirmed",
+      "info_class": "contradiction_internal",
+      "info_floor": true,
+      "evidence": "preGate.ts:395-397 y docs/todo-jueces-gate-dispatch.md:114 dicen que el gate commitea recien al aprobar; con KANAI_PREGATE_COMMIT encendida commitea al empezar.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "commitBeforeIntegralGate no exige que las sesiones de trabajo esten cerradas y puede atribuir trabajo en curso a otra sesion",
+      "where": "server/dispatch/sessionCommit.ts:206",
+      "phase": "F3",
+      "confidence": "probable",
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "Toma la sesion coding de mayor numero sin mirar su estado. startSessionGate sin sessionId tambien llega por POST /api/dispatch/gate (gate.post.ts:16, sessionId opcional); con S2 abierta, el trabajo quedaria como sesion 3.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "commitBeforeIntegralGate elige la ultima sesion de codigo con un criterio propio en vez de sessionPolicy, sin excluir sesiones reemplazadas",
+      "where": "server/dispatch/sessionCommit.ts:213",
+      "phase": "F3",
+      "confidence": "confirmed",
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "Usa (kind ?? 'coding') === 'coding'; los hermanos usan sessionPolicy(kind).isWork (guided tambien es trabajo) y no mira supersededSessionIds.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f5",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "Al aprobar, todo resto se rotula 'ajustes al cerrar el gate' aunque no haya habido guardado previo",
+      "where": "server/dispatch/gateOutcome.ts:140",
+      "phase": "F1",
+      "confidence": "confirmed",
+      "info_class": "none",
+      "info_floor": false,
+      "evidence": "autoCommitSession pasa post-gate con la bandera encendida y sessionCommit.ts:119 no mira hasPriorCommits: si todos los guardados previos fallaron, el trabajo completo queda rotulado como ajustes.",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 12,
+    "read_full": 10,
+    "skimmed": 0,
+    "not_read": 2,
+    "files": {
+      "read_full": [
+        ".env.example",
+        "docs/configuration.md",
+        "docs/gate-niveles.md",
+        "docs/orquestador-gates-autonomo.md",
+        "docs/subagentes.md",
+        "server/dispatch/gate.ts",
+        "server/dispatch/gateOutcome.ts",
+        "server/dispatch/sessionCommit.ts",
+        "skills/claude/kn-execute-task/SKILL.md",
+        "tests/unit/pregate-commit.test.ts"
+      ],
+      "skimmed": [],
+      "not_read": [
+        "docs/worklog-2026-10-05-sondas-del-intake.md",
+        "docs/README.md"
+      ]
+    },
+    "plan_files": [
+      {
+        "path": ".env.example",
+        "lines": 5,
+        "blob": "7f42c0602452883ed4e80ee2e9e56b731f23757b",
+        "deleted": false
+      },
+      {
+        "path": "docs/configuration.md",
+        "lines": 1,
+        "blob": "95cd31aeb69d69101279aa2c181618363886103c",
+        "deleted": false
+      },
+      {
+        "path": "docs/gate-niveles.md",
+        "lines": 5,
+        "blob": "a8fda96c6809d91dc52c6d99bec35a742ffec46c",
+        "deleted": false
+      },
+      {
+        "path": "docs/orquestador-gates-autonomo.md",
+        "lines": 13,
+        "blob": "623927dd033245f18983ca786c343989a5e9d756",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "416d231730cd55cea3f1b2adcc514841b1c76c8c",
+        "deleted": false
+      },
+      {
+        "path": "docs/subagentes.md",
+        "lines": 3,
+        "blob": "d1231d9feb7891b7d203971ea87d53e6576f9647",
+        "deleted": false
+      },
+      {
+        "path": "docs/worklog-2026-10-05-sondas-del-intake.md",
+        "lines": 109,
+        "blob": "6d7dc81b76e8742b7720c294e838613fad9fd0c5",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gate.ts",
+        "lines": 5,
+        "blob": "64325dbc3058a3583ef81a763e9f503b9922b71a",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateOutcome.ts",
+        "lines": 5,
+        "blob": "3e40fb0c37e3ec79bff5a5e5ee37dbb702c3fba2",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/sessionCommit.ts",
+        "lines": 92,
+        "blob": "8e2aef30451f5db3f32076a801fb191fbd9fdad0",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-execute-task/SKILL.md",
+        "lines": 4,
+        "blob": "66c4e075a7092bf832c231b0e4a470c1a21fe5bc",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/pregate-commit.test.ts",
+        "lines": 169,
+        "blob": "c3d10d0c02263f79d92089dd86427014de956798",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      ".env.example": "7f42c0602452883ed4e80ee2e9e56b731f23757b",
+      "docs/configuration.md": "95cd31aeb69d69101279aa2c181618363886103c",
+      "docs/gate-niveles.md": "a8fda96c6809d91dc52c6d99bec35a742ffec46c",
+      "docs/orquestador-gates-autonomo.md": "623927dd033245f18983ca786c343989a5e9d756",
+      "docs/subagentes.md": "d1231d9feb7891b7d203971ea87d53e6576f9647",
+      "server/dispatch/gate.ts": "64325dbc3058a3583ef81a763e9f503b9922b71a",
+      "server/dispatch/gateOutcome.ts": "3e40fb0c37e3ec79bff5a5e5ee37dbb702c3fba2",
+      "server/dispatch/sessionCommit.ts": "8e2aef30451f5db3f32076a801fb191fbd9fdad0",
+      "skills/claude/kn-execute-task/SKILL.md": "66c4e075a7092bf832c231b0e4a470c1a21fe5bc",
+      "tests/unit/pregate-commit.test.ts": "c3d10d0c02263f79d92089dd86427014de956798"
+    },
+    "summary": {
+      "files": 12,
+      "reviewed_files": 10,
+      "lines": 412,
+      "reviewed_lines": 302,
+      "pct_lines": 73,
+      "excluded": []
+    }
+  },
+  "verdict_expected_by_rubric": "iterar"
+}
