@@ -48,4 +48,4 @@
 
 ## Plan
 
-0 de 5 fases cerradas, fase actual F1. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-verificacion-obligatoria/plan.md
+1 de 5 fases cerradas, fase actual F2. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-verificacion-obligatoria/plan.md
