@@ -1,7 +1,7 @@
 # F1 — Resultado: las políticas del ticket sobreviven al rearme
 
-Fecha: 2026-10-05. Cierre de la fase F1 del plan. Los números salen de rearmar (`db:rebuild --fresh`)
-**sobre copias** del store real, nunca sobre el vivo.
+Fecha: 2026-10-05. **Fase cerrada** (juez de fase: aprobable_con_nits). Los números salen de rearmar
+(`db:rebuild --fresh`) **sobre copias** del store real, nunca sobre el vivo.
 
 ## Qué se cambió
 
@@ -13,14 +13,14 @@ Fecha: 2026-10-05. Cierre de la fase F1 del plan. Los números salen de rearmar 
 | Texto (vuelta) | El importador las **lee** (con default ante ausencia o valor corrupto) |
 | Autopilot | El mapa dejó de degradar los valores nativos: `autonomous`/`per_session` hacen ida y vuelta |
 | Re-render | Setear la config **reescribe el `.md`**, por las dos vías (antes no lo hacía) |
-| Backfill | Se re-renderizaron los 56 `.md` afectados del store vivo (56 reescritos, 0 fallos) |
+| Backfill | Se re-renderizaron y **se commitearon** los 56 `.md` afectados del store vivo |
 
 ## El antes y el después (medido)
 
 | Medición | Antes | Después |
 |---|---|---|
 | Políticas no-default que sobreviven al rearme | **0 de 56** | **56 de 56** |
-| Tickets cuyo `autopilot` se degrada | **51** (48 `autonomous`, 3 `per_session`) | **0** |
+| Tickets cuyo `autopilot` se degrada | **51** | **0** |
 | Proyectos nativos (sin DKC detrás) | **0 %** (0 de 40) | **100 %** (taomangalam 37/37, kn_bench 2/2, kanai_self 1/1, kanai_test 2/2) |
 
 Testigo de punta a punta: `KT-002` (proyecto nativo `kanai_test`) conservó sus cinco valores tras el
@@ -37,15 +37,20 @@ rearme. En los proyectos con DKC detrás el resultado "verde" no prueba nada: el
 
 El arreglo materializa el estado **al cambiarlo** y **al crear** el ticket, pero no reescribe el pasado:
 los 606 `.md` del store no tenían las políticas. Se hizo un **backfill acotado** a los 56 afectados (los
-que tienen política no-default; 4 además con el autopilot desalineado), con verificación real por archivo.
-Sin ese paso, el rearme seguía devolviendo esas 56 políticas a su default aunque el mecanismo ya estuviera
-correcto.
+que tienen política no-default; 4 además con el autopilot desalineado), con verificación real por archivo
+y **commiteado en el data repo** (`6a59bb7`). Sin ese paso, el rearme seguía devolviendo esas 56 políticas
+a su default aunque el mecanismo ya estuviera correcto.
 
-## Estado
+## Estado del cierre
 
-- Suite completa: 354 archivos / 2776 tests en verde. `pnpm typecheck`: 0 errores.
-- Migración aplicada sobre el store vivo y verificada por hash; los 606 tickets quedaron en el default.
-- Respaldo previo del store: `/Users/edobacon/.kanai/backups/kanai_data-20261004-221204` (190 MB,
-  `integrity_check` ok, 606 tickets, fuera de todo repo git).
-- Pendiente de F1 para cerrar: solo las dos corridas de comando a cargo del dev (typecheck y el test de
-  config), que el plan exige con `executed_by: dev`.
+- Código: `d9d485b` (el arreglo), `9155af2` (nits del primer juez), `ecf94b4` (quitar la promesa de un
+  guard que todavía no existe). Data repo: `6a59bb7` (backfill), `c0c2463` (registros del cierre).
+- Verificación: `pnpm typecheck` exit 0 (corrido por el dev); test de config 13/13; suite completa
+  **354 archivos / 2777 tests en verde**.
+- Migración aplicada al store vivo y verificada por hash; los 606 tickets quedaron en el default `ask`
+  (ninguno cambió de comportamiento). Respaldo previo:
+  `/Users/edobacon/.kanai/backups/kanai_data-20261004-221204`.
+- **Alcance honesto**: en esta fase la política se persiste; **ningún consumidor la lee todavía**. La
+  exigencia efectiva al cerrar llega en F2 (el motivo estructurado) y F3 (el guard del cierre). Quien fije
+  `required` hoy no verá bloquearse nada.
+- Lo que sigue: F2, el motivo estructurado del ítem no ejecutado y su reporte.
