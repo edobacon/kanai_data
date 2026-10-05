@@ -54,6 +54,7 @@
 | decision-deteccion-en-texto.md | decision | Decisión F2: dónde se aplica la detección de datos dentro de textos | La detección en texto se aplica solo a textos sin estrategia por nombre (A); dentro de un XML cada etiqueta se oculta según la estrategia de su nombre (B) |
 | decision-niveles-y-archivos-helper.md | decision | Decisión F1: regla de niveles proporcional con tope, rangos numéricos y helper en dos archivos | Niveles light/medium/strong según el largo con tope (B), maxDepth 1 a 50, maxTextLength 256 a 1 MB, helper en dos archivos, tipo_documento excluido del catálogo id y estilo ajustado a mano según .eslintrc.js |
 | decision-suite-secure-login-cookie.md | decision | Decisión F9: la suite existente en la línea secure y el login con cookie | La suite de 2021 manda el token en x-access-token y secure lo lee de una cookie httpOnly: 14 de 15 tests dan 401. Se acepta esa línea base (A) y adaptar la suite queda para un ticket aparte |
+| entrega-manual.md | registro | Entrega manual de USUITE-15425 (fuera de la guía) | Lo que queda fuera de la guía por decisión del dev del 2026-10-05: QA en uvmcl (Q1 a Q10 y línea secure con logout), revisión de LOGGING.md, merges a develop/secure-develop y a master/secure-master (con aviso de commits ajenos en develop y /api/version solo en master de sandbox-api); el dev lo sigue y confirma en los logs |
 | plan-original.md | registro | Plan original importado: USUITE-15425: plan de desarrollo (logs de autenticación seguros y siempre visibles) | - |
 | revision-comportamiento-final.md | revision | Revisión F8: comportamiento final frente al análisis y al plan original | Qué cambió respecto del plan (niveles, catálogo, detección en texto, ejemplos de configuración corregidos, datos visibles por defecto, verificación) y los hallazgos de seguridad para el lead |
 | smoke-f7.md | registro | Smoke F7: salida real del logger con authLog (USUITE-15425) | Tres escenarios del smoke de F7 (sin config, config mal formada, info con niveles propios) con 0 claves ficticias, el script para repetirlo en F10 y las salidas completas |
@@ -64,4 +65,4 @@
 
 ## Plan
 
-10 de 11 fases cerradas, fase actual F10. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
+11 de 11 fases cerradas. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/usuite-15425/plan.md
