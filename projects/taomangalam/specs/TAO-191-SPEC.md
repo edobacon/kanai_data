@@ -35,9 +35,9 @@ Qué: exponer mediante obtenerVersionApp la versión mínima, recomendada y el e
 Qué: aplicar el middleware de versión mínima a las peticiones /v1 con cabeceras de app y responder 426 version_minima con versionMinima cuando la compilación no está soportada. Por qué: impedir el consumo con versiones incompatibles, conservando la consulta sin cabecera y el acceso de plataformas sin app_release.
 
 ### REQ-03 `confirmed`
-> Fuente: docs/backlog/EP-03a_identidad_de_dispositivo_autorizacion_y_legal.md:1078
+> Fuente: request:adenda-1-2026-10-05;TAO-191-Q1
 
-Qué: servir la configuración pública conforme al contrato, incluyendo accountDeletionPortalUrl configurada para M1a, excluyendo claves sensibles y soportando ETag e If-None-Match. Por qué: los consumidores necesitan configuración actualizada sin exponer secretos ni reutilizar una respuesta obsoleta.
+Qué: servir la configuración pública conforme al contrato, con accountDeletionPortalUrl resuelta por el mecanismo existente de configuración (clave en configuracion_clave, nunca literal dentro del endpoint), usando https://taomangalam.cl como valor provisional para pruebas locales de M1a, excluyendo claves sensibles y soportando ETag e If-None-Match. Por qué: los consumidores necesitan configuración actualizada sin exponer secretos ni reutilizar una respuesta obsoleta; el valor provisional permite implementar y probar en local sin esperar la página definitiva, y al ser configuración se cambia sin tocar código. La adenda 1 no acredita un portal de eliminación real: la comprobación por entorno y la QA en staging siguen pendientes.
 
 ### REQ-04 `confirmed`
 > Fuente: docs/backlog/EP-03a_identidad_de_dispositivo_autorizacion_y_legal.md:1098
@@ -77,14 +77,14 @@ Contrato: rollback: Revertir únicamente los cambios de privilegios y estructura
 #### S1.T4 — Escribir los tests focalizados del proveedor de versión, middleware y privilegios sobre los archivos de pruebas confirmados. Cubrir mínima 20/recomendada 25/build 22, build 18 con 426, igualdad con el mínimo, ausencia de app_release y QA-03a-09-01/02. Verificar los consumidores del contrato y permisos efectivos mediante roles reales de prueba. Registrar citas caso→test y cerrar la sesión con la regresión real del gate.
 Contrato: rollback: Revertir únicamente los tests y datos de prueba añadidos; restaurar cualquier ajuste a tests existentes que haya sido aprobado, sin modificar datos de aplicación.. Status: done
 
-#### S2.T1 — Implementar o completar la consulta real de configuración pública en los archivos verificados, utilizando configuracion_clave y el contrato existente. Incluir accountDeletionPortalUrl con el valor M1a confirmado, excluir claves sensibles y resolver ETag/If-None-Match sobre la representación pública para distinguir 304 sin cambios de 200 cuando cambia la URL.
-Contrato: rollback: Revertir los commits de la consulta y sus ajustes de contrato de forma coherente, conservando valores de configuración, claves sensibles y registros existentes.. Status: pending
+#### S2.T1 — Implementar la consulta parametrizable de configuración pública leyendo accountDeletionPortalUrl desde el mecanismo existente de configuración (fila en configuracion_clave), sin literal de la URL en el handler. Para las pruebas locales de M1a usar https://taomangalam.cl como valor provisional (seed/fixture local o variable de entorno del entorno de desarrollo, según el mecanismo ya existente), entendido como provisional hasta definir la página definitiva. No mutar staging ni ningún entorno remoto: la comprobación por entorno y la QA quedan para S4.
+Contrato: rollback: Revertir los commits de la task conservando la data de configuracion_clave y los registros existentes; no borrar filas de configuración creadas por otros flujos.. Status: done
 
 #### S2.T2 — Revisar la matriz de operaciones por rol para las tablas de configuración que esta sesión cree o modifique. Aplicar los GRANT/REVOKE necesarios para que la lectura pública y la administración real tengan solo sus permisos requeridos, sin extender la revisión a tablas ajenas.
-Contrato: rollback: Restaurar exclusivamente los privilegios y estructura afectados por esta tarea conforme al estado previo registrado, conservando todos los valores de configuración.. Status: pending
+Contrato: rollback: Restaurar exclusivamente los privilegios y estructura afectados por esta tarea conforme al estado previo registrado, conservando todos los valores de configuración.. Status: done
 
 #### S2.T3 — Escribir los tests focalizados de configuración y privilegios: validar el contrato y la URL M1a, ausencia de claves sensibles, 304 con ETag vigente y QA-03a-09-03 con 200 y URL nueva usando el ETag anterior. Verificar operaciones permitidas y denegadas para los roles afectados. Registrar citas caso→test y ejecutar la regresión real al cerrar el gate.
-Contrato: rollback: Revertir únicamente los tests y fixtures introducidos, retirando los datos de prueba sin tocar configuración ni registros existentes.. Status: pending
+Contrato: rollback: Revertir únicamente los tests y fixtures introducidos, retirando los datos de prueba sin tocar configuración ni registros existentes.. Status: done
 
 #### S3.T1 — Integrar el adaptador HTTP real y el almacenamiento de app existentes con la entrega de las sesiones anteriores. Enviar X-App-Version en formato semver+build y X-Plataforma en toda petición; exponer y persistir el estado obtenido del contrato y de 426 version_minima. Aplicar DEC-086: un fallo de red no inventa actualización ni reemplaza el último estado conocido. No implementar pantallas ni avisos.
 Contrato: rollback: Revertir los cambios del adaptador y persistencia manteniendo legibles los datos y registros ya almacenados; no borrar el estado conocido ni alterar consentimientos o versiones legales.. Status: pending
@@ -112,12 +112,12 @@ Contrato: rollback: Revertir únicamente los tests y fixtures añadidos, preserv
 
 **Gate (auto)**: El proveedor real devuelve actualizacion_recomendada para build 22 con mínima 20 y recomendada 25, rechaza build 18 con 426 y permite la consulta sin X-App-Version. Los roles tienen únicamente las operaciones necesarias sobre los datos de versión.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: La configuración pública devuelve la URL M1a configurada sin claves sensibles; un ETag vigente produce 304 y cambiar accountDeletionPortalUrl produce 200 con la URL nueva. Los privilegios de sus tablas respetan los consumidores reales.
 
@@ -133,3 +133,14 @@ Contrato: rollback: Revertir únicamente los tests y fixtures añadidos, preserv
 ### Session 4 · T0 · open
 
 **Gate (auto)**: Verificación real del proveedor sin pantalla propia: respuesta 426 y estado obligatorio en Android con build de prueba contra staging; configuración pública actualizada con ETag anterior; conservación del estado conocido tras reiniciar sin conexión. Registrar evidencia concreta por ítem y, si no se puede ejecutar, la causa; no declarar aprobadas pruebas de avisos de TAO-184/TAO-187.
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-03 (edit) `confirmed`: Qué: servir la configuración pública conforme al contrato, con accountDeletionPortalUrl resuelta por el mecanismo existente de configuración
+
+**Task ops:**
+
+- edit S2.T1 { desc="Implementar la consulta parametrizable de configuración pública leyendo accountDeletionPortalUrl desde el mecanismo existente de configuración (fila en configuracion_clave), sin literal de la URL en el handler. Para las pruebas locales de M1a usar https://taomangalam.cl como valor provisional (seed/fixture local o variable de entorno del entorno de desarrollo, según el mecanismo ya existente), entendido como provisional hasta definir la página definitiva. No mutar staging ni ningún entorno remoto: la comprobación por entorno y la QA quedan para S4.", rollback="Revertir los commits de la task conservando la data de configuracion_clave y los registros existentes; no borrar filas de configuración creadas por otros flujos.", validates=["REQ-03"], verify=["pnpm --filter server test -- public-config"] }
+
