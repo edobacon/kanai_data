@@ -4,7 +4,7 @@
 
 **Intención:** Que la sesion de verificacion de un ticket sea OBLIGATORIA cuando el ticket la tiene: cada item pasa o queda no ejecutado con su motivo, Kanai informa por que, y en la epica la politica se vuelve obligatoria por defecto (fuera de ella sigue advisory).
 **Tags:** repos: kanai-app · labels: verificacion, contrato, calidad, rearme
-**Estado:** 2 de 5 fases cerradas. Juez: por fase (ver el registro de cada fase).
+**Estado:** 3 de 5 fases cerradas. Juez: por fase (ver el registro de cada fase).
 
 ## Registro de avance
 
@@ -12,8 +12,8 @@
 |---|---|---|---|---|---|---|
 | F1 La politica de verificacion, su migracion y su supervivencia real al rearme | Que un ticket tenga una politica de verificacion persistida EN EL TEXTO y que el rearme la reproduzca de verdad (frontmatter + importador, ida y vuelta idempotentes), con default advisory, sin cambiar el comportamiento de ningun ticket existente. | Hecho | 2026-10-05 → 2026-10-05 | d9d485b, 9155af2, ecf94b4 | 4/4 | - |
 | F2 El motivo estructurado y el reporte del porque | Que un item no ejecutado tenga un MOTIVO estructurado, y que Kanai pueda informarlo; y que `pending` deje de ser un estado de reposo cuando la politica es obligatoria. | Hecho | 2026-10-05 → 2026-10-05 | f4773cd, 7238e65, 32ab77c, c21575a, 3252cc5, 8921862 | 3/3 | - |
-| F3 El guard del cierre | Que con la politica obligatoria el cierre exija los items resueltos y pueda REPORTAR que quedo sin correr y por que. | En curso | 2026-10-05 → - | 534f8aa, 322ba93 | 3/3 | - |
-| F4 La epica: obligatoria por defecto | Que en la ejecucion de epica la verificacion sea obligatoria por defecto, en el mismo lugar donde se fuerza autonomo, y que el contrato de entrega lo diga. | Pendiente | - → - | - | 0/3 | F4.1; F4.2; F4.3 |
+| F3 El guard del cierre | Que con la politica obligatoria el cierre exija los items resueltos y pueda REPORTAR que quedo sin correr y por que. | Hecho | 2026-10-05 → 2026-10-05 | 534f8aa, 322ba93 | 3/3 | - |
+| F4 La epica: obligatoria por defecto | Que en la ejecucion de epica la verificacion sea obligatoria por defecto, en el mismo lugar donde se fuerza autonomo, y que el contrato de entrega lo diga. | En curso | 2026-10-05 → - | a976304 | 1/3 | - |
 | F5 Verificacion de punta a punta | Verificar el conjunto de punta a punta, con un item que NO se puede correr y su motivo registrado. | Pendiente | - → - | - | 0/2 | F5.1; F5.2 |
 
 ## Riesgos
@@ -125,8 +125,8 @@
 **Cómo deshacerla:** Revertir el commit: el cierre vuelve a no exigir la verificacion
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F3** (estado: En curso)
-- **Fecha real:** inicio 2026-10-05 · fin -
+**Registro F3** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
   - [x] F3.pre1: F2 cerrada (el motivo estructurado existe) (F2 quedo cerrada (evento phase_closed e0052) con el juez de fase en aprobable_con_nits (aprobatorio, brief 8bc1259f): el motivo estructurado existe (not_run con causa y nota, validado antes de escribir), un pending se rechaza al registrar con la politica obligatoria, y el porque se informa en el reporte, el gate, la vista y el panel. Ademas el detalle de la verificacion sobrevive al rearme (medido).)
 - **Commits:**
@@ -150,7 +150,8 @@
   - Sin registros.
 - **Juez de la fase:**
   - 2026-10-05 · aprobable_con_reservas: VEREDICTO: aprobable_con_reservas (NO aprobatorio). Texto del juez: 'El guard DET-36 queda bien cableado (registrado solo en ticket->closed) y con la politica required traba por un item pending o por un not_run sin causa, listando el item y el motivo de lo que quedo sin correr; el mensaje real coincide con la evidencia y la copia tiene exactamente 8 items con 1 sin resolver y 1 not_run (sin-pw) con su nota. El escape payload.verificationAck es real: esta declarado en el schema del payload y en HUMAN_AUTH_FLAGS, y guardedTransition confirma por el host antes de correr. Verifique que el registro de guards carga sin el ciclo y que el comportamiento previo de tickets sin la politica no cambia.' DEFECTO (corregido en 322ba93, con test): un item con status 'fail' contaba como RESUELTO, asi que un ticket required cerraba con una verificacion fallida sin ack; contradice el contrato del propio guard y el goal de la fase ('cada item pasa o queda no ejecutado con su motivo'). Se agrego blockingVerificationItems (sin resolver MAS fallidos) y el mensaje ahora dice 'sin resolver o fallidos' con el estado real de cada uno. NITS corregidos en el mismo commit: el escape se evalua despues de mirar los items (no dependia del ack si no habia nada que reconocer); verificationAck entra en CLOSE_ACK_KEYS para la paridad con los otros acks de cierre; y DET-36 se declara en el catalogo como guard de ticket->closed (antes solo figuraba como review). NIT pendiente (de la evidencia): F3.c3 no traia execution con comando y codigo de salida, y su redaccion decia 'el cierre se traba' cuando lo medido fue el veredicto del guard sobre una copia (se registra la aclaracion). El juez descarto como FALSO POSITIVO que el endpoint HTTP no pida confirmacion para los acks: es el patron preexistente de todos.
-- **Cierre y siguiente paso:** Sin cerrar.
+  - 2026-10-05 · aprobable_con_nits: APROBATORIO (aprobable_con_nits). Texto del juez: 'La correccion del defecto previo es REAL y suficiente: blockingVerificationItems incluye fail ademas de pending y not_run/skipped sin causa; el guard la usa y el mensaje dice "sin resolver o fallidos" con el estado real de cada item. unresolvedVerificationItems quedo intacta: correcto, porque el REGISTRO si debe aceptar un fail. El ack se evalua DESPUES de mirar los items y hay test del caso fail (9 casos en el archivo). No rompe lo previo: con politica distinta de required el guard sale ok y DET-20 solo agrega la sesion de verificacion cuando es required; el registro de guards carga sin ciclo (verificationDetail es hoja). Ningun hallazgo permite un cierre indebido, asi que la fase cumple su goal.' HALLAZGOS: (1) RESERVA: det36 no excluye las sesiones de verificacion SUPERSEDED (DET-20 y DET-28 si lo hacen): una verificacion rehecha sigue trabando por sus items viejos y el unico escape es un ack cuya etiqueta afirma algo ya reemplazado; fail-closed y escapable, el juez sugiere resolverlo en F4. (2) NIT: el catch del detalle que no parsea lo saltea en silencio -> fail-open solo alcanzable por un sidecar editado o truncado. (3) NIT: el comentario afirma que sin items que reconocer no se pide confirmacion, pero la confirmacion la dispara humanFlagsIn sobre el payload: el guard no necesita el ack (correcto), la declaracion del comentario no la sostiene el codigo. (4) RESERVA: sin sesion de verificacion no se exige nada (declarado en la tarea): depende de que F4 garantice la sesion y F5 lo verifique de punta a punta. (5) FALSO POSITIVO verificado: el ciclo guards->dispatch->gate->guards ya no existe.
+- **Cierre y siguiente paso:** F3 entrega el GUARD DEL CIERRE. Con la politica de verificacion del ticket en `required`, el cierre exige que todos los items de sus sesiones de verificacion pasen o queden no ejecutados CON su motivo: bloquean los sin resolver (pending, o not_run/skipped sin causa) Y los que FALLARON (un fail no es un item resuelto), y el mensaje dice QUE quedo sin correr y POR QUE, con el estado real de cada item ('fallo', 'sin resolver (pendiente)', 'no ejecutado (causa): nota'). Con la politica advisory (el default de los 606 tickets del store) nada cambia, y un ticket sin sesion de verificacion se omite. Ademas, la politica vuelve BLOQUEANTE el gate de la sesion de verificacion (DET-20), sin cambiar el default. El escape del dev es payload.verificationAck con su motivo: se evalua despues de mirar los items (si no hay nada que reconocer no hace falta), queda en el payload del evento de cierre como los otros acks, y el sistema de confirmacion humana se lo pide a la persona por el host, igual que el teach. En el camino se corrigio un ciclo de modulos (los helpers puros del detalle se movieron a engine/verificationDetail) que rompia la inicializacion del registro de guards. MEDICION REAL sobre una copia del store con una sesion de verificacion real: sin reconocer el motivo el cierre TRABA nombrando el item sin resolver y lo ya no ejecutado con su motivo; reconociendo el motivo se DESTRABA. Verificacion: typecheck exit 0 y 9/9 del archivo de tests, corridos por el dev al HEAD final; suite completa 356 archivos / 2803 tests en verde. Veredicto del juez de fase: aprobable_con_nits (aprobatorio) tras dos iteraciones (la primera encontro que un item fallido contaba como resuelto). Reservas que el juez dejo para F4: el guard no excluye las sesiones de verificacion superseded (una verificacion rehecha sigue trabando por sus items viejos) y un detalle corrupto se saltea en silencio (fail-open improbable).. Siguiente: No aplica: F3 cierra su alcance; F4 (la epica con la verificacion obligatoria por defecto) arranca cuando el dev lo indique, incorporando las dos reservas que dejo el juez.
 
 ### F4. La epica: obligatoria por defecto
 
@@ -159,24 +160,24 @@
 **Cómo deshacerla:** Revertir el commit: la epica vuelve a dejar la verificacion como advisory
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F4** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F4** (estado: En curso)
+- **Fecha real:** inicio 2026-10-05 · fin -
 - **Antes de empezar:**
-  - [ ] F4.pre1: F3 cerrada (el guard honra la politica)
+  - [x] F4.pre1: F3 cerrada (el guard honra la politica) (F3 quedo cerrada (evento phase_closed e0069) con el juez de fase en aprobable_con_nits (aprobatorio, brief b42c70e0): el guard del cierre honra la politica (exige los items resueltos, bloquea tambien los fallidos, reporta que quedo sin correr y por que) y el cierre se destraba con el motivo reconocido y auditado. Verificado con typecheck 0, 9/9 del test del guard y suite completa 2803 tests en verde.)
 - **Commits:**
-  - Sin commits registrados.
+  - `a976304` · feat(epica): la verificacion es obligatoria por defecto en la corrida (F4) · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
-  - **F4.1** pendiente: `verification: 'required'` en la politica de epica
-  - **F4.2** pendiente: El contrato de entrega de la epica nombra la verificacion
-  - **F4.3** pendiente: El cierre del conjunto lo hereda
+  - **F4.1** → La politica de la epica suma `verification: 'required'` (proyeccion, no se persiste en el ticket) y el ticket de la epica la hereda como su politica EFECTIVA: los guards DET-36 y DET-20 la resuelven, y nextAction la refleja en la proyeccion del ticket.. Dónde: server/epics/policy.ts (activeEpicPolicy) + server/engine/guards/closure.ts + server/engine/guards/ticket.ts + server/llm/nextAction.ts. Cómo se comprobó: Test sobre una corrida de epica armada: `activeEpicPolicy` devuelve autopilot 'autonomous' Y verification 'required'. Y la herencia se prueba de verdad: con el ticket en 'ask' pero dentro de la corrida, el guard del cierre exige los items resueltos (DET-36) y el gate de la sesion de verificacion deja de ser advisory (DET-20), mientras que fuera de la epica la misma sesion no traba. 7 casos en tests/unit/epic-policy.test.ts.
+  - **F4.2** → El contrato de entrega de la epica nombra la verificacion: es parte de lo que se entrega, resuelta o con su motivo.. Dónde: server/epics/delivery.ts (epicDeliveryContract.instruction). Cómo se comprobó: Test: la instruccion del contrato menciona la verificacion y su motivo. Ademas el texto declara que no se cierra un ticket dejando items sin resolver ni sin explicar, que es lo que el guard exige desde F3.
+  - **F4.3** → El cierre del conjunto hereda la exigencia por ticket: al completar todos los tickets y hitos, cada ticket ya paso por su propia exigencia de verificacion (la politica efectiva de la epica).. Dónde: server/epics/delivery.ts (contrato de entrega final) + la herencia de F4.1 en los guards. Cómo se comprobó: El cierre del conjunto exige que cada ticket este cerrado, y cada ticket de la epica pasa por el guard del cierre con la politica efectiva obligatoria (F4.1 + F3). El contrato de entrega ademas lo declara al instruir la entrega final. No hay un cambio adicional de codigo: la herencia es la que se probo en F4.1 sobre la corrida.
 - **Criterios cumplidos:**
   - **F4.c1** pendiente (command): `pnpm typecheck` termina con codigo 0.
   - **F4.c2** pendiente (command): Los tests de la politica de epica pasan y afirman la verificacion obligatoria por defecto.
-  - **F4.c3** pendiente (evidence): Evidencia: en una corrida de epica la politica sale obligatoria y el contrato de entrega la nombra.
+  - **F4.c3** Evidencia: en una corrida de epica la politica sale obligatoria y el contrato de entrega la nombra. → Con una corrida de epica armada (store con la corrida en running y el ticket como actual), `activeEpicPolicy` devuelve autopilot 'autonomous' Y verification 'required', y la instruccion del contrato de entrega nombra la verificacion y su motivo. Lo importante: la herencia es REAL y se prueba donde importa, o sea que la politica de la epica la ve el guard del cierre y no solo la proyeccion: con el ticket en 'ask' (su politica persistida) dentro de la corrida, el guard DET-36 TRABA por un item sin resolver y DET-20 exige el gate de la sesion de verificacion; fuera de la epica, la misma sesion no traba. Cubierto por 7 casos en tests/unit/epic-policy.test.ts, que ademas cubren las dos reservas del juez de F3 (sesion reemplazada que no bloquea y detalle ilegible que si bloquea).
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
-  - Sin registros.
+  - Dos correcciones agregadas a F4 por decision del dev: excluir las sesiones de verificacion superseded del guard del cierre, y tratar un detalle ilegible como bloqueante en vez de saltearlo.. Por qué: El juez de F3 las dejo como reservas y sugirio resolverlas en F4, que es donde la politica pasa a ser el default y estos caminos se vuelven frecuentes.. Cambia la decisión: Se sumaron a F4 dos correcciones NO previstas como tarea, senaladas por el juez de F3 y autorizadas por el dev: (a) el guard del cierre ahora IGNORA las sesiones de verificacion reemplazadas (superseded), para que una verificacion rehecha no siga trabando por sus items viejos, y (b) un detalle de verificacion ILEGIBLE deja de saltearse en silencio y se reporta (fail-closed). Ambas con test en tests/unit/epic-policy.test.ts.
 - **Hallazgos:**
   - Sin registros.
 - **Bloqueos:**
