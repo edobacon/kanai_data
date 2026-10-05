@@ -87,13 +87,13 @@ Contrato: rollback: Restaurar exclusivamente los privilegios y estructura afecta
 Contrato: rollback: Revertir únicamente los tests y fixtures introducidos, retirando los datos de prueba sin tocar configuración ni registros existentes.. Status: done
 
 #### S3.T1 — Integrar el adaptador HTTP real y el almacenamiento de app existentes con la entrega de las sesiones anteriores. Enviar X-App-Version en formato semver+build y X-Plataforma en toda petición; exponer y persistir el estado obtenido del contrato y de 426 version_minima. Aplicar DEC-086: un fallo de red no inventa actualización ni reemplaza el último estado conocido. No implementar pantallas ni avisos.
-Contrato: rollback: Revertir los cambios del adaptador y persistencia manteniendo legibles los datos y registros ya almacenados; no borrar el estado conocido ni alterar consentimientos o versiones legales.. Status: pending
+Contrato: rollback: Revertir los cambios del adaptador y persistencia manteniendo legibles los datos y registros ya almacenados; no borrar el estado conocido ni alterar consentimientos o versiones legales.. Status: done
 
 #### S3.T2 — Preparar ep01-release-provider en la configuración de CI verificada, trazando los casos de esta preparación a los tests reales y propagando sus fallos. Preparar ep01-release-integration con las verificaciones originales de aviso obligatorio después de TAO-184 y recomendado después de TAO-187, conservándolas pendientes hasta contar con evidencia real. Registrar el handoff, el requisito de commits integrados y el límite de cierre de HU-03a-09. Si se modifica docs/backlog/EP-03a_identidad_de_dispositivo_autorizacion_y_legal.md, cumplir sus checks de documentación sin modificar fuentes ajenas.
-Contrato: rollback: Revertir los cambios de CI y documentación de esta tarea, conservando el historial de ejecuciones y los criterios originales de las fuentes.. Status: pending
+Contrato: rollback: Revertir los cambios de CI y documentación de esta tarea, conservando el historial de ejecuciones y los criterios originales de las fuentes.. Status: done
 
 #### S3.T3 — Escribir los tests focalizados del adaptador, persistencia y preparación de CI: cabeceras reales, estado recomendado, 426 seguido de reinicio sin red, estado al_dia conservado y ausencia de actualización inventada sin estado previo. Comprobar que los tests usan el contrato y proveedor implementados; verificar propagación de fallos del check y conservación de casos visuales pendientes. Incluir la comprobación condicional de lint del documento fuente si fue modificado. Registrar citas caso→test; el gate ejecutará la regresión completa y la revisión integral antes del handoff.
-Contrato: rollback: Revertir únicamente los tests y fixtures añadidos, preservando la evidencia ya registrada y los datos de aplicación.. Status: pending
+Contrato: rollback: Revertir únicamente los tests y fixtures añadidos, preservando la evidencia ya registrada y los datos de aplicación.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por TAO-191 · Proveedor real de versiones, configuración pública y estado persistente para EP-01
@@ -121,12 +121,12 @@ Contrato: rollback: Revertir únicamente los tests y fixtures añadidos, preserv
 
 **Gate (auto)**: La configuración pública devuelve la URL M1a configurada sin claves sensibles; un ETag vigente produce 304 y cambiar accountDeletionPortalUrl produce 200 con la URL nueva. Los privilegios de sus tablas respetan los consumidores reales.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: El adaptador real envía las cabeceras exigidas, consume el proveedor y conserva el último estado tras un 426 y un reinicio sin red. ep01-release-provider dispone de casos trazados y ep01-release-integration mantiene explícitas las verificaciones visuales pendientes de TAO-184 y TAO-187.
 
