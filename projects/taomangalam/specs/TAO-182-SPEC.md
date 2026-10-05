@@ -98,7 +98,7 @@ Contrato: rollback: Borrar el golden del shell en 1024x768.. Status: done
 Contrato: rollback: Borrar el golden del shell en 768x1024.. Status: done
 
 #### S3.T2 — Generar los goldens de las tres plantillas de HU-01-10 en los cinco tamaños, comprobando que la plantilla de lista y detalle cambia de composición en 840 y no en otro ancho.
-Contrato: rollback: Borrar `app/test/golden/goldens/templates/` y sus entradas en la suite.. Status: pending
+Contrato: rollback: Borrar `app/test/golden/goldens/templates/` y sus entradas en la suite.. Status: done
 
 #### S3.T2.1 — Golden de la plantilla de lista en los cinco tamaños, con el cambio de composición en 840.
 Contrato: rollback: Borrar el golden de la plantilla de lista.. Status: done
@@ -107,13 +107,13 @@ Contrato: rollback: Borrar el golden de la plantilla de lista.. Status: done
 Contrato: rollback: Borrar el golden de la plantilla de detalle.. Status: done
 
 #### S3.T2.3 — Golden de la tercera plantilla de HU-01-10 en los cinco tamaños.
-Contrato: rollback: Borrar el golden de la tercera plantilla.. Status: pending
+Contrato: rollback: Borrar el golden de la tercera plantilla.. Status: done
 
 #### S3.T3 — Documentar el procedimiento de actualización de goldens y asegurar la revisión del diff: la ruta de goldens queda bajo CODEOWNERS de la app y el documento describe regenerar, revisar el diff y adjuntar artifacts.
-Contrato: rollback: Revertir el documento y la entrada de CODEOWNERS.. Status: pending
+Contrato: rollback: Revertir el documento y la entrada de CODEOWNERS.. Status: done
 
 #### S3.T4 — Suite de regresión de shell y plantillas: compara los goldens del shell y de las plantillas e incluye los casos QA-01-16-01 y QA-01-16-03.
-Contrato: rollback: Borrar `shell_golden_test.dart` y `templates_golden_test.dart`; los goldens quedan sin comparación automatizada.. Status: pending
+Contrato: rollback: Borrar `shell_golden_test.dart` y `templates_golden_test.dart`; los goldens quedan sin comparación automatizada.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por HU-01-16 · Verificación responsive con goldens de componentes, shell y plantillas
@@ -143,18 +143,18 @@ Contrato: rollback: Borrar `shell_golden_test.dart` y `templates_golden_test.dar
 
 **Gate (auto)**: Los goldens de todos los componentes de HU-01-03 a HU-01-05 en sus estados, para cada tamaño y escala, quedan versionados y la suite de componentes pasa, fallando si falta cargar una fuente.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
 - [x] S3.T1
 - [x] S3.T1.1
 - [x] S3.T1.2
-- [ ] S3.T2
+- [x] S3.T2
 - [x] S3.T2.1
 - [x] S3.T2.2
-- [ ] S3.T2.3
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T2.3
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: Los goldens del shell (1024x768 con panel persistente; 768x1024 con panel superpuesto cerrado) y de las tres plantillas de HU-01-10 quedan versionados, y el procedimiento de actualización documentado hace que regenerar goldens muestre el diff en el PR.
 
