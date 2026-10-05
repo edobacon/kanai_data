@@ -144,7 +144,7 @@ Contrato: rollback: No aplica cambios de código; si se creó una copia aislada 
 
 **Gate (auto)**: El runner de integración termina en 0 cuando lo único pendiente son los pendientes previstos visibles (avisos de presentación de TAO-184/TAO-187 y QA humana diferida), propaga salida no-cero ante fallo real del proveedor o de evidencia de integración que falle, y dispone de un mecanismo documentado para incorporar evidencia de integración cuando exista. Las pruebas del runner verifican el contrato completo (0 con solo pendientes, no-cero con fallo real) sin aflojar aserciones. No se tocan triggers de CI ni se corre CI remoto.
 
-### Session 5 · T0 · open
+### Session 5 · T0 · continue
 
 **Gate (auto)**: Verificación real del proveedor sin pantalla propia: respuesta 426 y estado obligatorio en Android con build de prueba contra staging; configuración pública actualizada con ETag anterior; conservación del estado conocido tras reiniciar sin conexión. Registrar evidencia concreta por ítem y, si no se puede ejecutar, la causa; no declarar aprobadas pruebas de avisos de TAO-184/TAO-187.
 ## Enmiendas (refine_spec)
