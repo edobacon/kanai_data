@@ -12,13 +12,13 @@
 
 ## Avisos
 
-- Sin avisos.
+- la rama de trabajo codex/epicas-autonomas todavía no existe en kanai-app (se crea al empezar el trabajo)
 
 ## Repos
 
 | Repo | Ruta local | Rama base | Ramas de trabajo | Para qué |
 |---|---|---|---|---|
-| kanai-app | configurada | setup (existe) | codex/epicas-autonomas | Motor de Kanai: ejecución por tarea, gate por sesión, jueces, telemetría y métricas del roadmap |
+| kanai-app | configurada | setup (existe) | codex/epicas-autonomas (por crear) | Motor de Kanai: ejecución por tarea, gate por sesión, jueces, telemetría y métricas del roadmap |
 
 ## Ambientes
 
@@ -50,6 +50,7 @@
 | donde-entra-f3-3.md | analisis | Dónde entra F3.3: la revisión por tarea en vez del diff completo | Reconocimiento para F3.3: el punto de entrada es server/dispatch/gateContext.ts (251 líneas), que en su línea 98 ya recolecta los runs de la sesión con sus files por tarea; la atribución existe en los checkpoints que F2 persiste, así que F3.3 es usarla para componer el material del juez por tarea en vez de agregar. Debe quedar detrás de la misma condición que el alcance de sesión para no contaminar al piloto. |
 | estado-f2-y-piloto.md | registro | Estado: el piloto de la épica está corriendo y F2 está detrás de él | El piloto de la épica está corriendo (corrida cfaec5f3, TAO-181 integrado, TAO-182 en curso), así que F2.pre2 no se cumple y F2-F5 quedan esperando. F2 además contaminaría el piloto si se escribiera ahora. Se registran dos avisos: el F10 del caso de épicas está desactualizado y dos planes inline sobre la misma rama se marcan commits entre sí. |
 | fases-verificacion-obligatoria.md | analisis | Fases para la verificación obligatoria (F6 a F10) | Fases F6 a F10 para la verificación obligatoria: la política y su migración, el motivo estructurado (el cambio que más pesa), el guard del cierre, el default de épica y la verificación de punta a punta. Con las decisiones ya tomadas (causas, bloqueo con escape auditado, sin sesión no hay exigencia) y los criterios de cada fase. |
+| linea-base-f3-ep01.md | registro | Línea base de F3.1 y F3.2: los gates de EP-01 (TAO-181 y TAO-182), congelados | Foto del "antes" para F3.1 y F3.2, tomada del store el 2026-10-05: 15 gates de TAO-181 y TAO-182, de los cuales 10 son válidos (3 iterate, 30%) y 5 son artefactos del gate integral corrido sobre una rama ya integrada (diff vacío o invertido). El piloto anterior cerró; EP-01a (TAO-183 a 188) queda como muestra del "después" con la opción A elegida por el dev. Hallazgo aparte: el gate integral post-integración mide el diff equivocado y contaminaría el "después" si no se filtra. |
 | medicion-mismo-ticket-dos-veces.md | registro | Mejora al diseño de la medición: el mismo ticket DOS veces | Mejora al protocolo de F4: comparar la pata encadenada contra una pata por tarea corrida en el MISMO ticket (KT-012), revirtiendo la rama entre ambas, en vez de contra TAO-182 (otro trabajo). Con la bandera encendida la ejecución por tarea sigue disponible sin pasar sessionScope, así que las dos corridas parten del mismo punto. |
 | pata-por-tarea-piloto.md | registro | La pata "por tarea" del experimento, medida sobre el piloto en curso (provisional) | El piloto produce la pata "por tarea" del experimento con datos frescos: TAO-182 S1 4 corridas/2,56 M, S2 5/5,92 M, S3 4 de 7/4,04 M. Hallazgo: el motor despacha por HOJA (su pendingKey pide taskCode S3.T2.3, una subtarea), así que paga 2 a 3 arranques en frío de más por sesión con subtareas: 1,95 a 3,0 M de tokens y 14 a 29 min extra. F2 tiene que fijar la unidad de dispatch, no solo el brief. |
 | por-sesion-contra-por-tarea.md | analisis | Por sesión o por tarea: análisis medido del arranque en frío, el reloj y la revisión | Medición del store y del código: el arranque en frío se paga 4,6 veces por sesión (654 k tokens de entrada por tarea, 0,77 % de salida), la re-ejecución de una tarea cuesta 1,7x el tiempo, la verificación ya es por sesión y el juez es el mismo modelo. El arranque en frío no prueba el encadenado: prueba que hay que medirlo. |

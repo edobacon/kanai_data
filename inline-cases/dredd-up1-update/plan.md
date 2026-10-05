@@ -4,7 +4,7 @@
 
 **Intención:** Una única entrega final 1.1 para Claude Code, ejecutada y verificada en macOS de forma autónoma por el agente, con diseño portable a Linux y Windows cuya verificación real queda aplazada para después de la implementación. Todas las mejoras acordadas y documentación operativa propia. Preservar íntegra la documentación v1 y generar comparación v1/1.1. Sin push, publicación ni cambios de hooks globales.
 **Tags:** projects: up1 · repos: up1 · branches: feat/dredd-update, feat/dredd-update-1.1 · labels: dredd, tooling, autonomo, metricas, investigacion
-**Estado:** 2 de 8 fases cerradas. Juez final: pendiente.
+**Estado:** 7 de 8 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -12,12 +12,12 @@
 |---|---|---|---|---|---|---|
 | F0 Cerrar contexto y contrato 1.1 | Resolver decisiones y fijar aceptación antes de cambios de implementación. | Hecho | 2026-10-05 → 2026-10-05 | - | 3/3 | - |
 | F1 Base portable y operación segura | Helper, sesiones, guard y ejecución aislada con diseño portable, verificados en macOS. | Hecho | 2026-10-05 → 2026-10-05 | e7778ec, 7ac44c4, 1eed401, 2d80dc0 | 4/4 | - |
-| F2 Rigor del protocolo y auditoría de configuración | Contrato autónomo por fases, hallazgos estructurados y veredicto reproducible. | En curso | 2026-10-05 → - | - | 0/4 | F2.1; F2.2; F2.3; F2.4 |
-| F3 Concurrencia, jurado y verificación independiente | Adaptar esfuerzo al riesgo sin perder evidencia ni control del parent. | Pendiente | - → - | - | 0/4 | F3.1; F3.2; F3.3; F3.4 |
-| F4 Seguimiento local, pre-envío y revisión del delta | Persistir puntos y cobertura para verificar cierres sin olvidar código no leído. | Pendiente | - → - | - | 0/4 | F4.1; F4.2; F4.3; F4.4 |
-| F5 Métricas locales y exportación Markdown | Registrar ejecuciones reales y generar reportes compartibles sin servicios externos. | Pendiente | - → - | - | 0/4 | F5.1; F5.2; F5.3; F5.4 |
-| F6 Documentación 1.1 y comparación histórica | Documentar la implementación real de 1.1 y mantener la referencia v1 íntegra. | Pendiente | - → - | - | 0/3 | F6.1; F6.2; F6.3; F6.4 |
-| F7 Validación integral en macOS y juez final | Aceptar una única entrega 1.1 verificada en macOS, con documentación y auditoría independiente. | Pendiente | - → - | - | 0/4 | F7.1; F7.2; F7.3; F7.4 |
+| F2 Rigor del protocolo y auditoría de configuración | Contrato autónomo por fases, hallazgos estructurados y veredicto reproducible. | Hecho | 2026-10-05 → 2026-10-05 | a7e4c22, 4cb2f83 | 4/4 | - |
+| F3 Concurrencia, jurado y verificación independiente | Adaptar esfuerzo al riesgo sin perder evidencia ni control del parent. | Hecho | 2026-10-05 → 2026-10-05 | 02cfb51, c150cb9, 6fa29a0, 382d0c0 | 4/4 | - |
+| F4 Seguimiento local, pre-envío y revisión del delta | Persistir puntos y cobertura para verificar cierres sin olvidar código no leído. | Hecho | 2026-10-05 → 2026-10-05 | 2e8a1d3, b4c91db, 0a70da3 | 4/4 | - |
+| F5 Métricas locales y exportación Markdown | Registrar ejecuciones reales y generar reportes compartibles sin servicios externos. | Hecho | 2026-10-05 → 2026-10-05 | 4b266f1, 5491bde, 0ddaa1a, cf32715, 52f5c26 | 4/4 | - |
+| F6 Documentación 1.1 y comparación histórica | Documentar la implementación real de 1.1 y mantener la referencia v1 íntegra. | Hecho | 2026-10-05 → 2026-10-05 | 6eb1152 | 3/3 | - |
+| F7 Validación integral en macOS y juez final | Aceptar una única entrega 1.1 verificada en macOS, con documentación y auditoría independiente. | En curso | 2026-10-05 → - | 7a93581, dff7ca8, f757205, 9757aff, 8ca028f, 7f28c23 | 2/4 | - |
 
 ## Riesgos
 
@@ -120,22 +120,23 @@
 **Cómo deshacerla:** Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F2** (estado: En curso)
-- **Fecha real:** inicio 2026-10-05 · fin -
+**Registro F2** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
   - [x] F2.P1: F0 cerrada y F1.1 terminada (prefetch con refs exactos) con sus commits registrados; autorización de implementación vigente. Puede avanzar en paralelo con F1.2-F1.4. (F0 cerrada el 2026-10-05; F1.1 terminada y registrada (bb.py con prefetch y refs por hash) en el commit e7778ec, registrado en F1. Autorización de implementación vigente. F2 avanza en paralelo con el cierre de F1 (juez de fase en curso).)
 - **Commits:**
-  - Sin commits registrados.
+  - `a7e4c22` · feat(dredd): fragmented protocol, triage, rubric and config audit · up1/feat/dredd-update-1.1 (verificado)
+  - `4cb2f83` · fix(dredd): jury for high-risk diffs without logic and dismiss reasons · up1/feat/dredd-update-1.1 (verificado)
 - **Qué se hizo:**
-  - **F2.1** pendiente: Fragmentar protocolo y formalizar resultados
-  - **F2.2** pendiente: Implementar triage y rúbrica
-  - **F2.3** pendiente: Auditar configuraciones y layouts
-  - **F2.4** pendiente: Validar rigor con casos tabulados
+  - **F2.1** → SKILL.md pasó de 1680 líneas a coordinador (157) con mapa; el protocolo vive en protocol/ (setup, core, progress, voice, phases-diff, phases-context, phases-ticket, output) con división sin pérdida verificada al cortar. coverage.json mapea 32 capacidades v1 a secciones 1.1 y 5 novedades. Contrato JSON de hallazgos en core.md (kind, severidad, mecanismo, evidencia, ref, fundamento, piso, contrato compartido). Retirada la rama de KB con servicio de búsqueda externo: KB de archivos con Grep. Jira obligatorio solo en revisión de PR (D3).. Dónde: .claude/skills/dredd/SKILL.md, protocol/*.md, protocol/coverage.json. Cómo se comprobó: test_f2_protocol (5 tests): cada capacidad apunta a un encabezado existente y su sección contiene los textos clave; el coordinador mapea cada archivo; sin referencias excluidas en toda la skill; KB de archivos y opcional; F4 sigue la configuración de KB. · ejecutó: llm
+  - **F2.2** → dredd_triage.py: señales deletes, deps, auth_rbac, migration, shared_contract, config_behavior con evidencia; descarte solo con motivo no vacío; topología por lanes de lógica (un layout con claves del core cuenta como lógica); perfil de revisores D1; fases aplicables y excluidas con motivo, F2.55 a confirmar; contexto de AC por modo (D3). dredd_rubric.py: validación del contrato, dedup por repo+archivo+mecanismo con severidad más alta, tabla de veredicto D4 con nombres v1 y override con motivo. CLI dredd-review.py triage/verdict.. Dónde: .claude/skills/dredd/scripts/dredd_triage.py, dredd_rubric.py, dredd_diff.py, dredd-review.py; protocol/core.md (contrato, dedup, tabla). Cómo se comprobó: test_f2_triage 8 tests y test_f2_rubric 9 tests OK en Python 3.9 y 3.14. · ejecutó: llm
+  - **F2.3** → dredd_config_audit.py + dredd-review.py layout-refs/config-consumers: relationDisplayFields contra objetos con unión core+mod por nombre, record types rt__Tipo__Base o baseObject, layouts anidados, no resueltos declarados, in_diff para separar nuevo de preexistente, campos de sistema; consumidores de una clave por repo marcando los de servidor. Nueva Fase 2.8 en protocol/phases-context.md con severidad según consumidor.. Dónde: .claude/skills/dredd/scripts/dredd_config_audit.py; protocol/phases-context.md Fase 2.8. Cómo se comprobó: test_f2_config 8 tests OK con fixtures de objetos core, mod y record type. · ejecutó: llm
+  - **F2.4** → Casos tabulados de veredicto: S0, S1, un S2, dos S2, S2 de contrato compartido, dos S2 con piso informativo, S2 real más uno de piso, solo S3, solo consulta, vacío; un finding sin evidencia o ref se rechaza (debe pasar a consulta); consulta no lleva severidad; dedup de mismo mecanismo y separación de mismo síntoma en otro archivo; override con y sin motivo.. Dónde: .claude/skills/dredd/scripts/tests/test_f2_rubric.py. Cómo se comprobó: 10 casos de la tabla y 8 tests de contrato, dedup y override pasan en 3.9 y 3.14. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F2.C1** pendiente (evidence): Suite de F2 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f2_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F2 fijado en F0.3 (nunca 0); suites test_f2_protocol, test_f2_triage, test_f2_rubric y test_f2_config presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro.
-  - **F2.C2** pendiente (evidence): Mapa de fases demuestra preservación de capacidades v1 y autonomía del nuevo protocolo.
-  - **F2.C3** pendiente (evidence): Veredicto calculado coincide con fixtures; cada hallazgo incluye mecanismo, ref y fundamento.
-  - **F2.C4** pendiente (evidence): Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso.
+  - **F2.C1** Suite de F2 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f2_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F2 fijado en F0.3 (nunca 0); suites test_f2_protocol, test_f2_triage, test_f2_rubric y test_f2_config presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro. → Suites en .claude/skills/dredd/scripts/tests/test_f2_protocol.py, test_f2_triage.py, test_f2_rubric.py y test_f2_config.py, ejecutadas sobre el commit a7e4c22 el 2026-10-05. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f2_*.py" -v (y con /opt/homebrew/bin/python3.14)`, salida 0, Ran 30 tests, OK en ambos (mínimo F2: 23). test_f2_protocol 5, test_f2_triage 8, test_f2_rubric 9, test_f2_config 8. Sin skips. Regresión F1: 55 OK.
+  - **F2.C2** Mapa de fases demuestra preservación de capacidades v1 y autonomía del nuevo protocolo. → protocol/coverage.json: 32 capacidades v1 (modos, requisitos, ejecución y modelo, F0-F4, Core Extension, evidencia, severidad, entrega, blindaje, progreso, memoria, helper, voz) con archivo, encabezado y textos clave, más 5 novedades 1.1. test_f2_protocol lo verifica sección por sección y comprueba que la skill no menciona herramientas excluidas. · ejecutó: llm
+  - **F2.C3** Veredicto calculado coincide con fixtures; cada hallazgo incluye mecanismo, ref y fundamento. → test_f2_rubric: los 10 casos tabulados coinciden con la tabla de protocol/core.md; validate rechaza un finding sin mechanism, evidence, ref, basis o file; el CLI verdict sale con 3 ante contrato inválido y reporta veredicto calculado y final con override. · ejecutó: llm
+  - **F2.C4** Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso. → KB f2-juez-ciego.md: juez sonnet de contexto limpio sobre a7e4c22, veredicto aprobado con nits sin bloqueantes; N1 y N2 corregidos en 4cb2f83 con tests, N3 documentado en protocol/core.md, N4 aceptado S3. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f2_*.py"`, salida 0, 32 tests OK en 4cb2f83 (3.9 y 3.14)
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
@@ -144,7 +145,7 @@
   - Sin registros.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Protocolo fragmentado (SKILL.md coordinador + 8 archivos en protocol/ y coverage.json con 32 capacidades v1), triage determinista con descartes explicados, contrato de hallazgos, dedup por mecanismo, tabla única de veredicto con nombres v1 y override con motivo, auditoría de relationDisplayFields y consumidores, Fase 2.8. Commits a7e4c22 y 4cb2f83. 32 tests OK en 3.9 y 3.14. Juez ciego: aprobado con nits.. Siguiente: 2026-10-05: iniciar F3 (carriles, jurado, verificador y consentimiento), con código ya adelantado en el árbol de trabajo.
 
 ### F3. Concurrencia, jurado y verificación independiente
 
@@ -154,31 +155,34 @@
 **Cómo deshacerla:** Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F3** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F3** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
-  - [ ] F3.P1: F1 y F2 cerradas con criterios y commits aplicables registrados; autorización de implementación vigente.
+  - [x] F3.P1: F1 y F2 cerradas con criterios y commits aplicables registrados; autorización de implementación vigente. (F1 cerrada (e7778ec, 7ac44c4, 1eed401, 2d80dc0) y F2 cerrada (a7e4c22, 4cb2f83) el 2026-10-05 con todos sus criterios y commits registrados; autorización vigente (f0-decisiones-aprobadas.md).)
 - **Commits:**
-  - Sin commits registrados.
+  - `02cfb51` · feat(dredd): review lanes, jury synthesis, verifier and approved posting · up1/feat/dredd-update-1.1 (verificado)
+  - `c150cb9` · fix(dredd): unique synthesis ids, honest coverage and single-use approvals · up1/feat/dredd-update-1.1 (verificado)
+  - `6fa29a0` · fix(dredd): accept planned lanes in synthesis and reserve approvals · up1/feat/dredd-update-1.1 (verificado)
+  - `382d0c0` · fix(dredd): keep approval consumed on ambiguous network failures · up1/feat/dredd-update-1.1 (verificado)
 - **Qué se hizo:**
-  - **F3.1** pendiente: Orquestar roles por ejes independientes
-  - **F3.2** pendiente: Implementar jurado según F0 y síntesis
-  - **F3.3** pendiente: Implementar verificador condicional
-  - **F3.4** pendiente: Conservar acciones externas en parent
+  - **F3.1** → dredd_jury.plan_lanes + dredd-review.py lanes: carriles por perfil del triage (single sin fanout, jury K2/K3 ciegos, modules uno por repo), límite de workers (4 por defecto, DREDD_MAX_WORKERS o --max-workers) con tandas declaradas, prefetch obligatorio y compartido, modelos por rol configurables (DREDD_MODEL_<ROL>), degradación sin subagentes declarada como no ciega, timeout blando de 60 min.. Dónde: .claude/skills/dredd/scripts/dredd_jury.py, dredd-review.py; protocol/orchestration.md (Carriles); SKILL.md paso 1d. Cómo se comprobó: test_f3_orchestration: 5 tests OK en 3.9 y 3.14. · ejecutó: llm
+  - **F3.2** → dredd_jury.synthesize + dredd-review.py synthesize: valida el contrato de cada carril, agrupa por mecanismo conservando quién lo reportó y la severidad más alta, desacuerdos visibles, S0/S1 de un solo revisor a verificación, K3 un solo voto a consulta atribuida, S2 de uno solo sin evidencia a consulta, carril fallido como no cubierto con cobertura parcial, modelo pedido y usado por carril.. Dónde: .claude/skills/dredd/scripts/dredd_jury.py; protocol/orchestration.md (Síntesis). Cómo se comprobó: test_f3_jury: 6 tests OK (coincidencia K2, desacuerdo, worker fallido, K3, dedup entre módulos sin inventar cobertura, contrato inválido sale 3). · ejecutó: llm
+  - **F3.3** → dredd_jury.apply_verification + dredd-review.py verify: confirmed conserva con evidencia del verificador, refuted pasa a OK con evidencia, insufficient a consulta con la severidad previa, sin resultado queda pendiente y declarado; veredicto recalculado con la tabla; cobertura parcial no puede dar aprobable.. Dónde: .claude/skills/dredd/scripts/dredd_jury.py; protocol/orchestration.md (Verificador condicional). Cómo se comprobó: test_f3_verifier: 5 tests OK; test_f3_jury cubre el veredicto con cobertura parcial. · ejecutó: llm
+  - **F3.4** → Los workers solo devuelven core_extension_candidates y memory_updates; la síntesis los junta como external_actions_pending que exigen consentimiento. dredd-progress.py approve registra el hash del cuerpo aprobado; bb.py comment --run se niega sin aprobación o si el cuerpo cambió; fallo HTTP sale 4 sin anunciar éxito. Sin hooks globales: todo se prueba con API simulada y DREDD_HOME temporal.. Dónde: .claude/skills/dredd/scripts/bb.py, dredd_state.py, dredd-progress.py; protocol/orchestration.md, output.md; SKILL.md paso 5. Cómo se comprobó: test_f3_consent: 4 tests OK contra API simulada en 127.0.0.1. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F3.C1** pendiente (evidence): Suite de F3 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f3_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F3 fijado en F0.3 (nunca 0); suites test_f3_orchestration, test_f3_jury, test_f3_verifier y test_f3_consent presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro.
-  - **F3.C2** pendiente (evidence): Una revisión amplia comparte prefetch y deduplica sin atribuir cobertura inexistente.
-  - **F3.C3** pendiente (evidence): Sin consentimiento no hay publicación ni creación externa; hallazgos refutados recalibran resultado.
-  - **F3.C4** pendiente (evidence): Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso.
+  - **F3.C1** Suite de F3 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f3_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F3 fijado en F0.3 (nunca 0); suites test_f3_orchestration, test_f3_jury, test_f3_verifier y test_f3_consent presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro. → Suites en .claude/skills/dredd/scripts/tests/test_f3_*.py ejecutadas sobre el commit 02cfb51 el 2026-10-05. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f3_*.py" -v (y con /opt/homebrew/bin/python3.14)`, salida 0, Ran 20 tests, OK en ambos (mínimo F3: 16). test_f3_orchestration 5, test_f3_jury 6, test_f3_verifier 5, test_f3_consent 4. Sin skips. Suite completa test_f*.py OK.
+  - **F3.C2** Una revisión amplia comparte prefetch y deduplica sin atribuir cobertura inexistente. → .claude/skills/dredd/scripts/tests/test_f3_orchestration.py (test_all_lanes_share_one_prefetch_and_models_are_configurable) y test_f3_jury.py (test_wide_review_dedups_across_modules_without_inventing_coverage, test_failed_worker_marks_partial_coverage): todos los carriles apuntan al mismo prefetch, un mismo mecanismo de dos módulos queda como un hallazgo con ambos reportantes y un carril fallido queda como no cubierto. · ejecutó: llm
+  - **F3.C3** Sin consentimiento no hay publicación ni creación externa; hallazgos refutados recalibran resultado. → .claude/skills/dredd/scripts/tests/test_f3_consent.py: sin aprobación no hay request a la API; un cuerpo distinto del aprobado se rechaza; error HTTP sale 4 sin salida de éxito; candidatos Core Extension quedan pendientes de consentimiento. test_f3_verifier.py: un S1 refutado pasa a OK y el veredicto se recalcula de iterar a aprobable. · ejecutó: llm
+  - **F3.C4** Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso. → KB f3-juez-ciego.md: juez sonnet de contexto limpio, 3 rondas; aprobado con nits en 6fa29a0 sin bloqueantes; el único nit (N2) corregido en 382d0c0 con test. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f3_*.py"`, salida 0, 26 tests OK en 382d0c0 (3.9 y 3.14)
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · .claude/skills/dredd/scripts/dredd_jury.py y bb.py (02cfb51): Ids de hallazgo repetidos entre carriles permitían que un resultado del verificador descartara dos hallazgos, y bb.py comment publicaba sin --run; detectados por el juez ciego y corregidos en c150cb9 y 6fa29a0.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Equipo de revisión: carriles por perfil con límite de workers y prefetch compartido, síntesis con ids únicos por carril, desacuerdos visibles y cobertura honesta (carriles ausentes y archivos no leídos), verificador que confirma, refuta o baja a consulta y recalcula el veredicto, publicación solo del cuerpo aprobado (destino, un solo uso, corrida abierta, reserva bajo lock). Commits 02cfb51, c150cb9, 6fa29a0, 382d0c0. 26 tests F3 OK en 3.9 y 3.14. Juez: aprobado con nits tras 3 rondas.. Siguiente: 2026-10-05: iniciar F4 (expediente, alcance por git, rondas e invalidación), con código y 23 tests ya adelantados en el árbol de trabajo.
 
 ### F4. Seguimiento local, pre-envío y revisión del delta
 
@@ -188,31 +192,33 @@
 **Cómo deshacerla:** Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F4** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F4** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
-  - [ ] F4.P1: F3 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+  - [x] F4.P1: F3 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente. (F3 cerrada el 2026-10-05 con criterios F3.C1-F3.C4 y commits 02cfb51, c150cb9, 6fa29a0, 382d0c0 registrados; autorización vigente (f0-decisiones-aprobadas.md).)
 - **Commits:**
-  - Sin commits registrados.
+  - `2e8a1d3` · feat(dredd): local case file, git scope and coverage across rounds · up1/feat/dredd-update-1.1 (verificado)
+  - `b4c91db` · fix(dredd): unicode paths, binaries, stale coverage and stricter closure · up1/feat/dredd-update-1.1 (verificado)
+  - `0a70da3` · docs(dredd): closing rules for binaries and files out of scope · up1/feat/dredd-update-1.1 (verificado)
 - **Qué se hizo:**
-  - **F4.1** pendiente: Diseñar expediente local versionado
-  - **F4.2** pendiente: Implementar cálculo git de scope y cobertura
-  - **F4.3** pendiente: Integrar rondas y decisiones
-  - **F4.4** pendiente: Probar invalidación y conservación de historia
+  - **F4.1** → dredd_case.py: expediente <DREDD_HOME>/cases/<clave>.json con schema_version 2, id estable H-<sha1(repo|archivo|mecanismo)>, estados open/corrected/accepted/deferred/dismissed, historia por hallazgo que nunca se borra, close_criterion y refs por ronda (head, base, identidad), migración desde v1 con respaldo <clave>.v1.bak.json, escritura con lock y atómica, clave saneada contra path traversal. Sin servidor.. Dónde: .claude/skills/dredd/scripts/dredd_case.py, dredd-case.py; protocol/rounds.md. Cómo se comprobó: test_f4_case: 4 tests OK en 3.9 y 3.14. · ejecutó: llm
+  - **F4.2** → dredd_scope.py: alcance commiteado base...head con blob por archivo y renombres; alcance de working tree (staged, unstaged, untracked) con blob por hash-object e identidad por contenido; cobertura full/partial/not-read por blob con binarios nunca full; consumidores por import del módulo cambiado en la base; detección de historia reescrita (head anterior inexistente o no ancestro). Solo lectura del repo.. Dónde: .claude/skills/dredd/scripts/dredd_scope.py. Cómo se comprobó: test_f4_scope: 5 tests OK con repos git temporales. · ejecutó: llm
+  - **F4.3** → plan_round/record_round: modos preenvio (correcciones para el autor, sin comentario) y ajena (informe y borrador); revisión de delta + huecos + pendientes; revisión completa ante primera ronda, base nueva o rebase/force-push sin borrar el expediente; close exige evidencia y head verificado de la ronda actual; decide accepted/deferred con motivo y actor; reapertura de un corregido que reaparece; escalado tras 3 rondas sin avance o 2 rondas sin leer completo un archivo.. Dónde: .claude/skills/dredd/scripts/dredd_case.py, dredd-case.py; protocol/rounds.md. Cómo se comprobó: test_f4_rounds: 6 tests OK (incluye ida y vuelta por el CLI). · ejecutó: llm
+  - **F4.4** → Casos de invalidación: interdiff vacío con archivo parcial sigue en revisión; blob cambiado invalida la lectura completa; renombre sin cambio conserva cobertura por blob; binario listado y nunca full; base nueva fuerza revisión completa conservando hallazgos; force-push detectado conservando historia; abandono y reanudación desde disco conserva pendientes; corregido que reaparece se reabre.. Dónde: .claude/skills/dredd/scripts/tests/test_f4_invalidation.py. Cómo se comprobó: 8 tests OK en 3.9 y 3.14. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F4.C1** pendiente (evidence): Suite de F4 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f4_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F4 fijado en F0.3 (nunca 0); suites test_f4_case, test_f4_scope, test_f4_rounds y test_f4_invalidation presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro.
-  - **F4.C2** pendiente (evidence): Expediente y métricas futuras distinguen corrección, decisión y pendiente.
-  - **F4.C3** pendiente (evidence): Revisión parcial o archivo ojeado nunca aparecen como cobertura completa.
-  - **F4.C4** pendiente (evidence): Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso.
+  - **F4.C1** Suite de F4 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f4_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F4 fijado en F0.3 (nunca 0); suites test_f4_case, test_f4_scope, test_f4_rounds y test_f4_invalidation presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro. → Suites en .claude/skills/dredd/scripts/tests/test_f4_*.py sobre el commit 2e8a1d3, 2026-10-05. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f4_*.py" -v (y con /opt/homebrew/bin/python3.14)`, salida 0, Ran 23 tests, OK en ambos (mínimo F4: 17). test_f4_case 4, test_f4_scope 5, test_f4_rounds 6, test_f4_invalidation 8. Sin skips. Regresión F1-F3 OK.
+  - **F4.C2** Expediente y métricas futuras distinguen corrección, decisión y pendiente. → .claude/skills/dredd/scripts/dredd_case.py: estados separados open, corrected, accepted, deferred, dismissed y summary() que los cuenta por separado; test_f4_case.py test_decisions_keep_history_and_never_look_corrected verifica que una decisión no suma como corregida. Las métricas de F5 usan los mismos estados (outcomes). · ejecutó: llm
+  - **F4.C3** Revisión parcial o archivo ojeado nunca aparecen como cobertura completa. → .claude/skills/dredd/scripts/dredd_scope.py coverage_entry (binario nunca full, niveles cerrados) y dredd_case.plan_round (holes para todo lo que no es full); tests test_f4_invalidation.py test_empty_interdiff_still_reviews_files_never_read y test_binary_is_listed_and_never_full, test_f4_rounds.py test_escalates_when_same_file_stays_unread_two_rounds. · ejecutó: llm
+  - **F4.C4** Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso. → KB f4-juez-ciego.md: juez sonnet de contexto limpio; iterar en 2e8a1d3 (8 hallazgos, 3 S1) y aprobado con nits en b4c91db; N1 documentado en protocol/rounds.md (0a70da3). · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f4_*.py"`, salida 0, 32 tests OK en b4c91db; suite completa 145 OK
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · .claude/skills/dredd/scripts/dredd_scope.py y dredd_case.py (2e8a1d3): Rutas no ASCII corruptas por quotePath, binarios que escalaban siempre, cobertura que sobrevivía a un cambio de contenido y alcance de worktree contra la base cruda; detectados por el juez ciego y corregidos en b4c91db.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Expediente local versionado por PR o rama, alcance por git (commiteado o working tree contra merge-base, rutas no ASCII), cobertura por blob con nivel name-only para binarios, plan de ronda con delta, huecos, pendientes y consumidores, revisión completa ante base nueva o historia reescrita, cierre estricto con evidencia, decisiones con motivo y escalado. Commits 2e8a1d3, b4c91db, 0a70da3. 32 tests F4 OK en 3.9 y 3.14. Juez: aprobado con nits.. Siguiente: 2026-10-05: iniciar F5 (métricas locales y reporte Markdown), con código, 19 tests y ejemplo reproducible ya en el árbol de trabajo.
 
 ### F5. Métricas locales y exportación Markdown
 
@@ -222,31 +228,36 @@
 **Cómo deshacerla:** Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
 **Cambia código:** sí (no cierra sin commits registrados)
 
-**Registro F5** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F5** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
-  - [ ] F5.P1: F4 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+  - [x] F5.P1: F4 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente. (F4 cerrada el 2026-10-05 con criterios F4.C1-F4.C4 y commits 2e8a1d3, b4c91db, 0a70da3 registrados; autorización vigente (f0-decisiones-aprobadas.md).)
 - **Commits:**
-  - Sin commits registrados.
+  - `4b266f1` · docs(dredd): a must rule of a configured KB is S0, a missing KB is not · up1/feat/dredd-update-1.1 (verificado)
+  - `5491bde` · feat(dredd): local metrics per run and shareable Markdown report · up1/feat/dredd-update-1.1 (verificado)
+  - `0ddaa1a` · fix(dredd): closed vocabularies and shape checks for metrics · up1/feat/dredd-update-1.1 (verificado)
+  - `cf32715` · fix(dredd): editing an export that stays is not a deletion signal · up1/feat/dredd-update-1.1 (verificado)
+  - `52f5c26` · fix(dredd): full type and range validation of metric records · up1/feat/dredd-update-1.1 (verificado)
 - **Qué se hizo:**
-  - **F5.1** pendiente: Implementar esquema y captura
-  - **F5.2** pendiente: Implementar comando report
-  - **F5.3** pendiente: Implementar agregados y outcomes honestos
-  - **F5.4** pendiente: Probar y generar muestra anonimizada
+  - **F5.1** → dredd_metrics.build_record + dredd-metrics.py record: registro por corrida en <DREDD_HOME>/metrics/runs/<run_id>.json con schema_version, skill_version 1.1.0, estado, inicio/fin/duración, modo, repo/pr, refs, diffstat, fases aplicables/ejecutadas/omitidas, revisores, tests, cobertura, hallazgos, verificación, veredicto emitido/calculado/override, limitaciones; tokens solo con source, si no null y costo null; sin end queda incomplete; close sin registro lo anota como aborted o incomplete; DREDD_METRICS=off no escribe.. Dónde: .claude/skills/dredd/scripts/dredd_metrics.py, dredd-metrics.py, dredd-progress.py (record_if_missing); protocol/output.md. Cómo se comprobó: test_f5_capture: 4 tests OK en 3.9 y 3.14. · ejecutó: llm
+  - **F5.2** → dredd-metrics.py report --output --repo --from --to [--include-links] [--force] [--as-of] [--metrics-dir]: Markdown UTF-8 con filtros, resumen, duración, veredictos, severidades, verificaciones no ejecutadas, completitud de costos, resultado de hallazgos, corridas, datos incompletos y cómo leerlo; archivo existente sale 3 sin --force; fecha inválida, rango invertido o extensión no .md salen 2; periodo vacío genera el reporte diciendo 'Sin datos'. No publica nada.. Dónde: .claude/skills/dredd/scripts/dredd-metrics.py, dredd_report.py. Cómo se comprobó: test_f5_report: 6 tests OK. · ejecutó: llm
+  - **F5.3** → Agregados: costo promedio solo sobre corridas con costo completo y conteo de parciales y sin dato; duplicados por run_id deduplicados conservando el más reciente y reportados; precisión sobre lo adjudicado (corregidos+confirmados / corregidos+confirmados+descartados) con cobertura de adjudicación y denominador visibles; aceptado y pospuesto como decisiones aparte; percentiles con tamaño de muestra solo de corridas completas; outcome exige evidencia y actor.. Dónde: .claude/skills/dredd/scripts/dredd_metrics.py. Cómo se comprobó: test_f5_aggregates: 5 tests OK. · ejecutó: llm
+  - **F5.4** → Pruebas de anonimización (rutas personales macOS y Windows reemplazadas por <ruta>, autores y títulos nunca impresos, repos como alias repo-A salvo --include-links) y de registros corruptos reportados; muestra publicada: examples/metrics/ (4 registros: completos, costo parcial, abortado) y examples/reporte-ejemplo.md generado con --as-of 2026-10-05, verificado byte a byte por test.. Dónde: .claude/skills/dredd/examples/, scripts/tests/test_f5_anonymize.py, test_f5_report.py. Cómo se comprobó: test_f5_anonymize 4 tests y test_published_example_is_reproducible OK. · ejecutó: llm
 - **Criterios cumplidos:**
-  - **F5.C1** pendiente (evidence): Suite de F5 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f5_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F5 fijado en F0.3 (nunca 0); suites test_f5_capture, test_f5_report, test_f5_aggregates y test_f5_anonymize presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro.
-  - **F5.C2** pendiente (evidence): El comando genera un .md legible con sección de datos incompletos y muestra reproducible.
-  - **F5.C3** pendiente (evidence): Registros/reportes declaran versión 1.1 y no exponen secretos, rutas personales ni código sensible.
-  - **F5.C4** pendiente (evidence): Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso.
+  - **F5.C1** Suite de F5 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f5_*.py" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F5 fijado en F0.3 (nunca 0); suites test_f5_capture, test_f5_report, test_f5_aggregates y test_f5_anonymize presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro. → Suites en .claude/skills/dredd/scripts/tests/test_f5_*.py sobre el commit 5491bde, 2026-10-05. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f5_*.py" -v (y con /opt/homebrew/bin/python3.14)`, salida 0, Ran 19 tests, OK en ambos (mínimo F5: 15). test_f5_capture 4, test_f5_report 6, test_f5_aggregates 5, test_f5_anonymize 4. Sin skips. Suite completa: 164 OK.
+  - **F5.C2** El comando genera un .md legible con sección de datos incompletos y muestra reproducible. → .claude/skills/dredd/examples/reporte-ejemplo.md (Markdown con sección 'Datos incompletos' que lista la corrida abortada y su limitación) regenerado idéntico por test_f5_report.py test_published_example_is_reproducible. · ejecutó: llm
+  - **F5.C3** Registros/reportes declaran versión 1.1 y no exponen secretos, rutas personales ni código sensible. → .claude/skills/dredd/scripts/dredd_metrics.py build_record guarda skill_version 1.1.0 y el reporte la imprime en el encabezado (examples/reporte-ejemplo.md línea 3); test_f5_anonymize.py verifica que rutas personales, autores, títulos y repos no aparecen sin --include-links; los registros no guardan código ni diff. · ejecutó: llm
+  - **F5.C4** Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso. → KB f5-juez-ciego.md: juez sonnet de contexto limpio, 3 rondas; aprobado sin hallazgos en 52f5c26 con 540 casos de fuzz sin crash ni fugas. · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests -p "test_f5_*.py"`, salida 0, 25 tests OK en 52f5c26; suite completa 171 OK
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
   - Sin registros.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · .claude/skills/dredd/scripts/dredd_triage.py (a7e4c22, módulo de F2): La prueba de punta a punta (script en el scratchpad, modo local con los scripts reales) mostró que el triage marcaba la señal deletes al editar la línea de un export que sigue existiendo; corregido en cf32715 con test (solo cuentan exports cuyo nombre no vuelve).
+  - introducido · .claude/skills/dredd/scripts/dredd_report.py y dredd_metrics.py (5491bde): El reporte anonimizado podía filtrar rutas y tokens desde campos libres, y registros con tipos inválidos tumbaban el comando; detectado por el juez ciego y corregido en 0ddaa1a y 52f5c26.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Métricas locales por corrida (vocabularios cerrados, texto libre sin rutas ni credenciales, tokens solo con fuente, abortadas registradas al cerrar) y reporte Markdown anonimizado con duración, veredictos, costo sin promediar parciales, precisión con denominador y datos incompletos; validación de tipos y rangos con red defensiva; ejemplo reproducible. Commits 4b266f1, 5491bde, 0ddaa1a, cf32715, 52f5c26. 25 tests F5, suite completa 171 OK en 3.9 y 3.14. Juez: aprobado tras 3 rondas y 540 casos de fuzz.. Siguiente: 2026-10-05: iniciar F6 (documentación 1.1, comparación e índice), con borradores ya escritos en el árbol de trabajo.
 
 ### F6. Documentación 1.1 y comparación histórica
 
@@ -255,21 +266,21 @@
 **Esfuerzo:** Estimación inicial de esfuerzo activo: 1-2 días; recalibrar tras F0; no es fecha de entrega.
 **Cómo deshacerla:** No aplica: fase de análisis/validación sin cambios de código ni publicación.
 
-**Registro F6** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F6** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
-  - [ ] F6.P1: F5 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+  - [x] F6.P1: F5 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente. (F5 cerrada el 2026-10-05 con criterios F5.C1-F5.C4 y commits 4b266f1, 5491bde, 0ddaa1a, cf32715, 52f5c26 registrados; autorización vigente (f0-decisiones-aprobadas.md).)
 - **Commits:**
-  - Sin commits registrados.
+  - `6eb1152` · docs(dredd): referencia, guía operativa y comparación de Dredd 1.1 · up1/feat/dredd-update-1.1 (verificado)
 - **Qué se hizo:**
-  - **F6.1** pendiente: Crear referencia y guía operativa 1.1
-  - **F6.2** pendiente: Crear comparación v1 a 1.1 e índice
-  - **F6.3** pendiente: Documentar métricas y trazabilidad
-  - **F6.4** pendiente: Verificar preservación y ejemplos
+  - **F6.1** → Referencia y guía operativa de Dredd 1.1. Dónde: docs/reference/dredd-v1.1.md, docs/guides/dredd-operacion-v1.1.md (commit 6eb1152). Cómo se comprobó: Juez ciego sonnet contrastó comandos, flags, variables y códigos de salida con scripts/ y protocol/: aprobado (KB f6-juez-ciego.md).
+  - **F6.2** → Comparación v1 a 1.1 y sección Dredd del índice. Dónde: docs/reference/dredd-v1-a-v1.1.md, docs/INDEX.md (commit 6eb1152). Cómo se comprobó: Script de enlaces: los 5 enlaces nuevos del índice resuelven; juez ciego aprobado.
+  - **F6.3** → Métricas y trazabilidad documentadas (listas cerradas, limpieza de texto libre, UTC, datos incompletos, denominador de adjudicación). Dónde: docs/guides/dredd-operacion-v1.1.md §10, docs/reference/dredd-v1.1.md sección Métricas, .claude/skills/dredd/examples/reporte-ejemplo.md. Cómo se comprobó: Contrastado con scripts/dredd_metrics.py y dredd_report.py; juez ciego aprobado.
+  - **F6.4** → Preservación v1 y ejemplo reproducible verificados. Dónde: docs/reference/dredd-v1.md, docs/guides/dredd-operacion-v1.md, .claude/skills/dredd/examples/reporte-ejemplo.md. Cómo se comprobó: git diff 348ea29 vacío en ambos v1; dredd-metrics.py report --metrics-dir examples/metrics --as-of 2026-10-05 regenera el ejemplo idéntico (diff exit 0).
 - **Criterios cumplidos:**
-  - **F6.C1** pendiente (evidence): Documentos 1.1, comparación e índice presentes con enlaces y ejemplos validados.
-  - **F6.C2** pendiente (evidence): Ambos documentos v1 coinciden byte a byte con la línea base 348ea29.
-  - **F6.C3** pendiente (evidence): Documentación 1.1 describe sólo comportamientos implementados y declara Linux y Windows sin verificar, con la verificación aplazada como pendiente.
+  - **F6.C1** Documentos 1.1, comparación e índice presentes con enlaces y ejemplos validados. → Documentos 1.1, comparación e índice en 6eb1152 con enlaces y ejemplo validados. · ejecutó: llm, `script de enlaces y términos sobre los 4 docs + dredd-metrics.py report --metrics-dir examples/metrics --as-of 2026-10-05 y diff contra examples/reporte-ejemplo.md`, salida 0, 5 enlaces nuevos del índice resuelven (los rotos del INDEX son preexistentes de 348ea29, repos hermanos ausentes en el worktree); 0 rayas largas tras corrección; ejemplo idéntico (4 corridas, 0 problemas).
+  - **F6.C2** Ambos documentos v1 coinciden byte a byte con la línea base 348ea29. → docs/reference/dredd-v1.md y docs/guides/dredd-operacion-v1.md idénticos byte a byte a git show 348ea29:<ruta>; baseline en KB f0-baseline-v1-y-preservacion.md. · ejecutó: llm, `git diff --stat 348ea29 -- docs/reference/dredd-v1.md docs/guides/dredd-operacion-v1.md`, salida 0, diff vacío; SHA-256 44b80985cbe2... y a166b891fd3e... iguales a la baseline de F0.
+  - **F6.C3** Documentación 1.1 describe sólo comportamientos implementados y declara Linux y Windows sin verificar, con la verificación aplazada como pendiente. → Juez ciego sonnet (KB f6-juez-ciego.md) contrastó comandos, flags, variables, códigos de salida, rutas, veredictos y perfiles con el código: aprobado, 0 bloqueantes, 2 menores corregidos. dredd-v1.1.md:19-25 y guía §11 declaran Linux y Windows sin verificar con verificación aplazada. · ejecutó: llm
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
@@ -278,7 +289,7 @@
   - Sin registros.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Documentación 1.1 en 6eb1152: referencia, guía operativa, comparación v1 a 1.1 e índice. v1 idénticos a 348ea29; ejemplo de reporte reproducible; juez ciego aprobado con 2 menores corregidos.. Siguiente: 2026-10-05: F7, suite completa en 3.9 y 3.14, flujo e2e local y juez final; luego pedir al dev el smoke de Claude Code y la aceptación.
 
 ### F7. Validación integral en macOS y juez final
 
@@ -287,28 +298,33 @@
 **Esfuerzo:** Estimación inicial de esfuerzo activo: 1-2 días; recalibrar tras F0; no es fecha de entrega.
 **Cómo deshacerla:** No aplica: fase de análisis/validación sin cambios de código ni publicación.
 
-**Registro F7** (estado: Pendiente)
-- **Fecha real:** inicio - · fin -
+**Registro F7** (estado: En curso)
+- **Fecha real:** inicio 2026-10-05 · fin -
 - **Antes de empezar:**
-  - [ ] F7.P1: F6 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+  - [x] F7.P1: F6 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente. (F6 cerrada (e0096) con F6.C1-F6.C3 y commit 6eb1152 registrado; autorización vigente en KB f0-decisiones-aprobadas.md.)
 - **Commits:**
-  - Sin commits registrados.
+  - `7a93581` · fix(dredd): user-confirmed approve and close, quoted comment and egress gaps · up1/feat/dredd-update-1.1 (verificado)
+  - `dff7ca8` · style(dredd): replace long dashes in protocol, skill and progress output · up1/feat/dredd-update-1.1 (verificado)
+  - `f757205` · fix(dredd): protect script-only state, inline state imports and variable subcommands · up1/feat/dredd-update-1.1 (verificado)
+  - `9757aff` · fix(dredd): derive run metrics from the case and validate the summary · up1/feat/dredd-update-1.1 (verificado)
+  - `8ca028f` · fix(dredd): no guessed verdict from old case rounds and a stricter time window · up1/feat/dredd-update-1.1 (verificado)
+  - `7f28c23` · docs(dredd): document derived metrics and how old case rounds are matched · up1/feat/dredd-update-1.1 (verificado)
 - **Qué se hizo:**
-  - **F7.1** pendiente: Ejecutar matriz en macOS
-  - **F7.2** pendiente: Verificar extremo a extremo y regresión
-  - **F7.3** pendiente: Preparar paquete único y revisión independiente
-  - **F7.4** pendiente: Registrar resultado y correcciones necesarias
+  - **F7.1** → Matriz en macOS: suite completa en Python 3.9.25 y 3.14.4. Dónde: .claude/skills/dredd/scripts/tests (HEAD 6eb1152). Cómo se comprobó: 171 tests OK en ambas versiones, 0 skips; versiones registradas: git 2.54.0, Claude Code 2.1.278. Smoke de Claude Code pendiente del dev (F7.C2).
+  - **F7.2** → Extremo a extremo local y regresión: corrida, triage, carriles, síntesis, verificador, veredicto, expediente, aprobación, métricas, cierre, reporte y merge-check con los scripts reales sobre un repo temporal. Dónde: flujo e2e del agente contra .claude/skills/dredd (HEAD 6eb1152); worktree limpio tras correr (git status vacío). Cómo se comprobó: python3.9 e2e_flow.py .claude/skills/dredd: 16/16 pasos ok, veredicto iterar (S1 confirmado), merge-check clean, reporte con 1 corrida completa. El PR real en Bitbucket queda como acción del dev (token y hooks del proyecto), sin publicar.
+  - **F7.3** → Paquete único 1.1 y revisión independiente. Dónde: rama feat/dredd-update-1.1, 348ea29..f757205 (22 commits, solo .claude/skills/dredd/ y docs/). Cómo se comprobó: Juez final opus de contexto limpio, 2 rondas (KB f7-juez-final-propio.md); rollback por git revert de commits aislados verificado por el juez (check 10).
+  - **F7.4** → Resultado y correcciones registradas: bloqueante de publicación sin aprobación y nits del juez final corregidos. Dónde: commits 7a93581, dff7ca8, f757205; .claude/skills/dredd/scripts/dredd-guard.py; tests en scripts/tests/test_f1_guard.py (TestFinalJudgeBypasses, TestFinalJudgeNits). Cómo se comprobó: 182 tests OK en Python 3.9.25 y 3.14.4; e2e 16/16; 0 rayas largas en la skill.
 - **Criterios cumplidos:**
-  - **F7.C1** pendiente (evidence): Suite completa ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v. Exit 0; 'Ran N tests' con N mayor o igual a la suma de los mínimos de F1-F5; las 20 suites test_f1_* a test_f5_* presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro.
+  - **F7.C1** Suite completa ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v. Exit 0; 'Ran N tests' con N mayor o igual a la suma de los mínimos de F1-F5; las 20 suites test_f1_* a test_f5_* presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro. → .claude/skills/dredd/scripts/tests/ en 6eb1152 (20 archivos test_f[1-5]_*.py). · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests (y con python3.14)`, salida 0, Python 3.9.25: Ran 171 tests OK (51.4 s); Python 3.14.4: Ran 171 tests OK (52.3 s); 0 fallos, 0 skips; 171 >= 95; 20 suites test_f1_* a test_f5_* presentes; git 2.54.0, Claude Code 2.1.278, macOS. HEAD 6eb1152.
   - **F7.C2** pendiente (manual): Smoke de Claude Code en macOS y revisión del reporte Markdown confirmados por el dev.
-  - **F7.C3** pendiente (evidence): Juez final evalúa alcance completo, conservación v1 y que la verificación aplazada de Linux y Windows quede declarada; resultado registrado.
+  - **F7.C3** Juez final evalúa alcance completo, conservación v1 y que la verificación aplazada de Linux y Windows quede declarada; resultado registrado. → KB f7-juez-final-propio.md: alcance completo, conservación v1 (idénticos a 348ea29) y Linux/Windows declarados sin verificar con verificación aplazada (docs/reference/dredd-v1.1.md:19-25). El juez de Kanai (scope final) corre tras cerrar F7 porque la herramienta lo exige. · ejecutó: llm, `/opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests (corrido por el juez y por el agente en f757205)`, salida 0, Juez final opus: r1 rechazado, r2 aprobado con nits; nits corregidos en f757205; 182 tests OK en 3.9 y 3.14.
   - **F7.C4** pendiente (manual): Única entrega 1.1 aceptada con commits, docs y rollback, sin publicar por esta fase.
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
-  - Sin registros.
+  - Corrección A+B de métricas dentro de F7 tras el hallazgo e0106 (smoke real): derivar hallazgos, cobertura, veredicto calculado y carriles del expediente (ronda ligada con --run) y de lanes.json; resumen.json con formato cerrado que se rechaza con código 2; sin dato queda null, nunca cero; el reporte lista corridas sin conteos y veredictos emitidos distintos del calculado sin motivo. Commits 9757aff y 8ca028f; 191 tests OK en 3.9 y 3.14; e2e 16/16; juez ciego sonnet aprobado con 4 menores, corregidos en 8ca028f.. Por qué: El dev eligió A+B y hacerlo dentro de F7 (opción 1) el 2026-10-05. También se re-registraron las 3 corridas reales del dev con las reglas nuevas (respaldo en ~/.dredd/metrics.bak-20261005).. Cambia la decisión: F7.C2 se vuelve a evaluar con corridas nuevas del dev después de esta corrección.
 - **Hallazgos:**
-  - Sin registros.
+  - introducido · scripts/dredd_metrics.py build_record; protocol/output.md sección Métricas; scripts/dredd-progress.py record_if_missing; ~/.dredd/metrics/runs de las 3 corridas reales del smoke (2026-10-05): El registro de métricas guarda lo que le pasa el parent sin juzgarlo ni derivarlo de los datos de la corrida. En cm#48 y layout#426 el expediente tiene 4 hallazgos cada uno (S1+2xS2+S3 y 4xS3), pero la métrica dice 0 hallazgos y veredicto calculado 'otro', porque se registró sin resumen al cerrar y los faltantes se completan con ceros. En layout#425 el resumen usó claves inventadas (consultas, ok, verifications_executed, lanes) que el registro aceptó en silencio: quedaron tests vacíos y revisores nulos. El protocolo no define el formato de resumen.json. Los tests de F5 usaron registros bien formados, por eso F5.C2/C3 pasaron.
 - **Bloqueos:**
   - Sin registros.
 - **Cierre y siguiente paso:** Sin cerrar.

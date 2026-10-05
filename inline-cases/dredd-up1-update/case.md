@@ -65,6 +65,13 @@
 | f0-propuesta-decisiones.md | analisis | F0: propuesta de decisiones (pendiente de aprobación) | Propuesta del agente para las 12 decisiones de F0 (políticas y arquitectura), con opciones, recomendación y motivo. PENDIENTE de aprobación del dev; no son decisiones confirmadas. |
 | f1-juez-ciego.md | revision | F1: juez ciego de fase | Juez ciego de F1 (sonnet, contexto limpio): 4 rondas; iterar por bypasses del guard, resueltos en 7ac44c4, 1eed401 y 2d80dc0; veredicto final aprobado con nits (N10 S3). DKC diferido a F2. |
 | f1-matriz-plataformas.md | referencia | F1: matriz por sistema | Matriz por sistema de los mecanismos de F1 (helper, estado, lock, guard, merge, instalador, consola): qué usa cada uno, límites y cómo resuelve Python y git. macOS verificado; Linux y Windows diseño sin verificar. |
+| f2-juez-ciego.md | revision | F2: juez ciego de fase | Juez ciego de F2 (sonnet): aprobado con nits sobre a7e4c22; N1 (jurado en diff de alto riesgo sin lógica) y N2 (motivo de descarte) corregidos en 4cb2f83; N3 documentado; N4 (needles de cobertura genéricos) aceptado S3. |
+| f3-juez-ciego.md | revision | F3: juez ciego de fase | Juez ciego de F3 (sonnet): 3 rondas; iterar por ids repetidos entre carriles y comment sin --run, luego por lanes del plan; aprobado con nits en 6fa29a0; N2 corregido en 382d0c0. |
+| f4-juez-ciego.md | revision | F4: juez ciego de fase | Juez ciego de F4 (sonnet): iterar en 2e8a1d3 (rutas no ASCII, binarios que escalaban, cobertura vieja, merge-base, cierre débil, colisiones, consumidores, renombres); todo resuelto en b4c91db; aprobado con nits; N1 documentado. |
+| f5-juez-ciego.md | revision | F5: juez ciego de fase | Juez ciego de F5 (sonnet): 3 rondas; iterar por campos libres sin limpiar y registros con tipos inválidos que tumbaban el reporte; aprobado sin hallazgos en 52f5c26 tras 540 casos de fuzz. |
+| f6-juez-ciego.md | revision | F6: juez ciego de la documentación 1.1 | Juez ciego de F6 (sonnet): aprobado, 0 bloqueantes; 2 menores (frase ambigua de portabilidad, consola Windows) corregidos antes de 6eb1152. |
+| f7-correccion-metricas.md | revision | F7: corrección de métricas tras el smoke real (A+B) | El smoke real mostró métricas con 0 hallazgos frente a un expediente con S1-S3. Se corrigió con la opción A+B (derivar de la corrida y validar el resumen) en 9757aff y 8ca028f; juez ciego aprobado con nits corregidos; 191 tests OK. |
+| f7-juez-final-propio.md | revision | F7: juez final propio (alcance completo) | Juez final opus de contexto limpio sobre 348ea29..HEAD. r1 rechazado (publicar sin aprobación, instalador global por error del brief); r2 aprobado con nits tras 7a93581 y dff7ca8; los 3 nits quedan corregidos en f757205. 182 tests OK. |
 | investigacion-configuracion-local.md | analisis | Investigación local y perfil propuesto para Dredd up1 1.1 | Perfil adaptativo observado, recomendaciones para 1.1, límites de portabilidad, métricas incompletas y evidencia de 272 tests locales. No modifica skills ni completa fases. |
 | validacion-plan-vista.md | registro | Validación del plan y del modelo de lectura de la vista | Plan estructurado creado sin lint; el modelo que consume la vista carga 8 fases, 31 tareas y 25 criterios pendientes. |
 | verificacion-solo-macos.md | decision | Verificación solo en macOS; Linux y Windows aplazados | Decisión del usuario (2026-10-05): ejecución y verificación solo en macOS; Linux y Windows con diseño portable y verificación aplazada para después de la implementación. |
@@ -72,4 +79,4 @@
 
 ## Plan
 
-2 de 8 fases cerradas, fase actual F2. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/dredd-up1-update/plan.md
+7 de 8 fases cerradas, fase actual F7. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/dredd-up1-update/plan.md
