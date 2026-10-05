@@ -209,3 +209,9 @@ Contrato: rollback: Eliminar la verificación de actualización en vivo del pane
 
 - remove REQ-07
 
+## Higiene de CI (Adenda 2)
+
+La Adenda 2 (2026-10-05) registra correcciones de higiene del job de docs, fuera del alcance funcional de la historia: 17 palabras agregadas al diccionario cspell del proyecto para `docs/product/design-system/high-contrast.md` y calificación de referencias DartDoc `[apply]` en `app/lib/core/preferences/preference_controller.dart` y `preference_draft_controller.dart` (con los generados regenerados por build_runner). No cambia el comportamiento del producto ni agrega requisitos, tareas ni sesiones al plan.
+
+Fuente y verificación: commit `ac0f10c` en `epic/EP-01`; las suites transversales del repositorio (`tests/test_docs_linters.py` y `tests/test_docs_generate_and_orphans.py`) quedaron en verde en la corrida del CI local (`pnpm run check` y `pnpm run test`) sobre la rama, cubriendo el job de docs del PR final.
+
