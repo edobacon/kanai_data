@@ -8,6 +8,14 @@ external: UPONE-1769
 tier: T1
 module: curriculum-mapping
 autopilot: manual
+verification_policy: ask
+teach_policy: ask
+draft_policy: skip
+review_policy: auto
+story_points:
+  published: 8
+  estimated: 2
+  executed: 3
 ---
 
 ## Request

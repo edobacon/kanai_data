@@ -2,7 +2,7 @@ plan_id: kanai-verificacion-obligatoria
 title: Verificacion obligatoria por ticket, obligatoria por defecto en epica
 intent: "Que la sesion de verificacion de un ticket sea OBLIGATORIA cuando el ticket la tiene: cada item pasa o queda no ejecutado con su motivo, Kanai informa por que, y en la epica la politica se vuelve obligatoria por defecto (fuera de ella sigue advisory)."
 created: 2026-10-05T01:05:16.015Z
-updated: 2026-10-05T01:11:52.312Z
+updated: 2026-10-05T01:30:08.309Z
 tags:
   projects: []
   repos:
@@ -19,7 +19,8 @@ settings:
   judge: per_phase
 risks:
   - "La migracion toca el store vivo: exige backup previo y verificacion posterior"
-  - "Las politicas del ticket NO estan en el frontmatter: un db:rebuild --fresh las devuelve a su default EN SILENCIO. Por eso F1 las materializa en el texto y mide el rearme antes y despues"
+  - "Las politicas del ticket NO estan en el frontmatter: un db:rebuild --fresh las devuelve a su default EN SILENCIO (medido el 2026-10-05: 56 -> 0). Por eso F1 las materializa en el texto y mide el rearme antes y despues"
+  - "El round-trip del frontmatter NO es idempotente (medido el 2026-10-05: 51 tickets pierden autopilot; en los 4 proyectos nativos de Kanai la perdida es del 100%). Materializar el campo no alcanza: el importador tiene que leerlo y el mapa de autopilot tiene que aceptar los valores nativos"
   - "Volver bloqueante el cierre cambia el comportamiento de tickets EN CURSO: la politica nace en ask, asi que nadie se ve afectado sin pedirlo"
   - "El motivo estructurado toca el contrato de una tool que ya usaron 28 sesiones: la compatibilidad hacia atras importa (pass/fail/pending siguen valiendo con la politica en ask)"
 out_of_scope:
@@ -28,29 +29,32 @@ out_of_scope:
   - Revisar el resto del contrato de sesiones mas alla de blocksClose
 phases:
   - code: F1
-    title: La politica de verificacion, su migracion y su supervivencia al rearme
-    goal: Que un ticket tenga una politica de verificacion persistida EN EL TEXTO (para que sobreviva a un rearme de la DB), con default advisory, sin cambiar el comportamiento de ningun ticket existente.
+    title: La politica de verificacion, su migracion y su supervivencia real al rearme
+    goal: Que un ticket tenga una politica de verificacion persistida EN EL TEXTO y que el rearme la reproduzca de verdad (frontmatter + importador, ida y vuelta idempotentes), con default advisory, sin cambiar el comportamiento de ningun ticket existente.
     prerequisites:
       - id: F1.pre1
-        text: Backup del store vivo hecho FUERA de los repos (lo pide el contrato del repo antes de tocar datos)
+        text: "Backup del store vivo hecho FUERA de los repos (lo pide el contrato del repo antes de tocar datos) — CUMPLIDO el 2026-10-05: /Users/edobacon/.kanai/backups/kanai_data-20261004-221204 (integrity_check ok, 606 tickets, fuera de todo git)"
       - id: F1.pre2
-        text: "MEDICION PREVIA del rearme sobre una COPIA del store: correr `pnpm db:rebuild --fresh` contra la copia y registrar QUE SOBREVIVE, en particular si teachPolicy/draftPolicy/reviewPolicy vuelven a su default. Va ANTES del backup: convierte la sospecha en dato"
+        text: "MEDICION PREVIA del rearme sobre una COPIA del store: correr `pnpm db:rebuild --fresh` contra la copia y registrar QUE SOBREVIVE — CUMPLIDO el 2026-10-05: las 56 politicas no-default volvieron a su default y 51 tickets perdieron autopilot (100% en los 4 proyectos nativos de Kanai). Detalle en la revision del KB 'Que sobrevive a un rearme de la DB: medido, no supuesto'"
     tasks:
       - code: F1.1
         text: Agregar la columna `verification_policy` a `tickets` (ask|required, default ask) con su migracion
         detail: Columna nueva en `tickets` (texto, not null, default 'ask') con su migracion de drizzle generada y revisada. Mismo patron que teachPolicy/draftPolicy/reviewPolicy (server/db/schema.ts).
       - code: F1.2
         text: Que `set_ticket_config` acepte y muestre la politica, con su validacion
-        detail: "`setTicketConfig` (server/repo/tickets.ts:150) valida y setea; `set_ticket_config` (server/mcp/tools.ts:953) la acepta en el patch y la muestra en el resumen."
+        detail: "`setTicketConfig` (server/repo/tickets.ts:154) valida y setea; `set_ticket_config` (server/mcp/tools.ts:953) la acepta en el patch y la muestra en el resumen."
       - code: F1.3
-        text: "Tests: persistencia, default y rechazo de un valor invalido"
-        detail: La politica se persiste; el default es `ask`; un valor invalido se rechaza con motivo; ningun ticket existente cambia de comportamiento.
+        text: "Tests: persistencia, default, rechazo de un valor invalido y round-trip idempotente"
+        detail: "tests/unit/ticket-config.test.ts (archivo NUEVO: es el que corre F1.c2, no existe todavia). La politica se persiste; el default es `ask`; un valor invalido se rechaza con motivo; ningun ticket existente cambia de comportamiento. Sumar el round-trip: un ticket escrito a frontmatter con `autopilot` NATIVO (autonomous|per_session) y con la politica no-default tiene que volver a leerse con esos mismos valores (un `autonomous` cae a `manual` por AUTOPILOT_MAP)."
       - code: F1.4
-        text: Materializar la politica en el TEXTO del ticket como estado (frontmatter, al lado de autopilot)
-        detail: "El frontmatter del ticket (projects/<p>/tickets/<T>.md) trae `autopilot` pero NINGUNA de las tres politicas: teach/draft/review solo viven en la DB y en los sidecars de auditoria, asi que un db:rebuild --fresh los devuelve a su default EN SILENCIO (un default valido no falla, cambia el comportamiento). La politica nueva tiene que escribirse en el frontmatter como ESTADO, al lado de `autopilot`, y conviene cerrar el mismo hueco para las tres existentes en el mismo cambio o dejarlo medido y decidido."
+        text: Materializar en el TEXTO la politica nueva Y las tres existentes, y RE-RENDERIZAR el .md al setear la config
+        detail: "El frontmatter del ticket (projects/<p>/tickets/<T>.md) trae `autopilot` pero NINGUNA de las tres politicas: medido en F1.pre2, de 56 tickets con politicas no-default sobrevivieron 0. Escribir `verification_policy` como ESTADO al lado de `autopilot` (ticketToMarkdown, server/engine/render.ts:41) y, en el mismo cambio, teach/draft/review, que tienen el mismo hueco. Ademas `setTicketConfig` (server/repo/tickets.ts:154) NO re-renderiza el .md (no llama logTicket, a diferencia de setTicketExternal): sin eso el texto conserva el valor viejo y el rearme reproduce el viejo. Tiene que re-renderizar al cambiar la config."
       - code: F1.5
-        text: "Volver a medir el rearme: el ticket conserva su politica tras un --fresh"
-        detail: "Repetir la medicion de F1.pre2 despues de implementar: `pnpm db:rebuild --fresh` sobre una copia y comprobar que el ticket conserva su politica (y, si se cerro el hueco, tambien teach/draft/review)."
+        text: "La vuelta: que el importador LEA las politicas del frontmatter y que el mapa de autopilot deje de degradar los valores nativos"
+        detail: "`toTicketInsert` (server/migrate-up1/parse.ts:514) tiene que leer `verification_policy` y las tres politicas del frontmatter (con su default si faltan). Y el mapa de autopilot tiene que ser idempotente: `AUTOPILOT_MAP` solo entiende claves de DKC (super/strict/true/manual) y `autonomous`/`per_session` nativos caen al `?? 'manual'`. Medido en F1.pre2: 48 tickets autonomous->manual y 3 per_session->manual; en los 4 proyectos nativos de Kanai, 40/40. La ida (render) y la vuelta (parse) tienen que coincidir."
+      - code: F1.6
+        text: "Volver a medir el rearme: el ticket conserva su politica Y su autopilot tras un --fresh"
+        detail: "Repetir la medicion de F1.pre2 despues de implementar: `KANAI_DATA_ROOT=<copia> KANAI_DATA_REPO= pnpm db:rebuild --fresh` sobre una copia y comprobar que el ticket conserva su politica y su autopilot. Hacerlo sobre un proyecto NATIVO de Kanai (p. ej. kanai_test o taomangalam), NO sobre uno con carpeta DKC: en un proyecto con DKC el --fresh lo re-migra desde DKC y un 'verde' taparia el hueco (medido: jormat 113/116 y up1 75/79 se recuperan re-migrando; taomangalam 0/37 desde el texto)."
     criteria:
       - id: F1.c1
         text: "`pnpm typecheck` termina con codigo 0."
@@ -61,7 +65,7 @@ phases:
           cwd: /Users/edobacon/Workspace/kanai/kanai-app
           expect: 0 errores
       - id: F1.c2
-        text: Los tests de la config del ticket pasan en verde, incluida la politica nueva.
+        text: Los tests de la config del ticket pasan en verde, incluida la politica nueva (crea tests/unit/ticket-config.test.ts).
         kind: command
         run:
           command: pnpm vitest run tests/unit/ticket-config.test.ts
@@ -72,12 +76,12 @@ phases:
         text: "Evidencia: la migracion aplicada sobre el store vivo, con su verificación posterior."
         kind: evidence
       - id: F1.c4
-        text: "Evidencia: el rearme medido sobre una COPIA antes y despues, y el ticket conservando su politica."
+        text: "Evidencia: el rearme medido sobre una COPIA antes y despues, en un proyecto NATIVO de Kanai, con el ticket conservando su politica Y su autopilot."
         kind: evidence
-    effort: 4 a 6 horas
+    effort: 6 a 9 horas
     delivers: true
     changes_code: true
-    rollback: Revertir el commit y el down de la migracion; la columna nueva con default no afecta a nadie
+    rollback: Revertir los commits y el down de la migracion; la columna nueva con default no afecta a nadie (el round-trip del frontmatter es aditivo)
   - code: F2
     title: El motivo estructurado y el reporte del porque
     goal: Que un item no ejecutado tenga un MOTIVO estructurado, y que Kanai pueda informarlo; y que `pending` deje de ser un estado de reposo cuando la politica es obligatoria.
@@ -90,7 +94,7 @@ phases:
         detail: "`report_verification` (server/mcp/tools.ts:812) acepta por item `status: pass|fail|not_run` + `cause` (sin-pw|sin-ambiente|sin-acceso|no-aplica|otro) + `note`. Con `not_run` la causa es obligatoria; con `otro` la nota tambien. `evidence` se conserva para lo que si se corrio."
       - code: F2.2
         text: "`pending` deja de ser estado de reposo cuando la politica es obligatoria"
-        detail: "Con la politica en `required`, un item en `pending` no se acepta al cerrar: se exige `pass`, `fail` o `not_run` con causa. Con la politica en `ask` todo sigue como hasta hoy."
+        detail: "Con la politica en `required`, un item en `pending` no se acepta al cerrar: se exige `pass`, `fail` o `not_run` con causa. Con la politica en `ask` todo sigue igual que con el comportamiento anterior."
       - code: F2.3
         text: Superficie que INFORMA el porque de lo no ejecutado
         detail: "Una lectura (en el mismo reporte o en una tool de consulta) que devuelva, por item: estado, causa y nota. Es lo que responde 'Kanai debe poder informar por que'."
@@ -133,7 +137,7 @@ phases:
         detail: "El guard del cierre (server/engine/guards/closure.ts, al lado del guard del teach en la linea 108) exige, con la politica en `required`, que todos los items de la sesion de verificacion esten resueltos: `pass`, o `not_run` con causa."
       - code: F3.2
         text: La politica puede volver bloqueante el gate de la sesion de verificacion
-        detail: Hoy `blocksClose` es fijo por tipo de sesion (shared/session-policy.ts:21 declara verification con blocksClose:false). La politica del ticket tiene que poder volver bloqueante el gate de su sesion de verificacion, sin cambiar el default.
+        detail: "`blocksClose` es fijo por tipo de sesion (shared/session-policy.ts:21 declara verification con blocksClose:false). La politica del ticket tiene que poder volver bloqueante el gate de su sesion de verificacion, sin cambiar el default."
       - code: F3.3
         text: El cierre reporta que quedo sin correr, con su motivo, y el escape del dev queda auditado
         detail: El mensaje del guard lista los items sin resolver con su causa, y el escape del dev (cerrar reconociendo el motivo) queda auditado igual que el del teach (server/mcp/humanConfirm.ts).

@@ -7,6 +7,10 @@ work_type: implement
 external: KANAI-KB7
 tier: T2
 autopilot: autonomous
+verification_policy: ask
+teach_policy: skip
+draft_policy: ask
+review_policy: auto
 ---
 
 ## Request

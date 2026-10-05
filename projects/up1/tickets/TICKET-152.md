@@ -8,6 +8,10 @@ external: UPONE-1770
 tier: T2
 module: curriculum-mapping
 autopilot: manual
+verification_policy: ask
+teach_policy: skip
+draft_policy: skip
+review_policy: skip
 story_points:
   estimated: 3
   executed: 3

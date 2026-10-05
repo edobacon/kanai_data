@@ -9,6 +9,10 @@ tier: T1
 tier_origin: estimated
 module: object-manager
 autopilot: manual
+verification_policy: ask
+teach_policy: ask
+draft_policy: skip
+review_policy: auto
 story_points:
   published: 2
   estimated: 2

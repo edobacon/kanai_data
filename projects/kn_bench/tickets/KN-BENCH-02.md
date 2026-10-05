@@ -8,6 +8,10 @@ external: KN-BENCH-02
 tier: T2
 module: duration
 autopilot: autonomous
+verification_policy: ask
+teach_policy: skip
+draft_policy: ask
+review_policy: auto
 ---
 
 ## Request

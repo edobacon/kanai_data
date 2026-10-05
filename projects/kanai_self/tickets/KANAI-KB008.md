@@ -6,6 +6,10 @@ status: closed
 work_type: improvement
 module: mcp
 autopilot: manual
+verification_policy: ask
+teach_policy: skip
+draft_policy: ask
+review_policy: auto
 ---
 
 # Capa de presentación semántica del MCP de kanai

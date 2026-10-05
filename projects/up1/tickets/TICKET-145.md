@@ -8,6 +8,13 @@ external: UPONE-1757
 tier: T2
 module: curriculum-design
 autopilot: autonomous
+verification_policy: ask
+teach_policy: ask
+draft_policy: skip
+review_policy: auto
+story_points:
+  estimated: 3
+  executed: 3
 ---
 
 # Migracion server-side de invariantes de Curriculum Design (camino A) + validacion

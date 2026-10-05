@@ -43,7 +43,8 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | analisis-verificacion-obligatoria.md | analisis | Análisis: la verificación obligatoria y lo que cambia en el contrato | Análisis completo del caso: el problema medido (13 de 28 sesiones de verificación abiertas, varias cerradas con todo pendiente, y siete fallos reales cuando sí corren), la decisión del dev, los ocho cambios de contrato entre ticket y épica, y las cinco fases con sus criterios y las decisiones ya tomadas. |
-| rearme-db-que-sobrevive.md | revision | Antes del backup: qué sobrevive a un rearme de la DB | Verificación previa al backup: los casos inline, el plan, las KB docs y el esquema sobreviven al rearme; autopilot está en el frontmatter del ticket, pero teachPolicy/draftPolicy/reviewPolicy NO, así que un db:rebuild --fresh los devolvería a su default en silencio. F1 tiene que materializar la política nueva en el texto del ticket como estado y verificar con un rearme sobre copia, midiendo primero. |
+| f1-resultados.md | registro | F1 — Resultado: las políticas del ticket sobreviven al rearme | Cierre de F1 con el antes/después medido sobre copias: las políticas no-default que sobrevivían al rearme pasaron de 0/56 a 56/56, los autopilot degradados de 51 a 0, y los proyectos nativos del 0% al 100%. Incluye la causa raíz, el backfill acotado de 56 .md autorizado por el dev y lo que falta para cerrar (las dos corridas de comando del dev). |
+| rearme-db-que-sobrevive.md | revision | Qué sobrevive a un rearme de la DB: medido, no supuesto | Medición con rearme real (--fresh) sobre una copia: las 56 políticas no-default vuelven a su default en silencio y el autopilot se pierde en los 4 proyectos nativos de Kanai (40/40), aunque esté en el frontmatter. Corrige la revisión previa ("autopilot SÍ sobrevive") y fija lo que F1 tiene que cerrar: frontmatter + re-render al setear la config + parser que lea la política + arreglar el mapa de autopilot. |
 
 ## Plan
 

@@ -6,6 +6,13 @@ status: closed
 work_type: fix
 module: curriculum-design
 autopilot: autonomous
+verification_policy: ask
+teach_policy: ask
+draft_policy: skip
+review_policy: auto
+story_points:
+  estimated: 1
+  executed: 1
 ---
 
 # Contexto
