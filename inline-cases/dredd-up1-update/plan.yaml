@@ -1,6 +1,8 @@
 plan_id: dredd-up1-update
 title: "Dredd up1 1.1: plan de evolución autónoma"
-intent: Una única entrega final 1.1 para Claude Code en macOS, Linux y Windows, con todas las mejoras acordadas y documentación operativa propia. Preservar íntegra la documentación v1 y generar comparación v1/1.1. Planificación actual no inicia implementación, publicación ni cambios de hooks globales.
+intent: Una única entrega final 1.1 para Claude Code, ejecutada y verificada en macOS de forma autónoma por el agente, con diseño portable a Linux y Windows cuya verificación real queda aplazada para después de la implementación. Todas las mejoras acordadas y documentación operativa propia. Preservar íntegra la documentación v1 y generar comparación v1/1.1. Sin push, publicación ni cambios de hooks globales.
+created: 2026-10-04T18:28:40.002Z
+updated: 2026-10-05T15:26:08.313Z
 tags:
   projects:
     - up1
@@ -9,6 +11,7 @@ tags:
   tickets: []
   branches:
     - feat/dredd-update
+    - feat/dredd-update-1.1
   folders: []
   labels:
     - dredd
@@ -19,13 +22,16 @@ tags:
 settings:
   judge: final
 risks:
-  - Bash/fcntl y runners POSIX no prueban portabilidad Windows.
+  - Sin verificación real en Linux y Windows, el diseño portable puede fallar al probarse después; la documentación 1.1 debe declararlos sin verificar.
+  - Las suites las corre el mismo agente que implementa; el juez ciego por fase y el juez final son el control independiente.
   - Ledger concurrente y guard deben aislar sesiones sin abrir bypass de seguridad.
   - Tokens/costo incompletos no se inventan; outcomes no equivalen automáticamente a precisión.
   - Decisiones de jurado, Jira local, rúbrica y retención siguen pendientes hasta F0.
   - Checkout con cambios ajenos; aislar ejecución sin descartar ni mezclar su trabajo.
-  - Validación real Linux/Windows requiere ambientes y responsables; un test macOS no los sustituye.
+  - Un criterio de tests puede aprobar en vacío si la carpeta o el patrón no tienen tests; por eso cada criterio exige mínimo y suites nombradas.
+  - "F2 corre en paralelo con F1.2-F1.4: cambios de F1 sobre helper o estado pueden obligar a ajustar F2 antes de cerrar F3."
 out_of_scope:
+  - "Verificación real en Linux y Windows (suites y smoke de Claude Code): aplazada para después de la implementación, como seguimiento aparte."
   - Dependencias/referencias a plataformas de gestión o búsqueda excluidas en el producto up1.
   - Cambios de funcionalidad o repos de módulos de up1.
   - Codex como cliente objetivo; dashboards o servicios de métricas remotos.
@@ -36,7 +42,7 @@ phases:
   - code: F0
     title: Cerrar contexto y contrato 1.1
     goal: Resolver decisiones y fijar aceptación antes de cambios de implementación.
-    owner: Responsable del caso; validación de comandos por el dev
+    owner: Agente prepara propuestas y artefactos; el dev decide y confirma F0.C1
     prerequisites:
       - id: F0.P1
         text: El usuario autoriza el plan; documentos base y repos verificados, sin iniciar implementación.
@@ -46,14 +52,17 @@ phases:
         detail: Confirmar jurado/costo, Jira en pre-envío, severidad/veredictos, límite de workers/modelos, presupuesto y retención/anonimización. Registrar propuestas y decisiones humanas por separado.
         kb:
           - contexto-y-alcance.md#11-decisiones-abiertas-y-dependencias-del-plan
+          - investigacion-configuracion-local.md#configuracion-observada-y-adaptacion-propuesta
       - code: F0.2
         text: Definir soporte y arquitectura portable
-        detail: Fijar versiones/capacidades Python/git, helper portable, identidad de sesiones, lock o parent escritor, runners por OS y fuente real de tokens. Asignar validación Linux/Windows.
+        detail: Fijar versión de Python soportada (en macOS conviven 3.9 y 3.14) y de git, helper portable, identidad de sesiones, lock o parent escritor y fuente real de tokens. El diseño evita mecanismos solo POSIX aunque Linux y Windows se verifiquen después.
         kb:
           - contexto-y-alcance.md#7-arquitectura-autonoma-a-evaluar
+          - investigacion-configuracion-local.md#limites-que-requieren-trabajo-propio-en-up1
+          - verificacion-solo-macos.md
       - code: F0.3
         text: Congelar baseline y matriz de aceptación
-        detail: Registrar contenido/hashes de ambos docs v1 en 348ea29 y pruebas por requisito. Aislar trabajo futuro sin alterar checkout dirty y registrar commits posteriores al inicio de sus fases.
+        detail: Registrar contenido/hashes de ambos docs v1 en 348ea29 y pruebas por requisito. Fijar la convención de tests .claude/skills/dredd/scripts/tests/test_fN_<area>.py (suites nombradas en cada criterio de F1-F5) y el número mínimo de tests por fase, derivado de los casos de la matriz (nunca 0). Aislar trabajo futuro sin alterar checkout dirty y registrar commits posteriores al inicio de sus fases.
         kb:
           - version-1.1-y-conservacion-v1.md
           - contexto-y-alcance.md#10-evidencia-requerida-para-aceptar-la-entrega
@@ -62,26 +71,26 @@ phases:
         text: Decisiones pendientes resueltas con motivo y responsable; autorización de implementación registrada.
         kind: manual
       - id: F0.C2
-        text: Contrato de interfaces, entornos, rúbrica y matriz de pruebas disponibles en el KB.
+        text: Contrato de interfaces, entornos, rúbrica y matriz de pruebas disponibles en el KB, con convención de nombres de tests y mínimo de tests por fase.
         kind: evidence
       - id: F0.C3
         text: Hashes/docs v1 congelados y estrategia para preservar cambios ajenos verificable.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 1–2 días; recalibrar tras F0; no es fecha de entrega."
+    effort: "Estimación inicial de esfuerzo activo: 1-2 días; recalibrar tras F0; no es fecha de entrega."
     delivers: false
     changes_code: false
     rollback: "No aplica: fase de análisis/validación sin cambios de código ni publicación."
   - code: F1
     title: Base portable y operación segura
-    goal: Helper, sesiones, guard y ejecución aislada coherentes en los tres sistemas.
-    owner: Responsable del caso; validación de comandos por el dev
+    goal: Helper, sesiones, guard y ejecución aislada con diseño portable, verificados en macOS.
+    owner: Agente implementa, ejecuta las suites en macOS y commitea por fase sin push
     prerequisites:
       - id: F1.P1
         text: F0 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
     tasks:
       - code: F1.1
         text: Adaptar helper y prefetch
-        detail: Inventarios paginados, errores HTTP/timeouts/rate-limit explícitos, refs exactos y prefetch único. Núcleo portable acordado; compatibilidad con llamadas previas o migración documentada.
+        detail: Inventarios paginados, errores HTTP/timeouts/rate-limit explícitos, refs exactos y prefetch único. Núcleo portable acordado; compatibilidad con llamadas previas o migración documentada. Al terminarla habilita el inicio de F2.
         kb:
           - contexto-y-alcance.md#4-problemas-que-condicionan-el-diseno
       - code: F1.2
@@ -101,32 +110,28 @@ phases:
           - contexto-y-alcance.md
     criteria:
       - id: F1.C1
-        text: Suite portable registra paginación/HTTP, aislamiento y preservación del checkout.
-        kind: command
-        run:
-          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
-          repo: up1
-          cwd: .
-          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
-          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
-          exit_code: 0
+        text: "Suite de F1 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p \"test_f1_*.py\" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F1 fijado en F0.3 (nunca 0); suites test_f1_helper, test_f1_sessions, test_f1_guard y test_f1_checkout presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro."
+        kind: evidence
       - id: F1.C2
-        text: Matriz OS identifica mecanismos usados, límites y resolución de Python/git.
+        text: Matriz por sistema identifica mecanismos usados, límites y resolución de Python/git; macOS verificado, Linux y Windows marcados como diseño sin verificar.
         kind: evidence
       - id: F1.C3
         text: Guard y runners dejan de contradecirse sin ampliar permisos de red/escritura indiscriminadamente.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 3–5 días; recalibrar tras F0; no es fecha de entrega."
+      - id: F1.C4
+        text: "Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso."
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 3-5 días; recalibrar tras F0; no es fecha de entrega."
     delivers: true
     changes_code: true
     rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
   - code: F2
     title: Rigor del protocolo y auditoría de configuración
     goal: Contrato autónomo por fases, hallazgos estructurados y veredicto reproducible.
-    owner: Responsable del caso; validación de comandos por el dev
+    owner: Agente implementa, ejecuta las suites en macOS y commitea por fase sin push
     prerequisites:
       - id: F2.P1
-        text: F1 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+        text: F0 cerrada y F1.1 terminada (prefetch con refs exactos) con sus commits registrados; autorización de implementación vigente. Puede avanzar en paralelo con F1.2-F1.4.
     tasks:
       - code: F2.1
         text: Fragmentar protocolo y formalizar resultados
@@ -151,32 +156,28 @@ phases:
           - contexto-y-alcance.md
     criteria:
       - id: F2.C1
-        text: Suite de triage/rúbrica/configuración pasa con escenarios de evidencia y ausencia.
-        kind: command
-        run:
-          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
-          repo: up1
-          cwd: .
-          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
-          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
-          exit_code: 0
+        text: "Suite de F2 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p \"test_f2_*.py\" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F2 fijado en F0.3 (nunca 0); suites test_f2_protocol, test_f2_triage, test_f2_rubric y test_f2_config presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro."
+        kind: evidence
       - id: F2.C2
         text: Mapa de fases demuestra preservación de capacidades v1 y autonomía del nuevo protocolo.
         kind: evidence
       - id: F2.C3
         text: Veredicto calculado coincide con fixtures; cada hallazgo incluye mecanismo, ref y fundamento.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 3–5 días; recalibrar tras F0; no es fecha de entrega."
+      - id: F2.C4
+        text: "Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso."
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 3-5 días; recalibrar tras F0; no es fecha de entrega."
     delivers: true
     changes_code: true
     rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
   - code: F3
     title: Concurrencia, jurado y verificación independiente
     goal: Adaptar esfuerzo al riesgo sin perder evidencia ni control del parent.
-    owner: Responsable del caso; validación de comandos por el dev
+    owner: Agente implementa, ejecuta las suites en macOS y commitea por fase sin push
     prerequisites:
       - id: F3.P1
-        text: F2 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
+        text: F1 y F2 cerradas con criterios y commits aplicables registrados; autorización de implementación vigente.
     tasks:
       - code: F3.1
         text: Orquestar roles por ejes independientes
@@ -200,29 +201,25 @@ phases:
           - contexto-y-alcance.md
     criteria:
       - id: F3.C1
-        text: Suite cubre modelos/roles disponibles, desacuerdo, worker fallido y reverify.
-        kind: command
-        run:
-          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
-          repo: up1
-          cwd: .
-          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
-          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
-          exit_code: 0
+        text: "Suite de F3 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p \"test_f3_*.py\" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F3 fijado en F0.3 (nunca 0); suites test_f3_orchestration, test_f3_jury, test_f3_verifier y test_f3_consent presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro."
+        kind: evidence
       - id: F3.C2
         text: Una revisión amplia comparte prefetch y deduplica sin atribuir cobertura inexistente.
         kind: evidence
       - id: F3.C3
         text: Sin consentimiento no hay publicación ni creación externa; hallazgos refutados recalibran resultado.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 2–4 días; recalibrar tras F0; no es fecha de entrega."
+      - id: F3.C4
+        text: "Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso."
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 2-4 días; recalibrar tras F0; no es fecha de entrega."
     delivers: true
     changes_code: true
     rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
   - code: F4
     title: Seguimiento local, pre-envío y revisión del delta
     goal: Persistir puntos y cobertura para verificar cierres sin olvidar código no leído.
-    owner: Responsable del caso; validación de comandos por el dev
+    owner: Agente implementa, ejecuta las suites en macOS y commitea por fase sin push
     prerequisites:
       - id: F4.P1
         text: F3 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
@@ -249,29 +246,25 @@ phases:
           - contexto-y-alcance.md#9-seguimiento-y-cobertura-condiciones-de-seguridad-logica
     criteria:
       - id: F4.C1
-        text: Suite cubre delta, rebase/force-push, blob cambiado, no leídos y cierre verificable.
-        kind: command
-        run:
-          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
-          repo: up1
-          cwd: .
-          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
-          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
-          exit_code: 0
+        text: "Suite de F4 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p \"test_f4_*.py\" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F4 fijado en F0.3 (nunca 0); suites test_f4_case, test_f4_scope, test_f4_rounds y test_f4_invalidation presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro."
+        kind: evidence
       - id: F4.C2
         text: Expediente y métricas futuras distinguen corrección, decisión y pendiente.
         kind: evidence
       - id: F4.C3
         text: Revisión parcial o archivo ojeado nunca aparecen como cobertura completa.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 3–5 días; recalibrar tras F0; no es fecha de entrega."
+      - id: F4.C4
+        text: "Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso."
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 3-5 días; recalibrar tras F0; no es fecha de entrega."
     delivers: true
     changes_code: true
     rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
   - code: F5
     title: Métricas locales y exportación Markdown
     goal: Registrar ejecuciones reales y generar reportes compartibles sin servicios externos.
-    owner: Responsable del caso; validación de comandos por el dev
+    owner: Agente implementa, ejecuta las suites en macOS y commitea por fase sin push
     prerequisites:
       - id: F5.P1
         text: F4 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
@@ -283,7 +276,7 @@ phases:
           - contexto-y-alcance.md
       - code: F5.2
         text: Implementar comando report
-        detail: Interfaz dredd-metrics.py report --repo --from --to --output, anonymización según contrato; UTF-8 y Markdown real, sin publicar. Definir archivo existente/filtros/no datos.
+        detail: Interfaz dredd-metrics.py report --repo --from --to --output, anonimización según contrato; UTF-8 y Markdown real, sin publicar. Definir archivo existente/filtros/no datos.
         kb:
           - contexto-y-alcance.md
       - code: F5.3
@@ -298,38 +291,35 @@ phases:
           - contexto-y-alcance.md#8-metricas-y-comando-de-reporte
     criteria:
       - id: F5.C1
-        text: Suite de captura/exportación valida nulls, parciales, filtros y anonimización.
-        kind: command
-        run:
-          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
-          repo: up1
-          cwd: .
-          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
-          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
-          exit_code: 0
+        text: "Suite de F5 ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -p \"test_f5_*.py\" -v. Exit 0; 'Ran N tests' con N mayor o igual al mínimo de F5 fijado en F0.3 (nunca 0); suites test_f5_capture, test_f5_report, test_f5_aggregates y test_f5_anonymize presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro."
+        kind: evidence
       - id: F5.C2
         text: El comando genera un .md legible con sección de datos incompletos y muestra reproducible.
         kind: evidence
       - id: F5.C3
         text: Registros/reportes declaran versión 1.1 y no exponen secretos, rutas personales ni código sensible.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 2–3 días; recalibrar tras F0; no es fecha de entrega."
+      - id: F5.C4
+        text: "Juez ciego de fase: subagente de contexto limpio con un brief armado desde el plan, los criterios y el diff de la fase; veredicto sin hallazgos bloqueantes abiertos, registrado en el KB del caso."
+        kind: evidence
+    effort: "Estimación inicial de esfuerzo activo: 2-3 días; recalibrar tras F0; no es fecha de entrega."
     delivers: true
     changes_code: true
     rollback: Revertir sólo los commits nuevos de esta fase con git revert en la rama del caso; conservar cambios ajenos, documentación v1 y registros locales. Si cambia formato local, respaldar datos y ofrecer retorno de esquema sin borrar historial.
   - code: F6
     title: Documentación 1.1 y comparación histórica
     goal: Documentar la implementación real de 1.1 y mantener la referencia v1 íntegra.
-    owner: Responsable del caso; validación de comandos por el dev
+    owner: Agente redacta, verifica y commitea sin push
     prerequisites:
       - id: F6.P1
         text: F5 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
     tasks:
       - code: F6.1
         text: Crear referencia y guía operativa 1.1
-        detail: "docs/reference/dredd-v1.1.md y docs/guides/dredd-operacion-v1.1.md: flujos/decisiones, instalación por OS, comandos, fallos, límites y política de publicación. No promesas sin verificar."
+        detail: "docs/reference/dredd-v1.1.md y docs/guides/dredd-operacion-v1.1.md: flujos/decisiones, instalación, comandos, fallos, límites y política de publicación. Estado de verificación por sistema: macOS verificado; Linux y Windows con diseño portable sin verificar. No promesas sin verificar."
         kb:
           - version-1.1-y-conservacion-v1.md
+          - verificacion-solo-macos.md
       - code: F6.2
         text: Crear comparación v1 a 1.1 e índice
         detail: "docs/reference/dredd-v1-a-v1.1.md: cambios/preservaciones/migración y evidencia. Índice nuevo o existente enlaza ambas versiones sin editar docs históricos."
@@ -353,66 +343,57 @@ phases:
         text: Ambos documentos v1 coinciden byte a byte con la línea base 348ea29.
         kind: evidence
       - id: F6.C3
-        text: Documentación 1.1 describe sólo comportamientos implementados; diferencias por OS y límites explícitos.
+        text: Documentación 1.1 describe sólo comportamientos implementados y declara Linux y Windows sin verificar, con la verificación aplazada como pendiente.
         kind: evidence
-    effort: "Estimación inicial de esfuerzo activo: 1–2 días; recalibrar tras F0; no es fecha de entrega."
+    effort: "Estimación inicial de esfuerzo activo: 1-2 días; recalibrar tras F0; no es fecha de entrega."
     delivers: false
     changes_code: false
     rollback: "No aplica: fase de análisis/validación sin cambios de código ni publicación."
   - code: F7
-    title: Validación integral de tres sistemas y juez final
-    goal: Aceptar una única entrega 1.1 con pruebas reales, documentación y auditoría independiente.
-    owner: Responsable del caso; validación de comandos por el dev
+    title: Validación integral en macOS y juez final
+    goal: Aceptar una única entrega 1.1 verificada en macOS, con documentación y auditoría independiente.
+    owner: Agente ejecuta suite, extremo a extremo y juez final; el dev confirma smoke (F7.C2) y aceptación (F7.C4)
     prerequisites:
       - id: F7.P1
         text: F6 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente.
     tasks:
       - code: F7.1
-        text: Ejecutar matriz en macOS, Linux y Windows
-        detail: El dev/responsables asignados ejecutan comandos y smoke Claude Code. Registrar versiones, totales, salidas y estado; no validar Windows por tests macOS.
+        text: Ejecutar matriz en macOS
+        detail: El agente ejecuta la suite completa; el smoke de Claude Code lo confirma el dev. Registrar versiones de Python, git y Claude Code, totales, salidas y estado.
         kb:
           - contexto-y-alcance.md#10-evidencia-requerida-para-aceptar-la-entrega
       - code: F7.2
         text: Verificar extremo a extremo y regresión
-        detail: PR/local con/sin KB, decisiones Jira de F0, jurado/verify, cierre delta, API, progreso/hooks, export MD y consentimiento. Fuentes/refs y datos incompletos visibles.
+        detail: "PR/local con/sin KB, decisiones Jira de F0, jurado/verify, cierre delta, API, progreso/hooks, export MD y consentimiento. Fuentes/refs y datos incompletos visibles. Requiere del dev: token de Bitbucket ya presente en el entorno (el agente no ingresa credenciales) y la instalación o autorización de hooks de proyecto para la prueba, sin tocar hooks globales."
         kb:
           - contexto-y-alcance.md
       - code: F7.3
         text: Preparar paquete único y revisión independiente
-        detail: Listado de commits/archivos/docs 1.1, comparación, reportes de pruebas y rollback. Pedir brief del juez final y revisarlo en contexto limpio según flujo del caso.
+        detail: Listado de commits/archivos/docs 1.1, comparación, reportes de pruebas, rollback y pendiente de verificación Linux/Windows. Pedir brief del juez final y revisarlo en contexto limpio según flujo del caso.
         kb:
           - contexto-y-alcance.md
       - code: F7.4
         text: Registrar resultado y correcciones necesarias
-        detail: No cerrar con criterios pendientes; si juez requiere cambios, agregar fase de correcciones autorizada y reevaluar. Push/merge/publicación requieren instrucción adicional.
+        detail: No cerrar con criterios pendientes; si juez requiere cambios, agregar fase de correcciones autorizada por el dev y reevaluar. Push/merge/publicación requieren instrucción adicional.
         kb:
           - contexto-y-alcance.md
     criteria:
       - id: F7.C1
-        text: Suite se ejecuta en los tres sistemas, con evidencia por OS y sin fallos ocultos.
-        kind: command
-        run:
-          command: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v
-          repo: up1
-          cwd: .
-          how: El dev lo ejecuta con el Python compatible definido en F0, sobre la rama del caso. No instala dependencias ni corre suites del producto.
-          expect: Exit 0, tests ejecutados y totales registrados; ningún fallo ni skip que oculte un requisito.
-          exit_code: 0
+        text: "Suite completa ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v. Exit 0; 'Ran N tests' con N mayor o igual a la suma de los mínimos de F1-F5; las 20 suites test_f1_* a test_f5_* presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro."
+        kind: evidence
       - id: F7.C2
-        text: Smoke del cliente en los tres sistemas y revisión del reporte Markdown confirmados por el dev.
+        text: Smoke de Claude Code en macOS y revisión del reporte Markdown confirmados por el dev.
         kind: manual
       - id: F7.C3
-        text: Juez final evalúa alcance completo, conservación v1 y evidencias de compatibilidad; resultado registrado.
+        text: Juez final evalúa alcance completo, conservación v1 y que la verificación aplazada de Linux y Windows quede declarada; resultado registrado.
         kind: evidence
       - id: F7.C4
         text: Única entrega 1.1 aceptada con commits, docs y rollback, sin publicar por esta fase.
         kind: manual
-    effort: "Estimación inicial de esfuerzo activo: 1–2 días más disponibilidad de ambientes; recalibrar tras F0; no es fecha de entrega."
+    effort: "Estimación inicial de esfuerzo activo: 1-2 días; recalibrar tras F0; no es fecha de entrega."
     delivers: false
     changes_code: false
     rollback: "No aplica: fase de análisis/validación sin cambios de código ni publicación."
 registered_project_ack:
   project: up1
   reason: El usuario pidió explícitamente un caso inline para este trabajo puntual sobre la herramienta Dredd, aislado de los tickets de producto de up1. Se registra la excepción; no se altera el flujo de tickets ni se convierte la herramienta en dependiente de Kanai.
-created: 2026-10-04T18:28:40.002Z
-updated: 2026-10-04T18:28:40.018Z

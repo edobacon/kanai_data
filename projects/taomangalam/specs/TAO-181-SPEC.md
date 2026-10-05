@@ -59,10 +59,10 @@ Con panel persistente en tablet, aplicar un ajuste actualiza el panel y el conte
 
 Ajustes y la aplicación de preferencias reutilizan el tema de HU-01-01, el servicio de reducción de movimiento de HU-01-07 y el resolvedor de imágenes por familia; no se crean equivalentes nuevos.
 
-### REQ-10 `confirmed` `enforcement`
-> Fuente: taomangalam/app/assets/manifest.json:44
+### REQ-10 `confirmed`
+> Fuente: Pedido TAO-181, criterio de aceptacion del fondo de la familia Cuenta + Adenda 3 - 2026-10-05 - dev (edobacon); DEC-235, doc 43 §9; app/lib/core/images/fixtures/image_manifest_fixture.dart (cuentaViewFamilyDeclaration)
 
-El fondo de la familia Cuenta (v-27-cuenta.png) ocupa la pantalla completa detrás del contenido: cover con punto focal, opacidad visual de 12 a 18 %, al menos 65 % de zona tranquila y texto largo sobre superficie opaca (doc 43 §9, DEC-235).
+El fondo de la familia Cuenta (v-27-cuenta.png) ocupa la pantalla completa detras del contenido: cover con punto focal, opacidad visual de 12 a 18 %, al menos 65 % de zona tranquila y texto largo sobre superficie opaca (doc 43 §9, DEC-235). Alcance verificable hoy: telefono. En tablet el diferido esta sancionado por la Adenda 3 del pedido: la familia declara en M0 solo el maestro de telefono vertical (app/lib/core/images/fixtures/image_manifest_fixture.dart, cuentaViewFamilyDeclaration) y sus derivados propios de tablet llegan con HU-02-08, de modo que en tablet Ajustes compone sobre la superficie de respaldo de la familia (token canvas). La variante de tablet se verificara cuando exista su maestro.
 
 ### REQ-11 `confirmed` `enforcement`
 > Fuente: taomangalam/app/test/navigation/app_shell_golden_test.dart:5
@@ -209,6 +209,10 @@ Contrato: rollback: Eliminar la verificación de actualización en vivo del pane
 
 - remove REQ-07
 
+### Enmienda 2
+**REQs:**
+
+- REQ-10 (edit) `confirmed`: El fondo de la familia Cuenta (v-27-cuenta.png) ocupa la pantalla completa detras del contenido: cover con punto focal, opacidad visual de 1
 ## Higiene de CI (Adenda 2)
 
 La Adenda 2 (2026-10-05) registra correcciones de higiene del job de docs, fuera del alcance funcional de la historia: 17 palabras agregadas al diccionario cspell del proyecto para `docs/product/design-system/high-contrast.md` y calificación de referencias DartDoc `[apply]` en `app/lib/core/preferences/preference_controller.dart` y `preference_draft_controller.dart` (con los generados regenerados por build_runner). No cambia el comportamiento del producto ni agrega requisitos, tareas ni sesiones al plan.
