@@ -136,7 +136,7 @@ Contrato: rollback: No aplica cambios de código; si se creó una copia aislada 
 
 **Gate (auto)**: El adaptador real envía las cabeceras exigidas, consume el proveedor y conserva el último estado tras un 426 y un reinicio sin red. ep01-release-provider dispone de casos trazados y ep01-release-integration mantiene explícitas las verificaciones visuales pendientes de TAO-184 y TAO-187.
 
-### Session 4 · T2 · iterate
+### Session 4 · T2 · continue
 
 **Tasks:**
 - [x] S4.T1
