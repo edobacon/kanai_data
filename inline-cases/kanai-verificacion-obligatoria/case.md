@@ -12,6 +12,8 @@
 
 ## Avisos
 
+- la rama base codex/epicas-autonomas no existe en kanai-app (ni local ni en origin)
+- la rama de trabajo codex/epicas-autonomas todavía no existe en kanai-app (se crea al empezar el trabajo)
 - el intake no tiene ambientes (QA, producción): anótalos si el trabajo se valida o se despliega en alguno
 - el intake no tiene personas (responsable, quien revisa, quien despliega)
 
@@ -19,7 +21,7 @@
 
 | Repo | Ruta local | Rama base | Ramas de trabajo | Para qué |
 |---|---|---|---|---|
-| kanai-app | configurada | codex/epicas-autonomas (existe) | codex/epicas-autonomas | El producto Kanai: la politica por ticket, la migracion, el reporte de verificacion, el guard del cierre y el default de epica viven aca |
+| kanai-app | configurada | codex/epicas-autonomas (NO existe) | codex/epicas-autonomas (por crear) | El producto Kanai: la politica por ticket, la migracion, el reporte de verificacion, el guard del cierre y el default de epica viven aca |
 
 ## Ambientes
 
@@ -43,6 +45,7 @@
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
 | analisis-verificacion-obligatoria.md | analisis | Análisis: la verificación obligatoria y lo que cambia en el contrato | Análisis completo del caso: el problema medido (13 de 28 sesiones de verificación abiertas, varias cerradas con todo pendiente, y siete fallos reales cuando sí corren), la decisión del dev, los ocho cambios de contrato entre ticket y épica, y las cinco fases con sus criterios y las decisiones ya tomadas. |
+| cierre-de-rama.md | registro | Cierre de la rama: merge a setup, push y borrado | Desenlace de la rama: merge fast-forward a setup, push de setup (origin/setup en 7ae3dda) y borrado de codex/epicas-autonomas en local y remoto, con la verificación previa de que no se perdía ningún commit. |
 | f1-resultados.md | registro | F1 — Resultado: las políticas del ticket sobreviven al rearme | F1 cerrada (juez aprobable_con_nits): las políticas no-default que sobrevivían al rearme pasaron de 0/56 a 56/56, los autopilot degradados de 51 a 0 y los proyectos nativos del 0% al 100%. Incluye la causa raíz, el backfill acotado de 56 .md ya commiteado en el data repo, los commits del cierre y el alcance honesto de la fase (la política se persiste; su exigencia al cerrar llega en F2/F3). |
 | f2-resultados.md | registro | F2 — Resultado: el ítem no ejecutado tiene su motivo | F2 cerrada (juez aprobable_con_nits tras tres iteraciones): el ítem no ejecutado lleva su causa y su nota, se valida antes de escribir, un pending se rechaza con la política obligatoria y el porqué se informa en el reporte, el gate, la vista y el panel. Incluye el hallazgo corregido de que el detalle no sobrevivía al rearme, las mediciones sobre una sesión real y las dos correcciones que exigió el juez (upsert acotado y smoke sin motivos inventados). |
 | f3-resultados.md | registro | F3 — Resultado: el cierre exige la verificación resuelta | F3 cerrada (juez aprobable_con_nits tras dos iteraciones): con la política obligatoria el cierre exige que cada ítem pase o quede no ejecutado con su motivo, bloquea también los ítems fallidos, reporta qué quedó sin correr y por qué, y se destraba con un motivo reconocido y auditado. Incluye la medición real sobre una copia, el defecto que encontró el juez (un fail contaba como resuelto) y las dos reservas que pasan a F4. |
