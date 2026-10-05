@@ -50,10 +50,10 @@ Contrato: rollback: rm words.mjs (archivo nuevo, no toca nada existente).. Statu
 Contrato: rollback: rm words.test.mjs (archivo nuevo).. Status: done
 
 #### S2.T1 — Agregar al README una seccion para countWords que describa que cuenta palabras separadas por espacios, tabulaciones o saltos de linea, que ignora los espacios de los extremos, que devuelve 0 para texto vacio o solo espacios y que lanza TypeError si text no es string; incluir un bloque de ejemplo con import { countWords } from './words.mjs' y al menos una llamada con su resultado (countWords('hola mundo') devuelve 2). Solo agregar: no reescribir, reordenar ni reformatear el contenido existente.
-Contrato: rollback: git checkout -- README.md (o borrar la seccion agregada; no hay otros archivos tocados).. Status: pending
+Contrato: rollback: git checkout -- README.md (o borrar la seccion agregada; no hay otros archivos tocados).. Status: done
 
 #### S2.T2 — Regresion acotada de la utilidad: correr el archivo de tests de words y confirmar que los seis casos siguen pasando despues del cambio de documentacion, y que greet.mjs y greet.test.mjs no aparecen modificados en el working tree.
-Contrato: rollback: Nada que revertir: la task solo ejecuta tests y lecturas de estado; si detecta un fallo, se revierte la task que lo introdujo.. Status: pending
+Contrato: rollback: Nada que revertir: la task solo ejecuta tests y lecturas de estado; si detecta un fallo, se revierte la task que lo introdujo.. Status: done
 ## Sessions
 
 ### Session 1 · T1 · continue
@@ -64,10 +64,10 @@ Contrato: rollback: Nada que revertir: la task solo ejecuta tests y lecturas de 
 
 **Gate (auto)**: words.mjs existe y exporta countWords; node --test words.test.mjs pasa los seis casos (texto simple, espacios multiples, saltos y tabs, vacio, solo espacios, no-string con TypeError).
 
-### Session 2 · T0 · open
+### Session 2 · T0 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T2
 
 **Gate (auto)**: El README tiene una seccion nueva de countWords con un ejemplo concreto, el contenido previo intacto (git diff solo con lineas agregadas) y la suite de words sigue verde.
