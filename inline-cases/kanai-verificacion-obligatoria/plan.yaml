@@ -1,0 +1,227 @@
+plan_id: kanai-verificacion-obligatoria
+title: Verificacion obligatoria por ticket, obligatoria por defecto en epica
+intent: "Que la sesion de verificacion de un ticket sea OBLIGATORIA cuando el ticket la tiene: cada item pasa o queda no ejecutado con su motivo, Kanai informa por que, y en la epica la politica se vuelve obligatoria por defecto (fuera de ella sigue advisory)."
+created: 2026-10-05T01:05:16.015Z
+updated: 2026-10-05T01:11:52.312Z
+tags:
+  projects: []
+  repos:
+    - kanai-app
+  tickets: []
+  branches: []
+  folders: []
+  labels:
+    - verificacion
+    - contrato
+    - calidad
+    - rearme
+settings:
+  judge: per_phase
+risks:
+  - "La migracion toca el store vivo: exige backup previo y verificacion posterior"
+  - "Las politicas del ticket NO estan en el frontmatter: un db:rebuild --fresh las devuelve a su default EN SILENCIO. Por eso F1 las materializa en el texto y mide el rearme antes y despues"
+  - "Volver bloqueante el cierre cambia el comportamiento de tickets EN CURSO: la politica nace en ask, asi que nadie se ve afectado sin pedirlo"
+  - "El motivo estructurado toca el contrato de una tool que ya usaron 28 sesiones: la compatibilidad hacia atras importa (pass/fail/pending siguen valiendo con la politica en ask)"
+out_of_scope:
+  - "Tickets sin sesion de verificacion: se omiten, como pidio el dev"
+  - Cambiar como corre el smoke (Playwright) o su infraestructura
+  - Revisar el resto del contrato de sesiones mas alla de blocksClose
+phases:
+  - code: F1
+    title: La politica de verificacion, su migracion y su supervivencia al rearme
+    goal: Que un ticket tenga una politica de verificacion persistida EN EL TEXTO (para que sobreviva a un rearme de la DB), con default advisory, sin cambiar el comportamiento de ningun ticket existente.
+    prerequisites:
+      - id: F1.pre1
+        text: Backup del store vivo hecho FUERA de los repos (lo pide el contrato del repo antes de tocar datos)
+      - id: F1.pre2
+        text: "MEDICION PREVIA del rearme sobre una COPIA del store: correr `pnpm db:rebuild --fresh` contra la copia y registrar QUE SOBREVIVE, en particular si teachPolicy/draftPolicy/reviewPolicy vuelven a su default. Va ANTES del backup: convierte la sospecha en dato"
+    tasks:
+      - code: F1.1
+        text: Agregar la columna `verification_policy` a `tickets` (ask|required, default ask) con su migracion
+        detail: Columna nueva en `tickets` (texto, not null, default 'ask') con su migracion de drizzle generada y revisada. Mismo patron que teachPolicy/draftPolicy/reviewPolicy (server/db/schema.ts).
+      - code: F1.2
+        text: Que `set_ticket_config` acepte y muestre la politica, con su validacion
+        detail: "`setTicketConfig` (server/repo/tickets.ts:150) valida y setea; `set_ticket_config` (server/mcp/tools.ts:953) la acepta en el patch y la muestra en el resumen."
+      - code: F1.3
+        text: "Tests: persistencia, default y rechazo de un valor invalido"
+        detail: La politica se persiste; el default es `ask`; un valor invalido se rechaza con motivo; ningun ticket existente cambia de comportamiento.
+      - code: F1.4
+        text: Materializar la politica en el TEXTO del ticket como estado (frontmatter, al lado de autopilot)
+        detail: "El frontmatter del ticket (projects/<p>/tickets/<T>.md) trae `autopilot` pero NINGUNA de las tres politicas: teach/draft/review solo viven en la DB y en los sidecars de auditoria, asi que un db:rebuild --fresh los devuelve a su default EN SILENCIO (un default valido no falla, cambia el comportamiento). La politica nueva tiene que escribirse en el frontmatter como ESTADO, al lado de `autopilot`, y conviene cerrar el mismo hueco para las tres existentes en el mismo cambio o dejarlo medido y decidido."
+      - code: F1.5
+        text: "Volver a medir el rearme: el ticket conserva su politica tras un --fresh"
+        detail: "Repetir la medicion de F1.pre2 despues de implementar: `pnpm db:rebuild --fresh` sobre una copia y comprobar que el ticket conserva su politica (y, si se cerro el hueco, tambien teach/draft/review)."
+    criteria:
+      - id: F1.c1
+        text: "`pnpm typecheck` termina con codigo 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 errores
+      - id: F1.c2
+        text: Los tests de la config del ticket pasan en verde, incluida la politica nueva.
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/ticket-config.test.ts
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 fallos
+      - id: F1.c3
+        text: "Evidencia: la migracion aplicada sobre el store vivo, con su verificación posterior."
+        kind: evidence
+      - id: F1.c4
+        text: "Evidencia: el rearme medido sobre una COPIA antes y despues, y el ticket conservando su politica."
+        kind: evidence
+    effort: 4 a 6 horas
+    delivers: true
+    changes_code: true
+    rollback: Revertir el commit y el down de la migracion; la columna nueva con default no afecta a nadie
+  - code: F2
+    title: El motivo estructurado y el reporte del porque
+    goal: Que un item no ejecutado tenga un MOTIVO estructurado, y que Kanai pueda informarlo; y que `pending` deje de ser un estado de reposo cuando la politica es obligatoria.
+    prerequisites:
+      - id: F2.pre1
+        text: F1 cerrada (la politica existe, se persiste y sobrevive al rearme)
+    tasks:
+      - code: F2.1
+        text: Extender `report_verification` con el estado de no-ejecucion y su causa
+        detail: "`report_verification` (server/mcp/tools.ts:812) acepta por item `status: pass|fail|not_run` + `cause` (sin-pw|sin-ambiente|sin-acceso|no-aplica|otro) + `note`. Con `not_run` la causa es obligatoria; con `otro` la nota tambien. `evidence` se conserva para lo que si se corrio."
+      - code: F2.2
+        text: "`pending` deja de ser estado de reposo cuando la politica es obligatoria"
+        detail: "Con la politica en `required`, un item en `pending` no se acepta al cerrar: se exige `pass`, `fail` o `not_run` con causa. Con la politica en `ask` todo sigue como hasta hoy."
+      - code: F2.3
+        text: Superficie que INFORMA el porque de lo no ejecutado
+        detail: "Una lectura (en el mismo reporte o en una tool de consulta) que devuelva, por item: estado, causa y nota. Es lo que responde 'Kanai debe poder informar por que'."
+      - code: F2.4
+        text: Tests del motivo en los dos sentidos
+        detail: not_run con causa se acepta; not_run sin causa se rechaza; otro sin nota se rechaza; pass conserva evidence; con la politica en ask el comportamiento no cambia (compatibilidad con las 28 sesiones que ya usaron la tool).
+    criteria:
+      - id: F2.c1
+        text: "`pnpm typecheck` termina con codigo 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 errores
+      - id: F2.c2
+        text: Los tests del reporte de verificacion pasan, incluido `not_run` con causa.
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/verification-report.test.ts
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 fallos
+      - id: F2.c3
+        text: "Evidencia: Kanai puede informar el porque de un item no ejecutado (causa y nota), leido desde el store."
+        kind: evidence
+    effort: 3 a 5 horas
+    delivers: true
+    changes_code: true
+    rollback: "Revertir el commit: la tool vuelve a aceptar solo pass/fail/pending y el motivo deja de registrarse"
+  - code: F3
+    title: El guard del cierre
+    goal: Que con la politica obligatoria el cierre exija los items resueltos y pueda REPORTAR que quedo sin correr y por que.
+    prerequisites:
+      - id: F3.pre1
+        text: F2 cerrada (el motivo estructurado existe)
+    tasks:
+      - code: F3.1
+        text: El guard del cierre exige los items resueltos cuando la politica es obligatoria
+        detail: "El guard del cierre (server/engine/guards/closure.ts, al lado del guard del teach en la linea 108) exige, con la politica en `required`, que todos los items de la sesion de verificacion esten resueltos: `pass`, o `not_run` con causa."
+      - code: F3.2
+        text: La politica puede volver bloqueante el gate de la sesion de verificacion
+        detail: Hoy `blocksClose` es fijo por tipo de sesion (shared/session-policy.ts:21 declara verification con blocksClose:false). La politica del ticket tiene que poder volver bloqueante el gate de su sesion de verificacion, sin cambiar el default.
+      - code: F3.3
+        text: El cierre reporta que quedo sin correr, con su motivo, y el escape del dev queda auditado
+        detail: El mensaje del guard lista los items sin resolver con su causa, y el escape del dev (cerrar reconociendo el motivo) queda auditado igual que el del teach (server/mcp/humanConfirm.ts).
+    criteria:
+      - id: F3.c1
+        text: "`pnpm typecheck` termina con codigo 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 errores
+      - id: F3.c2
+        text: Los tests del guard del cierre pasan en los dos sentidos (con la politica exige, sin ella no).
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/closure-guards.test.ts
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 fallos
+      - id: F3.c3
+        text: "Evidencia: el cierre se traba con un item sin resolver y se destraba reconociendo el motivo."
+        kind: evidence
+    effort: 3 a 5 horas
+    delivers: true
+    changes_code: true
+    rollback: "Revertir el commit: el cierre vuelve a no exigir la verificacion"
+  - code: F4
+    title: "La epica: obligatoria por defecto"
+    goal: Que en la ejecucion de epica la verificacion sea obligatoria por defecto, en el mismo lugar donde se fuerza autonomo, y que el contrato de entrega lo diga.
+    prerequisites:
+      - id: F4.pre1
+        text: F3 cerrada (el guard honra la politica)
+    tasks:
+      - code: F4.1
+        text: "`verification: 'required'` en la politica de epica"
+        detail: "`activeEpicPolicy` (server/epics/policy.ts:14, donde ya devuelve autopilot:'autonomous') suma `verification:'required'`, y el ticket de la epica lo hereda como su politica efectiva."
+      - code: F4.2
+        text: El contrato de entrega de la epica nombra la verificacion
+        detail: "`epicDeliveryContract` (server/epics/delivery.ts:11) pide 'registrar evidencia por ticket'; pasa a nombrar que la verificacion de cada ticket es parte de lo que se entrega, resuelta o con su motivo."
+      - code: F4.3
+        text: El cierre del conjunto lo hereda
+        detail: El cierre del conjunto ('completar todos los tickets y hitos') hereda la exigencia por ticket.
+    criteria:
+      - id: F4.c1
+        text: "`pnpm typecheck` termina con codigo 0."
+        kind: command
+        run:
+          command: pnpm typecheck
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 errores
+      - id: F4.c2
+        text: Los tests de la politica de epica pasan y afirman la verificacion obligatoria por defecto.
+        kind: command
+        run:
+          command: pnpm vitest run tests/unit/epic-policy.test.ts
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          expect: 0 fallos
+      - id: F4.c3
+        text: "Evidencia: en una corrida de epica la politica sale obligatoria y el contrato de entrega la nombra."
+        kind: evidence
+    effort: 2 a 3 horas
+    delivers: true
+    changes_code: true
+    rollback: "Revertir el commit: la epica vuelve a dejar la verificacion como advisory"
+  - code: F5
+    title: Verificacion de punta a punta
+    goal: Verificar el conjunto de punta a punta, con un item que NO se puede correr y su motivo registrado.
+    prerequisites:
+      - id: F5.pre1
+        text: F4 cerrada
+    tasks:
+      - code: F5.1
+        text: Corrida real con un item no ejecutable y su motivo
+        detail: Un ticket real con la politica en obligatoria y su sesion de verificacion, donde un item no se puede correr por un motivo real (por ejemplo, sin PW disponible), con su causa y su nota.
+      - code: F5.2
+        text: Comprobar que el cierre informa el motivo y que el escape auditado funciona
+        detail: El cierre (o su intento) tiene que informar que quedo sin correr y por que; el dev lo reconoce y el ticket cierra con esa traza.
+    criteria:
+      - id: F5.c1
+        text: "Evidencia: un ticket con la politica obligatoria, un item que no se pudo correr con su motivo, y el cierre informandolo."
+        kind: evidence
+      - id: F5.c2
+        text: "Evidencia: el ticket cierra con el reconocimiento auditado y no queda ningun item sin causa."
+        kind: evidence
+    effort: 1 a 2 horas
+    delivers: false
+    changes_code: false
+    rollback: "No aplica: es una verificacion, no cambia codigo"
