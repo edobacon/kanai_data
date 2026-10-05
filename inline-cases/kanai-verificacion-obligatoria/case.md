@@ -4,7 +4,7 @@
 
 **Objetivo:** Que la sesion de verificacion de un ticket sea OBLIGATORIA cuando el ticket la tiene: cada item pasa o queda no ejecutado CON SU MOTIVO (por ejemplo, sin PW disponible), de modo que se pueda retomar de forma informada o saber por que se omitio y se pudo seguir, y Kanai pueda informar por que. En la ejecucion de epica la politica se vuelve obligatoria por defecto, en el mismo lugar donde hoy se fuerza autopilot autonomo; fuera de la epica sigue advisory, esperando la confirmacion del dev. Un ticket sin sesion de verificacion no se ve afectado: se omite.
 **Tags:** repos: kanai-app · labels: verificacion, contrato, calidad, encadenado
-**Etapa:** ejecucion
+**Etapa:** cerrado
 
 ## Falta
 
@@ -47,8 +47,10 @@
 | f2-resultados.md | registro | F2 — Resultado: el ítem no ejecutado tiene su motivo | F2 cerrada (juez aprobable_con_nits tras tres iteraciones): el ítem no ejecutado lleva su causa y su nota, se valida antes de escribir, un pending se rechaza con la política obligatoria y el porqué se informa en el reporte, el gate, la vista y el panel. Incluye el hallazgo corregido de que el detalle no sobrevivía al rearme, las mediciones sobre una sesión real y las dos correcciones que exigió el juez (upsert acotado y smoke sin motivos inventados). |
 | f3-resultados.md | registro | F3 — Resultado: el cierre exige la verificación resuelta | F3 cerrada (juez aprobable_con_nits tras dos iteraciones): con la política obligatoria el cierre exige que cada ítem pase o quede no ejecutado con su motivo, bloquea también los ítems fallidos, reporta qué quedó sin correr y por qué, y se destraba con un motivo reconocido y auditado. Incluye la medición real sobre una copia, el defecto que encontró el juez (un fail contaba como resuelto) y las dos reservas que pasan a F4. |
 | f4-resultados.md | registro | F4 — Resultado: la épica con la verificación obligatoria por defecto | F4 cerrada tras tres rondas de juez: la épica vuelve la verificación obligatoria por defecto y la política efectiva llega de verdad a las cuatro rutas que bloquean o cierran un ticket, con una sola definición. Incluye el defecto que encontró el juez (la política se perdía en el cierre real por lote, con la corrida en ready), las dos reservas de la segunda ronda y los nits finales. |
+| f5-resultados.md | registro | F5 — Resultado: la verificación de punta a punta | F5 cerrada (juez aprobable_con_nits) y con ella el plan completo (5 de 5): la prueba de punta a punta con las herramientas reales sobre KT-013 en kanai_test, con un ítem verificado de verdad y otro no ejecutado con su causa y su nota. Incluye las tres salidas textuales (el rechazo al registrar sin motivo, el cierre informando qué quedó sin correr, el reconocimiento que destraba) y el defecto que la prueba encontró y corrigió. |
 | rearme-db-que-sobrevive.md | revision | Qué sobrevive a un rearme de la DB: medido, no supuesto | Medición con rearme real (--fresh) sobre una copia: las 56 políticas no-default vuelven a su default en silencio y el autopilot se pierde en los 4 proyectos nativos de Kanai (40/40), aunque esté en el frontmatter. Corrige la revisión previa ("autopilot SÍ sobrevive") y fija lo que F1 tiene que cerrar: frontmatter + re-render al setear la config + parser que lea la política + arreglar el mapa de autopilot. |
+| resumen-final-del-caso.md | registro | Caso kanai-verificacion-obligatoria — Resumen final | Resumen final del caso, con las 5 fases cerradas: qué se entregó en cada una, los cinco hallazgos que encontraron los jueces ciegos (ninguno visible en un test verde), los commits, la verificación al cierre y lo que queda fuera del plan. |
 
 ## Plan
 
-4 de 5 fases cerradas, fase actual F5. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-verificacion-obligatoria/plan.md
+5 de 5 fases cerradas. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-verificacion-obligatoria/plan.md

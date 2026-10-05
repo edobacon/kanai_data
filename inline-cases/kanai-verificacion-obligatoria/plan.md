@@ -4,7 +4,7 @@
 
 **Intención:** Que la sesion de verificacion de un ticket sea OBLIGATORIA cuando el ticket la tiene: cada item pasa o queda no ejecutado con su motivo, Kanai informa por que, y en la epica la politica se vuelve obligatoria por defecto (fuera de ella sigue advisory).
 **Tags:** repos: kanai-app · labels: verificacion, contrato, calidad, rearme
-**Estado:** 4 de 5 fases cerradas. Juez: por fase (ver el registro de cada fase).
+**Estado:** Terminado. Juez: por fase (ver el registro de cada fase).
 
 ## Registro de avance
 
@@ -14,7 +14,7 @@
 | F2 El motivo estructurado y el reporte del porque | Que un item no ejecutado tenga un MOTIVO estructurado, y que Kanai pueda informarlo; y que `pending` deje de ser un estado de reposo cuando la politica es obligatoria. | Hecho | 2026-10-05 → 2026-10-05 | f4773cd, 7238e65, 32ab77c, c21575a, 3252cc5, 8921862 | 3/3 | - |
 | F3 El guard del cierre | Que con la politica obligatoria el cierre exija los items resueltos y pueda REPORTAR que quedo sin correr y por que. | Hecho | 2026-10-05 → 2026-10-05 | 534f8aa, 322ba93 | 3/3 | - |
 | F4 La epica: obligatoria por defecto | Que en la ejecucion de epica la verificacion sea obligatoria por defecto, en el mismo lugar donde se fuerza autonomo, y que el contrato de entrega lo diga. | Hecho | 2026-10-05 → 2026-10-05 | a976304, fd2b917, fa84b72, 0d04d26 | 3/3 | - |
-| F5 Verificacion de punta a punta | Verificar el conjunto de punta a punta, con un item que NO se puede correr y su motivo registrado. | En curso | 2026-10-05 → - | 7ae3dda | 2/2 | - |
+| F5 Verificacion de punta a punta | Verificar el conjunto de punta a punta, con un item que NO se puede correr y su motivo registrado. | Hecho | 2026-10-05 → 2026-10-05 | 7ae3dda | 2/2 | - |
 
 ## Riesgos
 
@@ -197,8 +197,8 @@
 **Esfuerzo:** 1 a 2 horas
 **Cómo deshacerla:** No aplica: es una verificacion, no cambia codigo
 
-**Registro F5** (estado: En curso)
-- **Fecha real:** inicio 2026-10-05 · fin -
+**Registro F5** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-05
 - **Antes de empezar:**
   - [x] F5.pre1: F4 cerrada (F4 quedo cerrada (evento phase_closed e0092) con el juez de fase en aprobable_con_nits (aprobatorio, brief fce86ef8): las dos reservas de la ronda previa quedaron resueltas y el defecto del cierre real sigue corregido. Verificado con typecheck 0, 15/15 del test de la politica de epica y suite completa 2818 tests en verde.)
 - **Commits:**
@@ -218,5 +218,5 @@
 - **Bloqueos:**
   - Sin registros.
 - **Juez de la fase:**
-  - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+  - 2026-10-05 · aprobable_con_nits: APROBATORIO (aprobable_con_nits). El juez verifico la evidencia contra el store real (copia del kanai.db con su WAL), el repo (HEAD=7ae3dda) y la copia de medicion: KT-013 existe con verification_policy=required PERSISTIDA (frontmatter del .md y columna de la DB) y su sesion KT-013-S2 es kind=verification, state=continue, con 2 items (el del saludo en pass con evidencia real y el smoke en not_run con causa 'sin-ambiente' y su nota), SIN NINGUN ITEM SIN CAUSA. El commit 7ae3dda es HEAD y hace exactamente lo que declara, con test que fallaria sin el fix; las citas clave son correctas (validateNotRunReason emite el rechazo sin escribir, por eso no hay invocation_error en la auditoria; verificationAck esta en HUMAN_AUTH_FLAGS); reprodujo por su cuenta que con el estado real blockingVerificationItems devuelve vacio y DET-36 retorna ok:true; y el brief distingue lo medido en el ticket real de lo medido en la copia. HALLAZGOS (ninguno sobre el fondo): (1) NIT: la cita del brief a closure.ts:117 apunta a la linea de la politica efectiva, no a donde el guard bloquea (155-159) y arma el fixHint (169); (2) NIT: la transcripcion del rechazo altero la capitalizacion ('NO EJECUTADO' vs 'NO ejecutado'); (3) RESERVA de trazabilidad: las mediciones sobre la copia no dejan traza propia (el audit de la copia solo tiene el tool_call de validate_transition, el mismo del store vivo), aunque el estado de la copia es verificable y la reconciliacion reproduce el mensaje exacto; (4) NIT preexistente y de bajo impacto: la lista 'Ya quedaron sin correr' solo incluye los not_run, asi que un item 'skipped' CON causa (que el guard considera resuelto) no se lista ahi cuando otro item bloquea. El juez no corrio typecheck ni la suite: los numeros de tests siguen siendo el autorreporte del dev.
+- **Cierre y siguiente paso:** F5 entrega la PRUEBA DE PUNTA A PUNTA con las herramientas reales, sobre un ticket de verdad: KT-013 en el proyecto kanai_test (que NO tiene baseUrl de verificacion, elegido a proposito porque es el caso real de un item no ejecutable). El recorrido: el ticket quedo con la verificacion OBLIGATORIA (persistida, verificada en el frontmatter y en la columna de la DB), con su sesion de verificacion de 2 items; uno se verifico DE VERDAD (el saludo: `node greet.mjs` imprime '¡Hola, mundo!' con exit 0 y sus tests dan 11/11) y el otro (el smoke de la vista con Playwright) quedo NO EJECUTADO con causa 'sin-ambiente' y su nota. Los tres momentos que el caso pedia quedaron medidos con salidas textuales: (1) la politica se hace cumplir AL REGISTRAR: intentar reportar el item sin motivo fue RECHAZADO ('el item 2 quedo NO ejecutado (not_run) sin su motivo: indica la causa...'); (2) el CIERRE lo informa: sobre una copia del store con ese item sin resolver, el guard devuelve 'La verificacion de este ticket es OBLIGATORIA y quedan 1 item(s) sin resolver o fallidos: ... (no ejecutado (sin causa)) ... o cierra reconociendo el motivo en payload.verificationAck (queda auditado)'; y (3) el RECONOCIMIENTO del dev destraba (el guard pasa con el motivo, y la marca pasa por el sistema de confirmacion humana, asi que queda auditada). En el ticket real, con los items resueltos, la consulta del cierre da DET-36 en ok:true: la verificacion obligatoria NO traba cuando cada item paso o quedo justificado. La prueba ademas encontro y corrigio un detalle del mensaje: repetia el mismo item no ejecutado en las dos listas (commit 7ae3dda, con test que falla sin el fix). Verificacion: typecheck 0 y suite completa 357 archivos / 2819 tests en verde. Veredicto del juez de fase: aprobable_con_nits (aprobatorio), que verifico la evidencia contra el store real y reprodujo por su cuenta que DET-36 devuelve ok:true con el estado real; dejo solo nits de cita, una reserva de trazabilidad de la copia y un nit preexistente (un item 'skipped' con causa no se lista en el informe de 'ya quedaron sin correr').. Siguiente: No aplica: F5 era la ultima fase del plan y queda cerrada (5 de 5). Lo que sigue es fuera del plan: decidir si se sube la rama de codigo (45 commits sin push) y si se sube el data repo (local, sin push por contrato), y limpiar las copias temporales.
