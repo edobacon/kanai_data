@@ -47,6 +47,7 @@
 |---|---|---|---|
 | contrato-f1.md | decision | Contrato de implementación F1 | Host MCP visible, datos separados, cierre humano, instrumentación inicial y piloto real separado. |
 | correcciones-arbiter.md | registro | Correcciones y revisión de implementación | F11 cerrada: revisión aprobada, diez hallazgos resueltos, tres commits, 2652 pruebas. F10 piloto pendiente. |
+| medicion-f12-planificador.md | registro | Medición de F12: planificador antes y después con cuerpos reales | Jormat JOR-169..175: 81 aristas falsas a 0. Tao TAO-181..188: 36 a 18 avisos externos, 8 internas conservadas, 0 referencias reales perdidas. |
 | operacion-y-piloto.md | registro | Operación implementada y preparación del piloto | Revisión aprobada, diez hallazgos resueltos, tres commits registrados y 2652 pruebas; piloto pendiente. |
 | piloto-ep01-preparacion-y-parser.md | analisis | Piloto EP-01: preparación y hallazgo del planificador | Épica nativa creada con TAO-181–188; preintake registrado. Parser produce referencias contextuales/IDs truncados y auto-referencias. Hallazgo pendiente antes de aprobación y ejecución. |
 | piloto-jormat-hallazgos-planificador.md | analisis | Piloto Jormat: tres fallas del planificador de épicas y su corrección | Épica EPIC-FACTURAS-CLIENTE-FEEDBACK (JOR-169 a 175) destapó tres fallas: dependencias falsas por denylist fija de prefijos (81 de 81 falsas), archivos externos sin vía de entrada aunque estén en readPaths, y repo de la épica solo por nombre. Ubicación en código, datos y corrección propuesta. |

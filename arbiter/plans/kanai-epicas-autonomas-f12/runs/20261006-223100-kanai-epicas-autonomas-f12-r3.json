@@ -1,101 +1,90 @@
 {
-  "run_id": "kanai-epicas-autonomas-f12-r2",
+  "run_id": "kanai-epicas-autonomas-f12-r3",
   "plan_id": "kanai-epicas-autonomas-f12",
-  "ts_start": "2026-10-06T22:20:55Z",
-  "ts_end": "2026-10-06T22:25:00Z",
+  "ts_start": "2026-10-06T22:27:00Z",
+  "ts_end": "2026-10-06T22:31:00Z",
   "mode": "end_of_plan",
   "base_ref_used": "54b849e",
-  "head_ref": "8e8af70",
+  "head_ref": "fc4ab80",
   "repo": "kanai-app",
   "calibration": "comportamiento",
   "judge_scope": "interdiff",
-  "interdiff_base": "ad8f4e1",
+  "interdiff_base": "8e8af70",
   "plan_phase_ids": [
     "F12.1",
     "F12.2",
     "F12.3",
     "F12.4-docs"
   ],
+  "coverage_floor_waived": "Archivos de skills/claude/kn-aws: commit 3254962 de otra sesión entre las rondas, fuera del alcance de F12 (pedido explícito del dev, 06-10).",
   "findings": {
     "S0": 0,
     "S1": 0,
-    "S2": 1,
+    "S2": 0,
     "S3": 1,
-    "consulta": 0
+    "consulta": 1
   },
-  "max_severity": "S2",
-  "verdict": "aprobable_con_reservas",
+  "max_severity": "S3",
+  "verdict": "aprobable_con_nits",
   "batches": 1,
   "consumers": 3,
-  "lines_judged": 129,
+  "lines_judged": 49,
   "findings_detail": [
     {
-      "id": "f1",
-      "severity": "S2",
+      "id": "f3",
+      "severity": "S3",
       "kind": "correctness",
-      "title": "La clasificación de 'archivo propio' depende de si el archivo existe en la raíz evaluada, así que el plan y la corrida divergen cuando un ticket anterior crea ese archivo",
-      "where": "server/epics/assets.ts:64",
-      "evidence": "externallyRead decide ownFile por existencia en disco; planner usa repositoryRoot y runner el worktree: 0 issues al planificar y 1 al correr si un ticket anterior crea el archivo citado.",
+      "title": "Una lectura externa que coincide por sufijo tapa la cita a un archivo del propio repo que deberia declararse como asset",
+      "where": "server/epics/assets.ts:61",
+      "evidence": "externallyRead cubre por sufijo sin distinguir archivo propio; aceptado como residual (wont_fix) para que plan y corrida clasifiquen igual.",
       "phase": "F12.2",
       "confidence": "confirmed",
       "info_class": "none",
       "info_floor": false,
+      "carried_from": "kanai-epicas-autonomas-f12-r1/f3",
       "stuck_rounds": 0,
-      "outcome": "fixed",
-      "outcome_note": "re-chequeo: corregido",
+      "outcome": "wont_fix",
+      "outcome_note": "decision del dev",
       "outcome_inferred": true
     },
     {
-      "id": "f2",
-      "severity": "S3",
-      "kind": "maintainability",
-      "title": "La comparación exacta contra canonicalReadPath(resolve(root, path)) quedó duplicada en las dos ramas de externallyRead",
-      "where": "server/epics/assets.ts:70",
-      "evidence": "La rama ownFile ya compara exacto y retorna; la rama no propia lo repite sin efecto.",
+      "id": "c1",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "La cobertura por resolve(root, path) puede divergir entre planificar y correr para citas con '..'",
+      "where": "server/epics/assets.ts:63-64",
+      "evidence": "La rama exacta usa root (repositoryRoot al planificar, worktree al correr); solo afecta citas con '..'. Rama preexistente, no tocada por el delta.",
       "phase": "F12.2",
-      "confidence": "confirmed",
+      "confidence": "assumption",
       "info_class": "none",
-      "info_floor": false,
-      "stuck_rounds": 0,
-      "outcome": "fixed",
-      "outcome_note": "re-chequeo: corregido",
-      "outcome_inferred": true
+      "info_floor": false
     }
   ],
   "recheck": [
     {
-      "prev_run_id": "kanai-epicas-autonomas-f12-r1",
+      "prev_run_id": "kanai-epicas-autonomas-f12-r2",
       "prev_id": "f1",
       "verdict": "corregido",
-      "evidence": "SKILL.md:13 y epic-execution.md:22-26 describen las menciones de familia no importadas.",
+      "evidence": "externallyRead ya no decide archivo propio por existencia en disco; plan y corrida clasifican igual.",
       "matches_current": false
     },
     {
-      "prev_run_id": "kanai-epicas-autonomas-f12-r1",
+      "prev_run_id": "kanai-epicas-autonomas-f12-r2",
       "prev_id": "f2",
       "verdict": "corregido",
-      "evidence": "Test 'plan re-deriva las inferidas sin decidir pero conserva las aceptadas y las descartadas' con asserts concretos.",
-      "matches_current": false
-    },
-    {
-      "prev_run_id": "kanai-epicas-autonomas-f12-r1",
-      "prev_id": "f3",
-      "verdict": "corregido",
-      "evidence": "externallyRead ya no cubre por sufijo un archivo existente del repo; test nuevo.",
+      "evidence": "La comparacion exacta aparece una sola vez en externallyRead.",
       "matches_current": false
     }
   ],
   "coverage": {
-    "files_in_diff": 4,
-    "read_full": 4,
+    "files_in_diff": 2,
+    "read_full": 2,
     "skimmed": 0,
     "not_read": 0,
     "files": {
       "read_full": [
         "server/epics/assets.ts",
-        "tests/unit/epic-planner-catalog.test.ts",
-        "docs/development/epic-execution.md",
-        "skills/claude/kn-epic/SKILL.md"
+        "tests/unit/epic-planner-catalog.test.ts"
       ],
       "skimmed": [],
       "not_read": []
@@ -109,8 +98,8 @@
       },
       {
         "path": "server/epics/assets.ts",
-        "lines": 15,
-        "blob": "4618547d7083fc715ca190a542c10423de2fc64d",
+        "lines": 9,
+        "blob": "33b3f719a1f62cf4611334b7c8fca35811926efc",
         "deleted": false
       },
       {
@@ -181,8 +170,8 @@
       },
       {
         "path": "tests/unit/epic-planner-catalog.test.ts",
-        "lines": 184,
-        "blob": "08f7754a10db8cfb49f65b43fdadc15b6e1e3287",
+        "lines": 171,
+        "blob": "6d4da319958073306650eeb5bd2cb0cb34d754af",
         "deleted": false
       },
       {
@@ -193,19 +182,17 @@
       }
     ],
     "reviewed": {
-      "server/epics/assets.ts": "4618547d7083fc715ca190a542c10423de2fc64d",
-      "tests/unit/epic-planner-catalog.test.ts": "08f7754a10db8cfb49f65b43fdadc15b6e1e3287",
-      "docs/development/epic-execution.md": "6cb0a8c548b572366d173386f9c1656d1d4b0c11",
-      "skills/claude/kn-epic/SKILL.md": "14020c7ed267e901e648ad79877f1db0ee2f7071"
+      "server/epics/assets.ts": "33b3f719a1f62cf4611334b7c8fca35811926efc",
+      "tests/unit/epic-planner-catalog.test.ts": "6d4da319958073306650eeb5bd2cb0cb34d754af"
     },
     "summary": {
       "files": 15,
       "reviewed_files": 9,
-      "lines": 1213,
-      "reviewed_lines": 336,
-      "pct_lines": 27,
+      "lines": 1194,
+      "reviewed_lines": 317,
+      "pct_lines": 26,
       "excluded": []
     }
   },
-  "verdict_expected_by_rubric": "aprobable_con_reservas"
+  "verdict_expected_by_rubric": "aprobable_con_nits"
 }

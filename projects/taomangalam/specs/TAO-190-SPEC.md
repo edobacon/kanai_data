@@ -2,7 +2,7 @@
 id: TAO-190-SPEC
 project: taomangalam
 ticket: TAO-190
-status: draft
+status: approved
 ---
 
 # TAO-190 · Preparación del proveedor real de assets M1a para EP-01
