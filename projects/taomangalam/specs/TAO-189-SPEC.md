@@ -66,16 +66,16 @@ La persistencia se crea con una migracion Prisma nueva en `server/prisma/` que a
 Contrato: rollback: Borrar la carpeta de la migracion nueva bajo `server/prisma/migrations/`, revertir el bloque agregado en `server/prisma/schema.prisma` y el seed; la base queda sin las dos tablas, igual que antes.. Status: done
 
 #### S1.T2 — Implementar el proveedor de politica regional en `server/src/` (Express/TypeScript, NO Gradle) que resuelve opt_in|opt_out|disabled desde la region/tenant del sujeto leyendo `politica_analitica_region`, expuesto por `GET /privacidad/politica-analitica` conforme al esquema `PoliticaAnalitica` de `server/contract/openapi.yaml` (l.1630, l.6756-6837). Fallback obligatorio: region ausente, desconocida, invalida o con vigencia expirada resuelve `opt_in`, nunca `disabled` (DEC-130:30-32, EP-15:387-389).
-Contrato: rollback: Revertir los archivos del proveedor y su registro de ruta en `server/src/routes/`; el endpoint deja de existir y nada mas en el backend lo referencia.. Status: pending
+Contrato: rollback: Revertir los archivos del proveedor y su registro de ruta en `server/src/routes/`; el endpoint deja de existir y nada mas en el backend lo referencia.. Status: done
 
 #### S1.T3 — Implementar el registro y actualizacion de consentimiento (`POST /privacidad/consentimientos` l.1661, `GET /privacidad/consentimientos` l.1735, esquemas `ConsentimientoRequest`/`ConsentimientoAnalitica`/`EstadoConsentimiento`) y el estado canonico "puede emitir analitica" (EP-15:400) aplicado como descarte en `POST /metricas/eventos` (openapi.yaml l.5546-5552): `disabled` nunca emite; `opt_in` emite solo con consentimiento otorgado; `opt_out` emite salvo rechazo/retiro; una negativa previa no se convierte en aceptacion al cambiar de region; una politica mas estricta detiene la emision hasta un nuevo consentimiento. Usar la capacidad existente `metrica.consentir` (`server/src/capacidades/catalogo.ts:415-416`).
-Contrato: rollback: Revertir los handlers de `/privacidad/consentimientos` y el hook de descarte en `/metricas/eventos`; la emision vuelve al comportamiento previo y los registros ya persistidos quedan intactos.. Status: pending
+Contrato: rollback: Revertir los handlers de `/privacidad/consentimientos` y el hook de descarte en `/metricas/eventos`; la emision vuelve al comportamiento previo y los registros ya persistidos quedan intactos.. Status: done
 
 #### S1.T4 — Resolver identidad/sesion y capacidades del sujeto contra sus proveedores reales del backend antes de leer o escribir consentimiento: obtener el sujeto desde el middleware de sesion existente y la capacidad `metrica.consentir` desde `server/src/capacidades/catalogo.ts:415-416`, sin stubs, sin sujeto hardcodeado y sin asumir capacidades concedidas. Una peticion sin sesion valida o sin la capacidad responde el error declarado en el contrato, no un 500 ni un sujeto anonimo inventado.
-Contrato: rollback: Revertir el cableado a los proveedores en los handlers de privacidad; las rutas vuelven a su resolucion anterior de sujeto sin afectar la persistencia.. Status: pending
+Contrato: rollback: Revertir el cableado a los proveedores en los handlers de privacidad; las rutas vuelven a su resolucion anterior de sujeto sin afectar la persistencia.. Status: done
 
 #### S1.T5 — Escribir la suite de pruebas de contrato de politica y consentimiento ejecutable sin V-51 (tres modos, persistencia/actualizacion, bloqueo de emision), conservando la referencia caso→test por cada caso cubierto.
-Contrato: rollback: Revertir el commit de la suite de contrato; los tests unitarios de la sesion 1 permanecen.. Status: pending
+Contrato: rollback: Revertir el commit de la suite de contrato; los tests unitarios de la sesion 1 permanecen.. Status: done
 
 #### S2.T2 — Preparar el job CI del proveedor de consentimiento como runner Node `scripts/ci/ep01-consent-provider.mjs`, siguiendo el patron de `scripts/ci/ep01-legal-provider.mjs` y `scripts/ci/ep01-release-provider.mjs`, e invocarlo dentro del job `integration` de `.github/workflows/ci-pr.yml` (l.638) usando la config efimera `vitest.integration.ci.ts`. La activacion por rama es `startsWith(github.head_ref,'epic/EP-01')` (l.768-802), que cubre la rama real de trabajo `epic/EP-01a`. El runner ejecuta la suite de contrato de politica y consentimiento y conserva las referencias caso→test como evidencia. No hay lane de fastlane ni modulo Gradle involucrados.
 Contrato: rollback: Quitar el runner `scripts/ci/ep01-consent-provider.mjs` y su invocacion en el job `integration` de `.github/workflows/ci-pr.yml`, dejando el workflow como estaba en `epic/EP-01a`; la suite de contrato sigue corriendo en local con `pnpm -C server exec vitest run src/privacidad`.. Status: pending
@@ -131,14 +131,14 @@ Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo 
 - REQ-04 (edit) `confirmed`: Existe una suite de pruebas de contrato de politica y consentimiento del backend, escrita con Vitest (`server/package.json:12-13` `"test":"v
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
 - [x] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
 
 **Gate (auto)**: Corriendo `pnpm -C server exec vitest run src/privacidad` se observa: la politica resuelve opt_in/opt_out/disabled con fallback opt_in ante region ausente, desconocida, invalida o vencida; el consentimiento se persiste y se relee; y la emision se decide por el estado "puede emitir analitica" (disabled nunca; opt_in+otorgado si; opt_out salvo rechazo/retiro; una negativa previa no se convierte en aceptacion al cambiar la region).
 
