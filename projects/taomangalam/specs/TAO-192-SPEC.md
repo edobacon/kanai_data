@@ -218,91 +218,91 @@ Contrato: rollback: Revertir el empaquetado y el check; conservar los textos fue
 Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S4.T1 — Implementar `aceptarDocumentosLegales` en línea: dos filas con versión, `aceptada_at`, origen `app`, dispositivo y versión de app; idempotencia por `Idempotency-Key` (sin duplicar, `idempotencia_conflicto` con cuerpo distinto); validaciones `version_legal_desconocida`, `aceptacion_fecha_invalida`, `documento_legal_modificado` con `pendientes` de versiones más nuevas que exigen reaceptación; `listarMisAceptaciones` paginado por cuenta de más reciente a más antigua.
-Contrato: rollback: Revertir el endpoint y el listado; las aceptaciones ya insertadas permanecen (append-only).. Status: pending
+Contrato: rollback: Revertir el endpoint y el listado; las aceptaciones ya insertadas permanecen (append-only).. Status: done
 
 #### S4.T1.1 — Insertar las dos filas (términos y privacidad) con versión, `aceptada_at`, origen `app`, dispositivo y versión de app.
-Contrato: rollback: Revertir la inserción; las aceptaciones ya insertadas permanecen (append-only).. Status: pending
+Contrato: rollback: Revertir la inserción; las aceptaciones ya insertadas permanecen (append-only).. Status: done
 
 #### S4.T1.2 — Idempotencia por `Idempotency-Key`: la misma petición no duplica filas y con cuerpo distinto responde `idempotencia_conflicto`.
-Contrato: rollback: Revertir la idempotencia; no borra aceptaciones existentes.. Status: pending
+Contrato: rollback: Revertir la idempotencia; no borra aceptaciones existentes.. Status: done
 
 #### S4.T1.3 — Validaciones de versión/fecha/hash: `version_legal_desconocida`, `aceptacion_fecha_invalida` y `documento_legal_modificado`, con `pendientes` de versiones más nuevas que exigen reaceptación.
-Contrato: rollback: Revertir las validaciones; no inserta ni borra filas por sí sola.. Status: pending
+Contrato: rollback: Revertir las validaciones; no inserta ni borra filas por sí sola.. Status: done
 
 #### S4.T1.4 — `listarMisAceptaciones` paginado por cuenta de más reciente a más antigua, sin incluir las de otras cuentas.
-Contrato: rollback: Revertir el listado; las aceptaciones quedan intactas.. Status: pending
+Contrato: rollback: Revertir el listado; las aceptaciones quedan intactas.. Status: done
 
 #### S4.T2 — Implementar la cola offline `registro_legal_pendiente` (versión, hash, fecha y dispositivo), el envío diferido con `aceptada_at` original y `registrada_at` de envío, el bloqueo de otras peticiones hasta el 201 de la cola, el reintento con la misma `Idempotency-Key` y el borrado de la entrada al confirmar 201, con persistencia entre cierres.
-Contrato: rollback: Revertir la cola y el envío diferido; conservar las entradas no enviadas del usuario.. Status: pending
+Contrato: rollback: Revertir la cola y el envío diferido; conservar las entradas no enviadas del usuario.. Status: done
 
 #### S4.T2.1 — Persistencia de la cola `registro_legal_pendiente` (versión, hash, fecha y dispositivo) que sobrevive al cierre de la app.
-Contrato: rollback: Revertir la persistencia; conservar las entradas no enviadas del usuario.. Status: pending
+Contrato: rollback: Revertir la persistencia; conservar las entradas no enviadas del usuario.. Status: done
 
 #### S4.T2.2 — Envío diferido con `aceptada_at` original y `registrada_at` de envío, y borrado de la entrada al recibir 201.
-Contrato: rollback: Revertir el envío diferido; conservar las entradas no enviadas.. Status: pending
+Contrato: rollback: Revertir el envío diferido; conservar las entradas no enviadas.. Status: done
 
 #### S4.T2.3 — Bloqueo de otras peticiones (`registrarDispositivo`/kuberani) hasta el 201 de la cola y reintento con la misma `Idempotency-Key` sin duplicados.
-Contrato: rollback: Revertir el bloqueo y el reintento; no borra entradas de la cola.. Status: pending
+Contrato: rollback: Revertir el bloqueo y el reintento; no borra entradas de la cola.. Status: done
 
 #### S4.T2.4 — Manejo de `aceptadaAt` futura: cuando el servidor responde `aceptacion_fecha_invalida`, la entrada sale de la cola `registro_legal_pendiente` y no se reintenta, quedando la cuenta sin aceptación registrada. La re-presentación de V-51 queda en ep01-legal-integration.
-Contrato: rollback: Revertir el manejo de fecha inválida; conservar el resto de la cola.. Status: pending
+Contrato: rollback: Revertir el manejo de fecha inválida; conservar el resto de la cola.. Status: done
 
 #### S4.T3 — Implementar el bloqueo por reaceptación del lado proveedor: 403 `version_legal_pendiente` con `documentosPendientes` en operaciones autenticadas no exentas, lista de exentas por `x-exenta-version-legal` (`obtenerManifiesto`, `obtenerDocumentoLegal`, `aceptarDocumentosLegales`), y no bloqueo de versiones sin `exige_reaceptacion`. La presentación de V-51 y el retorno al punto previo no entran: quedan en ep01-legal-integration.
-Contrato: rollback: Revertir el bloqueo y las exenciones; no cambia datos.. Status: pending
+Contrato: rollback: Revertir el bloqueo y las exenciones; no cambia datos.. Status: done
 
 #### S4.T3.1 — Bloqueo 403 `version_legal_pendiente` con `documentosPendientes` en operaciones autenticadas no exentas.
-Contrato: rollback: Revertir el bloqueo; no cambia datos.. Status: pending
+Contrato: rollback: Revertir el bloqueo; no cambia datos.. Status: done
 
 #### S4.T3.2 — Lista de exentas por `x-exenta-version-legal` (`obtenerManifiesto`, `obtenerDocumentoLegal`, `aceptarDocumentosLegales`).
-Contrato: rollback: Revertir las exenciones; el bloqueo vuelve a aplicar a todas las operaciones.. Status: pending
+Contrato: rollback: Revertir las exenciones; el bloqueo vuelve a aplicar a todas las operaciones.. Status: done
 
 #### S4.T3.3 — No bloqueo de versiones sin `exige_reaceptacion`: al publicarse no bloquean ni aparecen en `legalPendiente`.
-Contrato: rollback: Revertir el criterio de no bloqueo; no cambia datos.. Status: pending
+Contrato: rollback: Revertir el criterio de no bloqueo; no cambia datos.. Status: done
 
 #### S4.T3.4 — Prueba generada sobre el contrato que verifica cada operación autenticada según su `x-exenta-version-legal`; la extensión se declara en la fuente del contrato y los tipos se regeneran con `pnpm -C server run generate` (no se edita `server/contract/generated/api.d.ts` a mano).
-Contrato: rollback: Revertir la prueba de contrato; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir la prueba de contrato; no toca código productivo.. Status: done
 
 #### S4.T4 — Documentar la superficie operativa: comando de seed de capacidades y comando de registro legal con uso, parámetros y ejemplo en `docs/development/commands.md`; claves de configuración nuevas (`JWT_SIGNING_KEY`, `JWT_ACCESS_TTL_MINUTES` default 15, `JWT_REFRESH_TTL_DAYS` default 30 y el uso de `STAGING_BASE_URL` para la `url_publicada` legal) en `docs/development/configuration.md` y en `.env.example`; paso de registro legal en el despliegue en `docs/development/release-runbook.md`.
-Contrato: rollback: Revertir los cambios de documentación; no afecta código.. Status: pending
+Contrato: rollback: Revertir los cambios de documentación; no afecta código.. Status: done
 
 #### S4.T4.1 — Documentar el comando de seed de capacidades en `docs/development/commands.md` con uso, parámetros y ejemplo.
-Contrato: rollback: Revertir la sección de commands.md; no afecta código.. Status: pending
+Contrato: rollback: Revertir la sección de commands.md; no afecta código.. Status: done
 
 #### S4.T4.2 — Documentar el comando de registro legal en `docs/development/commands.md` con uso, parámetros y ejemplo.
-Contrato: rollback: Revertir la sección de commands.md; no afecta código.. Status: pending
+Contrato: rollback: Revertir la sección de commands.md; no afecta código.. Status: done
 
 #### S4.T4.3 — Listar en `docs/development/configuration.md` las claves de configuración nuevas: `JWT_SIGNING_KEY` (obligatoria, sin valor de ejemplo real), `JWT_ACCESS_TTL_MINUTES` (default 15), `JWT_REFRESH_TTL_DAYS` (default 30) y el uso de `STAGING_BASE_URL` para componer la `url_publicada` legal; declararlas también en `.env.example` para mantener la paridad schema-ejemplo que exige `scripts/dev/env-parity.test.mjs`.
-Contrato: rollback: Revertir la sección de configuration.md; no afecta código.. Status: pending
+Contrato: rollback: Revertir la sección de configuration.md; no afecta código.. Status: done
 
 #### S4.T4.4 — Registrar en `docs/development/release-runbook.md` el paso de ejecución del script de registro de versión legal en el despliegue de staging (incluida la dependencia de `STAGING_BASE_URL`).
-Contrato: rollback: Revertir la sección de release-runbook.md; no afecta código.. Status: pending
+Contrato: rollback: Revertir la sección de release-runbook.md; no afecta código.. Status: done
 
 #### S4.T5 — Correr el job de lint de docs local y dejar compliant cualquier doc referenciado que el plan llegue a tocar (`docs/backlog/EP-03a_...md`, `docs/backlog/EP-06_...md`).
-Contrato: rollback: Revertir los ajustes de lint; los docs vuelven a su estado previo si el job no aplica.. Status: pending
+Contrato: rollback: Revertir los ajustes de lint; los docs vuelven a su estado previo si el job no aplica.. Status: done
 
 #### S4.T5.1 — Correr markdownlint, cspell y vale sobre `docs/backlog/EP-03a_...md` y `docs/backlog/EP-06_...md` y dejar los archivos compliant.
-Contrato: rollback: Revertir los ajustes de lint; los docs vuelven a su estado previo.. Status: pending
+Contrato: rollback: Revertir los ajustes de lint; los docs vuelven a su estado previo.. Status: done
 
 #### S4.T5.2 — Verificar que el job de docs local quede verde antes del PR si el plan tocó esos docs.
-Contrato: rollback: Revertir la verificación; no afecta los docs.. Status: pending
+Contrato: rollback: Revertir la verificación; no afecta los docs.. Status: done
 
 #### S4.T6 — Escribir los tests de aceptación legal (online, idempotencia, cola offline con fecha original, bloqueo/exenciones por reaceptación) trazados a los casos QA de HU-03a-11, HU-03a-12 y HU-03a-13, sin declarar pruebas manuales como aprobadas.
-Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S4.T6.1 — Tests de aceptación en línea e idempotencia (`idempotencia_conflicto` con cuerpo distinto, dos toques dejan solo dos filas).
-Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S4.T6.2 — Tests de cola offline con `aceptada_at` original al reconectar y reintento con la misma `Idempotency-Key`.
-Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S4.T6.3 — Tests de bloqueo/exenciones por reaceptación (`version_legal_pendiente`, exentas por `x-exenta-version-legal`).
-Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S4.T6.4 — Tests de cola offline en la app: guardado sin red, envío con fecha original, orden, borrado/reintento y salida por aceptacion_fecha_invalida.
-Contrato: rollback: Revertir los tests de cola offline.. Status: pending
+Contrato: rollback: Revertir los tests de cola offline.. Status: done
 
 #### S4.T6.5 — Tests de bloqueo generados sobre el conjunto de operaciones autenticadas del contrato según x-exenta-version-legal, más las exentas y las versiones sin exige_reaceptacion.
-Contrato: rollback: Revertir los tests de bloqueo.. Status: pending
+Contrato: rollback: Revertir los tests de bloqueo.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por TAO-192 · Preparación EP-01: identidad, autorización, manifiesto y contratos legales
@@ -506,38 +506,38 @@ Recorte por exceso aplicado en autónomo: S2.T1.1, S2.T1.2, S2.T1.3, S2.T2.1, S2
 
 **Gate (auto)**: `GET /v1/legal/documentos` devuelve la vigente de cada tipo con `hashContenido` y `urlPublicada` y `texto` nulo; `obtenerDocumentoLegal` inexistente responde 404 `recurso_no_encontrado`; cada `urlPublicada` sirve su versión sin sesión; el rol de app no puede UPDATE/DELETE `aceptacion_documento_legal`; el CI falla si el texto empaquetado no coincide con la fuente. Verificable por API y psql.
 
-### Session 4 · T3 · open
+### Session 4 · T3 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T1.1
-- [ ] S4.T1.2
-- [ ] S4.T1.3
-- [ ] S4.T1.4
-- [ ] S4.T2
-- [ ] S4.T2.1
-- [ ] S4.T2.2
-- [ ] S4.T2.3
-- [ ] S4.T2.4
-- [ ] S4.T3
-- [ ] S4.T3.1
-- [ ] S4.T3.2
-- [ ] S4.T3.3
-- [ ] S4.T3.4
-- [ ] S4.T4
-- [ ] S4.T4.1
-- [ ] S4.T4.2
-- [ ] S4.T4.3
-- [ ] S4.T4.4
-- [ ] S4.T5
-- [ ] S4.T5.1
-- [ ] S4.T5.2
-- [ ] S4.T6
-- [ ] S4.T6.1
-- [ ] S4.T6.2
-- [ ] S4.T6.3
-- [ ] S4.T6.4
-- [ ] S4.T6.5
+- [x] S4.T1
+- [x] S4.T1.1
+- [x] S4.T1.2
+- [x] S4.T1.3
+- [x] S4.T1.4
+- [x] S4.T2
+- [x] S4.T2.1
+- [x] S4.T2.2
+- [x] S4.T2.3
+- [x] S4.T2.4
+- [x] S4.T3
+- [x] S4.T3.1
+- [x] S4.T3.2
+- [x] S4.T3.3
+- [x] S4.T3.4
+- [x] S4.T4
+- [x] S4.T4.1
+- [x] S4.T4.2
+- [x] S4.T4.3
+- [x] S4.T4.4
+- [x] S4.T5
+- [x] S4.T5.1
+- [x] S4.T5.2
+- [x] S4.T6
+- [x] S4.T6.1
+- [x] S4.T6.2
+- [x] S4.T6.3
+- [x] S4.T6.4
+- [x] S4.T6.5
 
 **Gate (auto)**: `aceptarDocumentosLegales` crea dos filas con versión/fecha/origen/dispositivo y es idempotente; la cola offline registra `aceptada_at` original al reconectar; `listarMisAceptaciones` pagina por cuenta; las operaciones no exentas responden 403 `version_legal_pendiente` mientras que manifiesto/documentos/aceptar se atienden. Verificable por respuestas de API, staging y cola local.
 
