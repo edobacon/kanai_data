@@ -4,7 +4,7 @@
 
 **Intención:** Una única entrega final 1.1 para Claude Code, ejecutada y verificada en macOS de forma autónoma por el agente, con diseño portable a Linux y Windows cuya verificación real queda aplazada para después de la implementación. Todas las mejoras acordadas y documentación operativa propia. Preservar íntegra la documentación v1 y generar comparación v1/1.1. Sin push, publicación ni cambios de hooks globales.
 **Tags:** projects: up1 · repos: up1 · branches: feat/dredd-update, feat/dredd-update-1.1 · labels: dredd, tooling, autonomo, metricas, investigacion
-**Estado:** 8 de 8 fases cerradas. Juez final: pendiente.
+**Estado:** Terminado. Juez final: **aprobable_con_nits** (2026-10-06). Juez final opus de contexto limpio sobre 348ea29..858a7f6 (28 commits, 69 rutas solo en .claude/skills/dredd y docs). 0 bloqueantes. Confirmado: v1 intacta (diff vacio), sin push (ramas ausentes en origin), sin settings ni hooks globales tocados, sin trailer Co-Authored-By, sin rayas largas, nombres de veredicto v1 (D4) bien resueltos, Linux y Windows declarados sin verificar. Nits S3: (1) el rollback de F7.C4 dice mover la rama a 348ea29 (reset, destructivo); conviene git revert 348ea29..858a7f6 o conservar feat/dredd-update-1.1 como respaldo; (2) el protocolo no obliga a escribir el motivo cuando el veredicto emitido difiere del calculado (dredd_rubric.py:110-113 ya manda el calculado y avisa), pendiente aceptado; (3) reviewers y tests sin dato y rondas sin ligar a corrida en las corridas reales, pendiente aceptado; (4) evidencias de F7.C1 y F7.3 citan HEAD 6eb1152 con 171 tests y la actualizacion esta en open_items (191 y 198). Peticion al dev atendida: suite completa en 858a7f6 el 2026-10-06, 198 tests OK en Python 3.9.25 y 3.14.4.
 
 ## Registro de avance
 

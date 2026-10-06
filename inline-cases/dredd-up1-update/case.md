@@ -4,7 +4,7 @@
 
 **Objetivo:** Preparar e implementar cuando se autorice una única entrega Dredd up1 1.1 con todas las mejoras acordadas: rigor y operación segura, auditoría de configuración, concurrencia adaptativa, seguimiento local y métricas exportables a Markdown. Ejecución y verificación en Claude Code macOS, con diseño portable a Linux y Windows cuya verificación real queda aplazada para después de la implementación. Generar documentación operativa y referencia 1.1, preservar íntegra la v1 y documentar comparación entre versiones.
 **Tags:** projects: up1 · repos: up1 · branches: feat/dredd-update · labels: dredd, tooling, autonomo, metricas, investigacion
-**Etapa:** ejecucion
+**Etapa:** cerrado
 
 ## Falta
 

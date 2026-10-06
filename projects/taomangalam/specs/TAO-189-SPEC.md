@@ -22,9 +22,9 @@ Regla de dominio clave (DEC-130): region ausente/desconocida/invalida/vencida re
 ## Requirements
 
 ### REQ-01 `confirmed`
-> Fuente: Adenda 3 (2026-10-06) puntos 1 y 6; DEC-130 l.30-32; EP-15 l.387-389; server/package.json:5-6; server/src/routes/
+> Fuente: Adenda 5 punto 2 - 2026-10-06 (resolucion por region); Adenda 3 punto 6; `server/contract/openapi.yaml` l.1630
 
-El backend Express/TypeScript bajo `server/` expone un proveedor real de politica regional de analitica que resuelve los tres modos opt_in, opt_out y disabled a partir de la region/tenant del sujeto, detras del contrato canonico (EP-15 / DEC-130 / `server/contract/openapi.yaml`), sin dependencias de UI y sin modulo Gradle. Ante region ausente, desconocida, invalida o con politica vencida resuelve a `opt_in` (comportamiento seguro que exige aceptacion previa), nunca a `disabled`.
+El backend Express/TypeScript bajo `server/` expone un proveedor real de politica regional de analitica que resuelve los tres modos opt_in, opt_out y disabled a partir de la `region` del sujeto, detras del contrato canonico (EP-15 / DEC-130 / `server/contract/openapi.yaml`), sin dependencias de UI y sin modulo Gradle. La resolucion es POR `region`: el endpoint publico `GET /privacidad/politica-analitica` recibe unicamente `region` como entrada, y la columna `tenant` de `politica_analitica_region` es forward-looking (no se siembra ni participa de la resolucion hoy; el aislamiento por tenant se definira cuando exista una via por contrato). Ante region ausente, desconocida, invalida o con politica vencida resuelve a `opt_in` (comportamiento seguro que exige aceptacion previa), nunca a `disabled`.
 
 ### REQ-02 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-15_metricas_observabilidad_y_auditoria.md:102
@@ -32,9 +32,9 @@ El backend Express/TypeScript bajo `server/` expone un proveedor real de politic
 El consentimiento de analitica se registra y se actualiza de forma persistente: la decision del sujeto se guarda, se sobrescribe en actualizaciones sucesivas y se vuelve a leer con el mismo valor; un sujeto sin registro previo devuelve el default definido sin fallar.
 
 ### REQ-03 `confirmed`
-> Fuente: EP-15 l.400; DEC-130; Adenda 3 (2026-10-06) punto 6; server/contract/openapi.yaml l.5546-5552
+> Fuente: Adenda 5 punto 1 - 2026-10-06 (gate de emision vs endpoint de ingesta); EP-15 l.400; DEC-130
 
-La emision de analitica se decide por el estado canonico "puede emitir analitica" (EP-15 l.400): con politica `disabled` nunca se emite; con `opt_in` se emite solo si existe consentimiento otorgado vigente; con `opt_out` se emite salvo rechazo o retiro registrado; una negativa previa nunca se convierte en aceptacion al cambiar la region del sujeto; y un cambio a una politica mas estricta detiene la emision hasta que se registre un nuevo consentimiento. El descarte se aplica en `POST /metricas/eventos`.
+La decision de emision de analitica se ENTREGA como servicio/funcion reutilizable en `server/src/metricas/emision-analitica.ts` (`evaluarEmision` / `crearServicioEmisionAnalitica`), que implementa el estado canonico "puede emitir analitica" (EP-15 l.400): con politica `disabled` nunca se emite; con `opt_in` se emite solo si existe consentimiento otorgado vigente; con `opt_out` se emite salvo rechazo o retiro registrado; una negativa previa nunca se convierte en aceptacion al cambiar la region del sujeto; y un cambio a una politica mas estricta detiene la emision hasta que se registre un nuevo consentimiento. La APLICACION material de esa decision como descarte en `POST /metricas/eventos` queda DIFERIDA a HU-15-06: ni el endpoint ni sus entidades de ingesta (`sesion_uso`, `evento_metrica`) existen en este subticket de preparacion, que solo entrega la funcion que decide. No se crea el endpoint ni las entidades de ingesta aqui.
 
 ### REQ-04 `confirmed`
 > Fuente: Pedido de cambio 2026-10-06 (concretar `<carpeta>` = `src/privacidad`); Adenda 3 punto 4 (Vitest, `pnpm -C server exec vitest run <carpeta>`, `vitest.integration.ci.ts`) y punto 3 (runner `scripts/ci/ep01-consent-provider.mjs` en job `integration` de `.github/workflows/ci-pr.yml:638`, activacion `epic/EP-01*` l.768-802)
@@ -42,9 +42,9 @@ La emision de analitica se decide por el estado canonico "puede emitir analitica
 Existe una suite de pruebas de contrato de politica y consentimiento del backend, escrita con Vitest (`server/package.json:12-13` `"test":"vitest run"`, config `server/vitest.config.ts`), ubicada en `server/src/privacidad` y ejecutable en un checkout limpio sin V-51 mediante `pnpm -C server exec vitest run src/privacidad`. El job CI se prepara como runner `scripts/ci/ep01-consent-provider.mjs` invocado dentro del job `integration` de `.github/workflows/ci-pr.yml` (l.638), siguiendo el patron de `scripts/ci/ep01-legal-provider.mjs` y `scripts/ci/ep01-release-provider.mjs`, activado por rama `epic/EP-01*` (`startsWith(github.head_ref,'epic/EP-01')`, l.768-802) y usando la config efimera `vitest.integration.ci.ts`. El runner conserva las referencias caso→test como evidencia. No hay modulo Gradle `:consent` ni lane de fastlane involucrados.
 
 ### REQ-05 `confirmed` `enforcement`
-> Fuente: Adenda 3 (2026-10-06) punto 2; DEC-155; server/contract/openapi.yaml l.1630, l.1661, l.1735, l.5546-5552, l.6756-6837; server/contract/generated/dart/; server/contract/generated/api.d.ts
+> Fuente: Adenda 5 punto 3 - 2026-10-06 (conformidad del cliente Dart); Adenda 3 punto 2; DEC-155
 
-La implementacion se conforma campo a campo al contrato canonico `server/contract/openapi.yaml` (OpenAPI 3.1 v2.4.1, DEC-155): esquemas `PoliticaAnalitica`, `ConsentimientoRequest`, `ConsentimientoAnalitica` y `EstadoConsentimiento` (aprox. l.6756-6837) y endpoints `GET /privacidad/politica-analitica` (l.1630), `POST /privacidad/consentimientos` (l.1661), `GET /privacidad/consentimientos` (l.1735) y el descarte en `POST /metricas/eventos` (l.5546-5552). El adaptador consumible por la app es el cliente Dart generado en `server/contract/generated/dart/`; los tipos TS son `server/contract/generated/api.d.ts`. Prohibido introducir un contrato paralelo, renombrar campos o agregar endpoints fuera del OpenAPI.
+La implementacion se conforma campo a campo al contrato canonico `server/contract/openapi.yaml` (OpenAPI 3.1 v2.4.1, DEC-155): esquemas `PoliticaAnalitica`, `ConsentimientoRequest`, `ConsentimientoAnalitica` y `EstadoConsentimiento` (aprox. l.6756-6837) y endpoints `GET /privacidad/politica-analitica` (l.1630), `POST /privacidad/consentimientos` (l.1661) y `GET /privacidad/consentimientos` (l.1735). Alcance verificable de la conformidad del cliente: los tipos TS `server/contract/generated/api.d.ts` se regeneran y se comparan byte a byte contra lo versionado; el modelo Dart versionado en `server/contract/generated/dart/` se verifica ESTRUCTURALMENTE (presencia de campos y valores de enum), porque la regeneracion completa del cliente Dart requiere un toolchain que no corre en los tests unitarios: esa brecha queda registrada y se cubre fuera de la suite. Prohibido introducir un contrato paralelo, renombrar campos o agregar endpoints fuera del OpenAPI.
 
 ### REQ-06 `inferred` `enforcement`
 > Fuente: taomangalam/docs/backlog/EP-03a_identidad_de_dispositivo_autorizacion_y_legal.md:1805
@@ -129,6 +129,13 @@ Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo 
 **REQs:**
 
 - REQ-04 (edit) `confirmed`: Existe una suite de pruebas de contrato de politica y consentimiento del backend, escrita con Vitest (`server/package.json:12-13` `"test":"v
+
+### Enmienda 6
+**REQs:**
+
+- REQ-03 (edit) `confirmed`: La decision de emision de analitica se ENTREGA como servicio/funcion reutilizable en `server/src/metricas/emision-analitica.ts` (`evaluarEmi
+- REQ-01 (edit) `confirmed`: El backend Express/TypeScript bajo `server/` expone un proveedor real de politica regional de analitica que resuelve los tres modos opt_in, 
+- REQ-05 (edit) `confirmed`: La implementacion se conforma campo a campo al contrato canonico `server/contract/openapi.yaml` (OpenAPI 3.1 v2.4.1, DEC-155): esquemas `Pol
 ## Sessions
 
 ### Session 1 · T2 · continue
