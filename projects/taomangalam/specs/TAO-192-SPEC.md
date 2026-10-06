@@ -203,19 +203,19 @@ Contrato: rollback: Revertir la caché y el refresco; la app vuelve a no aplicar
 Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S3.T1 — Crear la migración de `documento_legal` y `aceptacion_documento_legal` (append-only) con REVOKE explícito: documento_legal SELECT para el rol de app y escritura del script de despliegue; aceptacion_documento_legal SELECT+INSERT con REVOKE de UPDATE/DELETE.
-Contrato: rollback: Revertir la migración con su inversa; conservar registros legales existentes y no degradar consentimientos.. Status: pending
+Contrato: rollback: Revertir la migración con su inversa; conservar registros legales existentes y no degradar consentimientos.. Status: done
 
 #### S3.T2 — Implementar el script de registro de versión legal del pipeline: inserta la fila con `hash_contenido` = SHA-256 del Markdown de `docs/legal/` (convención `terminos-vX.Y.md` / `privacidad-vX.Y.md`), `url_publicada` = `${STAGING_BASE_URL}/legal/<tipo>/<version>` reutilizando la variable `STAGING_BASE_URL` ya existente del pipeline de despliegue (`.github/workflows/deploy-staging.yml`) y `texto_snapshot` nulo; idempotente (no duplica ni altera versiones anteriores), más el check de CI de hash del texto empaquetado contra `docs/legal/`.
-Contrato: rollback: Revertir el script y el check; las filas registradas quedan como están (inmutables).. Status: pending
+Contrato: rollback: Revertir el script y el check; las filas registradas quedan como están (inmutables).. Status: done
 
 #### S3.T3 — Implementar la lectura pública por API (`obtenerDocumentosLegalesVigentes` sin texto y `obtenerDocumentoLegal` con `hashContenido`/`urlPublicada` y `texto` nulo, 404 `recurso_no_encontrado`) y el servido en `server/` de la página estática `/legal/<tipo>/<version>` (la ruta que apunta `url_publicada`) con el texto de esa versión y su número de versión, sin requerir sesión.
-Contrato: rollback: Revertir los endpoints y el servido estático; las versiones registradas quedan intactas.. Status: pending
+Contrato: rollback: Revertir los endpoints y el servido estático; las versiones registradas quedan intactas.. Status: done
 
 #### S3.T4 — Empaquetar el texto legal en la app al compilarse: los Markdown viven en `app/assets/legal/` y se declaran como assets en `app/pubspec.yaml`, con su versión; agregar el check de CI que falla si el hash del texto empaquetado difiere de la fuente de `docs/legal/` (`terminos-vX.Y.md` / `privacidad-vX.Y.md`).
-Contrato: rollback: Revertir el empaquetado y el check; conservar los textos fuente.. Status: pending
+Contrato: rollback: Revertir el empaquetado y el check; conservar los textos fuente.. Status: done
 
 #### S3.T5 — Escribir los tests de documentos legales (registro con hash, idempotencia, publicación por versión, lectura pública, 404 y rechazo de UPDATE/DELETE por rol) trazados a los casos QA de HU-03a-10.
-Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S4.T1 — Implementar `aceptarDocumentosLegales` en línea: dos filas con versión, `aceptada_at`, origen `app`, dispositivo y versión de app; idempotencia por `Idempotency-Key` (sin duplicar, `idempotencia_conflicto` con cuerpo distinto); validaciones `version_legal_desconocida`, `aceptacion_fecha_invalida`, `documento_legal_modificado` con `pendientes` de versiones más nuevas que exigen reaceptación; `listarMisAceptaciones` paginado por cuenta de más reciente a más antigua.
 Contrato: rollback: Revertir el endpoint y el listado; las aceptaciones ya insertadas permanecen (append-only).. Status: pending
@@ -495,14 +495,14 @@ Recorte por exceso aplicado en autónomo: S2.T1.1, S2.T1.2, S2.T1.3, S2.T2.1, S2
 
 **Gate (auto)**: `obtenerManifiesto` devuelve `version`, `ETag` y `capacidades` (Estándar + obligatorias) con `capacidadesPorTipoCuenta`; con `If-None-Match` responde 304; un cambio de asignación de perfil cambia version/ETag; la app sin conexión usa el manifiesto Estándar empaquetado y al recibir `capacidad_denegada` vuelve a pedir el manifiesto. Verificable por respuesta del endpoint y CI de regeneración.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
-- [ ] S3.T5
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
+- [x] S3.T5
 
 **Gate (auto)**: `GET /v1/legal/documentos` devuelve la vigente de cada tipo con `hashContenido` y `urlPublicada` y `texto` nulo; `obtenerDocumentoLegal` inexistente responde 404 `recurso_no_encontrado`; cada `urlPublicada` sirve su versión sin sesión; el rol de app no puede UPDATE/DELETE `aceptacion_documento_legal`; el CI falla si el texto empaquetado no coincide con la fuente. Verificable por API y psql.
 
