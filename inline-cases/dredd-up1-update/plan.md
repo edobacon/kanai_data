@@ -4,7 +4,7 @@
 
 **Intención:** Una única entrega final 1.1 para Claude Code, ejecutada y verificada en macOS de forma autónoma por el agente, con diseño portable a Linux y Windows cuya verificación real queda aplazada para después de la implementación. Todas las mejoras acordadas y documentación operativa propia. Preservar íntegra la documentación v1 y generar comparación v1/1.1. Sin push, publicación ni cambios de hooks globales.
 **Tags:** projects: up1 · repos: up1 · branches: feat/dredd-update, feat/dredd-update-1.1 · labels: dredd, tooling, autonomo, metricas, investigacion
-**Estado:** 7 de 8 fases cerradas. Juez final: pendiente.
+**Estado:** 8 de 8 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -17,7 +17,7 @@
 | F4 Seguimiento local, pre-envío y revisión del delta | Persistir puntos y cobertura para verificar cierres sin olvidar código no leído. | Hecho | 2026-10-05 → 2026-10-05 | 2e8a1d3, b4c91db, 0a70da3 | 4/4 | - |
 | F5 Métricas locales y exportación Markdown | Registrar ejecuciones reales y generar reportes compartibles sin servicios externos. | Hecho | 2026-10-05 → 2026-10-05 | 4b266f1, 5491bde, 0ddaa1a, cf32715, 52f5c26 | 4/4 | - |
 | F6 Documentación 1.1 y comparación histórica | Documentar la implementación real de 1.1 y mantener la referencia v1 íntegra. | Hecho | 2026-10-05 → 2026-10-05 | 6eb1152 | 3/3 | - |
-| F7 Validación integral en macOS y juez final | Aceptar una única entrega 1.1 verificada en macOS, con documentación y auditoría independiente. | En curso | 2026-10-05 → - | 7a93581, dff7ca8, f757205, 9757aff, 8ca028f, 7f28c23, 536a06b, b244e6c, 858a7f6 | 2/4 | - |
+| F7 Validación integral en macOS y juez final | Aceptar una única entrega 1.1 verificada en macOS, con documentación y auditoría independiente. | Hecho | 2026-10-05 → 2026-10-06 | 7a93581, dff7ca8, f757205, 9757aff, 8ca028f, 7f28c23, 536a06b, b244e6c, 858a7f6 | 4/4 | - |
 
 ## Riesgos
 
@@ -298,8 +298,8 @@
 **Esfuerzo:** Estimación inicial de esfuerzo activo: 1-2 días; recalibrar tras F0; no es fecha de entrega.
 **Cómo deshacerla:** No aplica: fase de análisis/validación sin cambios de código ni publicación.
 
-**Registro F7** (estado: En curso)
-- **Fecha real:** inicio 2026-10-05 · fin -
+**Registro F7** (estado: Hecho)
+- **Fecha real:** inicio 2026-10-05 · fin 2026-10-06
 - **Antes de empezar:**
   - [x] F7.P1: F6 cerrada con criterios y commits aplicables registrados; autorización de implementación vigente. (F6 cerrada (e0096) con F6.C1-F6.C3 y commit 6eb1152 registrado; autorización vigente en KB f0-decisiones-aprobadas.md.)
 - **Commits:**
@@ -319,9 +319,9 @@
   - **F7.4** → Resultado y correcciones registradas: bloqueante de publicación sin aprobación y nits del juez final corregidos. Dónde: commits 7a93581, dff7ca8, f757205; .claude/skills/dredd/scripts/dredd-guard.py; tests en scripts/tests/test_f1_guard.py (TestFinalJudgeBypasses, TestFinalJudgeNits). Cómo se comprobó: 182 tests OK en Python 3.9.25 y 3.14.4; e2e 16/16; 0 rayas largas en la skill.
 - **Criterios cumplidos:**
   - **F7.C1** Suite completa ejecutada por el agente en macOS con el Python soportado de F0: python -m unittest discover -s .claude/skills/dredd/scripts/tests -v. Exit 0; 'Ran N tests' con N mayor o igual a la suma de los mínimos de F1-F5; las 20 suites test_f1_* a test_f5_* presentes; sin fallos ni skips que oculten requisitos. Comando, código de salida y totales en el registro. → .claude/skills/dredd/scripts/tests/ en 6eb1152 (20 archivos test_f[1-5]_*.py). · ejecutó: llm, `PYTHONDONTWRITEBYTECODE=1 /opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests (y con python3.14)`, salida 0, Python 3.9.25: Ran 171 tests OK (51.4 s); Python 3.14.4: Ran 171 tests OK (52.3 s); 0 fallos, 0 skips; 171 >= 95; 20 suites test_f1_* a test_f5_* presentes; git 2.54.0, Claude Code 2.1.278, macOS. HEAD 6eb1152.
-  - **F7.C2** pendiente (manual): Smoke de Claude Code en macOS y revisión del reporte Markdown confirmados por el dev.
+  - **F7.C2** Smoke de Claude Code en macOS y revisión del reporte Markdown confirmados por el dev. → El dev corrió el smoke real de Dredd 1.1 en Claude Code macOS sobre PR reales (layout #425 y #426, curriculum-mapping #48 en rondas 3, 4 y 5 del 2026-10-06) y revisó el reporte Markdown de métricas. El smoke del 2026-10-05 mostró métricas con 0 hallazgos; se corrigió en 9757aff y 8ca028f (opción A+B). Verificación posterior el 2026-10-06: las corridas 20261006T122928, 20261006T153057 y 20261006T161924 traen hallazgos derivados del expediente que coinciden con ronda.json (S1:1/S2:3; S2:2/S3:2; S2:1/S3:1); el reporte (dredd-metrics.py report) cuenta 7 corridas, 0 problemas, y marca como datos incompletos las rondas 3 y 4 con veredicto emitido distinto del calculado sin motivo, y la falta de reviewers y tests. Ronda 5 registrada y cerrada ese día. El dev confirmó en chat el 2026-10-06 el smoke y la revisión del reporte. · ejecutó: dev, 7 corridas en el reporte, 0 problemas; 3 corridas del 2026-10-06 con conteos iguales al expediente; pendientes conocidos: reviewers/tests sin dato en las 3, rondas del caso sin ligar a corrida (run null), veredicto emitido distinto del calculado sin motivo en las rondas 3 y 4.
   - **F7.C3** Juez final evalúa alcance completo, conservación v1 y que la verificación aplazada de Linux y Windows quede declarada; resultado registrado. → KB f7-juez-final-propio.md: alcance completo, conservación v1 (idénticos a 348ea29) y Linux/Windows declarados sin verificar con verificación aplazada (docs/reference/dredd-v1.1.md:19-25). El juez de Kanai (scope final) corre tras cerrar F7 porque la herramienta lo exige. · ejecutó: llm, `/opt/homebrew/bin/python3.9 -m unittest discover -s .claude/skills/dredd/scripts/tests (corrido por el juez y por el agente en f757205)`, salida 0, Juez final opus: r1 rechazado, r2 aprobado con nits; nits corregidos en f757205; 182 tests OK en 3.9 y 3.14.
-  - **F7.C4** pendiente (manual): Única entrega 1.1 aceptada con commits, docs y rollback, sin publicar por esta fase.
+  - **F7.C4** Única entrega 1.1 aceptada con commits, docs y rollback, sin publicar por esta fase. → El dev aceptó la entrega única Dredd 1.1 el 2026-10-06 al pedir el cierre del caso, tras confirmar F7.C2. Commits: rama feat/dredd-update del checkout principal uplanner/up1, HEAD 858a7f6, desde la base 348ea29 (código por fase, juez final propio r2 aprobado con nits corregidos en f757205, corrección de métricas 9757aff y 8ca028f). Docs: referencia, guía operativa y comparación 1.1 en 6eb1152 y changelog 1.1 contra v1 en 536a06b; la documentación v1 se conserva intacta en 348ea29. Rollback: volver feat/dredd-update a 348ea29 restituye la v1 completa (el skill ~/.claude/skills/dredd apunta al checkout, por lo que el rollback también revierte el skill instalado). Sin publicar: git ls-remote origin feat/dredd-update no devuelve la rama, no hay push. · ejecutó: dev, HEAD 858a7f6 en feat/dredd-update; rama ausente en el remoto (sin push); base v1 348ea29 preservada. Pendientes no bloqueantes aceptados: reviewers/tests sin dato en corridas reales, rondas sin ligar a corrida, veredicto emitido distinto del calculado sin motivo (rondas 3 y 4 de #48); verificación en Linux y Windows aplazada por decisión del 2026-10-05.
 - **No cumplido:**
   - Sin registros.
 - **Desvíos del plan:**
@@ -332,4 +332,4 @@
   - introducido · .claude/skills/dredd/SKILL.md (pasos de ejecución), protocol/voice.md, protocol/orchestration.md (brief de carriles), protocol/output.md (plantilla del informe), scripts/dredd-progress-notify.py:INVOCATION; ~/.dredd/notify.log: La personalidad de Dredd se redujo en la 1.1. En la v1, la sección 'Firma y voz (no negociable)' estaba dentro de SKILL.md, que se carga siempre; en la 1.1 pasó a voice.md y solo figura en la tabla del mapa, sin un momento obligatorio de lectura. Los pasos no piden la firma de apertura ni la frase de cierre, el brief de los revisores en carriles no pide frase por bloque, y la plantilla del informe no tiene firma. Evidencia en notify.log: las corridas v1 narraban una frase por fase ('Court's in session.', 'The diff doesn't lie...'); de las 4 corridas 1.1, una tuvo una sola frase y las otras ninguna, ni siquiera líneas de avance. Causa probable del silencio del narrador: el hook solo reconoce la ruta literal de dredd-progress.py y el protocolo muestra invocaciones con la variable $PROG. El mapa de cobertura dio la voz por conservada porque solo verifica que el encabezado exista.
 - **Bloqueos:**
   - Sin registros.
-- **Cierre y siguiente paso:** Sin cerrar.
+- **Cierre y siguiente paso:** Dredd up1 1.1 aceptada por el dev el 2026-10-06 tras el smoke real en macOS y la corrección de métricas (A+B). Juez final propio r2 aprobado con nits corregidos. Rama feat/dredd-update en 858a7f6, sin push; v1 preservada en 348ea29.. Siguiente: 2026-10-13: decidir si se publica feat/dredd-update (push y PR) y definir los ajustes del protocolo: motivo obligatorio cuando el veredicto emitido difiere del calculado, guardar lanes.json y verificaciones, ligar rondas con --run. Verificación en Linux y Windows aplazada.

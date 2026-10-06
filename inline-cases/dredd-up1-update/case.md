@@ -79,4 +79,4 @@
 
 ## Plan
 
-7 de 8 fases cerradas, fase actual F7. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/dredd-up1-update/plan.md
+8 de 8 fases cerradas. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/dredd-up1-update/plan.md
