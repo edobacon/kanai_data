@@ -142,7 +142,7 @@ Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo 
 
 **Gate (auto)**: Corriendo `pnpm -C server exec vitest run src/privacidad` se observa: la politica resuelve opt_in/opt_out/disabled con fallback opt_in ante region ausente, desconocida, invalida o vencida; el consentimiento se persiste y se relee; y la emision se decide por el estado "puede emitir analitica" (disabled nunca; opt_in+otorgado si; opt_out salvo rechazo/retiro; una negativa previa no se convierte en aceptacion al cambiar la region).
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
 - [x] S2.T2
