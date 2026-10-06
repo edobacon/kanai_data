@@ -1,0 +1,157 @@
+plan_id: kanai-medir-ejecucion-real
+title: Medir con corridas reales las mejoras de ejecución de Kanai
+intent: Comprobar con LLM real que los cambios bajan rebotes, tokens y tiempo del gate N3, sin tocar tickets reales.
+created: 2026-10-06T19:17:11.640Z
+updated: 2026-10-06T19:36:49.156Z
+tags:
+  projects: []
+  repos:
+    - kanai-app
+    - kanai-app-codex
+  tickets:
+    - TAO-192
+    - TAO-191
+    - TAO-186
+  branches: []
+  folders: []
+  labels:
+    - kanai
+    - ejecucion
+    - gates
+    - medicion
+settings:
+  judge: per_phase
+risks:
+  - "Cherry-pick de los 8 commits sobre setup puede dar conflictos: no se resuelven solos, se explican y se decide."
+  - "Una corrida real con LLM cuesta tokens: el ticket sintético debe ser chico."
+  - El MCP debe reiniciarse para cargar el código nuevo; sin eso se mide el código viejo.
+  - kanai-app tiene cambios ajenos sin commitear que no deben entrar en los commits.
+out_of_scope:
+  - Re-ejecutar gates o modificar tickets reales de taomangalam.
+  - Cambiar el alcance de cualquier ticket existente.
+  - Hacer push (solo con pedido explícito).
+phases:
+  - code: F0
+    title: Integrar y preparar
+    goal: Que el MCP corra el código con los cambios, en una rama local desde setup.
+    prerequisites:
+      - id: F0-P1
+        text: El KB del caso contiene punto-de-partida.md con la línea base y las metas.
+    tasks:
+      - code: F0.1
+        text: Crear la rama feat/medir-ejecucion-real desde setup en kanai-app sin llevarse los cambios ajenos sin commitear.
+        kb:
+          - punto-de-partida.md
+      - code: F0.2
+        text: Integrar en esa rama los 8 commits 9d4c1cf a 7204334 de la copia de Codex (rama feat/optimizar-ejecucion); si hay conflictos, explicarlos y esperar decisión.
+      - code: F0.3
+        text: Correr typecheck, lint y la suite de kanai-app sobre la rama integrada.
+      - code: F0.4
+        text: El dev reinicia el MCP de Kanai y se comprueba que carga el código nuevo (delivery_status ya no avisa que hay que reiniciar).
+    criteria:
+      - id: F0-C1
+        text: Typecheck, lint y suite de kanai-app pasan en la rama integrada (Node 24).
+        kind: command
+        run:
+          command: pnpm typecheck && pnpm lint && pnpm test
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          how: Correr en la rama feat/medir-ejecucion-real con el Node del .nvmrc.
+          expect: Tres comandos con salida 0.
+          exit_code: 0
+      - id: F0-C2
+        text: Tras reiniciar el MCP, la verificación de entrega no informa código más nuevo que el proceso.
+        kind: manual
+    effort: 2 h
+    delivers: false
+    changes_code: true
+    rollback: Descartar la rama feat/medir-ejecucion-real; setup queda intacta.
+  - code: F1
+    title: Corrida real en KT
+    goal: Medir un ticket sintético completo en KT con LLM real.
+    prerequisites:
+      - id: F1-P1
+        text: F0 cerrada con el MCP ya reiniciado.
+    tasks:
+      - code: F1.1
+        text: Crear en KT un ticket sintético chico que dependa de otro ya integrado, en rama acumuladora, para reproducir el diff heredado y el sandbox.
+      - code: F1.2
+        text: Ejecutarlo completo (spec, sesiones y gates) con LLM real y guardar en el KB sus rondas del N3, tokens por gate, si el sandbox corrió y los hallazgos repetidos.
+    criteria:
+      - id: F1-C1
+        text: El sandbox corrió y dejó evidencia en todos los gates del ticket sintético.
+        kind: evidence
+      - id: F1-C2
+        text: El KB trae la tabla de medidas reales del ticket sintético contra las metas, sin cifras inventadas.
+        kind: evidence
+    effort: 4 h
+    delivers: false
+    changes_code: false
+  - code: F2
+    title: Repetir el caso de TAO-192 en KT
+    goal: Medir el N3 sobre una copia en KT con el mismo diff de TAO-192, sin tocar el ticket real.
+    prerequisites:
+      - id: F2-P1
+        text: F1 cerrada.
+    tasks:
+      - code: F2.1
+        text: Reproducir en KT el diff de TAO-192 (incluido lo heredado de TAO-191 y la rama acumuladora) en un repo de prueba, sin modificar taomangalam.
+      - code: F2.2
+        text: Correr el gate N3 con LLM real sobre esa copia y guardar rondas, tokens por gate y hallazgos repetidos.
+      - code: F2.3
+        text: Comparar contra los 5 rebotes y los 6,35M tokens del peor gate de TAO-192.
+    criteria:
+      - id: F2-C1
+        text: Cero hallazgos por diff heredado en el N3 de la copia.
+        kind: evidence
+      - id: F2-C2
+        text: El KB trae rondas y tokens por gate de la copia contra las metas (2 rondas o menos, menos de 1M), con los incumplidos explicados.
+        kind: evidence
+    effort: 4 h
+    delivers: false
+    changes_code: false
+  - code: F3
+    title: Ajustes
+    goal: Corregir lo que las corridas muestren, solo si hace falta.
+    prerequisites:
+      - id: F3-P1
+        text: F2 cerrada y los hallazgos de las corridas registrados en el KB.
+    tasks:
+      - code: F3.1
+        text: Corregir en feat/medir-ejecucion-real cada hallazgo confirmado por las corridas, con un commit por hallazgo; si no hay ninguno, registrar 'No aplica' con la evidencia.
+    criteria:
+      - id: F3-C1
+        text: Typecheck, lint y suite de kanai-app pasan; o la fase queda sin cambios con 'No aplica' y su evidencia.
+        kind: command
+        run:
+          command: pnpm typecheck && pnpm lint && pnpm test
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          how: Correr en la rama feat/medir-ejecucion-real con el Node del .nvmrc.
+          expect: Tres comandos con salida 0.
+          exit_code: 0
+    effort: Según los hallazgos
+    delivers: false
+    changes_code: true
+    rollback: Revertir los commits de la fase.
+  - code: F4
+    title: Medición final y arbiter
+    goal: Comparar contra la línea base y cerrar con el arbiter.
+    prerequisites:
+      - id: F4-P1
+        text: F3 cerrada.
+    tasks:
+      - code: F4.1
+        text: Guardar en el KB la tabla final contra las metas, los incumplidos y las señales de mejora pendientes.
+      - code: F4.2
+        text: Correr el arbiter sobre feat/medir-ejecucion-real contra setup y registrar su veredicto.
+    criteria:
+      - id: F4-C1
+        text: El KB trae la tabla final con cada meta cumplida, incumplida o no medida.
+        kind: evidence
+      - id: F4-C2
+        text: El arbiter queda aprobado o aprobado con nits, y los hallazgos graves están corregidos.
+        kind: evidence
+    effort: 2 h
+    delivers: false
+    changes_code: false
