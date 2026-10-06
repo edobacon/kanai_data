@@ -1,0 +1,509 @@
+{
+  "run_id": "kanai-mejoras-post-tao-191-r1",
+  "plan_id": "kanai-mejoras-post-tao-191",
+  "ts_start": "2026-10-05T23:57:00Z",
+  "ts_end": "2026-10-06T00:05:00Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "d3e431a",
+  "head_ref": "8a1b990",
+  "repo": "kanai-app",
+  "plan_phase_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6"
+  ],
+  "calibration": "comportamiento",
+  "batches": 2,
+  "consumers": 30,
+  "lines_judged": 985,
+  "findings": {
+    "S0": 0,
+    "S1": 1,
+    "S2": 1,
+    "S3": 1,
+    "consulta": 1
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S1",
+      "kind": "correctness",
+      "title": "El tope de tokens tambien corta a los adaptadores que reportan el uso al final: un auto-fix de Claude o Codex ya completo queda failed y no se re-gatea",
+      "where": "server/dispatch/jobs.ts:167",
+      "phase": "F4",
+      "evidence": "jobs.ts evalua overTokenBudget en cada meta; claude/codex/local emiten un unico meta al final; supera 1.5M -> abort, state failed antes de applying, result descartado; gateAutofix devuelve false sin re-gate. tokenBudget.ts dice que no se cortan. Re-verify: sostenido.",
+      "info_class": "test_wrong",
+      "info_floor": false,
+      "seen_by": [
+        "b1",
+        "b2"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "intent_gap",
+      "title": "Sin baseline de tests, una contradiccion que persiste no se decide por los nombres: el gate usa el conteo de consola mientras la nota dice que mandan los nombres",
+      "where": "server/dispatch/gateChecksConsistency.ts:41",
+      "phase": "F1",
+      "evidence": "decideGate: testsBlocking = hasBaseline ? regression.count>0 : checks.tests.fail>0; sin baseline la consola (0) manda. computeRegressions sin baseline usa currentFail. Con baseline, baselineNote dice 'ahora 0 rojos' junto a la nota de consistencia.",
+      "info_class": "contradiction_internal",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "La doc de KANAI_GATE_FIX_MAX_TOKENS no aclara que con Claude/Codex una corrida que pasa el tope queda fallida",
+      "where": "docs/configuration.md:174",
+      "phase": "F4",
+      "evidence": "La fila dice que Claude y Codex lo reportan al final; el runner igual evalua el meta final y marca failed (ver f1).",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b2"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "fixWouldChaseUnreliableTests exige que todo bloqueante sea source objective: si un juez repite los rojos como hallazgo propio, el auto-fix se lanza igual",
+      "where": "server/dispatch/gateAutofix.ts:41",
+      "phase": "F4",
+      "evidence": "blocking.every(source==='objective'); los hallazgos del juez son source 'judge'; el prompt session-gate pide iterar ante tests en rojo.",
+      "info_class": "none",
+      "info_floor": false,
+      "seen_by": [
+        "b1"
+      ]
+    }
+  ],
+  "scope_creep": [],
+  "unfulfilled_phases": [],
+  "intent_gaps": [
+    "A sin baseline: si la contradiccion persiste no deciden los nombres (f2)",
+    "E: el tope se aplica tambien a adaptadores que reportan al final (f1)"
+  ],
+  "coverage": {
+    "files_in_diff": 47,
+    "read_full": 47,
+    "skimmed": 0,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "server/api/dispatch/review.post.ts",
+        "server/api/tickets/[id]/runs.get.ts",
+        "server/dispatch/contract.ts",
+        "server/dispatch/reconcileGuard.ts",
+        "server/dispatch/tokenBudget.ts",
+        "server/dispatch/checksCache.ts",
+        "server/dispatch/gate.ts",
+        "server/dispatch/gateAutofix.ts",
+        "server/dispatch/gateChecks.ts",
+        "server/dispatch/gateChecksConsistency.ts",
+        "server/dispatch/gateContext.ts",
+        "server/dispatch/gateTypes.ts",
+        "server/dispatch/jobs.ts",
+        "server/dispatch/judge.ts",
+        "server/dispatch/judgeAgents.ts",
+        "server/dispatch/persist.ts",
+        "server/dispatch/planTicket.ts",
+        "server/dispatch/sandboxCheck.ts",
+        "server/dispatch/specMissingValues.ts",
+        "server/dispatch/specReview.ts",
+        "server/dispatch/testCounts.ts",
+        "server/dispatch/adapters/opencode.ts",
+        "server/engine/guards/closeLimits.ts",
+        "shared/run-outcome.ts",
+        "app/components/TicketRuns.vue",
+        "app/components/TicketSidebar.vue",
+        "app/components/TicketTimeline.vue",
+        "app/pages/chat.vue",
+        "app/pages/tickets/[id].vue",
+        "server/mcp/planExecution.ts",
+        "server/mcp/tools.ts",
+        "server/repo/investigation.ts",
+        "server/repo/lifecycleReport.ts",
+        "server/repo/runs.ts",
+        "server/repo/salud.ts",
+        "skills/claude/kn-execute-task/SKILL.md",
+        "tests/unit/close-limits.test.ts",
+        "tests/unit/gate-checks-consistency.test.ts",
+        "tests/unit/gate-fix-budget.test.ts",
+        "tests/unit/gate-quality-wiring.test.ts",
+        "tests/unit/persist-blocked.test.ts",
+        "tests/unit/reconcile-guard.test.ts",
+        "tests/unit/run-outcome.test.ts",
+        "tests/unit/session-scope.test.ts",
+        "tests/unit/spec-missing-values.test.ts",
+        "tests/unit/test-baseline.test.ts",
+        "docs/configuration.md"
+      ],
+      "skimmed": [],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "app/components/TicketRuns.vue",
+        "lines": 11,
+        "blob": "9a8dc971ae6389a4c1670a18afdfeac22c4e2e36",
+        "deleted": false
+      },
+      {
+        "path": "app/components/TicketSidebar.vue",
+        "lines": 4,
+        "blob": "afc63ca2ff64c8a19850f8002dd8e651c80e891a",
+        "deleted": false
+      },
+      {
+        "path": "app/components/TicketTimeline.vue",
+        "lines": 2,
+        "blob": "73e991fc64d51d5c569ae646b99e7b8c6b2f213e",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/chat.vue",
+        "lines": 3,
+        "blob": "861ffa44bb037ab83e51f437b61c744be5788646",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/tickets/[id].vue",
+        "lines": 2,
+        "blob": "d0d86a61174fa4be1d3670fe1d3b1dee8b2f8d6f",
+        "deleted": false
+      },
+      {
+        "path": "docs/configuration.md",
+        "lines": 1,
+        "blob": "c05bc564567c6bdc12b87399ccc6e83ec835082c",
+        "deleted": false
+      },
+      {
+        "path": "server/api/dispatch/review.post.ts",
+        "lines": 3,
+        "blob": "7f6b60e70dbd802e997aeb9a91ea0c4c4c8ea9f4",
+        "deleted": false
+      },
+      {
+        "path": "server/api/tickets/[id]/runs.get.ts",
+        "lines": 2,
+        "blob": "d501b072831e3c7ce13ae540760794d2896a1d88",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/adapters/opencode.ts",
+        "lines": 9,
+        "blob": "790564e3189c3073db920ceabc5481d6905f3b03",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/checksCache.ts",
+        "lines": 6,
+        "blob": "44fa58194e19c0f8c422b938d253a09ac8b79583",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/contract.ts",
+        "lines": 8,
+        "blob": "8d43a64df50f59708818994686fe71f47ed1b4f6",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gate.ts",
+        "lines": 33,
+        "blob": "f9e902fd2a3a60e8ce06331ed21e57cad91545e5",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateAutofix.ts",
+        "lines": 34,
+        "blob": "07f4c2c0ec6d1a79435f4fffe0ed2f5d514603d1",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateChecks.ts",
+        "lines": 9,
+        "blob": "98337ec757fdc21343831cd08ca6af2154cee1cb",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateChecksConsistency.ts",
+        "lines": 42,
+        "blob": "2ce07219caedcb9e3826abc50b44e5f0eed7ded3",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateContext.ts",
+        "lines": 11,
+        "blob": "327c777dc69ed9adb0c2ee4799f6e78329315d52",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateTypes.ts",
+        "lines": 2,
+        "blob": "f350d7767a077a5562588577f65aa9cbcf6da758",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/jobs.ts",
+        "lines": 14,
+        "blob": "431cc4e1a5caa56dd1183858a43d90b61bf30b65",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/judge.ts",
+        "lines": 37,
+        "blob": "60a830073fdece33d6105d4d9a01bec0c8937033",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/judgeAgents.ts",
+        "lines": 26,
+        "blob": "2747a79d4ead9e8a66766f86ca26a4482e3d1b19",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/persist.ts",
+        "lines": 11,
+        "blob": "085d1d037fe250e95b4ad32f2f23b43f95c8a678",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/planTicket.ts",
+        "lines": 4,
+        "blob": "e5d4dbc8be7e0528d5fb8337e040ebb668d83560",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/reconcileGuard.ts",
+        "lines": 53,
+        "blob": "76ae72065079761c4da50b9e01d6b1334e588465",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/sandboxCheck.ts",
+        "lines": 3,
+        "blob": "0bf4f19bcd2ab3f39a3532868014f72f228e6124",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/specMissingValues.ts",
+        "lines": 39,
+        "blob": "7bab2163a3e157089d8d06463e3b9dedbc929ffc",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/specReview.ts",
+        "lines": 13,
+        "blob": "7aafdc4dd09660733725c4e6b50cd6070810f0c9",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/testCounts.ts",
+        "lines": 14,
+        "blob": "3b20550d0d466d46d09b2afb0d05d408c0cf2c69",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/tokenBudget.ts",
+        "lines": 17,
+        "blob": "abeba6afa79ef14c49fcc8676ac8a702856e1ab9",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/closeLimits.ts",
+        "lines": 8,
+        "blob": "810dbea718f1414ab221998739f65e04c96d7ada",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/planExecution.ts",
+        "lines": 2,
+        "blob": "7914fb15bb96b29c966a7f769d39d369707b80f2",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 10,
+        "blob": "c5173b9109ee78ea60942678dfbe3e8b18cb25cd",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/investigation.ts",
+        "lines": 4,
+        "blob": "bb0e85f74a7a900fcdc3b06d703143664e049c49",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/lifecycleReport.ts",
+        "lines": 10,
+        "blob": "6c7372241a3a6266bcf78e6cfeb95e5cbea11416",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/runs.ts",
+        "lines": 10,
+        "blob": "14d16f3f57836e14ebf134e420e1f5b47e9c6ef7",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/salud.ts",
+        "lines": 3,
+        "blob": "11a685dc4db45e7d89e6a16ce40a3618a1ae186d",
+        "deleted": false
+      },
+      {
+        "path": "shared/run-outcome.ts",
+        "lines": 20,
+        "blob": "871411d84013c2a82e518e42a8e59fbc0c47e3db",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-execute-task/SKILL.md",
+        "lines": 4,
+        "blob": "9410a0310f21318c71025b779516c3cd0cc0d976",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/close-limits.test.ts",
+        "lines": 7,
+        "blob": "5429092b365a94ff6a132905a6c6016d6c10606d",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-checks-consistency.test.ts",
+        "lines": 55,
+        "blob": "d4c4e78f8fe28ca7d7ac42a7e5dcb966c630a342",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-fix-budget.test.ts",
+        "lines": 132,
+        "blob": "4630ec49b178bce2e3edd415987f7dc364438b48",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-quality-wiring.test.ts",
+        "lines": 15,
+        "blob": "687f5ece4a04b548eb1e2c9a4a00a25450340449",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/persist-blocked.test.ts",
+        "lines": 62,
+        "blob": "3f4f7533452b830fc249954ad7b3e47043946dd4",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/reconcile-guard.test.ts",
+        "lines": 98,
+        "blob": "15ca1bf653070d6d04b3ae8022945ca02fe3149c",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/run-outcome.test.ts",
+        "lines": 12,
+        "blob": "5e2b08ea8b9e358f15ff741f8cf37f0211ec9a64",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/session-scope.test.ts",
+        "lines": 3,
+        "blob": "9b3bdf424bb8259d717493e92e1be5a76aca0a21",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/spec-missing-values.test.ts",
+        "lines": 93,
+        "blob": "0ef43008def8493ae0c08f2172aa1a50501839a5",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/test-baseline.test.ts",
+        "lines": 24,
+        "blob": "7ec7ac75bb0d2afa2aa4013d507e49b622f973f4",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "server/api/dispatch/review.post.ts": "7f6b60e70dbd802e997aeb9a91ea0c4c4c8ea9f4",
+      "server/api/tickets/[id]/runs.get.ts": "d501b072831e3c7ce13ae540760794d2896a1d88",
+      "server/dispatch/contract.ts": "8d43a64df50f59708818994686fe71f47ed1b4f6",
+      "server/dispatch/reconcileGuard.ts": "76ae72065079761c4da50b9e01d6b1334e588465",
+      "server/dispatch/tokenBudget.ts": "abeba6afa79ef14c49fcc8676ac8a702856e1ab9",
+      "server/dispatch/checksCache.ts": "44fa58194e19c0f8c422b938d253a09ac8b79583",
+      "server/dispatch/gate.ts": "f9e902fd2a3a60e8ce06331ed21e57cad91545e5",
+      "server/dispatch/gateAutofix.ts": "07f4c2c0ec6d1a79435f4fffe0ed2f5d514603d1",
+      "server/dispatch/gateChecks.ts": "98337ec757fdc21343831cd08ca6af2154cee1cb",
+      "server/dispatch/gateChecksConsistency.ts": "2ce07219caedcb9e3826abc50b44e5f0eed7ded3",
+      "server/dispatch/gateContext.ts": "327c777dc69ed9adb0c2ee4799f6e78329315d52",
+      "server/dispatch/gateTypes.ts": "f350d7767a077a5562588577f65aa9cbcf6da758",
+      "server/dispatch/jobs.ts": "431cc4e1a5caa56dd1183858a43d90b61bf30b65",
+      "server/dispatch/judge.ts": "60a830073fdece33d6105d4d9a01bec0c8937033",
+      "server/dispatch/judgeAgents.ts": "2747a79d4ead9e8a66766f86ca26a4482e3d1b19",
+      "server/dispatch/persist.ts": "085d1d037fe250e95b4ad32f2f23b43f95c8a678",
+      "server/dispatch/planTicket.ts": "e5d4dbc8be7e0528d5fb8337e040ebb668d83560",
+      "server/dispatch/sandboxCheck.ts": "0bf4f19bcd2ab3f39a3532868014f72f228e6124",
+      "server/dispatch/specMissingValues.ts": "7bab2163a3e157089d8d06463e3b9dedbc929ffc",
+      "server/dispatch/specReview.ts": "7aafdc4dd09660733725c4e6b50cd6070810f0c9",
+      "server/dispatch/testCounts.ts": "3b20550d0d466d46d09b2afb0d05d408c0cf2c69",
+      "server/dispatch/adapters/opencode.ts": "790564e3189c3073db920ceabc5481d6905f3b03",
+      "server/engine/guards/closeLimits.ts": "810dbea718f1414ab221998739f65e04c96d7ada",
+      "shared/run-outcome.ts": "871411d84013c2a82e518e42a8e59fbc0c47e3db",
+      "app/components/TicketRuns.vue": "9a8dc971ae6389a4c1670a18afdfeac22c4e2e36",
+      "app/components/TicketSidebar.vue": "afc63ca2ff64c8a19850f8002dd8e651c80e891a",
+      "app/components/TicketTimeline.vue": "73e991fc64d51d5c569ae646b99e7b8c6b2f213e",
+      "app/pages/chat.vue": "861ffa44bb037ab83e51f437b61c744be5788646",
+      "app/pages/tickets/[id].vue": "d0d86a61174fa4be1d3670fe1d3b1dee8b2f8d6f",
+      "server/mcp/planExecution.ts": "7914fb15bb96b29c966a7f769d39d369707b80f2",
+      "server/mcp/tools.ts": "c5173b9109ee78ea60942678dfbe3e8b18cb25cd",
+      "server/repo/investigation.ts": "bb0e85f74a7a900fcdc3b06d703143664e049c49",
+      "server/repo/lifecycleReport.ts": "6c7372241a3a6266bcf78e6cfeb95e5cbea11416",
+      "server/repo/runs.ts": "14d16f3f57836e14ebf134e420e1f5b47e9c6ef7",
+      "server/repo/salud.ts": "11a685dc4db45e7d89e6a16ce40a3618a1ae186d",
+      "skills/claude/kn-execute-task/SKILL.md": "9410a0310f21318c71025b779516c3cd0cc0d976",
+      "tests/unit/close-limits.test.ts": "5429092b365a94ff6a132905a6c6016d6c10606d",
+      "tests/unit/gate-checks-consistency.test.ts": "d4c4e78f8fe28ca7d7ac42a7e5dcb966c630a342",
+      "tests/unit/gate-fix-budget.test.ts": "4630ec49b178bce2e3edd415987f7dc364438b48",
+      "tests/unit/gate-quality-wiring.test.ts": "687f5ece4a04b548eb1e2c9a4a00a25450340449",
+      "tests/unit/persist-blocked.test.ts": "3f4f7533452b830fc249954ad7b3e47043946dd4",
+      "tests/unit/reconcile-guard.test.ts": "15ca1bf653070d6d04b3ae8022945ca02fe3149c",
+      "tests/unit/run-outcome.test.ts": "5e2b08ea8b9e358f15ff741f8cf37f0211ec9a64",
+      "tests/unit/session-scope.test.ts": "9b3bdf424bb8259d717493e92e1be5a76aca0a21",
+      "tests/unit/spec-missing-values.test.ts": "0ef43008def8493ae0c08f2172aa1a50501839a5",
+      "tests/unit/test-baseline.test.ts": "7ec7ac75bb0d2afa2aa4013d507e49b622f973f4",
+      "docs/configuration.md": "c05bc564567c6bdc12b87399ccc6e83ec835082c"
+    },
+    "summary": {
+      "files": 47,
+      "reviewed_files": 47,
+      "lines": 985,
+      "reviewed_lines": 985,
+      "pct_lines": 100,
+      "excluded": []
+    }
+  },
+  "ticket": {
+    "resolution": "none"
+  },
+  "verdict_expected_by_rubric": "iterar"
+}
