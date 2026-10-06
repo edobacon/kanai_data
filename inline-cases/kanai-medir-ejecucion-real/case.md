@@ -46,6 +46,7 @@
 
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
+| medidas-kt-017.md | registro | Medidas reales de KT-017 (dependencia en rama acumuladora) | KT-017 con el codigo nuevo: sandbox corrio en 2 de 3 gates de sesion (el otro sin cambios de codigo), N3 aprobado en 1 ronda con 57,7k tokens; subagentes sin tokens en los runs. |
 | punto-de-partida.md | referencia | Punto de partida y metas de la medición real | Línea base de TAO-192, TAO-191 y TAO-186, lo ya medido sin LLM y las metas que faltan por comprobar. |
 
 ## Plan
