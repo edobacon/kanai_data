@@ -46,9 +46,10 @@
 
 | Documento | Tipo | Título | Resumen |
 |---|---|---|---|
-| medidas-kt-017.md | registro | Medidas reales de KT-017 (dependencia en rama acumuladora) | KT-017 con el codigo nuevo: sandbox corrio en 2 de 3 gates de sesion (el otro sin cambios de codigo), N3 aprobado en 1 ronda con 57,7k tokens; subagentes sin tokens en los runs. |
+| medidas-kt-017.md | registro | Medidas reales de KT-017 (dependencia en rama acumuladora) | KT-017 con el codigo nuevo: sandbox corrio en 2 de 3 gates de sesion (el otro omitido por diseno, sin cambios de codigo), N3 aprobado en 1 ronda con 57,7k tokens; subagentes sin tokens en los runs. |
+| medidas-kt-018.md | registro | Medidas reales de KT-018 (consumidor con dependencia integrada) y tabla de F1 | KT-018 con diff de 5 a 3 archivos al excluir KT-017, N3 en 2 rondas (82k y 55k tokens), sandbox corrio en 3 de 4 gates; un hallazgo real y uno sin explicar. |
 | punto-de-partida.md | referencia | Punto de partida y metas de la medición real | Línea base de TAO-192, TAO-191 y TAO-186, lo ya medido sin LLM y las metas que faltan por comprobar. |
 
 ## Plan
 
-1 de 5 fases cerradas, fase actual F1. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-medir-ejecucion-real/plan.md
+2 de 5 fases cerradas, fase actual F2. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-medir-ejecucion-real/plan.md
