@@ -191,16 +191,16 @@ Contrato: rollback: Revertir los archivos de test nuevos; no toca código produc
 Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S2.T1 — Implementar `obtenerManifiesto`: calcular `version`/`ETag` desde las asignaciones de perfil vigentes, responder 304 ante `If-None-Match` sin cambios, exponer `capacidades` (Estándar + obligatorias), `capacidadesPorTipoCuenta` y `legalPendiente` no vacío cuando hay versión legal pendiente (200 exento).
-Contrato: rollback: Revertir el endpoint; los consumidores vuelven a no tener manifiesto.. Status: pending
+Contrato: rollback: Revertir el endpoint; los consumidores vuelven a no tener manifiesto.. Status: done
 
 #### S2.T2 — Generar y empaquetar el manifiesto Estándar en la app/módulo, y agregar el check de CI que falla nombrando la capacidad distinta si el perfil Estándar del seed cambia sin regenerar el manifiesto empaquetado.
-Contrato: rollback: Revertir el manifiesto empaquetado y su check; conservar el seed.. Status: pending
+Contrato: rollback: Revertir el manifiesto empaquetado y su check; conservar el seed.. Status: done
 
 #### S2.T3 — Implementar en la app la caché del manifiesto, el uso del manifiesto empaquetado sin conexión y el refresco al recibir `capacidad_denegada` (repetición de la petición del manifiesto).
-Contrato: rollback: Revertir la caché y el refresco; la app vuelve a no aplicar manifiesto.. Status: pending
+Contrato: rollback: Revertir la caché y el refresco; la app vuelve a no aplicar manifiesto.. Status: done
 
 #### S2.T4 — Escribir los tests de contrato/persistencia del manifiesto (version/ETag/304, capacidades por tipo de cuenta, empaquetado y refresco por denegación) trazados a los casos QA de HU-03a-08.
-Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos; no toca código productivo.. Status: done
 
 #### S3.T1 — Crear la migración de `documento_legal` y `aceptacion_documento_legal` (append-only) con REVOKE explícito: documento_legal SELECT para el rol de app y escritura del script de despliegue; aceptacion_documento_legal SELECT+INSERT con REVOKE de UPDATE/DELETE.
 Contrato: rollback: Revertir la migración con su inversa; conservar registros legales existentes y no degradar consentimientos.. Status: pending
@@ -485,13 +485,13 @@ Recorte por exceso aplicado en autónomo: S2.T1.1, S2.T1.2, S2.T1.3, S2.T2.1, S2
 
 **Gate (auto)**: El servidor emite/rota/revoca sesiones (201/200/`refresh_invalido`, 401 `token_expirado`/`no_autenticado`), crea la cuenta de dispositivo en primer uso (201 con perfil Estándar y credencial hasheada), el seed deja el catálogo 14 y perfil Estándar sin duplicados y el middleware deniega por capacidad/cuenta (403); la base Drift abre en esquema 1 con las 14 tablas y un `espacio_datos` local. Verificable por tests de contrato/persistencia y psql.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: `obtenerManifiesto` devuelve `version`, `ETag` y `capacidades` (Estándar + obligatorias) con `capacidadesPorTipoCuenta`; con `If-None-Match` responde 304; un cambio de asignación de perfil cambia version/ETag; la app sin conexión usa el manifiesto Estándar empaquetado y al recibir `capacidad_denegada` vuelve a pedir el manifiesto. Verificable por respuesta del endpoint y CI de regeneración.
 
