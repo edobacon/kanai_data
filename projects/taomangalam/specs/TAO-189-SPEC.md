@@ -78,13 +78,13 @@ Contrato: rollback: Revertir el cableado a los proveedores en los handlers de pr
 Contrato: rollback: Revertir el commit de la suite de contrato; los tests unitarios de la sesion 1 permanecen.. Status: done
 
 #### S2.T2 — Preparar el job CI del proveedor de consentimiento como runner Node `scripts/ci/ep01-consent-provider.mjs`, siguiendo el patron de `scripts/ci/ep01-legal-provider.mjs` y `scripts/ci/ep01-release-provider.mjs`, e invocarlo dentro del job `integration` de `.github/workflows/ci-pr.yml` (l.638) usando la config efimera `vitest.integration.ci.ts`. La activacion por rama es `startsWith(github.head_ref,'epic/EP-01')` (l.768-802), que cubre la rama real de trabajo `epic/EP-01a`. El runner ejecuta la suite de contrato de politica y consentimiento y conserva las referencias caso→test como evidencia. No hay lane de fastlane ni modulo Gradle involucrados.
-Contrato: rollback: Quitar el runner `scripts/ci/ep01-consent-provider.mjs` y su invocacion en el job `integration` de `.github/workflows/ci-pr.yml`, dejando el workflow como estaba en `epic/EP-01a`; la suite de contrato sigue corriendo en local con `pnpm -C server exec vitest run src/privacidad`.. Status: pending
+Contrato: rollback: Quitar el runner `scripts/ci/ep01-consent-provider.mjs` y su invocacion en el job `integration` de `.github/workflows/ci-pr.yml`, dejando el workflow como estaba en `epic/EP-01a`; la suite de contrato sigue corriendo en local con `pnpm -C server exec vitest run src/privacidad`.. Status: done
 
 #### S2.T3 — Escribir/ajustar la regresion de la suite de contrato: verifica que el job corre verde sin V-51, que falla si el adaptador importa artefactos de UI de V-51, y que la conformidad de forma con EP-15/DEC-130 se sostiene.
-Contrato: rollback: Revertir el commit de la regresion; la suite de contrato base permanece como evidencia.. Status: pending
+Contrato: rollback: Revertir el commit de la regresion; la suite de contrato base permanece como evidencia.. Status: done
 
 #### S2.T4 — Test de regresion que prueba que identidad/sesion y capacidades NO se simulan: un doble de prueba del proveedor de sesion que devuelve vacio hace fallar la peticion con el error contractual, y un sujeto sin la capacidad `metrica.consentir` no puede registrar consentimiento. El test falla si alguien reintroduce un sujeto fijo o un bypass de capacidad en el camino de privacidad.
-Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo importa.. Status: pending
+Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo importa.. Status: done
 ## Enmiendas (refine_spec)
 
 ### Enmienda 1
@@ -145,9 +145,9 @@ Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo 
 ### Session 2 · T2 · open
 
 **Tasks:**
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: Corriendo el job CI ep01-consent-provider en un checkout limpio sin V-51 se ve la suite de contrato en verde y las referencias caso→test publicadas como evidencia.
 ## Decisions
