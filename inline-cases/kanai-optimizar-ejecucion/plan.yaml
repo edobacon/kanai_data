@@ -1,0 +1,151 @@
+plan_id: kanai-optimizar-ejecucion
+title: Optimizar la ejecución de tickets en Kanai
+intent: Menos rebotes, tokens y tiempo al ejecutar tickets con alcance fijo, cambiando solo el cómo.
+tags:
+  projects: []
+  repos:
+    - kanai-app
+  tickets:
+    - TAO-192
+    - TAO-191
+  branches: []
+  folders: []
+  labels:
+    - kanai
+    - ejecucion
+    - gates
+    - optimizacion
+settings:
+  judge: final
+risks:
+  - Cambiar el cálculo del diff del gate puede alterar el veredicto de tickets en curso.
+  - El MCP debe reiniciarse para que los cambios apliquen.
+  - Hay cambios ajenos sin commitear en kanai-app.
+out_of_scope:
+  - Modificar el alcance, spec o REQs de cualquier ticket existente.
+  - Hacer push (solo con pedido explícito).
+phases:
+  - code: F0
+    title: Línea base
+    goal: Congelar las cifras de TAO-192 y TAO-191 como referencia comparable.
+    prerequisites:
+      - id: F0-P1
+        text: El KB del caso contiene linea-base-tao-192.md.
+    tasks:
+      - code: F0.1
+        text: Validar las cifras de la línea base contra get_execution_summary y get_runs de TAO-192 y TAO-191.
+        kb:
+          - linea-base-tao-192.md
+      - code: F0.2
+        text: Completar los 26 runs antiguos que get_runs no devuelve, o declarar el límite en el KB.
+    criteria:
+      - id: F0-C1
+        text: El KB trae la línea base validada con cifras y límites declarados.
+        kind: evidence
+    effort: 1 h
+    delivers: false
+    changes_code: false
+  - code: F1
+    title: Diagnóstico de causas
+    goal: Confirmar contra el código cada causa probable antes de cambiar nada.
+    prerequisites:
+      - id: F1-P1
+        text: F0 cerrada.
+    tasks:
+      - code: F1.1
+        text: Encontrar por qué el sandbox no detecta cambios en la rama de trabajo (rama acumuladora epic/EP-01) en kanai-app.
+        kb:
+          - linea-base-tao-192.md#causas-probables-a-confirmar-en-f1
+      - code: F1.2
+        text: Encontrar contra qué base se calcula el diff del gate N3 y por qué incluye lo ya integrado de TAO-191.
+      - code: F1.3
+        text: Entender por qué cada ronda del N3 entrega hallazgos nuevos y qué contexto infla el gate de 6,35M tokens.
+      - code: F1.4
+        text: Explicar el hueco de 6,4 h y el crecimiento de contexto por lote en S4.
+      - code: F1.5
+        text: Guardar en el KB un documento de causas confirmadas con archivo:línea.
+    criteria:
+      - id: F1-C1
+        text: Cada causa tiene archivo:línea o queda descartada con motivo.
+        kind: evidence
+    effort: 4 h
+    delivers: false
+    changes_code: false
+  - code: F2
+    title: Cambios en la ejecución
+    goal: Implementar en kanai-app solo los cambios que F1 confirme.
+    prerequisites:
+      - id: F2-P1
+        text: F1 cerrada y causas confirmadas en el KB.
+      - id: F2-P2
+        text: Rama feat/optimizar-ejecucion creada desde setup.
+    tasks:
+      - code: F2.1
+        text: Calcular el diff del gate N3 contra la base real de las dependencias integradas.
+      - code: F2.2
+        text: Hacer que el sandbox detecte los cambios de ramas acumuladoras y deje evidencia de que corrió.
+      - code: F2.3
+        text: Hacer que la primera ronda del N3 agote hallazgos y que los reruns revisen solo lo corregido.
+      - code: F2.4
+        text: Recortar el contexto del gate y avisar cuando un ticket supere un umbral de tamaño, sin cambiar su alcance.
+      - code: F2.5
+        text: Correr typecheck, lint y la suite de kanai-app, y commitear por tarea.
+    criteria:
+      - id: F2-C1
+        text: Typecheck, lint y suite de kanai-app pasan sin fallas nuevas.
+        kind: command
+        run:
+          command: pnpm typecheck && pnpm lint && pnpm test
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          how: Correr desde la raíz del repo en la rama de trabajo.
+          expect: Tres comandos con salida 0.
+          exit_code: 0
+    effort: 1 a 2 días
+    delivers: false
+    changes_code: true
+    rollback: Revertir los commits de la rama; no hay migraciones ni datos.
+  - code: F3
+    title: Pruebas en KT
+    goal: Validar los cambios con un ticket sintético en KT y repitiendo el gate N3 de TAO-192.
+    prerequisites:
+      - id: F3-P1
+        text: F2 cerrada y MCP de Kanai reiniciado.
+    tasks:
+      - code: F3.1
+        text: Crear en KT un ticket sintético chico que dependa de otro ya integrado, para reproducir diff heredado y rama acumuladora.
+      - code: F3.2
+        text: Ejecutar el ticket sintético y medir sandbox, hallazgos repetidos, rondas y tokens del gate.
+      - code: F3.3
+        text: Repetir el gate N3 de TAO-192 sobre su rama y comparar contra la línea base.
+    criteria:
+      - id: F3-C1
+        text: El sandbox corre y deja evidencia en el ticket sintético.
+        kind: evidence
+      - id: F3-C2
+        text: Cero hallazgos por diff heredado en el ticket sintético y en la repetición de TAO-192.
+        kind: evidence
+      - id: F3-C3
+        text: El gate N3 aprueba en 2 rondas o menos con menos de 1M de tokens por gate.
+        kind: evidence
+    effort: 4 h
+    delivers: false
+    changes_code: false
+  - code: F4
+    title: Medición y cierre
+    goal: Comparar contra la línea base y cerrar el caso.
+    prerequisites:
+      - id: F4-P1
+        text: F3 cerrada.
+    tasks:
+      - code: F4.1
+        text: Guardar en el KB la comparación final contra las metas y las señales de mejora pendientes.
+    criteria:
+      - id: F4-C1
+        text: El KB trae la tabla final contra las metas, con los incumplidos explicados.
+        kind: evidence
+    effort: 1 h
+    delivers: false
+    changes_code: false
+created: 2026-10-06T12:27:46.150Z
+updated: 2026-10-06T12:27:46.155Z
