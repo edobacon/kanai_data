@@ -48,10 +48,10 @@ Contrato: rollback: Borrar kanai_test/normalized-count.mjs (archivo nuevo, no ha
 Contrato: rollback: Borrar kanai_test/normalized-count.test.mjs: `rm -f kanai_test/normalized-count.test.mjs`.. Status: done
 
 #### S2.T1 — Agregar al final de kanai_test/README.md una seccion `## countNormalizedWords` siguiendo el formato de la seccion normalizeText (README.md:4-22): bloque de firma `countNormalizedWords(text: string): number`, la frase 'Definida en `normalized-count.mjs`' con la nota de que normaliza con normalizeText de normalize.mjs, los bullets de comportamiento (cuenta palabras del texto normalizado; texto vacio o solo espacios devuelve 0; lanza TypeError si el argumento no es string) y un ejemplo con import desde './normalized-count.mjs' y resultado concreto. No editar ni reordenar el contenido existente.
-Contrato: rollback: Revertir solo el README: `git checkout -- kanai_test/README.md`.. Status: pending
+Contrato: rollback: Revertir solo el README: `git checkout -- kanai_test/README.md`.. Status: done
 
 #### S2.T2 — Regresion de cierre del ticket: correr los tests del sandbox tocados por este trabajo y confirmar que el cambio de documentacion no altero codigo (git diff --name-only no debe listar normalize.mjs, greet.mjs ni normalize.test.mjs).
-Contrato: rollback: No modifica archivos; si falla, revertir la tarea de README con `git checkout -- kanai_test/README.md`.. Status: pending
+Contrato: rollback: No modifica archivos; si falla, revertir la tarea de README con `git checkout -- kanai_test/README.md`.. Status: done
 ## Sessions
 
 ### Session 1 · T1 · continue
@@ -62,10 +62,10 @@ Contrato: rollback: No modifica archivos; si falla, revertir la tarea de README 
 
 **Gate (auto)**: En la rama epic/KT-ACUM, `node --test kanai_test/normalized-count.test.mjs` muestra 6 tests pasando (texto simple, varios espacios, saltos y tabs, vacio, solo espacios, no string) y `npm test` sigue verde con normalize.test.mjs.
 
-### Session 2 · T0 · open
+### Session 2 · T0 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T2
 
 **Gate (auto)**: kanai_test/README.md muestra, debajo de la seccion normalizeText, una seccion nueva `## countNormalizedWords` con firma, comportamiento y ejemplo; `git diff kanai_test/README.md` solo agrega lineas.
