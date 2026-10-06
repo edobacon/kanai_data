@@ -41,10 +41,10 @@ Contrato: rollback: Borrar kanai_test/normalize.mjs (archivo nuevo, no hay consu
 Contrato: rollback: Borrar kanai_test/normalize.test.mjs (archivo nuevo); no altera la suite existente.. Status: done
 
 #### S2.T1 — Agregar al final de `kanai_test/README.md` una seccion nueva para `normalizeText` siguiendo el formato de las secciones existentes (ver countWords en kanai_test/README.md:14), con la firma, la descripcion de los tres comportamientos (trim, colapso de blancos, TypeError si no es string) y un ejemplo concreto: entrada `'  hola   \n mundo  '` -> salida `'hola mundo'`. No reescribir ni reordenar el contenido previo.
-Contrato: rollback: `git checkout -- kanai_test/README.md` para volver a la version anterior del archivo.. Status: pending
+Contrato: rollback: `git checkout -- kanai_test/README.md` para volver a la version anterior del archivo.. Status: done
 
 #### S2.T2 — Regresion de cierre de la documentacion: re-correr los tests de normalize y los de words para confirmar que la edicion del README no rompio nada y que greet.mjs, words.mjs y sus tests siguen sin modificarse.
-Contrato: rollback: No aplica: la task no modifica archivos; si detecta un fallo, se revierte la task que lo introdujo.. Status: pending
+Contrato: rollback: No aplica: la task no modifica archivos; si detecta un fallo, se revierte la task que lo introdujo.. Status: done
 ## Sessions
 
 ### Session 1 · T1 · continue
@@ -55,10 +55,10 @@ Contrato: rollback: No aplica: la task no modifica archivos; si detecta un fallo
 
 **Gate (auto)**: `node --test kanai_test/normalize.test.mjs` pasa con los 6 casos (simple, espacios multiples, saltos y tabs, vacio, solo espacios, no-string) y normalize.mjs exporta normalizeText.
 
-### Session 2 · T0 · open
+### Session 2 · T0 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T2
 
 **Gate (auto)**: El README del sandbox muestra la seccion de normalizeText con su ejemplo y las secciones previas intactas; la suite de normalize sigue pasando.
