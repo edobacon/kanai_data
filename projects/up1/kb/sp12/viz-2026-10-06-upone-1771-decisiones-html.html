@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kanai · UPONE-1771 · Qué hay que decidir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================================
+   kanai:viz — hoja de estilos refinada (técnico-editorial). Fiel a la identidad
+   oscura de Kanai (IBM Plex + Bricolage, acento azul→violeta), con profundidad,
+   jerarquía y oficio. Todo token-driven -> oscuro/claro. El flow queda igual.
+   ============================================================================ */
+:root {
+  --bg: #080b11; --panel: #0f1620; --panel-2: #0b1119;
+  --border: #212e3d; --border-soft: #18222f;
+  --text: #f2f7fb; --dim: #c6d3df; --muted: #8ea0b4;
+  --brand: #5b9dff; --brand-2: #a172ff; --brand-dim: #22375a;
+  --glow: rgba(91,157,255,0.35);
+  --ok: #33c88a; --warn: #f0a92b; --bad: #f2555a;
+  --grad: linear-gradient(135deg, var(--brand), var(--brand-2));
+  --hair: rgba(255,255,255,0.06);          /* highlight superior (lit-from-above) */
+  --shadow: 0 1px 0 var(--hair) inset, 0 10px 30px -18px rgba(0,0,0,0.75);
+  --shadow-sm: 0 1px 0 var(--hair) inset, 0 4px 14px -10px rgba(0,0,0,0.7);
+  --ring: rgba(91,157,255,0.14);
+  --fdisp: 'Bricolage Grotesque', system-ui, sans-serif;
+  --fbody: 'IBM Plex Sans', system-ui, sans-serif;
+  --fmono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+:root[data-theme="light"] {
+  --bg: #f4f7fb; --panel: #ffffff; --panel-2: #eef3f9;
+  --border: #dbe3ee; --border-soft: #e8eef5;
+  --text: #101826; --dim: #38485a; --muted: #667589;
+  --brand: #2f6fe0; --brand-2: #7a4fe0; --brand-dim: #cfe0fb;
+  --glow: rgba(47,111,224,0.22);
+  --ok: #109a63; --warn: #b9760c; --bad: #d33a40;
+  --hair: rgba(255,255,255,0.9);
+  --shadow: 0 1px 0 var(--hair) inset, 0 12px 28px -20px rgba(17,32,60,0.35);
+  --shadow-sm: 0 1px 0 var(--hair) inset, 0 6px 16px -12px rgba(17,32,60,0.3);
+  --ring: rgba(47,111,224,0.14);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; color: var(--text); font-family: var(--fbody);
+  -webkit-font-smoothing: antialiased; line-height: 1.55;
+  background:
+    radial-gradient(1200px 520px at 50% -8%, color-mix(in srgb, var(--brand) 9%, transparent), transparent 70%),
+    radial-gradient(900px 500px at 100% 0%, color-mix(in srgb, var(--brand-2) 7%, transparent), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  transition: background .2s ease, color .2s ease;
+}
+.wrap { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* --- header editorial --- */
+.wrap > header { margin-bottom: 30px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.wrap > header::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: var(--grad); opacity: .9;
+}
+.wrap { position: relative; }
+.wrap > header h1 {
+  font-family: var(--fdisp); font-weight: 700; font-size: 30px; line-height: 1.08;
+  letter-spacing: -.025em; margin: 0;
+  background: linear-gradient(180deg, var(--text), color-mix(in srgb, var(--text) 68%, var(--muted)));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.wrap > header p {
+  color: var(--muted); font-size: 12.5px; margin: 7px 0 0; font-family: var(--fmono);
+  letter-spacing: .02em; text-transform: uppercase;
+}
+.theme-toggle {
+  flex: 0 0 auto; font-family: var(--fmono); font-size: 11px; color: var(--dim);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
+  padding: 7px 13px; cursor: pointer; box-shadow: var(--shadow-sm); transition: all .15s ease;
+}
+.theme-toggle:hover { border-color: color-mix(in srgb, var(--brand) 55%, var(--border)); color: var(--brand); }
+
+/* --- ritmo de secciones + título con marcador --- */
+.cviz { margin: 26px 0; }
+.cviz-title {
+  font-family: var(--fdisp); font-weight: 600; font-size: 15px; color: var(--text);
+  margin: 0 0 11px; letter-spacing: -.01em; display: flex; align-items: center; gap: 9px;
+}
+.cviz-title::before {
+  content: ""; width: 6px; height: 16px; border-radius: 2px; background: var(--grad);
+  flex: 0 0 auto; box-shadow: 0 0 12px var(--glow);
+}
+
+/* --- callout --- */
+.cv-callout {
+  display: flex; gap: 13px; padding: 15px 17px; border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c, var(--brand)) 30%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--c, var(--brand)) 12%, var(--panel)), color-mix(in srgb, var(--c, var(--brand)) 5%, var(--panel-2)));
+  box-shadow: var(--shadow-sm);
+}
+.cv-callout.t-info { --c: var(--brand); } .cv-callout.t-warn { --c: var(--warn); }
+.cv-callout.t-ok { --c: var(--ok); } .cv-callout.t-note { --c: var(--brand-2); }
+.cv-cico {
+  flex: 0 0 auto; width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center;
+  font-size: 14px; color: #fff; background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 60%, #000));
+  box-shadow: 0 4px 12px -4px color-mix(in srgb, var(--c) 60%, transparent);
+}
+.cv-ctitle { font-weight: 600; color: var(--text); font-size: 13.5px; margin-bottom: 3px; letter-spacing: -.01em; }
+.cv-ctext { color: var(--dim); font-size: 13px; line-height: 1.6; }
+
+/* --- steps: disco con anillo + conector --- */
+.cv-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.cv-steps li { display: flex; gap: 14px; align-items: flex-start; padding: 7px 0; position: relative; }
+.cv-steps li:not(:last-child) .cv-num::after {
+  content: ""; position: absolute; top: 26px; left: 50%; transform: translateX(-50%);
+  width: 2px; height: calc(100% - 12px); background: linear-gradient(var(--brand-dim), transparent);
+}
+.cv-num {
+  flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--fdisp); font-weight: 700; font-size: 11px; color: #fff; background: var(--grad);
+  box-shadow: 0 0 0 4px var(--ring); position: relative;
+}
+.cv-stitle { font-weight: 600; color: var(--text); font-size: 13.5px; }
+.cv-stext { color: var(--muted); font-size: 12.5px; line-height: 1.55; margin-top: 2px; }
+
+/* --- checklist --- */
+.cv-check { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cv-check li { display: flex; gap: 11px; align-items: center; font-size: 13.5px; color: var(--dim); }
+.cv-box {
+  flex: 0 0 18px; width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--border);
+  display: grid; place-items: center; font-size: 11px; color: #fff; background: var(--panel-2);
+}
+.cv-check li.done .cv-box { border-color: transparent; background: linear-gradient(135deg, var(--ok), color-mix(in srgb, var(--ok) 60%, var(--brand))); }
+.cv-check li.done { color: var(--muted); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--muted) 45%, transparent); }
+
+/* --- keyvalue: definición con hairlines --- */
+.cv-kv {
+  display: grid; grid-template-columns: max-content 1fr; gap: 0 18px;
+  padding: 4px 17px; background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm);
+}
+.cv-kv > span { padding: 9px 0; border-top: 1px solid var(--border-soft); align-self: center; }
+.cv-kv > span:nth-child(1), .cv-kv > span:nth-child(2) { border-top: none; }
+.cv-k { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); font-family: var(--fmono); white-space: nowrap; }
+.cv-v { font-size: 13px; color: var(--text); overflow-wrap: anywhere; }
+
+/* --- comparison: contenedor redondeado, header con degradado, zebra --- */
+.cv-tblwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); }
+.cv-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cv-tbl th, .cv-tbl td { padding: 10px 13px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-soft); }
+.cv-tbl thead th { background: linear-gradient(180deg, var(--panel), var(--panel-2)); color: var(--text); font-weight: 600; font-family: var(--fdisp); letter-spacing: -.01em; border-bottom: 1px solid var(--border); }
+.cv-tbl tbody tr:nth-child(even) { background: color-mix(in srgb, var(--panel) 45%, transparent); }
+.cv-tbl tbody tr:last-child td { border-bottom: none; }
+.cv-tbl td { color: var(--dim); }
+.cv-tbl .cv-rl { color: var(--text); font-weight: 600; }
+
+/* --- timeline --- */
+.cv-timeline { display: flex; flex-direction: column; gap: 0; padding-left: 2px; }
+.cv-tlrow { display: flex; gap: 14px; padding-bottom: 16px; position: relative; }
+.cv-tlrow::before { content: ""; position: absolute; left: 5px; top: 14px; bottom: -2px; width: 2px; background: linear-gradient(var(--brand-dim), color-mix(in srgb, var(--brand-dim) 30%, transparent)); }
+.cv-tlrow:last-child::before { display: none; }
+.cv-tldot { flex: 0 0 12px; width: 12px; height: 12px; margin-top: 4px; border-radius: 50%; background: var(--grad); box-shadow: 0 0 0 4px var(--ring), 0 0 10px var(--glow); z-index: 1; }
+.cv-tllabel { color: var(--text); font-weight: 600; font-size: 13.5px; }
+.cv-tltext { color: var(--muted); font-size: 12.5px; line-height: 1.55; margin-top: 2px; }
+
+/* --- stats: tarjetas con barra de acento superior --- */
+.cv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.cv-stat {
+  position: relative; overflow: hidden; background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--border); border-radius: 14px; padding: 15px 15px 14px; box-shadow: var(--shadow-sm);
+}
+.cv-stat::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--grad); opacity: .85; }
+.cv-sval { font-family: var(--fdisp); font-weight: 700; font-size: 30px; line-height: 1; color: var(--text); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.cv-slabel { font-size: 11px; color: var(--muted); margin-top: 7px; font-family: var(--fmono); text-transform: uppercase; letter-spacing: .04em; }
+.cv-ssub { font-size: 11.5px; color: var(--dim); margin-top: 3px; }
+
+/* --- card --- */
+.cv-card {
+  position: relative; background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border: 1px solid var(--border); border-radius: 14px; padding: 15px 17px 15px 19px; box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.cv-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c, var(--brand-2)); box-shadow: 0 0 14px color-mix(in srgb, var(--c, var(--brand-2)) 55%, transparent); }
+.cv-card.t-info { --c: var(--brand); } .cv-card.t-warn { --c: var(--warn); } .cv-card.t-ok { --c: var(--ok); } .cv-card.t-note { --c: var(--brand-2); }
+.cv-cardtitle { font-family: var(--fdisp); font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 5px; letter-spacing: -.01em; }
+.cv-cardtext { color: var(--dim); font-size: 13px; line-height: 1.6; }
+
+/* --- chart --- */
+.cv-chart { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow-sm); }
+.cv-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.cv-axis { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cv-line { fill: none; stroke: var(--c); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.cv-area { fill: color-mix(in srgb, var(--c) 22%, transparent); stroke: none; }
+.cv-pt { fill: var(--panel); stroke: var(--c); stroke-width: 2; }
+.cv-xlabels { display: flex; justify-content: space-between; margin-top: 6px; font-family: var(--fmono); font-size: 10px; color: var(--muted); }
+.cv-xlabels span { flex: 1; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cv-xlabels span:first-child { text-align: left; } .cv-xlabels span:last-child { text-align: right; }
+.cv-bars { display: flex; flex-direction: column; gap: 11px; }
+.cv-barrow { display: grid; grid-template-columns: minmax(74px, 130px) 1fr auto; gap: 12px; align-items: center; font-size: 12.5px; }
+.cv-barlabel { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cv-bartrack { height: 12px; background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 20px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.35); }
+.cv-barfill { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 70%, var(--brand-2)), var(--c)); box-shadow: 0 0 12px -2px color-mix(in srgb, var(--c) 60%, transparent); }
+.cv-barval { color: var(--text); font-family: var(--fmono); font-size: 11.5px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.cv-cols { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 6px; }
+.cv-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.cv-colval { font-family: var(--fmono); font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.cv-colbar { width: 100%; max-width: 48px; min-height: 4px; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg, var(--c), color-mix(in srgb, var(--c) 30%, transparent)); box-shadow: 0 0 14px -4px color-mix(in srgb, var(--c) 55%, transparent); }
+.cv-collabel { font-size: 10px; color: var(--muted); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; font-family: var(--fmono); }
+
+/* --- diagram (fallback code) --- */
+.cv-diagram { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; overflow-x: auto; box-shadow: var(--shadow-sm); }
+.cv-diagram svg { max-width: 100%; height: auto; }
+.cv-err { color: var(--muted); font-size: 12.5px; }
+.cv-codefallback { font-family: var(--fmono); font-size: 12px; color: var(--dim); white-space: pre; margin: 0; }
+
+/* --- ticket-flow (FSM) — más presencia --- */
+.cv-flow { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 18px 14px; box-shadow: var(--shadow-sm); }
+.cv-flowline { display: flex; align-items: flex-start; overflow-x: auto; }
+.cv-fnode { flex: 1; min-width: 82px; display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; text-align: center; padding: 0 4px; }
+.cv-fnode::before { content: ""; position: absolute; top: 15px; left: -50%; width: 100%; height: 2px; background: var(--border); }
+.cv-fnode:first-child::before { display: none; }
+.cv-fnode.done::before, .cv-fnode.current::before { background: linear-gradient(90deg, var(--ok), color-mix(in srgb, var(--ok) 40%, var(--brand))); }
+.cv-fdot { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-family: var(--fdisp); font-weight: 700; font-size: 12px; background: var(--panel); border: 2px solid var(--border); color: var(--muted); position: relative; z-index: 1; box-shadow: var(--shadow-sm); }
+.cv-fnode.done .cv-fdot { border-color: var(--ok); color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, var(--panel)); }
+.cv-fnode.current .cv-fdot { border-color: transparent; color: #fff; background: var(--grad); box-shadow: 0 0 0 5px var(--ring), 0 6px 16px -6px var(--glow); }
+.cv-flabel { font-family: var(--fmono); font-size: 10px; color: var(--muted); }
+.cv-fnode.current .cv-flabel { color: var(--text); font-weight: 600; }
+.cv-fblocked { margin-top: 12px; font-family: var(--fmono); font-size: 11px; color: var(--bad); }
+.cv-fnext { margin-top: 13px; display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.cv-fnextlab { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-family: var(--fmono); }
+.cv-fchip { font-family: var(--fmono); font-size: 11px; color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 40%, var(--border)); background: color-mix(in srgb, var(--brand) 10%, transparent); border-radius: 7px; padding: 2px 9px; }
+
+/* --- guards — filas en tarjeta con icono en badge --- */
+.cv-guards { list-style: none; margin: 0; padding: 6px 4px; display: flex; flex-direction: column; gap: 2px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); }
+.cv-guards li { display: flex; gap: 11px; align-items: flex-start; padding: 9px 13px; border-radius: 10px; }
+.cv-guards li:hover { background: color-mix(in srgb, var(--panel-2) 60%, transparent); }
+.cv-gico { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 7px; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 55%, #000)); box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--c) 60%, transparent); }
+.cv-glabel { color: var(--text); font-size: 13.5px; }
+.cv-ghint { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+/* --- reqs — tarjeta con acento por certeza --- */
+.cv-reqs { display: flex; flex-direction: column; gap: 10px; }
+.cv-req { position: relative; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px 12px 16px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); box-shadow: var(--shadow-sm); overflow: hidden; }
+.cv-req::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c, var(--brand)); }
+.cv-reqhead { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+.cv-reqcode { font-family: var(--fmono); font-size: 11.5px; color: var(--brand); font-weight: 700; letter-spacing: .02em; }
+.cv-reqcert { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #fff; background: linear-gradient(135deg, var(--c, var(--brand)), color-mix(in srgb, var(--c, var(--brand)) 55%, #000)); border-radius: 6px; padding: 2px 8px; }
+.cv-reqstmt { color: var(--dim); font-size: 12.5px; line-height: 1.55; }
+.cv-reqsrc { font-family: var(--fmono); color: var(--muted); font-size: 10px; margin-top: 4px; }
+
+/* --- sessions — fila con acento de estado --- */
+.cv-sessions { display: flex; flex-direction: column; gap: 8px; }
+.cv-sess { position: relative; display: flex; align-items: center; gap: 11px; font-size: 12.5px; padding: 11px 14px 11px 16px; border: 1px solid var(--border); border-radius: 12px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); box-shadow: var(--shadow-sm); overflow: hidden; }
+.cv-sess::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c, var(--muted)); }
+.cv-sessn { font-family: var(--fdisp); color: var(--text); font-weight: 700; font-size: 13px; }
+.cv-sessstate { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #fff; background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 55%, #000)); border-radius: 6px; padding: 2px 8px; }
+.cv-sesstier { font-family: var(--fmono); color: var(--muted); font-size: 10px; border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; }
+.cv-sessnote { color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* --- coverage — ring más grande con degradado --- */
+.cv-cov { display: flex; align-items: center; gap: 18px; }
+.cv-ring { width: 76px; height: 76px; flex: 0 0 76px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(from -90deg, var(--brand) 0, var(--brand-2) calc(var(--p, 0) * 1%), var(--border) 0); position: relative; box-shadow: 0 0 24px -8px var(--glow); }
+.cv-ring::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; background: linear-gradient(180deg, var(--panel), var(--panel-2)); }
+.cv-ringval { position: relative; font-family: var(--fdisp); font-weight: 700; font-size: 17px; color: var(--text); letter-spacing: -.02em; }
+.cv-covlabel { color: var(--text); font-size: 13.5px; font-weight: 600; }
+.cv-covnums { font-family: var(--fmono); color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+/* --- html sanitizado --- */
+.cv-html { font-size: 13px; color: var(--dim); line-height: 1.65; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 14px 17px; box-shadow: var(--shadow-sm); }
+.cv-html code { font-family: var(--fmono); font-size: .92em; background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 6px; padding: 1px 6px; color: var(--brand); }
+.cv-html a { color: var(--brand); text-underline-offset: 2px; }
+.cv-html table { border-collapse: collapse; font-size: 12.5px; }
+.cv-html th, .cv-html td { border: 1px solid var(--border); padding: 6px 10px; }
+
+/* --- flow (SVG nativo) — sin cambios de diseño --- */
+.cv-flow2 { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px; overflow-x: auto; box-shadow: var(--shadow-sm); }
+.cv-flow2 svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.cv-flow2 .fl-edge { stroke: currentColor; stroke-width: 1.5; fill: none; opacity: .55; }
+.cv-flow2 .fl-edge.back { stroke-dasharray: 4 3; }
+.cv-flow2 .fl-arrow { fill: currentColor; opacity: .55; }
+.cv-flow2 .fl-elabel { fill: var(--muted); font-family: var(--fmono); font-size: 10px; }
+.cv-flow2 .fl-elabel-bg { fill: var(--panel-2); }
+.cv-flow2 .fl-ntext { fill: var(--text); font-family: var(--fbody); font-size: 12px; font-weight: 500; }
+.cv-flow2 .fl-box { fill: var(--panel); stroke: var(--border); stroke-width: 1.5; }
+.cv-flow2 .fl-k-startend .fl-box { stroke: var(--ok); fill: color-mix(in srgb, var(--ok) 12%, var(--panel)); }
+.cv-flow2 .fl-k-decision .fl-box { stroke: var(--warn); fill: color-mix(in srgb, var(--warn) 12%, var(--panel)); }
+.cv-flow2 .fl-k-accent .fl-box { stroke: var(--brand); fill: color-mix(in srgb, var(--brand) 14%, var(--panel)); }
+.cv-flow2 .fl-k-io .fl-box { stroke: var(--brand-2); fill: color-mix(in srgb, var(--brand-2) 10%, var(--panel)); }
+
+/* --- lote KB: compare, diff, tree, matrix, tags --- */
+/* Componentes nuevos (lote KB): compare, diff, tree, matrix, tags. Misma estética que el resto. */
+
+/* compare (antes → después) */
+.cv-compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+.cv-cmp-col { position: relative; overflow: hidden; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 13px 15px; box-shadow: var(--shadow-sm); }
+.cv-cmp-col::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+.cv-cmp-before::before { background: color-mix(in srgb, var(--muted) 60%, transparent); }
+.cv-cmp-after::before { background: var(--grad); }
+.cv-cmp-head { font-family: var(--fdisp); font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.cv-cmp-before .cv-cmp-head { color: var(--muted); }
+.cv-cmp-head::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+.cv-cmp-before .cv-cmp-head::before { background: var(--muted); }
+.cv-cmp-after .cv-cmp-head::before { background: var(--brand); box-shadow: 0 0 8px var(--glow); }
+.cv-cmp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cv-cmp-list li { font-size: 12.5px; color: var(--dim); line-height: 1.5; padding-left: 15px; position: relative; }
+.cv-cmp-list li::before { content: "–"; position: absolute; left: 2px; color: var(--muted); }
+.cv-cmp-after .cv-cmp-list li::before { content: "+"; color: var(--ok); }
+.cv-cmp-text { font-size: 12.5px; color: var(--dim); line-height: 1.55; }
+.cv-cmp-arrow { align-self: center; color: var(--brand); font-size: 20px; font-weight: 700; }
+@media (max-width: 560px) { .cv-compare { grid-template-columns: 1fr; } .cv-cmp-arrow { transform: rotate(90deg); } }
+
+/* diff (campo → campo) */
+.cv-diff { display: flex; flex-direction: column; gap: 0; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); padding: 4px 15px; }
+.cv-diff-row { display: grid; grid-template-columns: minmax(80px, max-content) 1fr auto 1fr; gap: 10px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border-soft); }
+.cv-diff-row:first-child { border-top: none; }
+.cv-diff-label { font-family: var(--fmono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+.cv-diff-from { font-size: 12.5px; color: var(--bad); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--bad) 50%, transparent); font-family: var(--fmono); overflow-wrap: anywhere; }
+.cv-diff-ar { color: var(--muted); font-size: 13px; }
+.cv-diff-to { font-size: 12.5px; color: var(--ok); font-weight: 600; font-family: var(--fmono); overflow-wrap: anywhere; }
+
+/* tree (jerarquía/composición) */
+.cv-tree, .cv-tree-sub { list-style: none; margin: 0; padding: 0; }
+.cv-tree-sub { margin-left: 11px; padding-left: 15px; border-left: 1.5px solid var(--border); }
+.cv-tree > li { position: relative; }
+.cv-tree-node { display: inline-flex; align-items: center; gap: 8px; padding: 5px 0; }
+.cv-tree-sub .cv-tree-node { position: relative; }
+.cv-tree-sub > li > .cv-tree-node::before { content: ""; position: absolute; left: -15px; top: 50%; width: 11px; height: 1.5px; background: var(--border); }
+.cv-tree-tag { font-family: var(--fmono); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 38%, var(--border)); background: color-mix(in srgb, var(--brand) 10%, transparent); border-radius: 5px; padding: 1px 6px; }
+.cv-tree-label { font-size: 13px; color: var(--text); }
+.cv-tree-sub .cv-tree-label { color: var(--dim); }
+
+/* matrix (filas × columnas con estado) */
+.cv-mxwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-sm); }
+.cv-matrix { width: 100%; border-collapse: collapse; font-size: 12px; }
+.cv-matrix th, .cv-matrix td { padding: 9px 11px; border-bottom: 1px solid var(--border-soft); text-align: center; vertical-align: middle; }
+.cv-matrix thead th { background: linear-gradient(180deg, var(--panel), var(--panel-2)); color: var(--text); font-weight: 600; font-family: var(--fdisp); font-size: 11.5px; border-bottom: 1px solid var(--border); }
+.cv-matrix tbody tr:last-child td { border-bottom: none; }
+.cv-mx-rl { text-align: left; color: var(--text); font-weight: 600; }
+.cv-mx-cell { white-space: nowrap; }
+.cv-mx-dot { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 7px; font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 55%, #000)); box-shadow: 0 3px 8px -3px color-mix(in srgb, var(--c) 60%, transparent); vertical-align: middle; }
+.cv-mx-txt { color: var(--muted); font-size: 11px; margin-left: 6px; }
+
+/* tags (chips) */
+.cv-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.cv-tag { font-family: var(--fmono); font-size: 11.5px; color: var(--c, var(--dim)); border: 1px solid color-mix(in srgb, var(--c, var(--border)) 40%, var(--border)); background: color-mix(in srgb, var(--c, var(--panel-2)) 12%, var(--panel-2)); border-radius: 999px; padding: 3px 11px; }
+
+/* --- lote KB 2: map, legend, quote, kpi, meter --- */
+/* Lote 2: map, legend, quote, kpi, meter. Misma estética. */
+
+/* map (ownership polimórfico) */
+.cv-map { display: flex; flex-direction: column; align-items: center; gap: 9px; text-align: center; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px; box-shadow: var(--shadow-sm); }
+.cv-map-owners, .cv-map-children { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+.cv-map-owner, .cv-map-child { font-family: var(--fmono); font-size: 11.5px; color: var(--dim); border: 1px solid var(--border); background: var(--panel-2); border-radius: 999px; padding: 3px 11px; }
+.cv-map-down { font-family: var(--fmono); font-size: 11px; color: var(--muted); }
+.cv-map-rel { color: var(--brand); }
+.cv-map-target { font-family: var(--fdisp); font-weight: 700; font-size: 15px; color: #fff; background: var(--grad); border-radius: 10px; padding: 7px 16px; box-shadow: 0 6px 16px -6px var(--glow); letter-spacing: -.01em; }
+
+/* legend (marca/color → significado) */
+.cv-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.cv-lg-item { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--dim); }
+.cv-lg-dot { width: 12px; height: 12px; border-radius: 4px; background: var(--c, var(--brand)); box-shadow: 0 0 8px -1px color-mix(in srgb, var(--c, var(--brand)) 55%, transparent); }
+.cv-lg-line { width: 18px; height: 3px; border-radius: 2px; background: var(--c, var(--brand)); }
+
+/* quote (cita destacada) */
+.cv-quote { position: relative; margin: 0; padding: 15px 18px 15px 46px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-left: 3px solid var(--c, var(--brand-2)); border-radius: 14px; box-shadow: var(--shadow-sm); }
+.cv-quote.t-info { --c: var(--brand); } .cv-quote.t-ok { --c: var(--ok); } .cv-quote.t-warn { --c: var(--warn); } .cv-quote.t-bad { --c: var(--bad); } .cv-quote.t-note { --c: var(--brand-2); }
+.cv-quote::before { content: "\201C"; position: absolute; left: 13px; top: 4px; font-family: var(--fdisp); font-weight: 700; font-size: 38px; line-height: 1; color: var(--c, var(--brand-2)); opacity: .55; }
+.cv-q-text { color: var(--text); font-size: 13.5px; line-height: 1.6; }
+.cv-q-cite { color: var(--muted); font-family: var(--fmono); font-size: 11px; margin-top: 9px; }
+
+/* kpi (métrica con tendencia) */
+.cv-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.cv-kpi { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; box-shadow: var(--shadow-sm); }
+.cv-kpi-top { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.cv-kpi-val { font-family: var(--fdisp); font-weight: 700; font-size: 28px; line-height: 1; color: var(--text); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.cv-kpi-delta { font-family: var(--fmono); font-size: 12px; font-weight: 600; color: var(--c, var(--muted)); }
+.cv-kpi-label { font-family: var(--fmono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 8px; }
+.cv-kpi-sub { font-size: 11.5px; color: var(--dim); margin-top: 3px; }
+
+/* meter (barras de progreso) */
+.cv-meters { display: flex; flex-direction: column; gap: 13px; }
+.cv-mt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 12.5px; }
+.cv-mt-label { color: var(--dim); }
+.cv-mt-val { font-family: var(--fmono); font-size: 11px; color: var(--text); font-variant-numeric: tabular-nums; }
+.cv-mt-track { height: 12px; background: var(--panel-2); border: 1px solid var(--border-soft); border-radius: 20px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,.35); }
+.cv-mt-fill { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg, color-mix(in srgb, var(--c, var(--brand)) 70%, var(--brand-2)), var(--c, var(--brand))); box-shadow: 0 0 12px -2px color-mix(in srgb, var(--c, var(--brand)) 60%, transparent); }
+
+/* --- lote KB 3: code, codediff --- */
+/* Lote 3: code, codediff. */
+.cv-code, .cv-codediff { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm); background: var(--panel-2); }
+.cv-code-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 13px; background: linear-gradient(180deg, var(--panel), var(--panel-2)); border-bottom: 1px solid var(--border); }
+.cv-code-file { font-family: var(--fmono); font-size: 11.5px; color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cv-code-lang { flex: 0 0 auto; font-family: var(--fmono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--brand); border: 1px solid color-mix(in srgb, var(--brand) 38%, var(--border)); background: color-mix(in srgb, var(--brand) 10%, transparent); border-radius: 5px; padding: 1px 7px; }
+.cv-code-pre { margin: 0; padding: 13px 15px; overflow-x: auto; font-family: var(--fmono); font-size: 12px; line-height: 1.6; color: var(--dim); }
+.cv-code-pre code { font-family: inherit; white-space: pre; }
+
+/* codediff (diff unificado) */
+.cv-dl-body { overflow-x: auto; font-family: var(--fmono); font-size: 12px; line-height: 1.55; padding: 4px 0; }
+.cv-dl { display: flex; gap: 0; white-space: pre; min-width: max-content; }
+.cv-dl-sign { flex: 0 0 24px; text-align: center; user-select: none; color: var(--muted); }
+.cv-dl-txt { flex: 1; padding-right: 14px; }
+.cv-dl-ctx .cv-dl-txt { color: var(--dim); }
+.cv-dl-add { background: color-mix(in srgb, var(--ok) 13%, transparent); }
+.cv-dl-add .cv-dl-sign, .cv-dl-add .cv-dl-txt { color: var(--ok); }
+.cv-dl-del { background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.cv-dl-del .cv-dl-sign, .cv-dl-del .cv-dl-txt { color: var(--bad); }
+
+/* --- syntax highlight --- */
+/* syntax highlight (code, codediff) — colores por token, temables */
+.hl-com { color: var(--muted); font-style: italic; }
+.hl-str { color: var(--ok); }
+.hl-num { color: var(--brand-2); }
+.hl-kw { color: var(--brand); font-weight: 600; }
+.hl-fn { color: var(--warn); }
+.cv-code-pre code, .cv-dl-txt { color: var(--dim); }
+/* codediff: dejar ver el highlight; add/del se marcan por tinte + signo + borde izquierdo */
+.cv-dl-add, .cv-dl-del { box-shadow: inset 3px 0 0 var(--edge); }
+.cv-dl-add { --edge: var(--ok); }
+.cv-dl-del { --edge: var(--bad); }
+.cv-dl-add .cv-dl-txt, .cv-dl-del .cv-dl-txt { color: var(--dim); }
+.cv-dl-add .cv-dl-sign { color: var(--ok); }
+.cv-dl-del .cv-dl-sign { color: var(--bad); }
+
+/* diagram pre-renderizado (mermaid server-side): SVG dual-tema, swap por CSS sin JS */
+.cv-mmd svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.cv-mmd-light { display: none; }
+:root[data-theme="light"] .cv-mmd-dark { display: none; }
+:root[data-theme="light"] .cv-mmd-light { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1 id="doc-title">UPONE-1771 · Qué hay que decidir</h1>
+      <p id="doc-sub">Indicadores y versionado del plan de estudios (tributación). Consolidado de decisiones abiertas, verificado contra el código y en vivo el 2026-10-06.</p>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" type="button">tema: oscuro</button>
+  </header>
+  <main id="root"><div class="cviz" data-type="callout"><div class="cv-callout t-info"><span class="cv-cico" aria-hidden="true">ℹ</span><div class="cv-cbody"><div class="cv-ctitle">En una frase</div><div class="cv-ctext">El ticket pide dos cosas: indicadores de cobertura del mapa de tributación con su denominador, y que al versionar un plan se elija entre replicar el mapa o partir limpio. La verificación mostró que la parte de indicadores casi no tiene decisiones abiertas, pero la de versionado tiene un prerrequisito que el ticket no menciona (la adopción de matriz no se copia) y cuatro decisiones de fondo que conviene resolver antes del intake.</div></div></div></div><div class="cviz" data-type="callout"><div class="cv-callout t-note"><span class="cv-cico" aria-hidden="true">✎</span><div class="cv-cbody"><div class="cv-ctitle">Vigencia de este documento</div><div class="cv-ctext">Verificado el 2026-10-06 contra develop local y origin/develop de cada repo, y en vivo contra el MCP de up1 (tenant de desarrollo, usuario Admin). Los develop locales van por detrás de origin/develop (cm 32 commits, cd 7, object-manager 42, layout 68), así que el ticket debe construirse sobre origin/develop. Caduca si cambia el hook de versionado, el contrato MCP de cm o cd, o si se mergea trabajo nuevo de tributación. Re-verificar antes del intake.</div></div></div></div><div class="cviz" data-type="keyvalue"><div class="cviz-title">Encuadre: de qué trata el ticket</div><div class="cv-kv"><span class="cv-k">Ticket</span><span class="cv-v">UPONE-1771, Historia, 10 SP del PO, Backlog, sin asignar. Épica UPONE-1452 Curriculum Mapping.</span><span class="cv-k">Qué es tributar</span><span class="cv-v">Declarar qué asignatura del plan desarrolla o evalúa qué competencia, y en qué nivel de desarrollo.</span><span class="cv-k">Parte A: indicadores</span><span class="cv-v">Cuatro números de cobertura del mapa: desarrollo tributado (por celda declarada), competencias con evaluador, asignaturas sin tributar y filas fuera de diseño. Cada uno declara su denominador. Con base de logro RepresentativeLevel, &#39;con evaluador&#39; exige evaluador en el nivel representativo.</span><span class="cv-k">Parte B: versionado (R-8)</span><span class="cv-v">Al crear una nueva versión de un plan, quien tiene permiso elige entre replicar el mapa (remapeando cada fila a la asignatura equivalente de la versión nueva) o empezar sin tributación. Sin permiso se replica por defecto. Se informa cuántas filas quedan sin destino.</span><span class="cv-k">Dónde estamos</span><span class="cv-v">1756, 1769 y 1770 (los antecedentes) están Finalizadas. 1771 no tiene trabajo previo en ninguna rama. Tres de las cuatro tarjetas de indicadores ya existen desde 1756.</span></div></div><div class="cviz" data-type="keyvalue"><div class="cviz-title">Glosario mínimo</div><div class="cv-kv"><span class="cv-k">Tributación</span><span class="cv-v">Una fila que une una asignatura del plan con una competencia, un nivel de desarrollo y un tipo de contribución (desarrolla, evalúa o ambos).</span><span class="cv-k">Celda declarada</span><span class="cv-v">Par competencia + nivel que la competencia declara como suyo. Es la unidad con la que se cuenta el desarrollo tributado.</span><span class="cv-k">Base de logro</span><span class="cv-v">Cómo mide logro una matriz: Aggregation (agrega todos los niveles) o RepresentativeLevel (mira solo un nivel representativo).</span><span class="cv-k">Fuera de diseño</span><span class="cv-v">Fila de tributación que contradice el diseño actual: nivel no declarado, nodo que consolida, o competencia que ya no está en el árbol.</span><span class="cv-k">Adopción de matriz</span><span class="cv-v">Registro de que un plan sigue una matriz de competencias. Sin adopción vigente, las reglas de tributación (R-1) rechazan escribir filas para ese plan.</span><span class="cv-k">Hook de versionado</span><span class="cv-v">Código de curriculum-design que corre después de crear una versión. Hoy copia la extensión del plan y no toca la tributación.</span><span class="cv-k">MCP</span><span class="cv-v">Puerta por la que un agente (Claude u otro) opera UP1 con los permisos reales del usuario que lo conectó.</span></div></div><div class="cviz" data-type="flow"><div class="cviz-title">Cómo versiona hoy un plan (y dónde entran las decisiones)</div><div class="cv-flow2"><svg viewBox="0 0 342 622" role="img" aria-label="Cómo versiona hoy un plan (y dónde entran las decisiones)"><defs><marker id="fl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon class="fl-arrow" points="0,0 10,5 0,10"/></marker></defs><path class="fl-edge" d="M 171 54 C 171 87, 171 87, 171 120" marker-end="url(#fl-arrow)"/><path class="fl-edge" d="M 171 166 C 171 199, 171 199, 171 232" marker-end="url(#fl-arrow)"/><path class="fl-edge" d="M 171 278 C 171 311, 171 311, 171 344" marker-end="url(#fl-arrow)"/><path class="fl-edge" d="M 171 390 C 171 423, 83 423, 83 456" marker-end="url(#fl-arrow)"/><path class="fl-edge" d="M 171 390 C 171 423, 259 423, 259 456" marker-end="url(#fl-arrow)"/><path class="fl-edge" d="M 83 502 C 83 535, 171 535, 171 568" marker-end="url(#fl-arrow)"/><g class="fl-k-startend"><rect class="fl-box" x="96" y="8" width="150" height="46" rx="23"/><text class="fl-ntext" x="171" y="31" text-anchor="middle" dominant-baseline="middle"><tspan x="171" dy="-7">Usuario o agente MCP</tspan><tspan x="171" dy="14">pide &#39;nueva versión&#39;</tspan></text></g><g class="fl-k-process"><rect class="fl-box" x="96" y="120" width="150" height="46" rx="9"/><text class="fl-ntext" x="171" y="143" text-anchor="middle" dominant-baseline="middle"><tspan x="171" dy="-14">Core crea la v2</tspan><tspan x="171" dy="14">(entradas de malla,</tspan><tspan x="171" dy="14">categorías,</tspan></text></g><g class="fl-k-process"><rect class="fl-box" x="96" y="232" width="150" height="46" rx="9"/><text class="fl-ntext" x="171" y="255" text-anchor="middle" dominant-baseline="middle"><tspan x="171" dy="-14">Hook de cd copia la</tspan><tspan x="171" dy="14">extensión del plan,</tspan><tspan x="171" dy="14">fuera de la</tspan></text></g><g class="fl-k-accent"><rect class="fl-box" x="96" y="344" width="150" height="46" rx="9"/><text class="fl-ntext" x="171" y="367" text-anchor="middle" dominant-baseline="middle"><tspan x="171" dy="-14">La v2 queda SIN</tspan><tspan x="171" dy="14">tributación y SIN</tspan><tspan x="171" dy="14">adopción de matriz</tspan></text></g><g class="fl-k-decision"><polygon class="fl-box" points="83,452 158,479 83,506 8,479"/><text class="fl-ntext" x="83" y="479" text-anchor="middle" dominant-baseline="middle"><tspan x="83" dy="-14">D1/D3/D4/D5: aquí</tspan><tspan x="83" dy="14">iría replicar o</tspan><tspan x="83" dy="14">limpiar</tspan></text></g><g class="fl-k-decision"><polygon class="fl-box" points="259,452 334,479 259,506 184,479"/><text class="fl-ntext" x="259" y="479" text-anchor="middle" dominant-baseline="middle"><tspan x="259" dy="-14">D12: aquí falta</tspan><tspan x="259" dy="14">arrastrar la</tspan><tspan x="259" dy="14">adopción</tspan></text></g><g class="fl-k-decision"><polygon class="fl-box" points="171,564 246,591 171,618 96,591"/><text class="fl-ntext" x="171" y="591" text-anchor="middle" dominant-baseline="middle"><tspan x="171" dy="-14">D6/D11: cómo se</tspan><tspan x="171" dy="14">informa y se</tspan><tspan x="171" dy="14">reintenta</tspan></text></g></svg></div></div><div class="cviz" data-type="legend"><div class="cviz-title">Cómo leer el flujo</div><div class="cv-legend"><span class="cv-lg-item"><span class="cv-lg-swatch cv-lg-dot"></span>Proceso que ya existe</span><span class="cv-lg-item"><span class="cv-lg-swatch cv-lg-dot"></span>Estado actual verificado</span><span class="cv-lg-item"><span class="cv-lg-swatch cv-lg-dot"></span>Punto de decisión</span></div></div><div class="cviz" data-type="compare"><div class="cviz-title">Lo que pide el ticket frente a lo que existe hoy</div><div class="cv-compare"><div class="cv-cmp-col cv-cmp-before"><div class="cv-cmp-head">Hoy (verificado)</div><ul class="cv-cmp-list"><li>La v2 nace con la malla copiada y cero tributaciones.</li><li>La v2 nace sin matriz adoptada.</li><li>La acción de versionar es inmediata: sin elección ni informe en pantalla.</li><li>Por MCP se puede versionar (creación genérica), pero sin guía ni parámetro de elección.</li><li>Por MCP no se pueden escribir tributaciones (cerrado a propósito).</li><li>Los indicadores se calculan solo en el cliente; por MCP no existen.</li><li>El nivel representativo existe en el modelo pero nadie lo marca (36 de 36 sin valor).</li></ul></div><div class="cv-cmp-arrow" aria-hidden="true">→</div><div class="cv-cmp-col cv-cmp-after"><div class="cv-cmp-head">Lo que pide el ticket</div><ul class="cv-cmp-list"><li>La v2 nace con el mapa replicado y remapeado, o vacío, según una elección.</li><li>Se informa cuántas filas quedaron sin destino.</li><li>Sin permiso de escritura de tributación se replica por defecto.</li><li>Cuatro indicadores con denominador declarado por vista.</li><li>Con RepresentativeLevel, &#39;con evaluador&#39; exige evaluador en el nivel representativo.</li><li>Las filas fuera de diseño se muestran marcadas y no se borran.</li></ul></div></div></div><div class="cviz" data-type="callout"><div class="cv-callout t-warn"><span class="cv-cico" aria-hidden="true">⚠</span><div class="cv-cbody"><div class="cv-ctitle">Giro: el ticket asume algo que no existe</div><div class="cv-ctext">El PO escribió &#39;sin Core Extension&#39;. Pero la acción &#39;Crear nueva versión&#39; solo envía el plan de origen y la bandera de versión: no admite un parámetro de elección, la confirmación es binaria y el aviso posterior solo muestra el número de versión (layout/src/composables/useCreateRowAction.ts:76-85 y :126-138). Hay camino sin tocar layout (ver D1), pero el paso de elección no es &#39;solo configuración&#39;. Además, versionar no copia la adopción de matriz: sin ella, las tributaciones replicadas no se pueden gestionar (R-1).</div></div></div></div><div class="cviz" data-type="comparison"><div class="cviz-title">D1 · Dónde se elige &#39;replicar o limpiar&#39; en pantalla (decide: PO, y core si se elige C)</div><div class="cv-tblwrap"><table class="cv-tbl"><thead><tr><th></th><th>Opción</th><th>Qué implica</th><th>Pros</th><th>Contras</th><th>Esfuerzo / reversibilidad</th></tr></thead><tbody><tr><td class="cv-rl">A · Dos acciones de tipo mutation (mod-only)</td><td>Dos acciones (&#39;replicar&#39; y &#39;empezar limpio&#39;) que llaman a una mutation propia de cd que versiona y decide.</td><td>Sin Core Extension; gateable por permiso; la misma mutation sirve a pantalla y MCP.</td><td>Reemplaza la acción estándar de versionar solo para Curriculum; duplica el gate de estado y capability; el informe de filas sin destino no tiene lugar en pantalla.</td><td>Medio / reversible</td></tr><tr><td class="cv-rl">B · Elegir después de crear</td><td>Versionar como hoy; en el componente de tributación de la v2 ofrecer &#39;replicar desde la versión anterior&#39; o &#39;limpiar&#39;.</td><td>Sin cambios en el flujo de versionado; informe y permiso viven en cm; separa &#39;crear versión&#39; de &#39;replicar mapa&#39;, lo que resuelve el reintento.</td><td>Se aparta de la letra del PO (&#39;al versionar se elige&#39;); la v2 existe un rato sin mapa.</td><td>Bajo a medio / reversible</td></tr><tr><td class="cv-rl">C · Extender layout (Core Extension)</td><td>La acción de crear admite elección y un informe declarativos.</td><td>Reutilizable por otros objetos versionables.</td><td>Entra Aduana y core-extension-writer; coordinación con core; cambia la capacidad de permiso condicional (hoy estática).</td><td>Alto / baja reversibilidad</td></tr></tbody></table></div></div><div class="cviz" data-type="comparison"><div class="cviz-title">D4 · Dónde vive la réplica (decide: equipo técnico con core si aplica)</div><div class="cv-tblwrap"><table class="cv-tbl"><thead><tr><th></th><th>Opción</th><th>Qué implica</th><th>Pros</th><th>Contras</th></tr></thead><tbody><tr><td class="cv-rl">R1 · Hook de cd, acceso directo</td><td>cd escribe las filas por acceso directo a la base, replicando las reglas de cm.</td><td>Simple, ya hay precedente de cd leyendo cm.</td><td>Se salta R-1 a R-6 y el historial de cm; riesgo de que las reglas diverjan; no es atómico.</td></tr><tr><td class="cv-rl">R2 · cd invoca el punto de entrada gobernado de cm</td><td>cd llama a la operación de guardado en conjunto de cm.</td><td>Pantalla y MCP quedan idénticos; historial correcto.</td><td>Acopla cd a cm; exige arrastrar la adopción antes (D12); tope de 500 filas por guardado.</td></tr><tr><td class="cv-rl">R3 · Gancho post-versión en core</td><td>cm reacciona al versionado con un gancho de core.</td><td>Cada regla queda en su dueño.</td><td>Es Core Extension; hoy core solo tiene ganchos antes de crear y antes de actualizar y ningún mod los usa.</td></tr><tr><td class="cv-rl">R4 · Operación propia de cm &#39;replicar desde la versión anterior&#39;</td><td>cm expone una operación idempotente, auditada, invocable por pantalla y MCP; cd solo versiona.</td><td>Idempotente por la unicidad existente; separa responsabilidades; resuelve el reintento.</td><td>Requiere que la elección sea posterior a crear (opción B de D1).</td></tr></tbody></table></div></div><div class="cviz" data-type="comparison"><div class="cviz-title">Resumen: las decisiones que conviene tomar antes del intake</div><div class="cv-tblwrap"><table class="cv-tbl"><thead><tr><th></th><th>#</th><th>Qué se decide</th><th>Hecho verificado</th><th>Recomendación</th><th>Decide</th></tr></thead><tbody><tr><td class="cv-rl">D2</td><td>¿Se parte el ticket en A (indicadores) y B (versionado)?</td><td>Con el alcance MCP el total supera los 10 SP. La parte A casi no tiene decisiones abiertas y no depende de nada.</td><td>Partir. A puede arrancar ya.</td><td>PO</td></tr><tr><td class="cv-rl">D3</td><td>¿&#39;Sin permiso se replica&#39; es regla fija o parámetro institucional?</td><td>El PO lo fija como replicar; la documentación lo llama inferencia y &#39;parámetro configurable&#39;, pero hoy no existe ningún parámetro institucional para esto.</td><td>Regla fija ahora; parámetro solo si un cliente lo pide, con default.</td><td>PO</td></tr><tr><td class="cv-rl">D5</td><td>¿Qué permiso es &#39;escritura de tributación&#39;?</td><td>Son tres capabilities separadas (create, modify, delete). La autoridad curricular solo tiene delete.</td><td>competencyalignment:create, porque la v2 recibe filas nuevas.</td><td>PO</td></tr><tr><td class="cv-rl">D12</td><td>¿Se arrastra la adopción de matriz a la v2 al versionar?</td><td>No se copia (verificado en vivo y en código). Sin ella, R-1 rechaza las filas replicadas por la vía gobernada.</td><td>Sí, como parte de este ticket: es prerrequisito de replicar.</td><td>Equipo técnico + PO (cambia el alcance)</td></tr><tr><td class="cv-rl">D13</td><td>¿Se acepta que replicar al versionar escriba tributación por MCP, que hoy está cerrado?</td><td>La escritura de tributaciones por MCP está bloqueada a propósito. Versionar por MCP con réplica sería la única excepción.</td><td>Aceptarlo solo con réplica atribuida y auditada a nombre de quien versiona.</td><td>PO + responsable de seguridad del MCP</td></tr><tr><td class="cv-rl">D1 y D4</td><td>Ver las dos tablas de arriba.</td><td>Layout no admite elección ni informe declarativos; el hook corre fuera de la transacción.</td><td>Opción B de D1 con R4 de D4; o A con R2 si el PO exige elegir al versionar.</td><td>PO (D1) y equipo técnico (D4)</td></tr></tbody></table></div></div><div class="cviz" data-type="comparison"><div class="cviz-title">Decisiones que se resuelven dentro del intake (no bloquean la partida)</div><div class="cv-tblwrap"><table class="cv-tbl"><thead><tr><th></th><th>#</th><th>Qué se decide</th><th>Hecho verificado</th><th>Recomendación</th></tr></thead><tbody><tr><td class="cv-rl">D6</td><td>Atomicidad y reintento de la réplica.</td><td>El hook corre fuera de la transacción de versionado; reintentar la creación crea otra versión.</td><td>Operación aparte e idempotente; aceptar una v2 sin mapa ante un fallo, con informe.</td></tr><tr><td class="cv-rl">D7</td><td>Cómo se identifica la asignatura equivalente.</td><td>No hay vínculo persistido (sourceEntryId queda nulo); el mapa viejo a nuevo existe solo en el resultado de crear; no hay unicidad por plan y asignatura.</td><td>Usar el mapa del resultado de crear, filtrando por tipo de entrada.</td></tr><tr><td class="cv-rl">D8</td><td>Nivel representativo: quién lo marca y qué pasa si falta.</td><td>Nadie lo escribe ni lo valida; 36 de 36 sin valor en el tenant.</td><td>Definir fallback (último nivel, como hoy en el aviso) y quién lo marca.</td></tr><tr><td class="cv-rl">D9</td><td>Qué cuenta como &#39;fuera de diseño&#39;.</td><td>Hoy la lectura descarta en silencio las filas con competencia fuera del árbol (alignmentView.resolver.js:328).</td><td>Contar las tres variantes y dejar de descartarlas en silencio.</td></tr><tr><td class="cv-rl">D10</td><td>Qué indicadores van en la lectura del plan y cuáles en el componente.</td><td>La maqueta v17 deja tres en la lectura; el PO pide los cuatro en ambas, y la etiqueta difiere.</td><td>Confirmar con el PO; declarar denominador en cada vista.</td></tr><tr><td class="cv-rl">D11</td><td>Cómo expresa la elección y recibe el informe un agente MCP.</td><td>El MCP elimina las claves que empiezan con guion bajo; el genérico no conoce parámetros de versionado.</td><td>Ficha dedicada de versionado o, con la opción B de D1, una ficha aparte de réplica.</td></tr><tr><td class="cv-rl">D14 a D18</td><td>Deriva de origin/develop, nombre developmentLevelId, plan publicado y vías no gobernadas, numeración de reglas, guía MCP de cm.</td><td>Detalle en UPONE-1771-detalle.</td><td>Resolver en el intake, con cada punto como tarea o criterio.</td></tr></tbody></table></div></div><div class="cviz" data-type="steps"><div class="cviz-title">Caso trabajado (ilustrativo, con números inventados para explicar)</div><ol class="cv-steps"><li><span class="cv-num">1</span><div class="cv-scontent"><div class="cv-stitle">Plan con 12 asignaturas y 30 tributaciones</div><div class="cv-stext">Un plan activo con la matriz adoptada. Alguien con permiso pide una nueva versión.</div></div></li><li><span class="cv-num">2</span><div class="cv-scontent"><div class="cv-stitle">Hoy</div><div class="cv-stext">La v2 nace en borrador con las 12 asignaturas, sin tributaciones y sin matriz adoptada. Quien quiera el mapa debe reconstruirlo a mano.</div></div></li><li><span class="cv-num">3</span><div class="cv-scontent"><div class="cv-stitle">Con opción B de D1 y R4 de D4</div><div class="cv-stext">La v2 nace igual. En su componente de tributación aparece &#39;replicar desde la versión anterior&#39; (solo con permiso de escritura). Al ejecutarlo se adopta la matriz, se remapean las filas y se informa, por ejemplo, &#39;28 replicadas, 2 sin destino porque la asignatura salió de la malla&#39;.</div></div></li><li><span class="cv-num">4</span><div class="cv-scontent"><div class="cv-stitle">Sin permiso</div><div class="cv-stext">No ve la opción. Si el default es replicar (D3), el sistema lo hace en el servidor al versionar y deja constancia de a nombre de quién.</div></div></li><li><span class="cv-num">5</span><div class="cv-scontent"><div class="cv-stitle">Por MCP</div><div class="cv-stext">El agente versiona con la ficha dedicada y, después, invoca la réplica con su informe. Si repite la llamada, no se duplican filas.</div></div></li></ol></div><div class="cviz" data-type="checklist"><div class="cviz-title">Qué llevar al PO y qué resuelve el equipo</div><ul class="cv-check"><li class=""><span class="cv-box" aria-hidden="true"></span>PO: partir el ticket en A y B (D2).</li><li class=""><span class="cv-box" aria-hidden="true"></span>PO: elegir cuándo se elige, al versionar o justo después (D1).</li><li class=""><span class="cv-box" aria-hidden="true"></span>PO: confirmar default sin permiso y qué permiso gobierna la elección (D3 y D5).</li><li class=""><span class="cv-box" aria-hidden="true"></span>PO y equipo: arrastrar la adopción de matriz como parte del ticket (D12).</li><li class=""><span class="cv-box" aria-hidden="true"></span>PO y seguridad MCP: aceptar la réplica por MCP como excepción auditada (D13).</li><li class=""><span class="cv-box" aria-hidden="true"></span>Equipo técnico: dónde vive la réplica y cómo se reintenta (D4, D6).</li><li class=""><span class="cv-box" aria-hidden="true"></span>Equipo técnico: confirmar en runtime que el rol activo de un usuario no Admin tiene las capabilities de cm en cd.</li><li class=""><span class="cv-box" aria-hidden="true"></span>Equipo técnico: construir sobre origin/develop de object-manager, cm y cd.</li></ul></div><div class="cviz" data-type="callout"><div class="cv-callout t-warn"><span class="cv-cico" aria-hidden="true">⚠</span><div class="cv-cbody"><div class="cv-ctitle">Lo que este documento NO cierra</div><div class="cv-ctext">No hay pasada formal de Aduana. No se probó en runtime la replicación con tributaciones reales (requiere crearlas desde la UI), ni un rol que no sea Admin, ni la grilla de la UI con una v2 sin adopción. Las estimaciones solo están en forma relativa; el total supera los 10 SP del PO si se incluye el alcance MCP. La prueba en vivo dejó un plan de smoke (código SMOKE-2003-CLON, versión 2, en borrador) en el tenant de desarrollo.</div></div></div></div><div class="cviz" data-type="tags"><div class="cviz-title">Procedencia de los datos</div><div class="cv-tags"><span class="cv-tag" style="--c:var(--ok)">Código real (file:line, develop y origin/develop)</span><span class="cv-tag" style="--c:var(--ok)">Prueba en vivo vía MCP (tenant de desarrollo, Admin)</span><span class="cv-tag" style="--c:var(--brand)">Jira (estado verificado 2026-10-06)</span><span class="cv-tag" style="--c:var(--brand-2)">KB sprint 10 y 11 (referido, no verificado en esta pasada)</span><span class="cv-tag" style="--c:var(--warn)">Recomendaciones (elección, no hecho)</span></div></div><div class="cviz" data-type="card"><div class="cviz-title">Documentos hermanos</div><div class="cv-card t-note"><div class="cv-cardtitle">Documentos hermanos</div><div class="cv-cardtext">UPONE-1771-detalle (contrato con las 18 decisiones y los criterios de aceptación) y UPONE-1771-pre-intake (enfoques, hipótesis resueltas y evidencia en vivo), ambos en la carpeta sp12 del KB de up1.</div></div></div></main>
+</div>
+
+<script>
+// ============================================================================
+// Renderer de visuales kanai:viz para la tool generate_guide (port fiel de app/components/ChatViz.vue y
+// del artifact-renderer.html del skill kanai-viz). renderVizArtifact() en server/dispatch/vizArtifact.ts
+// inyecta THEME/KANAI_VIZ/TITLE/SUBTITLE reemplazando los marcadores __KANAI_*__ de abajo.
+// Dos temas (oscuro/claro) via data-theme; el lector puede alternar con el botón. 'diagram' usa mermaid
+// desde CDN y cae al código si el host bloquea la red. Fuente de verdad de los tipos: server/dispatch/viz.ts.
+// ============================================================================
+
+const THEME = 'light' // 'dark' | 'light' — inyectado por la tool (default por KANAI_VIZ_THEME)
+const KANAI_VIZ = [{"type":"callout","tone":"info","title":"En una frase","text":"El ticket pide dos cosas: indicadores de cobertura del mapa de tributación con su denominador, y que al versionar un plan se elija entre replicar el mapa o partir limpio. La verificación mostró que la parte de indicadores casi no tiene decisiones abiertas, pero la de versionado tiene un prerrequisito que el ticket no menciona (la adopción de matriz no se copia) y cuatro decisiones de fondo que conviene resolver antes del intake."},{"type":"callout","tone":"note","title":"Vigencia de este documento","text":"Verificado el 2026-10-06 contra develop local y origin/develop de cada repo, y en vivo contra el MCP de up1 (tenant de desarrollo, usuario Admin). Los develop locales van por detrás de origin/develop (cm 32 commits, cd 7, object-manager 42, layout 68), así que el ticket debe construirse sobre origin/develop. Caduca si cambia el hook de versionado, el contrato MCP de cm o cd, o si se mergea trabajo nuevo de tributación. Re-verificar antes del intake."},{"type":"keyvalue","title":"Encuadre: de qué trata el ticket","rows":[{"k":"Ticket","v":"UPONE-1771, Historia, 10 SP del PO, Backlog, sin asignar. Épica UPONE-1452 Curriculum Mapping."},{"k":"Qué es tributar","v":"Declarar qué asignatura del plan desarrolla o evalúa qué competencia, y en qué nivel de desarrollo."},{"k":"Parte A: indicadores","v":"Cuatro números de cobertura del mapa: desarrollo tributado (por celda declarada), competencias con evaluador, asignaturas sin tributar y filas fuera de diseño. Cada uno declara su denominador. Con base de logro RepresentativeLevel, 'con evaluador' exige evaluador en el nivel representativo."},{"k":"Parte B: versionado (R-8)","v":"Al crear una nueva versión de un plan, quien tiene permiso elige entre replicar el mapa (remapeando cada fila a la asignatura equivalente de la versión nueva) o empezar sin tributación. Sin permiso se replica por defecto. Se informa cuántas filas quedan sin destino."},{"k":"Dónde estamos","v":"1756, 1769 y 1770 (los antecedentes) están Finalizadas. 1771 no tiene trabajo previo en ninguna rama. Tres de las cuatro tarjetas de indicadores ya existen desde 1756."}]},{"type":"keyvalue","title":"Glosario mínimo","rows":[{"k":"Tributación","v":"Una fila que une una asignatura del plan con una competencia, un nivel de desarrollo y un tipo de contribución (desarrolla, evalúa o ambos)."},{"k":"Celda declarada","v":"Par competencia + nivel que la competencia declara como suyo. Es la unidad con la que se cuenta el desarrollo tributado."},{"k":"Base de logro","v":"Cómo mide logro una matriz: Aggregation (agrega todos los niveles) o RepresentativeLevel (mira solo un nivel representativo)."},{"k":"Fuera de diseño","v":"Fila de tributación que contradice el diseño actual: nivel no declarado, nodo que consolida, o competencia que ya no está en el árbol."},{"k":"Adopción de matriz","v":"Registro de que un plan sigue una matriz de competencias. Sin adopción vigente, las reglas de tributación (R-1) rechazan escribir filas para ese plan."},{"k":"Hook de versionado","v":"Código de curriculum-design que corre después de crear una versión. Hoy copia la extensión del plan y no toca la tributación."},{"k":"MCP","v":"Puerta por la que un agente (Claude u otro) opera UP1 con los permisos reales del usuario que lo conectó."}]},{"type":"flow","title":"Cómo versiona hoy un plan (y dónde entran las decisiones)","direction":"TD","nodes":[{"id":"a","label":"Usuario o agente MCP pide 'nueva versión'","kind":"startend"},{"id":"b","label":"Core crea la v2 (entradas de malla, categorías, secciones) en una transacción","kind":"process"},{"id":"c","label":"Hook de cd copia la extensión del plan, fuera de la transacción","kind":"process"},{"id":"d","label":"La v2 queda SIN tributación y SIN adopción de matriz","kind":"accent"},{"id":"e","label":"D1/D3/D4/D5: aquí iría replicar o limpiar","kind":"decision"},{"id":"f","label":"D12: aquí falta arrastrar la adopción","kind":"decision"},{"id":"g","label":"D6/D11: cómo se informa y se reintenta","kind":"decision"}],"edges":[{"from":"a","to":"b"},{"from":"b","to":"c"},{"from":"c","to":"d"},{"from":"d","to":"e"},{"from":"d","to":"f"},{"from":"e","to":"g"}]},{"type":"legend","title":"Cómo leer el flujo","items":[{"label":"Proceso que ya existe","mark":"dot"},{"label":"Estado actual verificado","mark":"dot"},{"label":"Punto de decisión","mark":"dot"}]},{"type":"compare","title":"Lo que pide el ticket frente a lo que existe hoy","before":{"label":"Hoy (verificado)","points":["La v2 nace con la malla copiada y cero tributaciones.","La v2 nace sin matriz adoptada.","La acción de versionar es inmediata: sin elección ni informe en pantalla.","Por MCP se puede versionar (creación genérica), pero sin guía ni parámetro de elección.","Por MCP no se pueden escribir tributaciones (cerrado a propósito).","Los indicadores se calculan solo en el cliente; por MCP no existen.","El nivel representativo existe en el modelo pero nadie lo marca (36 de 36 sin valor)."]},"after":{"label":"Lo que pide el ticket","points":["La v2 nace con el mapa replicado y remapeado, o vacío, según una elección.","Se informa cuántas filas quedaron sin destino.","Sin permiso de escritura de tributación se replica por defecto.","Cuatro indicadores con denominador declarado por vista.","Con RepresentativeLevel, 'con evaluador' exige evaluador en el nivel representativo.","Las filas fuera de diseño se muestran marcadas y no se borran."]}},{"type":"callout","tone":"warn","title":"Giro: el ticket asume algo que no existe","text":"El PO escribió 'sin Core Extension'. Pero la acción 'Crear nueva versión' solo envía el plan de origen y la bandera de versión: no admite un parámetro de elección, la confirmación es binaria y el aviso posterior solo muestra el número de versión (layout/src/composables/useCreateRowAction.ts:76-85 y :126-138). Hay camino sin tocar layout (ver D1), pero el paso de elección no es 'solo configuración'. Además, versionar no copia la adopción de matriz: sin ella, las tributaciones replicadas no se pueden gestionar (R-1)."},{"type":"comparison","title":"D1 · Dónde se elige 'replicar o limpiar' en pantalla (decide: PO, y core si se elige C)","columns":["Opción","Qué implica","Pros","Contras","Esfuerzo / reversibilidad"],"rows":[{"label":"A · Dos acciones de tipo mutation (mod-only)","cells":["Dos acciones ('replicar' y 'empezar limpio') que llaman a una mutation propia de cd que versiona y decide.","Sin Core Extension; gateable por permiso; la misma mutation sirve a pantalla y MCP.","Reemplaza la acción estándar de versionar solo para Curriculum; duplica el gate de estado y capability; el informe de filas sin destino no tiene lugar en pantalla.","Medio / reversible"]},{"label":"B · Elegir después de crear","cells":["Versionar como hoy; en el componente de tributación de la v2 ofrecer 'replicar desde la versión anterior' o 'limpiar'.","Sin cambios en el flujo de versionado; informe y permiso viven en cm; separa 'crear versión' de 'replicar mapa', lo que resuelve el reintento.","Se aparta de la letra del PO ('al versionar se elige'); la v2 existe un rato sin mapa.","Bajo a medio / reversible"]},{"label":"C · Extender layout (Core Extension)","cells":["La acción de crear admite elección y un informe declarativos.","Reutilizable por otros objetos versionables.","Entra Aduana y core-extension-writer; coordinación con core; cambia la capacidad de permiso condicional (hoy estática).","Alto / baja reversibilidad"]}]},{"type":"comparison","title":"D4 · Dónde vive la réplica (decide: equipo técnico con core si aplica)","columns":["Opción","Qué implica","Pros","Contras"],"rows":[{"label":"R1 · Hook de cd, acceso directo","cells":["cd escribe las filas por acceso directo a la base, replicando las reglas de cm.","Simple, ya hay precedente de cd leyendo cm.","Se salta R-1 a R-6 y el historial de cm; riesgo de que las reglas diverjan; no es atómico."]},{"label":"R2 · cd invoca el punto de entrada gobernado de cm","cells":["cd llama a la operación de guardado en conjunto de cm.","Pantalla y MCP quedan idénticos; historial correcto.","Acopla cd a cm; exige arrastrar la adopción antes (D12); tope de 500 filas por guardado."]},{"label":"R3 · Gancho post-versión en core","cells":["cm reacciona al versionado con un gancho de core.","Cada regla queda en su dueño.","Es Core Extension; hoy core solo tiene ganchos antes de crear y antes de actualizar y ningún mod los usa."]},{"label":"R4 · Operación propia de cm 'replicar desde la versión anterior'","cells":["cm expone una operación idempotente, auditada, invocable por pantalla y MCP; cd solo versiona.","Idempotente por la unicidad existente; separa responsabilidades; resuelve el reintento.","Requiere que la elección sea posterior a crear (opción B de D1)."]}]},{"type":"comparison","title":"Resumen: las decisiones que conviene tomar antes del intake","columns":["#","Qué se decide","Hecho verificado","Recomendación","Decide"],"rows":[{"label":"D2","cells":["¿Se parte el ticket en A (indicadores) y B (versionado)?","Con el alcance MCP el total supera los 10 SP. La parte A casi no tiene decisiones abiertas y no depende de nada.","Partir. A puede arrancar ya.","PO"]},{"label":"D3","cells":["¿'Sin permiso se replica' es regla fija o parámetro institucional?","El PO lo fija como replicar; la documentación lo llama inferencia y 'parámetro configurable', pero hoy no existe ningún parámetro institucional para esto.","Regla fija ahora; parámetro solo si un cliente lo pide, con default.","PO"]},{"label":"D5","cells":["¿Qué permiso es 'escritura de tributación'?","Son tres capabilities separadas (create, modify, delete). La autoridad curricular solo tiene delete.","competencyalignment:create, porque la v2 recibe filas nuevas.","PO"]},{"label":"D12","cells":["¿Se arrastra la adopción de matriz a la v2 al versionar?","No se copia (verificado en vivo y en código). Sin ella, R-1 rechaza las filas replicadas por la vía gobernada.","Sí, como parte de este ticket: es prerrequisito de replicar.","Equipo técnico + PO (cambia el alcance)"]},{"label":"D13","cells":["¿Se acepta que replicar al versionar escriba tributación por MCP, que hoy está cerrado?","La escritura de tributaciones por MCP está bloqueada a propósito. Versionar por MCP con réplica sería la única excepción.","Aceptarlo solo con réplica atribuida y auditada a nombre de quien versiona.","PO + responsable de seguridad del MCP"]},{"label":"D1 y D4","cells":["Ver las dos tablas de arriba.","Layout no admite elección ni informe declarativos; el hook corre fuera de la transacción.","Opción B de D1 con R4 de D4; o A con R2 si el PO exige elegir al versionar.","PO (D1) y equipo técnico (D4)"]}]},{"type":"comparison","title":"Decisiones que se resuelven dentro del intake (no bloquean la partida)","columns":["#","Qué se decide","Hecho verificado","Recomendación"],"rows":[{"label":"D6","cells":["Atomicidad y reintento de la réplica.","El hook corre fuera de la transacción de versionado; reintentar la creación crea otra versión.","Operación aparte e idempotente; aceptar una v2 sin mapa ante un fallo, con informe."]},{"label":"D7","cells":["Cómo se identifica la asignatura equivalente.","No hay vínculo persistido (sourceEntryId queda nulo); el mapa viejo a nuevo existe solo en el resultado de crear; no hay unicidad por plan y asignatura.","Usar el mapa del resultado de crear, filtrando por tipo de entrada."]},{"label":"D8","cells":["Nivel representativo: quién lo marca y qué pasa si falta.","Nadie lo escribe ni lo valida; 36 de 36 sin valor en el tenant.","Definir fallback (último nivel, como hoy en el aviso) y quién lo marca."]},{"label":"D9","cells":["Qué cuenta como 'fuera de diseño'.","Hoy la lectura descarta en silencio las filas con competencia fuera del árbol (alignmentView.resolver.js:328).","Contar las tres variantes y dejar de descartarlas en silencio."]},{"label":"D10","cells":["Qué indicadores van en la lectura del plan y cuáles en el componente.","La maqueta v17 deja tres en la lectura; el PO pide los cuatro en ambas, y la etiqueta difiere.","Confirmar con el PO; declarar denominador en cada vista."]},{"label":"D11","cells":["Cómo expresa la elección y recibe el informe un agente MCP.","El MCP elimina las claves que empiezan con guion bajo; el genérico no conoce parámetros de versionado.","Ficha dedicada de versionado o, con la opción B de D1, una ficha aparte de réplica."]},{"label":"D14 a D18","cells":["Deriva de origin/develop, nombre developmentLevelId, plan publicado y vías no gobernadas, numeración de reglas, guía MCP de cm.","Detalle en UPONE-1771-detalle.","Resolver en el intake, con cada punto como tarea o criterio."]}]},{"type":"steps","title":"Caso trabajado (ilustrativo, con números inventados para explicar)","items":[{"title":"Plan con 12 asignaturas y 30 tributaciones","text":"Un plan activo con la matriz adoptada. Alguien con permiso pide una nueva versión."},{"title":"Hoy","text":"La v2 nace en borrador con las 12 asignaturas, sin tributaciones y sin matriz adoptada. Quien quiera el mapa debe reconstruirlo a mano."},{"title":"Con opción B de D1 y R4 de D4","text":"La v2 nace igual. En su componente de tributación aparece 'replicar desde la versión anterior' (solo con permiso de escritura). Al ejecutarlo se adopta la matriz, se remapean las filas y se informa, por ejemplo, '28 replicadas, 2 sin destino porque la asignatura salió de la malla'."},{"title":"Sin permiso","text":"No ve la opción. Si el default es replicar (D3), el sistema lo hace en el servidor al versionar y deja constancia de a nombre de quién."},{"title":"Por MCP","text":"El agente versiona con la ficha dedicada y, después, invoca la réplica con su informe. Si repite la llamada, no se duplican filas."}]},{"type":"checklist","title":"Qué llevar al PO y qué resuelve el equipo","items":[{"text":"PO: partir el ticket en A y B (D2).","done":false},{"text":"PO: elegir cuándo se elige, al versionar o justo después (D1).","done":false},{"text":"PO: confirmar default sin permiso y qué permiso gobierna la elección (D3 y D5).","done":false},{"text":"PO y equipo: arrastrar la adopción de matriz como parte del ticket (D12).","done":false},{"text":"PO y seguridad MCP: aceptar la réplica por MCP como excepción auditada (D13).","done":false},{"text":"Equipo técnico: dónde vive la réplica y cómo se reintenta (D4, D6).","done":false},{"text":"Equipo técnico: confirmar en runtime que el rol activo de un usuario no Admin tiene las capabilities de cm en cd.","done":false},{"text":"Equipo técnico: construir sobre origin/develop de object-manager, cm y cd.","done":false}]},{"type":"callout","tone":"warn","title":"Lo que este documento NO cierra","text":"No hay pasada formal de Aduana. No se probó en runtime la replicación con tributaciones reales (requiere crearlas desde la UI), ni un rol que no sea Admin, ni la grilla de la UI con una v2 sin adopción. Las estimaciones solo están en forma relativa; el total supera los 10 SP del PO si se incluye el alcance MCP. La prueba en vivo dejó un plan de smoke (código SMOKE-2003-CLON, versión 2, en borrador) en el tenant de desarrollo."},{"type":"tags","title":"Procedencia de los datos","items":[{"text":"Código real (file:line, develop y origin/develop)","tone":"ok"},{"text":"Prueba en vivo vía MCP (tenant de desarrollo, Admin)","tone":"ok"},{"text":"Jira (estado verificado 2026-10-06)","tone":"info"},{"text":"KB sprint 10 y 11 (referido, no verificado en esta pasada)","tone":"note"},{"text":"Recomendaciones (elección, no hecho)","tone":"warn"}]},{"type":"card","title":"Documentos hermanos","text":"UPONE-1771-detalle (contrato con las 18 decisiones y los criterios de aceptación) y UPONE-1771-pre-intake (enfoques, hipótesis resueltas y evidencia en vivo), ambos en la carpeta sp12 del KB de up1.","tone":"note"}]
+const TITLE = "UPONE-1771 · Qué hay que decidir"
+const SUBTITLE = "Indicadores y versionado del plan de estudios (tributación). Consolidado de decisiones abiertas, verificado contra el código y en vivo el 2026-10-06."
+
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+const str = (v) => (v == null ? '' : String(v))
+const arr = (v) => (Array.isArray(v) ? v : [])
+const num = (v) => (Number(v) || 0)
+
+const TONE_ICON = { info: 'ℹ', warn: '⚠', ok: '✓', note: '✎' }
+const toneOf = (v) => (['info', 'warn', 'ok', 'note'].includes(str(v.tone)) ? str(v.tone) : 'info')
+const GUARD_META = { pass: { c: 'var(--ok)', ico: '✓' }, warn: { c: 'var(--warn)', ico: '!' }, fail: { c: 'var(--bad)', ico: '✕' }, na: { c: 'var(--muted)', ico: '·' } }
+const CERT_COLOR = { confirmed: 'var(--ok)', inferred: 'var(--brand)', assumed: 'var(--warn)', blocked: 'var(--bad)' }
+const SESS_COLOR = { open: 'var(--brand)', continue: 'var(--ok)', iterate: 'var(--warn)', escalate: 'var(--bad)', standby: 'var(--muted)' }
+const FSM_DEFAULT = ['open', 'in_progress', 'ready_to_close', 'closed']
+const stateColor = (s) => (s === 'blocked' ? 'var(--bad)' : s === 'closed' ? 'var(--ok)' : s === 'in_progress' ? 'var(--brand)' : s === 'ready_to_close' ? 'var(--brand-2)' : 'var(--muted)')
+
+function titleBlock(v) {
+  const t = str(v.title)
+  return t && v.type !== 'callout' ? `<div class="cviz-title">${esc(t)}</div>` : ''
+}
+
+function chartGeom(items) {
+  const CW = 320, CH = 120, PX = 8, PY = 12
+  const n = items.length, max = Math.max(1, ...items.map((i) => i.value))
+  const innerW = CW - PX * 2, innerH = CH - PY * 2, baseY = CH - PY
+  const pts = items.map((it, i) => {
+    const x = n <= 1 ? CW / 2 : PX + (i / (n - 1)) * innerW
+    const y = PY + innerH - (it.value / max) * innerH
+    return { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, label: it.label, value: it.value }
+  })
+  const line = pts.map((p) => `${p.x},${p.y}`).join(' ')
+  const area = pts.length ? `M ${pts[0].x},${baseY} ${pts.map((p) => `L ${p.x},${p.y}`).join(' ')} L ${pts[pts.length - 1].x},${baseY} Z` : ''
+  return { pts, line, area, w: CW, h: CH, baseY }
+}
+
+// --- flow: flowchart nativo en SVG. Layout por capas (longest-path acotado); back-edges de ciclo
+// detectadas por DFS y excluidas del layering para que un ciclo no infle las capas sin cota. ---
+function flLayout(v) {
+  const dir = str(v.direction) === 'LR' ? 'LR' : 'TD'
+  const nodes = arr(v.nodes).map((n) => ({ id: str(n.id), label: str(n.label || n.id), kind: str(n.kind || 'process') }))
+  const byId = new Map(nodes.map((n) => [n.id, n]))
+  const edges = arr(v.edges).map((e) => ({ from: str(e.from), to: str(e.to), label: str(e.label || '') })).filter((e) => byId.has(e.from) && byId.has(e.to))
+  const adj = new Map(nodes.map((n) => [n.id, []]))
+  for (const e of edges) adj.get(e.from).push(e)
+  const state = new Map(nodes.map((n) => [n.id, 0]))
+  const back = new Set()
+  const visit = (u) => { state.set(u, 1); for (const e of adj.get(u)) { const s = state.get(e.to); if (s === 1) back.add(e); else if (s === 0) visit(e.to) } state.set(u, 2) }
+  for (const n of nodes) if (state.get(n.id) === 0) visit(n.id)
+  const layer = new Map(nodes.map((n) => [n.id, 0]))
+  for (let it = 0; it < nodes.length; it++) { let ch = false; for (const e of edges) { if (back.has(e)) continue; const nl = layer.get(e.from) + 1; if (nl > layer.get(e.to)) { layer.set(e.to, nl); ch = true } } if (!ch) break }
+  const maxL = Math.max(0, ...[...layer.values()])
+  const layers = Array.from({ length: maxL + 1 }, () => [])
+  for (const n of nodes) layers[layer.get(n.id)].push(n)
+  const NW = 150, NH = 46, RANK = 66, GAP = 26, P = 8
+  const along = (l) => P + l * (NH + RANK)
+  const laneSize = Math.max(1, ...layers.map((ns) => ns.length))
+  const laneSpan = laneSize * NW + (laneSize - 1) * GAP
+  const pos = new Map()
+  layers.forEach((ns, l) => {
+    const span = ns.length * NW + (ns.length - 1) * GAP
+    const start = P + (laneSpan - span) / 2
+    ns.forEach((n, i) => { const cross = start + i * (NW + GAP); const x = dir === 'TD' ? cross : along(l); const y = dir === 'TD' ? along(l) : cross; pos.set(n.id, { x, y, cx: x + NW / 2, cy: y + NH / 2 }) })
+  })
+  const w = (dir === 'TD' ? laneSpan : (maxL + 1) * (NW + RANK) - RANK) + P * 2
+  const h = (dir === 'TD' ? (maxL + 1) * (NH + RANK) - RANK : laneSpan) + P * 2
+  return { dir, nodes, edges, layer, pos, NW, NH, w, h, back }
+}
+function flWrap(s, max) { if (s.length <= max) return [s]; const words = s.split(' '); const lines = []; let cur = ''; for (const w of words) { if ((cur + ' ' + w).trim().length > max && cur) { lines.push(cur); cur = w } else cur = (cur + ' ' + w).trim() } if (cur) lines.push(cur); return lines.slice(0, 3) }
+function flNode(n, p, NW, NH) {
+  const k = ['startend', 'decision', 'accent', 'io', 'process'].includes(n.kind) ? n.kind : 'process'
+  const lines = flWrap(n.label, 20)
+  const tspans = lines.map((line, i) => `<tspan x="${p.cx}" dy="${i === 0 ? -(lines.length - 1) * 7 : 14}">${esc(line)}</tspan>`).join('')
+  const text = `<text class="fl-ntext" x="${p.cx}" y="${p.cy}" text-anchor="middle" dominant-baseline="middle">${tspans}</text>`
+  let box
+  if (k === 'decision') { const mx = p.cx, my = p.cy, hw = NW / 2, hh = NH / 2 + 4; box = `<polygon class="fl-box" points="${mx},${my - hh} ${mx + hw},${my} ${mx},${my + hh} ${mx - hw},${my}"/>` }
+  else { const rx = k === 'startend' ? NH / 2 : 9; box = `<rect class="fl-box" x="${p.x}" y="${p.y}" width="${NW}" height="${NH}" rx="${rx}"/>` }
+  return `<g class="fl-k-${k}">${box}${text}</g>`
+}
+function flEdgeLabel(text, mid) { const w = text.length * 6 + 8; return `<g><rect class="fl-elabel-bg" x="${mid.x - w / 2}" y="${mid.y - 8}" width="${w}" height="15" rx="3"/><text class="fl-elabel" x="${mid.x}" y="${mid.y}" text-anchor="middle" dominant-baseline="middle">${esc(text)}</text></g>` }
+function flEdge(e, L) {
+  const a = L.pos.get(e.from), b = L.pos.get(e.to), back = L.back.has(e)
+  let d, mid
+  if (L.dir === 'TD') {
+    const x1 = a.cx, y1 = a.y + L.NH, x2 = b.cx, y2 = b.y
+    if (back) { const off = 46; d = `M ${x1} ${a.cy} C ${x1 + off + 60} ${a.cy}, ${x2 + off + 60} ${b.cy}, ${x2} ${b.cy}`; mid = { x: Math.max(x1, x2) + off + 20, y: (a.cy + b.cy) / 2 } }
+    else { d = `M ${x1} ${y1} C ${x1} ${(y1 + y2) / 2}, ${x2} ${(y1 + y2) / 2}, ${x2} ${y2}`; mid = { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } }
+  } else {
+    const x1 = a.x + L.NW, y1 = a.cy, x2 = b.x, y2 = b.cy
+    if (back) { const off = 40; d = `M ${a.cx} ${a.y} C ${a.cx} ${a.y - off - 40}, ${b.cx} ${b.y - off - 40}, ${b.cx} ${b.y}`; mid = { x: (a.cx + b.cx) / 2, y: Math.min(a.y, b.y) - off - 12 } }
+    else { d = `M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`; mid = { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } }
+  }
+  return `<path class="fl-edge${back ? ' back' : ''}" d="${d}" marker-end="url(#fl-arrow)"/>${e.label ? flEdgeLabel(e.label, mid) : ''}`
+}
+function flowViz(v) {
+  const L = flLayout(v)
+  if (!L.nodes.length) return `<div class="cv-err">flujo vacío</div>`
+  const defs = `<defs><marker id="fl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon class="fl-arrow" points="0,0 10,5 0,10"/></marker></defs>`
+  const edges = L.edges.map((e) => flEdge(e, L)).join('')
+  const nodes = L.nodes.map((n) => flNode(n, L.pos.get(n.id), L.NW, L.NH)).join('')
+  return `<div class="cv-flow2"><svg viewBox="0 0 ${L.w} ${L.h}" role="img" aria-label="${esc(str(v.title) || 'diagrama de flujo')}">${defs}${edges}${nodes}</svg></div>`
+}
+
+const RENDER = {
+  callout(v) {
+    const tone = toneOf(v)
+    return `<div class="cv-callout t-${tone}"><span class="cv-cico" aria-hidden="true">${TONE_ICON[tone]}</span><div class="cv-cbody">${v.title ? `<div class="cv-ctitle">${esc(v.title)}</div>` : ''}<div class="cv-ctext">${esc(v.text)}</div></div></div>`
+  },
+  steps(v) {
+    const items = arr(v.items).map((it) => (typeof it === 'string' ? { title: it, text: '' } : { title: str(it.title), text: str(it.text) }))
+    return `<ol class="cv-steps">${items.map((s, i) => `<li><span class="cv-num">${i + 1}</span><div class="cv-scontent"><div class="cv-stitle">${esc(s.title)}</div>${s.text ? `<div class="cv-stext">${esc(s.text)}</div>` : ''}</div></li>`).join('')}</ol>`
+  },
+  checklist(v) {
+    const items = arr(v.items).map((it) => (typeof it === 'string' ? { text: it, done: false } : { text: str(it.text), done: Boolean(it.done) }))
+    return `<ul class="cv-check">${items.map((c) => `<li class="${c.done ? 'done' : ''}"><span class="cv-box" aria-hidden="true">${c.done ? '✓' : ''}</span>${esc(c.text)}</li>`).join('')}</ul>`
+  },
+  keyvalue(v) {
+    const rows = arr(v.rows).map((r) => `<span class="cv-k">${esc(r.k)}</span><span class="cv-v">${esc(r.v)}</span>`).join('')
+    return `<div class="cv-kv">${rows}</div>`
+  },
+  comparison(v) {
+    const cols = arr(v.columns).map((c) => `<th>${esc(c)}</th>`).join('')
+    const rows = arr(v.rows).map((r) => `<tr><td class="cv-rl">${esc(r.label)}</td>${arr(r.cells).map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')
+    return `<div class="cv-tblwrap"><table class="cv-tbl"><thead><tr><th></th>${cols}</tr></thead><tbody>${rows}</tbody></table></div>`
+  },
+  timeline(v) {
+    return `<div class="cv-timeline">${arr(v.items).map((t) => `<div class="cv-tlrow"><span class="cv-tldot" aria-hidden="true"></span><div><div class="cv-tllabel">${esc(t.label)}</div>${t.text ? `<div class="cv-tltext">${esc(t.text)}</div>` : ''}</div></div>`).join('')}</div>`
+  },
+  stats(v) {
+    return `<div class="cv-stats">${arr(v.items).map((s) => `<div class="cv-stat"><div class="cv-sval">${esc(s.value)}</div><div class="cv-slabel">${esc(s.label)}</div>${s.sub ? `<div class="cv-ssub">${esc(s.sub)}</div>` : ''}</div>`).join('')}</div>`
+  },
+  card(v) {
+    return `<div class="cv-card t-${toneOf(v)}">${v.title ? `<div class="cv-cardtitle">${esc(v.title)}</div>` : ''}<div class="cv-cardtext">${esc(v.text)}</div></div>`
+  },
+  chart(v) {
+    const variant = ['columns', 'line', 'area'].includes(str(v.variant)) ? str(v.variant) : 'bar'
+    const color = str(v.color) || 'var(--brand)'
+    const unit = str(v.unit)
+    const items = arr(v.items).map((it) => ({ label: str(it.label), value: num(it.value), color: it.color ? str(it.color) : '' }))
+    const max = Math.max(1, ...items.map((i) => i.value))
+    const pct = (val) => `${Math.round((val / max) * 100)}%`
+    if (variant === 'line' || variant === 'area') {
+      const g = chartGeom(items)
+      const area = variant === 'area' ? `<path d="${g.area}" class="cv-area" style="--c:${color}"></path>` : ''
+      const dots = g.pts.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="2.5" class="cv-pt" style="--c:${color}"></circle>`).join('')
+      const labels = g.pts.map((p) => `<span>${esc(p.label)}</span>`).join('')
+      return `<div class="cv-chart"><div class="cv-linechart"><svg viewBox="0 0 ${g.w} ${g.h}" class="cv-svg" role="img" aria-label="${esc(v.title || 'gráfico')}"><line x1="0" y1="${g.baseY}" x2="${g.w}" y2="${g.baseY}" class="cv-axis"></line>${area}<polyline points="${g.line}" class="cv-line" style="--c:${color}"></polyline>${dots}</svg><div class="cv-xlabels">${labels}</div></div></div>`
+    }
+    if (variant === 'columns') {
+      return `<div class="cv-chart"><div class="cv-cols">${items.map((c) => `<div class="cv-col"><span class="cv-colval">${esc(c.value)}${esc(unit)}</span><span class="cv-colbar" style="height:${pct(c.value)};--c:${c.color || 'var(--brand)'}"></span><span class="cv-collabel">${esc(c.label)}</span></div>`).join('')}</div></div>`
+    }
+    return `<div class="cv-chart"><div class="cv-bars">${items.map((c) => `<div class="cv-barrow"><span class="cv-barlabel">${esc(c.label)}</span><span class="cv-bartrack"><span class="cv-barfill" style="width:${pct(c.value)};--c:${c.color || 'var(--brand)'}"></span></span><span class="cv-barval">${esc(c.value)}${esc(unit)}</span></div>`).join('')}</div></div>`
+  },
+  diagram(v) {
+    return `<div class="cv-diagram" data-mermaid="${esc(v.code)}"><pre class="cv-codefallback">${esc(v.code)}</pre></div>`
+  },
+  flow(v) {
+    return flowViz(v)
+  },
+  'ticket-flow'(v) {
+    const states = arr(v.states).length ? arr(v.states).map(str) : FSM_DEFAULT
+    const current = str(v.current)
+    const cur = states.indexOf(current)
+    const blocked = current === 'blocked'
+    const nodes = states.map((name, i) => {
+      const status = blocked ? 'pending' : i < cur ? 'done' : i === cur ? 'current' : 'pending'
+      return `<div class="cv-fnode ${status}"><span class="cv-fdot" style="--c:${stateColor(name)}">${status === 'done' ? '✓' : i + 1}</span><span class="cv-flabel">${esc(name)}</span></div>`
+    }).join('')
+    const next = arr(v.next).map(str)
+    const nextBlock = next.length ? `<div class="cv-fnext"><span class="cv-fnextlab">siguiente:</span>${next.map((n) => `<span class="cv-fchip">${esc(n)}</span>`).join('')}</div>` : ''
+    const blk = blocked ? `<div class="cv-fblocked">● blocked</div>` : ''
+    return `<div class="cv-flow"><div class="cv-flowline">${nodes}</div>${blk}${nextBlock}</div>`
+  },
+  guards(v) {
+    const items = arr(v.items).map((it) => { const s = str(it.status); return { label: str(it.label), status: (['pass', 'warn', 'fail', 'na'].includes(s) ? s : 'na'), hint: str(it.hint) } })
+    return `<ul class="cv-guards">${items.map((g) => `<li><span class="cv-gico" style="--c:${GUARD_META[g.status].c}">${GUARD_META[g.status].ico}</span><div class="cv-gbody"><span class="cv-glabel">${esc(g.label)}</span>${g.hint ? `<span class="cv-ghint">${esc(g.hint)}</span>` : ''}</div></li>`).join('')}</ul>`
+  },
+  reqs(v) {
+    const items = arr(v.items).map((it) => { const c = str(it.certainty); return { code: str(it.code), statement: str(it.statement), certainty: ['confirmed', 'inferred', 'assumed', 'blocked'].includes(c) ? c : 'inferred', source: str(it.source) } })
+    return `<div class="cv-reqs">${items.map((r) => `<div class="cv-req" style="--c:${CERT_COLOR[r.certainty]}"><div class="cv-reqhead"><span class="cv-reqcode">${esc(r.code)}</span><span class="cv-reqcert" style="--c:${CERT_COLOR[r.certainty]}">${esc(r.certainty)}</span></div><div class="cv-reqstmt">${esc(r.statement)}</div>${r.source ? `<div class="cv-reqsrc">src: ${esc(r.source)}</div>` : ''}</div>`).join('')}</div>`
+  },
+  sessions(v) {
+    const items = arr(v.items).map((it) => ({ session: str(it.session), state: str(it.state) || 'open', tier: str(it.tier), note: str(it.note) }))
+    return `<div class="cv-sessions">${items.map((s) => `<div class="cv-sess" style="--c:${SESS_COLOR[s.state] || 'var(--muted)'}"><span class="cv-sessn">${esc(s.session)}</span><span class="cv-sessstate" style="--c:${SESS_COLOR[s.state] || 'var(--muted)'}">${esc(s.state)}</span>${s.tier ? `<span class="cv-sesstier">${esc(s.tier)}</span>` : ''}${s.note ? `<span class="cv-sessnote">${esc(s.note)}</span>` : ''}</div>`).join('')}</div>`
+  },
+  coverage(v) {
+    const value = num(v.value), max = num(v.max) > 0 ? num(v.max) : 100
+    const p = Math.max(0, Math.min(100, Math.round((value / max) * 100)))
+    const unit = str(v.unit)
+    return `<div class="cv-cov"><div class="cv-ring" style="--p:${p}"><span class="cv-ringval">${p}%</span></div><div class="cv-covmeta">${v.label ? `<div class="cv-covlabel">${esc(v.label)}</div>` : ''}<div class="cv-covnums">${esc(value)}${esc(unit)} / ${esc(max)}${esc(unit)}</div></div></div>`
+  },
+  html(v) {
+    const dirty = str(v.html)
+    const clean = dirty.replace(/<\/?(script|style|iframe|object|embed)[^>]*>/gi, '').replace(/\son\w+="[^"]*"/gi, '').replace(/\son\w+='[^']*'/gi, '').replace(/javascript:/gi, '')
+    return `<div class="cv-html">${clean}</div>`
+  },
+}
+
+function renderOne(v) {
+  const fn = RENDER[str(v.type)]
+  const inner = fn ? fn(v) : `<div class="cv-err">tipo de visual no soportado: ${esc(v.type)}</div>`
+  return `<div class="cviz" data-type="${esc(v.type)}">${titleBlock(v)}${inner}</div>`
+}
+
+// El servidor pre-renderiza el título y el cuerpo (#root) para que el artefacto se vea SIN JS. Con JS,
+// solo completamos lo que falte: título/subtítulo si vinieran vacíos, y el #root si el server no lo llenó
+// (fallback). Así no hay doble render ni parpadeo.
+if (!document.getElementById('doc-title').textContent.trim()) document.getElementById('doc-title').textContent = TITLE
+if (!document.getElementById('doc-sub').textContent.trim()) document.getElementById('doc-sub').textContent = SUBTITLE
+if (!document.title.trim()) document.title = 'Kanai · ' + TITLE
+{
+  const root = document.getElementById('root')
+  if (!root.children.length) root.innerHTML = arr(KANAI_VIZ).map(renderOne).join('')
+}
+
+// Tema: fija el inicial (THEME) y permite alternar. Re-renderiza mermaid al cambiar de tema.
+let currentTheme = THEME === 'light' ? 'light' : 'dark'
+function applyTheme(t) {
+  currentTheme = t
+  document.documentElement.setAttribute('data-theme', t)
+  const btn = document.getElementById('theme-toggle')
+  if (btn) btn.textContent = 'tema: ' + (t === 'light' ? 'claro' : 'oscuro')
+  renderDiagrams(t)
+}
+document.getElementById('theme-toggle').addEventListener('click', () => applyTheme(currentTheme === 'light' ? 'dark' : 'light'))
+
+let mermaidMod = null
+async function renderDiagrams(theme) {
+  const els = [...document.querySelectorAll('.cv-diagram[data-mermaid]')]
+  if (!els.length) return
+  try {
+    if (!mermaidMod) mermaidMod = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default
+    mermaidMod.initialize({ startOnLoad: false, theme: theme === 'light' ? 'default' : 'dark', securityLevel: 'strict', fontFamily: 'IBM Plex Mono, ui-monospace, monospace' })
+    for (let i = 0; i < els.length; i++) {
+      try {
+        const { svg } = await mermaidMod.render('kviz-d' + theme + i, els[i].getAttribute('data-mermaid'))
+        els[i].innerHTML = svg
+      } catch (e) { /* deja el fallback de código */ }
+    }
+  } catch (e) { /* sin red: queda el fallback de código */ }
+}
+
+applyTheme(currentTheme)
+</script>
+</body>
+</html>
