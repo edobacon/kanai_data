@@ -45,10 +45,10 @@ Contrato: rollback: `git rm kanai_test/text-report.mjs` (archivo nuevo, ningun o
 Contrato: rollback: `git rm kanai_test/text-report.test.mjs` (archivo nuevo; no altera las suites existentes).. Status: done
 
 #### S2.T1 — Agregar al final de `kanai_test/README.md` una seccion `textReport` siguiendo el patron de las secciones `normalizeText` (README.md:19) y `countNormalizedWords` (README.md:39): import desde `text-report.mjs`, ejemplo `textReport('hola mundo')` con su salida `{ normalized: 'hola mundo', words: 2, characters: 10 }`, y una linea indicando que un texto vacio o solo con espacios devuelve `{ normalized: '', words: 0, characters: 0 }` y que un valor que no es string lanza `TypeError`. No reescribir ni reordenar el contenido existente.
-Contrato: rollback: `git checkout -- kanai_test/README.md` (revierte solo las lineas agregadas; ningun archivo de codigo cambia).. Status: pending
+Contrato: rollback: `git checkout -- kanai_test/README.md` (revierte solo las lineas agregadas; ningun archivo de codigo cambia).. Status: done
 
 #### S2.T2 — Verificar que el ejemplo documentado coincide con la salida real y que la suite del sandbox sigue en verde: correr los tests del reporte y los de los dos modulos reusados para confirmar que no se tocaron.
-Contrato: rollback: No aplica: la task no modifica archivos (solo ejecuta tests); si falla, revertir la task de README con `git checkout -- kanai_test/README.md`.. Status: pending
+Contrato: rollback: No aplica: la task no modifica archivos (solo ejecuta tests); si falla, revertir la task de README con `git checkout -- kanai_test/README.md`.. Status: done
 ## Sessions
 
 ### Session 1 · T1 · continue
@@ -59,10 +59,10 @@ Contrato: rollback: No aplica: la task no modifica archivos (solo ejecuta tests)
 
 **Gate (auto)**: En la rama epic/KT-ACUM, `node --test kanai_test/text-report.test.mjs` pasa los 7 tests y `textReport('hola\n\tmundo')` devuelve `{ normalized: 'hola mundo', words: 2, characters: 10 }`.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T2
 
 **Gate (auto)**: `kanai_test/README.md` muestra, debajo de las secciones existentes, la seccion `textReport` con ejemplo de uso y salida; `git diff kanai_test/README.md` solo agrega lineas.
