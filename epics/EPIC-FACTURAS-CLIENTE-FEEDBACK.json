@@ -1,0 +1,2335 @@
+{
+  "id": "EPIC-FACTURAS-CLIENTE-FEEDBACK",
+  "projectId": "jormat-evolution",
+  "title": "Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)",
+  "objective": "Cubrir lo pedido por el cliente en el feedback funcional del 29-09-2026 para Ventas / Facturas Cliente: ventas persistidas, reglas de emision validadas en servidor, estados comerciales con saldo real, popup y estado de cuenta del cliente, anulacion con nota de credito, operacion de Bodega y envio SII simulado. Fuente de verdad: jormat_docs/tickets/JOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md.",
+  "scope": [
+    "JOR-169 Persistencia de ventas y correccion de migraciones de facturas",
+    "JOR-170 Reglas de emision en servidor, Super Usuario, utilidad y unificacion de bloqueo_descuento",
+    "JOR-171 Saldo, pagos, estados comerciales, tarjetas y filtros del listado",
+    "JOR-172 Popup del cliente, Estado de cuenta y cheques",
+    "JOR-173 Anular factura mediante nota de credito",
+    "JOR-174 Entrega Rapida, Formato Bodega e impresion de despacho",
+    "JOR-175 Envio SII simulado, Reenviar y acciones por estado",
+    "Fuera de alcance: convertir cotizaciones, notas de venta o presupuestos en factura (pendiente de respuesta del cliente, consulta P-01); integracion SII real"
+  ],
+  "exclusions": [],
+  "criteria": [
+    "Los 30 criterios de aceptacion de la seccion 7 del documento de decisiones se cumplen, verificados en API y despues de reiniciar el servicio",
+    "Migraciones pasan desde base vacia y como upgrade",
+    "Las reglas que bloquean la emision se validan en frontend y backend con datos reales",
+    "Suites existentes de ventas, compras, guias, solicitudes de pedido y pagos pasan"
+  ],
+  "requiredChecks": [
+    "quality-gate"
+  ],
+  "repo": "monorepo",
+  "baseBranch": "main",
+  "branch": "feature/facturas-cliente-feedback",
+  "tickets": [
+    {
+      "id": "JOR-169",
+      "title": "Facturas cliente (feedback) 1/7 · Persistencia de ventas y correccion de migraciones de facturas",
+      "body": "## Contexto\n\nParte 1 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). El feedback del cliente prevalece sobre el legacy.\n\nHoy Ventas trabaja en memoria (`backend/jormat-api/src/sales/sales.service.ts:332`, `STUB_DOCUMENTOS`): borradores, emisiones y lineas se pierden al reiniciar y no usan las tablas `invoices` / `invoice_items` creadas en el commit 937de25. Ademas la migracion de datos de facturas falla. Este ticket es la base del resto de la epica.\n## Alcance\n\n1. **T-01 Corregir backfill** de `backend/jormat-api/migrations/20261003000002_invoices_legacy_data.ts`: mapear `customer_id` a `customers.id` (entero), no a `customers.uuid` (hoy PostgreSQL devuelve 42804). Revisar `000004` (corre tarde y retorna si la columna ya es INTEGER). La API sigue exponiendo el UUID.\n2. **T-02 Instalacion desde cero**: `backend/jormat-api/migrations/20260924000000_rbac_bodega_orders_production.ts` falla en base vacia (FK `role_capabilities_role_id_foreign`, depende de `internal-admin`). Garantizar el orden o crear el rol.\n3. **T-04 Persistir Sales** sobre `invoices` / `invoice_items`:\n   - Borrador sin folio, editable y fuera de deuda (R-05).\n   - Emision: folio simulado separado del id, fecha y usuario de emision; emitida inmutable (R-07).\n   - Clonar crea un documento nuevo con identidad nueva.\n   - Integridad: FK de `invoice_items.invoice_id`, `item_id`, `location_id`; UNIQUE en los uuid; CHECK de cantidad positiva; `workspace_id` explicito (hoy default DEV).\n4. **T-03 Unidad del descuento de linea**: persistir porcentaje (y el importe calculado si se guarda), con unidad explicita (P-08.1).\n5. **P-04.1 Copia del receptor en el documento**: RUT, razon social, direccion, ciudad, telefono, guardados en la factura al emitir. Cambiar la ficha del cliente despues no altera la factura emitida.\n6. **T-13 Guardar N.P. y O.C.** en la factura (hoy N.P. solo vive en memoria del borrador, `backend/jormat-api/src/sales/sales.service.ts:610`; en el legacy tampoco se guardaba). Mostrarlos en detalle e impresion.\n7. Guardar en cada linea el **costo neto unitario** al emitir (lo usa la utilidad del ticket 2/7, P-09.2).\n## Criterios de aceptacion\n\n- Migraciones: `migrate:latest` pasa desde base vacia y como upgrade de una base con datos; los snapshots quedan con `customer_id` y `workspace_id` consistentes.\n- Guardar borrador, reiniciar el servicio y retomarlo con todas sus lineas (criterio 14 del doc).\n- Emitir asigna folio simulado; intentar editar una emitida devuelve error en el API.\n- Clonar crea otro documento; el original no cambia.\n- Cambiar la direccion del cliente despues de emitir no cambia la factura emitida (criterio 13).\n- N.P. y O.C. ingresadas se ven en detalle e impresion despues de reiniciar (criterio 27).\n- Tests existentes de `sales` siguen pasando o se adaptan solo si afirman el comportamiento en memoria.\n\n## Fuera de alcance\n\nReglas comerciales de emision (2/7), saldo y pagos (3/7), notas de credito (5/7), SII (7/7). Migracion historica completa de facturas.\n\n## Evidencia\n\nDoc de decisiones secciones 4.2 (P-04.1), 4.3 (P-08.1), 4.7 (P-01.1) y 5 (T-01 a T-04, T-13). La investigacion del backend del 03-10 (KB del proyecto, carpeta tickets) trae las pruebas de migraciones y la auditoria del esquema.",
+      "revision": "3a9b592ed09ef7f53ddd711ed427232a33cf0d4396991f0b940cf5c9fa0c8632",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "backend/jormat-api/src/sales/sales.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/migrations/20261003000002_invoices_legacy_data.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/migrations/20260924000000_rbac_bodega_orders_production.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        }
+      ],
+      "criteria": [
+        "Migraciones pasan desde base vacia y como upgrade, con customer_id y workspace_id consistentes",
+        "Borrador guardado sobrevive a un reinicio y se retoma con sus lineas",
+        "Emitida no se edita; clonar crea otro documento",
+        "Cambiar la direccion del cliente no altera una factura emitida",
+        "N.P. y O.C. se ven en detalle e impresion despues de reiniciar"
+      ]
+    },
+    {
+      "id": "JOR-170",
+      "title": "Facturas cliente (feedback) 2/7 · Reglas de emision en servidor, Super Usuario y utilidad",
+      "body": "## Contexto\n\nParte 2 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (persistencia).\n\nEl cliente exige que las reglas que bloquean la emision se validen en frontend **y** backend con datos reales (feedback §11, R-20). Hoy el backend no valida tope de ficha, bloqueo de descuento, precio minimo ni excepciones (`backend/jormat-api/src/sales/sales.service.ts` no lee `oil`, `maxDiscount` ni `minPrice`); el front tampoco aplica el tope de la ficha en modo importe (`front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:379`).\n\n**Reemplaza** lo definido en JOR-167 CA-09 (descuento de linea como monto sin tope): el tope se valida en porcentaje; la pantalla puede seguir aceptando importe, convertido a porcentaje para validar.\n## Alcance\n\n### Reglas para todo usuario (T-06, emision transaccional)\n- Cliente bloqueado (`customers.locked`) impide Facturar (R-09, P-07.1). Mensaje de referencia: \"Cliente bloqueado contactar gerencia, imposible generar venta\".\n- Stock de la bodega de origen: si la cantidad supera el disponible (incluido 0) se bloquea Facturar, se identifica el item y la cantidad queda para corregir (R-11, P-06.1). Aplica tambien a Super Usuario. Mensaje de referencia: \"Su sucursal no cuenta con stock suficiente para item ID {id} - Actual: {n}\".\n- Credito: solo 30 o 60 dias; vencimiento = fecha del documento + dias corridos (R-10, P-05.1).\n- Origen = bodega seleccionada; determina stock y ubicaciones (P-02.1).\n- Emision en una transaccion: cabecera, lineas y descuento de stock, con control concurrente; movimientos de inventario referenciados a la factura y sin duplicados ante reintentos (T-07).\n\n### Reglas del usuario comun\n- Descuento de linea en porcentaje sobre precio neto x cantidad, con tope `ds_max_discount` de la ficha (R-12, P-08.1).\n- Descuento general maximo 20%; excluyente con descuentos de linea (R-13, P-08.2).\n- Repuestos con **Bloqueo Descuento** en la ficha: sin descuento de linea y bloquean el descuento general mientras haya al menos uno en la factura (P-08.2).\n- Precio minimo = precio neto de venta vigente de la ficha (`nm_net`, no el costo `net_price`); al retomar borrador se actualiza y se avisa (R-14, P-08.3).\n- Al crear desde otro documento (factura, guia), los valores copiados pasan por estas reglas; si incumplen, se bloquea Facturar (P-01.2, P-01.2.D1).\n\n### T-10 Unificar `oil` y `bloqueo_descuento`\nHoy la ficha y el CSV escriben solo `bloqueo_descuento` (`backend/jormat-api/src/items/items.repository.ts:822`, `backend/jormat-api/src/items/csv/items-import.util.ts:196`) y ventas/compras/guias leen solo `oil`: marcar el bloqueo no tiene efecto. Decision (opcion A): migracion que copia `oil = 1` a `bloqueo_descuento = 1` y elimina `oil`; cambiar lectores (`backend/jormat-api/src/items/dto/item.dto.ts` y listado de `backend/jormat-api/src/items/items.repository.ts`, `front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx`, `front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx`, `front/jormat-front/src/components/compras/builder/PurchaseInvoiceBuilder.tsx`, `front/jormat-front/src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx`, `front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx`); badge \"Aceite\" pasa a \"Bloqueo descuento\". Correr pruebas de Compras, Guias y Solicitudes de pedido.\n\n### Super Usuario (P-09.1, R-15, R-16)\n- Capability nueva (nombre propuesto `sales.invoices:commercial-override`), validada en el backend. `owner` e `internal-admin` la reciben; crear rol \"Super Usuario\" con ella.\n- Habilita: superar tope de ficha y descontar repuestos con Bloqueo Descuento en la linea; descuento general **hasta 80%**; precio bajo el vigente; ver costo y utilidad.\n- No habilita: facturar a cliente bloqueado o sin stock, ni combinar descuento general con un repuesto con Bloqueo Descuento.\n\n### Utilidad (P-09.2, R-17)\nSolo con la capability. Por linea y total: monto = venta neta despues de descuentos - costo neto x cantidad; porcentaje = monto / venta neta x 100 (margen sobre venta). Costo = costo neto de compra de la ficha al emitir, guardado en la linea (1/7). Sin costo o venta 0: \"Sin dato\".\n## Criterios de aceptacion (verificados en API)\n\n- Cliente bloqueado: el API rechaza la emision aunque el front se salte el boton (criterio 6).\n- Stock 3, cantidad 5: rechazo; dos emisiones simultaneas con stock para una no dejan stock negativo (criterio 7).\n- Usuario comun: tope de ficha, precio bajo el vigente o general combinado con linea: rechazo (criterio 8).\n- Repuesto con Bloqueo Descuento + otro repuesto: general bloqueado; quitarlo lo habilita solo si no queda otro (criterio 9).\n- Super Usuario baja precio y supera topes, ve utilidad; no factura a bloqueado ni sin stock (criterio 10). General 80% se acepta, 81% se rechaza; usuario comun limite 20% (criterio 28).\n- Credito solo 30 o 60 (criterio 11).\n- Venta 100.000, costo 80.000: utilidad $20.000 (20%); cambiar el costo de la ficha despues no altera la factura emitida (criterio 26).\n- Marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura, tambien en el API (criterio 30).\n\n## Fuera de alcance\n\nSaldo y pagos (3/7). Tarifas por cliente/sucursal. Excepciones de stock para Super Usuario.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-09 a R-17, R-20), 4.2, 4.3, 4.4, 4.7 y 5 (T-06, T-07, T-10). La evidencia del legacy (regla de Bloqueo Descuento, rotulo de la ficha, vista especial con tope 80% y calculo de utilidad), con archivo y linea, esta en esas secciones del doc.",
+      "revision": "4e1b333f086a64e85848aaeb61d4ee7d6f25b3569287e2fbe5da91fe1b855fe7",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [
+        "JOR-169"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "backend/jormat-api/src/sales/sales.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/src/items/items.repository.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/src/items/csv/items-import.util.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/src/items/dto/item.dto.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "front/jormat-front/src/components/compras/builder/PurchaseInvoiceBuilder.tsx",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "front/jormat-front/src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        }
+      ],
+      "criteria": [
+        "Cliente bloqueado y stock insuficiente se rechazan en el API, sin stock negativo con emisiones simultaneas",
+        "Usuario comun: tope de ficha, precio bajo el vigente y descuento general combinado se rechazan; general maximo 20%",
+        "Bloqueo Descuento marcado en la ficha bloquea descuento de linea y general, tambien en el API",
+        "Super Usuario supera topes, general hasta 80% (81% rechazado), ve utilidad; no factura a bloqueado ni sin stock",
+        "Utilidad 100.000 / 80.000 = $20.000 (20%) y no cambia si cambia el costo de la ficha",
+        "Credito solo 30 o 60 dias"
+      ]
+    },
+    {
+      "id": "JOR-171",
+      "title": "Facturas cliente (feedback) 3/7 · Saldo, pagos y estados comerciales en el listado",
+      "body": "## Contexto\n\nParte 3 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7.\n\nEl cliente pide que el listado muestre informacion comercial (pago y vencimiento), no solo estado SII (feedback §3.1 a §3.3, captura p. 6). Hoy Payments usa SEED (`backend/jormat-api/src/payments/payments.service.ts:63`), `applyPayment` no persiste, y la etiqueta Vencida compara vencimiento con estado SII \"aceptado\", que no acredita pago. Ventas y Cobranza no comparten datos.\n## Alcance\n\n1. **P-13.1 Pagos persistidos** en el modulo de Cobranza de Evolution (capabilities existentes `payments.customers:record-payment` y `apply-payment`): pago (cliente, fecha, importe, medio, referencia, usuario, vigente/revertido) y aplicacion a factura (importe aplicado). Reutilizar `payment_methods`.\n2. **T-05 Proyeccion unica de saldo**: saldo = total - pagos aplicados - notas de credito aplicadas. La usan estado, listado, tarjetas, popup (4/7) y Estado de cuenta (4/7). Sin tabla de \"vencidas\".\n3. **Estados comerciales (R-05)**: Borrador (sin folio, fuera de deuda), Pendiente de pago (emitida, saldo > 0, dentro del plazo), Pagada (saldo 0), Vencida (saldo > 0 y plazo de 30/60 dias cumplido). Separados del estado SII simulado.\n4. **Tarjetas (R-02, P-14.2 opcion B)**: Pendientes de pago (con saldo **dentro del plazo**), Vencidos (con saldo y plazo cumplido), Notas de credito (todas las emitidas). Borradores no cuentan. Reemplazan las tarjetas actuales centradas en SII.\n5. **P-14.1 opcion A**: las tarjetas cuentan los documentos que cumplen los filtros activos y el acceso del usuario; se recalculan al aplicar o limpiar filtros. Agregacion en servidor sobre datos persistidos.\n6. **Filtros y busqueda (R-03, R-04)**: RUT, nombre o razon social, Origen, O.C. (columna \"Orden\"), rango de fechas (se mantiene) y estado comercial (Borrador, Pendiente de pago, Pagada, Vencida). Quitar el filtro marcado en la captura p. 6.\n7. **R-01**: excluir guias de despacho del listado.\n\n## Criterios de aceptacion\n\n- Las guias de despacho no aparecen (criterio 1).\n- Credito 30 dias emitida hace 31 dias con saldo: Vencida, cuenta en \"Vencidos\" y no en \"Pendientes de pago\" (criterio 2).\n- Dos pagos parciales que completan el total: Pagada, sale de ambos contadores (criterio 3).\n- Un borrador no cuenta en deuda ni tarjetas (criterio 4).\n- Cada filtro devuelve el conjunto esperado (criterio 5).\n- Con un rango de fechas, los tres contadores coinciden con la tabla filtrada; al limpiar vuelven al total del usuario (criterio 29).\n- Un pago registrado sobrevive a un reinicio y se refleja en estado y tarjetas.\n\n## Fuera de alcance\n\nNotas de credito y su aplicacion (5/7; este ticket deja la proyeccion preparada para sumarlas). Cheques (4/7). Reportes de cobranza.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-01 a R-05), 4.1 (P-13.1, P-14.1, P-14.2) y 5 (T-05). La formula de saldo del legacy (total menos pagos) esta citada con archivo y linea en la seccion 4.1. Summary actual en `backend/jormat-api/src/sales/sales.service.ts:447`.",
+      "revision": "0087d904934f9e9b1dcceccd06c5874ed44daf790509da60b3b3f515c06554f1",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [
+        "JOR-169"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "backend/jormat-api/src/payments/payments.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/src/sales/sales.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        }
+      ],
+      "criteria": [
+        "Guias de despacho excluidas del listado",
+        "Estados Borrador, Pendiente de pago, Pagada y Vencida calculados con saldo y vencimiento",
+        "Tarjetas: Pendientes dentro de plazo, Vencidos y Notas de credito; borradores excluidos",
+        "Tarjetas respetan los filtros activos y coinciden con la tabla",
+        "Pagos persistidos se reflejan en estado y tarjetas despues de reiniciar"
+      ]
+    },
+    {
+      "id": "JOR-172",
+      "title": "Facturas cliente (feedback) 4/7 · Popup del cliente, Estado de cuenta y cheques",
+      "body": "## Contexto\n\nParte 4 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 3/7 (proyeccion de saldo).\n\nAl seleccionar el cliente en Crear factura se muestra el popup \"Informacion adicional / Documentos pendientes\" con credito, bloqueo y contadores (R-08, captura p. 7). Hoy `getClienteNotification` devuelve credito y bloqueo reales pero los contadores en `null` (`backend/jormat-api/src/catalogos/catalogos.service.ts:96`). \"Mas detalles\" no tiene destino en Evolution y no existe registro de cheques.\n## Alcance\n\n1. **Contador Facturas (P-03.1)**: facturas emitidas con saldo, separadas en Pendiente de pago y Vencida, sumando todas las sucursales del cliente. No usar el criterio legacy `status != 2`.\n2. **Contador Notas (P-03.2)**: notas de credito con saldo disponible (no aplicadas por completo). Si 5/7 aun no esta, el contador queda en 0 con datos reales.\n3. **Contador Cheques (P-03.2 y D1, opcion B)**: cheques **rechazados (protestados)** del cliente. No cuenta pendientes, depositados ni validados.\n4. **T-11 Registro de cheques**: tabla persistente minima (cliente, numero, banco, importe, fechas, estado del catalogo `statuses` modulo 3 ya migrado: 1 Pendiente, 2 Validada, 3 Rechazada, 4 Depositado; vinculo a facturas). Solo lo necesario para el contador; la gestion completa de cheques es otro modulo.\n5. **T-08**: contadores calculados desde documentos reales, con la proyeccion de 3/7.\n6. **T-12 Estado de cuenta del cliente** (destino de \"Mas detalles\", JOR-167-Q8): pantalla aparte que se abre en pestana nueva. Cabecera con datos del cliente y estado Activo/Bloqueado; filtro por rango de fechas; grilla con facturas con saldo y notas con saldo disponible. Columnas: Tipo documento, N° documento (abre el detalle), Origen, Estado, Fecha, Total, Abono, Pendiente (con suma). Sin cheques.\n\n## Criterios de aceptacion\n\n- Popup con credito, bloqueo, facturas con saldo (todas las sucursales, separadas por estado) y notas con saldo disponible, con datos reales (criterio 12).\n- Cliente con un cheque Rechazado y otro Pendiente: \"Cheques: 1\" (criterio 24).\n- \"Mas detalles\" abre el Estado de cuenta en otra pestana; el pendiente coincide con el del popup y el listado (criterio 25).\n\n## Fuera de alcance\n\nGestion completa de cheques (depositar, validar, rechazar). Notificaciones automaticas.\n\n## Evidencia\n\nDoc de decisiones secciones 4.2 (P-03.1, P-03.2, JOR-167-Q8) y 5 (T-08, T-11, T-12). El popup, la pantalla Estado de cuenta y la consulta de cheques del legacy estan citados con archivo y linea en la seccion 4.2. Catalogo de estados en Evolution: `backend/jormat-api/migrations/20260914000000_types_statuses_legacy.ts:37`.",
+      "revision": "2fad6554bdfc0898c690a814ee4f2cef4c2d88efe1a8343bb2d1f85e39673f5e",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [
+        "JOR-171"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "backend/jormat-api/src/catalogos/catalogos.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/migrations/20260914000000_types_statuses_legacy.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        }
+      ],
+      "criteria": [
+        "Popup con credito, bloqueo, facturas con saldo de todas las sucursales y notas con saldo disponible",
+        "Contador de cheques cuenta solo rechazados",
+        "Mas detalles abre el Estado de cuenta en otra pestana y su pendiente coincide con popup y listado"
+      ]
+    },
+    {
+      "id": "JOR-173",
+      "title": "Facturas cliente (feedback) 5/7 · Anular factura mediante nota de credito",
+      "body": "## Contexto\n\nParte 5 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (persistencia), 2/7 (movimientos de stock) y 3/7 (saldo).\n\nEl cliente pide la accion \"Convertir en Nota de Credito / Anular\" vinculada al documento original (feedback §3.4). En el legacy no existe esa accion: la nota se crea en un modulo aparte, copia las lineas y permite editarlas sin control; no reduce la deuda de la factura. Se toman del legacy los datos y efectos y se agrega el control que pide el cliente.\n## Alcance\n\n1. **P-10.1 Anulacion total** desde el menu de la factura emitida: nota por todas las lineas e importes, vinculada a la factura. La nota reutiliza cabecera y lineas de documento de venta.\n2. **Datos que pide**: Tipo **Devolucion** o **Falla**, y observacion libre.\n3. **Permiso**: capability existente `sales.documents:void` (equivalente al `nota-de-credito-edit` del legacy), validada en el backend.\n4. **P-10.1.D1**: una segunda nota sobre una factura ya anulada se rechaza.\n5. **P-10.2 Efectos, en una sola operacion**:\n   - Saldo: la deuda de la factura baja a 0 (la factura no puede seguir Pendiente ni Vencida).\n   - Stock segun tipo: Devolucion reingresa las cantidades a la bodega de origen; Falla no mueve stock. Movimientos referenciados a la nota, sin duplicados.\n6. **P-10.2.D1 opcion A**: si la factura tenia pagos, el pago se mantiene y el importe anulado queda como **credito disponible del cliente** (nota con saldo disponible), visible en el popup y en el Estado de cuenta (4/7). La factura muestra la nota vinculada y su condicion de anulada. La aplicacion posterior de ese credito a otra factura se registra con vinculo real (no texto libre).\n7. La proyeccion de saldo (3/7) suma las notas aplicadas.\n\n## Criterios de aceptacion\n\n- Anular factura sin pagos con tipo Devolucion: nota vinculada, deuda 0, stock reingresado en la bodega de origen (criterio 15).\n- Tipo Falla: igual, sin movimiento de stock (criterio 16).\n- Factura pagada de $100.000: el pago se mantiene y el cliente queda con $100.000 de credito disponible (criterio 17).\n- Segundo intento de anular la misma factura: rechazo (criterio 18).\n- Usuario sin `sales.documents:void`: el API rechaza.\n\n## Fuera de alcance\n\nNotas parciales. Devolucion de dinero. Nota de credito desde el modulo de notas independiente.\n\n## Evidencia\n\nDoc de decisiones seccion 4.5: selector Devolucion/Falla, observacion, efecto en stock por tipo, nota No Aplicada como saldo a favor y permiso del legacy, con archivo y linea. Capability en Evolution: `backend/jormat-api/seeds/05_sales_capabilities.ts:26`.",
+      "revision": "8f7ef292a70bfc497768c2b0fb17939caeeb065ba6ca584b876553a550b5bfc1",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [
+        "JOR-169",
+        "JOR-170",
+        "JOR-171"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "backend/jormat-api/seeds/05_sales_capabilities.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        }
+      ],
+      "criteria": [
+        "Anulacion total con tipo Devolucion: nota vinculada, deuda 0 y stock reingresado",
+        "Tipo Falla: sin movimiento de stock",
+        "Factura pagada: el pago se mantiene y queda credito disponible del cliente",
+        "Segunda anulacion de la misma factura rechazada",
+        "Sin sales.documents:void el API rechaza"
+      ]
+    },
+    {
+      "id": "JOR-174",
+      "title": "Facturas cliente (feedback) 6/7 · Entrega Rapida, Formato Bodega e impresion de despacho",
+      "body": "## Contexto\n\nParte 6 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (persistencia y copia del receptor) y 2/7 (stock descontado al emitir).\n\nEl cliente pide mantener Entrega Rapida, un Formato Bodega con ubicacion fisica y la impresion de datos de despacho desde Visualizar (feedback §3.4, §8, capturas p. 5, 6 y 9). Hoy no existen como acciones en Evolution.\n## Alcance\n\n1. **Entrega Rapida (P-11.1 opcion A)**: accion de fila para facturas emitidas no entregadas. Entrega completa en un clic, sin exigir pago. Registra usuario, fecha y comentario (`is_out`, `date_out`, `user_out_id`, `commentary_out`). No descuenta stock (ya se desconto al emitir). **Idempotente**: una segunda llamada no reescribe ni mueve stock. Permiso: definir capability de Bodega o reutilizar una existente.\n2. **Formato Bodega (R-19, P-12.1 opcion A)**: vista imprimible distinta de la factura comercial, desde el menu y desde Visualizar. Incluye identificacion de la factura, cliente, codigo, descripcion, cantidad y **ubicacion** registrada del repuesto en la bodega de origen (si tiene varias, todas). Orden = orden de lineas. Repuesto sin ubicacion: \"Sin ubicacion\" (no desaparece).\n3. **Imprimir datos de despacho (R-18, P-12.2 opcion A)**: desde Visualizar. Destinatario, RUT, telefono, direccion, ciudad, transporte y observacion **guardados en la factura**, mas bloque de remitente (Jormat). Cantidad de bultos, dimensiones, peso y fragil se completan en la pantalla de impresion y **no se persisten**.\n4. **T-09 Selector de transporte** conectado al catalogo real `transport_companies` (hoy simulado).\n5. **Visualizar** con imprimir factura e imprimir datos de despacho (R-06).\n\n## Criterios de aceptacion\n\n- Entrega Rapida repetida no reescribe fecha/usuario ni mueve stock (criterio 19).\n- Formato Bodega lista la ubicacion de cada repuesto; uno sin ubicacion aparece con \"Sin ubicacion\" (criterio 20).\n- Imprimir datos de despacho usa los datos guardados en la factura y permite completar bultos, dimensiones, peso y fragil (criterio 21).\n- Ninguna de estas acciones espera el estado SII (P-15.1.D1).\n\n## Fuera de alcance\n\nEntrega parcial. Asignacion de ubicaciones de picking. Reservas de stock.\n\n## Evidencia\n\nDoc de decisiones seccion 4.6 y 5 (T-09): Entrega Rapida, ubicaciones, formulario de despacho y formato Bodega del legacy, con archivo y linea.",
+      "revision": "7cf2861708459ecd50ec7341e00675f0819603442c29272c9086912d2e796b8c",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [
+        "JOR-169",
+        "JOR-170"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "Entrega Rapida repetida no reescribe ni mueve stock",
+        "Formato Bodega muestra ubicacion por repuesto y Sin ubicacion cuando falta",
+        "Imprimir datos de despacho usa los datos guardados y permite completar bultos, dimensiones, peso y fragil",
+        "Ninguna accion espera el estado SII"
+      ]
+    },
+    {
+      "id": "JOR-175",
+      "title": "Facturas cliente (feedback) 7/7 · Envio SII simulado, Reenviar y acciones por estado",
+      "body": "## Contexto\n\nParte 7 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (emision persistida).\n\nEl SII sigue como maqueta (R-21): numeracion, envio y resultados se muestran como simulados; no se agregan CAF, firma, credenciales ni conexion real. Hoy `issueFactura` asigna folio en memoria y un estado SII forzable; no hay envio ni reenvio. El cliente pide el menu completo de acciones por fila (R-06).\n## Alcance\n\n1. **T-14 / P-15.1**: al Facturar se emite y se **envia de inmediato** (simulado), se muestra el aviso \"Documento enviado al SII (simulado)\" y se vuelve al listado, como en el legacy. Guardar resultado y fecha de cada intento simulado (estados demo: aceptado, aceptado con reparos, rechazado).\n2. **Reenviar**: accion de fila para facturas emitidas, segun permiso y sin depender del estado; registra un nuevo intento simulado sin alterar el documento. Permiso: capability nueva o `sales.invoices:issue`.\n3. **P-15.1.D1**: ninguna accion de Bodega espera el resultado SII.\n4. **Menu de acciones por fila (R-06, R-07)** con sus condiciones:\n   - Visualizar: siempre.\n   - Clonar: siempre (`sales.invoices:edit`).\n   - Editar: solo Borrador.\n   - Anular (nota de credito): emitidas no anuladas (`sales.documents:void`, 5/7).\n   - Reenviar SII: emitidas.\n   - Entrega Rapida: emitidas no entregadas (6/7).\n   - Formato Bodega: emitidas (6/7).\n5. Banner y rotulos de simulacion en todas las vistas que muestran folio o estado SII.\n\n## Criterios de aceptacion\n\n- Toda numeracion y envio SII se identifica como simulado (criterio 22).\n- Facturar envia de inmediato y vuelve al listado; Reenviar registra un nuevo intento sin alterar el documento; Entrega Rapida y Formato Bodega disponibles sin esperar el resultado (criterio 23).\n- Cada accion del menu aparece solo en los estados indicados y el API rechaza la accion fuera de ellos.\n\n## Fuera de alcance\n\nIntegracion real con el SII (XML, firma, CAF, folios autorizados, consulta de estado).\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-06, R-07, R-21), 4.8 y 5 (T-14): envio inmediato y Reenviar del legacy, con archivo y linea. Evolution: `backend/jormat-api/src/sales/sales.service.ts:523` (issueFactura), `backend/jormat-api/src/sales/dto/documento.dto.ts:20` (estados demo), banner `front/jormat-front/src/components/shared/SimulacionSiiBanner/SimulacionSiiBanner.tsx`.",
+      "revision": "8b92b0838e0cd5bd62865ba152e5da70b3b38f634e4a70cd5ffa76685f6ed099",
+      "repo": "monorepo",
+      "aliases": [],
+      "scopeApproved": true,
+      "dependencies": [
+        "JOR-169"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "backend/jormat-api/src/sales/sales.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/src/sales/dto/documento.dto.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "front/jormat-front/src/components/shared/SimulacionSiiBanner/SimulacionSiiBanner.tsx",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        }
+      ],
+      "criteria": [
+        "Toda numeracion y envio SII se identifica como simulado",
+        "Facturar envia de inmediato y vuelve al listado",
+        "Reenviar registra un nuevo intento sin alterar el documento",
+        "Cada accion del menu aparece solo en sus estados y el API la rechaza fuera de ellos"
+      ]
+    }
+  ],
+  "externalEvidence": {},
+  "dependencyWork": [],
+  "readPaths": [
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/items/items/update/items-update.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoices-create-key.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoicesCreateKeyController.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create/clientsInvoicesCreateController.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/list/dropdownActionsMenu.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customer-notification.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customerNotificationController.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/packOff/print-pack-off.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/warehouse-print/invoice-warehouse-print.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients/account/accountStatusController.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/create/credit-notes-create.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/list/credit-notes-list.html",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/clients/model.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/invoices/model.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/notes/model.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/payments/model.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/warehouseDeliveries/model.js",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+    "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-investigacion-backend-main-2026-10-03.md"
+  ],
+  "repositoryRoot": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-evolution-mono",
+  "readRequirements": [
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/clients/model.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/invoices/model.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/notes/model.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/payments/model.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/warehouseDeliveries/model.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/items/items/update/items-update.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoices-create-key.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoicesCreateKeyController.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create/clientsInvoicesCreateController.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/list/dropdownActionsMenu.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customer-notification.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customerNotificationController.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/packOff/print-pack-off.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/warehouse-print/invoice-warehouse-print.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients/account/accountStatusController.js",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/create/credit-notes-create.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    },
+    {
+      "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/list/credit-notes-list.html",
+      "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+      "ticketIds": [],
+      "sources": [
+        "Lectura declarada en el plan"
+      ]
+    }
+  ],
+  "version": 4,
+  "dependencies": [
+    {
+      "from": "JOR-166",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-01",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-02",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-04",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-05",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-07",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-03",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-08",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-04",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-13",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-09",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-01",
+      "to": "JOR-169",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-169:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-169",
+      "to": "JOR-170",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-170:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-166",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-20",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "CA-09",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-06",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-09",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-07",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-11",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-06",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-10",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-05",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-02",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-07",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-12",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-08",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-13",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-14",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-01",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-10",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-09",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-15",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-16",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-17",
+      "to": "JOR-170",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-170:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-169",
+      "to": "JOR-171",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-171:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-166",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-13",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-05",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-05",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-02",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-14",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-03",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-04",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-01",
+      "to": "JOR-171",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-171:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-171",
+      "to": "JOR-172",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-172:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-166",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-08",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-03",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-11",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-08",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-12",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167-Q8",
+      "to": "JOR-172",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-172:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-169",
+      "to": "JOR-173",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-173:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-170",
+      "to": "JOR-173",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-173:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-171",
+      "to": "JOR-173",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-173:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-166",
+      "to": "JOR-173",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-173:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-173",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-173:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-10",
+      "to": "JOR-173",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-173:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-169",
+      "to": "JOR-174",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-174:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-170",
+      "to": "JOR-174",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-174:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-166",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-11",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-19",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-12",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-18",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-09",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-06",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-15",
+      "to": "JOR-174",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-174:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-169",
+      "to": "JOR-175",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "JOR-175:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "JOR-166",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "JOR-167",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-21",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-06",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "T-14",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "P-15",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "R-07",
+      "to": "JOR-175",
+      "origin": "inferred",
+      "reason": "Contexto, no dependencia",
+      "source": "JOR-175:body",
+      "accepted": false,
+      "dismissed": true
+    }
+  ],
+  "order": [
+    "JOR-169",
+    "JOR-170",
+    "JOR-171",
+    "JOR-172",
+    "JOR-173",
+    "JOR-174",
+    "JOR-175"
+  ],
+  "approvedFingerprint": "2a56ccf8aa0e7a17abd36cee89571a45dda1cc44c81ce02cfbd19f6eb2bd46d9",
+  "approvedBy": "human-confirmed",
+  "history": [],
+  "events": [
+    {
+      "id": "42845f78-4730-4762-9394-6dabe448f277",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:33:57.968Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "create",
+      "source": "kanai-server",
+      "durationMs": 74
+    },
+    {
+      "id": "8b3611d1-2086-46fb-83fa-468939d4b0c1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:37:18.462Z",
+      "kind": "plan_changed",
+      "planVersion": 2
+    },
+    {
+      "id": "8f7b3d46-13f6-413c-babb-6fef112fa362",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:37:18.467Z",
+      "kind": "operation_completed",
+      "planVersion": 2,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 96
+    },
+    {
+      "id": "a127236f-35da-4272-9371-aad445777a78",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:37:27.218Z",
+      "kind": "plan_evaluated",
+      "planVersion": 2
+    },
+    {
+      "id": "860e70ec-b890-4f87-85f0-973ce665c4fe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:37:27.224Z",
+      "kind": "operation_completed",
+      "planVersion": 2,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 15
+    },
+    {
+      "id": "4871bb09-b7d4-4434-89b8-5faa9d298103",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:50:27.878Z",
+      "kind": "plan_changed",
+      "planVersion": 3
+    },
+    {
+      "id": "9c5771c5-bbe0-4ba5-b9e9-b6d7c02eb072",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:50:27.883Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 90
+    },
+    {
+      "id": "56a00930-b3b0-43e8-b6b1-4703c0b3803b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:50:30.337Z",
+      "kind": "plan_evaluated",
+      "planVersion": 3
+    },
+    {
+      "id": "42a4830c-a1ae-40cd-8dc9-31b32a4b58bf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:50:30.342Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 10
+    },
+    {
+      "id": "6d27f50b-a220-4263-9d73-c7104d0ae848",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5879b534-c400-44af-8104-eea4c3085d80",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "783a1b9b-fd1c-47e1-8881-36b5ece9e9e4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-01\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f32a1a77-8a02-4f66-8dac-142d4f4cae10",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-02\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0f2c24b8-f6ad-4afa-83c6-e04c91ffff5a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-04\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e0cb919c-3310-4b65-b194-7a3c91ca1231",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-05\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "dae5953c-a391-49e5-87b5-42f269fc7fd2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-07\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "6a4979ae-9d4e-44b1-8fa8-e09d1d9bfe4e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-03\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "24306730-457e-4b4c-b8c1-a2dba4863cb0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-08\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7776221d-2f99-469d-b7f3-a3c5ef4019cd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-04\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "c5f52b56-323e-40b4-a527-8722020295f5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-13\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b16647ac-d0df-43c1-b619-bfd02a69418a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-09\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f217c857-e1e2-4247-8a16-0138fc72e474",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-01\",\"to\":\"JOR-169\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "6f5b23f0-7e98-49d7-8580-bfffd98fb36e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "fa27532d-310b-4034-8393-f07f379e739c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "c67534ab-d4ea-4702-a1f3-1d15fe792477",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-20\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8f119a23-987b-4ff6-9f3a-a0efd7469cfb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"CA-09\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "fee144b0-3073-4985-b2fa-6a7e1ebf5d1e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-06\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8685e2f3-5733-4138-bbc1-31a77a8f9722",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-09\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7e5063be-2401-4bf8-b10f-7b136cd960fe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-07\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "93f5ee0f-0c30-4ad0-a262-bb93cd1c85f6",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-11\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "eae666d5-a984-404f-9a2a-4b922bfbd154",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-06\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7eb7c74c-6b35-44ae-b455-5e69ccd68ff5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-10\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "c4225774-303d-4431-aa38-53adcb98c9ec",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-05\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "259836f6-d9c9-4bf1-84d7-e5f5ab8c5d05",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-02\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "77389cf9-9868-44e3-8fd2-c7496e13db4f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-07\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "187248a2-2931-40a4-a296-a220ee4801ba",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-12\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "42f3703c-20ce-4760-a969-e1b278bcf674",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-08\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d95196f1-3ba3-49ed-83b2-5a730be6fdc7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-13\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a5da5bd9-c34f-44a0-8d40-698c5d30deb3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-14\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "47074625-af51-4d69-b476-ecff2fb7af94",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-01\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a6303e7f-ffb7-4bbd-8f04-4ada059bd3fb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-10\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "c77925e9-3b66-46b1-82ec-9ed559fd1bf0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-09\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "4e6f29e0-f707-45b6-b144-468bce33f245",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-15\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8e0b8156-4515-4d65-9b81-b6302d4dfe0b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-16\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d31efd6d-702d-4c20-a856-5d3267d97fc8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-17\",\"to\":\"JOR-170\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1402de19-badc-418d-9108-254805d4f1ba",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f0af6fdf-09a0-49d0-bca9-87c023ef38f5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f096099e-0504-466d-ae42-32f6b31c429b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-13\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "cc577473-76d9-497d-82de-3dd5c1e0ba12",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-05\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "78546bff-eb0d-4d6f-bebb-2ca6f2c25dd3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-05\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "70c4b284-6ce7-469d-b65b-f0a6b7fefa5c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-02\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2651199c-55a4-4e6d-8411-2edcd182ecf0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-14\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e678f28f-d876-4957-b360-8ec07b784504",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-03\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "660fe70f-8e26-4777-9451-1d6916eda780",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-04\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "401f402a-9180-408c-ab9b-3964fb891397",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-01\",\"to\":\"JOR-171\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5fb9eca4-7515-42b2-8711-4c9b94076c7b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "dfb2e883-1bfa-4455-b82e-9de273001a1e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "86d55bfa-6ef9-4523-b645-cc9f3bef9b8e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-08\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0e575b5b-ffb7-4a1c-8f13-0901e26913de",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-03\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "61b5e7fe-9efc-4d69-b5e7-28f1ec89cd7f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-11\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "fd108a5c-679e-4045-87e0-fdb148929548",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-08\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "29358e3f-4cba-474f-92f0-9f3807d24a47",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-12\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "931484fc-ded3-4465-83ba-3a68f49c2341",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167-Q8\",\"to\":\"JOR-172\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "45492c56-ab6d-4964-85b0-9af918b18745",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-173",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-173\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8039bc1f-569a-44e5-9017-22f1c8010d1f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-173",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-173\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0d71007b-d55d-4b1d-9375-309bbcb43816",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-173",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-10\",\"to\":\"JOR-173\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f33e6e19-5b55-4c92-821b-aeffd7213ef2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "022d2b43-b72e-41ca-b118-efc0ff30e269",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d499e6bd-9641-4188-a7cb-6edd339828e1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-11\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "bd89d8c9-364e-435d-a943-e18e1f6c7583",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-19\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b55a1686-456a-42eb-a61e-7cff996a7d6b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-12\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5d82170a-022f-4e9a-90c6-f4cd0c1a78f7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-18\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5bf51e92-76d1-490e-8d88-17f3f4c21d34",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-09\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "6cf6efc2-4bdf-4203-90c7-3a35dcad02d5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-06\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "3925b3aa-85bd-4dea-9f5c-8c837c56ae23",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-15\",\"to\":\"JOR-174\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "81483e88-5a14-4ff1-8e93-ceda7e5cf80b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-166\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f4c49200-976a-46dd-b11a-0488230bb79e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"JOR-167\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "4fed9398-fdd2-4036-8ba6-77f92771618a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-21\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5e9f1f29-29f8-4b82-b27a-9a638c90556e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-06\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1c14b857-d60b-48c8-aa3b-abde18eeeb6b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"T-14\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "9168b645-8cc0-4131-a4ca-4f93fe90303a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"P-15\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "9cba1927-5bc3-4c51-bfde-c32658637319",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Contexto, no dependencia",
+      "evidence": [
+        "{\"from\":\"R-07\",\"to\":\"JOR-175\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a1a4cf09-881b-430c-a459-5d39c78b4522",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-169",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-169\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "08991be8-481a-45ec-9295-0067b975ad35",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-170",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-170\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "67e95412-17bc-4247-9b41-bd99f2da42fb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-171",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-171\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "1bc1bd30-6f99-4272-ad78-16be88d82110",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-172",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-172\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "527ed0d8-1ffd-4b35-a292-c05f107700e0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-173",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-173\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "434fa641-bfa1-4cb2-8196-a7f9d90ffe94",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-174",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-174\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "97c47e0f-c2aa-4f1d-b22e-3a2e53e68f94",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "JOR-175",
+      "reason": "Bloque del feedback del cliente",
+      "evidence": [
+        "{\"ticketId\":\"JOR-175\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "e2366efb-39b5-43f4-8838-14b800bffd79",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.955Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 4,
+      "reason": "80 decisiones; 80 cambios"
+    },
+    {
+      "id": "c81fc997-c6c7-44f8-961e-854d7d6596fb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:52:52.960Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 17
+    },
+    {
+      "id": "292b0515-a233-42f0-8398-7d2b2cb3f834",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:53:39.658Z",
+      "kind": "plan_approved",
+      "planVersion": 4
+    },
+    {
+      "id": "ce7aa30d-f3c0-43de-b085-8c95eea281cf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-06T21:53:39.662Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "approve",
+      "source": "kanai-server",
+      "durationMs": 8
+    }
+  ]
+}

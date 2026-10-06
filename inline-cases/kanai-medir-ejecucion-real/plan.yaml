@@ -2,7 +2,7 @@ plan_id: kanai-medir-ejecucion-real
 title: Medir con corridas reales las mejoras de ejecución de Kanai
 intent: Comprobar con LLM real que los cambios bajan rebotes, tokens y tiempo del gate N3, sin tocar tickets reales.
 created: 2026-10-06T19:17:11.640Z
-updated: 2026-10-06T20:11:56.871Z
+updated: 2026-10-06T21:33:38.097Z
 tags:
   projects: []
   repos:
@@ -26,10 +26,13 @@ risks:
   - "Una corrida real con LLM cuesta tokens: el ticket sintético debe ser chico."
   - El MCP debe reiniciarse para cargar el código nuevo; sin eso se mide el código viejo.
   - kanai-app tiene cambios ajenos sin commitear que no deben entrar en los commits.
+  - "Las correcciones de F5 y F7 cambian la completitud y el contexto del gate integral: no deben aflojar el bloqueo de archivos de texto no incluidos ni ocultar archivos de codigo."
+  - "Los jueces ciegos calibran la severidad distinto entre rondas: puede aparecer un hallazgo nuevo en cada ronda; tope de una ronda mas de correcciones."
 out_of_scope:
   - Re-ejecutar gates o modificar tickets reales de taomangalam.
   - Cambiar el alcance de cualquier ticket existente.
   - Hacer push (solo con pedido explícito).
+  - Corregir en este caso los hallazgos S3 restantes y las consultas del arbiter, ni el contrato del planificador.
 phases:
   - code: F0
     title: Integrar y preparar
@@ -132,11 +135,11 @@ phases:
           exit_code: 0
     effort: Según los hallazgos
     delivers: false
-    changes_code: true
+    changes_code: false
     rollback: Revertir los commits de la fase.
   - code: F4
     title: Medición final y arbiter
-    goal: Comparar contra la línea base y cerrar con el arbiter.
+    goal: Comparar contra la línea base y correr el arbiter sobre el cambio.
     prerequisites:
       - id: F4-P1
         text: F3 cerrada.
@@ -149,9 +152,115 @@ phases:
       - id: F4-C1
         text: El KB trae la tabla final con cada meta cumplida, incumplida o no medida.
         kind: evidence
-      - id: F4-C2
-        text: El arbiter queda aprobado o aprobado con nits, y los hallazgos graves están corregidos.
-        kind: evidence
     effort: 2 h
+    delivers: false
+    changes_code: false
+  - code: F5
+    title: Correcciones del arbiter
+    goal: Corregir en kanai-app los hallazgos graves del arbiter (1 S1 y 2 S2) sin aflojar el bloqueo de contenido de texto no leido.
+    prerequisites:
+      - id: F5-P1
+        text: F4 cerrada con el veredicto iterar del arbiter registrado en arbiter-ronda-1.md.
+    tasks:
+      - code: F5.1
+        text: "Binarios en el gate integral (f1, S1): diffStats separa los archivos binarios del contenido de texto no incluido; la completitud de la revision (reviewComplete) ignora los binarios pero sigue bloqueando un archivo de texto sin leer; el N3 nombra los binarios en sus notas. Con tests que reproducen el ticket con un png commiteado."
+        kb:
+          - arbiter-ronda-1.md
+      - code: F5.2
+        text: "Rerun del N3 (f3, S2): la nota de reutilizacion lista las rutas de los archivos reutilizados (con tope) y el alcance de codigo del rerun deja de decir rama completa; con tests."
+        kb:
+          - arbiter-ronda-1.md
+      - code: F5.3
+        text: "Comentario fail-open (f6, S2): corregir el comentario de ticketBranchDiff para que diga que propaga el error de resolveTicketReviewBase."
+      - code: F5.4
+        text: Actualizar docs/gate-niveles.md con el tratamiento de binarios y la lista de reutilizados, y correr typecheck, lint, docs:check y la suite; un commit por hallazgo.
+    criteria:
+      - id: F5-C1
+        text: Typecheck, lint, docs:check y suite de kanai-app pasan sin fallas nuevas (Node 24).
+        kind: command
+        run:
+          command: pnpm typecheck && pnpm lint && pnpm docs:check && pnpm test
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          how: Correr en la rama feat/medir-ejecucion-real con el Node del .nvmrc.
+          expect: Cuatro comandos con salida 0.
+          exit_code: 0
+      - id: F5-C2
+        text: Los tests nuevos de f1 y f3 fallan sobre el codigo sin la correccion y pasan con ella.
+        kind: evidence
+    effort: 1 día
+    delivers: false
+    changes_code: true
+    rollback: Revertir los commits de F5 en feat/medir-ejecucion-real; no hay migraciones ni datos.
+  - code: F6
+    title: Ronda de cierre del arbiter
+    goal: Volver a juzgar las correcciones con el arbiter.
+    prerequisites:
+      - id: F6-P1
+        text: F5 cerrada con sus commits registrados.
+    tasks:
+      - code: F6.1
+        text: Correr la ronda de cierre del arbiter (interdiff desde 12c18ca) y registrar su veredicto, con re-chequeo de los hallazgos de la ronda 1.
+    criteria:
+      - id: F6-C1
+        text: La ronda 2 del arbiter queda guardada en el historial con su veredicto y los hallazgos de la ronda 1 reconciliados.
+        kind: evidence
+    effort: 3 h
+    delivers: false
+    changes_code: false
+  - code: F7
+    title: Correcciones de la ronda 2
+    goal: Corregir en kanai-app los 3 hallazgos S2 de la ronda 2 del arbiter (codigo tratado como binario, alcance del rerun y deuda de impacto tras un escalate) sin aflojar el bloqueo de texto no leido.
+    prerequisites:
+      - id: F7-P1
+        text: F6 cerrada con la ronda 2 del arbiter (iterar) guardada como kanai-medir-ejecucion-real-r2.
+    tasks:
+      - code: F7.1
+        text: "g1 (S2): un archivo con extension de codigo que git muestra como binario (binary o -diff en .gitattributes, UTF-16, NUL) deja de contar como binario: queda como texto no leido y bloquea el integral. Test con un .ts marcado -diff en un repo git real, y los binarios de assets siguen sin bloquear."
+        kb:
+          - arbiter-ronda-1.md
+      - code: F7.2
+        text: "g3 (S2): el alcance del rerun se redacta de forma condicional y siempre verdadera (los archivos reutilizados, si las notas los listan, conservan su revision y no se repiten); corregir el titulo del test que decia only when files can be reused."
+      - code: F7.3
+        text: "g2 (S2): priorIntegralGate conserva la deuda de impacto (impactRoots) cuando el integral anterior termino en escalate con deuda pendiente, y sigue devolviendo null para un escalate sin deuda. Test con la base de datos en memoria como el de integral-review-limits."
+      - code: F7.4
+        text: "Limpiezas menores: quitar el export sin uso TICKET_DIFF_BUDGET (g6) y actualizar docs/worklog-2026-10-06-ejecucion-integral.md para que no contradiga la regla de binarios (g9); actualizar docs/gate-niveles.md con g1 y g2; correr typecheck, lint, docs:check y la suite; un commit por hallazgo."
+    criteria:
+      - id: F7-C1
+        text: Typecheck, lint, docs:check y suite de kanai-app pasan sin fallas nuevas (Node 24).
+        kind: command
+        run:
+          command: pnpm typecheck && pnpm lint && pnpm docs:check && pnpm test
+          repo: kanai-app
+          cwd: /Users/edobacon/Workspace/kanai/kanai-app
+          how: Correr en la rama feat/medir-ejecucion-real con el Node del .nvmrc.
+          expect: Cuatro comandos con salida 0.
+          exit_code: 0
+      - id: F7-C2
+        text: Los tests de g1, g2 y g3 fallan por comportamiento (no por un import inexistente) sobre el codigo sin la correccion y pasan con ella.
+        kind: evidence
+    effort: 1 día
+    delivers: false
+    changes_code: true
+    rollback: Revertir los commits de F7 en feat/medir-ejecucion-real; no hay migraciones ni datos.
+  - code: F8
+    title: Ronda 3 del arbiter y tabla final
+    goal: Volver a juzgar las correcciones de F7 con el arbiter, con tope, y dejar la tabla final al dia.
+    prerequisites:
+      - id: F8-P1
+        text: F7 cerrada con sus commits registrados.
+    tasks:
+      - code: F8.1
+        text: "Correr la ronda 3 del arbiter sobre feat/medir-ejecucion-real contra setup con re-chequeo de los hallazgos de la ronda 2 y registrar su veredicto; si vuelve a dar S2, no abrir otra ronda de correcciones: cerrar con reservas y consultar al dev."
+      - code: F8.2
+        text: Actualizar en el KB la tabla final contra las metas con el resultado del arbiter, las correcciones de F5 y F7, los nits de F4 y F5 y los hallazgos restantes.
+    criteria:
+      - id: F4-C2
+        text: El arbiter no deja S0 ni S1 y los S2 quedan corregidos o resueltos con decision del dev; los S3 y consultas restantes quedan listados.
+        kind: evidence
+      - id: F8-C1
+        text: La tabla final del KB refleja las correcciones de F5 y F7 y el veredicto final del arbiter.
+        kind: evidence
+    effort: 3 h
     delivers: false
     changes_code: false

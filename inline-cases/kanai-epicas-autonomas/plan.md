@@ -4,7 +4,7 @@
 
 **Intención:** Implementar el plan acordado de épicas autónomas en Kanai, con permisos por harness, Teach/Skip, seguimiento de tickets, recuperación y métricas desde el inicio; evaluar piloto Tao Mangalam. Registrar el plan no inicia ejecución.
 **Tags:** projects: kanai_self · repos: kanai-app · labels: epicas, autonomia, harness, metricas, piloto-taomangalam
-**Estado:** 10 de 11 fases cerradas. Juez final: pendiente.
+**Estado:** 10 de 12 fases cerradas. Juez final: pendiente.
 
 ## Registro de avance
 
@@ -20,6 +20,7 @@
 | F8 Vistas y operaciones MCP | Mostrar y gestionar épicas con el mismo contrato de autorización desde UI y MCP. | Hecho | 2026-10-03 → 2026-10-03 | e6d5a6a103a184773e3e038b56a0e8647f3c83ac | 2/2 | - |
 | F9 Tablero y exportación de métricas | Hacer evaluables velocidad, autonomía, calidad y recuperación con datos reconciliables. | Hecho | 2026-10-03 → 2026-10-03 | 1d716b440eb4ae9b112f4ba75f47dacb288b0ef0 | 2/2 | - |
 | F11 Correcciones de revisión de implementación | Resolver los ocho hallazgos originales de arbiter y los adicionales de los ciclos de revisión antes del piloto, con evidencia y registro. | Hecho | 2026-10-03 → 2026-10-03 | 80c2d51dcced57d84e5e1802eb9a50ed40689ab4, bd004db5261a4e72dc49a64155823b9bb4cdaa8d, 364eb16afcd35f7fe8879f20f645c00a76e7561e | 2/2 | - |
+| F12 Correcciones del planificador destapadas por el piloto Jormat | Que una épica de otro proyecto se planifique sin dependencias falsas, con lecturas externas como entrada válida y con el repo aceptado por nombre o id, antes de ejecutar la cohorte Jormat del piloto. | Pendiente | - → - | - | 0/2 | F12.1; F12.2; F12.3; F12.4 |
 | F10 Piloto, evaluación y mejoras | Validar el conjunto en Tao Mangalam y decidir expansión con evidencia. | Bloqueado (Piloto real pendiente de selección humana de 3–5 tickets Tao Mangalam, baseline posterior a DEC-239, rama, host/versión, responsables y permisos efectivos. Además faltan ejecución real y observación de defectos durante 14 días desde merge. No hay bloqueo de revisión de código: F11 cerrada y arbiter aprobado.) | 2026-10-03 → - | 07b7ac7, a43fc9a, 8d4221f, 01e17bf, da26ab3, 70eb4bc, abe6359, c29530d, e6478a7, aacbbca, b7cb29d | 0/2 | Seleccionar tickets, baseline y ambiente del piloto (2026-10-04); Evaluar resultados y priorizar expansión (2026-10-18); Informe de piloto con muestra y cumplimiento (2026-10-18); Comparación y seguimiento de 14 días (2026-10-18); Ejecutar piloto y observar defectos 14 días (2026-10-18); F10.1; F10.2; F10.3 |
 
 ## Riesgos
@@ -360,6 +361,38 @@
   - Sin registros.
 - **Cierre y siguiente paso:** Diez hallazgos corregidos y reconciliados; arbiter aprobado, pruebas y documentación actualizadas; tres commits verificados.. Siguiente: 2026-10-04: F10 sigue pendiente de selección explícita de piloto Tao Mangalam, baseline y permisos. Seguimiento de 14 días se calcula desde el merge real, aún sin fecha.
 
+### F12. Correcciones del planificador destapadas por el piloto Jormat
+
+**Meta:** Que una épica de otro proyecto se planifique sin dependencias falsas, con lecturas externas como entrada válida y con el repo aceptado por nombre o id, antes de ejecutar la cohorte Jormat del piloto.
+**Esfuerzo:** Acotado a server/epics (planner, assets, schema, service, bridge), sus tests y dos documentos.
+**Cómo deshacerla:** Revertir únicamente los commits de esta fase; las épicas guardadas siguen válidas porque sin prefijo y con repo por nombre el comportamiento es el actual.
+**Cambia código:** sí (no cierra sin commits registrados)
+
+**Registro F12** (estado: Pendiente)
+- **Fecha real:** inicio - · fin -
+- **Antes de empezar:**
+  - [ ] F12-P1: Rama de trabajo de kanai-app definida y registrada en el intake antes de modificar código (la rama codex/epicas-autonomas del intake no existe; el código de épicas está en setup).
+  - [ ] F12-P2: Cuerpos originales de JOR-169 a JOR-175 (antes de la edición del 06-10) y de TAO-181 a TAO-188 disponibles como fixtures, sin re-planificar las épicas reales.
+- **Commits:**
+  - Sin commits registrados.
+- **Qué se hizo:**
+  - **F12.1** pendiente: Dependencias inferidas por prefijo de proyecto: cargar ticketPrefix en canonicalDraft, considerar solo menciones PREFIJO-número completas, tratar tickets cerrados como contexto y conservar el comportamiento actual sin prefijo. Tests con R-05, P-08, CA-09, JOR-167-Q8, nombre de documento y ticket cerrado.
+  - **F12.2** pendiente: Lecturas externas como entrada: referencias del cuerpo cubiertas por readPaths/readRequirements (coincidencia por sufijo) y assets con external:true resueltos por readRequirements o externalEvidence sin inspección dentro del repo. Tests y documentación en epic-execution.md y kn-epic.
+  - **F12.3** pendiente: Repo de la épica por nombre o id, normalizado al nombre en canonicalDraft y repoRoot, con mensaje que liste los repos válidos; documentar el caso monorepo registrado por subcarpetas en kn-epic. Tests con id distinto del nombre.
+  - **F12.4** pendiente: Medir antes y después en memoria con los fixtures de Jormat y Tao; correr suite, typecheck y lint; revisión arbiter; registrar commits y reiniciar el MCP antes de la corrida de la cohorte Jormat.
+- **Criterios cumplidos:**
+  - **F12-C1** pendiente (evidence): Con los cuerpos originales de JOR-169 a JOR-175 el plan no genera ninguna de las 81 aristas falsas y conserva las dependencias reales; con TAO-181 a TAO-188 no empeora el resultado de kanai-pre-epica F2 (44 avisos o menos, 0 referencias reales perdidas).
+  - **F12-C2** pendiente (evidence): Referencias a archivos declarados en readPaths no bloquean el plan; un asset external cubierto por una lectura autorizada queda listo; una épica creada con el id o el nombre del repo guarda el nombre; suite y typecheck pasan y arbiter aprueba.
+- **No cumplido:**
+  - Sin registros.
+- **Desvíos del plan:**
+  - Enmienda: Agrega F12 (correcciones del planificador destapadas por el piloto Jormat: dependencias por prefijo de proyecto, lecturas externas como entrada, repo por nombre o id) antes de F10; F10 pasa a requerir F12 cerrada y F10.1 incorpora la épica EPIC-FACTURAS-CLIENTE-FEEDBACK de jormat-evolution como segunda cohorte del piloto.. Motivo: Preparar la épica de jormat-evolution (JOR-169 a 175) requirió rechazar 81 dependencias falsas, cuatro rodeos de assets y usar el nombre del repo en vez del id. La persona decidió (06-10) corregirlo en este caso antes del piloto (opción A) y ejecutar la épica Jormat después de las correcciones como cohorte de F10 (opción 1). Detalle en piloto-jormat-hallazgos-planificador.md.
+- **Hallazgos:**
+  - Sin registros.
+- **Bloqueos:**
+  - Sin registros.
+- **Cierre y siguiente paso:** Sin cerrar.
+
 ### F10. Piloto, evaluación y mejoras
 
 **Meta:** Validar el conjunto en Tao Mangalam y decidir expansión con evidencia.
@@ -372,6 +405,7 @@
   - [x] F10-P1: F7 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F10-P2: F8 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
   - [x] F10-P3: F9 cerrada con sus criterios y evidencia verificados. (Fases previas cerradas con commits y pruebas registrados en el caso.)
+  - [ ] F10-P4: F12 cerrada con sus criterios y evidencia verificados.
 - **Commits:**
   - `07b7ac7` · feat(epics): prepare batch decisions and phased dependency execution · kanai-app/codex/epicas-autonomas (verificado)
   - `a43fc9a` · fix(epics): prepare authorized execution and clarify epic and ticket views · kanai-app/codex/epicas-autonomas (verificado)
@@ -385,7 +419,7 @@
   - `aacbbca` · test(mcp): guarda que epic_operate apunte a la skill kn-epic y que el protocolo siga servido · kanai-app/codex/epicas-autonomas (verificado)
   - `b7cb29d` · fix(inline): un commit se registra en su fase de destino aunque no este iniciada · kanai-app/codex/epicas-autonomas (verificado)
 - **Qué se hizo:**
-  - **F10.1** pendiente: Seleccionar 3–5 tickets relacionados, rama corta y baseline del flujo actual con CI liviano; completar ambientes, roles y autorizaciones del piloto.
+  - **F10.1** pendiente: Seleccionar las cohortes del piloto con rama corta y baseline del flujo actual con CI liviano: EP-01 de Tao Mangalam (TAO-181 y TAO-182, ya ejecutada) y EPIC-FACTURAS-CLIENTE-FEEDBACK de jormat-evolution (JOR-169 a JOR-175, plan aprobado, se ejecuta después de F12); completar ambientes, roles y autorizaciones del piloto.
   - **F10.2** pendiente: Ejecutar piloto según permisos y controles aprobados; registrar datos de éxito/fallo, interrupciones y reanudación y observar defectos durante 14 días posteriores a integración.
   - **F10.3** pendiente: Comparar tiempos, intervenciones, CI, retrabajo y calidad; separar ahorro previo de DEC-239; registrar mejoras priorizadas y decisión de expansión o ajuste.
 - **Criterios cumplidos:**

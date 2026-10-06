@@ -18,7 +18,7 @@
 
 | Repo | Ruta local | Rama base | Ramas de trabajo | Para qué |
 |---|---|---|---|---|
-| kanai-app | configurada | setup (existe) | codex/epicas-autonomas | Implementación fase por fase, con commits y verificación registrados. |
+| kanai-app | configurada | setup (existe) | setup | Implementación fase por fase, con commits y verificación registrados. Desde F12 (06-10) se trabaja directo sobre setup, con commits por tarea y sin push; la rama codex/epicas-autonomas nunca se creó: el código de épicas ya está en setup. |
 
 ## Ambientes
 
@@ -49,8 +49,9 @@
 | correcciones-arbiter.md | registro | Correcciones y revisión de implementación | F11 cerrada: revisión aprobada, diez hallazgos resueltos, tres commits, 2652 pruebas. F10 piloto pendiente. |
 | operacion-y-piloto.md | registro | Operación implementada y preparación del piloto | Revisión aprobada, diez hallazgos resueltos, tres commits registrados y 2652 pruebas; piloto pendiente. |
 | piloto-ep01-preparacion-y-parser.md | analisis | Piloto EP-01: preparación y hallazgo del planificador | Épica nativa creada con TAO-181–188; preintake registrado. Parser produce referencias contextuales/IDs truncados y auto-referencias. Hallazgo pendiente antes de aprobación y ejecución. |
+| piloto-jormat-hallazgos-planificador.md | analisis | Piloto Jormat: tres fallas del planificador de épicas y su corrección | Épica EPIC-FACTURAS-CLIENTE-FEEDBACK (JOR-169 a 175) destapó tres fallas: dependencias falsas por denylist fija de prefijos (81 de 81 falsas), archivos externos sin vía de entrada aunque estén en readPaths, y repo de la épica solo por nombre. Ubicación en código, datos y corrección propuesta. |
 | plan-implementacion-epicas-autonomas.md | analisis | Plan de implementación de épicas autónomas, permisos por harness y métricas | Plan presentado y autorizado para registro: alcance, dependencias, ramas, autonomía, Teach, recuperación, vistas, paquetes P0–P9, aceptación y piloto medido en Tao Mangalam. |
 
 ## Plan
 
-10 de 11 fases cerradas, fase actual F10. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md
+10 de 12 fases cerradas, fase actual F12. Vista: /Users/edobacon/.kanai/data/kanai_data/inline-cases/kanai-epicas-autonomas/plan.md

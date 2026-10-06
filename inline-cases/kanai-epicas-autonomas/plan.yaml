@@ -1,8 +1,6 @@
 plan_id: kanai-epicas-autonomas
 title: Épicas con planificación y ejecución autónoma encadenada
 intent: Implementar el plan acordado de épicas autónomas en Kanai, con permisos por harness, Teach/Skip, seguimiento de tickets, recuperación y métricas desde el inicio; evaluar piloto Tao Mangalam. Registrar el plan no inicia ejecución.
-created: 2026-10-03T14:48:59.957Z
-updated: 2026-10-04T21:47:38.342Z
 tags:
   projects:
     - kanai_self
@@ -357,6 +355,43 @@ phases:
     delivers: false
     changes_code: true
     rollback: Revertir commits de corrección sin eliminar historial ni datos de corridas.
+  - code: F12
+    title: Correcciones del planificador destapadas por el piloto Jormat
+    goal: Que una épica de otro proyecto se planifique sin dependencias falsas, con lecturas externas como entrada válida y con el repo aceptado por nombre o id, antes de ejecutar la cohorte Jormat del piloto.
+    prerequisites:
+      - id: F12-P1
+        text: Rama de trabajo de kanai-app definida y registrada en el intake antes de modificar código (la rama codex/epicas-autonomas del intake no existe; el código de épicas está en setup).
+      - id: F12-P2
+        text: Cuerpos originales de JOR-169 a JOR-175 (antes de la edición del 06-10) y de TAO-181 a TAO-188 disponibles como fixtures, sin re-planificar las épicas reales.
+    tasks:
+      - code: F12.1
+        text: "Dependencias inferidas por prefijo de proyecto: cargar ticketPrefix en canonicalDraft, considerar solo menciones PREFIJO-número completas, tratar tickets cerrados como contexto y conservar el comportamiento actual sin prefijo. Tests con R-05, P-08, CA-09, JOR-167-Q8, nombre de documento y ticket cerrado."
+        kb:
+          - piloto-jormat-hallazgos-planificador.md
+          - piloto-ep01-preparacion-y-parser.md
+      - code: F12.2
+        text: "Lecturas externas como entrada: referencias del cuerpo cubiertas por readPaths/readRequirements (coincidencia por sufijo) y assets con external:true resueltos por readRequirements o externalEvidence sin inspección dentro del repo. Tests y documentación en epic-execution.md y kn-epic."
+        kb:
+          - piloto-jormat-hallazgos-planificador.md
+      - code: F12.3
+        text: Repo de la épica por nombre o id, normalizado al nombre en canonicalDraft y repoRoot, con mensaje que liste los repos válidos; documentar el caso monorepo registrado por subcarpetas en kn-epic. Tests con id distinto del nombre.
+        kb:
+          - piloto-jormat-hallazgos-planificador.md
+      - code: F12.4
+        text: Medir antes y después en memoria con los fixtures de Jormat y Tao; correr suite, typecheck y lint; revisión arbiter; registrar commits y reiniciar el MCP antes de la corrida de la cohorte Jormat.
+        kb:
+          - piloto-jormat-hallazgos-planificador.md
+    criteria:
+      - id: F12-C1
+        text: Con los cuerpos originales de JOR-169 a JOR-175 el plan no genera ninguna de las 81 aristas falsas y conserva las dependencias reales; con TAO-181 a TAO-188 no empeora el resultado de kanai-pre-epica F2 (44 avisos o menos, 0 referencias reales perdidas).
+        kind: evidence
+      - id: F12-C2
+        text: Referencias a archivos declarados en readPaths no bloquean el plan; un asset external cubierto por una lectura autorizada queda listo; una épica creada con el id o el nombre del repo guarda el nombre; suite y typecheck pasan y arbiter aprueba.
+        kind: evidence
+    effort: Acotado a server/epics (planner, assets, schema, service, bridge), sus tests y dos documentos.
+    delivers: false
+    changes_code: true
+    rollback: Revertir únicamente los commits de esta fase; las épicas guardadas siguen válidas porque sin prefijo y con repo por nombre el comportamiento es el actual.
   - code: F10
     title: Piloto, evaluación y mejoras
     goal: Validar el conjunto en Tao Mangalam y decidir expansión con evidencia.
@@ -367,11 +402,14 @@ phases:
         text: F8 cerrada con sus criterios y evidencia verificados.
       - id: F10-P3
         text: F9 cerrada con sus criterios y evidencia verificados.
+      - id: F10-P4
+        text: F12 cerrada con sus criterios y evidencia verificados.
     tasks:
       - code: F10.1
-        text: Seleccionar 3–5 tickets relacionados, rama corta y baseline del flujo actual con CI liviano; completar ambientes, roles y autorizaciones del piloto.
+        text: "Seleccionar las cohortes del piloto con rama corta y baseline del flujo actual con CI liviano: EP-01 de Tao Mangalam (TAO-181 y TAO-182, ya ejecutada) y EPIC-FACTURAS-CLIENTE-FEEDBACK de jormat-evolution (JOR-169 a JOR-175, plan aprobado, se ejecuta después de F12); completar ambientes, roles y autorizaciones del piloto."
         kb:
           - plan-implementacion-epicas-autonomas.md
+          - piloto-jormat-hallazgos-planificador.md
       - code: F10.2
         text: Ejecutar piloto según permisos y controles aprobados; registrar datos de éxito/fallo, interrupciones y reanudación y observar defectos durante 14 días posteriores a integración.
         kb:
@@ -394,3 +432,5 @@ phases:
 registered_project_ack:
   project: kanai_self
   reason: La persona eligió expresamente caso inline y solicitó corregir el registro al formato estructurado visible en la app.
+created: 2026-10-03T14:48:59.957Z
+updated: 2026-10-06T22:01:51.833Z

@@ -63,7 +63,7 @@ La persistencia se crea con una migracion Prisma nueva en `server/prisma/` que a
 ## Tasks
 
 #### S1.T1 — Crear la migracion Prisma en `server/prisma/migrations/` que agrega los modelos `politica_analitica_region` (region/tenant, modo opt_in|opt_out|disabled, version_politica, vigencia_desde/vigencia_hasta) y `consentimiento_analitica` (sujeto, estado otorgado|rechazado|retirado, region, version_politica, fuente, fecha; append-only, sin UPDATE/DELETE) en `server/prisma/schema.prisma`, mas el seed de las regiones UE/EEE en `opt_in`. Hoy ninguna de las dos tablas existe (schema.prisma:27-412). Incluir el repositorio de lectura (ultima fila por fecha como vigente, default por politica cuando no hay filas).
-Contrato: rollback: Borrar la carpeta de la migracion nueva bajo `server/prisma/migrations/`, revertir el bloque agregado en `server/prisma/schema.prisma` y el seed; la base queda sin las dos tablas, igual que antes.. Status: pending
+Contrato: rollback: Borrar la carpeta de la migracion nueva bajo `server/prisma/migrations/`, revertir el bloque agregado en `server/prisma/schema.prisma` y el seed; la base queda sin las dos tablas, igual que antes.. Status: done
 
 #### S1.T2 — Implementar el proveedor de politica regional en `server/src/` (Express/TypeScript, NO Gradle) que resuelve opt_in|opt_out|disabled desde la region/tenant del sujeto leyendo `politica_analitica_region`, expuesto por `GET /privacidad/politica-analitica` conforme al esquema `PoliticaAnalitica` de `server/contract/openapi.yaml` (l.1630, l.6756-6837). Fallback obligatorio: region ausente, desconocida, invalida o con vigencia expirada resuelve `opt_in`, nunca `disabled` (DEC-130:30-32, EP-15:387-389).
 Contrato: rollback: Revertir los archivos del proveedor y su registro de ruta en `server/src/routes/`; el endpoint deja de existir y nada mas en el backend lo referencia.. Status: pending
@@ -134,7 +134,7 @@ Contrato: rollback: Eliminar el archivo de test agregado; ninguna otra suite lo 
 ### Session 1 · T2 · open
 
 **Tasks:**
-- [ ] S1.T1
+- [x] S1.T1
 - [ ] S1.T2
 - [ ] S1.T3
 - [ ] S1.T4
