@@ -150,19 +150,19 @@ Contrato: rollback: Retirar únicamente el archivo de pruebas nuevo y sus tempor
 Contrato: rollback: Restaurar recursos y configuración de iconos anteriores conservando maestros de identidad y evidencia de revisión.. Status: done
 
 #### S7.T1 — Crear tests/test_assets_provider.py con el contrato del check ep01-assets-provider: que scripts/ci/ep01-assets-provider.mjs encadene validador, --check del pipeline y comprobación de empaquetado, identifique el SHA evaluado y publique la trazabilidad de QA-02-01/02/03/07 a pruebas o evidencias humanas; que falle ante estado inválido, PNG huérfano, derivado obsoleto o maestro empaquetado; que con cero pruebas descubiertas, un comando omitido o evidencia humana pendiente no declare la entrega completa; y que un check preparado pero no ejecutado en CI real sobre un SHA integrado no habilite el consumo por EP-01. Mantener tests/test_build_artifacts.py solo para el contrato del workflow.
-Contrato: rollback: Retirar el archivo de pruebas nuevo conservando las aserciones previas de artifacts y quality-gate y toda la evidencia registrada.. Status: pending
+Contrato: rollback: Retirar el archivo de pruebas nuevo conservando las aserciones previas de artifacts y quality-gate y toda la evidencia registrada.. Status: done
 
 #### S7.T2 — Etapa vertical 3: comprobar que la entrega se consume por la interfaz existente de imágenes, sin lecturas directas de app/assets/manifest.json en el código de imágenes y conservando el resolvedor integrado y su token de respaldo. Adaptar el suministro para que la fuente productiva real se lea detrás de esa interfaz está permitido; la fixture de los tests sigue siendo fixture y no se exige como fuente de producción. Cualquier cambio adyacente no autorizado queda como advertencia.
-Contrato: rollback: Revertir exclusivamente la adaptación del suministro, preservando la interfaz, las fixtures y el respaldo anteriores.. Status: pending
+Contrato: rollback: Revertir exclusivamente la adaptación del suministro, preservando la interfaz, las fixtures y el respaldo anteriores.. Status: done
 
 #### S7.T3 — Implementar el check como scripts/ci/ep01-assets-provider.mjs y enlazarlo en .github/workflows/ci-pr.yml reutilizando jobs y toolchain existentes: ejecutar el validador y el --check del pipeline de scripts/assets/, la comprobación de empaquetado y las suites tests/test_assets_*.py, identificar el SHA evaluado y publicar artifacts con la matriz de trazabilidad QA-02-01/02/03/07 a pruebas o evidencias humanas. Ajustar solo las aserciones afectadas del contrato de quality-gate en tests/test_build_artifacts.py. Registrar los pendientes humanos y exigir CI real sobre commits integrados antes del consumo por EP-01; no cerrar historias proveedoras ni ejecutar el gate durante el intake.
-Contrato: rollback: Restaurar workflow, script de CI y contrato de gate previos conservando resultados históricos y evidencias; la retirada del check no habilita el consumo.. Status: pending
+Contrato: rollback: Restaurar workflow, script de CI y contrato de gate previos conservando resultados históricos y evidencias; la retirada del check no habilita el consumo.. Status: done
 
 #### S7.T4 — Aplicar la variante documental a los archivos realmente tocados del paquete, incluidos docs/PLAN.md, el backlog de EP-02 y docs/content/SCHEMA.md cuando correspondan. Reutilizar scripts/dev/docs.mjs con DOCS_DIFF_BASE=epic/EP-01a, la base de integración pertinente del paquete, en vez de origin/main, que arrastra trabajo ajeno; corregir lint únicamente en los documentos modificados.
-Contrato: rollback: Revertir solo las correcciones documentales del paquete junto con sus cambios funcionales compatibles, conservando DEC, mediciones y registros exigidos por los rollback de las fuentes.. Status: pending
+Contrato: rollback: Revertir solo las correcciones documentales del paquete junto con sus cambios funcionales compatibles, conservando DEC, mediciones y registros exigidos por los rollback de las fuentes.. Status: done
 
 #### S7.T5 — Ajustar app/test/core/images/image_manifest_test.dart solo si hace falta regresión adicional del handoff, preservando sus casos de acceso por interfaz, fixture y token de respaldo, y comprobando que el manifiesto productivo se lee detrás de la interfaz. Extender tests/test_docs_linters.py con un documento heredado modificado que falle por Markdown o cspell y con la exclusión de heredados intactos, usando DOCS_DIFF_BASE=epic/EP-01a y temporales aislados.
-Contrato: rollback: Restaurar ambos archivos de prueba a su versión previa y eliminar temporales; no alterar código de imágenes ni documentos canónicos para forzar un resultado.. Status: pending
+Contrato: rollback: Restaurar ambos archivos de prueba a su versión previa y eliminar temporales; no alterar código de imágenes ni documentos canónicos para forzar un resultado.. Status: done
 ## Verificacion runtime
 
 Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Railway/costos/presupuestos y SHA del prototipo; inventario 64 ids/alt y estados45 piezas; hojas contacto QA de Diseño/Contenido teléfono3x/tablet2x; iconos instalados Android circular/squircle e iOS; CI real ep01-assets-provider sobre SHA integrado. Todos los ítems humanos permanecen pending hasta revisión real. No hay una vista propia que verificar. Sesión definida con seis ítems concretos en el registro canónico de sesiones.
@@ -293,14 +293,14 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 
 **Gate (strong)**: Recursos B3 iOS y Android (capas primer plano/fondo/monocroma) generados con formatos verificables, sol centrado en zona segura y pruebas automáticas verdes. Capturas/pruebas de instalación Android circular/squircle e iOS preparadas con pendientes humanos explícitos, sin fingir aprobaciones.
 
-### Session 7 · open
+### Session 7 · continue
 
 **Tasks:**
-- [ ] S7.T1
-- [ ] S7.T2
-- [ ] S7.T3
-- [ ] S7.T4
-- [ ] S7.T5
+- [x] S7.T1
+- [x] S7.T2
+- [x] S7.T3
+- [x] S7.T4
+- [x] S7.T5
 
 **Gate (strong)**: ep01-assets-provider ejecutable encadena validador, --check, empaquetado y suites reales, identifica SHA y publica trazabilidad QA. Pruebas negativas detectan incoherencias y quality-gate integra el job. Compatible con resolvedor existente y lint de documentos del paquete en verde usando SHA base capturado al primer arranque; consumo final depende de CI real y evidencia humana en sesión final.
 
