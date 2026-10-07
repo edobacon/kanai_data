@@ -84,13 +84,13 @@ Los documentos realmente modificados por HU-02-01/02/03/07 deben cumplir docs:ch
 ## Tasks
 
 #### S1.T1 — Dejar preparada la LISTA OPERATIVA del primer arranque usando los chequeos canónicos ya existentes: trabajo concurrente terminado, rama epic/EP-01a, árbol limpio, commits de EP-00 integrados (verificados, no reejecutados) y base de pruebas registrada, más la matriz de fuentes HU-02-01/02/03/07 y el registro de SkipTeach acotado a teach-intake y teach-close. NO construir un control de arranque nuevo en Kanai ni pruebas de su máquina de estados. Estas comprobaciones se ejecutan al arrancar, no durante el intake: el ticket permanece open y no se hace checkout, stash, reset, commit ni ejecución de tareas.
-Contrato: rollback: Si cualquier precondición falla, conservar la lista y detener el arranque; no alterar rama, árbol, datos ni registros. Corregir únicamente el registro de preparación por el flujo canónico.. Status: pending
+Contrato: rollback: Si cualquier precondición falla, conservar la lista y detener el arranque; no alterar rama, árbol, datos ni registros. Corregir únicamente el registro de preparación por el flujo canónico.. Status: done
 
 #### S1.T2 — Realizar HU-02-01 con Railway como único proveedor (adenda 2): comparar DENTRO de Railway la modalidad Storage Buckets frente a volumen persistente servido por un servicio, citando las fuentes oficiales consultadas el 2026-10-06 (https://docs.railway.com/storage-buckets, https://docs.railway.com/storage-buckets/billing, https://docs.railway.com/volumes/reference) y registrando la modalidad elegida y las alternativas internas descartadas con su motivo. Para bucket privado evaluar URLs firmadas frente a proxy, costo total incluyendo servicio, egress y CDN, y persistencia de versiones anteriores mediante claves inmutables aunque no exista versionado nativo. Medir localmente el peso WebP por familia; de ahí salen los presupuestos en MB de binario iOS/Android y del conjunto descargable, con método reproducible, regla esencial/descargable, URLs versionadas por clave inmutable derivada del hash, publicación del SHA-256 y modo de acceso. Preparar en scripts/assets/ un prototipo descartable que sirva por HTTP local un derivado real y verifique su SHA-256, sin credenciales, sin crear recursos en Railway y sin caché productiva; dejar constancia de que no representa latencia remota. La medición remota desde Railway es evidencia obligatoria: obtenerla cuando haya entorno autorizado y, si no lo hay, registrar el bloqueo pendiente con la evidencia faltante, sin pedir candidatos ni credenciales para comenzar la comparación documental y sin inventar resultados. Publicar la DEC en docs/product/decisiones/ y actualizar doc 47 §5, doc 42 §4.4 y HU-02-02/09/15.
-Contrato: rollback: Descartar el prototipo si se revierte el cambio técnico y comprobar que el build no depende de él; conservar DEC, tabla de mediciones, bloqueos registrados y evidencia. Si cambia la modalidad elegida, actualizar primero los consumidores como exige HU-02-01.. Status: pending
+Contrato: rollback: Descartar el prototipo si se revierte el cambio técnico y comprobar que el build no depende de él; conservar DEC, tabla de mediciones, bloqueos registrados y evidencia. Si cambia la modalidad elegida, actualizar primero los consumidores como exige HU-02-01.. Status: done
 
 #### S1.T3 — Crear tests/test_assets_origin.py con pruebas acotadas del prototipo de origen y su evidencia: derivado real íntegro aceptado por SHA-256, mismo archivo con un byte alterado rechazado, y ausencia de dependencia del build respecto del prototipo. Comprobar además que la DEC registra Railway como proveedor único con una modalidad elegida y sus alternativas internas descartadas, que la medición remota desde Railway figura como evidencia obtenida o como bloqueo pendiente explícito (nunca como valor fabricado) y que QA-02-01-01 queda registrada como revisión real de Producto y no como aserción textual. Usar temporales de prueba sin tocar maestros ni registros vivos y sin credenciales ni llamadas a Railway.
-Contrato: rollback: Revertir únicamente el archivo de pruebas nuevo y sus temporales; conservar DEC, mediciones y bloqueos ya registrados.. Status: pending
+Contrato: rollback: Revertir únicamente el archivo de pruebas nuevo y sus temporales; conservar DEC, mediciones y bloqueos ya registrados.. Status: done
 
 #### S2.T1 — Entregar HU-02-02 como unidad de esquema, manifiesto y validador consumiendo exclusivamente la DEC real de la sesión anterior. El padre no se ejecuta directamente.
 Contrato: rollback: Revertir conjuntamente esquema, manifiesto y validador; restaurar la versión previa conservando maestros y registros, y comprobar ausencia de referencias al esquema retirado.. Status: pending
@@ -241,12 +241,12 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 - edit S3.T1.2 { desc="Añadir --check al exportador de scripts/assets/ y el procesamiento por familia: verificar correspondencia de maestro, configuración, salidas y metadatos; salida determinista y diagnóstico de obsolescencia por id y variante. Comparar los SHA-256 de los maestros antes y después y emitir un resumen por familia con cantidades, pesos y errores.", rollback="Restaurar el comportamiento y las salidas anteriores del exportador; mantener maestros intactos y toda evidencia registrada.", validates=["REQ-07"], verify=["python3 -m unittest discover -s tests -p test_assets_pipeline.py"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
 
 **Gate (auto)**: DEC y tabla de mediciones revisables para HU-02-01, con prototipo que acepta el derivado íntegro y rechaza un byte alterado; precondiciones de ejecución documentadas sin arranque durante el intake.
 
@@ -307,7 +307,6 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 ### Session 8 · T0 · open
 
 **Gate (strong)**: Verificación final del proveedor completo con resultados reales automáticos/humanos. Pendientes de Producto/Diseño/Contenido o acceso remoto se reportan con motivo; no pasan por defecto ni habilitan consumo final.
-
 ## Technical
 
 Decisiones de implementación inferidas dentro del modo autónomo; no representan aprobaciones humanas nuevas.
