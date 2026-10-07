@@ -134,52 +134,52 @@ Contrato: rollback: git revert del archivo de test de CrearSolicitudPedidoView..
 Contrato: rollback: git revert de los archivos de test nuevos del front.. Status: done
 
 #### S2.T1 — Validación en el API de cliente bloqueado (customers.locked) al emitir, con el mensaje 'Cliente bloqueado contactar gerencia, imposible generar venta', y de crédito solo 30 o 60 días con vencimiento = fecha del documento + días corridos (rechaza credito_90).
-Contrato: rollback: git revert de sales.service.ts y factura-input.dto.ts.. Status: pending
+Contrato: rollback: git revert de sales.service.ts y factura-input.dto.ts.. Status: done
 
 #### S2.T1.1 — Backend: en SalesService.issueFactura, rechazar la emisión cuando el cliente tiene customers.locked=1, con el mensaje de referencia 'Cliente bloqueado contactar gerencia, imposible generar venta'; la validación corre server-side aunque el request no venga del builder.
-Contrato: rollback: git revert de sales.service.ts.. Status: pending
+Contrato: rollback: git revert de sales.service.ts.. Status: done
 
 #### S2.T1.2 — Backend: restringir el crédito a 30 o 60 días en FORMA_PAGO_VALUES/factura-input.dto.ts y calcular el vencimiento como fecha del documento + días corridos en sales.service.ts; un plazo distinto (credito_90) responde rechazo.
-Contrato: rollback: git revert de factura-input.dto.ts y sales.service.ts.. Status: pending
+Contrato: rollback: git revert de factura-input.dto.ts y sales.service.ts.. Status: done
 
 #### S2.T1.3 — Tests unitarios/servicio de ambas reglas: cliente locked=1 rechazado con el mensaje de referencia y locked=0 emitido; credito_30/credito_60 con su vencimiento y credito_90 rechazado.
-Contrato: rollback: git revert de los archivos de test de sales.service.. Status: pending
+Contrato: rollback: git revert de los archivos de test de sales.service.. Status: done
 
 #### S2.T2 — Stock de la bodega de origen en la emisión: si cantidad > disponible (incluido 0) se rechaza identificando item y cantidad ('Su sucursal no cuenta con stock suficiente para item ID {id} - Actual: {n}'); descuento de stock, cabecera y líneas en UNA transacción con control concurrente (lock) que evita stock negativo, con movimientos de inventario referenciados a la factura e idempotentes ante reintentos. Aplica también a Super Usuario.
-Contrato: rollback: git revert de sales.repository.ts/sales.service.ts y rollback de la migración de movimientos si se creó tabla.. Status: pending
+Contrato: rollback: git revert de sales.repository.ts/sales.service.ts y rollback de la migración de movimientos si se creó tabla.. Status: done
 
 #### S2.T2.1 — Validación de stock por bodega de origen en la emisión, con el mensaje que identifica el item y el stock actual disponible (incluido 0); aplica también a Super Usuario.
-Contrato: rollback: git revert de sales.service.ts.. Status: pending
+Contrato: rollback: git revert de sales.service.ts.. Status: done
 
 #### S2.T2.2 — Descuento transaccional de stock con lock (evita negativo bajo concurrencia) y movimientos de inventario referenciados a la factura, idempotentes ante reintentos (sin duplicados).
-Contrato: rollback: git revert de sales.repository.ts y rollback de la migración de movimientos.. Status: pending
+Contrato: rollback: git revert de sales.repository.ts y rollback de la migración de movimientos.. Status: done
 
 #### S2.T3 — Clonado desde otro documento (factura/guía): los valores copiados pasan por las reglas de descuento/precio/bloqueo y, si incumplen, se bloquea Facturar (el API rechaza y el front no habilita el botón).
-Contrato: rollback: git revert de sales.service.ts (resolverLineas).. Status: pending
+Contrato: rollback: git revert de sales.service.ts (resolverLineas).. Status: done
 
 #### S2.T3.1 — Backend: en resolverLineas (sales.service.ts), aplicar a las líneas copiadas desde factura/guía las mismas reglas de descuento de línea, general, Bloqueo Descuento y precio mínimo nm_net; si alguna incumple, rechazar la emisión con mensaje claro.
-Contrato: rollback: git revert de sales.service.ts (resolverLineas).. Status: pending
+Contrato: rollback: git revert de sales.service.ts (resolverLineas).. Status: done
 
 #### S2.T3.2 — Front: origen-factura.ts siembra los valores clonados y reusa los gates existentes; si los valores copiados incumplen (descuento sobre tope, precio bajo nm_net o Bloqueo Descuento), no habilita Facturar y confía en el rechazo del API.
-Contrato: rollback: git revert de origen-factura.ts y el builder.. Status: pending
+Contrato: rollback: git revert de origen-factura.ts y el builder.. Status: done
 
 #### S2.T3.3 — Tests de clonado: clonar desde factura/guía con descuento sobre el tope de la ficha bloquea la emisión (P-01.2.D1) y clonar con valores dentro de las reglas emite sin cambios.
-Contrato: rollback: git revert de los archivos de test de clonado.. Status: pending
+Contrato: rollback: git revert de los archivos de test de clonado.. Status: done
 
 #### S2.T4 — Regresión de la etapa: casos de API de los criterios 6, 7, 11 y 30 (cliente bloqueado, stock 3 vs cantidad 5 y concurrencia, crédito solo 30/60, y Bloqueo de descuento marcado en ficha/CSV que bloquea en la factura).
-Contrato: rollback: git revert del commit de tests.. Status: pending
+Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S2.T4.1 — Criterio 6: emisión directa al API (sin builder) con cliente locked=1 rechazada con el mensaje de referencia, y con locked=0 emitida (prueba que el front no evade la regla).
-Contrato: rollback: git revert del archivo de test del criterio 6.. Status: pending
+Contrato: rollback: git revert del archivo de test del criterio 6.. Status: done
 
 #### S2.T4.2 — Criterio 7: bodega de origen con stock 3 vs cantidad 5 rechazada con el mensaje 'Su sucursal no cuenta con stock suficiente...', stock 0 rechazado, happy stock 10/cantidad 5 dejando stock 5, y concurrencia (dos emisiones con stock para una) que no deja item_qty negativo.
-Contrato: rollback: git revert del archivo de test del criterio 7.. Status: pending
+Contrato: rollback: git revert del archivo de test del criterio 7.. Status: done
 
 #### S2.T4.3 — Criterio 11: credito_30 y credito_60 con su vencimiento (fecha del documento + días corridos) aceptados y credito_90 rechazado.
-Contrato: rollback: git revert del archivo de test del criterio 11.. Status: pending
+Contrato: rollback: git revert del archivo de test del criterio 11.. Status: done
 
 #### S2.T4.4 — Criterio 30: marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura también en el API, y un item con oil=1 previo queda con bloqueo_descuento=1 tras la migración.
-Contrato: rollback: git revert del archivo de test del criterio 30.. Status: pending
+Contrato: rollback: git revert del archivo de test del criterio 30.. Status: done
 
 #### S3.T1 — Capability sales.invoices:commercial-override en el catálogo (seeds/05_sales_capabilities.ts) y rol 'Super Usuario' (seed nuevo, workspace-scoped) con esa capability; owner e internal-admin la reciben por los grant-all (seeds 09/16) sin mantenimiento manual. Validación en el backend del override por capability.
 Contrato: rollback: git revert del seed; re-seed o borrar el rol/capability creados.. Status: pending
@@ -226,25 +226,25 @@ Contrato: rollback: git revert del commit de tests.. Status: pending
 
 **Gate (auto)**: En el builder de facturas un repuesto con Bloqueo Descuento muestra el badge 'Bloqueo descuento' y no admite descuento de línea ni general; el API rechaza descuento de línea sobre ds_max_discount, general >20% o combinado con línea, y precio < nm_net. Tests de Compras, Guías y Solicitudes de pedido verdes.
 
-### Session 2 · T3 · open
+### Session 2 · T3 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T2.1
-- [ ] S2.T2.2
-- [ ] S2.T3
-- [ ] S2.T3.1
-- [ ] S2.T3.2
-- [ ] S2.T3.3
-- [ ] S2.T4
-- [ ] S2.T4.1
-- [ ] S2.T4.2
-- [ ] S2.T4.3
-- [ ] S2.T4.4
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T2.1
+- [x] S2.T2.2
+- [x] S2.T3
+- [x] S2.T3.1
+- [x] S2.T3.2
+- [x] S2.T3.3
+- [x] S2.T4
+- [x] S2.T4.1
+- [x] S2.T4.2
+- [x] S2.T4.3
+- [x] S2.T4.4
 
 **Gate (auto)**: El API rechaza emitir con cliente bloqueado, stock insuficiente en la bodega de origen (incluido 0) y crédito distinto de 30/60, con los mensajes de referencia; dos emisiones simultáneas con stock para una no dejan stock negativo; el clonado que incumple reglas se bloquea.
 
