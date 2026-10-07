@@ -77,16 +77,16 @@ El tiempo desde el arranque hasta el destino queda registrado como métrica de d
 ## Tasks
 
 #### S1.T1 — Configurar la splash nativa de iOS y Android: fondo ivory100 y logo sol-luna de tinta desde app/assets/identidad/, válida con el sistema en claro y en oscuro.
-Contrato: rollback: Revertir la configuración de la splash nativa al launch screen por defecto.. Status: pending
+Contrato: rollback: Revertir la configuración de la splash nativa al launch screen por defecto.. Status: done
 
 #### S1.T2 — Crear la primera superficie Flutter de la splash como ruta de arranque, con la identidad en estado final (logo centrado y nombre «Tao Mangalam» como clave no traducible) y sin animación todavía.
-Contrato: rollback: Eliminar la ruta/superficie de splash y volver a la pantalla de arranque previa.. Status: pending
+Contrato: rollback: Eliminar la ruta/superficie de splash y volver a la pantalla de arranque previa.. Status: done
 
 #### S1.T3 — Resolver el destino de la splash a Inicio y delegar V-51 al gate existente. NO crear ninguna ruta marcador ni agregar entradas a `app/lib/navigation/app_routes.dart`. En cuanto el destino esta listo (o al vencer `splashMax` 1000 ms), la splash navega por NOMBRE a `AppRouteNames.home` (path `/home`) usando el router de go_router que deja HU-01-09/TAO-179. Quitar de la splash toda consulta al estado legal (`ColaLegalPendiente` / `colaLegalPendienteProvider`): la presentacion de V-51 (primer uso sin aceptacion registrada o version legal pendiente) queda a cargo del `LegalConsentGate` ya integrado por GH-63/TAO-185 en `app/lib/navigation/legal_consent_gate.dart`, montado sobre el shell en `app/lib/app.dart`, que lee `consentimientoLegalControllerProvider` y superpone `LegalConsentView` mientras hay documentos por aceptar y usa la copia legal empaquetada sin red. Verificar que el gate siga envolviendo el shell despues del cambio y que no haya doble resolucion del estado legal.
-Contrato: rollback: Revertir el resolvedor de destino de la splash a la navegacion directa a `AppRouteNames.home` sin cambios adicionales y dejar intacto `app/lib/app.dart` con el `LegalConsentGate` tal como lo integro GH-63; no se agregan ni se quitan rutas en `app_routes.dart`, por lo que el revert no afecta al router.. Status: pending
+Contrato: rollback: Revertir el resolvedor de destino de la splash a la navegacion directa a `AppRouteNames.home` sin cambios adicionales y dejar intacto `app/lib/app.dart` con el `LegalConsentGate` tal como lo integro GH-63; no se agregan ni se quitan rutas en `app_routes.dart`, por lo que el revert no afecta al router.. Status: done
 
 #### S1.T4 — Escribir los tests de la etapa: unitaria de resolución del destino (Inicio, V-51 sin aceptación, V-51 por versión pendiente), arranque sin red y emisión de la métrica; cubrir los criterios de aceptación de destino.
-Contrato: rollback: Revertir los archivos de test agregados.. Status: pending
+Contrato: rollback: Revertir los archivos de test agregados.. Status: done
 
 #### S2.T1 — Implementar la secuencia animada de la identidad con animación propia de Flutter (CustomPainter que revela el trazo sobre el logo raster), sin Rive ni Lottie, usando los tokens splashEnso, splashDiscStart/End, splashNameStart/End y splashMax; cortar al estado final y navegar apenas el destino está listo, sin bucle.
 Contrato: rollback: Desactivar la animación y mostrar la identidad en estado final estático.. Status: pending
@@ -147,13 +147,13 @@ Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Stat
 - edit S1.T3 { desc="Resolver el destino de la splash a Inicio y delegar V-51 al gate existente. NO crear ninguna ruta marcador ni agregar entradas a `app/lib/navigation/app_routes.dart`. En cuanto el destino esta listo (o al vencer `splashMax` 1000 ms), la splash navega por NOMBRE a `AppRouteNames.home` (path `/home`) usando el router de go_router que deja HU-01-09/TAO-179. Quitar de la splash toda consulta al estado legal (`ColaLegalPendiente` / `colaLegalPendienteProvider`): la presentacion de V-51 (primer uso sin aceptacion registrada o version legal pendiente) queda a cargo del `LegalConsentGate` ya integrado por GH-63/TAO-185 en `app/lib/navigation/legal_consent_gate.dart`, montado sobre el shell en `app/lib/app.dart`, que lee `consentimientoLegalControllerProvider` y superpone `LegalConsentView` mientras hay documentos por aceptar y usa la copia legal empaquetada sin red. Verificar que el gate siga envolviendo el shell despues del cambio y que no haya doble resolucion del estado legal.", rollback="Revertir el resolvedor de destino de la splash a la navegacion directa a `AppRouteNames.home` sin cambios adicionales y dejar intacto `app/lib/app.dart` con el `LegalConsentGate` tal como lo integro GH-63; no se agregan ni se quitan rutas en `app_routes.dart`, por lo que el revert no afecta al router.", validates=["REQ-06"], isTest=false, verify=["cd app && flutter analyze lib/navigation lib/features/splash","cd app && flutter test test/features/splash"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
 
 **Gate (auto)**: En arranque frío, en claro y oscuro, se ve la splash nativa con papel ivory100 y logo de tinta y la primera superficie Flutter con la identidad estática; la app resuelve a Inicio cuando hay aceptación registrada y sin versión pendiente, y al marcador de V-51 en el resto; funciona sin red.
 

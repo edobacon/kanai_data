@@ -182,19 +182,19 @@ Contrato: rollback: git revert del archivo de test del criterio 11.. Status: don
 Contrato: rollback: git revert del archivo de test del criterio 30.. Status: done
 
 #### S3.T1 — Capability sales.invoices:commercial-override en el catálogo (seeds/05_sales_capabilities.ts) y rol 'Super Usuario' (seed nuevo, workspace-scoped) con esa capability; owner e internal-admin la reciben por los grant-all (seeds 09/16) sin mantenimiento manual. Validación en el backend del override por capability.
-Contrato: rollback: git revert del seed; re-seed o borrar el rol/capability creados.. Status: pending
+Contrato: rollback: git revert del seed; re-seed o borrar el rol/capability creados.. Status: done
 
 #### S3.T2 — Override del Super Usuario y utilidad de punta a punta (backend + front).
-Contrato: rollback: git revert del commit de la task.. Status: pending
+Contrato: rollback: git revert del commit de la task.. Status: done
 
 #### S3.T2.1 — Backend: con la capability, saltear el tope de ficha, permitir descuento de línea sobre repuestos con Bloqueo Descuento, descuento general hasta 80% y precio bajo el vigente; seguir rechazando cliente bloqueado/sin stock y general combinado con Bloqueo Descuento. Calcular utilidad por línea y total (monto = venta neta - costo neto*cantidad; % = monto/venta neta*100), persistir el costo neto de compra de la ficha al emitir en invoice_items.net_unit_cost (snapshot) y exponer costo/utilidad solo con la capability; 'Sin dato' sin costo o venta 0.
-Contrato: rollback: git revert de sales.service.ts/sales.repository.ts/calc-totals.ts y el DTO.. Status: pending
+Contrato: rollback: git revert de sales.service.ts/sales.repository.ts/calc-totals.ts y el DTO.. Status: done
 
 #### S3.T2.2 — Front: exponer el flag de la capability al builder, habilitar los overrides permitidos (topes, precio, 80% general) y mostrar costo y utilidad por línea y total cuando está presente, manteniendo el gate de Facturar para bloqueado/sin stock y general+Bloqueo Descuento.
-Contrato: rollback: git revert de los componentes y hooks del builder.. Status: pending
+Contrato: rollback: git revert de los componentes y hooks del builder.. Status: done
 
 #### S3.T3 — Regresión de la etapa: casos de los criterios 10, 26 y 28 (Super Usuario baja precio/supera topes y ve utilidad pero no factura bloqueado/sin stock; venta 100.000/costo 80.000 -> $20.000 20% y el cambio posterior del costo no altera la factura; general 80% acepta, 81% rechaza; usuario común límite 20%).
-Contrato: rollback: git revert del commit de tests.. Status: pending
+Contrato: rollback: git revert del commit de tests.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: El API rechaza emitir una factura a un cliente con customers.locked = 1, aunque el front saltee el botón Facturar. Mensaje de referencia: 'Cliente bloqueado contactar gerencia, imposible generar venta'.
@@ -248,14 +248,14 @@ Contrato: rollback: git revert del commit de tests.. Status: pending
 
 **Gate (auto)**: El API rechaza emitir con cliente bloqueado, stock insuficiente en la bodega de origen (incluido 0) y crédito distinto de 30/60, con los mensajes de referencia; dos emisiones simultáneas con stock para una no dejan stock negativo; el clonado que incumple reglas se bloquea.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · iterate
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T2.1
-- [ ] S3.T2.2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T2.1
+- [x] S3.T2.2
+- [x] S3.T3
 
 **Gate (auto)**: Con la capability sales.invoices:commercial-override (rol Super Usuario), el usuario supera el tope de la ficha, descuenta repuestos con Bloqueo Descuento, usa 80% general, baja el precio y ve costo/utilidad (venta 100.000 / costo 80.000 -> $20.000 = 20%); no factura a bloqueado/sin stock ni combina general con Bloqueo Descuento; el usuario común queda en 20%.
 
