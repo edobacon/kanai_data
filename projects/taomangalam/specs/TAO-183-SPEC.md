@@ -2,7 +2,7 @@
 id: TAO-183-SPEC
 project: taomangalam
 ticket: TAO-183
-status: approved
+status: draft
 ---
 
 # TAO-183 · Splash de identidad con destino y sin esperas artificiales (HU-01-12)
@@ -74,6 +74,21 @@ Si la historia modifica docs/PLAN.md o docs/product/vistas/V-01_inicio.md (ambos
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:125
 
 El tiempo desde el arranque hasta el destino queda registrado como métrica de desarrollo.
+
+### REQ-13 `confirmed`
+> Fuente: enmienda:gate-integral-TAO-183#1 (app/lib/app.dart monta const SplashScreen() sin override)
+
+El provider `splashDestinationReadyProvider` (app/lib/features/splash/presentation/splash_screen.dart) se cablea en produccion a una señal REAL de «destino listo» definida en `app/lib/app.dart` (arranque/bootstrap o primera composicion de Inicio resuelta), en lugar del `Future<void>.value()` ya resuelto: con el provider por defecto (sin override de test) la secuencia splashEnso/splashDisc/splashName se reproduce y la navegacion a `AppRouteNames.home` ocurre en cuanto esa señal completa, siempre dentro del tope splashMax (1000 ms).
+
+### REQ-14 `confirmed`
+> Fuente: enmienda:gate-integral-TAO-183#2 (asset ausente del bundle; REQ-09, DEC-235)
+
+El arte de fondo `familia-identidad-entrada.png` queda empaquetado en el bundle: el bloque `flutter: assets:` de `app/pubspec.yaml` declara `assets/fondos-vistas/` (o el archivo puntual), de modo que el resolvedor de imagenes lo carga en produccion y la capa de fondo de la primera superficie Flutter no cae al color de respaldo. Los tests `app/test/features/splash/splash_background_test.dart` y `app/test/golden/splash_golden_test.dart` resuelven el asset por el resolvedor/bundle (rootBundle/AssetImage), no por `File` + `MemoryImage`.
+
+### REQ-15 `confirmed` `enforcement`
+> Fuente: enmienda:gate-integral-TAO-183#3 (fuga de ui.Image en _SplashEnsoRevealState)
+
+`_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` implementa `dispose()` y libera el `ui.Image` cargado (`image.dispose()`) antes de llamar a `super.dispose()`, y no usa la imagen despues de liberarla (guarda contra la carga asincronica que resuelve con el State ya desmontado): no queda memoria nativa de la textura retenida al salir de la splash.
 ## Tasks
 
 #### S1.T1 — Configurar la splash nativa de iOS y Android: fondo ivory100 y logo sol-luna de tinta desde app/assets/identidad/, válida con el sistema en claro y en oscuro.
@@ -120,6 +135,18 @@ Contrato: rollback: Revertir los cambios de esos documentos.. Status: done
 
 #### S3.T4 — Escribir los tests de la etapa: golden del estado final en teléfono y tablet, test de semántica (anuncio «Tao Mangalam» y etiqueta del indicador) y verificación de lint de los docs del baseline.
 Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Status: done
+
+#### S5.T1 — Definir en `app/lib/app.dart` la señal real de «destino listo» (completar cuando el arranque/bootstrap o la primera composicion de Inicio esta lista) y sobrescribir con ella `splashDestinationReadyProvider` de `app/lib/features/splash/presentation/splash_screen.dart`, reemplazando el `Future<void>.value()` ya resuelto del default; la splash sigue navegando por NOMBRE a `AppRouteNames.home` (REQ-06) y el `LegalConsentGate` resuelve V-51. Agregar `app/test/features/splash/splash_destination_signal_test.dart` con reloj simulado que ejercite el provider POR DEFECTO (sin override) y compruebe que la secuencia corre y la navegacion ocurre dentro de splashMax (1000 ms). Sin dependencias nuevas.
+Contrato: rollback: Revertir `app/lib/app.dart` y `app/lib/features/splash/presentation/splash_screen.dart` al default previo (`Future<void>.value()`) y borrar `app/test/features/splash/splash_destination_signal_test.dart`; la splash vuelve a navegar de inmediato a Inicio, sin regresion funcional de destino.. Status: done
+
+#### S5.T2 — Declarar el arte de fondo en el bloque `flutter: assets:` de `app/pubspec.yaml` (`assets/fondos-vistas/`, o el archivo `assets/fondos-vistas/familia-identidad-entrada.png`) para que el resolvedor de imagenes lo cargue en produccion y la capa de fondo no caiga al color de respaldo. Ajustar `app/test/features/splash/splash_background_test.dart` y `app/test/golden/splash_golden_test.dart` para que resuelvan el asset por el resolvedor/bundle (rootBundle/AssetImage) en lugar de `File` + `MemoryImage`, y dejarlos verdes (regenerar el golden solo si el cambio de origen del asset lo exige, comparando contra el aprobado).
+Contrato: rollback: Revertir la entrada de assets en `app/pubspec.yaml` y restaurar los dos archivos de test a su version previa con `File` + `MemoryImage`; el fondo vuelve al color de respaldo en produccion sin romper el build.. Status: done
+
+#### S5.T3 — Agregar `dispose()` a `_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` que libere el `ui.Image` cargado (`image.dispose()`) antes de `super.dispose()`, con guarda para la carga asincronica que resuelve con el State ya desmontado (liberar la imagen y no llamar setState). Agregar `app/test/features/splash/splash_sequence_dispose_test.dart` que monte y desmonte la splash y verifique `image.debugDisposed == true` y la ausencia de excepciones de Flutter cuando la carga resuelve tras el desmontaje.
+Contrato: rollback: Quitar el `dispose()` agregado en `splash_sequence.dart` y borrar `app/test/features/splash/splash_sequence_dispose_test.dart`; vuelve el comportamiento previo (imagen no liberada), sin cambio funcional visible.. Status: done
+
+#### S5.T4 — Regresion acotada de la splash tras las tres correcciones: correr los tests de la feature splash y el golden, y `flutter analyze` sobre los archivos tocados (`app/lib/app.dart`, `app/lib/features/splash/presentation/splash_screen.dart`, `app/lib/features/splash/presentation/splash_sequence.dart`). Clasificar cualquier fallo como introducido o preexistente y corregir solo los introducidos. No se corre la suite completa: eso lo hace el gate al cerrar.
+Contrato: rollback: No aplica: la task no modifica codigo de produccion; si se ajusta algun test, revertir ese archivo a su version previa.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa detrás del contenido (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila) con el texto largo sobre superficie opaca, sin salto de color del papel respecto de la 
@@ -145,6 +172,20 @@ Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Stat
 **Task ops:**
 
 - edit S1.T3 { desc="Resolver el destino de la splash a Inicio y delegar V-51 al gate existente. NO crear ninguna ruta marcador ni agregar entradas a `app/lib/navigation/app_routes.dart`. En cuanto el destino esta listo (o al vencer `splashMax` 1000 ms), la splash navega por NOMBRE a `AppRouteNames.home` (path `/home`) usando el router de go_router que deja HU-01-09/TAO-179. Quitar de la splash toda consulta al estado legal (`ColaLegalPendiente` / `colaLegalPendienteProvider`): la presentacion de V-51 (primer uso sin aceptacion registrada o version legal pendiente) queda a cargo del `LegalConsentGate` ya integrado por GH-63/TAO-185 en `app/lib/navigation/legal_consent_gate.dart`, montado sobre el shell en `app/lib/app.dart`, que lee `consentimientoLegalControllerProvider` y superpone `LegalConsentView` mientras hay documentos por aceptar y usa la copia legal empaquetada sin red. Verificar que el gate siga envolviendo el shell despues del cambio y que no haya doble resolucion del estado legal.", rollback="Revertir el resolvedor de destino de la splash a la navegacion directa a `AppRouteNames.home` sin cambios adicionales y dejar intacto `app/lib/app.dart` con el `LegalConsentGate` tal como lo integro GH-63; no se agregan ni se quitan rutas en `app_routes.dart`, por lo que el revert no afecta al router.", validates=["REQ-06"], isTest=false, verify=["cd app && flutter analyze lib/navigation lib/features/splash","cd app && flutter test test/features/splash"] }
+
+### Enmienda 3
+**REQs:**
+
+- REQ-13 (add) `confirmed`: El provider `splashDestinationReadyProvider` (app/lib/features/splash/presentation/splash_screen.dart) se cablea en produccion a una señal R
+- REQ-14 (add) `confirmed`: El arte de fondo `familia-identidad-entrada.png` queda empaquetado en el bundle: el bloque `flutter: assets:` de `app/pubspec.yaml` declara 
+- REQ-15 (add) `confirmed`: `_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` implementa `dispose()` y libera el `ui.Image` cargad
+
+**Tasks agregadas:**
+
+- S5: Definir en `app/lib/app.dart` la señal real de «destino listo» (completar cuando el arranque/bootstrap o la primera composicion de Inicio esta lista) y sobrescribir con ella `splashDestinationReadyProvider` de `app/lib/features/splash/presentation/splash_screen.dart`, reemplazando el `Future<void>.value()` ya resuelto del default; la splash sigue navegando por NOMBRE a `AppRouteNames.home` (REQ-06) y el `LegalConsentGate` resuelve V-51. Agregar `app/test/features/splash/splash_destination_signal_test.dart` con reloj simulado que ejercite el provider POR DEFECTO (sin override) y compruebe que la secuencia corre y la navegacion ocurre dentro de splashMax (1000 ms). Sin dependencias nuevas. (valida: REQ-13, REQ-03; rollback: Revertir `app/lib/app.dart` y `app/lib/features/splash/presentation/splash_screen.dart` al default previo (`Future<void>.value()`) y borrar `app/test/features/splash/splash_destination_signal_test.dart`; la splash vuelve a navegar de inmediato a Inicio, sin regresion funcional de destino.)
+- S5: Declarar el arte de fondo en el bloque `flutter: assets:` de `app/pubspec.yaml` (`assets/fondos-vistas/`, o el archivo `assets/fondos-vistas/familia-identidad-entrada.png`) para que el resolvedor de imagenes lo cargue en produccion y la capa de fondo no caiga al color de respaldo. Ajustar `app/test/features/splash/splash_background_test.dart` y `app/test/golden/splash_golden_test.dart` para que resuelvan el asset por el resolvedor/bundle (rootBundle/AssetImage) en lugar de `File` + `MemoryImage`, y dejarlos verdes (regenerar el golden solo si el cambio de origen del asset lo exige, comparando contra el aprobado). (valida: REQ-14, REQ-09; rollback: Revertir la entrada de assets en `app/pubspec.yaml` y restaurar los dos archivos de test a su version previa con `File` + `MemoryImage`; el fondo vuelve al color de respaldo en produccion sin romper el build.)
+- S5: Agregar `dispose()` a `_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` que libere el `ui.Image` cargado (`image.dispose()`) antes de `super.dispose()`, con guarda para la carga asincronica que resuelve con el State ya desmontado (liberar la imagen y no llamar setState). Agregar `app/test/features/splash/splash_sequence_dispose_test.dart` que monte y desmonte la splash y verifique `image.debugDisposed == true` y la ausencia de excepciones de Flutter cuando la carga resuelve tras el desmontaje. (valida: REQ-15; rollback: Quitar el `dispose()` agregado en `splash_sequence.dart` y borrar `app/test/features/splash/splash_sequence_dispose_test.dart`; vuelve el comportamiento previo (imagen no liberada), sin cambio funcional visible.)
+- S5: Regresion acotada de la splash tras las tres correcciones: correr los tests de la feature splash y el golden, y `flutter analyze` sobre los archivos tocados (`app/lib/app.dart`, `app/lib/features/splash/presentation/splash_screen.dart`, `app/lib/features/splash/presentation/splash_sequence.dart`). Clasificar cualquier fallo como introducido o preexistente y corregir solo los introducidos. No se corre la suite completa: eso lo hace el gate al cerrar. (valida: REQ-13, REQ-14, REQ-15, test; rollback: No aplica: la task no modifica codigo de produccion; si se ajusta algun test, revertir ese archivo a su version previa.)
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -181,3 +222,11 @@ Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Stat
 **Gate (auto)**: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa (cover con punto focal, opacidad 12–18 %, ≥65 % de zona tranquila) en teléfono y tablet sin salto de color del papel; el logo/nombre se anuncian como «Tao Mangalam» y el indicador tiene etiqueta; quedan goldens de teléfono/tablet; y los docs del baseline siguen lint-compliant.
 
 ### Session 4 · T0 · open
+
+### Session 5 · iterate
+
+**Tasks:**
+- [x] S5.T1
+- [x] S5.T2
+- [x] S5.T3
+- [x] S5.T4

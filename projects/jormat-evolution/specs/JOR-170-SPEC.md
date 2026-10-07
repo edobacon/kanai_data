@@ -2,7 +2,7 @@
 id: JOR-170-SPEC
 project: jormat-evolution
 ticket: JOR-170
-status: draft
+status: approved
 ---
 
 # JOR-170 · Reglas de emisión en servidor, Super Usuario y utilidad (Facturas cliente 2/7)
@@ -65,9 +65,9 @@ El precio mínimo de una línea es el precio neto de venta vigente de la ficha (
 Al crear una factura desde otro documento (factura o guía), los valores copiados pasan por las reglas de descuento/precio/bloqueo; si incumplen, se bloquea Facturar.
 
 ### REQ-10 `confirmed`
-> Fuente: backend/jormat-api/src/items/dto/item.dto.ts:163 + backend/jormat-api/src/items/items.repository.ts:1094 (oil) + backend/jormat-api/src/items/csv/items-import.util.ts:216 (bloqueoDescuento)
+> Fuente: Request JOR-170 2/7, seccion T-10 + Adenda 2 (2026-10-07, Enfoque C no destructivo); doc de decisiones secciones 3 y 5 (T-10); criterio de aceptacion 30
 
-Se unifican oil y bloqueo_descuento (T-10): migración que copia oil=1 a bloqueo_descuento=1 y elimina oil; los lectores (dto/listado backend, builder front, Compras, Guías, Solicitudes) leen bloqueo_descuento y el badge 'Aceite' pasa a 'Bloqueo descuento'. Marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura también en el API.
+El bloqueo de descuento se unifica de forma NO destructiva (T-10, Adenda 2 / Enfoque C): NO se modifica la tabla items (sin migracion, sin copia de dato, sin drop de items.oil) y se conservan ambas columnas con sus datos. El bloqueo se considera ACTIVO si bloqueo_descuento = 1 O oil = 1; el backend expone ese flag efectivo en listado y detalle de items (item.dto.ts e items.repository.ts) y el front lo consume para marcar la linea bloqueada (bloqueoDescuento === true u oil === 1) en LineItemsTable, TransactionBuilder, PurchaseInvoiceBuilder, CrearGuiaDespachoView y CrearSolicitudPedidoView; el badge 'Aceite' pasa a 'Bloqueo descuento'. Marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura tambien en el API.
 
 ### REQ-11 `confirmed`
 > Fuente: backend/jormat-api/src/sales/facturas.controller.ts:16 + backend/jormat-api/seeds/05_sales_capabilities.ts:11
@@ -100,14 +100,14 @@ El contrato de línea del front (lineItemSchema) y del backend (LineItemDto) se 
 El gate de Facturar del front reusa los gates existentes (cliente bloqueado, stock de la bodega de origen, precio bajo piso) y el cálculo/tope server-side sigue siendo la fuente de verdad (calc-totals), sin duplicar reglas.
 ## Tasks
 
-#### S1.T1 — T-10 de punta a punta: migración que copia oil=1 a bloqueo_descuento=1 y elimina la columna oil; actualizar lectores backend (item.dto.ts expone bloqueoDescuento en el listado y quita oil; items.repository.ts proyección/mapeo del listado y detalle; line-item.dto.ts reemplaza oil por bloqueoDescuento) y front (LineItemsTable badge 'Bloqueo descuento' y regla, TransactionBuilder hasOilItem→hasBloqueoDescuentoItem, origen-factura, PurchaseInvoiceBuilder, CrearGuiaDespachoView, CrearSolicitudPedidoView, schemas items.ts/ventas.ts). Aditiva y reversible.
-Contrato: rollback: git revert del commit; correr 'npm --prefix backend/jormat-api run migrate:rollback' para deshacer la migración (down re-agrega oil y copia de vuelta).. Status: done
+#### S1.T1 — T-10 (Enfoque C, no destructivo): NO crear ninguna migracion sobre la tabla items. Verificar en backend/jormat-api que no exista migracion que dropee items.oil ni que copie oil=1 a bloqueo_descuento=1, y dejar ambas columnas intactas con sus datos. Definir en el backend el flag efectivo de bloqueo de descuento como (bloqueo_descuento === 1 || oil === 1) en un unico punto reutilizable, para que lo consuman el DTO y el listado de items.
+Contrato: rollback: Revertir el commit: no hay cambio de schema ni de datos que deshacer; solo se elimina el helper del flag efectivo.. Status: done
 
-#### S1.T1.1 — Backend: migración nueva que hace UPDATE items SET bloqueo_descuento=1 WHERE oil=1 y dropColumn oil (down reversible) más item.dto.ts (listado expone bloqueoDescuento, quita oil), items.repository.ts (proyecta items.bloqueo_descuento en el listado, quita i.oil; RawItemRow/mapRowToDto) y line-item.dto.ts (bloqueoDescuento en vez de oil).
-Contrato: rollback: npm --prefix backend/jormat-api run migrate:rollback y git revert de los archivos.. Status: done
+#### S1.T1.1 — Exponer el flag efectivo de bloqueo de descuento (bloqueo_descuento === 1 || oil === 1) en backend/jormat-api/src/items/dto/item.dto.ts y en el listado de backend/jormat-api/src/items/items.repository.ts, conservando ambas columnas en la lectura (no se elimina oil del modelo ni del SELECT).
+Contrato: rollback: Revertir el commit del DTO y del repository; ambas columnas siguen existiendo, no hay dato que restaurar.. Status: done
 
-#### S1.T1.2 — Front: LineItemsTable usa bloqueoDescuento (badge 'Bloqueo descuento', descuento de línea deshabilitado), TransactionBuilder bloquea el general con hasBloqueoDescuentoItem, origen-factura siembra bloqueoDescuento, PurchaseInvoiceBuilder/CrearGuiaDespachoView/CrearSolicitudPedidoView cambian oil→bloqueoDescuento y los schemas items.ts/ventas.ts quedan alineados.
-Contrato: rollback: git revert de los archivos del front.. Status: done
+#### S1.T1.2 — Front: consumir el flag efectivo para marcar la linea bloqueada (bloqueoDescuento === true || oil === 1) en front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx, ventas/builder/TransactionBuilder/TransactionBuilder.tsx, compras/builder/PurchaseInvoiceBuilder.tsx, bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx y bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx. Cambiar el badge 'Aceite' por 'Bloqueo descuento'. No eliminar el campo oil del contrato del front.
+Contrato: rollback: Revertir el commit del front; el contrato conserva ambos campos, sin impacto en datos.. Status: done
 
 #### S1.T2 — Reglas de descuento y precio mínimo en backend y front: descuento de línea en % sobre neto*cantidad con tope ds_max_discount de la ficha (reemplaza el monto sin tope de JOR-167 CA-09; la pantalla acepta monto y lo convierte a % para validar); descuento general máximo 20% y excluyente con descuentos de línea; repuesto con Bloqueo Descuento sin descuento de línea y bloqueando el general; precio mínimo = nm_net vigente (no net_price) con refresh y aviso al retomar borrador.
 Contrato: rollback: git revert del commit de la task.. Status: done
@@ -121,11 +121,11 @@ Contrato: rollback: git revert de los componentes/schema del front.. Status: don
 #### S1.T3 — Regresión de la etapa: tests del front de los módulos Compras, Guías de despacho y Solicitudes de pedido (consumidores de oil/bloqueo_descuento) y de los nuevos casos de descuento/bloqueo.
 Contrato: rollback: git revert del commit de tests.. Status: done
 
-#### S1.T3.1 — Tests del módulo Compras (PurchaseInvoiceBuilder): el builder lee bloqueoDescuento (ya no oil), muestra el badge 'Bloqueo descuento' y no rompe sus casos previos tras quitar la columna oil.
-Contrato: rollback: git revert del archivo de test de PurchaseInvoiceBuilder.. Status: done
+#### S1.T3.1 — Tests backend de T-10 (sin migracion): item con bloqueo_descuento=1 y oil=0 -> flag efectivo true; item con oil=1 y bloqueo_descuento=0 -> flag efectivo true; ambos en 0 -> false y descuento de linea dentro del tope aceptado. Test de regresion de schema: no existe migracion que dropee items.oil ni UPDATE que copie oil a bloqueo_descuento, y una fila con oil=1/bloqueo_descuento=0 conserva esos valores tras correr migraciones. Reemplaza los casos JOR-170-TC-REQ-10-1/-2/-3 que verificaban la copia y el drop de columna.
+Contrato: rollback: Revertir el commit de tests.. Status: done
 
-#### S1.T3.2 — Tests del módulo Guías de despacho (CrearGuiaDespachoView): lectura de bloqueoDescuento en el listado/builder y no regresión tras la unificación oil→bloqueo_descuento.
-Contrato: rollback: git revert del archivo de test de CrearGuiaDespachoView.. Status: done
+#### S1.T3.2 — Tests de API y CSV de T-10: marcar Bloqueo de descuento desde la ficha o por CSV (items-import.util.ts) hace que el API rechace la factura con descuento de linea o descuento general sobre ese item; lo mismo cuando el bloqueo viene solo del dato legacy oil=1. Verificar que Compras, Guias de despacho y Solicitudes de pedido siguen marcando la linea bloqueada con cualquiera de las dos columnas en 1. Sin referencias a migracion, copia de dato ni drop de oil.
+Contrato: rollback: Revertir el commit de tests.. Status: done
 
 #### S1.T3.3 — Tests del módulo Solicitudes de pedido (CrearSolicitudPedidoView): lectura de bloqueoDescuento y no regresión tras la unificación oil→bloqueo_descuento.
 Contrato: rollback: git revert del archivo de test de CrearSolicitudPedidoView.. Status: done
@@ -248,7 +248,7 @@ Contrato: rollback: git revert del commit de tests.. Status: done
 
 **Gate (auto)**: El API rechaza emitir con cliente bloqueado, stock insuficiente en la bodega de origen (incluido 0) y crédito distinto de 30/60, con los mensajes de referencia; dos emisiones simultáneas con stock para una no dejan stock negativo; el clonado que incumple reglas se bloquea.
 
-### Session 3 · T2 · iterate
+### Session 3 · T2 · continue
 
 **Tasks:**
 - [x] S3.T1
@@ -260,3 +260,18 @@ Contrato: rollback: git revert del commit de tests.. Status: done
 **Gate (auto)**: Con la capability sales.invoices:commercial-override (rol Super Usuario), el usuario supera el tope de la ficha, descuenta repuestos con Bloqueo Descuento, usa 80% general, baja el precio y ve costo/utilidad (venta 100.000 / costo 80.000 -> $20.000 = 20%); no factura a bloqueado/sin stock ni combina general con Bloqueo Descuento; el usuario común queda en 20%.
 
 ### Session 4 · T0 · open
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-10 (edit) `confirmed`: El bloqueo de descuento se unifica de forma NO destructiva (T-10, Adenda 2 / Enfoque C): NO se modifica la tabla items (sin migracion, sin c
+
+**Task ops:**
+
+- edit S1.T1 { desc="T-10 (Enfoque C, no destructivo): NO crear ninguna migracion sobre la tabla items. Verificar en backend/jormat-api que no exista migracion que dropee items.oil ni que copie oil=1 a bloqueo_descuento=1, y dejar ambas columnas intactas con sus datos. Definir en el backend el flag efectivo de bloqueo de descuento como (bloqueo_descuento === 1 || oil === 1) en un unico punto reutilizable, para que lo consuman el DTO y el listado de items.", rollback="Revertir el commit: no hay cambio de schema ni de datos que deshacer; solo se elimina el helper del flag efectivo.", validates=["REQ-10"], verify=["cd backend/jormat-api && pnpm test -- src/items"] }
+- edit S1.T1.1 { desc="Exponer el flag efectivo de bloqueo de descuento (bloqueo_descuento === 1 || oil === 1) en backend/jormat-api/src/items/dto/item.dto.ts y en el listado de backend/jormat-api/src/items/items.repository.ts, conservando ambas columnas en la lectura (no se elimina oil del modelo ni del SELECT).", rollback="Revertir el commit del DTO y del repository; ambas columnas siguen existiendo, no hay dato que restaurar.", validates=["REQ-10"], verify=["cd backend/jormat-api && pnpm test -- src/items"] }
+- edit S1.T1.2 { desc="Front: consumir el flag efectivo para marcar la linea bloqueada (bloqueoDescuento === true || oil === 1) en front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx, ventas/builder/TransactionBuilder/TransactionBuilder.tsx, compras/builder/PurchaseInvoiceBuilder.tsx, bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx y bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx. Cambiar el badge 'Aceite' por 'Bloqueo descuento'. No eliminar el campo oil del contrato del front.", rollback="Revertir el commit del front; el contrato conserva ambos campos, sin impacto en datos.", validates=["REQ-10"], verify=["cd front/jormat-front && pnpm test -- LineItemsTable TransactionBuilder PurchaseInvoiceBuilder"] }
+- edit S1.T3.1 { desc="Tests backend de T-10 (sin migracion): item con bloqueo_descuento=1 y oil=0 -> flag efectivo true; item con oil=1 y bloqueo_descuento=0 -> flag efectivo true; ambos en 0 -> false y descuento de linea dentro del tope aceptado. Test de regresion de schema: no existe migracion que dropee items.oil ni UPDATE que copie oil a bloqueo_descuento, y una fila con oil=1/bloqueo_descuento=0 conserva esos valores tras correr migraciones. Reemplaza los casos JOR-170-TC-REQ-10-1/-2/-3 que verificaban la copia y el drop de columna.", rollback="Revertir el commit de tests.", validates=["REQ-10"], verify=["cd backend/jormat-api && pnpm test -- src/items"] }
+- edit S1.T3.2 { desc="Tests de API y CSV de T-10: marcar Bloqueo de descuento desde la ficha o por CSV (items-import.util.ts) hace que el API rechace la factura con descuento de linea o descuento general sobre ese item; lo mismo cuando el bloqueo viene solo del dato legacy oil=1. Verificar que Compras, Guias de despacho y Solicitudes de pedido siguen marcando la linea bloqueada con cualquiera de las dos columnas en 1. Sin referencias a migracion, copia de dato ni drop de oil.", rollback="Revertir el commit de tests.", validates=["REQ-10"], verify=["cd backend/jormat-api && pnpm test -- src/items src/sales"] }
+
