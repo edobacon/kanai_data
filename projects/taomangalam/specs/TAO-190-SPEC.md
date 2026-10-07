@@ -129,19 +129,19 @@ Contrato: rollback: Revertir los casos y temporales añadidos, conservando resul
 Contrato: rollback: Retirar únicamente casos y muestras de prueba nuevos; conservar evidencia y archivos productivos.. Status: done
 
 #### S4.T1 — Etapa vertical 1 de HU-02-07: clasificación y derivados reales de las 45 piezas y sus hojas de contacto para revisión humana. El padre se completa por sus subtasks y no implica aprobación automática.
-Contrato: rollback: Revertir los commits técnicos de esta etapa restaurando derivados y entradas previas; conservar maestros, aprobaciones reales, DEC, mediciones y registros, y comprobar que las piezas retiradas resuelven al respaldo del resolvedor.. Status: pending
+Contrato: rollback: Revertir los commits técnicos de esta etapa restaurando derivados y entradas previas; conservar maestros, aprobaciones reales, DEC, mediciones y registros, y comprobar que las piezas retiradas resuelven al respaldo del resolvedor.. Status: done
 
 #### S4.T1.1 — Clasificar y exportar las 45 piezas de identidad (6), Ashura (12), llegadas (12), permanencia (12) y perfiles (3) con el pipeline real de scripts/assets/. Registrar medidas, bytes y SHA-256 por derivado, cerrar por-optimizar solo para piezas exportadas con aprobaciones reales de Diseño y Contenido, y mantener permanencia sin aprobación como provisional y sin derivados finales. Verificar las rutas numéricas llegadas-avance/casa-05 y permanencia/casa-05; si falta aprobación, conservar el respaldo y dejar el caso final pendiente.
-Contrato: rollback: Restaurar derivados y entradas anteriores conservando maestros y aprobaciones; verificar que las piezas retiradas resuelven al respaldo existente.. Status: pending
+Contrato: rollback: Restaurar derivados y entradas anteriores conservando maestros y aprobaciones; verificar que las piezas retiradas resuelven al respaldo existente.. Status: done
 
 #### S4.T1.2 — Preparar las hojas de contacto por familia en teléfono 3x y tablet 2x sobre los fondos de referencia existentes (familia Recorrido) y tramitar la revisión real de Diseño y Contenido: QA-02-03-03 (sin deformaciones, bandas ni cambios de color respecto del maestro), QA-02-07-01 (llegadas y Ashura sin deformación ni cambio de color) y QA-02-07-04 (comparación con estados-avance-permanencia-retroceso.png y doc 43 §9: ninguna pieza con marco, borde, sombra ni recuadro, integración con contain sobre papel ivory100 según DEC-235). Registrar aprobaciones o defectos tal como los emitan las personas; el agente no aprueba ni declara aprobada una revisión pendiente.
-Contrato: rollback: Retirar únicamente las presentaciones técnicas nuevas si se revierte el paquete; conservar hojas revisadas, comentarios y decisiones reales. No revocar ni fabricar aprobaciones.. Status: pending
+Contrato: rollback: Retirar únicamente las presentaciones técnicas nuevas si se revierte el paquete; conservar hojas revisadas, comentarios y decisiones reales. No revocar ni fabricar aprobaciones.. Status: done
 
 #### S4.T2 — Pruebas de la etapa de clasificación y derivados en tests/test_assets_m1a.py; la regresión completa queda para el cierre canónico. El padre se completa por su subtask.
-Contrato: rollback: Revertir únicamente los casos añadidos, preservando suites y registros previos.. Status: pending
+Contrato: rollback: Revertir únicamente los casos añadidos, preservando suites y registros previos.. Status: done
 
 #### S4.T2.1 — Crear tests/test_assets_m1a.py con la clasificación de las 45 piezas por familia, derivados y metadatos registrados (medidas, bytes, SHA-256), exclusión de derivados finales para permanencia provisional, resolución de las rutas Casa 5 y rechazo de incoherencias. Enlazar los casos visuales QA-02-03-03 y QA-02-07-01/04 a los registros reales de revisión y comprobar que, sin ese registro, el caso queda pendiente y no se convierte en aprobación automática.
-Contrato: rollback: Retirar los casos nuevos conservando la evidencia y las aserciones previas.. Status: pending
+Contrato: rollback: Retirar los casos nuevos conservando la evidencia y las aserciones previas.. Status: done
 
 #### S6.T1 — Crear tests/test_assets_icons.py con la verificación automatizable de los iconos B3: presencia y formato de los recursos generados desde app/assets/identidad/ (iOS a sangre completa; Android con capas de primer plano, fondo #FAF7F0 y monocroma), geometría del sol dentro de la zona segura para máscara circular y squircle, y que la evidencia de instalación real en Android e iOS (QA-02-07-03) figure como pendiente humano mientras no exista, sin convertirla en aprobación automática. Usar temporales aislados, sin tocar maestros de identidad.
 Contrato: rollback: Retirar únicamente el archivo de pruebas nuevo y sus temporales; conservar recursos de iconos, evidencia y registros de revisión existentes.. Status: pending
@@ -274,14 +274,14 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 
 **Gate (auto)**: Una muestra real produce WebP 1x/2x/3x con medidas, perfil, alfa y hashes comprobables; --check detecta desactualización y la validación rechaza empaquetar maestros.
 
-### Session 4 · T3 · open
+### Session 4 · T3 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T1.1
-- [ ] S4.T1.2
-- [ ] S4.T2
-- [ ] S4.T2.1
+- [x] S4.T1
+- [x] S4.T1.1
+- [x] S4.T1.2
+- [x] S4.T2
+- [x] S4.T2.1
 
 **Gate (strong)**: Clasificación verificable de 45 piezas, derivados trazados únicamente para piezas realmente aprobadas y hojas de contacto preparadas para Diseño/Contenido. Permanencia provisional conserva respaldo. Esta etapa no exige los iconos ni CI de sesiones posteriores; las revisiones humanas finales se comprueban en la sesión final.
 
