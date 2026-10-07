@@ -152,22 +152,22 @@ Contrato: rollback: Borrar el archivo de test.. Status: done
 Contrato: rollback: `git checkout --` de los archivos de `src/sales` tocados; los folios ya asignados se revierten con el rollback de la transaccion.. Status: done
 
 #### S3.T1 — Persistir el descuento de línea con unidad explícita: guardar `discount_unit` (porcentaje) y el importe calculado en `invoice_items` al guardar/emitir, y reflejarlo en el `LineItemDto` de respuesta (P-08.1, REQ-07).
-Contrato: rollback: `migrate:rollback` de las columnas y git restore de `sales.service.ts`/DTO.. Status: pending
+Contrato: rollback: `migrate:rollback` de las columnas y git restore de `sales.service.ts`/DTO.. Status: done
 
 #### S3.T2 — Al emitir, copiar el receptor a la factura (rut, razón social, dirección, ciudad, teléfono) desde el payload/DTO a las columnas `invoices.receptor_*`; leerlas del snapshot y no de `customers` (P-04.1, REQ-08).
-Contrato: rollback: `migrate:rollback` de las columnas y git restore del service.. Status: pending
+Contrato: rollback: `migrate:rollback` de las columnas y git restore del service.. Status: done
 
 #### S3.T3 — Persistir N.P. (`orderNote`) y O.C. (`oc`) en `invoices` al emitir, exponer `orderNote` en `DocumentoDTEDto`/detalle, renderizar N.P. en `front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.tsx` (reemplaza el DEUDA_TECNICA_CONFIRMAR de la cabecera) y agregar la columna N.P. en `front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.tsx`; agregar `orderNote` a `documentoDTESchema` (`front/jormat-front/src/lib/schemas/ventas.ts:136`) (T-13, REQ-09).
-Contrato: rollback: git restore de los archivos de back y front; `migrate:rollback` de las columnas si aplica.. Status: pending
+Contrato: rollback: git restore de los archivos de back y front; `migrate:rollback` de las columnas si aplica.. Status: done
 
 #### S3.T4 — Guardar el costo neto unitario por línea en `invoice_items.net_unit_cost` al emitir, tomándolo del dato de costo de la línea o derivándolo de `unit_price`/`total` (P-09.2, REQ-10).
-Contrato: rollback: `migrate:rollback` de la columna y git restore del service.. Status: pending
+Contrato: rollback: `migrate:rollback` de la columna y git restore del service.. Status: done
 
 #### S3.T5 — Tests de campos y regresión (unit + e2e): descuento con unidad, snapshot del receptor inmutable al cambiar al cliente, N.P./O.C. persistidos y visibles, y costo neto unitario; verificar que los tests existentes de `sales` siguen pasando, adaptando solo los que afirman el stub en memoria.
-Contrato: rollback: Borrar/restaurar los tests nuevos.. Status: pending
+Contrato: rollback: Borrar/restaurar los tests nuevos.. Status: done
 
 #### S3.T6 — Agregar N.P. y O.C. a la vista de impresion del DOCUMENTO individual (la identificada en la task de verificacion de referencias; `DocumentosPrintView` es la impresion de listado y no corresponde), tomando los valores del documento persistido y no del estado en memoria del borrador. Respetar el layout y los componentes de impresion existentes, sin crear una vista paralela.
-Contrato: rollback: `git checkout --` del componente de impresion por documento modificado.. Status: pending
+Contrato: rollback: `git checkout --` del componente de impresion por documento modificado.. Status: done
 ## Enmiendas (refine_spec)
 
 ### Enmienda 1
@@ -221,14 +221,14 @@ Contrato: rollback: `git checkout --` del componente de impresion por documento 
 
 **Gate (auto)**: Con el API: guardar borrador -> reiniciar -> retomarlo con sus líneas; emitir asigna folio; editar una emitida da 400; clonar crea otro documento sin tocar el original.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · iterate
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
-- [ ] S3.T5
-- [ ] S3.T6
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
+- [x] S3.T5
+- [x] S3.T6
 
 **Gate (auto)**: Emitir con descuento, receptor, N.P./O.C. y costo; el detalle y la impresión muestran N.P./O.C. tras reiniciar; la factura emitida no cambia al editar la ficha del cliente.

@@ -111,22 +111,22 @@ Contrato: rollback: Revertir solo los casos nuevos, conservando fixtures anterio
 Contrato: rollback: Retirar casos y fixtures añadidos sin modificar el inventario productivo ni los maestros.. Status: done
 
 #### S3.T1 — Entregar HU-02-03 en scripts/assets/ sobre el manifiesto validado y los presupuestos decididos; reutilizar el conversor disponible tras confirmar su versión y contrato. El padre se completa por sus subtasks.
-Contrato: rollback: Restaurar derivados, manifiesto y declaración de assets previos; conservar todos los maestros PNG y comprobar sus hashes y el --check contra la versión restaurada.. Status: pending
+Contrato: rollback: Restaurar derivados, manifiesto y declaración de assets previos; conservar todos los maestros PNG y comprobar sus hashes y el --check contra la versión restaurada.. Status: done
 
 #### S3.T1.1 — Implementar la exportación en scripts/assets/ desde los usos del manifiesto: 1x, 2.0x/ y 3.0x/, sRGB, alfa, proporción y nombres numerados como arcano-08-la-fuerza. Usar los tamaños de content/imagenes/12 y los límites de peso medidos en HU-02-01; rechazar ampliación y sobrepeso indicando id y variante. Registrar ruta, medidas, bytes y SHA-256 por derivado.
-Contrato: rollback: Restaurar exportador, derivados y metadatos anteriores sin sobrescribir ni borrar maestros.. Status: pending
+Contrato: rollback: Restaurar exportador, derivados y metadatos anteriores sin sobrescribir ni borrar maestros.. Status: done
 
 #### S3.T1.2 — Añadir --check al exportador de scripts/assets/ y el procesamiento por familia: verificar correspondencia de maestro, configuración, salidas y metadatos; salida determinista y diagnóstico de obsolescencia por id y variante. Comparar los SHA-256 de los maestros antes y después y emitir un resumen por familia con cantidades, pesos y errores.
-Contrato: rollback: Restaurar el comportamiento y las salidas anteriores del exportador; mantener maestros intactos y toda evidencia registrada.. Status: pending
+Contrato: rollback: Restaurar el comportamiento y las salidas anteriores del exportador; mantener maestros intactos y toda evidencia registrada.. Status: done
 
 #### S3.T1.3 — Actualizar app/pubspec.yaml para declarar solo derivados manifestados con modo empaquetado e implementar su comprobación en scripts/assets/. Rechazar app/assets/ completo, maestros PNG, derivados desconocidos y descargables declarados como empaquetados. No generar todavía piezas finales de permanencia sin aprobación.
-Contrato: rollback: Restaurar declaración de assets y comprobación previas junto al conjunto compatible de derivados y manifiesto.. Status: pending
+Contrato: rollback: Restaurar declaración de assets y comprobación previas junto al conjunto compatible de derivados y manifiesto.. Status: done
 
 #### S3.T2 — Añadir las pruebas del pipeline y del empaquetado en tests/test_assets_pipeline.py usando muestras pequeñas y temporales; la exportación completa queda para el gate. El padre se completa por su subtask.
-Contrato: rollback: Revertir los casos y temporales añadidos, conservando resultados previos y maestros.. Status: pending
+Contrato: rollback: Revertir los casos y temporales añadidos, conservando resultados previos y maestros.. Status: done
 
 #### S3.T2.1 — Cubrir en tests/test_assets_pipeline.py: 1254→320/640/960, lámina 1024×1536→256×384/512×768/768×1152, 800×800 con uso 418 rechazado, peso máximo por familia, alfa, nombres numerados, hashes de maestros antes/después, determinismo de dos corridas, --check ante maestro o derivado alterado, resumen por familia y declaraciones inválidas de pubspec. Ejecutar el conversor y --check reales, no una simulación; enlazar QA-02-03-01/02 y dejar QA-02-03-03 para la revisión de Diseño.
-Contrato: rollback: Retirar únicamente casos y muestras de prueba nuevos; conservar evidencia y archivos productivos.. Status: pending
+Contrato: rollback: Retirar únicamente casos y muestras de prueba nuevos; conservar evidencia y archivos productivos.. Status: done
 
 #### S4.T1 — Etapa vertical 1 de HU-02-07: clasificación y derivados reales de las 45 piezas y sus hojas de contacto para revisión humana. El padre se completa por sus subtasks y no implica aprobación automática.
 Contrato: rollback: Revertir los commits técnicos de esta etapa restaurando derivados y entradas previas; conservar maestros, aprobaciones reales, DEC, mediciones y registros, y comprobar que las piezas retiradas resuelven al respaldo del resolvedor.. Status: pending
@@ -262,15 +262,15 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 
 **Gate (auto)**: El inventario migrado valida sin errores ni PNG huérfanos, conserva los 64 ids/alt y muestra permanencia provisional; las entradas deliberadamente inválidas producen diagnósticos por id o ruta.
 
-### Session 3 · T3 · open
+### Session 3 · T3 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T1.1
-- [ ] S3.T1.2
-- [ ] S3.T1.3
-- [ ] S3.T2
-- [ ] S3.T2.1
+- [x] S3.T1
+- [x] S3.T1.1
+- [x] S3.T1.2
+- [x] S3.T1.3
+- [x] S3.T2
+- [x] S3.T2.1
 
 **Gate (auto)**: Una muestra real produce WebP 1x/2x/3x con medidas, perfil, alfa y hashes comprobables; --check detecta desactualización y la validación rechaza empaquetar maestros.
 
