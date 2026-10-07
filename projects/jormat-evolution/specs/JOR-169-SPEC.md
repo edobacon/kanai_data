@@ -137,19 +137,19 @@ Contrato: rollback: Descartar la base efimera y la copia de la DB dev; no toca l
 Contrato: rollback: Restaurar el dump previo de la DB dev tomado antes de migrar; `migrate:rollback` de las migraciones nuevas.. Status: done
 
 #### S2.T1 — Reemplazar el almacén en memoria de `SalesService` (`documentos`/`lineasPorDoc`/`datosBorradorPorDoc`, sales.service.ts:332) por persistencia Knex en `invoices`/`invoice_items` con `workspace_id` explícito: `createDraft`/`updateDraft`/`findDocumento` leen y escriben el borrador y sus líneas; un borrador queda sin folio y editable (R-05, REQ-03).
-Contrato: rollback: git restore de `sales.service.ts` y de su módulo; `migrate:rollback` si se agregó migración.. Status: pending
+Contrato: rollback: git restore de `sales.service.ts` y de su módulo; `migrate:rollback` si se agregó migración.. Status: done
 
 #### S2.T2 — Persistir la emisión en `SalesService.issueFactura`: asignar folio simulado (serie por tipoDTE, separado del id), setear fecha y usuario de emisión, y bloquear la edición de emitidas (R-07, REQ-04).
-Contrato: rollback: git restore de `sales.service.ts`; `migrate:rollback` si aplica.. Status: pending
+Contrato: rollback: git restore de `sales.service.ts`; `migrate:rollback` si aplica.. Status: done
 
 #### S2.T3 — Clonado: crear siempre un documento NUEVO con identidad nueva (fila nueva en `invoices` con su uuid) al partir de un origen, copiando sus líneas; el original no se modifica (REQ-05). Corregir cualquier ruta que reutilice el id del origen.
-Contrato: rollback: git restore de `sales.service.ts`.. Status: pending
+Contrato: rollback: git restore de `sales.service.ts`.. Status: done
 
 #### S2.T4 — Test de integración de persistencia (nuevo `backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts`): crear borrador y releerlo con una instancia nueva del servicio (simula reinicio) con sus líneas; emisión asigna folio; editar emitida 400; clon con identidad nueva y original intacto; adaptar los specs de `sales` que afirmaban el stub en memoria.
-Contrato: rollback: Borrar el archivo de test.. Status: pending
+Contrato: rollback: Borrar el archivo de test.. Status: done
 
 #### S2.T5 — Implementar el folio simulado al emitir: correlativo entero por tipo de DTE, sin CAF (serie simulada), persistido en la columna de folio de `invoices` separado del id/uuid, con el mapeo explicito tipoDTE -> `invoices.type_id` (Factura Electronica -> 1) en una constante del modulo sales (sin magic numbers dispersos). La asignacion del correlativo debe ser atomica dentro de la transaccion de emision.
-Contrato: rollback: `git checkout --` de los archivos de `src/sales` tocados; los folios ya asignados se revierten con el rollback de la transaccion.. Status: pending
+Contrato: rollback: `git checkout --` de los archivos de `src/sales` tocados; los folios ya asignados se revierten con el rollback de la transaccion.. Status: done
 
 #### S3.T1 — Persistir el descuento de línea con unidad explícita: guardar `discount_unit` (porcentaje) y el importe calculado en `invoice_items` al guardar/emitir, y reflejarlo en el `LineItemDto` de respuesta (P-08.1, REQ-07).
 Contrato: rollback: `migrate:rollback` de las columnas y git restore de `sales.service.ts`/DTO.. Status: pending
@@ -210,14 +210,14 @@ Contrato: rollback: `git checkout --` del componente de impresion por documento 
 
 **Gate (auto)**: `migrate:latest` pasa desde base vacía y como upgrade; los snapshots de `invoices`/`invoice_items` muestran los constraints y las columnas nuevas; re-ejecutar migrate no cambia nada.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: Con el API: guardar borrador -> reiniciar -> retomarlo con sus líneas; emitir asigna folio; editar una emitida da 400; clonar crea otro documento sin tocar el original.
 
