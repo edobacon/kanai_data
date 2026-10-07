@@ -23,61 +23,60 @@ Datos a confirmar antes de ejecutar:
 
 ## Requirements
 
-#### REQ-01 `confirmed`
+### REQ-01 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1650
-> Necesidad: build
+
 Qué: presentar V-51 obligatoria tras la splash y antes de cualquier introducción, con «Privacidad y consentimientos», Términos y Privacidad versionados y explicación de qué datos trata la app, dónde viven y por qué aceptar es necesario. Sin aceptación, mantener el bloqueo de navegación y permitir releer, incluso al volver a la app; la vista no se filtra por permisos. Por qué: garantizar una decisión informada antes de acceder al resto.
 
-#### REQ-02 `confirmed`
+### REQ-02 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1668
-> Necesidad: build
+
 Qué: abrir el texto completo de cada documento y regresar al mismo punto de V-51; mostrar carga, error con Reintentar y texto empaquetado sin red. Identificar errores de carga con errorId sin datos personales, y no mostrar datos de consultas. Por qué: permitir leer íntegramente los documentos sin perder contexto ni depender de conectividad.
 
-#### REQ-03 `confirmed`
+### REQ-03 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1654
-> Necesidad: build
+
 Qué: consumir obtenerPoliticaAnalitica y presentar opt_in con Aceptar analítica/Rechazar analítica equivalentes, opt_out con aviso de actividad e instrucciones para desactivarla, y disabled sin bloque. Delegar el registro a HU-15-03/04, sin usar el consentimiento para perfilar. Por qué: respetar la política regional sin inducir la elección.
 
-#### REQ-04 `confirmed`
+### REQ-04 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1658
-> Necesidad: build
+
 Qué: Aceptar y continuar delega la aceptación versionada a HU-03a-11 con red y a HU-03a-12 sin red; continúa a Inicio y su introducción, o al contexto conservado, cuando el proveedor confirma el resultado. Mantener la verificación de documento_legal.aceptar en el servidor. Por qué: conectar la presentación con los mecanismos legales existentes sin duplicar persistencia ni cola.
 
-#### REQ-05 `confirmed`
+### REQ-05 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1661
-> Necesidad: build
+
 Qué: presentar V-51 al abrir con versiones pendientes, ante version_legal_pendiente en cualquier pantalla y ante rechazos inmediatos o diferidos; mostrar «Actualizamos este documento. Revísalo para continuar», seleccionar solo documentos que requieren aceptación vigente y conservar el contexto anterior hasta aceptar. Por qué: resolver cambios legales sin perder el retorno ni aceptar versiones obsoletas.
 
-#### REQ-06 `confirmed`
+### REQ-06 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1666
-> Necesidad: build
+
 Qué: en teléfono presentar un bloque por documento y acciones al final; en tablet horizontal mostrar resumen y texto lado a lado. Admitir textos variables sin cortes y escala 200 %, con foco inicial en el título y lectura accesible. Por qué: permitir completar la aceptación en teléfono, tablet y con ayudas de accesibilidad.
 
-#### REQ-07 `confirmed`
+### REQ-07 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1720
-> Necesidad: build
+
 Qué: entregar la composición visual de V-51 como panel-modal a pantalla completa: primer uso con el fondo Identidad/entrada de V-31, actualizaciones con el fondo anfitrión y texto legal sobre superficies opacas. Por qué: cumplir doc 43 §9, DEC-235 y la aprobación de Diseño requerida para cerrar.
 
-#### REQ-08 `confirmed`
+### REQ-08 `confirmed` `enforcement`
 > Fuente: taomangalam/app/lib/core/images/background_layer.dart:89; taomangalam/app/lib/design_system/app_theme.dart:345; taomangalam/app/lib/design_system/overlays/tao_banner_host.dart:24; taomangalam/app/lib/l10n/app_localizations.dart:412
-> Necesidad: build
+
 Qué: reutilizar TaoBackgroundLayer, las opacidades semánticas, los átomos y la localización ARB existentes; usar TaoBannerHost cuando el error se presente como banner, conservando su única ranura y retirada tras reintento exitoso. Por qué: evitar un sistema paralelo y proteger los consumidores integrados; las coincidencias disabled del tema son opacidad, no política de analítica.
 
-#### REQ-09 `confirmed`
+### REQ-09 `confirmed` `enforcement`
 > Fuente: taomangalam/app/lib/core/preferences/preference_reduced_motion_store.dart:18; taomangalam/app/lib/core/preferences/preference_reduced_motion_store.dart:26
-> Necesidad: build
-Qué: consumir las preferencias de accesibilidad desde PreferenceStore y resolver movimiento reducido mediante PreferenceStoreReducedMotionStore; no crear stores ni claves paralelas para V-51 o sus transiciones. Por qué: preservar la preferencia aplicada en runtime y después de reiniciar, conforme a la regla normativa de EP-01.
 
+Qué: consumir las preferencias de accesibilidad desde PreferenceStore y resolver movimiento reducido mediante PreferenceStoreReducedMotionStore; no crear stores ni claves paralelas para V-51 o sus transiciones. Por qué: preservar la preferencia aplicada en runtime y después de reiniciar, conforme a la regla normativa de EP-01.
 ## Tasks
 
 #### S1.T1 — Completar intake-explore → teach-intake respetando Skip ya aprobado → design-feature. Contrastar KB y origin/main, fijar los archivos del componente V-51 y de los proveedores pendientes del summary, y documentar contratos sin construirlos. Reusar el navegador raíz comprobado en app/test/navigation/app_shell_integration_test.dart:101 y el fondo existente. Obtener preaprobación del juez de spec antes de aprobar, copiar estas tasks al ticket y habilitar request-execute solo después. Certeza confirmed para el flujo solicitado; firmas y ubicaciones pendientes deben quedar resueltas en el spec aprobado.
-Contrato: rollback: Retirar únicamente el plan no aprobado o corregir sus contratos; no iniciar ejecución ni cambiar proveedores, permisos o datos.. Status: pending
+Contrato: rollback: Retirar únicamente el plan no aprobado o corregir sus contratos; no iniciar ejecución ni cambiar proveedores, permisos o datos.. Status: done
 
 #### S1.T2 — Implementar la presentación y lector de V-51 en los archivos fijados al aprobar el spec; integrar la superficie con app/lib/navigation/app_shell.dart y textos en app/lib/l10n/app_es.arb. Mostrar título, versiones y explicación; conservar desplazamiento y selección al leer y volver. Añadir estados de carga, errorId sin datos personales, Reintentar y lectura empaquetada. Resolver teléfono/tablet, 360 × 800 al 200 % y foco al título. Certeza confirmed; fuentes: backlog EP-01:1650,1666,1668,1732. Reutilizar TaoBackgroundLayer de app/lib/core/images/background_layer.dart:89, tema, átomos y banner existentes, y PreferenceStoreReducedMotionStore de app/lib/core/preferences/preference_reduced_motion_store.dart:18. Entregar el fondo/composición de esta historia sin crear un nuevo resolvedor ni stores.
-Contrato: rollback: Revertir la presentación, lector y claves nuevas de V-51; conservar versiones empaquetadas, infraestructura visual y preferencias existentes.. Status: pending
+Contrato: rollback: Revertir la presentación, lector y claves nuevas de V-51; conservar versiones empaquetadas, infraestructura visual y preferencias existentes.. Status: done
 
 #### S1.T3 — Añadir casos de lector, carga/reintento, retorno al mismo punto, texto empaquetado y foco a app/test/navigation/app_shell_integration_test.dart. Extender app/test/goldens/background_layer_golden_test.dart con la composición de V-51 en teléfono/tablet, escala 200 % y contraste aumentado; ajustar app/test/navigation/app_shell_live_preferences_test.dart para verificar movimiento reducido al abrir V-51 y después de remontar con preferencias persistidas. Certeza confirmed: pruebas existentes verificadas en origin/main; escribir exclusivamente los escenarios de esta etapa y conservar su cobertura anterior.
-Contrato: rollback: Revertir solo los casos y referencias visuales añadidos en esta sesión, conservando las pruebas existentes y sin regenerar aprobaciones visuales automáticamente.. Status: pending
+Contrato: rollback: Revertir solo los casos y referencias visuales añadidos en esta sesión, conservando las pruebas existentes y sin regenerar aprobaciones visuales automáticamente.. Status: done
 
 #### S2.T1 — Integrar el primer uso obligatorio y la aceptación en los archivos de splash/introducción y proveedores fijados en el spec, junto a app/lib/navigation/app_router.dart y la presentación V-51. Invocar literalmente obtenerDocumentosLegalesVigentes, obtenerDocumentoLegal y aceptarDocumentosLegales mediante los contratos confirmados de TAO-192; delegar el registro sin red a HU-03a-12 usando las versiones empaquetadas. Mantener V-51 si no se acepta o el proveedor falla/deniega documento_legal.aceptar; continuar a Inicio e introducción solo con confirmación online o local. No implementar persistencia ni cola. Certeza confirmed; fuentes: backlog EP-01:1658,1660,1664,1728.
 Contrato: rollback: Revertir las conexiones nuevas y conservar el flujo obligatorio de primer uso, documentos empaquetados y registros locales pendientes; no borrar aceptaciones ni sustituir el bloqueo por acceso libre.. Status: pending
@@ -96,7 +95,6 @@ Contrato: rollback: Retirar únicamente los nuevos escenarios de reaceptación y
 
 #### S3.T3 — Ejecutar QA-01-13-01/02/03 contra los proveedores reales integrados de TAO-192 y TAO-189: comprobar aceptación por documento, cola local y sincronización, políticas regionales, rechazos y retorno. Revisar teléfono Android/tablet, modo avión y lector de pantalla. Capturar opt_in/opt_out/disabled en teléfono y tablet y obtener QA-01-13-04 de Diseño contra doc 43 §9 y maqueta-direccion-consolidada.png; revisar el fondo de V-51 como entregable de esta historia. Completar request-close con regresión completa en el gate y teach-close según Skip aprobado. No cerrar si faltan proveedores o aprobación visual; entrega a main requiere autorización distinta del lote epic/EP-01. Certeza confirmed; fuentes backlog EP-01:1739,1741,1743 y request inmutable.
 Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los cambios de presentación/integración responsables, conservando documentos empaquetados, cola pendiente y retorno; conservar evidencia del fallo sin datos personales.. Status: pending
-
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Qué: presentar V-51 al abrir con versiones pendientes, ante version_legal_pendiente en cualquier pantalla y ante rechazos inmediatos o diferidos; mostrar «Actualizamos este documento. Revísalo para continuar», seleccionar solo documentos que requieren aceptación vigente y conse
@@ -105,3 +103,34 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 2. **Qué:** Verificar en runtime: Qué: entregar la composición visual de V-51 como panel-modal a pantalla completa: primer uso con el fondo Identidad/entrada de V-31, actualizaciones con el fondo anfitrión y texto legal sobre superficies opacas. Por qué: cumplir doc 43 §9, DEC-235 y la aprobación de Diseño requ
    - **Se debe ver:** La vista renderiza sin errores de consola y el comportamiento esperado es visible.
    - **Dónde:** vista afectada por el ticket
+
+## Sessions
+
+### Session 1 · T2 · continue
+
+**Tasks:**
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+
+**Gate (auto)**: En preview de teléfono y tablet se puede abrir V-51, leer ambos documentos, volver al mismo punto y revisar carga, error y texto empaquetado; la composición y el foco son observables.
+
+### Session 2 · T2 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+
+**Gate (auto)**: Una instalación nueva muestra V-51 antes de la introducción; las tres políticas regionales son revisables y aceptar con red o en modo avión permite llegar a Inicio mediante los proveedores correspondientes.
+
+### Session 3 · T2 · open
+
+**Tasks:**
+- [ ] S3.T1
+- [ ] S3.T2
+- [ ] S3.T3
+
+**Gate (auto)**: Una actualización de Privacidad, un bloqueo recibido desde otra pantalla y los rechazos inmediato/diferido muestran la versión vigente y devuelven al contexto anterior al aceptar; quedan capturas regionales y evidencia real para Diseño/QA.
+
+### Session 4 · T0 · open
