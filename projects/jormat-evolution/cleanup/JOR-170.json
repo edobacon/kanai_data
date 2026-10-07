@@ -1,0 +1,4478 @@
+{
+  "ticketId": "JOR-170",
+  "projectId": "jormat-evolution",
+  "createdAt": "2026-10-07T19:45:06.329Z",
+  "updatedAt": "2026-10-07T19:59:34.038Z",
+  "status": "applied",
+  "branch": "feature/facturas-cliente-feedback",
+  "repos": [
+    {
+      "name": "backend",
+      "localPath": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-evolution-mono/backend/jormat-api",
+      "base": "2d1b04c2b54d184bdf2e190e1fa85a2f7e4882e7"
+    },
+    {
+      "name": "frontend",
+      "localPath": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-evolution-mono/front/jormat-front",
+      "base": "2d1b04c2b54d184bdf2e190e1fa85a2f7e4882e7"
+    }
+  ],
+  "items": [
+    {
+      "id": "backend:migrations/20261007000000_inventory_movements.ts:3",
+      "repo": "backend",
+      "path": "migrations/20261007000000_inventory_movements.ts",
+      "startLine": 3,
+      "endLine": 17,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Movimientos de inventario generados por la emision de documentos de venta.",
+        " *",
+        " * Registra los cambios de stock que produce la emision de un documento de venta: un movimiento con",
+        " * `quantity` entero con signo (negativo = sale, positivo = ingresa) referenciado al documento que lo",
+        " * origino (`reference_type` + `reference_id`).",
+        " *",
+        " * Idempotencia ante reintentos: el indice unico sobre",
+        " * (workspace_id, reference_type, reference_id, item_id, warehouse_id, COALESCE(location_id, 0))",
+        " * impide que una misma emision inserte dos veces el mismo movimiento. Se usa COALESCE(location_id, 0)",
+        " * porque la emision de facturas no selecciona ubicacion (location_id nulo): un UNIQUE plano trataria",
+        " * cada NULL como distinto y no deduplicaria.",
+        " *",
+        " * Aditiva y reversible: crea una tabla nueva, sin tocar datos existentes.",
+        " */"
+      ],
+      "comment": "/**\n* Movimientos de inventario generados por la emision de documentos de venta.\n*\n* Registra los cambios de stock que produce la emision de un documento de venta: un movimiento con\n* `quantity` entero con signo (negativo = sale, positivo = ingresa) referenciado al documento que lo\n* origino (`reference_type` + `reference_id`).\n*\n* Idempotencia ante reintentos: el indice unico sobre\n* (workspace_id, reference_type, reference_id, item_id, warehouse_id, COALESCE(location_id, 0))\n* impide que una misma emision inserte dos veces el mismo movimiento. Se usa COALESCE(location_id, 0)\n* porque la emision de facturas no selecciona ubicacion (location_id nulo): un UNIQUE plano trataria\n* cada NULL como distinto y no deduplicaria.\n*\n* Aditiva y reversible: crea una tabla nueva, sin tocar datos existentes.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:migrations/20261007000000_inventory_movements.ts:22",
+      "repo": "backend",
+      "path": "migrations/20261007000000_inventory_movements.ts",
+      "startLine": 22,
+      "endLine": 22,
+      "kind": "line",
+      "lines": [
+        "    // Referencias internas por serial (el catalogo expone uuid, pero el movimiento es interno)."
+      ],
+      "comment": "// Referencias internas por serial (el catalogo expone uuid, pero el movimiento es interno).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:migrations/20261007000000_inventory_movements.ts:30",
+      "repo": "backend",
+      "path": "migrations/20261007000000_inventory_movements.ts",
+      "startLine": 30,
+      "endLine": 30,
+      "kind": "line",
+      "lines": [
+        "    // Cantidad con signo: negativo descuenta stock, positivo lo incrementa."
+      ],
+      "comment": "// Cantidad con signo: negativo descuenta stock, positivo lo incrementa.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:5",
+      "repo": "backend",
+      "path": "seeds/25_super_usuario_role.ts",
+      "startLine": 5,
+      "endLine": 16,
+      "kind": "line",
+      "lines": [
+        "// Seed del rol 'Super Usuario' (workspace-scoped) con la capability comercial de override.",
+        "//",
+        "// Corre despues de los seeds de capabilities (05, por orden alfabetico) y despues de los grant-all",
+        "// de owner (16) e internal-admin (09): a esos dos la capability les llega por el grant-all \"todo lo",
+        "// que exista\", sin mantenimiento manual. Este seed solo crea un rol OPERATIVO acotado: un usuario",
+        "// con 'Super Usuario' puede superar topes de descuento, descontar repuestos con Bloqueo Descuento,",
+        "// bajar del precio vigente y ver costo/utilidad — pero NO facturar a un cliente bloqueado ni sin",
+        "// stock, ni combinar descuento general con un repuesto con Bloqueo Descuento.",
+        "//",
+        "// Aditivo: NO toca capabilities ni roles de otros seeds; solo crea/reutiliza el rol y su grant.",
+        "// Idempotente (lookup del rol por (workspace_id, name) + check previo del grant) y no-prod",
+        "// (la administracion RBAC en produccion va por la app, igual que 02-25)."
+      ],
+      "comment": "// Seed del rol 'Super Usuario' (workspace-scoped) con la capability comercial de override.\n//\n// Corre despues de los seeds de capabilities (05, por orden alfabetico) y despues de los grant-all\n// de owner (16) e internal-admin (09): a esos dos la capability les llega por el grant-all \"todo lo\n// que exista\", sin mantenimiento manual. Este seed solo crea un rol OPERATIVO acotado: un usuario\n// con 'Super Usuario' puede superar topes de descuento, descontar repuestos con Bloqueo Descuento,\n// bajar del precio vigente y ver costo/utilidad — pero NO facturar a un cliente bloqueado ni sin\n// stock, ni combinar descuento general con un repuesto con Bloqueo Descuento.\n//\n// Aditivo: NO toca capabilities ni roles de otros seeds; solo crea/reutiliza el rol y su grant.\n// Idempotente (lookup del rol por (workspace_id, name) + check previo del grant) y no-prod\n// (la administracion RBAC en produccion va por la app, igual que 02-25).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:18",
+      "repo": "backend",
+      "path": "seeds/25_super_usuario_role.ts",
+      "startLine": 18,
+      "endLine": 18,
+      "kind": "block",
+      "lines": [
+        "/** Capability que habilita los overrides comerciales; la siembra 05_sales_capabilities. */"
+      ],
+      "comment": "/** Capability que habilita los overrides comerciales; la siembra 05_sales_capabilities. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:21",
+      "repo": "backend",
+      "path": "seeds/25_super_usuario_role.ts",
+      "startLine": 21,
+      "endLine": 21,
+      "kind": "block",
+      "lines": [
+        "/** Nombre del rol operativo. Se resuelve por (workspace_id, name), no por id fijo. */"
+      ],
+      "comment": "/** Nombre del rol operativo. Se resuelve por (workspace_id, name), no por id fijo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:50",
+      "repo": "backend",
+      "path": "seeds/25_super_usuario_role.ts",
+      "startLine": 50,
+      "endLine": 50,
+      "kind": "line",
+      "lines": [
+        "  // Si el catalogo no existe (orden de seeds alterado / corrida suelta), no hay que otorgar."
+      ],
+      "comment": "// Si el catalogo no existe (orden de seeds alterado / corrida suelta), no hay que otorgar.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:62",
+      "repo": "backend",
+      "path": "seeds/25_super_usuario_role.ts",
+      "startLine": 62,
+      "endLine": 62,
+      "kind": "line",
+      "lines": [
+        "  // No sembrar RBAC en produccion (la administracion va por la app), igual que 02-16."
+      ],
+      "comment": "// No sembrar RBAC en produccion (la administracion va por la app), igual que 02-16.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/dto/item.dto.ts:170",
+      "repo": "backend",
+      "path": "src/items/dto/item.dto.ts",
+      "startLine": 170,
+      "endLine": 172,
+      "kind": "line",
+      "lines": [
+        "  // Flag EFECTIVO de bloqueo de descuento del listado: verdadero si cualquiera de las dos",
+        "  // marcas esta activa (`items.bloqueo_descuento = 1` O `items.oil = 1`, la columna real que",
+        "  // escribe la ficha y lee la factura en el legacy). Ambas columnas se conservan intactas."
+      ],
+      "comment": "// Flag EFECTIVO de bloqueo de descuento del listado: verdadero si cualquiera de las dos\n// marcas esta activa (`items.bloqueo_descuento = 1` O `items.oil = 1`, la columna real que\n// escribe la ficha y lee la factura en el legacy). Ambas columnas se conservan intactas.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.spec.ts:48",
+      "repo": "backend",
+      "path": "src/items/items.repository.spec.ts",
+      "startLine": 48,
+      "endLine": 48,
+      "kind": "block",
+      "lines": [
+        "/** Fila cruda minima del LISTADO (mapRowToDto), con defaults neutros. */"
+      ],
+      "comment": "/** Fila cruda minima del LISTADO (mapRowToDto), con defaults neutros. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:411",
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "startLine": 411,
+      "endLine": 412,
+      "kind": "line",
+      "lines": [
+        "        // Columna real que escribe la ficha y lee la factura en el legacy; el flag efectivo de",
+        "        // bloqueo la combina con `bloqueo_descuento` (ambas se conservan)."
+      ],
+      "comment": "// Columna real que escribe la ficha y lee la factura en el legacy; el flag efectivo de\n// bloqueo la combina con `bloqueo_descuento` (ambas se conservan).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:609",
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "startLine": 609,
+      "endLine": 610,
+      "kind": "line",
+      "lines": [
+        "      // JOR-157 (DT-18): columna real `items.bloqueo_descuento` (antes false fijo). El flag es",
+        "      // EFECTIVO: activo si la marca nueva o la legada (`oil`) estan seteadas."
+      ],
+      "comment": "// JOR-157 (DT-18): columna real `items.bloqueo_descuento` (antes false fijo). El flag es\n// EFECTIVO: activo si la marca nueva o la legada (`oil`) estan seteadas.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1099",
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "startLine": 1099,
+      "endLine": 1100,
+      "kind": "line",
+      "lines": [
+        "        // Flag de bloqueo de descuento efectivo (items.bloqueo_descuento u items.oil). Se proyecta",
+        "        // ademas de `oil`; ambas columnas conviven sin migracion (el legacy escribe `oil`)."
+      ],
+      "comment": "// Flag de bloqueo de descuento efectivo (items.bloqueo_descuento u items.oil). Se proyecta\n// ademas de `oil`; ambas columnas conviven sin migracion (el legacy escribe `oil`).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1493",
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "startLine": 1493,
+      "endLine": 1494,
+      "kind": "line",
+      "lines": [
+        "    // Flag EFECTIVO: el bloqueo se considera activo si la marca nueva (`bloqueo_descuento`) o la",
+        "    // legada (`oil`) estan seteadas. Se conservan ambas columnas; `oil` sigue expuesto en el DTO."
+      ],
+      "comment": "// Flag EFECTIVO: el bloqueo se considera activo si la marca nueva (`bloqueo_descuento`) o la\n// legada (`oil`) estan seteadas. Se conservan ambas columnas; `oil` sigue expuesto en el DTO.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1531",
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "startLine": 1531,
+      "endLine": 1531,
+      "kind": "block",
+      "lines": [
+        "  /** `items.bloqueo_descuento` (0/1) — marca nueva; el flag efectivo la combina con `oil`. */"
+      ],
+      "comment": "/** `items.bloqueo_descuento` (0/1) — marca nueva; el flag efectivo la combina con `oil`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1593",
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "startLine": 1593,
+      "endLine": 1593,
+      "kind": "block",
+      "lines": [
+        "  /** `items.oil` (0/1) — marca legada de aceite; combinada da el bloqueo efectivo. */"
+      ],
+      "comment": "/** `items.oil` (0/1) — marca legada de aceite; combinada da el bloqueo efectivo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/permissions/commercial-override-capability.spec.ts:44",
+      "repo": "backend",
+      "path": "src/permissions/commercial-override-capability.spec.ts",
+      "startLine": 44,
+      "endLine": 49,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Fake stateful de knex respaldado por arrays en memoria. Reproduce las operaciones que usan los",
+        " * seeds 05, 09, 16 y 25 (`where(obj).first()`, `insert(row)` awaitable, `insert(row).returning(col)`,",
+        " * `select(col)`) para ejercitar el codigo REAL de los seeds sin una DB Postgres. Modela que la DB",
+        " * asigna el id de `capabilities`, `roles` y `users` al insertar (los seeds no siempre lo proveen).",
+        " */"
+      ],
+      "comment": "/**\n* Fake stateful de knex respaldado por arrays en memoria. Reproduce las operaciones que usan los\n* seeds 05, 09, 16 y 25 (`where(obj).first()`, `insert(row)` awaitable, `insert(row).returning(col)`,\n* `select(col)`) para ejercitar el codigo REAL de los seeds sin una DB Postgres. Modela que la DB\n* asigna el id de `capabilities`, `roles` y `users` al insertar (los seeds no siempre lo proveen).\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/permissions/commercial-override-capability.spec.ts:100",
+      "repo": "backend",
+      "path": "src/permissions/commercial-override-capability.spec.ts",
+      "startLine": 100,
+      "endLine": 100,
+      "kind": "line",
+      "lines": [
+        "          // Debe ser thenable (para `await knex(t).insert(x)` sin `.returning()`)."
+      ],
+      "comment": "// Debe ser thenable (para `await knex(t).insert(x)` sin `.returning()`).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/permissions/commercial-override-capability.spec.ts:120",
+      "repo": "backend",
+      "path": "src/permissions/commercial-override-capability.spec.ts",
+      "startLine": 120,
+      "endLine": 124,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Capability de override comercial (JOR-170). Verifica el catalogo (seed 05), el rol operativo",
+        " * 'Super Usuario' (seed 25) y que owner (grant-all, seed 16) e internal-admin (grant-all, seed 09)",
+        " * la reciban sin mantenimiento manual.",
+        " */"
+      ],
+      "comment": "/**\n* Capability de override comercial (JOR-170). Verifica el catalogo (seed 05), el rol operativo\n* 'Super Usuario' (seed 25) y que owner (grant-all, seed 16) e internal-admin (grant-all, seed 09)\n* la reciban sin mantenimiento manual.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:13",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 13,
+      "endLine": 13,
+      "kind": "block",
+      "lines": [
+        "/** Linea minima del contrato con overrides para las reglas por item. */"
+      ],
+      "comment": "/** Linea minima del contrato con overrides para las reglas por item. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:78",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 78,
+      "endLine": 82,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Reglas comerciales de descuento y precio (Enfoque C): tope de descuento de linea",
+        " * (ds_max_discount), descuento general 0-20 excluyente con los de linea, bloqueo efectivo de",
+        " * descuento (bloqueo_descuento u oil) y piso de precio nm_net.",
+        " */"
+      ],
+      "comment": "/**\n* Reglas comerciales de descuento y precio (Enfoque C): tope de descuento de linea\n* (ds_max_discount), descuento general 0-20 excluyente con los de linea, bloqueo efectivo de\n* descuento (bloqueo_descuento u oil) y piso de precio nm_net.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:97",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 97,
+      "endLine": 97,
+      "kind": "line",
+      "lines": [
+        "    // precio 4000 x 1 = 4000; descuento 1000 = 25% > tope 20. El backend convierte importe -> %."
+      ],
+      "comment": "// precio 4000 x 1 = 4000; descuento 1000 = 25% > tope 20. El backend convierte importe -> %.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:138",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 138,
+      "endLine": 138,
+      "kind": "line",
+      "lines": [
+        "    // Se retira la linea con bloqueo: solo quedan lineas sin bloqueo -> el general se habilita."
+      ],
+      "comment": "// Se retira la linea con bloqueo: solo quedan lineas sin bloqueo -> el general se habilita.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:156",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 156,
+      "endLine": 157,
+      "kind": "line",
+      "lines": [
+        "    // costoUnitario (net_price) = 800, piso (nm_net) = 1000, precio = 900: por encima del costo",
+        "    // pero por debajo del piso -> se rechaza (el piso es nm_net, no net_price)."
+      ],
+      "comment": "// costoUnitario (net_price) = 800, piso (nm_net) = 1000, precio = 900: por encima del costo\n// pero por debajo del piso -> se rechaza (el piso es nm_net, no net_price).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:164",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 164,
+      "endLine": 168,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Override comercial (`sales.invoices:commercial-override`, JOR-170): habilita superar el tope de",
+        " * la ficha, descontar repuestos con Bloqueo Descuento, vender bajo el precio vigente y el",
+        " * descuento general hasta 80%; NO habilita combinar el general con un repuesto con Bloqueo.",
+        " */"
+      ],
+      "comment": "/**\n* Override comercial (`sales.invoices:commercial-override`, JOR-170): habilita superar el tope de\n* la ficha, descontar repuestos con Bloqueo Descuento, vender bajo el precio vigente y el\n* descuento general hasta 80%; NO habilita combinar el general con un repuesto con Bloqueo.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:236",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 236,
+      "endLine": 239,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Utilidad por linea y total (JOR-170). monto = venta neta - costo x cantidad; % sobre la venta",
+        " * neta. Sin costo o sin venta neta (0) no hay dato (`null` => \"Sin dato\").",
+        " */"
+      ],
+      "comment": "/**\n* Utilidad por linea y total (JOR-170). monto = venta neta - costo x cantidad; % sobre la venta\n* neta. Sin costo o sin venta neta (0) no hay dato (`null` => \"Sin dato\").\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:252",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 252,
+      "endLine": 253,
+      "kind": "line",
+      "lines": [
+        "    // La funcion solo mira `costoUnitario` (snapshot persistido), no el costo vigente de la ficha:",
+        "    // por eso el mismo input da el mismo resultado aunque \"hoy\" el item cueste otra cosa."
+      ],
+      "comment": "// La funcion solo mira `costoUnitario` (snapshot persistido), no el costo vigente de la ficha:\n// por eso el mismo input da el mismo resultado aunque \"hoy\" el item cueste otra cosa.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:263",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 263,
+      "endLine": 263,
+      "kind": "line",
+      "lines": [
+        "    // venta neta = 100.000 - 10.000 = 90.000; costo 80.000 -> monto 10.000 (11.11%)."
+      ],
+      "comment": "// venta neta = 100.000 - 10.000 = 90.000; costo 80.000 -> monto 10.000 (11.11%).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:286",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 286,
+      "endLine": 286,
+      "kind": "trailing",
+      "lines": [
+        "      { precio: 100000, cantidad: 1, descuento: 0, costoUnitario: 80000 }, // +20.000"
+      ],
+      "comment": "// +20.000",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:287",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 287,
+      "endLine": 287,
+      "kind": "trailing",
+      "lines": [
+        "      { precio: 50000, cantidad: 2, descuento: 0, costoUnitario: 20000 }, // +60.000"
+      ],
+      "comment": "// +60.000",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:289",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "startLine": 289,
+      "endLine": 289,
+      "kind": "line",
+      "lines": [
+        "    // venta neta 200.000; costo 120.000; monto 80.000 (40%)."
+      ],
+      "comment": "// venta neta 200.000; costo 120.000; monto 80.000 (40%).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:19",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 19,
+      "endLine": 22,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Tope del descuento general para el usuario con la capability de override comercial",
+        " * (`sales.invoices:commercial-override`). Un superusuario puede descontar hasta 80% de cabecera.",
+        " */"
+      ],
+      "comment": "/**\n* Tope del descuento general para el usuario con la capability de override comercial\n* (`sales.invoices:commercial-override`). Un superusuario puede descontar hasta 80% de cabecera.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:69",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 69,
+      "endLine": 69,
+      "kind": "block",
+      "lines": [
+        "/** Un descuento de linea expresado como porcentaje de su subtotal (0 si el subtotal es 0). */"
+      ],
+      "comment": "/** Un descuento de linea expresado como porcentaje de su subtotal (0 si el subtotal es 0). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:76",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 76,
+      "endLine": 83,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Reglas comerciales de descuento y precio minimo que el backend aplica al emitir/guardar lineas",
+        " * (fuente de verdad de los montos). Las reglas por item viajan sembradas en la propia linea: el",
+        " * piso es el neto vigente del item (`nm_net`, NO el costo `net_price`), el tope de descuento de",
+        " * linea es `ds_max_discount` de la ficha y el bloqueo es EFECTIVO (`bloqueoDescuento` de la marca",
+        " * nueva o `oil` de la columna legacy). El descuento general (porcentaje) es excluyente con",
+        " * cualquier descuento de linea y queda bloqueado si algun item tiene bloqueo de descuento.",
+        " */"
+      ],
+      "comment": "/**\n* Reglas comerciales de descuento y precio minimo que el backend aplica al emitir/guardar lineas\n* (fuente de verdad de los montos). Las reglas por item viajan sembradas en la propia linea: el\n* piso es el neto vigente del item (`nm_net`, NO el costo `net_price`), el tope de descuento de\n* linea es `ds_max_discount` de la ficha y el bloqueo es EFECTIVO (`bloqueoDescuento` de la marca\n* nueva o `oil` de la columna legacy). El descuento general (porcentaje) es excluyente con\n* cualquier descuento de linea y queda bloqueado si algun item tiene bloqueo de descuento.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:85",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 85,
+      "endLine": 85,
+      "kind": "block",
+      "lines": [
+        "  /** Descuento global de cabecera en porcentaje (0-20; hasta 80 con override). */"
+      ],
+      "comment": "/** Descuento global de cabecera en porcentaje (0-20; hasta 80 con override). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:87",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 87,
+      "endLine": 92,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Override comercial (`sales.invoices:commercial-override`). Habilita superar el tope de la ficha,",
+        "   * descontar lineas con Bloqueo Descuento, vender bajo el precio vigente y descontar general hasta",
+        "   * 80%. NUNCA habilita facturar a cliente bloqueado/sin stock (validaciones aparte) ni combinar el",
+        "   * descuento general con un item con Bloqueo Descuento.",
+        "   */"
+      ],
+      "comment": "/**\n* Override comercial (`sales.invoices:commercial-override`). Habilita superar el tope de la ficha,\n* descontar lineas con Bloqueo Descuento, vender bajo el precio vigente y descontar general hasta\n* 80%. NUNCA habilita facturar a cliente bloqueado/sin stock (validaciones aparte) ni combinar el\n* descuento general con un item con Bloqueo Descuento.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:96",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 96,
+      "endLine": 96,
+      "kind": "block",
+      "lines": [
+        "/** Convierte un monto de descuento a porcentaje del subtotal de la linea para validar el tope. */"
+      ],
+      "comment": "/** Convierte un monto de descuento a porcentaje del subtotal de la linea para validar el tope. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:101",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 101,
+      "endLine": 105,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Valida el descuento de linea (contra `ds_max_discount`), el descuento general (tope 0-20 y",
+        " * exclusividad con los descuentos de linea), el bloqueo efectivo de descuento y el piso de precio",
+        " * minimo (`nm_net`). Lanza 400 con un mensaje claro en espanol ante la primera violacion.",
+        " */"
+      ],
+      "comment": "/**\n* Valida el descuento de linea (contra `ds_max_discount`), el descuento general (tope 0-20 y\n* exclusividad con los descuentos de linea), el bloqueo efectivo de descuento y el piso de precio\n* minimo (`nm_net`). Lanza 400 con un mensaje claro en espanol ante la primera violacion.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:127",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 127,
+      "endLine": 128,
+      "kind": "line",
+      "lines": [
+        "    // Bloqueo efectivo: la linea no admite descuento, salvo que el usuario tenga el override",
+        "    // comercial (puede descontar repuestos con Bloqueo Descuento)."
+      ],
+      "comment": "// Bloqueo efectivo: la linea no admite descuento, salvo que el usuario tenga el override\n// comercial (puede descontar repuestos con Bloqueo Descuento).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:135",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 135,
+      "endLine": 137,
+      "kind": "line",
+      "lines": [
+        "    // Tope del descuento de linea (ds_max_discount) expresado en porcentaje sobre el subtotal.",
+        "    // La pantalla puede mandar el descuento como importe: se convierte a % para comparar. El",
+        "    // override comercial saltea el tope de la ficha."
+      ],
+      "comment": "// Tope del descuento de linea (ds_max_discount) expresado en porcentaje sobre el subtotal.\n// La pantalla puede mandar el descuento como importe: se convierte a % para comparar. El\n// override comercial saltea el tope de la ficha.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:153",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 153,
+      "endLine": 154,
+      "kind": "line",
+      "lines": [
+        "    // Piso de precio: el neto vigente del item (nm_net), no el costo de compra (net_price). El",
+        "    // override comercial permite vender por debajo del precio vigente."
+      ],
+      "comment": "// Piso de precio: el neto vigente del item (nm_net), no el costo de compra (net_price). El\n// override comercial permite vender por debajo del precio vigente.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:162",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 162,
+      "endLine": 163,
+      "kind": "line",
+      "lines": [
+        "  // El descuento general (porcentaje) es excluyente con los descuentos de linea para el usuario",
+        "  // comun. El override comercial si permite combinarlos (salvo con Bloqueo Descuento, ver abajo)."
+      ],
+      "comment": "// El descuento general (porcentaje) es excluyente con los descuentos de linea para el usuario\n// comun. El override comercial si permite combinarlos (salvo con Bloqueo Descuento, ver abajo).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:168",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 168,
+      "endLine": 170,
+      "kind": "line",
+      "lines": [
+        "  // Con al menos un item con bloqueo, el descuento general queda bloqueado. Esta regla aplica",
+        "  // TAMBIEN al override: el superusuario no puede combinar el general con un repuesto con Bloqueo",
+        "  // Descuento (aunque si puede descontar ese repuesto por linea)."
+      ],
+      "comment": "// Con al menos un item con bloqueo, el descuento general queda bloqueado. Esta regla aplica\n// TAMBIEN al override: el superusuario no puede combinar el general con un repuesto con Bloqueo\n// Descuento (aunque si puede descontar ese repuesto por linea).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:178",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 178,
+      "endLine": 178,
+      "kind": "block",
+      "lines": [
+        "/** Utilidad de una linea: monto (venta neta − costo) y porcentaje sobre la venta neta. */"
+      ],
+      "comment": "/** Utilidad de una linea: monto (venta neta − costo) y porcentaje sobre la venta neta. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:184",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 184,
+      "endLine": 184,
+      "kind": "block",
+      "lines": [
+        "/** Linea calculable para la utilidad: requiere precio, cantidad, descuento y el costo unitario. */"
+      ],
+      "comment": "/** Linea calculable para la utilidad: requiere precio, cantidad, descuento y el costo unitario. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:189",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 189,
+      "endLine": 197,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Utilidad de una linea de venta (JOR-170). Sin costo conocido o sin venta neta (0) no hay dato",
+        " * (`null`): el llamador lo presenta como \"Sin dato\". El costo es el neto de compra snapshot de la",
+        " * linea (`invoice_items.net_unit_cost`), no el vigente de la ficha.",
+        " *   venta neta = round(precio * cantidad - descuento)   (mismo total de linea que",
+        " *                                                        `calcLineTotalMonto`)",
+        " *   monto      = venta neta - costoUnitario * cantidad",
+        " *   porcentaje = monto / venta neta * 100",
+        " */"
+      ],
+      "comment": "/**\n* Utilidad de una linea de venta (JOR-170). Sin costo conocido o sin venta neta (0) no hay dato\n* (`null`): el llamador lo presenta como \"Sin dato\". El costo es el neto de compra snapshot de la\n* linea (`invoice_items.net_unit_cost`), no el vigente de la ficha.\n*   venta neta = round(precio * cantidad - descuento)   (mismo total de linea que\n*                                                        `calcLineTotalMonto`)\n*   monto      = venta neta - costoUnitario * cantidad\n*   porcentaje = monto / venta neta * 100\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:206",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 206,
+      "endLine": 210,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Utilidad total del documento: agrega las ventas netas y los costos de las lineas con costo",
+        " * conocido. Si NINGUNA linea tiene costo (o la venta neta total es 0) no hay dato (`null`). Las",
+        " * lineas sin costo se excluyen del agregado (no contaminan el total con \"costo 0\").",
+        " */"
+      ],
+      "comment": "/**\n* Utilidad total del documento: agrega las ventas netas y los costos de las lineas con costo\n* conocido. Si NINGUNA linea tiene costo (o la venta neta total es 0) no hay dato (`null`). Las\n* lineas sin costo se excluyen del agregado (no contaminan el total con \"costo 0\").\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:227",
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "startLine": 227,
+      "endLine": 227,
+      "kind": "block",
+      "lines": [
+        "/** Mensaje de referencia cuando la bodega de origen no cuenta con stock suficiente del item (R-11). */"
+      ],
+      "comment": "/** Mensaje de referencia cuando la bodega de origen no cuenta con stock suficiente del item (R-11). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/dto/documento.dto.ts:256",
+      "repo": "backend",
+      "path": "src/sales/dto/documento.dto.ts",
+      "startLine": 256,
+      "endLine": 257,
+      "kind": "line",
+      "lines": [
+        "  // Utilidad total del documento (JOR-170). SOLO se calcula/expone cuando el solicitante tiene la",
+        "  // capability de override comercial; ausente = \"Sin dato\" (ninguna linea con costo o venta neta 0)."
+      ],
+      "comment": "// Utilidad total del documento (JOR-170). SOLO se calcula/expone cuando el solicitante tiene la\n// capability de override comercial; ausente = \"Sin dato\" (ninguna linea con costo o venta neta 0).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/dto/factura-input.dto.ts:26",
+      "repo": "backend",
+      "path": "src/sales/dto/factura-input.dto.ts",
+      "startLine": 26,
+      "endLine": 29,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Valores validos de forma de pago del documento. El credito solo admite 30 o 60 dias; un plazo",
+        " * distinto (p.ej. `credito_90`) se rechaza en el limite de entrada.",
+        " */"
+      ],
+      "comment": "/**\n* Valores validos de forma de pago del documento. El credito solo admite 30 o 60 dias; un plazo\n* distinto (p.ej. `credito_90`) se rechaza en el limite de entrada.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/dto/factura-input.dto.ts:33",
+      "repo": "backend",
+      "path": "src/sales/dto/factura-input.dto.ts",
+      "startLine": 33,
+      "endLine": 33,
+      "kind": "block",
+      "lines": [
+        "/** Dias corridos de cada plazo de credito valido (la fecha del documento + estos dias = vencimiento). */"
+      ],
+      "comment": "/** Dias corridos de cada plazo de credito valido (la fecha del documento + estos dias = vencimiento). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/dto/line-item.dto.ts:87",
+      "repo": "backend",
+      "path": "src/sales/dto/line-item.dto.ts",
+      "startLine": 87,
+      "endLine": 89,
+      "kind": "line",
+      "lines": [
+        "  // Flag EFECTIVO de bloqueo de descuento sembrado por el builder desde el item (marca nueva",
+        "  // `items.bloqueo_descuento` o legada `items.oil`). Se declara para que el ValidationPipe no lo",
+        "  // descarte: sin el, una linea con bloqueo podia reenviarse sin la marca y admitir descuento."
+      ],
+      "comment": "// Flag EFECTIVO de bloqueo de descuento sembrado por el builder desde el item (marca nueva\n// `items.bloqueo_descuento` o legada `items.oil`). Se declara para que el ValidationPipe no lo\n// descarte: sin el, una linea con bloqueo podia reenviarse sin la marca y admitir descuento.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/dto/line-item.dto.ts:111",
+      "repo": "backend",
+      "path": "src/sales/dto/line-item.dto.ts",
+      "startLine": 111,
+      "endLine": 113,
+      "kind": "line",
+      "lines": [
+        "  // Utilidad de la linea (JOR-170). SOLO se calcula/exponen en la respuesta cuando el solicitante",
+        "  // tiene la capability de override comercial (`sales.invoices:commercial-override`). Ausentes =",
+        "  // \"Sin dato\" (sin costo o venta neta 0). El costo base es el snapshot `net_unit_cost` de la linea."
+      ],
+      "comment": "// Utilidad de la linea (JOR-170). SOLO se calcula/exponen en la respuesta cuando el solicitante\n// tiene la capability de override comercial (`sales.invoices:commercial-override`). Ausentes =\n// \"Sin dato\" (sin costo o venta neta 0). El costo base es el snapshot `net_unit_cost` de la linea.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/facturas.controller.ts:15",
+      "repo": "backend",
+      "path": "src/sales/facturas.controller.ts",
+      "startLine": 15,
+      "endLine": 20,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Capability de override comercial (JOR-170). No gatea el endpoint (los endpoints siguen exigiendo",
+        " * edit/issue); habilita, por request, saltear topes de descuento/precio y ver costo/utilidad. Se",
+        " * resuelve con el mismo matcher `can()` que usa `CapabilitiesGuard` sobre el vector efectivo que",
+        " * dejo el `CapabilitiesHydrationGuard`.",
+        " */"
+      ],
+      "comment": "/**\n* Capability de override comercial (JOR-170). No gatea el endpoint (los endpoints siguen exigiendo\n* edit/issue); habilita, por request, saltear topes de descuento/precio y ver costo/utilidad. Se\n* resuelve con el mismo matcher `can()` que usa `CapabilitiesGuard` sobre el vector efectivo que\n* dejo el `CapabilitiesHydrationGuard`.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/facturas.controller.ts:23",
+      "repo": "backend",
+      "path": "src/sales/facturas.controller.ts",
+      "startLine": 23,
+      "endLine": 23,
+      "kind": "block",
+      "lines": [
+        "/** `true` si el usuario autenticado tiene la capability de override comercial. */"
+      ],
+      "comment": "/** `true` si el usuario autenticado tiene la capability de override comercial. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales-tables.spec.ts:5",
+      "repo": "backend",
+      "path": "src/sales/sales-tables.spec.ts",
+      "startLine": 5,
+      "endLine": 10,
+      "kind": "block",
+      "lines": [
+        " * Guard de fidelidad de la persistencia de Ventas: los documentos viven UNICAMENTE en",
+        " * `invoices`/`invoice_items`. El modulo consulta ademas tablas de soporte de la emision: el catalogo",
+        " * `items` (uuid publico), `customers` (bloqueo del cliente), `warehouses` (bodega de origen por",
+        " * `ds_code`), `item_warehouses` (stock de la bodega) e `inventory_movements` (movimientos de la",
+        " * emision). Escanea el codigo fuente y falla si aparece una tabla de facturas PARALELA (un store",
+        " * alternativo para los mismos documentos)."
+      ],
+      "comment": "* Guard de fidelidad de la persistencia de Ventas: los documentos viven UNICAMENTE en\n* `invoices`/`invoice_items`. El modulo consulta ademas tablas de soporte de la emision: el catalogo\n* `items` (uuid publico), `customers` (bloqueo del cliente), `warehouses` (bodega de origen por\n* `ds_code`), `item_warehouses` (stock de la bodega) e `inventory_movements` (movimientos de la\n* emision). Escanea el codigo fuente y falla si aparece una tabla de facturas PARALELA (un store\n* alternativo para los mismos documentos).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales-tables.spec.ts:43",
+      "repo": "backend",
+      "path": "src/sales/sales-tables.spec.ts",
+      "startLine": 43,
+      "endLine": 44,
+      "kind": "line",
+      "lines": [
+        "    // `invoices`/`invoice_items` son el store de ventas; el resto son soporte de la emision",
+        "    // (catalogo, cliente, bodega, stock y movimientos), no stores paralelos."
+      ],
+      "comment": "// `invoices`/`invoice_items` son el store de ventas; el resto son soporte de la emision\n// (catalogo, cliente, bodega, stock y movimientos), no stores paralelos.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:71",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 71,
+      "endLine": 71,
+      "kind": "block",
+      "lines": [
+        "  /** `true` si el cliente (uuid publico) del workspace esta bloqueado por mora (`locked = 1`). */"
+      ],
+      "comment": "/** `true` si el cliente (uuid publico) del workspace esta bloqueado por mora (`locked = 1`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:73",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 73,
+      "endLine": 73,
+      "kind": "block",
+      "lines": [
+        "  /** Id serial de la bodega del workspace cuyo `ds_code` coincide con `origen`, o null si no matchea. */"
+      ],
+      "comment": "/** Id serial de la bodega del workspace cuyo `ds_code` coincide con `origen`, o null si no matchea. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:75",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 75,
+      "endLine": 75,
+      "kind": "block",
+      "lines": [
+        "  /** Stock disponible (SUM de `item_warehouses.item_qty`) por item (uuid publico) en la bodega. */"
+      ],
+      "comment": "/** Stock disponible (SUM de `item_warehouses.item_qty`) por item (uuid publico) en la bodega. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:375",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 375,
+      "endLine": 376,
+      "kind": "line",
+      "lines": [
+        "      // Bodega de origen: se resuelve desde el string `origen` del payload contra `warehouses.ds_code`",
+        "      // (mismo criterio que Guias y ajustes). Sin origen declarado no hay stock que descontar."
+      ],
+      "comment": "// Bodega de origen: se resuelve desde el string `origen` del payload contra `warehouses.ds_code`\n// (mismo criterio que Guias y ajustes). Sin origen declarado no hay stock que descontar.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:388",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 388,
+      "endLine": 390,
+      "kind": "line",
+      "lines": [
+        "        // Un `origen` que no matchea una bodega del workspace (p.ej. un borrador legacy con el",
+        "        // nombre de la sucursal) no descuenta stock; el rechazo de un origen invalido en el payload",
+        "        // lo hace el service. Evita romper la emision de documentos con origen historico."
+      ],
+      "comment": "// Un `origen` que no matchea una bodega del workspace (p.ej. un borrador legacy con el\n// nombre de la sucursal) no descuenta stock; el rechazo de un origen invalido en el payload\n// lo hace el service. Evita romper la emision de documentos con origen historico.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:484",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 484,
+      "endLine": 490,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Descuenta el stock de la bodega de origen e inserta los movimientos de inventario referenciados",
+        "   * a la factura, dentro de la transaccion de emision. Cada item+bodega se toma bajo un advisory lock",
+        "   * que serializa las emisiones concurrentes (evita dejar `item_qty` negativo) y la idempotencia la",
+        "   * garantiza el unique de `inventory_movements`: si el movimiento de la linea ya existe (reintento),",
+        "   * se saltea el descuento.",
+        "   */"
+      ],
+      "comment": "/**\n* Descuenta el stock de la bodega de origen e inserta los movimientos de inventario referenciados\n* a la factura, dentro de la transaccion de emision. Cada item+bodega se toma bajo un advisory lock\n* que serializa las emisiones concurrentes (evita dejar `item_qty` negativo) y la idempotencia la\n* garantiza el unique de `inventory_movements`: si el movimiento de la linea ya existe (reintento),\n* se saltea el descuento.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:500",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 500,
+      "endLine": 501,
+      "kind": "line",
+      "lines": [
+        "    // El movimiento es por (factura, item, bodega): dos lineas del mismo item se agregan en una sola",
+        "    // salida de stock, coherente con el unique que garantiza la idempotencia."
+      ],
+      "comment": "// El movimiento es por (factura, item, bodega): dos lineas del mismo item se agregan en una sola\n// salida de stock, coherente con el unique que garantiza la idempotencia.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:508",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 508,
+      "endLine": 508,
+      "kind": "trailing",
+      "lines": [
+        "      if (itemId === undefined) continue; // item no catalogado: no hay stock que mover"
+      ],
+      "comment": "// item no catalogado: no hay stock que mover",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:521",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 521,
+      "endLine": 521,
+      "kind": "trailing",
+      "lines": [
+        "      if (yaAplicado) continue; // reintento de la misma emision: no duplicar"
+      ],
+      "comment": "// reintento de la misma emision: no duplicar",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:553",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 553,
+      "endLine": 557,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Descuenta `cantidad` de `item_warehouses` repartiendo entre las filas con stock de esa bodega,",
+        "   * de mayor a menor, sin dejar ninguna en negativo. Con el lock tomado antes, el total disponible",
+        "   * ya se valido; el guard final es defensivo.",
+        "   */"
+      ],
+      "comment": "/**\n* Descuenta `cantidad` de `item_warehouses` repartiendo entre las filas con stock de esa bodega,\n* de mayor a menor, sin dejar ninguna en negativo. Con el lock tomado antes, el total disponible\n* ya se valido; el guard final es defensivo.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:588",
+      "repo": "backend",
+      "path": "src/sales/sales.repository.ts",
+      "startLine": 588,
+      "endLine": 588,
+      "kind": "block",
+      "lines": [
+        "  /** Resuelve el serial interno de los items por su uuid publico, acotado al workspace. */"
+      ],
+      "comment": "/** Resuelve el serial interno de los items por su uuid publico, acotado al workspace. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:38",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 38,
+      "endLine": 38,
+      "kind": "block",
+      "lines": [
+        "/** Uuid publico de cliente para los tests de bloqueo. */"
+      ],
+      "comment": "/** Uuid publico de cliente para los tests de bloqueo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:699",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 699,
+      "endLine": 701,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Cliente bloqueado en la emision",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Cliente bloqueado en la emision\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:752",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 752,
+      "endLine": 754,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Credito 30/60 y vencimiento",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Credito 30/60 y vencimiento\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:808",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 808,
+      "endLine": 810,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Stock de la bodega de origen",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Stock de la bodega de origen\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:873",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 873,
+      "endLine": 875,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Clonar desde otro documento aplica las reglas",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Clonar desde otro documento aplica las reglas\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:900",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 900,
+      "endLine": 902,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Bloqueo de descuento efectivo (bloqueo_descuento u oil) — T-10, criterio 30",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Bloqueo de descuento efectivo (bloqueo_descuento u oil) — T-10, criterio 30\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:944",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 944,
+      "endLine": 946,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Override comercial por capability (JOR-170): sales.invoices:commercial-override",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Override comercial por capability (JOR-170): sales.invoices:commercial-override\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:1100",
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "startLine": 1100,
+      "endLine": 1100,
+      "kind": "line",
+      "lines": [
+        "        // La lectura de la factura no trae `costoUnitario`: el service no inventa un dato."
+      ],
+      "comment": "// La lectura de la factura no trae `costoUnitario`: el service no inventa un dato.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:58",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 58,
+      "endLine": 58,
+      "kind": "block",
+      "lines": [
+        "/** Mensaje de referencia cuando el cliente de la factura esta bloqueado por mora (R-09, P-07.1). */"
+      ],
+      "comment": "/** Mensaje de referencia cuando el cliente de la factura esta bloqueado por mora (R-09, P-07.1). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:61",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 61,
+      "endLine": 66,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Opciones de la operacion ligadas a la capability del solicitante (JOR-170). `commercialOverride`",
+        " * se resuelve en el controller desde el vector de capabilities del usuario (`sales.invoices:",
+        " * commercial-override`) y habilita superar topes, descontar repuestos con Bloqueo Descuento, vender",
+        " * bajo el precio vigente y ver costo/utilidad. No habilita cliente bloqueado ni stock insuficiente.",
+        " */"
+      ],
+      "comment": "/**\n* Opciones de la operacion ligadas a la capability del solicitante (JOR-170). `commercialOverride`\n* se resuelve en el controller desde el vector de capabilities del usuario (`sales.invoices:\n* commercial-override`) y habilita superar topes, descontar repuestos con Bloqueo Descuento, vender\n* bajo el precio vigente y ver costo/utilidad. No habilita cliente bloqueado ni stock insuficiente.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:71",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 71,
+      "endLine": 71,
+      "kind": "block",
+      "lines": [
+        "/** Lee `n` dias corridos a una fecha ISO `YYYY-MM-DD`, en UTC para no correr el dia por zona horaria. */"
+      ],
+      "comment": "/** Lee `n` dias corridos a una fecha ISO `YYYY-MM-DD`, en UTC para no correr el dia por zona horaria. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:275",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 275,
+      "endLine": 277,
+      "kind": "line",
+      "lines": [
+        "    // Reglas que bloquean la emision, validadas server-side aunque el request no venga del builder",
+        "    // (feedback §11 / R-20): cliente bloqueado y stock de la bodega de origen. El override comercial",
+        "    // NO las habilita (solo aplica a topes/descuentos/precio)."
+      ],
+      "comment": "// Reglas que bloquean la emision, validadas server-side aunque el request no venga del builder\n// (feedback §11 / R-20): cliente bloqueado y stock de la bodega de origen. El override comercial\n// NO las habilita (solo aplica a topes/descuentos/precio).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:285",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 285,
+      "endLine": 290,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Decora un documento con la utilidad por linea y total cuando el solicitante tiene el override",
+        "   * comercial (JOR-170). Sin la capability el documento se devuelve intacto: costo/utilidad no se",
+        "   * exponen. La utilidad se calcula desde el snapshot de costo de cada linea (`net_unit_cost`), no",
+        "   * desde la ficha vigente del item.",
+        "   */"
+      ],
+      "comment": "/**\n* Decora un documento con la utilidad por linea y total cuando el solicitante tiene el override\n* comercial (JOR-170). Sin la capability el documento se devuelve intacto: costo/utilidad no se\n* exponen. La utilidad se calcula desde el snapshot de costo de cada linea (`net_unit_cost`), no\n* desde la ficha vigente del item.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:315",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 315,
+      "endLine": 318,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Rechaza la emision cuando el cliente esta bloqueado por mora (`customers.locked = 1`). El",
+        "   * `clienteId` viene del payload o, al retomar/emitir un borrador, de sus datos de formulario.",
+        "   */"
+      ],
+      "comment": "/**\n* Rechaza la emision cuando el cliente esta bloqueado por mora (`customers.locked = 1`). El\n* `clienteId` viene del payload o, al retomar/emitir un borrador, de sus datos de formulario.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:331",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 331,
+      "endLine": 336,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Rechaza la emision si la cantidad de una linea supera el stock de la bodega de origen. La",
+        "   * bodega se resuelve desde el string `origen` del payload contra `warehouses.ds_code` (mismo",
+        "   * criterio que Guias y ajustes). Sin `origen` declarado no hay bodega que validar (retrocompatible",
+        "   * con facturas que no seleccionan sucursal).",
+        "   */"
+      ],
+      "comment": "/**\n* Rechaza la emision si la cantidad de una linea supera el stock de la bodega de origen. La\n* bodega se resuelve desde el string `origen` del payload contra `warehouses.ds_code` (mismo\n* criterio que Guias y ajustes). Sin `origen` declarado no hay bodega que validar (retrocompatible\n* con facturas que no seleccionan sucursal).\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:388",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 388,
+      "endLine": 389,
+      "kind": "line",
+      "lines": [
+        "      // Las lineas copiadas desde otro documento (factura o guia) pasan por las mismas reglas",
+        "      // comerciales: descuento de linea, descuento general, bloqueo efectivo y piso de precio."
+      ],
+      "comment": "// Las lineas copiadas desde otro documento (factura o guia) pasan por las mismas reglas\n// comerciales: descuento de linea, descuento general, bloqueo efectivo y piso de precio.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:399",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 399,
+      "endLine": 403,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Vencimiento del documento. Con credito (30/60) es la fecha del documento + los dias corridos del",
+        "   * plazo; con contado (o sin forma de pago) se conserva el vencimiento explicito o la misma fecha.",
+        "   * Un plazo distinto de 30/60 se rechaza.",
+        "   */"
+      ],
+      "comment": "/**\n* Vencimiento del documento. Con credito (30/60) es la fecha del documento + los dias corridos del\n* plazo; con contado (o sin forma de pago) se conserva el vencimiento explicito o la misma fecha.\n* Un plazo distinto de 30/60 se rechaza.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:441",
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "startLine": 441,
+      "endLine": 443,
+      "kind": "line",
+      "lines": [
+        "    // Reglas comerciales (descuento de linea vs tope del item, descuento general excluyente,",
+        "    // bloqueo efectivo y piso nm_net). Se validan ANTES de calcular/persistir: una violacion no",
+        "    // consume folio ni escribe el documento."
+      ],
+      "comment": "// Reglas comerciales (descuento de linea vs tope del item, descuento general excluyente,\n// bloqueo efectivo y piso nm_net). Se validan ANTES de calcular/persistir: una violacion no\n// consume folio ni escribe el documento.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:28",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 28,
+      "endLine": 28,
+      "kind": "block",
+      "lines": [
+        "  /** Secuencia para dar RUT unico a cada cliente de prueba (unico parcial por workspace). */"
+      ],
+      "comment": "/** Secuencia para dar RUT unico a cada cliente de prueba (unico parcial por workspace). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:30",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 30,
+      "endLine": 30,
+      "kind": "block",
+      "lines": [
+        "  /** Bodega de origen usada por los tests de stock (seed: id 1, ds_code 'MAT'). */"
+      ],
+      "comment": "/** Bodega de origen usada por los tests de stock (seed: id 1, ds_code 'MAT'). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:62",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 62,
+      "endLine": 62,
+      "kind": "line",
+      "lines": [
+        "      // El borrado del item cascadea sus filas de item_warehouses e inventory_movements."
+      ],
+      "comment": "// El borrado del item cascadea sus filas de item_warehouses e inventory_movements.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:120",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 120,
+      "endLine": 120,
+      "kind": "block",
+      "lines": [
+        "  /** Crea un item del catalogo con stock en la bodega de origen; se limpia en el afterAll. */"
+      ],
+      "comment": "/** Crea un item del catalogo con stock en la bodega de origen; se limpia en el afterAll. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:138",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 138,
+      "endLine": 138,
+      "kind": "block",
+      "lines": [
+        "  /** Stock actual (SUM item_qty) de un item en la bodega de origen. */"
+      ],
+      "comment": "/** Stock actual (SUM item_qty) de un item en la bodega de origen. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:146",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 146,
+      "endLine": 146,
+      "kind": "block",
+      "lines": [
+        "  /** Crea un cliente del workspace con el flag `locked` pedido; se limpia en el afterAll. */"
+      ],
+      "comment": "/** Crea un cliente del workspace con el flag `locked` pedido; se limpia en el afterAll. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:161",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 161,
+      "endLine": 161,
+      "kind": "block",
+      "lines": [
+        "  /** Cantidad de movimientos de inventario referenciados a una factura. */"
+      ],
+      "comment": "/** Cantidad de movimientos de inventario referenciados a una factura. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:169",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 169,
+      "endLine": 169,
+      "kind": "block",
+      "lines": [
+        "  /** Linea de factura parametrizada por item uuid (tests de stock). */"
+      ],
+      "comment": "/** Linea de factura parametrizada por item uuid (tests de stock). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:603",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 603,
+      "endLine": 605,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Stock de la bodega de origen",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Stock de la bodega de origen\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:657",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 657,
+      "endLine": 659,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Emision transaccional: concurrencia e idempotencia",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// Emision transaccional: concurrencia e idempotencia\n// ---------------------------------------------------------------------------",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:728",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 728,
+      "endLine": 729,
+      "kind": "line",
+      "lines": [
+        "      // Simula el reintento de la MISMA emision: la factura vuelve a estar en borrador y se reemite",
+        "      // con la misma identidad (mismo reference_id de los movimientos)."
+      ],
+      "comment": "// Simula el reintento de la MISMA emision: la factura vuelve a estar en borrador y se reemite\n// con la misma identidad (mismo reference_id de los movimientos).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:738",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 738,
+      "endLine": 740,
+      "kind": "line",
+      "lines": [
+        "  // ---------------------------------------------------------------------------",
+        "  // REQ-01 — cliente bloqueado impide emitir (criterio 6)",
+        "  // ---------------------------------------------------------------------------"
+      ],
+      "comment": "// ---------------------------------------------------------------------------\n// REQ-01 — cliente bloqueado impide emitir (criterio 6)\n// ---------------------------------------------------------------------------",
+      "ids": [
+        "REQ-01"
+      ],
+      "commentedCode": false
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:741",
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "startLine": 741,
+      "endLine": 741,
+      "kind": "test-name",
+      "lines": [
+        "  describe('REQ-01 cliente bloqueado', () => {"
+      ],
+      "comment": "REQ-01 cliente bloqueado",
+      "ids": [
+        "REQ-01"
+      ],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:1",
+      "repo": "frontend",
+      "path": "src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx",
+      "startLine": 1,
+      "endLine": 6,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Bloqueo de descuento efectivo en Guías de despacho (JOR-170). La vista siembra el flag",
+        " * efectivo (`bloqueoDescuento` o la marca legacy `oil`) en la línea y la tabla compartida",
+        " * (`LineItemsTable`) lo refleja con el badge \"Bloqueo descuento\". Se monta la tabla REAL dentro de",
+        " * un stub de `BuilderItemsTabs` para observar el badge sin depender del buscador de ítems.",
+        " */"
+      ],
+      "comment": "/**\n* Bloqueo de descuento efectivo en Guías de despacho (JOR-170). La vista siembra el flag\n* efectivo (`bloqueoDescuento` o la marca legacy `oil`) en la línea y la tabla compartida\n* (`LineItemsTable`) lo refleja con el badge \"Bloqueo descuento\". Se monta la tabla REAL dentro de\n* un stub de `BuilderItemsTabs` para observar el badge sin depender del buscador de ítems.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:52",
+      "repo": "frontend",
+      "path": "src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx",
+      "startLine": 52,
+      "endLine": 52,
+      "kind": "block",
+      "lines": [
+        "/** Item de prueba con bloqueo efectivo (marca nueva). */"
+      ],
+      "comment": "/** Item de prueba con bloqueo efectivo (marca nueva). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:67",
+      "repo": "frontend",
+      "path": "src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx",
+      "startLine": 67,
+      "endLine": 67,
+      "kind": "line",
+      "lines": [
+        "// Stub de BuilderItemsTabs que monta la LineItemsTable REAL (observamos el badge que renderiza)."
+      ],
+      "comment": "// Stub de BuilderItemsTabs que monta la LineItemsTable REAL (observamos el badge que renderiza).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:1",
+      "repo": "frontend",
+      "path": "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+      "startLine": 1,
+      "endLine": 8,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Bloqueo de descuento efectivo en Solicitudes de pedido (JOR-170). La vista siembra el flag",
+        " * efectivo (`bloqueoDescuento` de la ficha o la marca legacy `oil`) en la línea al agregar el item,",
+        " * y la tabla compartida (`LineItemsTable`) lo refleja con el badge \"Bloqueo descuento\" y el",
+        " * descuento de línea deshabilitado. Ambas marcas se conservan: un item con `oil=1` sigue bloqueando.",
+        " * Se monta la tabla REAL dentro de un stub de `BuilderItemsTabs` para observar el badge sin depender",
+        " * del buscador de items.",
+        " */"
+      ],
+      "comment": "/**\n* Bloqueo de descuento efectivo en Solicitudes de pedido (JOR-170). La vista siembra el flag\n* efectivo (`bloqueoDescuento` de la ficha o la marca legacy `oil`) en la línea al agregar el item,\n* y la tabla compartida (`LineItemsTable`) lo refleja con el badge \"Bloqueo descuento\" y el\n* descuento de línea deshabilitado. Ambas marcas se conservan: un item con `oil=1` sigue bloqueando.\n* Se monta la tabla REAL dentro de un stub de `BuilderItemsTabs` para observar el badge sin depender\n* del buscador de items.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:54",
+      "repo": "frontend",
+      "path": "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+      "startLine": 54,
+      "endLine": 54,
+      "kind": "block",
+      "lines": [
+        "/** Item con la marca nueva de bloqueo. */"
+      ],
+      "comment": "/** Item con la marca nueva de bloqueo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:69",
+      "repo": "frontend",
+      "path": "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+      "startLine": 69,
+      "endLine": 69,
+      "kind": "block",
+      "lines": [
+        "/** Item con la marca legacy `oil=1` (ambas columnas se conservan). */"
+      ],
+      "comment": "/** Item con la marca legacy `oil=1` (ambas columnas se conservan). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:79",
+      "repo": "frontend",
+      "path": "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+      "startLine": 79,
+      "endLine": 79,
+      "kind": "block",
+      "lines": [
+        "/** Item sin bloqueo (control: no debe marcar ni deshabilitar nada). */"
+      ],
+      "comment": "/** Item sin bloqueo (control: no debe marcar ni deshabilitar nada). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:88",
+      "repo": "frontend",
+      "path": "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+      "startLine": 88,
+      "endLine": 88,
+      "kind": "line",
+      "lines": [
+        "// Stub de BuilderItemsTabs que monta la LineItemsTable REAL (observamos el badge que renderiza)."
+      ],
+      "comment": "// Stub de BuilderItemsTabs que monta la LineItemsTable REAL (observamos el badge que renderiza).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/compras/builder/PurchaseInvoiceBuilder.tsx:140",
+      "repo": "frontend",
+      "path": "src/components/compras/builder/PurchaseInvoiceBuilder.tsx",
+      "startLine": 140,
+      "endLine": 140,
+      "kind": "line",
+      "lines": [
+        "      // Flag efectivo de bloqueo de descuento (marca nueva o `oil` legacy)."
+      ],
+      "comment": "// Flag efectivo de bloqueo de descuento (marca nueva o `oil` legacy).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/BuilderItemsTabs/BuilderItemsTabs.tsx:53",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/BuilderItemsTabs/BuilderItemsTabs.tsx",
+      "startLine": 53,
+      "endLine": 56,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Override comercial (JOR-170), passthrough a LineItemsTable: habilita descontar lineas con",
+        "   * Bloqueo Descuento y muestra la utilidad por linea. Default `false`.",
+        "   */"
+      ],
+      "comment": "/**\n* Override comercial (JOR-170), passthrough a LineItemsTable: habilita descontar lineas con\n* Bloqueo Descuento y muestra la utilidad por linea. Default `false`.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/DocumentSummaryCard/DocumentSummaryCard.tsx:40",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/DocumentSummaryCard/DocumentSummaryCard.tsx",
+      "startLine": 40,
+      "endLine": 43,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Utilidad total del documento (JOR-170), visible solo con el override comercial. `null`/ausente",
+        "   * = \"Sin dato\" (ninguna línea con costo). Cuando se pasa, se renderiza la fila \"Utilidad\".",
+        "   */"
+      ],
+      "comment": "/**\n* Utilidad total del documento (JOR-170), visible solo con el override comercial. `null`/ausente\n* = \"Sin dato\" (ninguna línea con costo). Cuando se pasa, se renderiza la fila \"Utilidad\".\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx:185",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx",
+      "startLine": 185,
+      "endLine": 187,
+      "kind": "block",
+      "lines": [
+        " * Ítem con bloqueo de descuento (JOR-122 / V-05, marca efectiva). Con `oil: 1` (o",
+        " * `bloqueoDescuento: true`) el descuento de línea queda deshabilitado y topado en 0, y se muestra",
+        " * el badge \"Bloqueo descuento\". Fiel al `ng-disabled=\"items.oil == 1\"` del legacy."
+      ],
+      "comment": "* Ítem con bloqueo de descuento (JOR-122 / V-05, marca efectiva). Con `oil: 1` (o\n* `bloqueoDescuento: true`) el descuento de línea queda deshabilitado y topado en 0, y se muestra\n* el badge \"Bloqueo descuento\". Fiel al `ng-disabled=\"items.oil == 1\"` del legacy.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx:208",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx",
+      "startLine": 208,
+      "endLine": 208,
+      "kind": "line",
+      "lines": [
+        "    // Badge \"Bloqueo descuento\" presente."
+      ],
+      "comment": "// Badge \"Bloqueo descuento\" presente.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:277",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+      "startLine": 277,
+      "endLine": 277,
+      "kind": "line",
+      "lines": [
+        "  // --- JOR-122 / V-05: bloqueo de descuento (oil legacy o marca nueva) — deshabilitado en 0 ---"
+      ],
+      "comment": "// --- JOR-122 / V-05: bloqueo de descuento (oil legacy o marca nueva) — deshabilitado en 0 ---",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:294",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+      "startLine": 294,
+      "endLine": 294,
+      "kind": "line",
+      "lines": [
+        "    // Badge \"Bloqueo descuento\" visible."
+      ],
+      "comment": "// Badge \"Bloqueo descuento\" visible.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:593",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+      "startLine": 593,
+      "endLine": 593,
+      "kind": "line",
+      "lines": [
+        "  // V-05 sigue aplicando en ambos modos: el item con bloqueo deshabilita el descuento de linea."
+      ],
+      "comment": "// V-05 sigue aplicando en ambos modos: el item con bloqueo deshabilita el descuento de linea.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:614",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+      "startLine": 614,
+      "endLine": 615,
+      "kind": "line",
+      "lines": [
+        "  // Fix kn-dredd (S3): en modo amount el input queda `disabled` para el item bloqueado, pero eso NO",
+        "  // limpiaba el valor persistido en el form — una linea bloqueada clonada/sembrada con un monto de"
+      ],
+      "comment": "// Fix kn-dredd (S3): en modo amount el input queda `disabled` para el item bloqueado, pero eso NO\n// limpiaba el valor persistido en el form — una linea bloqueada clonada/sembrada con un monto de",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:617",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+      "startLine": 617,
+      "endLine": 617,
+      "kind": "line",
+      "lines": [
+        "  // Se fuerza el descuento efectivo a 0 (mismo criterio `bloqueado` que ya usa el cap de 'percent')."
+      ],
+      "comment": "// Se fuerza el descuento efectivo a 0 (mismo criterio `bloqueado` que ya usa el cap de 'percent').",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:93",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 93,
+      "endLine": 96,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Override comercial (JOR-170): habilita descontar una línea con Bloqueo Descuento (no la",
+        "   * deshabilita ni la fuerza a 0) y muestra la utilidad por línea. Default `false`.",
+        "   */"
+      ],
+      "comment": "/**\n* Override comercial (JOR-170): habilita descontar una línea con Bloqueo Descuento (no la\n* deshabilita ni la fuerza a 0) y muestra la utilidad por línea. Default `false`.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:160",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 160,
+      "endLine": 161,
+      "kind": "line",
+      "lines": [
+        "  // Bloqueo de descuento efectivo: la marca nueva (`bloqueoDescuento`) o la legada (`oil`). Se leen",
+        "  // ambos campos; ninguna de las dos columnas se pierde."
+      ],
+      "comment": "// Bloqueo de descuento efectivo: la marca nueva (`bloqueoDescuento`) o la legada (`oil`). Se leen\n// ambos campos; ninguna de las dos columnas se pierde.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:165",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 165,
+      "endLine": 165,
+      "kind": "line",
+      "lines": [
+        "  // Costo neto unitario de la linea (JOR-170): base de la utilidad que se muestra con el override."
+      ],
+      "comment": "// Costo neto unitario de la linea (JOR-170): base de la utilidad que se muestra con el override.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:168",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 168,
+      "endLine": 170,
+      "kind": "line",
+      "lines": [
+        "  // Bloqueo efectivo: la linea no admite descuento (marca nueva u oil legacy). El control se",
+        "  // deshabilita y se fuerza 0 — salvo con el override comercial (JOR-170), donde el superusuario",
+        "  // si puede descontar un repuesto con Bloqueo Descuento."
+      ],
+      "comment": "// Bloqueo efectivo: la linea no admite descuento (marca nueva u oil legacy). El control se\n// deshabilita y se fuerza 0 — salvo con el override comercial (JOR-170), donde el superusuario\n// si puede descontar un repuesto con Bloqueo Descuento.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:173",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 173,
+      "endLine": 173,
+      "kind": "line",
+      "lines": [
+        "  // V-02: tope del descuento de linea. El item bloqueado lo fija en 0; sin `maxDiscount` el cap es"
+      ],
+      "comment": "// V-02: tope del descuento de linea. El item bloqueado lo fija en 0; sin `maxDiscount` el cap es",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:175",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 175,
+      "endLine": 176,
+      "kind": "line",
+      "lines": [
+        "  // valor a este cap, replicando el `max=\"{{items.maxDiscount}}\"` del legacy. Con el override",
+        "  // comercial el tope de la ficha no aplica: cap 100."
+      ],
+      "comment": "// valor a este cap, replicando el `max=\"{{items.maxDiscount}}\"` del legacy. Con el override\n// comercial el tope de la ficha no aplica: cap 100.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:192",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 192,
+      "endLine": 192,
+      "kind": "line",
+      "lines": [
+        "  // V-05 en modo 'amount' (JOR-167): el input queda `disabled` para el item bloqueado, pero eso"
+      ],
+      "comment": "// V-05 en modo 'amount' (JOR-167): el input queda `disabled` para el item bloqueado, pero eso",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:194",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 194,
+      "endLine": 194,
+      "kind": "line",
+      "lines": [
+        "  // acota a `descuentoCap=0` en la interaccion). Sin este guard, una linea bloqueada clonada o"
+      ],
+      "comment": "// acota a `descuentoCap=0` en la interaccion). Sin este guard, una linea bloqueada clonada o",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:197",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 197,
+      "endLine": 198,
+      "kind": "line",
+      "lines": [
+        "  // (`bloqueoEfectivo`) que ya usa el cap de 'percent'. Con el override comercial no se fuerza: el",
+        "  // descuento cargado sobre un item con Bloqueo Descuento se aplica."
+      ],
+      "comment": "// (`bloqueoEfectivo`) que ya usa el cap de 'percent'. Con el override comercial no se fuerza: el\n// descuento cargado sobre un item con Bloqueo Descuento se aplica.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:201",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 201,
+      "endLine": 201,
+      "kind": "line",
+      "lines": [
+        "  // JOR-170: utilidad de la linea (solo informativa; se muestra con el override comercial)."
+      ],
+      "comment": "// JOR-170: utilidad de la linea (solo informativa; se muestra con el override comercial).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:546",
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
+      "startLine": 546,
+      "endLine": 549,
+      "kind": "block",
+      "lines": [
+        "  /**",
+        "   * Override comercial (JOR-170): habilita descontar líneas con Bloqueo Descuento y muestra la",
+        "   * utilidad por línea. Default `false` (Compras y usuario común).",
+        "   */"
+      ],
+      "comment": "/**\n* Override comercial (JOR-170): habilita descontar líneas con Bloqueo Descuento y muestra la\n* utilidad por línea. Default `false` (Compras y usuario común).\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:1",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 1,
+      "endLine": 8,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Reglas de descuento y precio del builder de Ventas en el FRONT (JOR-170).",
+        " *",
+        " * El descuento de línea se valida en PORCENTAJE sobre precio neto * cantidad contra el tope de la",
+        " * ficha (`maxDiscount`), aunque la pantalla lo cargue como importe (reemplaza el \"monto sin tope\"",
+        " * de JOR-167 CA-09). El descuento general es máximo 20% y excluyente con los descuentos de línea.",
+        " * Al retomar un borrador, el piso se re-siembra con el `nm_net` vigente de la ficha y se avisa.",
+        " */"
+      ],
+      "comment": "/**\n* Reglas de descuento y precio del builder de Ventas en el FRONT (JOR-170).\n*\n* El descuento de línea se valida en PORCENTAJE sobre precio neto * cantidad contra el tope de la\n* ficha (`maxDiscount`), aunque la pantalla lo cargue como importe (reemplaza el \"monto sin tope\"\n* de JOR-167 CA-09). El descuento general es máximo 20% y excluyente con los descuentos de línea.\n* Al retomar un borrador, el piso se re-siembra con el `nm_net` vigente de la ficha y se avisa.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:53",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 53,
+      "endLine": 53,
+      "kind": "line",
+      "lines": [
+        "// Stock por bodega vacío: aísla estas reglas del gate de stock (JOR-119)."
+      ],
+      "comment": "// Stock por bodega vacío: aísla estas reglas del gate de stock (JOR-119).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:71",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 71,
+      "endLine": 71,
+      "kind": "block",
+      "lines": [
+        "/** Línea con precio/cantidad/descuento/tope parametrizables. */"
+      ],
+      "comment": "/** Línea con precio/cantidad/descuento/tope parametrizables. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:89",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 89,
+      "endLine": 89,
+      "kind": "line",
+      "lines": [
+        "  // Radix (Dialog/AlertDialog) usa APIs de puntero/scroll que jsdom no implementa."
+      ],
+      "comment": "// Radix (Dialog/AlertDialog) usa APIs de puntero/scroll que jsdom no implementa.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:175",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 175,
+      "endLine": 176,
+      "kind": "line",
+      "lines": [
+        "    // El detalle vigente del item (MSW) expone precio (nm_net) = 333450. La línea traía un piso",
+        "    // viejo (50) y un precio (100): al retomar, el piso se actualiza y el precio queda por debajo."
+      ],
+      "comment": "// El detalle vigente del item (MSW) expone precio (nm_net) = 333450. La línea traía un piso\n// viejo (50) y un precio (100): al retomar, el piso se actualiza y el precio queda por debajo.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:236",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 236,
+      "endLine": 236,
+      "kind": "line",
+      "lines": [
+        "    // Ya no queda ningún repuesto con bloqueo: el control de descuento general se habilita."
+      ],
+      "comment": "// Ya no queda ningún repuesto con bloqueo: el control de descuento general se habilita.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:255",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 255,
+      "endLine": 255,
+      "kind": "line",
+      "lines": [
+        "    // El bloqueo limpia el descuento; no queda ningún exceso que bloquee Facturar."
+      ],
+      "comment": "// El bloqueo limpia el descuento; no queda ningún exceso que bloquee Facturar.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:273",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 273,
+      "endLine": 273,
+      "kind": "test-name",
+      "lines": [
+        "describe('TransactionBuilder — clonado desde documento reusa los gates (origen-factura, REQ-09)', () => {"
+      ],
+      "comment": "TransactionBuilder — clonado desde documento reusa los gates (origen-factura, REQ-09)",
+      "ids": [
+        "REQ-09"
+      ],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:274",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx",
+      "startLine": 274,
+      "endLine": 274,
+      "kind": "block",
+      "lines": [
+        "  /** Documento de origen (factura) con una sola línea, para el prefill de clonado. */"
+      ],
+      "comment": "/** Documento de origen (factura) con una sola línea, para el prefill de clonado. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.gaps.test.tsx:257",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.gaps.test.tsx",
+      "startLine": 257,
+      "endLine": 257,
+      "kind": "line",
+      "lines": [
+        "    // El monto NO se recorta; el tope se valida en porcentaje ($2.000 = 20% > 15%) y bloquea Facturar."
+      ],
+      "comment": "// El monto NO se recorta; el tope se valida en porcentaje ($2.000 = 20% > 15%) y bloquea Facturar.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx:153",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx",
+      "startLine": 153,
+      "endLine": 155,
+      "kind": "line",
+      "lines": [
+        "    // La ficha (MSW) tiene nm_net 333450 y costo 280000. Se retoma un borrador cuya línea traia",
+        "    // piso 280000 (el costo) y precio 300000: el piso se re-siembra con el nm_net vigente, asi que",
+        "    // un precio por ENCIMA del costo (280000) pero por debajo del neto (333450) queda bloqueado."
+      ],
+      "comment": "// La ficha (MSW) tiene nm_net 333450 y costo 280000. Se retoma un borrador cuya línea traia\n// piso 280000 (el costo) y precio 300000: el piso se re-siembra con el nm_net vigente, asi que\n// un precio por ENCIMA del costo (280000) pero por debajo del neto (333450) queda bloqueado.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:1",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx",
+      "startLine": 1,
+      "endLine": 8,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Override comercial del builder de Ventas (JOR-170, `sales.invoices:commercial-override`).",
+        " *",
+        " * Con la capability, el superusuario puede superar el tope de descuento de la ficha, vender bajo el",
+        " * precio vigente, descontar general hasta 80%, descontar repuestos con Bloqueo Descuento (por",
+        " * linea) y ver costo/utilidad. NO habilita facturar con cliente bloqueado/sin stock ni combinar el",
+        " * general con un item con Bloqueo Descuento. Sin la capability se conservan los gates estrictos.",
+        " */"
+      ],
+      "comment": "/**\n* Override comercial del builder de Ventas (JOR-170, `sales.invoices:commercial-override`).\n*\n* Con la capability, el superusuario puede superar el tope de descuento de la ficha, vender bajo el\n* precio vigente, descontar general hasta 80%, descontar repuestos con Bloqueo Descuento (por\n* linea) y ver costo/utilidad. NO habilita facturar con cliente bloqueado/sin stock ni combinar el\n* general con un item con Bloqueo Descuento. Sin la capability se conservan los gates estrictos.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:53",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx",
+      "startLine": 53,
+      "endLine": 54,
+      "kind": "line",
+      "lines": [
+        "// Stock por bodega vacío por default: aísla estas reglas del gate de stock (salvo el test que lo",
+        "// sobreescribe). `vi.mock` con la implementación real envuelta permite `mockResolvedValueOnce`."
+      ],
+      "comment": "// Stock por bodega vacío por default: aísla estas reglas del gate de stock (salvo el test que lo\n// sobreescribe). `vi.mock` con la implementación real envuelta permite `mockResolvedValueOnce`.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:221",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx",
+      "startLine": 221,
+      "endLine": 221,
+      "kind": "line",
+      "lines": [
+        "    // Total utilidad en el resumen (visible sin abrir la pestaña de seleccionados)."
+      ],
+      "comment": "// Total utilidad en el resumen (visible sin abrir la pestaña de seleccionados).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:226",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx",
+      "startLine": 226,
+      "endLine": 226,
+      "kind": "line",
+      "lines": [
+        "    // Utilidad por línea en la tabla de seleccionados."
+      ],
+      "comment": "// Utilidad por línea en la tabla de seleccionados.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:142",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 142,
+      "endLine": 147,
+      "kind": "line",
+      "lines": [
+        "  // JOR-170: override comercial por capability. Habilita superar el tope de la ficha, descontar",
+        "  // repuestos con Bloqueo Descuento, vender bajo el precio vigente, descontar general hasta 80% y",
+        "  // ver costo/utilidad. NO habilita facturar a cliente bloqueado/sin stock ni combinar el general",
+        "  // con un item con Bloqueo Descuento.",
+        "  // Selector que devuelve un BOOLEANO (no el vector): zustand solo re-renderiza cuando el flag",
+        "  // cambia, no en cada actualizacion del store de auth."
+      ],
+      "comment": "// JOR-170: override comercial por capability. Habilita superar el tope de la ficha, descontar\n// repuestos con Bloqueo Descuento, vender bajo el precio vigente, descontar general hasta 80% y\n// ver costo/utilidad. NO habilita facturar a cliente bloqueado/sin stock ni combinar el general\n// con un item con Bloqueo Descuento.\n// Selector que devuelve un BOOLEANO (no el vector): zustand solo re-renderiza cuando el flag\n// cambia, no en cada actualizacion del store de auth.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:163",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 163,
+      "endLine": 163,
+      "kind": "line",
+      "lines": [
+        "    // Con el override comercial el resolver usa el schema relajado (topes de linea y general)."
+      ],
+      "comment": "// Con el override comercial el resolver usa el schema relajado (topes de linea y general).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:207",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 207,
+      "endLine": 207,
+      "kind": "line",
+      "lines": [
+        "      // Flag efectivo de bloqueo de descuento (marca nueva o `oil` legacy). El listado ya lo expone."
+      ],
+      "comment": "// Flag efectivo de bloqueo de descuento (marca nueva o `oil` legacy). El listado ya lo expone.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:210",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 210,
+      "endLine": 211,
+      "kind": "line",
+      "lines": [
+        "      // Costo neto de compra del item (si el usuario tiene items.parts:cost-view): base de la",
+        "      // utilidad que el backend snapshot en `net_unit_cost`. Ausente -> utilidad \"Sin dato\"."
+      ],
+      "comment": "// Costo neto de compra del item (si el usuario tiene items.parts:cost-view): base de la\n// utilidad que el backend snapshot en `net_unit_cost`. Ausente -> utilidad \"Sin dato\".",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:373",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 373,
+      "endLine": 373,
+      "kind": "line",
+      "lines": [
+        "  // JOR-170: utilidad total del documento (solo informativa; se muestra con el override comercial)."
+      ],
+      "comment": "// JOR-170: utilidad total del documento (solo informativa; se muestra con el override comercial).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:418",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 418,
+      "endLine": 420,
+      "kind": "line",
+      "lines": [
+        "  // V-05 (bloqueo de descuento): una linea con bloqueo efectivo (marca nueva `bloqueoDescuento` u",
+        "  // `oil` legacy) no admite descuento; se fuerza a 0 en vivo. El stock NO se acota aqui: el legacy",
+        "  // permite exceder (ver sinStockEntry / DEC-8)."
+      ],
+      "comment": "// V-05 (bloqueo de descuento): una linea con bloqueo efectivo (marca nueva `bloqueoDescuento` u\n// `oil` legacy) no admite descuento; se fuerza a 0 en vivo. El stock NO se acota aqui: el legacy\n// permite exceder (ver sinStockEntry / DEC-8).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:427",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 427,
+      "endLine": 428,
+      "kind": "line",
+      "lines": [
+        "    // Con el override comercial el superusuario si puede descontar un repuesto con Bloqueo",
+        "    // Descuento; sin el, el descuento se fuerza a 0 en vivo."
+      ],
+      "comment": "// Con el override comercial el superusuario si puede descontar un repuesto con Bloqueo\n// Descuento; sin el, el descuento se fuerza a 0 en vivo.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:438",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 438,
+      "endLine": 441,
+      "kind": "line",
+      "lines": [
+        "  // JOR-122 / V-05: si el documento contiene algun item con bloqueo efectivo de descuento, el",
+        "  // descuento global se deshabilita y se fuerza a 0 (legacy",
+        "  // `clientsInvoicesCreateController.js:296-299`: discountButton = true; discount = 0). Fallback",
+        "  // seguro: sin items con bloqueo (o sin el dato) el control queda habilitado como antes."
+      ],
+      "comment": "// JOR-122 / V-05: si el documento contiene algun item con bloqueo efectivo de descuento, el\n// descuento global se deshabilita y se fuerza a 0 (legacy\n// `clientsInvoicesCreateController.js:296-299`: discountButton = true; discount = 0). Fallback\n// seguro: sin items con bloqueo (o sin el dato) el control queda habilitado como antes.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:475",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 475,
+      "endLine": 476,
+      "kind": "line",
+      "lines": [
+        "  // Con el override comercial el superusuario puede vender por debajo del precio vigente: el piso",
+        "  // deja de bloquear la emision."
+      ],
+      "comment": "// Con el override comercial el superusuario puede vender por debajo del precio vigente: el piso\n// deja de bloquear la emision.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:479",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 479,
+      "endLine": 481,
+      "kind": "line",
+      "lines": [
+        "  // R-14 / P-08.3: al RETOMAR un borrador, el piso de cada linea se re-siembra con el precio neto de",
+        "  // venta vigente de la ficha (`nm_net`), no con el del momento en que se guardo. Se consulta el",
+        "  // detalle vigente solo en ese caso; si el piso cambio respecto del que traia la linea, se avisa."
+      ],
+      "comment": "// R-14 / P-08.3: al RETOMAR un borrador, el piso de cada linea se re-siembra con el precio neto de\n// venta vigente de la ficha (`nm_net`), no con el del momento en que se guardo. Se consulta el\n// detalle vigente solo en ese caso; si el piso cambio respecto del que traia la linea, se avisa.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:493",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 493,
+      "endLine": 493,
+      "kind": "trailing",
+      "lines": [
+        "      const vigente = detalle.precio; // nm_net (el costo net_price NO es el piso)"
+      ],
+      "comment": "// nm_net (el costo net_price NO es el piso)",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:504",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 504,
+      "endLine": 509,
+      "kind": "line",
+      "lines": [
+        "  // R-12 / P-08.1: el descuento de linea se valida en PORCENTAJE sobre precio neto * cantidad",
+        "  // contra el tope de la ficha (`maxDiscount`, ds_max_discount). La pantalla manda el descuento",
+        "  // como IMPORTE: se convierte a % para comparar. Una linea con bloqueo efectivo no admite ningun",
+        "  // descuento. Reemplaza el \"monto sin tope\" de JOR-167 CA-09.",
+        "  // Con el override comercial no hay exceso de descuento de linea: el superusuario puede superar",
+        "  // el tope de la ficha y descontar repuestos con Bloqueo Descuento."
+      ],
+      "comment": "// R-12 / P-08.1: el descuento de linea se valida en PORCENTAJE sobre precio neto * cantidad\n// contra el tope de la ficha (`maxDiscount`, ds_max_discount). La pantalla manda el descuento\n// como IMPORTE: se convierte a % para comparar. Una linea con bloqueo efectivo no admite ningun\n// descuento. Reemplaza el \"monto sin tope\" de JOR-167 CA-09.\n// Con el override comercial no hay exceso de descuento de linea: el superusuario puede superar\n// el tope de la ficha y descontar repuestos con Bloqueo Descuento.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:523",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 523,
+      "endLine": 525,
+      "kind": "line",
+      "lines": [
+        "  // R-13 / P-08.2: descuento general maximo 20% (80% con override) y excluyente con los descuentos",
+        "  // de linea (el override si permite combinarlos). Con un item con Bloqueo Descuento el general",
+        "  // queda bloqueado en TODOS los casos (tambien para el superusuario)."
+      ],
+      "comment": "// R-13 / P-08.2: descuento general maximo 20% (80% con override) y excluyente con los descuentos\n// de linea (el override si permite combinarlos). Con un item con Bloqueo Descuento el general\n// queda bloqueado en TODOS los casos (tambien para el superusuario).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:1032",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 1032,
+      "endLine": 1033,
+      "kind": "line",
+      "lines": [
+        "                // V-05: con un item con bloqueo de descuento el descuento global se bloquea en 0.",
+        "                // Aplica tambien al override (no se combina el general con Bloqueo Descuento)."
+      ],
+      "comment": "// V-05: con un item con bloqueo de descuento el descuento global se bloquea en 0.\n// Aplica tambien al override (no se combina el general con Bloqueo Descuento).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:1038",
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "startLine": 1038,
+      "endLine": 1038,
+      "kind": "line",
+      "lines": [
+        "                // JOR-170: la utilidad total solo se muestra con el override comercial."
+      ],
+      "comment": "// JOR-170: la utilidad total solo se muestra con el override comercial.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/hooks/useItemsVigentes.ts:3",
+      "repo": "frontend",
+      "path": "src/hooks/useItemsVigentes.ts",
+      "startLine": 3,
+      "endLine": 11,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Detalle VIGENTE de los items de un documento (JOR-170 R-14 / P-08.3).",
+        " *",
+        " * Al retomar un borrador, el piso de precio de cada linea debe re-sembrarse con el precio neto de",
+        " * venta vigente de la ficha (`nm_net`, expuesto como `precio` en el detalle del item), no con el",
+        " * que tenia al guardarse. Este hook resuelve una query de detalle por itemId (mismo patron que",
+        " * `useStockPorBodega`: `useQueries` con un array de largo variable, cache compartida por",
+        " * `itemKeys.detail`). El consumidor (TransactionBuilder) lee del Map sin llamar hooks en loops.",
+        " */"
+      ],
+      "comment": "/**\n* Detalle VIGENTE de los items de un documento (JOR-170 R-14 / P-08.3).\n*\n* Al retomar un borrador, el piso de precio de cada linea debe re-sembrarse con el precio neto de\n* venta vigente de la ficha (`nm_net`, expuesto como `precio` en el detalle del item), no con el\n* que tenia al guardarse. Este hook resuelve una query de detalle por itemId (mismo patron que\n* `useStockPorBodega`: `useQueries` con un array de largo variable, cache compartida por\n* `itemKeys.detail`). El consumidor (TransactionBuilder) lee del Map sin llamar hooks en loops.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/items.ts:73",
+      "repo": "frontend",
+      "path": "src/lib/schemas/items.ts",
+      "startLine": 73,
+      "endLine": 74,
+      "kind": "line",
+      "lines": [
+        "  // Flag EFECTIVO de bloqueo de descuento del listado (marca nueva u `oil` legacy). `oil` se",
+        "  // conserva; este campo lo computa el backend desde ambas columnas."
+      ],
+      "comment": "// Flag EFECTIVO de bloqueo de descuento del listado (marca nueva u `oil` legacy). `oil` se\n// conserva; este campo lo computa el backend desde ambas columnas.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/purchases.test.ts:51",
+      "repo": "frontend",
+      "path": "src/lib/schemas/purchases.test.ts",
+      "startLine": 51,
+      "endLine": 52,
+      "kind": "line",
+      "lines": [
+        "  // JOR-170: el contrato de linea de Compras (compartido con Guias/Solicitudes)",
+        "  // acepta el flag efectivo de bloqueo de descuento y conserva `oil`."
+      ],
+      "comment": "// JOR-170: el contrato de linea de Compras (compartido con Guias/Solicitudes)\n// acepta el flag efectivo de bloqueo de descuento y conserva `oil`.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/purchases.ts:116",
+      "repo": "frontend",
+      "path": "src/lib/schemas/purchases.ts",
+      "startLine": 116,
+      "endLine": 116,
+      "kind": "line",
+      "lines": [
+        "  // Bloqueo de descuento efectivo (marca nueva `bloqueoDescuento` o `oil` legacy)."
+      ],
+      "comment": "// Bloqueo de descuento efectivo (marca nueva `bloqueoDescuento` o `oil` legacy).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.test.ts:182",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.test.ts",
+      "startLine": 182,
+      "endLine": 184,
+      "kind": "line",
+      "lines": [
+        "// JOR-170: el contrato de linea del front se mantiene espejo del `LineItemDto`",
+        "// del backend (bloqueoDescuento, oil, minPrice, maxDiscount, descuentoPorcentaje) y valida el",
+        "// descuento en PORCENTAJE sobre el subtotal contra el tope de la ficha, aunque sea un importe."
+      ],
+      "comment": "// JOR-170: el contrato de linea del front se mantiene espejo del `LineItemDto`\n// del backend (bloqueoDescuento, oil, minPrice, maxDiscount, descuentoPorcentaje) y valida el\n// descuento en PORCENTAJE sobre el subtotal contra el tope de la ficha, aunque sea un importe.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.test.ts:198",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.test.ts",
+      "startLine": 198,
+      "endLine": 198,
+      "kind": "line",
+      "lines": [
+        "    // subtotal = 100000; descuento 25000 = 25% > tope 20."
+      ],
+      "comment": "// subtotal = 100000; descuento 25000 = 25% > tope 20.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:320",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 320,
+      "endLine": 323,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Tope del descuento general para el usuario con la capability de override comercial",
+        " * (`sales.invoices:commercial-override`, JOR-170). Espeja `DESCUENTO_GLOBAL_MAX_OVERRIDE` del backend.",
+        " */"
+      ],
+      "comment": "/**\n* Tope del descuento general para el usuario con la capability de override comercial\n* (`sales.invoices:commercial-override`, JOR-170). Espeja `DESCUENTO_GLOBAL_MAX_OVERRIDE` del backend.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:326",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 326,
+      "endLine": 326,
+      "kind": "block",
+      "lines": [
+        "/** Opciones que relajan las reglas de linea/totales para el override comercial. */"
+      ],
+      "comment": "/** Opciones que relajan las reglas de linea/totales para el override comercial. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:328",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 328,
+      "endLine": 328,
+      "kind": "block",
+      "lines": [
+        "  /** `true` si el usuario tiene `sales.invoices:commercial-override`. */"
+      ],
+      "comment": "/** `true` si el usuario tiene `sales.invoices:commercial-override`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:332",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 332,
+      "endLine": 332,
+      "kind": "block",
+      "lines": [
+        "/** Tope efectivo del descuento general segun el override. */"
+      ],
+      "comment": "/** Tope efectivo del descuento general segun el override. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:337",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 337,
+      "endLine": 337,
+      "kind": "block",
+      "lines": [
+        "/** Descuento global de cabecera: porcentaje 0-`max`, opcional (default 0 en el calculo). */"
+      ],
+      "comment": "/** Descuento global de cabecera: porcentaje 0-`max`, opcional (default 0 en el calculo). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:356",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 356,
+      "endLine": 358,
+      "kind": "line",
+      "lines": [
+        "  // Numero de display (serial interno) sembrado del listado al agregar el item — solo para render",
+        "  // en la tabla de seleccionados. La referencia real de la linea es `itemId` (uuid). Opcional",
+        "  // (fallback al itemId); el backend lo descarta por whitelist al emitir (no es parte del contrato)."
+      ],
+      "comment": "// Numero de display (serial interno) sembrado del listado al agregar el item — solo para render\n// en la tabla de seleccionados. La referencia real de la linea es `itemId` (uuid). Opcional\n// (fallback al itemId); el backend lo descarta por whitelist al emitir (no es parte del contrato).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:364",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 364,
+      "endLine": 366,
+      "kind": "line",
+      "lines": [
+        "  // Unidad explicita del descuento: porcentaje que representa el importe `descuento` sobre el",
+        "  // subtotal de la linea. Opcional (el backend lo deriva si no viene); espeja",
+        "  // `LineItemDto.descuentoPorcentaje`. Juntos desambiguan la unidad al retomar la factura."
+      ],
+      "comment": "// Unidad explicita del descuento: porcentaje que representa el importe `descuento` sobre el\n// subtotal de la linea. Opcional (el backend lo deriva si no viene); espeja\n// `LineItemDto.descuentoPorcentaje`. Juntos desambiguan la unidad al retomar la factura.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:368",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 368,
+      "endLine": 370,
+      "kind": "line",
+      "lines": [
+        "  // Costo neto unitario de la linea (base de la utilidad, JOR-170). Lo siembra el builder desde el",
+        "  // item del listado (`costoCompra`, gateado por items.parts:cost-view); el backend lo usa como",
+        "  // snapshot en `invoice_items.net_unit_cost`. Opcional: sin dato la utilidad queda \"Sin dato\"."
+      ],
+      "comment": "// Costo neto unitario de la linea (base de la utilidad, JOR-170). Lo siembra el builder desde el\n// item del listado (`costoCompra`, gateado por items.parts:cost-view); el backend lo usa como\n// snapshot en `invoice_items.net_unit_cost`. Opcional: sin dato la utilidad queda \"Sin dato\".",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:373",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 373,
+      "endLine": 378,
+      "kind": "line",
+      "lines": [
+        "  // Piso de precio de la linea (JOR-121, fiel al legacy `minPrice`). El operador puede editar el",
+        "  // precio, pero no venderlo bajo este piso: si `precio < minPrice` la celda se marca en rojo y la",
+        "  // emision se bloquea. En el legacy `minPrice` se sembraba con el precio neto del item",
+        "  // (`clientsInvoicesCreateController.js:285` -> `minPrice: row.netPrice`), el mismo valor con que",
+        "  // arranca `precio` (`price: row.netPrice`). Opcional: una linea sin piso (Compras, o un backend",
+        "  // que aun no lo provea) no dispara la marca ni el gate."
+      ],
+      "comment": "// Piso de precio de la linea (JOR-121, fiel al legacy `minPrice`). El operador puede editar el\n// precio, pero no venderlo bajo este piso: si `precio < minPrice` la celda se marca en rojo y la\n// emision se bloquea. En el legacy `minPrice` se sembraba con el precio neto del item\n// (`clientsInvoicesCreateController.js:285` -> `minPrice: row.netPrice`), el mismo valor con que\n// arranca `precio` (`price: row.netPrice`). Opcional: una linea sin piso (Compras, o un backend\n// que aun no lo provea) no dispara la marca ni el gate.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:380",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 380,
+      "endLine": 385,
+      "kind": "line",
+      "lines": [
+        "  // JOR-122: reglas por item sembradas desde el item del listado al agregarlo. Todas opcionales",
+        "  // (fallback seguro: ausente ≡ regla inactiva).",
+        "  //   `oil` (V-05): item de aceite -> descuento de linea deshabilitado y forzado a 0 (legacy",
+        "  //     `clients-invoices-create.html:172` ng-disabled + `clientsInvoicesCreateController.js:296-299`).",
+        "  //   `maxDiscount` (V-02): tope del descuento de linea; el descuento se acota a este valor y",
+        "  //     excederlo marca warning (legacy `max=\"{{items.maxDiscount}}\"`). Ausente -> sin tope efectivo."
+      ],
+      "comment": "// JOR-122: reglas por item sembradas desde el item del listado al agregarlo. Todas opcionales\n// (fallback seguro: ausente ≡ regla inactiva).\n//   `oil` (V-05): item de aceite -> descuento de linea deshabilitado y forzado a 0 (legacy\n//     `clients-invoices-create.html:172` ng-disabled + `clientsInvoicesCreateController.js:296-299`).\n//   `maxDiscount` (V-02): tope del descuento de linea; el descuento se acota a este valor y\n//     excederlo marca warning (legacy `max=\"{{items.maxDiscount}}\"`). Ausente -> sin tope efectivo.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:387",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 387,
+      "endLine": 388,
+      "kind": "line",
+      "lines": [
+        "  // Bloqueo de descuento efectivo (marca nueva `bloqueoDescuento` o `oil` legacy). Sembrado desde",
+        "  // el item del listado; si esta activo, la linea no admite descuento (salvo override comercial)."
+      ],
+      "comment": "// Bloqueo de descuento efectivo (marca nueva `bloqueoDescuento` o `oil` legacy). Sembrado desde\n// el item del listado; si esta activo, la linea no admite descuento (salvo override comercial).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:391",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 391,
+      "endLine": 392,
+      "kind": "line",
+      "lines": [
+        "  // JOR-122 (X-STUB-01): observacion capturada por linea. Viaja en el payload de emision sobre el",
+        "  // stub (no requiere backend nuevo; el campo se persistira cuando el backend lo soporte)."
+      ],
+      "comment": "// JOR-122 (X-STUB-01): observacion capturada por linea. Viaja en el payload de emision sobre el\n// stub (no requiere backend nuevo; el campo se persistira cuando el backend lo soporte).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:396",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 396,
+      "endLine": 400,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Construye el schema de linea de item. Sin opciones, conserva el comportamiento estricto (tope de",
+        " * ficha y bloqueo de descuento). Con `commercialOverride` (JOR-170) relaja esas dos reglas: el",
+        " * superusuario puede superar el tope y descontar repuestos con Bloqueo Descuento.",
+        " */"
+      ],
+      "comment": "/**\n* Construye el schema de linea de item. Sin opciones, conserva el comportamiento estricto (tope de\n* ficha y bloqueo de descuento). Con `commercialOverride` (JOR-170) relaja esas dos reglas: el\n* superusuario puede superar el tope y descontar repuestos con Bloqueo Descuento.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:406",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 406,
+      "endLine": 406,
+      "kind": "line",
+      "lines": [
+        "    // Esta regla NO se relaja con el override."
+      ],
+      "comment": "// Esta regla NO se relaja con el override.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:416",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 416,
+      "endLine": 417,
+      "kind": "line",
+      "lines": [
+        "    // Bloqueo de descuento efectivo (marca nueva u `oil` legacy): la linea no admite descuento,",
+        "    // salvo que el usuario tenga el override comercial."
+      ],
+      "comment": "// Bloqueo de descuento efectivo (marca nueva u `oil` legacy): la linea no admite descuento,\n// salvo que el usuario tenga el override comercial.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:428",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 428,
+      "endLine": 430,
+      "kind": "line",
+      "lines": [
+        "    // Tope del descuento de linea: se valida en PORCENTAJE sobre el subtotal contra el",
+        "    // `maxDiscount` de la ficha, aunque la pantalla cargue el descuento como importe (R-12). El",
+        "    // override comercial saltea el tope."
+      ],
+      "comment": "// Tope del descuento de linea: se valida en PORCENTAJE sobre el subtotal contra el\n// `maxDiscount` de la ficha, aunque la pantalla cargue el descuento como importe (R-12). El\n// override comercial saltea el tope.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:444",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 444,
+      "endLine": 444,
+      "kind": "block",
+      "lines": [
+        "/** Schema de linea de item con las reglas estrictas (usuario comun). */"
+      ],
+      "comment": "/** Schema de linea de item con las reglas estrictas (usuario comun). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:473",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 473,
+      "endLine": 474,
+      "kind": "block",
+      "lines": [
+        " * (issue); el borrador (draft) los acepta parciales (DEC-LOCAL-04 / D5). Con",
+        " * `commercialOverride` (JOR-170) la linea y el tope del descuento general se relajan."
+      ],
+      "comment": "* (issue); el borrador (draft) los acepta parciales (DEC-LOCAL-04 / D5). Con\n* `commercialOverride` (JOR-170) la linea y el tope del descuento general se relajan.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:482",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 482,
+      "endLine": 483,
+      "kind": "line",
+      "lines": [
+        "    // Nota de pedido / recepcion (V-13). Referencia OPCIONAL segun la HU (3.2, JOR-167); en el legacy",
+        "    // era obligatoria (`clients-invoices-create.html:105`, `required`), pero manda el canon."
+      ],
+      "comment": "// Nota de pedido / recepcion (V-13). Referencia OPCIONAL segun la HU (3.2, JOR-167); en el legacy\n// era obligatoria (`clients-invoices-create.html:105`, `required`), pero manda el canon.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:490",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 490,
+      "endLine": 492,
+      "kind": "line",
+      "lines": [
+        "    // Medio de pago (V-09). El operador lo elige; `formaPago` (condicion) y `vencimiento` se derivan",
+        "    // de el. DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en el DTO",
+        "    // (`FacturaInputDto.medioPago`); persistencia pendiente del modelo real de facturas."
+      ],
+      "comment": "// Medio de pago (V-09). El operador lo elige; `formaPago` (condicion) y `vencimiento` se derivan\n// de el. DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en el DTO\n// (`FacturaInputDto.medioPago`); persistencia pendiente del modelo real de facturas.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:494",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 494,
+      "endLine": 497,
+      "kind": "line",
+      "lines": [
+        "    // Vencimiento persistido (V-11). Fecha ISO `yyyy-MM-dd` derivada de `fecha` + los dias del medio",
+        "    // de credito. Ausente en contado. Antes solo se mostraba (display-only); ahora viaja en el payload.",
+        "    // DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en el DTO; persistencia pendiente",
+        "    // del modelo real de facturas."
+      ],
+      "comment": "// Vencimiento persistido (V-11). Fecha ISO `yyyy-MM-dd` derivada de `fecha` + los dias del medio\n// de credito. Ausente en contado. Antes solo se mostraba (display-only); ahora viaja en el payload.\n// DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en el DTO; persistencia pendiente\n// del modelo real de facturas.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:500",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 500,
+      "endLine": 503,
+      "kind": "line",
+      "lines": [
+        "    // Transportista seleccionado cuando el despacho esta activo (V-14). Guarda el id estable del",
+        "    // transportista (no el nombre). DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en",
+        "    // el DTO; persistencia pendiente del modelo real de facturas; ademas espera DT-01 (catalogo de",
+        "    // transportistas)."
+      ],
+      "comment": "// Transportista seleccionado cuando el despacho esta activo (V-14). Guarda el id estable del\n// transportista (no el nombre). DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en\n// el DTO; persistencia pendiente del modelo real de facturas; ademas espera DT-01 (catalogo de\n// transportistas).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:507",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 507,
+      "endLine": 507,
+      "kind": "line",
+      "lines": [
+        "    // Id del cliente elegido en el buscador (`FacturaInputDto.clienteId`, JOR-167 fix de borrador)."
+      ],
+      "comment": "// Id del cliente elegido en el buscador (`FacturaInputDto.clienteId`, JOR-167 fix de borrador).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:514",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 514,
+      "endLine": 515,
+      "kind": "block",
+      "lines": [
+        " * un documento incompleto (DEC-LOCAL-04 / D5). Con `commercialOverride`, la linea y el tope del",
+        " * descuento general se relajan (JOR-170)."
+      ],
+      "comment": "* un documento incompleto (DEC-LOCAL-04 / D5). Con `commercialOverride`, la linea y el tope del\n* descuento general se relajan (JOR-170).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:522",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 522,
+      "endLine": 522,
+      "kind": "line",
+      "lines": [
+        "    // N.P opcional en borrador (se exige solo al facturar, V-13)."
+      ],
+      "comment": "// N.P opcional en borrador (se exige solo al facturar, V-13).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:535",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 535,
+      "endLine": 535,
+      "kind": "line",
+      "lines": [
+        "    // Cliente elegido: se guarda con el borrador para rehidratar credito y bloqueo al retomarlo."
+      ],
+      "comment": "// Cliente elegido: se guarda con el borrador para rehidratar credito y bloqueo al retomarlo.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:540",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 540,
+      "endLine": 540,
+      "kind": "block",
+      "lines": [
+        "/** Schema de borrador con las reglas estrictas (usuario comun). */"
+      ],
+      "comment": "/** Schema de borrador con las reglas estrictas (usuario comun). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:545",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 545,
+      "endLine": 546,
+      "kind": "block",
+      "lines": [
+        " * forma de pago (DEC-LOCAL-04 / D5). Con `commercialOverride`, la linea y el tope del descuento",
+        " * general se relajan (JOR-170)."
+      ],
+      "comment": "* forma de pago (DEC-LOCAL-04 / D5). Con `commercialOverride`, la linea y el tope del descuento\n* general se relajan (JOR-170).",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:554",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 554,
+      "endLine": 555,
+      "kind": "line",
+      "lines": [
+        "    // JOR-167: la HU (3.2) define la nota de pedido/recepcion y la O.C. como referencias OPCIONALES.",
+        "    // Reemplaza la obligatoriedad de paridad legacy (V-13): manda el canon."
+      ],
+      "comment": "// JOR-167: la HU (3.2) define la nota de pedido/recepcion y la O.C. como referencias OPCIONALES.\n// Reemplaza la obligatoriedad de paridad legacy (V-13): manda el canon.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:559",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 559,
+      "endLine": 560,
+      "kind": "line",
+      "lines": [
+        "    // Veredicto SII opcional (JOR-061 / B1): alinea con `FacturaInputDto.estadoSII?` del backend",
+        "    // (mock SII, JOR-059). Contrato-solo — el builder no lo envia; ningun flujo de UI lo setea."
+      ],
+      "comment": "// Veredicto SII opcional (JOR-061 / B1): alinea con `FacturaInputDto.estadoSII?` del backend\n// (mock SII, JOR-059). Contrato-solo — el builder no lo envia; ningun flujo de UI lo setea.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:562",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 562,
+      "endLine": 563,
+      "kind": "line",
+      "lines": [
+        "    // Id del borrador a emitir (JOR-167, fix de borrador; `FacturaInputDto.id` del backend). Con id,",
+        "    // el backend emite ESE borrador en vez de crear otro documento."
+      ],
+      "comment": "// Id del borrador a emitir (JOR-167, fix de borrador; `FacturaInputDto.id` del backend). Con id,\n// el backend emite ESE borrador en vez de crear otro documento.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:568",
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "startLine": 568,
+      "endLine": 568,
+      "kind": "block",
+      "lines": [
+        "/** Schema de emision con las reglas estrictas (usuario comun). */"
+      ],
+      "comment": "/** Schema de emision con las reglas estrictas (usuario comun). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:34",
+      "repo": "frontend",
+      "path": "src/lib/ventas/calc-totals.ts",
+      "startLine": 34,
+      "endLine": 35,
+      "kind": "line",
+      "lines": [
+        "  // Tope del descuento general (JOR-170). Default 20 (usuario comun); el builder pasa 80 cuando el",
+        "  // usuario tiene la capability de override comercial."
+      ],
+      "comment": "// Tope del descuento general (JOR-170). Default 20 (usuario comun); el builder pasa 80 cuando el\n// usuario tiene la capability de override comercial.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:58",
+      "repo": "frontend",
+      "path": "src/lib/ventas/calc-totals.ts",
+      "startLine": 58,
+      "endLine": 59,
+      "kind": "line",
+      "lines": [
+        "  // Descuento global como PORCENTAJE 0-tope (JOR-120 / DEC-018; 80 con override comercial):",
+        "  // se acota a [0, descuentoGlobalMax] y se aplica sobre el neto post-línea, no sobre el bruto."
+      ],
+      "comment": "// Descuento global como PORCENTAJE 0-tope (JOR-120 / DEC-018; 80 con override comercial):\n// se acota a [0, descuentoGlobalMax] y se aplica sobre el neto post-línea, no sobre el bruto.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:75",
+      "repo": "frontend",
+      "path": "src/lib/ventas/calc-totals.ts",
+      "startLine": 75,
+      "endLine": 75,
+      "kind": "block",
+      "lines": [
+        "/** Utilidad de una linea: monto (venta neta − costo) y porcentaje sobre la venta neta (JOR-170). */"
+      ],
+      "comment": "/** Utilidad de una linea: monto (venta neta − costo) y porcentaje sobre la venta neta (JOR-170). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:81",
+      "repo": "frontend",
+      "path": "src/lib/ventas/calc-totals.ts",
+      "startLine": 81,
+      "endLine": 81,
+      "kind": "block",
+      "lines": [
+        "/** Linea para el calculo de utilidad: precio, cantidad, descuento y el costo unitario (snapshot). */"
+      ],
+      "comment": "/** Linea para el calculo de utilidad: precio, cantidad, descuento y el costo unitario (snapshot). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:89",
+      "repo": "frontend",
+      "path": "src/lib/ventas/calc-totals.ts",
+      "startLine": 89,
+      "endLine": 95,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Utilidad de una linea de venta (JOR-170). Espejo de `calcularUtilidadLinea` del backend.",
+        " * Sin costo conocido o sin venta neta (0) devuelve `null` (la UI lo presenta como \"Sin dato\").",
+        " *   venta neta = calcLineTotal(precio, cantidad, descuento, 'amount')",
+        " *   monto      = venta neta - costoUnitario * cantidad",
+        " *   porcentaje = monto / venta neta * 100",
+        " */"
+      ],
+      "comment": "/**\n* Utilidad de una linea de venta (JOR-170). Espejo de `calcularUtilidadLinea` del backend.\n* Sin costo conocido o sin venta neta (0) devuelve `null` (la UI lo presenta como \"Sin dato\").\n*   venta neta = calcLineTotal(precio, cantidad, descuento, 'amount')\n*   monto      = venta neta - costoUnitario * cantidad\n*   porcentaje = monto / venta neta * 100\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:109",
+      "repo": "frontend",
+      "path": "src/lib/ventas/calc-totals.ts",
+      "startLine": 109,
+      "endLine": 112,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Utilidad total del documento (JOR-170): agrega las lineas con costo conocido. Si ninguna linea",
+        " * tiene costo (o la venta neta agregada es 0) devuelve `null` (\"Sin dato\").",
+        " */"
+      ],
+      "comment": "/**\n* Utilidad total del documento (JOR-170): agrega las lineas con costo conocido. Si ninguna linea\n* tiene costo (o la venta neta agregada es 0) devuelve `null` (\"Sin dato\").\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "frontend:src/lib/ventas/origen-factura.ts:105",
+      "repo": "frontend",
+      "path": "src/lib/ventas/origen-factura.ts",
+      "startLine": 105,
+      "endLine": 105,
+      "kind": "line",
+      "lines": [
+        "    // Flag efectivo de bloqueo de descuento (marca nueva o `oil` legacy); se conserva `oil`."
+      ],
+      "comment": "// Flag efectivo de bloqueo de descuento (marca nueva o `oil` legacy); se conserva `oil`.",
+      "ids": [],
+      "commentedCode": false
+    }
+  ],
+  "decisions": [
+    {
+      "id": "backend:migrations/20261007000000_inventory_movements.ts:3",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:migrations/20261007000000_inventory_movements.ts:22",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:migrations/20261007000000_inventory_movements.ts:30",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:5",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:18",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:21",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:50",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:seeds/25_super_usuario_role.ts:62",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/dto/item.dto.ts:170",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/items.repository.spec.ts:48",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:411",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:609",
+      "action": "rewrite",
+      "codes": [
+        "R1",
+        "R3"
+      ],
+      "replacement": [
+        "      // JOR-157: columna real `items.bloqueo_descuento`. El flag es EFECTIVO: activo si la marca",
+        "      // nueva o la legada (`oil`) estan seteadas."
+      ]
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1099",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1493",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1531",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/items/items.repository.ts:1593",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/permissions/commercial-override-capability.spec.ts:44",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/permissions/commercial-override-capability.spec.ts:100",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/permissions/commercial-override-capability.spec.ts:120",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:13",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:78",
+      "action": "rewrite",
+      "codes": [
+        "R2"
+      ],
+      "replacement": [
+        "/**",
+        " * Reglas comerciales de descuento y precio: tope de descuento de linea (ds_max_discount),",
+        " * descuento general 0-20 excluyente con los de linea, bloqueo efectivo de descuento",
+        " * (bloqueo_descuento u oil) y piso de precio nm_net.",
+        " */"
+      ]
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:97",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:138",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:156",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:164",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:236",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:252",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:263",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:286",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:287",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.spec.ts:289",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:19",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:69",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:76",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:85",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:87",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:96",
+      "action": "delete",
+      "codes": [
+        "R7"
+      ],
+      "evidence": "function formatoPorcentaje(valor: number): string { return String(Math.round(valor * 100) / 100); } — no divide por el subtotal de la linea ni recibe un monto de descuento, solo redondea el valor recibido."
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:101",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:127",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:135",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:153",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:162",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:168",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:178",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:184",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:189",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:206",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/calc-totals.ts:227",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/dto/documento.dto.ts:256",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/dto/factura-input.dto.ts:26",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/dto/factura-input.dto.ts:33",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/dto/line-item.dto.ts:87",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/dto/line-item.dto.ts:111",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/facturas.controller.ts:15",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/facturas.controller.ts:23",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales-tables.spec.ts:5",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales-tables.spec.ts:43",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:71",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:73",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:75",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:375",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:388",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:484",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:500",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:508",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:521",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:553",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.repository.ts:588",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:38",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:699",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:752",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:808",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:873",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:900",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Bloqueo de descuento efectivo (bloqueo_descuento u oil), criterio 30",
+        "  // ---------------------------------------------------------------------------"
+      ]
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:944",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.spec.ts:1100",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:58",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:61",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:71",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:275",
+      "action": "rewrite",
+      "codes": [
+        "R2"
+      ],
+      "replacement": [
+        "    // Reglas que bloquean la emision, validadas server-side aunque el request no venga del builder",
+        "    // (R-20): cliente bloqueado y stock de la bodega de origen. El override comercial",
+        "    // NO las habilita (solo aplica a topes/descuentos/precio)."
+      ]
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:285",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:315",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:331",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:388",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:399",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:src/sales/sales.service.ts:441",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:28",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:30",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:62",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:120",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:138",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:146",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:161",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:169",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:603",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:657",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:728",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:738",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "  // ---------------------------------------------------------------------------",
+        "  // Cliente bloqueado impide emitir (criterio 6)",
+        "  // ---------------------------------------------------------------------------"
+      ]
+    },
+    {
+      "id": "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:741",
+      "action": "review",
+      "codes": [
+        "R1"
+      ],
+      "evidence": "nombre de test con ids internos (REQ-01): cámbialo a mano, p.ej. \"cliente bloqueado\""
+    },
+    {
+      "id": "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:1",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:52",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:67",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:1",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:54",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:69",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:79",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:88",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/compras/builder/PurchaseInvoiceBuilder.tsx:140",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/components/shared/builder/BuilderItemsTabs/BuilderItemsTabs.tsx:53",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/DocumentSummaryCard/DocumentSummaryCard.tsx:40",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx:185",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx:208",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:277",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:294",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:593",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:614",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "  // En modo amount el input queda `disabled` para el item bloqueado, pero eso NO",
+        "  // limpiaba el valor persistido en el form, una linea bloqueada clonada/sembrada con un monto de"
+      ]
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:617",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:93",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:160",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:165",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:168",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:173",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:175",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:192",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:194",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:197",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:201",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.tsx:546",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:1",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:53",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:71",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:89",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:175",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:236",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:255",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:273",
+      "action": "review",
+      "codes": [
+        "R1"
+      ],
+      "evidence": "nombre de test con ids internos (REQ-09): cámbialo a mano, p.ej. \"TransactionBuilder: clonado desde documento reusa los gates (origen-factura)\""
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx:274",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.gaps.test.tsx:257",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx:153",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:1",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:53",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:221",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:226",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:142",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:163",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:207",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:210",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:373",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:418",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "  // V-05 (bloqueo de descuento): una linea con bloqueo efectivo (marca nueva `bloqueoDescuento` u",
+        "  // `oil` legacy) no admite descuento; se fuerza a 0 en vivo. El stock NO se acota aqui: el legacy",
+        "  // permite exceder (ver sinStockEntry)."
+      ]
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:427",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:438",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:475",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:479",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:493",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:504",
+      "action": "rewrite",
+      "codes": [
+        "R3"
+      ],
+      "replacement": [
+        "  // R-12 / P-08.1: el descuento de linea se valida en PORCENTAJE sobre precio neto * cantidad",
+        "  // contra el tope de la ficha (`maxDiscount`, ds_max_discount). La pantalla manda el descuento",
+        "  // como IMPORTE: se convierte a % para comparar. Una linea con bloqueo efectivo no admite ningun",
+        "  // descuento.",
+        "  // Con el override comercial no hay exceso de descuento de linea: el superusuario puede superar",
+        "  // el tope de la ficha y descontar repuestos con Bloqueo Descuento."
+      ]
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:523",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:1032",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:1038",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/hooks/useItemsVigentes.ts:3",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/items.ts:73",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/purchases.test.ts:51",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/purchases.ts:116",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.test.ts:182",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.test.ts:198",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:320",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:326",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:328",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:332",
+      "action": "delete",
+      "codes": [
+        "R4"
+      ]
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:337",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:356",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:364",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:368",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:373",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:380",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:387",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:391",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:396",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:406",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:416",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:428",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:444",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:473",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:482",
+      "action": "rewrite",
+      "codes": [
+        "R3"
+      ],
+      "replacement": [
+        "    // Nota de pedido / recepcion (V-13). Referencia OPCIONAL segun la HU (3.2, JOR-167)."
+      ]
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:490",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:494",
+      "action": "rewrite",
+      "codes": [
+        "R3"
+      ],
+      "replacement": [
+        "    // Vencimiento persistido (V-11). Fecha ISO `yyyy-MM-dd` derivada de `fecha` + los dias del medio",
+        "    // de credito. Ausente en contado.",
+        "    // DEUDA_TECNICA[ventas] (DT-04, JOR-159): declarado y validado en el DTO; persistencia pendiente",
+        "    // del modelo real de facturas."
+      ]
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:500",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:507",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:514",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:522",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:535",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:540",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:545",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:554",
+      "action": "rewrite",
+      "codes": [
+        "R3"
+      ],
+      "replacement": [
+        "    // JOR-167: la HU (3.2) define la nota de pedido/recepcion y la O.C. como referencias OPCIONALES."
+      ]
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:559",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:562",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/schemas/ventas.ts:568",
+      "action": "review",
+      "codes": [],
+      "evidence": "el modelo no devolvió una decisión para este comentario"
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:34",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:58",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:75",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:81",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:89",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/ventas/calc-totals.ts:109",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "frontend:src/lib/ventas/origen-factura.ts:105",
+      "action": "keep",
+      "codes": []
+    }
+  ],
+  "omitted": 0,
+  "unsupported": {},
+  "failures": [],
+  "skipped": [],
+  "sessions": [
+    "JOR-170-S1",
+    "JOR-170-S2",
+    "JOR-170-S3"
+  ],
+  "files": [
+    {
+      "repo": "backend",
+      "path": "src/items/items.repository.ts",
+      "applied": [
+        "backend:src/items/items.repository.ts:609"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "backend",
+      "path": "src/sales/calc-totals.spec.ts",
+      "applied": [
+        "backend:src/sales/calc-totals.spec.ts:78",
+        "backend:src/sales/calc-totals.spec.ts:13"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "backend",
+      "path": "src/sales/calc-totals.ts",
+      "applied": [
+        "backend:src/sales/calc-totals.ts:184",
+        "backend:src/sales/calc-totals.ts:96"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "backend",
+      "path": "src/sales/sales.service.spec.ts",
+      "applied": [
+        "backend:src/sales/sales.service.spec.ts:900",
+        "backend:src/sales/sales.service.spec.ts:873",
+        "backend:src/sales/sales.service.spec.ts:808",
+        "backend:src/sales/sales.service.spec.ts:752",
+        "backend:src/sales/sales.service.spec.ts:699"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "backend",
+      "path": "src/sales/sales.service.ts",
+      "applied": [
+        "backend:src/sales/sales.service.ts:275"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "backend",
+      "path": "test/e2e/sales-invoices-persistence.e2e-spec.ts",
+      "applied": [
+        "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:738",
+        "backend:test/e2e/sales-invoices-persistence.e2e-spec.ts:603"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx",
+      "applied": [
+        "frontend:src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx:52"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+      "applied": [
+        "frontend:src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx:54"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/compras/builder/PurchaseInvoiceBuilder.tsx",
+      "applied": [
+        "frontend:src/components/compras/builder/PurchaseInvoiceBuilder.tsx:140"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx",
+      "applied": [
+        "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx:208"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+      "applied": [
+        "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:614",
+        "frontend:src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx:294"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx",
+      "applied": [
+        "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx:226"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+      "applied": [
+        "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:1038",
+        "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:504",
+        "frontend:src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:418"
+      ],
+      "rejected": []
+    },
+    {
+      "repo": "frontend",
+      "path": "src/lib/schemas/ventas.ts",
+      "applied": [
+        "frontend:src/lib/schemas/ventas.ts:554",
+        "frontend:src/lib/schemas/ventas.ts:494",
+        "frontend:src/lib/schemas/ventas.ts:482",
+        "frontend:src/lib/schemas/ventas.ts:332"
+      ],
+      "rejected": []
+    }
+  ],
+  "commits": [
+    {
+      "repo": "backend",
+      "files": [
+        "src/items/items.repository.ts",
+        "src/sales/calc-totals.spec.ts",
+        "src/sales/calc-totals.ts",
+        "src/sales/sales.service.spec.ts",
+        "src/sales/sales.service.ts",
+        "test/e2e/sales-invoices-persistence.e2e-spec.ts"
+      ],
+      "hash": "a5f393ef1adbb7125a1c157984a4db48bd9e05e9"
+    },
+    {
+      "repo": "frontend",
+      "files": [
+        "src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.bloqueo.test.tsx",
+        "src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx",
+        "src/components/compras/builder/PurchaseInvoiceBuilder.tsx",
+        "src/components/shared/builder/LineItemsTable/LineItemsTable.stories.tsx",
+        "src/components/shared/builder/LineItemsTable/LineItemsTable.test.tsx",
+        "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx",
+        "src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
+        "src/lib/schemas/ventas.ts"
+      ],
+      "hash": "b8d3be5a496de8f19a3253bfede55afc61f1272d"
+    }
+  ]
+}

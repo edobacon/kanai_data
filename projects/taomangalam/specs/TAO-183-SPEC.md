@@ -2,7 +2,7 @@
 id: TAO-183-SPEC
 project: taomangalam
 ticket: TAO-183
-status: draft
+status: approved
 ---
 
 # TAO-183 · Splash de identidad con destino y sin esperas artificiales (HU-01-12)
@@ -56,9 +56,9 @@ La splash usa solo recursos locales, funciona sin conexión y el alta de la cuen
 «Tao Mangalam» es una clave de texto no traducible; el logo y el nombre se anuncian como «Tao Mangalam» y el indicador de carga tiene etiqueta; el logo queda centrado y sin deformar en teléfono y tablet.
 
 ### REQ-09 `confirmed`
-> Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:927
+> Fuente: adenda 5 (2026-10-07, edobacon) + request §Referencias canonicas (DEC-235, doc 43 §9)
 
-La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa detrás del contenido (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila) con el texto largo sobre superficie opaca, sin salto de color del papel respecto de la splash nativa (DEC-235, doc 43 §9).
+La primera superficie Flutter monta la capa de fondo de la familia Identidad/entrada mediante el resolvedor de imagenes existente, detras del contenido y a pantalla completa (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila, texto largo sobre superficie opaca, sin salto de color del papel respecto de la splash nativa). El arte `assets/fondos-vistas/familia-identidad-entrada.png` NO esta empaquetado (adenda 5, DEC-240), por lo que en produccion la capa cae al color de respaldo declarado por el resolvedor (`fallbackSurfaceToken: 'canvas'`) hasta la entrega de HU-02. En esta historia se verifica la estructura/composicion de la capa y su fallback; el criterio de aceptacion de fondo a pantalla completa visible y la comparacion visual [fidelity] (QA-01-12-04, DEC-235, doc 43 §9) quedan condicionados a esa entrega de HU-02.
 
 ### REQ-10 `confirmed` `enforcement`
 > Fuente: taomangalam/app/lib/design_system/tokens/tokens.g.dart:387
@@ -80,15 +80,15 @@ El tiempo desde el arranque hasta el destino queda registrado como métrica de d
 
 El provider `splashDestinationReadyProvider` (app/lib/features/splash/presentation/splash_screen.dart) se cablea en produccion a una señal REAL de «destino listo» definida en `app/lib/app.dart` (arranque/bootstrap o primera composicion de Inicio resuelta), en lugar del `Future<void>.value()` ya resuelto: con el provider por defecto (sin override de test) la secuencia splashEnso/splashDisc/splashName se reproduce y la navegacion a `AppRouteNames.home` ocurre en cuanto esa señal completa, siempre dentro del tope splashMax (1000 ms).
 
-### REQ-14 `confirmed`
-> Fuente: enmienda:gate-integral-TAO-183#2 (asset ausente del bundle; REQ-09, DEC-235)
-
-El arte de fondo `familia-identidad-entrada.png` queda empaquetado en el bundle: el bloque `flutter: assets:` de `app/pubspec.yaml` declara `assets/fondos-vistas/` (o el archivo puntual), de modo que el resolvedor de imagenes lo carga en produccion y la capa de fondo de la primera superficie Flutter no cae al color de respaldo. Los tests `app/test/features/splash/splash_background_test.dart` y `app/test/golden/splash_golden_test.dart` resuelven el asset por el resolvedor/bundle (rootBundle/AssetImage), no por `File` + `MemoryImage`.
-
 ### REQ-15 `confirmed` `enforcement`
 > Fuente: enmienda:gate-integral-TAO-183#3 (fuga de ui.Image en _SplashEnsoRevealState)
 
 `_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` implementa `dispose()` y libera el `ui.Image` cargado (`image.dispose()`) antes de llamar a `super.dispose()`, y no usa la imagen despues de liberarla (guarda contra la carga asincronica que resuelve con el State ya desmontado): no queda memoria nativa de la textura retenida al salir de la splash.
+
+### REQ-16 `confirmed` `enforcement`
+> Fuente: adenda 5 (2026-10-07, edobacon): DEC-240 y check de CI `ep01-assets-provider`
+
+El fondo `assets/fondos-vistas/familia-identidad-entrada.png` NO se declara en el bloque `flutter: assets:` de `app/pubspec.yaml` ni se agrega como fixture de asset empaquetado: declararlo contradice DEC-240 y el check de CI `ep01-assets-provider` (`export_assets.py --check-pubspec`) rechaza todo `.png` declarado, dejando el job en rojo. El acceso al arte sigue siendo por el resolvedor de imagenes existente con su respaldo (`fallbackSurfaceToken: 'canvas'`); el empaquetado se difiere a HU-02.
 ## Tasks
 
 #### S1.T1 — Configurar la splash nativa de iOS y Android: fondo ivory100 y logo sol-luna de tinta desde app/assets/identidad/, válida con el sistema en claro y en oscuro.
@@ -139,14 +139,14 @@ Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Stat
 #### S5.T1 — Definir en `app/lib/app.dart` la señal real de «destino listo» (completar cuando el arranque/bootstrap o la primera composicion de Inicio esta lista) y sobrescribir con ella `splashDestinationReadyProvider` de `app/lib/features/splash/presentation/splash_screen.dart`, reemplazando el `Future<void>.value()` ya resuelto del default; la splash sigue navegando por NOMBRE a `AppRouteNames.home` (REQ-06) y el `LegalConsentGate` resuelve V-51. Agregar `app/test/features/splash/splash_destination_signal_test.dart` con reloj simulado que ejercite el provider POR DEFECTO (sin override) y compruebe que la secuencia corre y la navegacion ocurre dentro de splashMax (1000 ms). Sin dependencias nuevas.
 Contrato: rollback: Revertir `app/lib/app.dart` y `app/lib/features/splash/presentation/splash_screen.dart` al default previo (`Future<void>.value()`) y borrar `app/test/features/splash/splash_destination_signal_test.dart`; la splash vuelve a navegar de inmediato a Inicio, sin regresion funcional de destino.. Status: done
 
-#### S5.T2 — Declarar el arte de fondo en el bloque `flutter: assets:` de `app/pubspec.yaml` (`assets/fondos-vistas/`, o el archivo `assets/fondos-vistas/familia-identidad-entrada.png`) para que el resolvedor de imagenes lo cargue en produccion y la capa de fondo no caiga al color de respaldo. Ajustar `app/test/features/splash/splash_background_test.dart` y `app/test/golden/splash_golden_test.dart` para que resuelvan el asset por el resolvedor/bundle (rootBundle/AssetImage) en lugar de `File` + `MemoryImage`, y dejarlos verdes (regenerar el golden solo si el cambio de origen del asset lo exige, comparando contra el aprobado).
-Contrato: rollback: Revertir la entrada de assets en `app/pubspec.yaml` y restaurar los dos archivos de test a su version previa con `File` + `MemoryImage`; el fondo vuelve al color de respaldo en produccion sin romper el build.. Status: done
-
 #### S5.T3 — Agregar `dispose()` a `_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` que libere el `ui.Image` cargado (`image.dispose()`) antes de `super.dispose()`, con guarda para la carga asincronica que resuelve con el State ya desmontado (liberar la imagen y no llamar setState). Agregar `app/test/features/splash/splash_sequence_dispose_test.dart` que monte y desmonte la splash y verifique `image.debugDisposed == true` y la ausencia de excepciones de Flutter cuando la carga resuelve tras el desmontaje.
 Contrato: rollback: Quitar el `dispose()` agregado en `splash_sequence.dart` y borrar `app/test/features/splash/splash_sequence_dispose_test.dart`; vuelve el comportamiento previo (imagen no liberada), sin cambio funcional visible.. Status: done
 
 #### S5.T4 — Regresion acotada de la splash tras las tres correcciones: correr los tests de la feature splash y el golden, y `flutter analyze` sobre los archivos tocados (`app/lib/app.dart`, `app/lib/features/splash/presentation/splash_screen.dart`, `app/lib/features/splash/presentation/splash_sequence.dart`). Clasificar cualquier fallo como introducido o preexistente y corregir solo los introducidos. No se corre la suite completa: eso lo hace el gate al cerrar.
 Contrato: rollback: No aplica: la task no modifica codigo de produccion; si se ajusta algun test, revertir ese archivo a su version previa.. Status: done
+
+#### S5.T5 — Ajustar los tests de la capa de fondo de la splash (V-31) para el alcance de la adenda 5: verificar estructura/composicion (capa unica detras del contenido, fit cover con punto focal, opacidad 12–18 %, texto largo sobre superficie opaca) y el camino de respaldo cuando el arte NO esta empaquetado (el resolvedor cae a `fallbackSurfaceToken: 'canvas'` sin excepcion ni salto de color respecto del papel ivory100). Quitar de los tests toda aserción que exija el PNG `assets/fondos-vistas/familia-identidad-entrada.png` empaquetado o la fixture de asset revertida. Agregar una aserción de guardrail que falle si `familia-identidad-entrada.png` (o `assets/fondos-vistas/`) aparece declarado en el bloque `flutter: assets:` de `app/pubspec.yaml` (DEC-240, check de CI `ep01-assets-provider` / `export_assets.py --check-pubspec`).
+Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash y el test de guardrail del pubspec al commit anterior (`git checkout HEAD -- app/test/features/splash/`); no se toca codigo de produccion ni `app/pubspec.yaml`.. Status: pending
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa detrás del contenido (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila) con el texto largo sobre superficie opaca, sin salto de color del papel respecto de la 
@@ -186,6 +186,30 @@ Contrato: rollback: No aplica: la task no modifica codigo de produccion; si se a
 - S5: Declarar el arte de fondo en el bloque `flutter: assets:` de `app/pubspec.yaml` (`assets/fondos-vistas/`, o el archivo `assets/fondos-vistas/familia-identidad-entrada.png`) para que el resolvedor de imagenes lo cargue en produccion y la capa de fondo no caiga al color de respaldo. Ajustar `app/test/features/splash/splash_background_test.dart` y `app/test/golden/splash_golden_test.dart` para que resuelvan el asset por el resolvedor/bundle (rootBundle/AssetImage) en lugar de `File` + `MemoryImage`, y dejarlos verdes (regenerar el golden solo si el cambio de origen del asset lo exige, comparando contra el aprobado). (valida: REQ-14, REQ-09; rollback: Revertir la entrada de assets en `app/pubspec.yaml` y restaurar los dos archivos de test a su version previa con `File` + `MemoryImage`; el fondo vuelve al color de respaldo en produccion sin romper el build.)
 - S5: Agregar `dispose()` a `_SplashEnsoRevealState` en `app/lib/features/splash/presentation/splash_sequence.dart` que libere el `ui.Image` cargado (`image.dispose()`) antes de `super.dispose()`, con guarda para la carga asincronica que resuelve con el State ya desmontado (liberar la imagen y no llamar setState). Agregar `app/test/features/splash/splash_sequence_dispose_test.dart` que monte y desmonte la splash y verifique `image.debugDisposed == true` y la ausencia de excepciones de Flutter cuando la carga resuelve tras el desmontaje. (valida: REQ-15; rollback: Quitar el `dispose()` agregado en `splash_sequence.dart` y borrar `app/test/features/splash/splash_sequence_dispose_test.dart`; vuelve el comportamiento previo (imagen no liberada), sin cambio funcional visible.)
 - S5: Regresion acotada de la splash tras las tres correcciones: correr los tests de la feature splash y el golden, y `flutter analyze` sobre los archivos tocados (`app/lib/app.dart`, `app/lib/features/splash/presentation/splash_screen.dart`, `app/lib/features/splash/presentation/splash_sequence.dart`). Clasificar cualquier fallo como introducido o preexistente y corregir solo los introducidos. No se corre la suite completa: eso lo hace el gate al cerrar. (valida: REQ-13, REQ-14, REQ-15, test; rollback: No aplica: la task no modifica codigo de produccion; si se ajusta algun test, revertir ese archivo a su version previa.)
+
+### Enmienda 4
+
+**REQ ops:**
+
+- remove REQ-14
+
+### Enmienda 5
+**REQs:**
+
+- REQ-09 (edit) `confirmed`: La primera superficie Flutter monta la capa de fondo de la familia Identidad/entrada mediante el resolvedor de imagenes existente, detras de
+- REQ-16 (add) `confirmed`: El fondo `assets/fondos-vistas/familia-identidad-entrada.png` NO se declara en el bloque `flutter: assets:` de `app/pubspec.yaml` ni se agre
+
+**Tasks agregadas:**
+
+- S5: Ajustar los tests de la capa de fondo de la splash (V-31) para el alcance de la adenda 5: verificar estructura/composicion (capa unica detras del contenido, fit cover con punto focal, opacidad 12–18 %, texto largo sobre superficie opaca) y el camino de respaldo cuando el arte NO esta empaquetado (el resolvedor cae a `fallbackSurfaceToken: 'canvas'` sin excepcion ni salto de color respecto del papel ivory100). Quitar de los tests toda aserción que exija el PNG `assets/fondos-vistas/familia-identidad-entrada.png` empaquetado o la fixture de asset revertida. Agregar una aserción de guardrail que falle si `familia-identidad-entrada.png` (o `assets/fondos-vistas/`) aparece declarado en el bloque `flutter: assets:` de `app/pubspec.yaml` (DEC-240, check de CI `ep01-assets-provider` / `export_assets.py --check-pubspec`). (valida: REQ-09, REQ-16, test; rollback: Revertir el archivo de test de la capa de fondo de la splash y el test de guardrail del pubspec al commit anterior (`git checkout HEAD -- app/test/features/splash/`); no se toca codigo de produccion ni `app/pubspec.yaml`.)
+
+**Task ops:**
+
+- delete S5.T2
+
+**REQ ops:**
+
+- remove REQ-14
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -227,6 +251,11 @@ Contrato: rollback: No aplica: la task no modifica codigo de produccion; si se a
 
 **Tasks:**
 - [x] S5.T1
-- [x] S5.T2
 - [x] S5.T3
 - [x] S5.T4
+- [ ] S5.T5
+## Decisions
+
+### DEC-LOCAL-01: plan-dedup → auto-pruned
+Recorte por exceso aplicado en autónomo: REQ-14
+
