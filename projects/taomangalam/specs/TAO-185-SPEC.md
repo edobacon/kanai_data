@@ -133,4 +133,4 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 
 **Gate (auto)**: Una actualización de Privacidad, un bloqueo recibido desde otra pantalla y los rechazos inmediato/diferido muestran la versión vigente y devuelven al contexto anterior al aceptar; quedan capturas regionales y evidencia real para Diseño/QA.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
