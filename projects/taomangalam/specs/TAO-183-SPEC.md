@@ -110,16 +110,16 @@ Contrato: rollback: Volver al comportamiento con animación completa.. Status: d
 Contrato: rollback: Revertir los archivos de test agregados.. Status: done
 
 #### S3.T1 — Mostrar el fondo de la familia Identidad/entrada (familia-identidad-entrada.png) a pantalla completa detrás del contenido usando el resolvedor de imágenes existente: cover con punto focal, opacidad visual 12–18 % y al menos 65 % de zona tranquila; el texto largo va sobre superficie opaca y el papel no salta respecto de la splash nativa.
-Contrato: rollback: Quitar el fondo de familia y dejar el papel ivory100 plano.. Status: pending
+Contrato: rollback: Quitar el fondo de familia y dejar el papel ivory100 plano.. Status: done
 
 #### S3.T2 — Aplicar accesibilidad y responsive: anunciar logo y nombre como «Tao Mangalam» (clave no traducible), etiquetar el indicador de carga y mantener el logo centrado y sin deformar en teléfono y tablet.
-Contrato: rollback: Revertir las etiquetas de semántica y el ajuste responsive.. Status: pending
+Contrato: rollback: Revertir las etiquetas de semántica y el ajuste responsive.. Status: done
 
 #### S3.T3 — Si la historia toca docs/PLAN.md o docs/product/vistas/V-01_inicio.md, dejarlos compliant con el linter de docs del baseline (.docs-baseline.txt) para no romper el job de docs ni quality-gate.
-Contrato: rollback: Revertir los cambios de esos documentos.. Status: pending
+Contrato: rollback: Revertir los cambios de esos documentos.. Status: done
 
 #### S3.T4 — Escribir los tests de la etapa: golden del estado final en teléfono y tablet, test de semántica (anuncio «Tao Mangalam» y etiqueta del indicador) y verificación de lint de los docs del baseline.
-Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Status: pending
+Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa detrás del contenido (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila) con el texto largo sobre superficie opaca, sin salto de color del papel respecto de la 
@@ -170,13 +170,13 @@ Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Stat
 
 **Gate (auto)**: En arranque normal la secuencia enso→disco→nombre corre una sola vez dentro de splashMax; si el destino está listo a los 400 ms salta al estado final y navega sin esperar 1000 ms; con carga >1 s quedan logo y nombre quietos con indicador discreto sin reiniciar el enso; con movimiento reducido no hay trazo (estado final o fundido ≤120 ms).
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa (cover con punto focal, opacidad 12–18 %, ≥65 % de zona tranquila) en teléfono y tablet sin salto de color del papel; el logo/nombre se anuncian como «Tao Mangalam» y el indicador tiene etiqueta; quedan goldens de teléfono/tablet; y los docs del baseline siguen lint-compliant.
 
