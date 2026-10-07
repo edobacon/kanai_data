@@ -146,7 +146,7 @@ Contrato: rollback: Quitar el `dispose()` agregado en `splash_sequence.dart` y b
 Contrato: rollback: No aplica: la task no modifica codigo de produccion; si se ajusta algun test, revertir ese archivo a su version previa.. Status: done
 
 #### S5.T5 — Ajustar los tests de la capa de fondo de la splash (V-31) para el alcance de la adenda 5: verificar estructura/composicion (capa unica detras del contenido, fit cover con punto focal, opacidad 12–18 %, texto largo sobre superficie opaca) y el camino de respaldo cuando el arte NO esta empaquetado (el resolvedor cae a `fallbackSurfaceToken: 'canvas'` sin excepcion ni salto de color respecto del papel ivory100). Quitar de los tests toda aserción que exija el PNG `assets/fondos-vistas/familia-identidad-entrada.png` empaquetado o la fixture de asset revertida. Agregar una aserción de guardrail que falle si `familia-identidad-entrada.png` (o `assets/fondos-vistas/`) aparece declarado en el bloque `flutter: assets:` de `app/pubspec.yaml` (DEC-240, check de CI `ep01-assets-provider` / `export_assets.py --check-pubspec`).
-Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash y el test de guardrail del pubspec al commit anterior (`git checkout HEAD -- app/test/features/splash/`); no se toca codigo de produccion ni `app/pubspec.yaml`.. Status: pending
+Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash y el test de guardrail del pubspec al commit anterior (`git checkout HEAD -- app/test/features/splash/`); no se toca codigo de produccion ni `app/pubspec.yaml`.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa detrás del contenido (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila) con el texto largo sobre superficie opaca, sin salto de color del papel respecto de la 
@@ -247,13 +247,13 @@ Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash
 
 ### Session 4 · T0 · open
 
-### Session 5 · iterate
+### Session 5 · continue
 
 **Tasks:**
 - [x] S5.T1
 - [x] S5.T3
 - [x] S5.T4
-- [ ] S5.T5
+- [x] S5.T5
 ## Decisions
 
 ### DEC-LOCAL-01: plan-dedup → auto-pruned
