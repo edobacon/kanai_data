@@ -88,13 +88,13 @@ Contrato: rollback: Revertir únicamente la conexión y presentación regional n
 Contrato: rollback: Revertir los casos y ajustes de fixtures de esta etapa; mantener pruebas anteriores y no alterar registros legales reales.. Status: done
 
 #### S3.T1 — Integrar en app/lib/navigation/app_router.dart y la presentación V-51 los eventos de HU-03a-13 y respuestas de HU-03a-11/12 fijados en el spec. Al abrir con versiones pendientes, recibir version_legal_pendiente o documento_legal_modificado, seleccionar por tipo/version/exige_reaceptacion y aceptación vigente, actualizar el texto, mostrar el aviso y conservar el retorno original. Reutilizar los mecanismos de lectura y aceptación de las sesiones previas; no implementar bloqueo del servidor, cola ni revisor posterior HU-01-14. Mantener el fondo anfitrión ya resuelto. Certeza confirmed; fuentes backlog EP-01:1661,1669,1690.
-Contrato: rollback: Revertir la nueva conexión de eventos conservando el flujo obligatorio de primer uso, el contexto de retorno y aceptaciones locales pendientes; no descartar ni dar por aceptada una versión rechazada.. Status: pending
+Contrato: rollback: Revertir la nueva conexión de eventos conservando el flujo obligatorio de primer uso, el contexto de retorno y aceptaciones locales pendientes; no descartar ni dar por aceptada una versión rechazada.. Status: done
 
 #### S3.T2 — Añadir a app/test/navigation/app_shell_integration_test.dart los casos de selección de documentos, QA-01-13-03, version_legal_pendiente desde otra pantalla, documento_legal_modificado inmediato, rechazo diferido al reconectar y versión que no exige reaceptación. Comprobar versiones y contexto de retorno, incluyendo que Términos vigente no reaparece por actualización de Privacidad. Mantener la regresión de navegación existente; no reescribir casos de lectura, políticas o primer uso cubiertos antes. Certeza confirmed; fuentes backlog EP-01:1710,1712,1714,1743 y app/test/navigation/app_shell_integration_test.dart:59.
-Contrato: rollback: Retirar únicamente los nuevos escenarios de reaceptación y sus fixtures, preservando la cobertura de las sesiones anteriores.. Status: pending
+Contrato: rollback: Retirar únicamente los nuevos escenarios de reaceptación y sus fixtures, preservando la cobertura de las sesiones anteriores.. Status: done
 
 #### S3.T3 — Ejecutar QA-01-13-01/02/03 contra los proveedores reales integrados de TAO-192 y TAO-189: comprobar aceptación por documento, cola local y sincronización, políticas regionales, rechazos y retorno. Revisar teléfono Android/tablet, modo avión y lector de pantalla. Capturar opt_in/opt_out/disabled en teléfono y tablet y obtener QA-01-13-04 de Diseño contra doc 43 §9 y maqueta-direccion-consolidada.png; revisar el fondo de V-51 como entregable de esta historia. Completar request-close con regresión completa en el gate y teach-close según Skip aprobado. No cerrar si faltan proveedores o aprobación visual; entrega a main requiere autorización distinta del lote epic/EP-01. Certeza confirmed; fuentes backlog EP-01:1739,1741,1743 y request inmutable.
-Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los cambios de presentación/integración responsables, conservando documentos empaquetados, cola pendiente y retorno; conservar evidencia del fallo sin datos personales.. Status: pending
+Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los cambios de presentación/integración responsables, conservando documentos empaquetados, cola pendiente y retorno; conservar evidencia del fallo sin datos personales.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Qué: presentar V-51 al abrir con versiones pendientes, ante version_legal_pendiente en cualquier pantalla y ante rechazos inmediatos o diferidos; mostrar «Actualizamos este documento. Revísalo para continuar», seleccionar solo documentos que requieren aceptación vigente y conse
@@ -124,12 +124,12 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 
 **Gate (auto)**: Una instalación nueva muestra V-51 antes de la introducción; las tres políticas regionales son revisables y aceptar con red o en modo avión permite llegar a Inicio mediante los proveedores correspondientes.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · iterate
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Una actualización de Privacidad, un bloqueo recibido desde otra pantalla y los rechazos inmediato/diferido muestran la versión vigente y devuelven al contexto anterior al aceptar; quedan capturas regionales y evidencia real para Diseño/QA.
 
