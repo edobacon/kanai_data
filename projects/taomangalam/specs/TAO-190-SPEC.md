@@ -93,22 +93,22 @@ Contrato: rollback: Descartar el prototipo si se revierte el cambio técnico y c
 Contrato: rollback: Revertir únicamente el archivo de pruebas nuevo y sus temporales; conservar DEC, mediciones y bloqueos ya registrados.. Status: done
 
 #### S2.T1 — Entregar HU-02-02 como unidad de esquema, manifiesto y validador consumiendo exclusivamente la DEC real de la sesión anterior. El padre no se ejecuta directamente.
-Contrato: rollback: Revertir conjuntamente esquema, manifiesto y validador; restaurar la versión previa conservando maestros y registros, y comprobar ausencia de referencias al esquema retirado.. Status: pending
+Contrato: rollback: Revertir conjuntamente esquema, manifiesto y validador; restaurar la versión previa conservando maestros y registros, y comprobar ausencia de referencias al esquema retirado.. Status: done
 
 #### S2.T1.1 — Definir o evolucionar el JSON Schema y el validador bajo scripts/assets/, tras comprobar qué existe hoy en scripts/. Incluir campos obligatorios (identidad, familia, maestro, estado, fuente o autoría con enlace al registro de creación, destino, medidas, tema, plataforma, modo y alt), ids únicos, inspección de medidas reales, cobertura de PNG y lista explícita de no productivos; rechazar dark en V1. La validación de fuente/autoría comprueba presencia y que el enlace al registro de creación resuelva: no evalúa tipo de licencia ni ninguna política normativa desconocida. Actualizar docs/content/SCHEMA.md solo en lo correspondiente al contrato de assets.
-Contrato: rollback: Restaurar esquema, validador y documentación previos como parte del rollback unitario del inventario; conservar todos los archivos fuente.. Status: pending
+Contrato: rollback: Restaurar esquema, validador y documentación previos como parte del rollback unitario del inventario; conservar todos los archivos fuente.. Status: done
 
 #### S2.T1.2 — Implementar en scripts/assets/ la validación de aprobado, provisional, por-corregir, por-optimizar y faltante conforme a DEC-230: aprobado exige registros reales de Diseño Y de Contenido más derivados registrados; aprobado sin derivados se indica como por-optimizar; faltante se acepta sin archivo solo con destino y medidas objetivo. No crear aprobaciones ni degradar estados o aprobaciones reales preexistentes. El validador no exige política de licencia ni autoría normativa (pendiente externo del propietario, excluido por la fuente): ese pendiente bloquea promociones NUEVAS a aprobado y no impide construir ni validar el inventario.
-Contrato: rollback: Restaurar la lógica previa junto al esquema compatible, sin borrar ni modificar los registros reales de aprobación.. Status: pending
+Contrato: rollback: Restaurar la lógica previa junto al esquema compatible, sin borrar ni modificar los registros reales de aprobación.. Status: done
 
 #### S2.T1.3 — Migrar app/assets/manifest.json comparándolo con su versión integrada: conservar exactamente los 64 ids y alt, inventariar maestros productivos de arcanos/zodiaco/identidad, registrar originales no productivos y aplicar la política de modo de HU-02-01. Completar fuente o autoría y enlace al registro de creación donde exista y dejar explícito el pendiente donde no, sin bloquear la construcción del inventario. Clasificar permanencia como provisional y los fondos de 940/941 × 1672 fuera de aprobado final; presentar la clasificación a Diseño y Contenido sin fabricar aprobaciones.
-Contrato: rollback: Restaurar manifiesto y clasificación anteriores junto al esquema/validador compatible, conservando maestros, procedencia y aprobaciones.. Status: pending
+Contrato: rollback: Restaurar manifiesto y clasificación anteriores junto al esquema/validador compatible, conservando maestros, procedencia y aprobaciones.. Status: done
 
 #### S2.T2 — Añadir la regresión del inventario y los estados en tests/test_assets_manifest.py. El padre se completa por su subtask.
-Contrato: rollback: Revertir solo los casos nuevos, conservando fixtures anteriores y registros de evidencia.. Status: pending
+Contrato: rollback: Revertir solo los casos nuevos, conservando fixtures anteriores y registros de evidencia.. Status: done
 
 #### S2.T2.1 — Escribir en tests/test_assets_manifest.py casos parametrizados que ejecuten el validador real sobre copias temporales: schema/id duplicado, estado listo, maestro ausente o medidas falsas, PNG huérfano, fuente/autoría ausente o enlace de registro de creación que no resuelve, aprobado sin Diseño o sin Contenido, aprobado sin derivados, faltante sin destino/medidas y dark en V1. Comprobar que los 64 ids y alt se conservan, que permanencias y fondos quedan fuera de aprobado final, que una entrada aprobada preexistente conserva su estado con la normativa de licencia pendiente y que una promoción nueva a aprobado se rechaza por ese pendiente. Registrar trazabilidad QA-02-02-01 a QA-02-02-04.
-Contrato: rollback: Retirar casos y fixtures añadidos sin modificar el inventario productivo ni los maestros.. Status: pending
+Contrato: rollback: Retirar casos y fixtures añadidos sin modificar el inventario productivo ni los maestros.. Status: done
 
 #### S3.T1 — Entregar HU-02-03 en scripts/assets/ sobre el manifiesto validado y los presupuestos decididos; reutilizar el conversor disponible tras confirmar su versión y contrato. El padre se completa por sus subtasks.
 Contrato: rollback: Restaurar derivados, manifiesto y declaración de assets previos; conservar todos los maestros PNG y comprobar sus hashes y el --check contra la versión restaurada.. Status: pending
@@ -250,15 +250,15 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 
 **Gate (auto)**: DEC y tabla de mediciones revisables para HU-02-01, con prototipo que acepta el derivado íntegro y rechaza un byte alterado; precondiciones de ejecución documentadas sin arranque durante el intake.
 
-### Session 2 · T3 · open
+### Session 2 · T3 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T2.1
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T2.1
 
 **Gate (auto)**: El inventario migrado valida sin errores ni PNG huérfanos, conserva los 64 ids/alt y muestra permanencia provisional; las entradas deliberadamente inválidas producen diagnósticos por id o ruta.
 
