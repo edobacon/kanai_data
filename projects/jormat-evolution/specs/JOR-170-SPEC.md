@@ -259,7 +259,7 @@ Contrato: rollback: git revert del commit de tests.. Status: done
 
 **Gate (auto)**: Con la capability sales.invoices:commercial-override (rol Super Usuario), el usuario supera el tope de la ficha, descuenta repuestos con Bloqueo Descuento, usa 80% general, baja el precio y ve costo/utilidad (venta 100.000 / costo 80.000 -> $20.000 = 20%); no factura a bloqueado/sin stock ni combina general con Bloqueo Descuento; el usuario común queda en 20%.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
 ## Enmiendas (refine_spec)
 
 ### Enmienda 1
