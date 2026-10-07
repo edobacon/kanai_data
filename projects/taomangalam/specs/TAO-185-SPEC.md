@@ -79,13 +79,13 @@ Contrato: rollback: Revertir la presentación, lector y claves nuevas de V-51; c
 Contrato: rollback: Revertir solo los casos y referencias visuales añadidos en esta sesión, conservando las pruebas existentes y sin regenerar aprobaciones visuales automáticamente.. Status: done
 
 #### S2.T1 — Integrar el primer uso obligatorio y la aceptación en los archivos de splash/introducción y proveedores fijados en el spec, junto a app/lib/navigation/app_router.dart y la presentación V-51. Invocar literalmente obtenerDocumentosLegalesVigentes, obtenerDocumentoLegal y aceptarDocumentosLegales mediante los contratos confirmados de TAO-192; delegar el registro sin red a HU-03a-12 usando las versiones empaquetadas. Mantener V-51 si no se acepta o el proveedor falla/deniega documento_legal.aceptar; continuar a Inicio e introducción solo con confirmación online o local. No implementar persistencia ni cola. Certeza confirmed; fuentes: backlog EP-01:1658,1660,1664,1728.
-Contrato: rollback: Revertir las conexiones nuevas y conservar el flujo obligatorio de primer uso, documentos empaquetados y registros locales pendientes; no borrar aceptaciones ni sustituir el bloqueo por acceso libre.. Status: pending
+Contrato: rollback: Revertir las conexiones nuevas y conservar el flujo obligatorio de primer uso, documentos empaquetados y registros locales pendientes; no borrar aceptaciones ni sustituir el bloqueo por acceso libre.. Status: done
 
 #### S2.T2 — Conectar obtenerPoliticaAnalitica y los proveedores de HU-15-03/04 preparados por TAO-189 en la presentación V-51 fijada en el spec; añadir textos por clave en app/lib/l10n/app_es.arb. opt_in muestra Aceptar analítica y Rechazar analítica del mismo tamaño, estilo, ubicación y peso semántico; opt_out informa actividad y desactivación; disabled omite el bloque. Delegar decisiones al proveedor sin stores propios ni perfilado. Certeza confirmed; fuente backlog EP-01:1654; app_theme.dart:320 describe opacidad disabled y no es fuente de política regional.
-Contrato: rollback: Revertir únicamente la conexión y presentación regional nueva; conservar decisiones de consentimiento ya registradas por sus proveedores.. Status: pending
+Contrato: rollback: Revertir únicamente la conexión y presentación regional nueva; conservar decisiones de consentimiento ya registradas por sus proveedores.. Status: done
 
 #### S2.T3 — Extender app/test/navigation/app_shell_integration_test.dart con instalación nueva tras splash, bloqueo al salir/volver, vista no filtrable, políticas opt_in/opt_out/disabled, elección equivalente y aceptación online/offline. Usar contratos simulados confirmados para comprobar versiones enviadas, continuidad solo con confirmación y fallos de permiso/registro. Ajustar los fixtures de pruebas existentes para representar aceptación ya vigente y conservar navegación a Biblioteca. Escribir QA-01-13-01/02 sin duplicar los casos del lector de la sesión anterior. Certeza confirmed; fuentes backlog EP-01:1700,1702,1704,1708,1716,1739 y app/test/navigation/app_shell_integration_test.dart:35,59.
-Contrato: rollback: Revertir los casos y ajustes de fixtures de esta etapa; mantener pruebas anteriores y no alterar registros legales reales.. Status: pending
+Contrato: rollback: Revertir los casos y ajustes de fixtures de esta etapa; mantener pruebas anteriores y no alterar registros legales reales.. Status: done
 
 #### S3.T1 — Integrar en app/lib/navigation/app_router.dart y la presentación V-51 los eventos de HU-03a-13 y respuestas de HU-03a-11/12 fijados en el spec. Al abrir con versiones pendientes, recibir version_legal_pendiente o documento_legal_modificado, seleccionar por tipo/version/exige_reaceptacion y aceptación vigente, actualizar el texto, mostrar el aviso y conservar el retorno original. Reutilizar los mecanismos de lectura y aceptación de las sesiones previas; no implementar bloqueo del servidor, cola ni revisor posterior HU-01-14. Mantener el fondo anfitrión ya resuelto. Certeza confirmed; fuentes backlog EP-01:1661,1669,1690.
 Contrato: rollback: Revertir la nueva conexión de eventos conservando el flujo obligatorio de primer uso, el contexto de retorno y aceptaciones locales pendientes; no descartar ni dar por aceptada una versión rechazada.. Status: pending
@@ -115,12 +115,12 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 
 **Gate (auto)**: En preview de teléfono y tablet se puede abrir V-51, leer ambos documentos, volver al mismo punto y revisar carga, error y texto empaquetado; la composición y el foco son observables.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Una instalación nueva muestra V-51 antes de la introducción; las tres políticas regionales son revisables y aceptar con red o en modo avión permite llegar a Inicio mediante los proveedores correspondientes.
 
