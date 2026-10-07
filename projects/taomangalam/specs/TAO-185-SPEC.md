@@ -131,6 +131,10 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 - [x] S3.T2
 - [x] S3.T3
 
-**Gate (auto)**: Una actualización de Privacidad, un bloqueo recibido desde otra pantalla y los rechazos inmediato/diferido muestran la versión vigente y devuelven al contexto anterior al aceptar; quedan capturas regionales y evidencia real para Diseño/QA.
+**Gate (auto)**: Tras las correcciones del review, la reaceptación legal (actualización de Privacidad, bloqueo recibido desde otra pantalla y rechazos inmediato/diferido) muestra la versión vigente y devuelve al contexto anterior al aceptar; el gate legal bloquea a pantalla completa mientras resuelve (carga y error) y no permite alcanzar Inicio; la suite del paquete app queda verde. La QA en dispositivo y la aprobación de Diseño se registran en la sesión de verificación y en los casos de fidelidad.
 
 ### Session 4 · T0 · continue
+
+### Session 5 · T2 · iterate
+
+**Gate (auto)**: La reaceptación legal (actualización de Privacidad, bloqueo recibido desde otra pantalla y rechazos inmediato/diferido) muestra la versión vigente y devuelve al contexto anterior al aceptar; el gate legal bloquea a pantalla completa mientras resuelve (carga y error) y no permite alcanzar Inicio.
