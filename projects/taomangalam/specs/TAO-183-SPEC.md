@@ -76,9 +76,9 @@ Si la historia modifica docs/PLAN.md o docs/product/vistas/V-01_inicio.md (ambos
 El tiempo desde el arranque hasta el destino queda registrado como métrica de desarrollo.
 
 ### REQ-13 `confirmed`
-> Fuente: enmienda:gate-integral-TAO-183#1 (app/lib/app.dart monta const SplashScreen() sin override)
+> Fuente: pedido de enmienda del gate integral TAO-183, tarea 1; app/lib/app.dart, app/lib/features/splash/presentation/splash_screen.dart
 
-El provider `splashDestinationReadyProvider` (app/lib/features/splash/presentation/splash_screen.dart) se cablea en produccion a una señal REAL de «destino listo» definida en `app/lib/app.dart` (arranque/bootstrap o primera composicion de Inicio resuelta), en lugar del `Future<void>.value()` ya resuelto: con el provider por defecto (sin override de test) la secuencia splashEnso/splashDisc/splashName se reproduce y la navegacion a `AppRouteNames.home` ocurre en cuanto esa señal completa, siempre dentro del tope splashMax (1000 ms).
+Por defecto la splash REPRODUCE su secuencia completa (`splashEnso` 0–650 ms, `splashDiscStart`–`splashDiscEnd`, `splashNameStart`–`splashNameEnd`) hasta `splashMax` (1000 ms, tokens de `tokens.g.dart`) y navega por NOMBRE a `AppRouteNames.home` al COMPLETARLA. El provider `splashDestinationReadyProvider` (declarado en `app/lib/features/splash/presentation/splash_screen.dart`, con su default de produccion en `app/lib/app.dart`) queda como hook de CORTE: solo si esa señal real completa ANTES de `splashMax`, `_resolveDestination` salta al estado final (`_controller.value = 1`) y navega de inmediato. El default de produccion NO puede ser una señal que complete dentro del primer frame (prohibidos `WidgetsBinding.instance.endOfFrame` y `Future<void>.value()` ya resuelto), porque colapsa la secuencia y la animacion nunca se ve en produccion. Sin dependencias nuevas.
 
 ### REQ-15 `confirmed` `enforcement`
 > Fuente: enmienda:gate-integral-TAO-183#3 (fuga de ui.Image en _SplashEnsoRevealState)
@@ -89,6 +89,11 @@ El provider `splashDestinationReadyProvider` (app/lib/features/splash/presentati
 > Fuente: adenda 5 (2026-10-07, edobacon): DEC-240 y check de CI `ep01-assets-provider`
 
 El fondo `assets/fondos-vistas/familia-identidad-entrada.png` NO se declara en el bloque `flutter: assets:` de `app/pubspec.yaml` ni se agrega como fixture de asset empaquetado: declararlo contradice DEC-240 y el check de CI `ep01-assets-provider` (`export_assets.py --check-pubspec`) rechaza todo `.png` declarado, dejando el job en rojo. El acceso al arte sigue siendo por el resolvedor de imagenes existente con su respaldo (`fallbackSurfaceToken: 'canvas'`); el empaquetado se difiere a HU-02.
+
+### REQ-17 `confirmed` `enforcement`
+> Fuente: pedido de enmienda del gate integral TAO-183, tarea 2; app/lib/app.dart, app/lib/navigation/app_router.dart, app/lib/main_{development,staging,production}.dart
+
+El arranque usa el `createAppRouter` compartido (`app/lib/navigation/app_router.dart`) con la ruta `/splash` como ubicacion inicial desde `app/lib/app.dart`, sin romper a ningun consumidor: (a) los tres entrypoints de sabor (`app/lib/main_development.dart`, `app/lib/main_staging.dart`, `app/lib/main_production.dart`) siguen montando `TaoApp` con el mismo contrato; (b) `createAppRouter` conserva `overridePlatformDefaultLocation: false`, de modo que una ubicacion provista por la plataforma (deep link) GANA sobre `/splash` y la app no fuerza la splash en ese caso; (c) los tests que montan `TaoApp` o llaman `createAppRouter` esperando una ubicacion inicial se adaptan al comportamiento nuevo sin aflojar aserciones (no se reemplazan igualdades por chequeos de existencia ni se eliminan casos); (d) la ruta `/splash` es la UNICA ruta agregada: sigue sin existir ninguna ruta de V-51, cuya presentacion la resuelve `LegalConsentGate` sobre el shell (REQ-06, adenda 4). Sin dependencias nuevas.
 ## Tasks
 
 #### S1.T1 — Configurar la splash nativa de iOS y Android: fondo ivory100 y logo sol-luna de tinta desde app/assets/identidad/, válida con el sistema en claro y en oscuro.
@@ -147,6 +152,15 @@ Contrato: rollback: No aplica: la task no modifica codigo de produccion; si se a
 
 #### S5.T5 — Ajustar los tests de la capa de fondo de la splash (V-31) para el alcance de la adenda 5: verificar estructura/composicion (capa unica detras del contenido, fit cover con punto focal, opacidad 12–18 %, texto largo sobre superficie opaca) y el camino de respaldo cuando el arte NO esta empaquetado (el resolvedor cae a `fallbackSurfaceToken: 'canvas'` sin excepcion ni salto de color respecto del papel ivory100). Quitar de los tests toda aserción que exija el PNG `assets/fondos-vistas/familia-identidad-entrada.png` empaquetado o la fixture de asset revertida. Agregar una aserción de guardrail que falle si `familia-identidad-entrada.png` (o `assets/fondos-vistas/`) aparece declarado en el bloque `flutter: assets:` de `app/pubspec.yaml` (DEC-240, check de CI `ep01-assets-provider` / `export_assets.py --check-pubspec`).
 Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash y el test de guardrail del pubspec al commit anterior (`git checkout HEAD -- app/test/features/splash/`); no se toca codigo de produccion ni `app/pubspec.yaml`.. Status: done
+
+#### S6.T1 — Invertir el comportamiento por defecto de la splash. En `app/lib/features/splash/presentation/splash_screen.dart`, `_resolveDestination` deja de navegar en cuanto lee la señal: la secuencia corre siempre hasta `splashMax` (1000 ms, token de `tokens.g.dart`) y al completarla navega por NOMBRE a `AppRouteNames.home`; la señal de `splashDestinationReadyProvider` queda como hook de CORTE que solo si completa antes de `splashMax` fuerza el estado final (`_controller.value = 1`) y navega de inmediato. En `app/lib/app.dart`, reemplazar el default `WidgetsBinding.instance.endOfFrame` (completa al cerrar el primer frame, por eso la animacion nunca se ve) por una señal real de destino listo que NO complete dentro del primer frame. No agregar dependencias ni tocar REQ aprobados (REQ-06: no se crean rutas de V-51).
+Contrato: rollback: revertir `app/lib/app.dart` y `app/lib/features/splash/presentation/splash_screen.dart` al estado previo (default `endOfFrame` y navegacion inmediata); la splash sigue arrancando y navegando a Inicio.. Status: done
+
+#### S6.T2 — Auditar y corregir el impacto del cambio de arranque (`app/lib/app.dart` entra por `/splash` via el `createAppRouter` compartido; `app/lib/navigation/app_router.dart` declara la ruta `/splash`) sobre TODOS sus consumidores, y reportar el inventario revisado: `app/lib/main_development.dart`, `app/lib/main_staging.dart`, `app/lib/main_production.dart`; el `LegalConsentGate` montado sobre el shell (`app/lib/navigation/legal_consent_gate.dart`, `app/lib/app.dart`); y todo archivo que monte `TaoApp` o llame `createAppRouter` (ubicarlos con `grep -rn "createAppRouter\|TaoApp(" app/lib app/test`). Verificar que `createAppRouter` conserva `overridePlatformDefaultLocation: false`, de modo que una ubicacion de plataforma (deep link) gane sobre `/splash`. Corregir lo que rompa sin agregar rutas nuevas (ninguna ruta de V-51) ni dependencias.
+Contrato: rollback: revertir los ajustes de consumidores y dejar `app/lib/app.dart` con el punto de entrada previo (sin `/splash` como ubicacion inicial); el router vuelve a su ubicacion inicial anterior.. Status: done
+
+#### S6.T3 — Ajustar y ampliar los tests del arranque de la splash. En `app/test/features/splash/splash_destination_signal_test.dart`: (a) con el provider por defecto, assertear que la secuencia AVANZA — el progreso del enso es estrictamente creciente entre frames y a los 300 ms esta estrictamente entre 0 y 1 — y que no hay navegacion antes de los 1000 ms; (b) assertear que por defecto la navegacion a `AppRouteNames.home` ocurre al completar `splashMax` (1000 ms); (c) MANTENER el caso de corte temprano con una señal inyectada que completa a los 400 ms (estado final + navegacion antes de `splashMax`). En los tests que montan `TaoApp`/`createAppRouter` esperando la ubicacion inicial, adaptar al arranque en `/splash` con valores concretos y agregar el caso de deep link: con una ubicacion de plataforma distinta y `overridePlatformDefaultLocation: false`, esa ubicacion gana sobre `/splash`. No aflojar aserciones: no reemplazar igualdades por chequeos de existencia ni borrar casos existentes.
+Contrato: rollback: revertir los archivos de test tocados a su version previa; el resto del codigo no depende de ellos.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La primera superficie Flutter muestra familia-identidad-entrada.png a pantalla completa detrás del contenido (cover con punto focal, opacidad visual 12–18 %, al menos 65 % de zona tranquila) con el texto largo sobre superficie opaca, sin salto de color del papel respecto de la 
@@ -210,6 +224,18 @@ Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash
 **REQ ops:**
 
 - remove REQ-14
+
+### Enmienda 6
+**REQs:**
+
+- REQ-13 (edit) `confirmed`: Por defecto la splash REPRODUCE su secuencia completa (`splashEnso` 0–650 ms, `splashDiscStart`–`splashDiscEnd`, `splashNameStart`–`splashNa
+- REQ-17 (add) `confirmed`: El arranque usa el `createAppRouter` compartido (`app/lib/navigation/app_router.dart`) con la ruta `/splash` como ubicacion inicial desde `a
+
+**Tasks agregadas:**
+
+- S6: Invertir el comportamiento por defecto de la splash. En `app/lib/features/splash/presentation/splash_screen.dart`, `_resolveDestination` deja de navegar en cuanto lee la señal: la secuencia corre siempre hasta `splashMax` (1000 ms, token de `tokens.g.dart`) y al completarla navega por NOMBRE a `AppRouteNames.home`; la señal de `splashDestinationReadyProvider` queda como hook de CORTE que solo si completa antes de `splashMax` fuerza el estado final (`_controller.value = 1`) y navega de inmediato. En `app/lib/app.dart`, reemplazar el default `WidgetsBinding.instance.endOfFrame` (completa al cerrar el primer frame, por eso la animacion nunca se ve) por una señal real de destino listo que NO complete dentro del primer frame. No agregar dependencias ni tocar REQ aprobados (REQ-06: no se crean rutas de V-51). (valida: REQ-13, REQ-03, REQ-02; rollback: revertir `app/lib/app.dart` y `app/lib/features/splash/presentation/splash_screen.dart` al estado previo (default `endOfFrame` y navegacion inmediata); la splash sigue arrancando y navegando a Inicio.)
+- S6: Auditar y corregir el impacto del cambio de arranque (`app/lib/app.dart` entra por `/splash` via el `createAppRouter` compartido; `app/lib/navigation/app_router.dart` declara la ruta `/splash`) sobre TODOS sus consumidores, y reportar el inventario revisado: `app/lib/main_development.dart`, `app/lib/main_staging.dart`, `app/lib/main_production.dart`; el `LegalConsentGate` montado sobre el shell (`app/lib/navigation/legal_consent_gate.dart`, `app/lib/app.dart`); y todo archivo que monte `TaoApp` o llame `createAppRouter` (ubicarlos con `grep -rn "createAppRouter\|TaoApp(" app/lib app/test`). Verificar que `createAppRouter` conserva `overridePlatformDefaultLocation: false`, de modo que una ubicacion de plataforma (deep link) gane sobre `/splash`. Corregir lo que rompa sin agregar rutas nuevas (ninguna ruta de V-51) ni dependencias. (valida: REQ-17, REQ-06; rollback: revertir los ajustes de consumidores y dejar `app/lib/app.dart` con el punto de entrada previo (sin `/splash` como ubicacion inicial); el router vuelve a su ubicacion inicial anterior.)
+- S6: Ajustar y ampliar los tests del arranque de la splash. En `app/test/features/splash/splash_destination_signal_test.dart`: (a) con el provider por defecto, assertear que la secuencia AVANZA — el progreso del enso es estrictamente creciente entre frames y a los 300 ms esta estrictamente entre 0 y 1 — y que no hay navegacion antes de los 1000 ms; (b) assertear que por defecto la navegacion a `AppRouteNames.home` ocurre al completar `splashMax` (1000 ms); (c) MANTENER el caso de corte temprano con una señal inyectada que completa a los 400 ms (estado final + navegacion antes de `splashMax`). En los tests que montan `TaoApp`/`createAppRouter` esperando la ubicacion inicial, adaptar al arranque en `/splash` con valores concretos y agregar el caso de deep link: con una ubicacion de plataforma distinta y `overridePlatformDefaultLocation: false`, esa ubicacion gana sobre `/splash`. No aflojar aserciones: no reemplazar igualdades por chequeos de existencia ni borrar casos existentes. (valida: REQ-13, REQ-17, test; rollback: revertir los archivos de test tocados a su version previa; el resto del codigo no depende de ellos.)
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -254,6 +280,13 @@ Contrato: rollback: Revertir el archivo de test de la capa de fondo de la splash
 - [x] S5.T3
 - [x] S5.T4
 - [x] S5.T5
+
+### Session 6 · continue
+
+**Tasks:**
+- [x] S6.T1
+- [x] S6.T2
+- [x] S6.T3
 ## Decisions
 
 ### DEC-LOCAL-01: plan-dedup → auto-pruned
