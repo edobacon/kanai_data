@@ -144,10 +144,10 @@ Contrato: rollback: Revertir únicamente los casos añadidos, preservando suites
 Contrato: rollback: Retirar los casos nuevos conservando la evidencia y las aserciones previas.. Status: done
 
 #### S6.T1 — Crear tests/test_assets_icons.py con la verificación automatizable de los iconos B3: presencia y formato de los recursos generados desde app/assets/identidad/ (iOS a sangre completa; Android con capas de primer plano, fondo #FAF7F0 y monocroma), geometría del sol dentro de la zona segura para máscara circular y squircle, y que la evidencia de instalación real en Android e iOS (QA-02-07-03) figure como pendiente humano mientras no exista, sin convertirla en aprobación automática. Usar temporales aislados, sin tocar maestros de identidad.
-Contrato: rollback: Retirar únicamente el archivo de pruebas nuevo y sus temporales; conservar recursos de iconos, evidencia y registros de revisión existentes.. Status: pending
+Contrato: rollback: Retirar únicamente el archivo de pruebas nuevo y sus temporales; conservar recursos de iconos, evidencia y registros de revisión existentes.. Status: done
 
 #### S6.T2 — Etapa vertical 2: producir los iconos de lanzamiento B3 desde app/assets/identidad/ conforme a DEC-151: iOS a sangre completa y Android adaptativo con capa de primer plano, fondo papel #FAF7F0 y capa monocroma. Verificar centrado del sol y zona segura en máscara circular y squircle de Android y en iOS, y preparar la instalación real en Android e iOS para la revisión humana de QA-02-07-03 (el sol no queda recortado en el lanzador). Sin evidencia de instalación real el caso queda pendiente o fallido, sin aprobación registrada por el agente. No producir icono de Google Play ni fichas de tienda.
-Contrato: rollback: Restaurar recursos y configuración de iconos anteriores conservando maestros de identidad y evidencia de revisión.. Status: pending
+Contrato: rollback: Restaurar recursos y configuración de iconos anteriores conservando maestros de identidad y evidencia de revisión.. Status: done
 
 #### S7.T1 — Crear tests/test_assets_provider.py con el contrato del check ep01-assets-provider: que scripts/ci/ep01-assets-provider.mjs encadene validador, --check del pipeline y comprobación de empaquetado, identifique el SHA evaluado y publique la trazabilidad de QA-02-01/02/03/07 a pruebas o evidencias humanas; que falle ante estado inválido, PNG huérfano, derivado obsoleto o maestro empaquetado; que con cero pruebas descubiertas, un comando omitido o evidencia humana pendiente no declare la entrega completa; y que un check preparado pero no ejecutado en CI real sobre un SHA integrado no habilite el consumo por EP-01. Mantener tests/test_build_artifacts.py solo para el contrato del workflow.
 Contrato: rollback: Retirar el archivo de pruebas nuevo conservando las aserciones previas de artifacts y quality-gate y toda la evidencia registrada.. Status: pending
@@ -285,11 +285,11 @@ Verificación final S8 después de arte S4, iconos S6 y CI S7: DEC/modalidad Rai
 
 **Gate (strong)**: Clasificación verificable de 45 piezas, derivados trazados únicamente para piezas realmente aprobadas y hojas de contacto preparadas para Diseño/Contenido. Permanencia provisional conserva respaldo. Esta etapa no exige los iconos ni CI de sesiones posteriores; las revisiones humanas finales se comprueban en la sesión final.
 
-### Session 6 · open
+### Session 6 · continue
 
 **Tasks:**
-- [ ] S6.T1
-- [ ] S6.T2
+- [x] S6.T1
+- [x] S6.T2
 
 **Gate (strong)**: Recursos B3 iOS y Android (capas primer plano/fondo/monocroma) generados con formatos verificables, sol centrado en zona segura y pruebas automáticas verdes. Capturas/pruebas de instalación Android circular/squircle e iOS preparadas con pendientes humanos explícitos, sin fingir aprobaciones.
 
