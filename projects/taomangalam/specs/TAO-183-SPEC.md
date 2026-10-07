@@ -89,25 +89,25 @@ Contrato: rollback: Revertir el resolvedor de destino de la splash a la navegaci
 Contrato: rollback: Revertir los archivos de test agregados.. Status: done
 
 #### S2.T1 — Implementar la secuencia animada de la identidad con animación propia de Flutter (CustomPainter que revela el trazo sobre el logo raster), sin Rive ni Lottie, usando los tokens splashEnso, splashDiscStart/End, splashNameStart/End y splashMax; cortar al estado final y navegar apenas el destino está listo, sin bucle.
-Contrato: rollback: Desactivar la animación y mostrar la identidad en estado final estático.. Status: pending
+Contrato: rollback: Desactivar la animación y mostrar la identidad en estado final estático.. Status: done
 
 #### S2.T1.1 — Dibujar el trazo del enso de 0 a 650 ms (splashEnso) revelando progresivamente el raster con un CustomPainter.
-Contrato: rollback: Quitar el trazo y dejar el logo raster completo.. Status: pending
+Contrato: rollback: Quitar el trazo y dejar el logo raster completo.. Status: done
 
 #### S2.T1.2 — Animar el disco rojo con opacidad y escala 0.92→1 entre splashDiscStart (450 ms) y splashDiscEnd (750 ms).
-Contrato: rollback: Quitar la animación del disco y mostrarlo en estado final.. Status: pending
+Contrato: rollback: Quitar la animación del disco y mostrarlo en estado final.. Status: done
 
 #### S2.T1.3 — Animar el nombre con opacidad y desplazamiento de 6 px entre splashNameStart (520 ms) y splashNameEnd (850 ms).
-Contrato: rollback: Quitar la animación del nombre y mostrarlo en estado final.. Status: pending
+Contrato: rollback: Quitar la animación del nombre y mostrarlo en estado final.. Status: done
 
 #### S2.T2 — Añadir el estado de carga larga: si el destino no está listo al pasar splashMax, dejar logo y nombre quietos y mostrar un indicador discreto separado, sin reiniciar el enso.
-Contrato: rollback: Quitar el indicador y dejar la splash solo en estado final.. Status: pending
+Contrato: rollback: Quitar el indicador y dejar la splash solo en estado final.. Status: done
 
 #### S2.T3 — Atender el movimiento reducido leyendo la preferencia por PreferenceStoreReducedMotionStore: mostrar el estado final directo o un fundido de hasta 120 ms, sin trazo.
-Contrato: rollback: Volver al comportamiento con animación completa.. Status: pending
+Contrato: rollback: Volver al comportamiento con animación completa.. Status: done
 
 #### S2.T4 — Escribir los tests de la etapa con reloj simulado: corte inmediato a los 400 ms, carga >1 s con enso único e indicador, movimiento reducido sin trazo y fundido ≤120 ms, y ausencia de dependencias Rive/Lottie.
-Contrato: rollback: Revertir los archivos de test agregados.. Status: pending
+Contrato: rollback: Revertir los archivos de test agregados.. Status: done
 
 #### S3.T1 — Mostrar el fondo de la familia Identidad/entrada (familia-identidad-entrada.png) a pantalla completa detrás del contenido usando el resolvedor de imágenes existente: cover con punto focal, opacidad visual 12–18 % y al menos 65 % de zona tranquila; el texto largo va sobre superficie opaca y el papel no salta respecto de la splash nativa.
 Contrato: rollback: Quitar el fondo de familia y dejar el papel ivory100 plano.. Status: pending
@@ -157,16 +157,16 @@ Contrato: rollback: Revertir los archivos de test y los goldens agregados.. Stat
 
 **Gate (auto)**: En arranque frío, en claro y oscuro, se ve la splash nativa con papel ivory100 y logo de tinta y la primera superficie Flutter con la identidad estática; la app resuelve a Inicio cuando hay aceptación registrada y sin versión pendiente, y al marcador de V-51 en el resto; funciona sin red.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: En arranque normal la secuencia enso→disco→nombre corre una sola vez dentro de splashMax; si el destino está listo a los 400 ms salta al estado final y navega sin esperar 1000 ms; con carga >1 s quedan logo y nombre quietos con indicador discreto sin reiniciar el enso; con movimiento reducido no hay trazo (estado final o fundido ≤120 ms).
 
