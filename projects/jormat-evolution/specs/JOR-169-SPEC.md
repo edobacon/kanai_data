@@ -221,7 +221,7 @@ Contrato: rollback: `git checkout --` del componente de impresion por documento 
 
 **Gate (auto)**: Con el API: guardar borrador -> reiniciar -> retomarlo con sus líneas; emitir asigna folio; editar una emitida da 400; clonar crea otro documento sin tocar el original.
 
-### Session 3 · T2 · iterate
+### Session 3 · T2 · continue
 
 **Tasks:**
 - [x] S3.T1
