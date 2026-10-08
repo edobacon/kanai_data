@@ -2,7 +2,7 @@
 id: TAO-185-SPEC
 project: taomangalam
 ticket: TAO-185
-status: approved
+status: draft
 ---
 
 # TAO-185 · HU-01-13 · V-51: lectura y aceptación legal obligatoria

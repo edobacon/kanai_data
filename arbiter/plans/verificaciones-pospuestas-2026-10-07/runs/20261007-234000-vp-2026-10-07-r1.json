@@ -1,0 +1,548 @@
+{
+  "run_id": "vp-2026-10-07-r1",
+  "plan_id": "verificaciones-pospuestas-2026-10-07",
+  "ts_start": "2026-10-07T23:20:00Z",
+  "ts_end": "2026-10-07T23:40:00Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "c6d2ee87",
+  "head_ref": "33c77992680dbcbb4d867ec9210a7bace3fa6ca9",
+  "repo": "kanai-app",
+  "judge_scope": "full",
+  "calibration": "comportamiento",
+  "findings": {
+    "S0": 0,
+    "S1": 4,
+    "S2": 0,
+    "S3": 9,
+    "consulta": 2
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S1",
+      "kind": "correctness",
+      "title": "La bandeja descarta sesiones con executor pw aunque tengan items pospuestos",
+      "where": "server/dispatch/humanChecks.ts:39",
+      "evidence": "listHumanChecks hace continue si spec.executor==='pw' antes de mirar el item; una sesion con smoke PW y pospuestos (human_deferred) queda fuera de la bandeja y registerHumanChecks los rechaza. El test human-checks.test.ts:66 fija el defecto.",
+      "confidence": "confirmed",
+      "phase": "F4",
+      "info_class": "test_wrong",
+      "outcome": "pending"
+    },
+    {
+      "id": "f2",
+      "severity": "S1",
+      "kind": "intent_gap",
+      "title": "El smoke de Playwright da por pasados los items requiresHuman",
+      "where": "server/dispatch/verification.ts:106",
+      "evidence": "generatePlaywrightSpec mapea todos los items a un test que solo exige 2xx y body visible; mapReportToItemStatuses devuelve pass. materializeHumanDeferral solo actua sobre pending, asi que lo humano nunca se pospone con PW y un pospuesto previo se pisa.",
+      "confidence": "confirmed",
+      "phase": "F9",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f3",
+      "severity": "S1",
+      "kind": "intent_gap",
+      "title": "Ningun camino automatico declara requiresHuman ni la ficha de la tool lo documenta",
+      "where": "server/repo/planning.ts:68",
+      "evidence": "El planner LLM no emite sesiones de verificacion; withFinalVerificationSession arma items por defecto sin requiresHuman; la description de set_session no menciona el campo. En una epica con humanChecks defer nada se pospone solo.",
+      "confidence": "confirmed",
+      "phase": "F3",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f4",
+      "severity": "S1",
+      "kind": "maintainability",
+      "title": "Sin tests de la confirmacion humana deferVerification ni de lote.post.ts",
+      "where": "server/mcp/tools.ts:836",
+      "evidence": "No hay test que pruebe notConfirmed sin codigo en report_verification, report_verification_batch o defer_verification, ni 403 por origen ajeno o 400 por body invalido en lote.post.ts.",
+      "confidence": "confirmed",
+      "phase": "F4",
+      "info_class": "missing_test_write",
+      "info_floor": true,
+      "outcome": "pending"
+    },
+    {
+      "id": "f5",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "La web marca deferRequestedByDev en todo pospuesto, tambien en items requiresHuman",
+      "where": "server/api/verificaciones/lote.post.ts:28",
+      "evidence": "deferRequestedByDev: status==='deferred' sin mirar requiresHuman; la bandeja muestra a pedido del dev para items humanos.",
+      "confidence": "confirmed",
+      "phase": "F5",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f6",
+      "severity": "S3",
+      "kind": "security",
+      "title": "report_verification_batch registra la autorizacion solo en el ticket del primer item",
+      "where": "server/mcp/tools.ts:948",
+      "evidence": "withHumanAuthorization con ticketId del primer item pospuesto por el dev aunque el lote toque varios tickets.",
+      "confidence": "confirmed",
+      "phase": "F4",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f7",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "verificaciones.vue no recarga las marcas al cambiar de proyecto",
+      "where": "app/pages/verificaciones.vue:76",
+      "evidence": "Los drafts se leen solo en onMounted; al cambiar de proyecto las marcas del anterior se guardan bajo la clave del nuevo.",
+      "confidence": "confirmed",
+      "phase": "F8",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f8",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "Un error por item conserva las marcas de toda la sesion, incluidas las registradas",
+      "where": "app/pages/verificaciones.vue:143",
+      "evidence": "La pagina toma el sessionId del error y conserva todas las marcas de esa sesion aunque el servidor registro los demas items.",
+      "confidence": "confirmed",
+      "phase": "F8",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f9",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "Escrituras no atomicas del detalle de verificacion",
+      "where": "server/dispatch/gateSpecial.ts:49",
+      "evidence": "deferHumanItemsAtClose escribe sobre un JSON leido antes, y registerHumanChecks valida contra una bandeja vieja; lectura-modifica-escribe sin transaccion.",
+      "confidence": "probable",
+      "phase": "F4",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f10",
+      "severity": "S3",
+      "kind": "performance",
+      "title": "listHumanChecks relee todas las epicas por sesion y una epica ilegible tumba la bandeja y el badge",
+      "where": "server/dispatch/humanChecks.ts:41",
+      "evidence": "effectiveVerificationPolicy construye EpicStore().list() por fila; el badge lo pide en cada navegacion; sin try/catch como el de getTicket.",
+      "confidence": "confirmed",
+      "phase": "F5",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f11",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "activeEpicPolicy().verification ignora la politica human_deferred persistida del ticket",
+      "where": "server/epics/policy.ts:19",
+      "evidence": "Devuelve epicVerificationPolicy ?? ask; effectiveVerificationPolicy respeta el human_deferred del ticket. Sin consumidores hoy.",
+      "confidence": "confirmed",
+      "phase": "F9",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f12",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "Los hallazgos del gate no incluyen el motivo de los pospuestos",
+      "where": "server/dispatch/gateSpecial.ts:90",
+      "evidence": "Un deferred tiene note pero cause null, y el finding solo muestra cause.",
+      "confidence": "confirmed",
+      "phase": "F1",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f13",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "La doc dice que la bandeja no incluye sesiones abiertas pero si incluye sus pospuestos",
+      "where": "docs/verificaciones-pospuestas.md:51",
+      "evidence": "Solo los pending exigen sesion cerrada; un deferred entra sin mirar el estado de la sesion.",
+      "confidence": "probable",
+      "phase": "F6",
+      "info_class": "stale_trivial",
+      "outcome": "pending"
+    },
+    {
+      "id": "f14",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "Precedencia ticket vs epica: la mas permisiva gana",
+      "where": "server/epics/policy.ts:65",
+      "evidence": "Una epica en defer rebaja a human_deferred un ticket en required; confirmar si es la intencion.",
+      "confidence": "assumption",
+      "phase": "F9",
+      "info_class": "none",
+      "outcome": "pending"
+    },
+    {
+      "id": "f15",
+      "severity": "consulta",
+      "kind": "intent_gap",
+      "title": "Bajo human_deferred un item automatizable pospuesto tampoco bloquea",
+      "where": "server/engine/verificationDetail.ts:58",
+      "evidence": "Ningun deferred bloquea bajo human_deferred sin mirar requiresHuman; fijado a proposito por un test. Confirmar con el dev.",
+      "confidence": "assumption",
+      "phase": "F9",
+      "info_class": "none",
+      "outcome": "pending"
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 39,
+    "read_full": 33,
+    "skimmed": 6,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "server/api/confirmations/[id].post.ts",
+        "server/api/tickets/[id]/config.post.ts",
+        "server/api/verificaciones/index.get.ts",
+        "server/api/verificaciones/lote.post.ts",
+        "server/db/schema.ts",
+        "server/engine/guards/catalog.ts",
+        "server/engine/guards/closure.ts",
+        "server/engine/guards/ticket.ts",
+        "server/epics/schema.ts",
+        "shared/human-checks.ts",
+        "app/components/KNavIcon.vue",
+        "app/layouts/default.vue",
+        "app/pages/verificaciones.vue",
+        "server/dispatch/gateSpecial.ts",
+        "server/dispatch/humanChecks.ts",
+        "server/dispatch/verification.ts",
+        "server/engine/verificationDetail.ts",
+        "server/epics/policy.ts",
+        "server/epics/runner.ts",
+        "server/epics/service.ts",
+        "server/mcp/humanConfirm.ts",
+        "server/mcp/toolProfiles.ts",
+        "server/mcp/tools.ts",
+        "server/repo/closeAdvisories.ts",
+        "server/repo/planning.ts",
+        "server/repo/tickets.ts",
+        "server/utils/sameOrigin.ts",
+        "skills/claude/kn-epic/SKILL.md",
+        "tests/unit/human-checks.test.ts",
+        "docs/det-catalogo.md",
+        "docs/mcp-catalogo.md",
+        "docs/README.md",
+        "docs/verificaciones-pospuestas.md"
+      ],
+      "skimmed": [
+        "tests/unit/epic-human-checks-run.test.ts",
+        "tests/unit/human-checks-filters.test.ts",
+        "tests/unit/verification-deferred-close.test.ts",
+        "tests/unit/verification-deferred.test.ts",
+        "tests/unit/verification-human-deferred.test.ts",
+        "tests/unit/verification-requires-human.test.ts"
+      ],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "app/components/KNavIcon.vue",
+        "lines": 3,
+        "blob": "576183c442f7af503821f48a773d47629cd81306",
+        "deleted": false
+      },
+      {
+        "path": "app/layouts/default.vue",
+        "lines": 8,
+        "blob": "9cd5e5f39a2796570a5210c07d511cfddeaa3333",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/verificaciones.vue",
+        "lines": 292,
+        "blob": "b087b1b6461f0f05ad94d52e2aadd861b60207f4",
+        "deleted": false
+      },
+      {
+        "path": "docs/det-catalogo.md",
+        "lines": 2,
+        "blob": "8b4623605c0794c21ab28e686e6adecb23773c68",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp-catalogo.md",
+        "lines": 7,
+        "blob": "9bf7721f030f2c5e7f7d12f6e2dab4e00822f490",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "19327e0c3272b9084c95148c50d4e82e01c159df",
+        "deleted": false
+      },
+      {
+        "path": "docs/verificaciones-pospuestas.md",
+        "lines": 110,
+        "blob": "8433e72008961954abb4fb170b9fbcaa269a9aef",
+        "deleted": false
+      },
+      {
+        "path": "server/api/confirmations/[id].post.ts",
+        "lines": 16,
+        "blob": "bbb0036e8c97a3503631b0c289d885c99068326f",
+        "deleted": false
+      },
+      {
+        "path": "server/api/tickets/[id]/config.post.ts",
+        "lines": 2,
+        "blob": "d918e5f3f00569c43ab78a22f4895849f1c8b991",
+        "deleted": false
+      },
+      {
+        "path": "server/api/verificaciones/index.get.ts",
+        "lines": 22,
+        "blob": "9c2b37bb2d60ecf276401f69b0b8100c5e0825db",
+        "deleted": false
+      },
+      {
+        "path": "server/api/verificaciones/lote.post.ts",
+        "lines": 33,
+        "blob": "057f02d14d043d4399647a65cd7fd15908308ddd",
+        "deleted": false
+      },
+      {
+        "path": "server/db/schema.ts",
+        "lines": 22,
+        "blob": "214b818301b29fba5dd19ce574d91ee3f42c433c",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateSpecial.ts",
+        "lines": 38,
+        "blob": "1d4483a186178ce7e085b7ba2a07c76e15dcb0d2",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/humanChecks.ts",
+        "lines": 151,
+        "blob": "1866c2068ced41ea96b6214b4e4744784a1365e9",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/verification.ts",
+        "lines": 68,
+        "blob": "40a26a66f18828dee68b0376060c8124dbede016",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/catalog.ts",
+        "lines": 2,
+        "blob": "2263547fca9d0669034f11748129d7a7a77a0440",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/closure.ts",
+        "lines": 18,
+        "blob": "cca791017e85697361e26a89be487415a05229bf",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/ticket.ts",
+        "lines": 7,
+        "blob": "05faf1fed4b7e67ecaca58ca0fb519503fc2698c",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/verificationDetail.ts",
+        "lines": 54,
+        "blob": "2001df4ee328df2ed45bed1273e09bd745c1389d",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/policy.ts",
+        "lines": 31,
+        "blob": "393e26ca14fe3f4337db7ef941d9b765973d106e",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/runner.ts",
+        "lines": 4,
+        "blob": "5d78efb6ceb6b632d91330747904e37224032fca",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/schema.ts",
+        "lines": 3,
+        "blob": "258c7f805eca6c50ec912a68e498e8cf5b6d8b72",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/service.ts",
+        "lines": 2,
+        "blob": "d26afffc1c28606f0b6285815ad60191dcc6e01a",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/humanConfirm.ts",
+        "lines": 1,
+        "blob": "c4fe6d90327afa5c1130b7af20b1a24c61843081",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/toolProfiles.ts",
+        "lines": 2,
+        "blob": "e2191ef1902cd90aa27c9cd83f510fea39144b2a",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 142,
+        "blob": "6f70b7f5d8686a8eb891b280c6177de3a3a3ec7d",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/closeAdvisories.ts",
+        "lines": 29,
+        "blob": "c4c663cc9af1873d2afb1eb621f884c169bb11ed",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/planning.ts",
+        "lines": 13,
+        "blob": "90c58cea3734a3cfe56e4d725ea7c83c2589660d",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/tickets.ts",
+        "lines": 4,
+        "blob": "913b491e93629f3e290ef4015f48c0ecedeae22b",
+        "deleted": false
+      },
+      {
+        "path": "server/utils/sameOrigin.ts",
+        "lines": 17,
+        "blob": "6990e5d5ca86c1988a4a01423b28236768dd90c2",
+        "deleted": false
+      },
+      {
+        "path": "shared/human-checks.ts",
+        "lines": 95,
+        "blob": "d36d21992a9ecefe5d2554d33c92bf97913ecf6b",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-epic/SKILL.md",
+        "lines": 1,
+        "blob": "d17da6abbca13d47be7e5fabf555132003f38f90",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-human-checks-run.test.ts",
+        "lines": 43,
+        "blob": "b659f10e65171410437d90dcf4db79c0aedcd97a",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/human-checks-filters.test.ts",
+        "lines": 131,
+        "blob": "b3bde1e843852d653275c205b5ca2d54ca9f2fa3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/human-checks.test.ts",
+        "lines": 142,
+        "blob": "78709b2e06aae984a3fd35ae35cbae0ec55399c3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/verification-deferred-close.test.ts",
+        "lines": 75,
+        "blob": "1e771de75d5db597c558484702a37b453f0c941e",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/verification-deferred.test.ts",
+        "lines": 143,
+        "blob": "157309b592a84e563e98370a9f4623056ced1455",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/verification-human-deferred.test.ts",
+        "lines": 224,
+        "blob": "971ab6af63e8d798e88623cc5bb1e4fc31cae9a6",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/verification-requires-human.test.ts",
+        "lines": 84,
+        "blob": "b95889a5470975f644adf7bd4e70206629971d1f",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "server/api/confirmations/[id].post.ts": "bbb0036e8c97a3503631b0c289d885c99068326f",
+      "server/api/tickets/[id]/config.post.ts": "d918e5f3f00569c43ab78a22f4895849f1c8b991",
+      "server/api/verificaciones/index.get.ts": "9c2b37bb2d60ecf276401f69b0b8100c5e0825db",
+      "server/api/verificaciones/lote.post.ts": "057f02d14d043d4399647a65cd7fd15908308ddd",
+      "server/db/schema.ts": "214b818301b29fba5dd19ce574d91ee3f42c433c",
+      "server/engine/guards/catalog.ts": "2263547fca9d0669034f11748129d7a7a77a0440",
+      "server/engine/guards/closure.ts": "cca791017e85697361e26a89be487415a05229bf",
+      "server/engine/guards/ticket.ts": "05faf1fed4b7e67ecaca58ca0fb519503fc2698c",
+      "server/epics/schema.ts": "258c7f805eca6c50ec912a68e498e8cf5b6d8b72",
+      "shared/human-checks.ts": "d36d21992a9ecefe5d2554d33c92bf97913ecf6b",
+      "app/components/KNavIcon.vue": "576183c442f7af503821f48a773d47629cd81306",
+      "app/layouts/default.vue": "9cd5e5f39a2796570a5210c07d511cfddeaa3333",
+      "app/pages/verificaciones.vue": "b087b1b6461f0f05ad94d52e2aadd861b60207f4",
+      "server/dispatch/gateSpecial.ts": "1d4483a186178ce7e085b7ba2a07c76e15dcb0d2",
+      "server/dispatch/humanChecks.ts": "1866c2068ced41ea96b6214b4e4744784a1365e9",
+      "server/dispatch/verification.ts": "40a26a66f18828dee68b0376060c8124dbede016",
+      "server/engine/verificationDetail.ts": "2001df4ee328df2ed45bed1273e09bd745c1389d",
+      "server/epics/policy.ts": "393e26ca14fe3f4337db7ef941d9b765973d106e",
+      "server/epics/runner.ts": "5d78efb6ceb6b632d91330747904e37224032fca",
+      "server/epics/service.ts": "d26afffc1c28606f0b6285815ad60191dcc6e01a",
+      "server/mcp/humanConfirm.ts": "c4fe6d90327afa5c1130b7af20b1a24c61843081",
+      "server/mcp/toolProfiles.ts": "e2191ef1902cd90aa27c9cd83f510fea39144b2a",
+      "server/mcp/tools.ts": "6f70b7f5d8686a8eb891b280c6177de3a3a3ec7d",
+      "server/repo/closeAdvisories.ts": "c4c663cc9af1873d2afb1eb621f884c169bb11ed",
+      "server/repo/planning.ts": "90c58cea3734a3cfe56e4d725ea7c83c2589660d",
+      "server/repo/tickets.ts": "913b491e93629f3e290ef4015f48c0ecedeae22b",
+      "server/utils/sameOrigin.ts": "6990e5d5ca86c1988a4a01423b28236768dd90c2",
+      "skills/claude/kn-epic/SKILL.md": "d17da6abbca13d47be7e5fabf555132003f38f90",
+      "tests/unit/human-checks.test.ts": "78709b2e06aae984a3fd35ae35cbae0ec55399c3",
+      "docs/det-catalogo.md": "8b4623605c0794c21ab28e686e6adecb23773c68",
+      "docs/mcp-catalogo.md": "9bf7721f030f2c5e7f7d12f6e2dab4e00822f490",
+      "docs/README.md": "19327e0c3272b9084c95148c50d4e82e01c159df",
+      "docs/verificaciones-pospuestas.md": "8433e72008961954abb4fb170b9fbcaa269a9aef"
+    },
+    "summary": {
+      "files": 39,
+      "reviewed_files": 33,
+      "lines": 2042,
+      "reviewed_lines": 1342,
+      "pct_lines": 65,
+      "excluded": []
+    }
+  },
+  "batches": 2,
+  "plan_phase_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9"
+  ],
+  "verdict_expected_by_rubric": "iterar"
+}

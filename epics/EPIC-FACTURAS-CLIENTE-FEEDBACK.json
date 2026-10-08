@@ -72,8 +72,8 @@
     {
       "id": "JOR-170",
       "title": "Facturas cliente (feedback) 2/7 · Reglas de emision en servidor, Super Usuario y utilidad",
-      "body": "## Contexto\n\nParte 2 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (persistencia).\n\nEl cliente exige que las reglas que bloquean la emision se validen en frontend **y** backend con datos reales (feedback §11, R-20). Hoy el backend no valida tope de ficha, bloqueo de descuento, precio minimo ni excepciones (`backend/jormat-api/src/sales/sales.service.ts` no lee `oil`, `maxDiscount` ni `minPrice`); el front tampoco aplica el tope de la ficha en modo importe (`front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:379`).\n\n**Reemplaza** lo definido en JOR-167 CA-09 (descuento de linea como monto sin tope): el tope se valida en porcentaje; la pantalla puede seguir aceptando importe, convertido a porcentaje para validar.\n## Alcance\n\n### Reglas para todo usuario (T-06, emision transaccional)\n- Cliente bloqueado (`customers.locked`) impide Facturar (R-09, P-07.1). Mensaje de referencia: \"Cliente bloqueado contactar gerencia, imposible generar venta\".\n- Stock de la bodega de origen: si la cantidad supera el disponible (incluido 0) se bloquea Facturar, se identifica el item y la cantidad queda para corregir (R-11, P-06.1). Aplica tambien a Super Usuario. Mensaje de referencia: \"Su sucursal no cuenta con stock suficiente para item ID {id} - Actual: {n}\".\n- Credito: solo 30 o 60 dias; vencimiento = fecha del documento + dias corridos (R-10, P-05.1).\n- Origen = bodega seleccionada; determina stock y ubicaciones (P-02.1).\n- Emision en una transaccion: cabecera, lineas y descuento de stock, con control concurrente; movimientos de inventario referenciados a la factura y sin duplicados ante reintentos (T-07).\n\n### Reglas del usuario comun\n- Descuento de linea en porcentaje sobre precio neto x cantidad, con tope `ds_max_discount` de la ficha (R-12, P-08.1).\n- Descuento general maximo 20%; excluyente con descuentos de linea (R-13, P-08.2).\n- Repuestos con **Bloqueo Descuento** en la ficha: sin descuento de linea y bloquean el descuento general mientras haya al menos uno en la factura (P-08.2).\n- Precio minimo = precio neto de venta vigente de la ficha (`nm_net`, no el costo `net_price`); al retomar borrador se actualiza y se avisa (R-14, P-08.3).\n- Al crear desde otro documento (factura, guia), los valores copiados pasan por estas reglas; si incumplen, se bloquea Facturar (P-01.2, P-01.2.D1).\n\n### T-10 Unificar `oil` y `bloqueo_descuento`\nHoy la ficha y el CSV escriben solo `bloqueo_descuento` (`backend/jormat-api/src/items/items.repository.ts:822`, `backend/jormat-api/src/items/csv/items-import.util.ts:196`) y ventas/compras/guias leen solo `oil`: marcar el bloqueo no tiene efecto. Decision (opcion A): migracion que copia `oil = 1` a `bloqueo_descuento = 1` y elimina `oil`; cambiar lectores (`backend/jormat-api/src/items/dto/item.dto.ts` y listado de `backend/jormat-api/src/items/items.repository.ts`, `front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx`, `front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx`, `front/jormat-front/src/components/compras/builder/PurchaseInvoiceBuilder.tsx`, `front/jormat-front/src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx`, `front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx`); badge \"Aceite\" pasa a \"Bloqueo descuento\". Correr pruebas de Compras, Guias y Solicitudes de pedido.\n\n### Super Usuario (P-09.1, R-15, R-16)\n- Capability nueva (nombre propuesto `sales.invoices:commercial-override`), validada en el backend. `owner` e `internal-admin` la reciben; crear rol \"Super Usuario\" con ella.\n- Habilita: superar tope de ficha y descontar repuestos con Bloqueo Descuento en la linea; descuento general **hasta 80%**; precio bajo el vigente; ver costo y utilidad.\n- No habilita: facturar a cliente bloqueado o sin stock, ni combinar descuento general con un repuesto con Bloqueo Descuento.\n\n### Utilidad (P-09.2, R-17)\nSolo con la capability. Por linea y total: monto = venta neta despues de descuentos - costo neto x cantidad; porcentaje = monto / venta neta x 100 (margen sobre venta). Costo = costo neto de compra de la ficha al emitir, guardado en la linea (1/7). Sin costo o venta 0: \"Sin dato\".\n## Criterios de aceptacion (verificados en API)\n\n- Cliente bloqueado: el API rechaza la emision aunque el front se salte el boton (criterio 6).\n- Stock 3, cantidad 5: rechazo; dos emisiones simultaneas con stock para una no dejan stock negativo (criterio 7).\n- Usuario comun: tope de ficha, precio bajo el vigente o general combinado con linea: rechazo (criterio 8).\n- Repuesto con Bloqueo Descuento + otro repuesto: general bloqueado; quitarlo lo habilita solo si no queda otro (criterio 9).\n- Super Usuario baja precio y supera topes, ve utilidad; no factura a bloqueado ni sin stock (criterio 10). General 80% se acepta, 81% se rechaza; usuario comun limite 20% (criterio 28).\n- Credito solo 30 o 60 (criterio 11).\n- Venta 100.000, costo 80.000: utilidad $20.000 (20%); cambiar el costo de la ficha despues no altera la factura emitida (criterio 26).\n- Marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura, tambien en el API (criterio 30).\n\n## Fuera de alcance\n\nSaldo y pagos (3/7). Tarifas por cliente/sucursal. Excepciones de stock para Super Usuario.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-09 a R-17, R-20), 4.2, 4.3, 4.4, 4.7 y 5 (T-06, T-07, T-10). La evidencia del legacy (regla de Bloqueo Descuento, rotulo de la ficha, vista especial con tope 80% y calculo de utilidad), con archivo y linea, esta en esas secciones del doc.",
-      "revision": "4e1b333f086a64e85848aaeb61d4ee7d6f25b3569287e2fbe5da91fe1b855fe7",
+      "body": "## Contexto\n\nParte 2 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (persistencia).\n\nEl cliente exige que las reglas que bloquean la emision se validen en frontend **y** backend con datos reales (feedback §11, R-20). Hoy el backend no valida tope de ficha, bloqueo de descuento, precio minimo ni excepciones (`backend/jormat-api/src/sales/sales.service.ts` no lee `oil`, `maxDiscount` ni `minPrice`); el front tampoco aplica el tope de la ficha en modo importe (`front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:379`).\n\n**Reemplaza** lo definido en JOR-167 CA-09 (descuento de linea como monto sin tope): el tope se valida en porcentaje; la pantalla puede seguir aceptando importe, convertido a porcentaje para validar.\n## Alcance\n\n### Reglas para todo usuario (T-06, emision transaccional)\n- Cliente bloqueado (`customers.locked`) impide Facturar (R-09, P-07.1). Mensaje de referencia: \"Cliente bloqueado contactar gerencia, imposible generar venta\".\n- Stock de la bodega de origen: si la cantidad supera el disponible (incluido 0) se bloquea Facturar, se identifica el item y la cantidad queda para corregir (R-11, P-06.1). Aplica tambien a Super Usuario. Mensaje de referencia: \"Su sucursal no cuenta con stock suficiente para item ID {id} - Actual: {n}\".\n- Credito: solo 30 o 60 dias; vencimiento = fecha del documento + dias corridos (R-10, P-05.1).\n- Origen = bodega seleccionada; determina stock y ubicaciones (P-02.1).\n- Emision en una transaccion: cabecera, lineas y descuento de stock, con control concurrente; movimientos de inventario referenciados a la factura y sin duplicados ante reintentos (T-07).\n\n### Reglas del usuario comun\n- Descuento de linea en porcentaje sobre precio neto x cantidad, con tope `ds_max_discount` de la ficha (R-12, P-08.1).\n- Descuento general maximo 20%; excluyente con descuentos de linea (R-13, P-08.2).\n- Repuestos con **Bloqueo Descuento** en la ficha: sin descuento de linea y bloquean el descuento general mientras haya al menos uno en la factura (P-08.2).\n- Precio minimo = precio neto de venta vigente de la ficha (`nm_net`, no el costo `net_price`); al retomar borrador se actualiza y se avisa (R-14, P-08.3).\n- Al crear desde otro documento (factura, guia), los valores copiados pasan por estas reglas; si incumplen, se bloquea Facturar (P-01.2, P-01.2.D1).\n\n### T-10 Unificar `oil` y `bloqueo_descuento`\nHoy la ficha y el CSV escriben solo `bloqueo_descuento` (`backend/jormat-api/src/items/items.repository.ts:822`, `backend/jormat-api/src/items/csv/items-import.util.ts:196`) y ventas/compras/guias leen solo `oil`: marcar el bloqueo no tiene efecto. Decision (opcion A): migracion que copia `oil = 1` a `bloqueo_descuento = 1` y elimina `oil`; cambiar lectores (`backend/jormat-api/src/items/dto/item.dto.ts` y listado de `backend/jormat-api/src/items/items.repository.ts`, `front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx`, `front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx`, `front/jormat-front/src/components/compras/builder/PurchaseInvoiceBuilder.tsx`, `front/jormat-front/src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx`, `front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx`); badge \"Aceite\" pasa a \"Bloqueo descuento\". Correr pruebas de Compras, Guias y Solicitudes de pedido.\n\n### Super Usuario (P-09.1, R-15, R-16)\n- Capability nueva (nombre propuesto `sales.invoices:commercial-override`), validada en el backend. `owner` e `internal-admin` la reciben; crear rol \"Super Usuario\" con ella.\n- Habilita: superar tope de ficha y descontar repuestos con Bloqueo Descuento en la linea; descuento general **hasta 80%**; precio bajo el vigente; ver costo y utilidad.\n- No habilita: facturar a cliente bloqueado o sin stock, ni combinar descuento general con un repuesto con Bloqueo Descuento.\n\n### Utilidad (P-09.2, R-17)\nSolo con la capability. Por linea y total: monto = venta neta despues de descuentos - costo neto x cantidad; porcentaje = monto / venta neta x 100 (margen sobre venta). Costo = costo neto de compra de la ficha al emitir, guardado en la linea (1/7). Sin costo o venta 0: \"Sin dato\".\n## Criterios de aceptacion (verificados en API)\n\n- Cliente bloqueado: el API rechaza la emision aunque el front se salte el boton (criterio 6).\n- Stock 3, cantidad 5: rechazo; dos emisiones simultaneas con stock para una no dejan stock negativo (criterio 7).\n- Usuario comun: tope de ficha, precio bajo el vigente o general combinado con linea: rechazo (criterio 8).\n- Repuesto con Bloqueo Descuento + otro repuesto: general bloqueado; quitarlo lo habilita solo si no queda otro (criterio 9).\n- Super Usuario baja precio y supera topes, ve utilidad; no factura a bloqueado ni sin stock (criterio 10). General 80% se acepta, 81% se rechaza; usuario comun limite 20% (criterio 28).\n- Credito solo 30 o 60 (criterio 11).\n- Venta 100.000, costo 80.000: utilidad $20.000 (20%); cambiar el costo de la ficha despues no altera la factura emitida (criterio 26).\n- Marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura, tambien en el API (criterio 30).\n\n## Fuera de alcance\n\nSaldo y pagos (3/7). Tarifas por cliente/sucursal. Excepciones de stock para Super Usuario.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-09 a R-17, R-20), 4.2, 4.3, 4.4, 4.7 y 5 (T-06, T-07, T-10). La evidencia del legacy (regla de Bloqueo Descuento, rotulo de la ficha, vista especial con tope 80% y calculo de utilidad), con archivo y linea, esta en esas secciones del doc.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-07 - dev (via opencode)\n\nDecisiones del dev (07-10) que completan el alcance antes de aprobar el spec:\n\n1) Movimientos de inventario (T-07, REQ-03): se crea la tabla nueva `inventory_movements` (workspace_id, item_id, warehouse_id, location_id, quantity entero con signo (negativo=sale, positivo=ingresa), reference_type ('invoice'|'credit_note'), reference_id, created_at, created_by), con unique (workspace_id, reference_type, reference_id, item_id, warehouse_id, location_id) para idempotencia ante reintentos. La emisión inserta un movimiento negativo por línea y decrementa `item_warehouses.item_qty` de la bodega de origen, todo en la misma transacción.\n\n2) Bodega de origen (P-02.1, REQ-02): se resuelve desde el string `origen` del payload contra `warehouse.ds_code` (mismo criterio que Guías y ajustes de stock); si no matchea una bodega del workspace, se rechaza la emisión con mensaje claro. El stock se valida contra `item_warehouses.item_qty` de esa bodega. No se modifica el contrato del payload.\n\n3) T-10 / REQ-10 (ajuste sobre la decisión previa): NO se dropea la columna `items.oil`. La migración solo copia `oil=1 → bloqueo_descuento=1` (UPDATE) y todos los lectores pasan a leer `bloqueo_descuento`. La columna `oil` queda inerte con su dato; su retiro final queda para ops en un ticket de limpieza posterior.\n\n**Motivo**: Resolver el bloqueo del spec (tabla de movimientos y bodega de origen) y ajustar T-10 para no dropear datos.\n\n### Adenda 2 - 2026-10-07 - dev (via opencode)\n\nCorrección de la unificación T-10 (reemplaza el punto 3 de la Adenda 1). Verificado contra el legacy y el feedback: en el legacy la columna real es `items.oil` (la ficha la escribe/lee y la factura la usa; rótulo de pantalla \"Bloqueo Descuento\"); en Evolution se agregó `items.bloqueo_descuento` (JOR-157) que escribe la ficha y el CSV, pero los builders leían solo `oil`.\n\nDecisión vigente (Enfoque C, no destructiva):\n- NO se modifica la tabla `items`: NO hay migración, NO se copia dato, NO se dropea ninguna columna. Se conservan `oil` y `bloqueo_descuento` con sus datos.\n- El bloqueo de descuento se considera ACTIVO si `bloqueo_descuento = 1` O `oil = 1`. El backend expone el flag efectivo y el front lo usa; se conservan ambos campos.\n- El badge \"Aceite\" pasa a decir \"Bloqueo descuento\".\n- El resto del alcance (tabla nueva `inventory_movements`, decremento de `item_warehouses.item_qty`, validaciones en servidor, Super Usuario, utilidad) se mantiene igual.\n\n**Motivo**: Evitar cualquier cambio/migración en la tabla items y conservar ambas columnas; validado contra legacy y feedback del cliente.",
+      "revision": "0d24dba2bd3db069ec0cdef1728e3370cb968334f8e5f72203cf678c5fa79314",
       "repo": "monorepo",
       "aliases": [],
       "scopeApproved": true,
@@ -504,125 +504,25 @@
       ]
     }
   ],
-  "version": 4,
+  "mentionCatalog": {
+    "JOR-157": {
+      "ticketId": "JOR-157",
+      "status": "closed"
+    },
+    "JOR-166": {
+      "ticketId": "JOR-166",
+      "status": "closed"
+    },
+    "JOR-167": {
+      "ticketId": "JOR-167",
+      "status": "closed"
+    }
+  },
+  "mentionFamilies": [
+    "JOR:2"
+  ],
+  "version": 5,
   "dependencies": [
-    {
-      "from": "JOR-166",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-01",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-02",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-04",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-05",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-07",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-03",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-08",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-04",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-13",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-09",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-01",
-      "to": "JOR-169",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-169:body",
-      "accepted": false,
-      "dismissed": true
-    },
     {
       "from": "JOR-169",
       "to": "JOR-170",
@@ -631,213 +531,6 @@
       "source": "JOR-170:dependencies",
       "accepted": true,
       "dismissed": false
-    },
-    {
-      "from": "JOR-166",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-20",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "CA-09",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-06",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-09",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-07",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-11",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-06",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-10",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-05",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-02",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-07",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-12",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-08",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-13",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-14",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-01",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-10",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-09",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-15",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-16",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-17",
-      "to": "JOR-170",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-170:body",
-      "accepted": false,
-      "dismissed": true
     },
     {
       "from": "JOR-169",
@@ -849,96 +542,6 @@
       "dismissed": false
     },
     {
-      "from": "JOR-166",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-13",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-05",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-05",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-02",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-14",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-03",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-04",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-01",
-      "to": "JOR-171",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-171:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
       "from": "JOR-171",
       "to": "JOR-172",
       "origin": "declared",
@@ -948,78 +551,6 @@
       "dismissed": false
     },
     {
-      "from": "JOR-166",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-08",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-03",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-11",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-08",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-12",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167-Q8",
-      "to": "JOR-172",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-172:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
       "from": "JOR-169",
       "to": "JOR-173",
       "origin": "declared",
@@ -1047,33 +578,6 @@
       "dismissed": false
     },
     {
-      "from": "JOR-166",
-      "to": "JOR-173",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-173:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-173",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-173:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-10",
-      "to": "JOR-173",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-173:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
       "from": "JOR-169",
       "to": "JOR-174",
       "origin": "declared",
@@ -1092,87 +596,6 @@
       "dismissed": false
     },
     {
-      "from": "JOR-166",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-11",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-19",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-12",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-18",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-09",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-06",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-15",
-      "to": "JOR-174",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-174:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
       "from": "JOR-169",
       "to": "JOR-175",
       "origin": "declared",
@@ -1180,69 +603,6 @@
       "source": "JOR-175:dependencies",
       "accepted": true,
       "dismissed": false
-    },
-    {
-      "from": "JOR-166",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "JOR-167",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-21",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-06",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "T-14",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "P-15",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
-    },
-    {
-      "from": "R-07",
-      "to": "JOR-175",
-      "origin": "inferred",
-      "reason": "Contexto, no dependencia",
-      "source": "JOR-175:body",
-      "accepted": false,
-      "dismissed": true
     }
   ],
   "order": [
@@ -1254,274 +614,280 @@
     "JOR-174",
     "JOR-175"
   ],
-  "approvedFingerprint": "2a56ccf8aa0e7a17abd36cee89571a45dda1cc44c81ce02cfbd19f6eb2bd46d9",
+  "approvedFingerprint": "8899bb583a4082a703983f5af0989bfe5001b1d1ddc8a429f2b95c12de202844",
   "approvedBy": "human-confirmed",
+  "dataModelAck": {
+    "digest": "d0d0d6605389fe15",
+    "reason": "El dev aprueba los cambios sensibles de modelo de datos detectados en la epica (reescritura/borrado en JOR-169 y JOR-170; siembra de capabilities/roles en JOR-170 y JOR-175), tras revisar el detalle.",
+    "by": "human-confirmed"
+  },
   "accessCheck": {
-    "id": "67f3b5ee-8d6e-4063-9e39-eaf859f90894",
-    "harness": "codex",
-    "harnessVersion": "desktop",
-    "harnessSessionId": "01a116ac-79aa-76a2-a040-9650db751e60",
-    "binding": "be00abb8548430d54308674d659818e2f46094e874bca1c1b0c5ec619bee2e35",
-    "issuedAt": "2026-10-07T14:07:00.665Z",
-    "expiresAt": "2026-10-07T14:22:00.665Z",
-    "validUntil": "2026-10-07T22:07:01.171Z",
+    "id": "193dc131-a264-44e6-be64-07863b278832",
+    "harness": "opencode",
+    "harnessVersion": "1.18.35",
+    "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
+    "binding": "fb37e7c18a02ab1ae3eb69167bd6de99881d34ad107bd57f71ecb1639309eb49",
+    "issuedAt": "2026-10-08T01:19:01.785Z",
+    "expiresAt": "2026-10-08T01:34:01.785Z",
+    "validUntil": "2026-10-08T09:19:30.989Z",
     "probes": [
       {
-        "id": "e2f62d5e-c103-45d8-9517-6b420ea375ac",
+        "id": "20265c7d-4580-4fe4-8154-e41258202483",
         "action": "read_repo",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-evolution-mono"
       },
       {
-        "id": "dccc8c9f-f778-4306-90da-592a0cba0dbc",
+        "id": "8e6898da-bb9e-4248-a09b-4acc7d875804",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/clients/model.js"
       },
       {
-        "id": "878cae21-1101-4182-8aa8-021fb9ec24a0",
+        "id": "372ea240-c7db-4add-8883-270b70e997a1",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/invoices/model.js"
       },
       {
-        "id": "e41c11dd-2743-44af-bc83-bad4945cd361",
+        "id": "cb023bfb-396a-44f9-bdd9-1a7789c3e371",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/notes/model.js"
       },
       {
-        "id": "a1f6fb98-0c9a-4ae0-a856-4492b1ba291e",
+        "id": "703d46a7-4912-432d-bc6f-8b054e97d055",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/payments/model.js"
       },
       {
-        "id": "048c29f5-a1e8-4295-b780-e599ac0818d9",
+        "id": "faac04f2-eb07-45ba-9781-d84704639e55",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/warehouseDeliveries/model.js"
       },
       {
-        "id": "465950f1-dbb4-4faf-ad43-e74dcd8ac36a",
+        "id": "f3aa6cda-a971-41b7-8210-a2afaa58da39",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md"
       },
       {
-        "id": "445f2a6a-92e4-448c-a3c3-4cd10324883c",
+        "id": "f7a2136c-6d9e-489d-92e5-19dc84399085",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-investigacion-backend-main-2026-10-03.md"
       },
       {
-        "id": "10197851-a40d-48b3-a14e-a125b3d6fbd9",
+        "id": "7d80fb73-ad25-4877-bcec-6cbe1b2e2eb2",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/items/items/update/items-update.html"
       },
       {
-        "id": "b5cc4185-08ba-4be1-a720-aaaba8524844",
+        "id": "e9565877-f81d-46e9-a822-701cefa00fde",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoices-create-key.html"
       },
       {
-        "id": "891b5a43-2ce1-4268-9000-74374975120d",
+        "id": "4b738d2c-e7ee-4882-9b45-c2ccae23cbb1",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoicesCreateKeyController.js"
       },
       {
-        "id": "818447a4-f9e0-4348-890a-2aa614c9af35",
+        "id": "a8556b70-eeb1-4926-a8d5-ff22df378089",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create/clientsInvoicesCreateController.js"
       },
       {
-        "id": "39b8df7c-8678-4f4e-a5c7-631127d4ca62",
+        "id": "351eaf09-1973-403f-848a-7b098d662d46",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/list/dropdownActionsMenu.html"
       },
       {
-        "id": "ce8227d1-7bd1-4a22-93f2-ee9a0c4f0c0e",
+        "id": "7eaf6e7d-4d09-489d-b302-ea6cce0ed161",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customer-notification.html"
       },
       {
-        "id": "22dbc3a8-13eb-4c52-b8bd-bfffe5894830",
+        "id": "ebc870aa-4585-417f-953f-078c8c94850d",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customerNotificationController.js"
       },
       {
-        "id": "e5cf8d19-bb1a-473a-9eaa-b1ff803dc791",
+        "id": "b146a80c-23e8-47c2-9369-f451e41425ca",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/packOff/print-pack-off.html"
       },
       {
-        "id": "9a483406-a775-492c-b718-f38813c37aab",
+        "id": "23826eb8-a482-4342-86e0-90aa562781c4",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/warehouse-print/invoice-warehouse-print.html"
       },
       {
-        "id": "a9cc2eb5-9710-4748-96e5-b57dd8926b00",
+        "id": "002411de-8764-4cf1-b068-45f9c68c7167",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients/account/accountStatusController.js"
       },
       {
-        "id": "cf92ff79-c1c8-4db9-b5d1-9e0565a65526",
+        "id": "7526849b-f3d7-4f48-b796-1c55937cccee",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/create/credit-notes-create.html"
       },
       {
-        "id": "17b7a153-26d1-4c2e-9b54-4b50ecba7ee8",
+        "id": "9704948d-6e32-4012-bdf3-cb1d1cc29003",
         "action": "read_external",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
         "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/list/credit-notes-list.html"
       }
     ],
     "report": {
-      "checkId": "67f3b5ee-8d6e-4063-9e39-eaf859f90894",
-      "harnessSessionId": "01a116ac-79aa-76a2-a040-9650db751e60",
+      "checkId": "193dc131-a264-44e6-be64-07863b278832",
+      "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
       "results": [
         {
-          "probeId": "e2f62d5e-c103-45d8-9517-6b420ea375ac",
+          "probeId": "20265c7d-4580-4fe4-8154-e41258202483",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.171Z",
+          "checkedAt": "2026-10-08T01:19:30.989Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "dccc8c9f-f778-4306-90da-592a0cba0dbc",
+          "probeId": "8e6898da-bb9e-4248-a09b-4acc7d875804",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.173Z",
+          "checkedAt": "2026-10-08T01:19:30.993Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "878cae21-1101-4182-8aa8-021fb9ec24a0",
+          "probeId": "372ea240-c7db-4add-8883-270b70e997a1",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.177Z",
+          "checkedAt": "2026-10-08T01:19:30.993Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "e41c11dd-2743-44af-bc83-bad4945cd361",
+          "probeId": "cb023bfb-396a-44f9-bdd9-1a7789c3e371",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.178Z",
+          "checkedAt": "2026-10-08T01:19:30.994Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "a1f6fb98-0c9a-4ae0-a856-4492b1ba291e",
+          "probeId": "703d46a7-4912-432d-bc6f-8b054e97d055",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.178Z",
+          "checkedAt": "2026-10-08T01:19:30.994Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "048c29f5-a1e8-4295-b780-e599ac0818d9",
+          "probeId": "faac04f2-eb07-45ba-9781-d84704639e55",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.179Z",
+          "checkedAt": "2026-10-08T01:19:30.994Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "465950f1-dbb4-4faf-ad43-e74dcd8ac36a",
+          "probeId": "f3aa6cda-a971-41b7-8210-a2afaa58da39",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.179Z",
+          "checkedAt": "2026-10-08T01:19:30.995Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "445f2a6a-92e4-448c-a3c3-4cd10324883c",
+          "probeId": "f7a2136c-6d9e-489d-92e5-19dc84399085",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.180Z",
+          "checkedAt": "2026-10-08T01:19:30.995Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "10197851-a40d-48b3-a14e-a125b3d6fbd9",
+          "probeId": "7d80fb73-ad25-4877-bcec-6cbe1b2e2eb2",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.181Z",
+          "checkedAt": "2026-10-08T01:19:30.995Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "b5cc4185-08ba-4be1-a720-aaaba8524844",
+          "probeId": "e9565877-f81d-46e9-a822-701cefa00fde",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.182Z",
+          "checkedAt": "2026-10-08T01:19:30.996Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "891b5a43-2ce1-4268-9000-74374975120d",
+          "probeId": "4b738d2c-e7ee-4882-9b45-c2ccae23cbb1",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.182Z",
+          "checkedAt": "2026-10-08T01:19:30.996Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "818447a4-f9e0-4348-890a-2aa614c9af35",
+          "probeId": "a8556b70-eeb1-4926-a8d5-ff22df378089",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.183Z",
+          "checkedAt": "2026-10-08T01:19:30.996Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "39b8df7c-8678-4f4e-a5c7-631127d4ca62",
+          "probeId": "351eaf09-1973-403f-848a-7b098d662d46",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.183Z",
+          "checkedAt": "2026-10-08T01:19:30.996Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "ce8227d1-7bd1-4a22-93f2-ee9a0c4f0c0e",
+          "probeId": "7eaf6e7d-4d09-489d-b302-ea6cce0ed161",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.183Z",
+          "checkedAt": "2026-10-08T01:19:30.997Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "22dbc3a8-13eb-4c52-b8bd-bfffe5894830",
+          "probeId": "ebc870aa-4585-417f-953f-078c8c94850d",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.183Z",
+          "checkedAt": "2026-10-08T01:19:30.997Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "e5cf8d19-bb1a-473a-9eaa-b1ff803dc791",
+          "probeId": "b146a80c-23e8-47c2-9369-f451e41425ca",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.184Z",
+          "checkedAt": "2026-10-08T01:19:30.997Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "9a483406-a775-492c-b718-f38813c37aab",
+          "probeId": "23826eb8-a482-4342-86e0-90aa562781c4",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.184Z",
+          "checkedAt": "2026-10-08T01:19:30.997Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "a9cc2eb5-9710-4748-96e5-b57dd8926b00",
+          "probeId": "002411de-8764-4cf1-b068-45f9c68c7167",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.186Z",
+          "checkedAt": "2026-10-08T01:19:30.998Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "cf92ff79-c1c8-4db9-b5d1-9e0565a65526",
+          "probeId": "7526849b-f3d7-4f48-b796-1c55937cccee",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.187Z",
+          "checkedAt": "2026-10-08T01:19:30.998Z",
           "detail": "Lectura comprobada sin exponer contenido"
         },
         {
-          "probeId": "17b7a153-26d1-4c2e-9b54-4b50ecba7ee8",
+          "probeId": "9704948d-6e32-4012-bdf3-cb1d1cc29003",
           "status": "readable",
-          "checkedAt": "2026-10-07T14:07:01.187Z",
+          "checkedAt": "2026-10-08T01:19:30.998Z",
           "detail": "Lectura comprobada sin exponer contenido"
         }
       ]
     }
   },
   "run": {
-    "id": "a863c727-d7a4-4170-967a-bb795393820f",
-    "planVersion": 4,
-    "fingerprint": "2a56ccf8aa0e7a17abd36cee89571a45dda1cc44c81ce02cfbd19f6eb2bd46d9",
-    "harness": "codex",
-    "harnessVersion": "desktop",
-    "harnessSessionId": "01a116ac-79aa-76a2-a040-9650db751e60",
+    "id": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+    "planVersion": 5,
+    "fingerprint": "8899bb583a4082a703983f5af0989bfe5001b1d1ddc8a429f2b95c12de202844",
+    "harness": "opencode",
+    "harnessVersion": "1.18.35",
+    "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
     "teach": "skip",
+    "humanChecks": "block",
     "state": "paused",
     "ticketIds": [
       "JOR-169",
@@ -1532,14 +898,76 @@
       "JOR-174",
       "JOR-175"
     ],
-    "current": 0,
-    "step": "execute",
-    "validated": {},
+    "current": 1,
+    "step": "intake",
+    "validated": {
+      "JOR-169": {
+        "sha": "16b592716382a9c22417c292502ba199bcbdab24",
+        "evidence": [
+          "kanai:ticket/JOR-169/closed",
+          "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+          "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+          "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+          "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+          "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+          "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+          "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+          "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+          "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+          "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+          "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+          "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+          "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+          "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+          "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+          "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+          "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+          "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+          "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+          "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+          "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+          "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+          "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+          "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+          "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+          "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+          "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+          "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+          "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+          "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+          "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+          "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+          "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+          "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+          "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+          "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+          "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+          "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+          "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+          "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+          "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+          "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+          "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+          "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+          "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+          "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+        ],
+        "commits": [
+          "0d882fc46dd0b41d831f50eb49cf65e1eae8f210",
+          "33ef0bcf8b982cd20808713dcb513478017252bd",
+          "547e9e5b35043fd99c7df1cd6a67aa2a2b692bb9",
+          "7b43edf912ded57d879fc6a41ba4d85fe5000681",
+          "7e01a9fabbae3392df3a0ab00b00723a5fd4c59d",
+          "cc0dbc06171ef823f1314405f6eaeb09efc07753",
+          "ea935e24a7dd40703b48578fa542323c25ae5b59",
+          "f197bfd72bcc98f67ca2858af128e641e86cf3d1"
+        ]
+      }
+    },
     "grants": [
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
-          "create_branch",
           "read_repo",
           "write_repo",
           "run_tests",
@@ -1547,178 +975,178 @@
           "git_integrate"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       },
       {
-        "actor": "edobacon",
+        "actor": "dev",
         "actions": [
           "read_external"
         ],
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
-        "expiresAt": "2026-10-13T23:59:59.000Z",
+        "expiresAt": "2026-10-08T09:19:30.989Z",
         "revoked": false
       }
     ],
@@ -1728,211 +1156,179 @@
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131-a264-44e6-be64-07863b278832: readable"
+        ]
+      },
+      {
+        "action": "write_repo",
+        "state": "granted",
+        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+      },
+      {
+        "action": "run_tests",
+        "state": "granted",
+        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+      },
+      {
+        "action": "kanai_tools",
+        "state": "granted",
+        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+      },
+      {
+        "action": "git_integrate",
+        "state": "granted",
+        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
+          "Comprobacion 193dc131: readable"
+        ]
       },
       {
         "action": "read_external",
         "state": "granted",
         "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
         "evidence": [
-          "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
-        ],
-        "restartRequired": false
-      },
-      {
-        "action": "write_repo",
-        "state": "interactive",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "evidence": [
-          "El repositorio está fuera de las raíces de escritura de esta sesión; requiere aprobación de sandbox para ejecutar acciones que escriban."
-        ]
-      },
-      {
-        "action": "run_tests",
-        "state": "interactive",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "evidence": [
-          "El repositorio está fuera de las raíces de escritura de esta sesión; requiere aprobación de sandbox para ejecutar acciones que escriban."
-        ]
-      },
-      {
-        "action": "git_integrate",
-        "state": "interactive",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "evidence": [
-          "El repositorio está fuera de las raíces de escritura de esta sesión; requiere aprobación de sandbox para ejecutar acciones que escriban."
-        ]
-      },
-      {
-        "action": "kanai_tools",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "evidence": [
-          "Herramientas Kanai disponibles en la sesión actual."
+          "Comprobacion 193dc131: readable"
         ]
       }
     ],
@@ -1943,15 +1339,920 @@
       "kanai_tools",
       "git_integrate"
     ],
-    "maxAttempts": 3,
+    "maxAttempts": 5,
     "attempts": {},
     "dependencyReceipts": {},
-    "pendingKey": "a863c727-d7a4-4170-967a-bb795393820f:JOR-169:{\"tool\":\"propose_transition\",\"args\":{\"projectId\":\"jormat-evolution\",\"ticketId\":\"JOR-169\",\"entity\":\"ticket\",\"id\":\"JOR-169\",\"to\":\"ready_to_close\"}}",
-    "reason": "Commits fuera del repositorio de la épica",
-    "startedAt": "2026-10-06T23:40:28.358Z",
-    "deadline": "2026-10-13T23:59:59.000Z"
+    "reason": "ticket_drift",
+    "startedAt": "2026-10-08T01:20:33.628Z",
+    "deadline": "2026-10-08T09:19:30.989Z"
   },
-  "history": [],
+  "history": [
+    {
+      "id": "a863c727-d7a4-4170-967a-bb795393820f",
+      "planVersion": 4,
+      "fingerprint": "2a56ccf8aa0e7a17abd36cee89571a45dda1cc44c81ce02cfbd19f6eb2bd46d9",
+      "harness": "codex",
+      "harnessVersion": "desktop",
+      "harnessSessionId": "01a116ac-79aa-76a2-a040-9650db751e60",
+      "teach": "skip",
+      "humanChecks": "block",
+      "state": "cancelled",
+      "ticketIds": [
+        "JOR-169",
+        "JOR-170",
+        "JOR-171",
+        "JOR-172",
+        "JOR-173",
+        "JOR-174",
+        "JOR-175"
+      ],
+      "current": 0,
+      "step": "execute",
+      "validated": {},
+      "grants": [
+        {
+          "actor": "edobacon",
+          "actions": [
+            "create_branch",
+            "read_repo",
+            "write_repo",
+            "run_tests",
+            "kanai_tools",
+            "git_integrate"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "edobacon",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+          "expiresAt": "2026-10-13T23:59:59.000Z",
+          "revoked": false
+        }
+      ],
+      "capabilities": [
+        {
+          "action": "read_repo",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+          "evidence": [
+            "Comprobación 28a7987d-2f22-4aac-a456-be45ad7f092e desde sesión 01a116ac-79aa-76a2-a040-9650db751e60: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "write_repo",
+          "state": "interactive",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "El repositorio está fuera de las raíces de escritura de esta sesión; requiere aprobación de sandbox para ejecutar acciones que escriban."
+          ]
+        },
+        {
+          "action": "run_tests",
+          "state": "interactive",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "El repositorio está fuera de las raíces de escritura de esta sesión; requiere aprobación de sandbox para ejecutar acciones que escriban."
+          ]
+        },
+        {
+          "action": "git_integrate",
+          "state": "interactive",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "El repositorio está fuera de las raíces de escritura de esta sesión; requiere aprobación de sandbox para ejecutar acciones que escriban."
+          ]
+        },
+        {
+          "action": "kanai_tools",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "Herramientas Kanai disponibles en la sesión actual."
+          ]
+        }
+      ],
+      "requiredActions": [
+        "read_repo",
+        "write_repo",
+        "run_tests",
+        "kanai_tools",
+        "git_integrate"
+      ],
+      "maxAttempts": 3,
+      "attempts": {},
+      "dependencyReceipts": {},
+      "pendingKey": "a863c727-d7a4-4170-967a-bb795393820f:JOR-169:{\"tool\":\"propose_transition\",\"args\":{\"projectId\":\"jormat-evolution\",\"ticketId\":\"JOR-169\",\"entity\":\"ticket\",\"id\":\"JOR-169\",\"to\":\"ready_to_close\"}}",
+      "reason": "Commits fuera del repositorio de la épica",
+      "startedAt": "2026-10-06T23:40:28.358Z",
+      "deadline": "2026-10-13T23:59:59.000Z"
+    },
+    {
+      "id": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "planVersion": 4,
+      "fingerprint": "2a56ccf8aa0e7a17abd36cee89571a45dda1cc44c81ce02cfbd19f6eb2bd46d9",
+      "harness": "opencode",
+      "harnessVersion": "1.18.35",
+      "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
+      "teach": "skip",
+      "humanChecks": "block",
+      "state": "cancelled",
+      "ticketIds": [
+        "JOR-169",
+        "JOR-170",
+        "JOR-171",
+        "JOR-172",
+        "JOR-173",
+        "JOR-174",
+        "JOR-175"
+      ],
+      "current": 1,
+      "step": "intake",
+      "validated": {
+        "JOR-169": {
+          "sha": "16b592716382a9c22417c292502ba199bcbdab24",
+          "evidence": [
+            "kanai:ticket/JOR-169/closed",
+            "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+            "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+            "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+            "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+            "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+            "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+            "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+            "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+            "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+            "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+            "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+            "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+            "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+            "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+            "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+            "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+            "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+            "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+            "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+            "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+            "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+            "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+            "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+            "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+            "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+            "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+            "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+            "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+            "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+            "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+            "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+            "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+            "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+            "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+            "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+            "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+            "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+            "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+            "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+            "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+            "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+            "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+            "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+            "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+            "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+            "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+          ],
+          "commits": [
+            "0d882fc46dd0b41d831f50eb49cf65e1eae8f210",
+            "33ef0bcf8b982cd20808713dcb513478017252bd",
+            "547e9e5b35043fd99c7df1cd6a67aa2a2b692bb9",
+            "7b43edf912ded57d879fc6a41ba4d85fe5000681",
+            "7e01a9fabbae3392df3a0ab00b00723a5fd4c59d",
+            "cc0dbc06171ef823f1314405f6eaeb09efc07753",
+            "ea935e24a7dd40703b48578fa542323c25ae5b59",
+            "f197bfd72bcc98f67ca2858af128e641e86cf3d1"
+          ]
+        }
+      },
+      "grants": [
+        {
+          "actor": "dev",
+          "actions": [
+            "read_repo",
+            "write_repo",
+            "run_tests",
+            "kanai_tools",
+            "git_integrate"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+          "expiresAt": "2026-10-08T06:58:22.942Z",
+          "revoked": false
+        }
+      ],
+      "capabilities": [
+        {
+          "action": "read_repo",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "Comprobacion 08604833-29e6-4c7d-a071-09b2fc54278a desde sesion 80517d66-46e0-498c-b46d-0b9687fa81e5: readable"
+          ]
+        },
+        {
+          "action": "write_repo",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "run_tests",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "kanai_tools",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "git_integrate",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+          "evidence": [
+            "Comprobacion 08604833 leer read"
+          ]
+        }
+      ],
+      "requiredActions": [
+        "read_repo",
+        "write_repo",
+        "run_tests",
+        "kanai_tools",
+        "git_integrate"
+      ],
+      "maxAttempts": 5,
+      "attempts": {},
+      "dependencyReceipts": {},
+      "reason": "ticket_drift",
+      "startedAt": "2026-10-07T23:16:10.300Z",
+      "deadline": "2026-10-08T06:58:22.942Z"
+    }
+  ],
   "events": [
     {
       "id": "42845f78-4730-4762-9394-6dabe448f277",
@@ -3904,6 +4205,607 @@
       "phase": "next",
       "source": "kanai-server",
       "durationMs": 67
+    },
+    {
+      "id": "9953141a-2da5-457f-ae97-262b4cdd7bc3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T22:53:58.213Z",
+      "kind": "access_check_prepared",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f"
+    },
+    {
+      "id": "4f410922-eca0-4f77-ade1-3ba596a030e8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T22:54:26.741Z",
+      "kind": "access_check_reported",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f",
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "151c3ff7-02bf-445a-9bcf-f3f38028066a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T22:57:54.413Z",
+      "kind": "access_check_prepared",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f"
+    },
+    {
+      "id": "5397c517-ec4b-4eea-9de7-6a2ec87ff883",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T22:58:30.001Z",
+      "kind": "access_check_reported",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f",
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "42224ec3-a16c-457f-871a-808ff00d444e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T22:58:59.505Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 488
+    },
+    {
+      "id": "3b430cec-6999-417e-8d4d-e1b0d31561e8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:10:01.699Z",
+      "kind": "cancelled",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f"
+    },
+    {
+      "id": "ec494d43-270d-4c01-83aa-03d9fb734ac4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:10:01.714Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f",
+      "phase": "cancel",
+      "source": "kanai-server",
+      "durationMs": 172
+    },
+    {
+      "id": "025f38f1-3982-4d05-87b2-f66c0c71ca88",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:10.197Z",
+      "kind": "plan_approved",
+      "planVersion": 4,
+      "runId": "a863c727-d7a4-4170-967a-bb795393820f"
+    },
+    {
+      "id": "9a13759e-f691-4f3a-bfa1-b537ab285532",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:10.300Z",
+      "kind": "run_started",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b"
+    },
+    {
+      "id": "219de453-1411-40af-919e-1b4798ec7365",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:10.300Z",
+      "kind": "teach_selected",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "reason": "skip"
+    },
+    {
+      "id": "d70bd06c-7afe-4d60-adca-8a04b582cd55",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:10.309Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "launch",
+      "source": "kanai-server",
+      "durationMs": 132
+    },
+    {
+      "id": "07e2c282-f143-4553-a78b-4a05d5d195a3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:13.485Z",
+      "kind": "ticket_verified",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "ticketId": "JOR-169",
+      "phase": "verify",
+      "evidence": [
+        "kanai:ticket/JOR-169/closed",
+        "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+        "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+        "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+        "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+        "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+        "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+        "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+        "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+        "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+        "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+        "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+        "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+        "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+        "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+        "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+        "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+        "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+        "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+        "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+        "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+        "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+        "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+        "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+        "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+        "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+        "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+        "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+        "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+        "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+        "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+        "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+        "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+        "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+        "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+        "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+        "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+        "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+        "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+        "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+        "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+        "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+        "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+        "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+        "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+        "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+        "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+      ]
+    },
+    {
+      "id": "cc3d1892-13c2-4717-b8cd-3d2eb20cfde2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:13.489Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 103
+    },
+    {
+      "id": "d6d9e760-2bf7-4ebe-bb1b-f06b31efcb24",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:38.340Z",
+      "kind": "ticket_integrated",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "ticketId": "JOR-169",
+      "phase": "integrate",
+      "evidence": [
+        "kanai:ticket/JOR-169/closed",
+        "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+        "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+        "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+        "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+        "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+        "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+        "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+        "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+        "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+        "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+        "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+        "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+        "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+        "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+        "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+        "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+        "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+        "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+        "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+        "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+        "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+        "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+        "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+        "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+        "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+        "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+        "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+        "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+        "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+        "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+        "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+        "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+        "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+        "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+        "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+        "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+        "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+        "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+        "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+        "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+        "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+        "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+        "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+        "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+        "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+        "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+      ]
+    },
+    {
+      "id": "3f171a58-f641-49cc-b095-8c5fd811f2e3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:38.345Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "integrate",
+      "source": "kanai-server",
+      "durationMs": 539
+    },
+    {
+      "id": "5528f425-191e-40cd-b414-733be22d5a5e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:41.857Z",
+      "kind": "paused",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "reason": "Commits fuera del repositorio de la épica"
+    },
+    {
+      "id": "c25c4960-4672-4e17-b9a1-9f665f42b85b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-07T23:16:41.863Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 788
+    },
+    {
+      "id": "a7c2b420-3064-4af1-b6b0-c0c84c6c3600",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T00:19:15.735Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 105
+    },
+    {
+      "id": "8fc90e5f-6980-4de8-bb50-5ad746f324d3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:11:09.843Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 84
+    },
+    {
+      "id": "cf56b0fc-e5f4-43d2-aec5-8878bd07f0e8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:17:23.860Z",
+      "kind": "resumed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b"
+    },
+    {
+      "id": "e36d938d-d084-493b-964c-37d48c59412f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:17:23.868Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "resume",
+      "source": "kanai-server",
+      "durationMs": 119
+    },
+    {
+      "id": "925a7ed0-3bca-4a73-a30c-39c8bbf3ef2d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:17:28.614Z",
+      "kind": "paused",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "reason": "ticket_drift"
+    },
+    {
+      "id": "5a7caf48-8b8a-4702-9747-a24c7a49c1b3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:17:28.620Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 1738
+    },
+    {
+      "id": "258f59f5-7564-49f7-a180-c799ab030f76",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:18:54.962Z",
+      "kind": "cancelled",
+      "planVersion": 4,
+      "runId": "2da8599c-9d08-45f7-9ac5-e7b047c4cb3b",
+      "reason": "plan_superseded"
+    },
+    {
+      "id": "993ae0a0-f331-4462-93a3-93e6a1e1197c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:18:54.978Z",
+      "kind": "plan_changed",
+      "planVersion": 5
+    },
+    {
+      "id": "64ab80bc-0223-4baa-8264-e3a4591814b6",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:18:54.985Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 183
+    },
+    {
+      "id": "339018ec-1381-40f3-8612-680e7783a69b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:19:01.794Z",
+      "kind": "access_check_prepared",
+      "planVersion": 5
+    },
+    {
+      "id": "5c753dcd-dbcf-49b8-903c-4adb505b8dbf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:19:36.902Z",
+      "kind": "access_check_reported",
+      "planVersion": 5,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "861b2033-8c9b-491d-b100-c84f435d494c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:33.554Z",
+      "kind": "plan_approved",
+      "planVersion": 5
+    },
+    {
+      "id": "483d8bbe-02c6-405d-857d-b32153d9a62a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:33.628Z",
+      "kind": "run_started",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239"
+    },
+    {
+      "id": "91c6b4d4-d39e-4d39-bf02-8216dfa4aa89",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:33.628Z",
+      "kind": "teach_selected",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "reason": "skip"
+    },
+    {
+      "id": "72b567ae-61fe-4baa-b05f-21700b6c66ee",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:33.636Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "launch",
+      "source": "kanai-server",
+      "durationMs": 98
+    },
+    {
+      "id": "ae0ba20c-51f7-4329-804f-76baf0332d49",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:37.425Z",
+      "kind": "ticket_verified",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "ticketId": "JOR-169",
+      "phase": "verify",
+      "evidence": [
+        "kanai:ticket/JOR-169/closed",
+        "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+        "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+        "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+        "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+        "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+        "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+        "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+        "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+        "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+        "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+        "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+        "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+        "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+        "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+        "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+        "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+        "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+        "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+        "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+        "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+        "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+        "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+        "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+        "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+        "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+        "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+        "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+        "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+        "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+        "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+        "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+        "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+        "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+        "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+        "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+        "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+        "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+        "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+        "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+        "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+        "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+        "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+        "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+        "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+        "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+        "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+      ]
+    },
+    {
+      "id": "f155191c-e224-4503-81ba-63d95fec5620",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:37.431Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 136
+    },
+    {
+      "id": "b60b71e3-0ce0-4a21-a3d0-14a462cff98f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:41.697Z",
+      "kind": "ticket_integrated",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "ticketId": "JOR-169",
+      "phase": "integrate",
+      "evidence": [
+        "kanai:ticket/JOR-169/closed",
+        "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+        "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+        "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+        "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+        "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+        "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+        "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+        "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+        "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+        "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+        "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+        "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+        "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+        "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+        "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+        "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+        "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+        "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+        "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+        "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+        "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+        "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+        "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+        "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+        "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+        "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+        "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+        "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+        "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+        "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+        "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+        "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+        "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+        "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+        "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+        "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+        "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+        "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+        "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+        "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+        "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+        "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+        "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+        "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+        "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+        "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+      ]
+    },
+    {
+      "id": "e39551c6-e9e4-42a9-a571-ac3b7d4d2dd1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:41.701Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "integrate",
+      "source": "kanai-server",
+      "durationMs": 492
+    },
+    {
+      "id": "e3dca503-4fb0-42c7-a538-295e78fd6303",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:46.186Z",
+      "kind": "paused",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "reason": "ticket_drift"
+    },
+    {
+      "id": "643cabde-22d2-46d5-8684-7c060900b56c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:20:46.191Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 779
+    },
+    {
+      "id": "e77c75e0-4169-420c-b0f9-dad85be5f779",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:29:33.606Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 120
+    },
+    {
+      "id": "08f8e5df-14dc-41db-973a-f4251b1b3f08",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:32:03.752Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 312
+    },
+    {
+      "id": "84f07a3c-9b2c-4e3c-bd98-41639571a5de",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:32:44.460Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 324
+    },
+    {
+      "id": "6f595fb4-0f4d-4bf9-9463-30a05066de87",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T01:32:58.921Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "a98d9e72-d690-4da4-a14b-c5749a84a239",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 72
     }
   ]
 }
