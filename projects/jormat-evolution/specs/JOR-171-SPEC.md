@@ -275,6 +275,6 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 
 **Gate (auto)**: En el listado de Facturas cliente se ve la columna de estado comercial, las tres tarjetas comerciales que se recalculan al aplicar o limpiar filtros, y los filtros nuevos sin el filtro removido de la captura p.6; verificable en la app con datos de prueba.
 
-### Session 5 · open
+### Session 5 · continue
 
 ### Session 7 · open
