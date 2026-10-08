@@ -83,13 +83,13 @@ Contrato: rollback: Revertir el commit del componente de accion.. Status: done
 Contrato: rollback: Eliminar los archivos de test agregados.. Status: done
 
 #### S2.T1 — Backend Formato Bodega: endpoint de lectura que devuelve cabecera (numero, fecha, cliente) y lineas en orden con codigo, descripcion, cantidad y lista de ubicaciones del repuesto en la bodega de origen (tabla de ubicaciones a confirmar), en una sola consulta agregada por factura (acotado a las lineas de esa factura, sin N+1); sin dependencia del estado SII.
-Contrato: rollback: Revertir commit del endpoint.. Status: pending
+Contrato: rollback: Revertir commit del endpoint.. Status: done
 
 #### S2.T2 — Frontend: vista imprimible Formato Bodega (distinta del formato comercial) con 'Sin ubicacion' cuando la lista viene vacia; accesos desde menu de fila y desde Visualizar.
-Contrato: rollback: Revertir commit de la vista y de los accesos.. Status: pending
+Contrato: rollback: Revertir commit de la vista y de los accesos.. Status: done
 
 #### S2.T3 — Tests S2: endpoint (orden de lineas, varias ubicaciones, criterio 20 'Sin ubicacion', ubicacion solo en otra bodega) y render de la vista.
-Contrato: rollback: Eliminar los archivos de test agregados.. Status: pending
+Contrato: rollback: Eliminar los archivos de test agregados.. Status: done
 
 #### S3.T1 — T-09: reemplazar la lista simulada del selector de transporte por el catalogo transport_companies (backend/migrations/20260901000001_transport_companies.ts:6), reutilizando el acceso a datos que usa TransportistasView (frontend/src/components/bodega/transportistas/TransportistasView/TransportistasView.tsx:180).
 Contrato: rollback: Revertir commit; el selector vuelve a la lista previa.. Status: pending
@@ -154,12 +154,12 @@ Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status:
 
 **Gate (auto)**: En el listado de facturas cliente la accion Entrega Rapida marca la factura entregada; una segunda llamada responde sin cambios (misma date_out y user_out_id, sin movimientos de stock), visible en el listado y en el test del endpoint.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Desde el menu de fila y desde Visualizar se abre el Formato Bodega imprimible; una factura con un repuesto sin ubicacion muestra 'Sin ubicacion' en esa linea y respeta el orden de lineas.
 
