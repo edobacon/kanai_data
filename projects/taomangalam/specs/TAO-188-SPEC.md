@@ -56,13 +56,13 @@ Qué: extender el flujo legal, proveedores y sistema de diseño existentes sin c
 ## Tasks
 
 #### S1.T1 — Agregar el modo de revisión de V-51 dentro de app/lib/navigation/legal_consent_view.dart, que hoy en epic/EP-01a implementa SOLO primer uso y aceptación obligatoria (no existe modo revisión previo; HU-01-13 no lo entregó). Reutilizar su lector y su contenedor en vez de crear una vista paralela, y dejar app/lib/navigation/legal_consent_gate.dart intacto. Listar el historial propio con listarMisAceptaciones vía app/lib/features/legal/data/puerto_consentimiento_legal.dart y sus providers (consentimiento_legal_providers.dart, legal_providers.dart), paginando con limit, cursor y siguienteCursor (sin traer todo el historial al abrir). Mostrar versión y fecha por documento, distinguir versión aceptada vs vigente e informar si corresponde nueva aceptación. Abrir el texto con obtenerDocumentoLegal en panel-modal usando app/lib/design_system/molecules/overlays/tao_dialog.dart y tao_dialog_route.dart sobre app/lib/design_system/molecules/tao_reading_card.dart, con fondo de app/lib/core/images/background_layer.dart (familia Identidad/entrada a pantalla completa, superficie legal opaca). Abrir o leer un documento NO registra aceptación. No modificar modelos de datos ni el historial append-only.
-Contrato: rollback: Revertir el modo de revisión agregado en legal_consent_view.dart y los puntos de lectura nuevos; legal_consent_gate.dart y el flujo de aceptación obligatoria quedan como están hoy en epic/EP-01a, y las operaciones existentes de lectura siguen intactas.. Status: pending
+Contrato: rollback: Revertir el modo de revisión agregado en legal_consent_view.dart y los puntos de lectura nuevos; legal_consent_gate.dart y el flujo de aceptación obligatoria quedan como están hoy en epic/EP-01a, y las operaciones existentes de lectura siguen intactas.. Status: done
 
 #### S1.T2 — Estados, permisos y navegación del modo de revisión, sobre los mismos archivos de S1.T1 (app/lib/navigation/legal_consent_view.dart y app/lib/features/legal/data/puerto_consentimiento_legal.dart con sus providers). Representar carga, error con errorId, lectura desde caché identificada como tal, política no disponible y reintento, conservando el último estado confirmado. Exigir vista.privacidad.acceder para entrar; en impersonación el historial se lee y las acciones legales y de consentimiento no se ofrecen ni se pueden invocar (metrica.consentir se verifica además en backend, DEC-220). Volver a V-27 conservando posición y contexto y anunciar el resultado de forma accesible, sin mover el foco sin aviso. Entrada desde la sección Privacidad de V-27: queda acotada a esa sola entrada y se conecta únicamente una vez entregado TAO-193; hasta entonces es condición previa para ejecutar las tareas consumidoras y se conserva el marcador existente de la sección sin reemplazarlo. Logs sin texto de documentos ni valores sensibles. Decisiones técnicas ya resueltas (reuso de vista, puertos, providers y componentes; paginación por cursor; panel-modal existente): no quedan como pendiente a concretar al aprobar.
-Contrato: rollback: Revertir los estados, guardas de permiso y el retorno accesible agregados en esta task; la vista vuelve al comportamiento de S1.T1 y, si se revierte todo, al flujo de aceptación obligatoria actual. No se toca el marcador de Cuenta ni las rutas existentes de V-27.. Status: pending
+Contrato: rollback: Revertir los estados, guardas de permiso y el retorno accesible agregados en esta task; la vista vuelve al comportamiento de S1.T1 y, si se revierte todo, al flujo de aceptación obligatoria actual. No se toca el marcador de Cuenta ni las rutas existentes de V-27.. Status: done
 
 #### S1.T3 — Tests de la sesión 1. Crear los dos archivos nuevos propuestos en la Adenda 2 (no existen hoy): app/test/navigation/legal_review_view_test.dart (QA-01-14-01 versión y fecha correctas y vuelta a cada texto; QA-01-14-02 leer una versión nueva no la marca aceptada ni registra aceptación; paginación con limit/cursor/siguienteCursor; estados de carga, error con errorId, caché identificada y política no disponible; retorno a V-27 conservando posición y anuncio accesible) y app/test/legal/puerto_revision_legal_test.dart (QA-01-14-05: en impersonación el historial se lee y las acciones legales y de consentimiento no se pueden invocar). Ajustar lo necesario, sin cambiar su intención, en los tests existentes app/test/navigation/legal_consent_gate_text_test.dart y app/test/navigation/legal_consent_view_layout_test.dart para cubrir la regresión de que el gate obligatorio sigue intacto. Comando canónico FVM según docs/development/commands.md y app/.fvmrc.
-Contrato: rollback: Eliminar los dos archivos de test nuevos y revertir los ajustes en legal_consent_gate_text_test.dart y legal_consent_view_layout_test.dart a su versión de epic/EP-01a.. Status: pending
+Contrato: rollback: Eliminar los dos archivos de test nuevos y revertir los ajustes en legal_consent_gate_text_test.dart y legal_consent_view_layout_test.dart a su versión de epic/EP-01a.. Status: done
 
 #### S2.T1 — S2.T1 · Extender V-51 y app/lib/features/legal/data/puerto_analitica.dart para consumir obtenerEstadoConsentimiento y registrarConsentimientoAnalitica existentes, junto con la política de HU-15-03. Presentar acciones equivalentes en opt_in, explicación y retirada según opt_out, y ninguna acción inadmisible en disabled. Actualizar la vista solo con respuesta confirmada, sin sustituir ni borrar eventos previos. Reutilizar la autorización de S1.T2 y tratar denegaciones del backend sin éxito visual; no implementar lógica regional ni backend nuevo.
 Contrato: rollback: Revertir la presentación y conexión de cambios de consentimiento incorporadas, dejando disponible la revisión legal; mantener los eventos append-only ya registrados.. Status: pending
@@ -118,12 +118,12 @@ Ninguno.
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
 
 **Gate (auto)**: Desde V-27 se abre una revisión legal de solo lectura con versiones y fechas, documentos en panel-modal, estados de carga/error/caché y retorno que conserva posición y foco.
 
@@ -141,4 +141,3 @@ Ninguno.
 **Tasks:**
 - [ ] S3.T1
 - [ ] S3.T2
-

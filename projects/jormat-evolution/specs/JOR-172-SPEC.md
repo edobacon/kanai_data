@@ -88,19 +88,19 @@ Contrato: rollback: Revertir los cambios en backend/jormat-api/src/catalogos/cat
 Contrato: rollback: Revertir los cambios en el servicio o repositorio de cheques y su archivo de test (git checkout de esos archivos).. Status: done
 
 #### S2.T1 — Crear el endpoint de Estado de cuenta del cliente: cabecera (datos del cliente, Activo o Bloqueado) y grilla de facturas con saldo y notas con saldo disponible, con las columnas Tipo documento, N° documento, Origen, Estado, Fecha, Total, Abono y Pendiente, más la suma de Pendiente. Filtro por rango de fechas y paginación en servidor (DET-41), reusando la proyección de 3/7. Sin cheques.
-Contrato: rollback: Eliminar el endpoint y su método de service y revertir el controller.. Status: pending
+Contrato: rollback: Eliminar el endpoint y su método de service y revertir el controller.. Status: done
 
 #### S2.T2 — Estado de cuenta (REQ-04, REQ-08). Se implementa y verifica exclusivamente en sus subtareas; esta task agrupa y no repite su detalle.
-Contrato: rollback: Eliminar la ruta y la vista nuevas y revertir el popup.. Status: pending
+Contrato: rollback: Eliminar la ruta y la vista nuevas y revertir el popup.. Status: done
 
 #### S2.T2.1 — Registrar la ruta nueva del Estado de cuenta con el id del cliente y crear la vista: cabecera, filtro de fechas, grilla con suma de Pendiente y N° documento enlazado al detalle del documento.
-Contrato: rollback: Eliminar la vista y la entrada del router.. Status: pending
+Contrato: rollback: Eliminar la vista y la entrada del router.. Status: done
 
 #### S2.T2.2 — En el popup, 'Mas detalles' abre la ruta con window.open(url, '_blank') sin perder el estado de Crear factura.
-Contrato: rollback: Revertir el handler de 'Mas detalles' en el popup.. Status: pending
+Contrato: rollback: Revertir el handler de 'Mas detalles' en el popup.. Status: done
 
 #### S2.T4 — Crear y ejecutar los tests del Estado de cuenta y verificar el criterio 25 (unico lugar). Crear el spec backend/jormat-api/src/sales/estado-cuenta.service.spec.ts y el e2e backend/jormat-api/test/estado-cuenta.e2e-spec.ts. El caso happy compara el Pendiente total del Estado de cuenta SOLO con el Pendiente total del listado de facturas de JOR-171 (misma proyeccion T-05, calcularSaldoProyectado), segun JOR-172-Q5. No se compara con ningun monto del popup, que no muestra montos (REQ-07). Tambien cubre rango de fechas vacio, paginacion en servidor, columna Origen (invoices.origin_name) y que el popup solo expone contadores. El reviewOutcome y el gate de la sesion 2 se alinean con esta verificacion: criterio 25 = Pendiente del Estado de cuenta igual al del listado de JOR-171, y 'Mas detalles' abre pestana nueva.
-Contrato: rollback: Revertir el commit de las pruebas y, si se tocó, del mapeo de la columna Origen; el resto del spec no se ve afectado.. Status: pending
+Contrato: rollback: Revertir el commit de las pruebas y, si se tocó, del mapeo de la columna Origen; el resto del spec no se ve afectado.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: 'Mas detalles' del popup abre en una pestaña nueva la pantalla Estado de cuenta del cliente (T-12). Muestra una cabecera con los datos del cliente y el estado Activo o Bloqueado, un filtro por rango de fechas y una grilla con las facturas con saldo y las notas con saldo disponi
@@ -191,14 +191,14 @@ Contrato: rollback: Revertir el commit de las pruebas y, si se tocó, del mapeo 
 
 **Gate (auto)**: El popup de Crear factura muestra contadores numéricos reales en lugar de null. El caso de criterio 24 (Rechazado + Pendiente = 'Cheques: 1') pasa en catalogos.controller.spec.ts y se ve en la UI.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · iterate
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T2.1
-- [ ] S2.T2.2
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T2.1
+- [x] S2.T2.2
+- [x] S2.T4
 
 **Gate (auto)**: 'Mas detalles' abre en una pestaña nueva el Estado de cuenta con la grilla de facturas y notas emitidas. El Pendiente total (solo facturas con saldo) coincide con el Pendiente del listado de 3/7 (criterio 25 reemplazado por la Adenda 1); no se compara contra ningun monto del popup, que muestra solo contadores. La columna Estado usa derivarEstadoComercialPago y la columna Origen muestra invoices.origin_name.
 
