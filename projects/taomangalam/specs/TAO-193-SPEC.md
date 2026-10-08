@@ -130,16 +130,16 @@ Contrato: rollback: Revertir solo el endpoint de login, su almacenamiento de int
 Contrato: rollback: Revertir los archivos agregados o modificados de `app/lib/features/cuenta` sin borrar el almacenamiento de sesion local ni los tokens ya persistidos en dispositivos de prueba.. Status: done
 
 #### S5.T3 — Escribir tests de widget SOLO de V27 Cuenta en app/test/features/cuenta para CUATRO estados: local previo primera red (explica cuenta dispositivo se creará con conexión y conserva operación local), dispositivo, pendiente verificación y completa; tipo/implicancias/identidad parcial, acciones V23/V24/V25, destinos V26 e invitación pendientes sin simular, entrada permanente V51 con cualquier estado/cuenta/sin sesión completa y advertencia logout no borra datos. Deben fallar si se omite cualquiera de los cuatro estados o acceso permanente. Ejecutar DESPUÉS producción S5.T6 y provider S5.T5; gate conjunto al finalizar.
-Contrato: rollback: Eliminar los archivos de test agregados bajo `app/test/features/cuenta`, sin tocar codigo de produccion ni datos.. Status: pending
+Contrato: rollback: Eliminar los archivos de test agregados bajo `app/test/features/cuenta`, sin tocar codigo de produccion ni datos.. Status: done
 
 #### S5.T4 — Verificar en test de integracion de la app que cerrar sesion desde V-27 conserva los datos locales (consultantes, consultas, tiradas, tareas) en el almacenamiento del dispositivo y que el estado de la app vuelve al modo sin sesion sin purgar nada.
-Contrato: rollback: Revertir el commit del test y del ajuste de limpieza de sesion si lo hubo.. Status: pending
+Contrato: rollback: Revertir el commit del test y del ajuste de limpieza de sesion si lo hubo.. Status: done
 
 #### S5.T5 — Cierre de sesion de punta a punta: endpoint `POST /auth/logout` conforme a `server/contract/openapi.yaml` y el provider de estado de sesion de la app que lo consume, que limpia los tokens del almacenamiento de sesion sin borrar datos locales y expone la advertencia explicita de que cerrar sesion no borra datos. Tests nuevos del servidor en `server/src/test/auth/logout.test.ts` (ruta nueva a crear). NO rehace los widgets de la vista Cuenta ni el acceso a Privacidad: ya estan cubiertos en S5.T3, ni el caso de datos locales conservados, cubierto en S5.T4.
-Contrato: rollback: Revertir los commits de codigo de esta task sin recrear ni reactivar los tokens ya revocados y sin tocar los datos locales ni los del servidor.. Status: pending
+Contrato: rollback: Revertir los commits de codigo de esta task sin recrear ni reactivar los tokens ya revocados y sin tocar los datos locales ni los del servidor.. Status: done
 
 #### S5.T6 — Widgets de PRODUCCION de la vista Cuenta (V-27, solo las secciones de HU-03b-11) en la app Flutter, conectados al estado real del provider y del almacenamiento de sesion. CONSERVAR INTEGRA la implementacion actual de esta task: tipo de cuenta y sus implicancias; estado con cuenta de dispositivo; estado pendiente de validacion; estado con cuenta completa; acciones de acceso y seguridad hacia V-23/V-24/V-25; cerrar sesion con la advertencia explicita de que no borra datos; acceso permanente a `V-51 Privacidad y consentimientos` disponible con cualquier tipo de cuenta y declarado como destino pendiente mientras TAO-188 no este integrado; `Recuperar contrasena` (V-26) y `Tengo una invitacion` declarados como destinos pendientes sin funcionamiento simulado. AGREGAR, ademas de esos tres estados, un CUARTO estado: local antes de la primera conexion. Cuando todavia no existe identidad de dispositivo en el servidor, la vista informa que la identidad de dispositivo se creara cuando haya red y que la app opera en local mientras tanto, conforme a `docs/product/vistas/V-27_cuenta_respaldo_y_dispositivos.md` (secciones `Tipo de cuenta` y `Estados principales`). El estado se deriva del estado real (ausencia de cuenta de dispositivo persistida y sin respuesta del backend), NO se simula ni se fabrica una identidad de servidor, y en ese estado no se ofrecen habilitadas las acciones que exigen una cuenta ya creada en el servidor. Esta task entrega solo produccion: sus pruebas de widget viven en la task de tests de `app/test/features/cuenta` y no se escriben aqui. No se agrega ningun job nuevo ni trabajo de limpieza.
-Contrato: rollback: Revertir el commit de esta task. La vista Cuenta vuelve a su version previa con los tres estados anteriores y sin el estado local; no se borran datos locales, sesiones persistidas ni aceptaciones.. Status: pending
+Contrato: rollback: Revertir el commit de esta task. La vista Cuenta vuelve a su version previa con los tres estados anteriores y sin el estado local; no se borran datos locales, sesiones persistidas ni aceptaciones.. Status: done
 
 #### S6.T2 — Normalizar al linter de docs UNICAMENTE los documentos efectivamente modificados por este paquete (`docs/development/configuration.md`, `docs/development/commands.md`, `docs/development/release-runbook.md` y cualquier otro doc que el paquete haya tocado); no normalizar documentos que solo estan referenciados por el request. Correr el lint con la base fija del paquete expresada como variable de entorno concreta: cargar `TAO193_DOCS_BASE` con el SHA literal registrado en el campo `baselineSha` del reporte de S2.T1 (nunca desde HEAD al verificar, ni desde la rama viva, ni desde `origin/main`), comprobar que apunta a un commit existente con `test -n "$TAO193_DOCS_BASE" && git cat-file -e "$TAO193_DOCS_BASE^{commit}"` y ejecutar `DOCS_DIFF_BASE="$TAO193_DOCS_BASE" pnpm run docs:check:changed`. Si `baselineSha` no esta registrado en el reporte de S2.T1, pausar y registrar el bloqueo con la persona responsable externa; no capturar un hash nuevo para destrabar.
 Contrato: rollback: Revertir con `git checkout --` los documentos normalizados en esta task, conservando el contenido previo de cada doc; no se modifican datos ni configuracion de CI. El `baselineSha` de S2.T1 queda intacto.. Status: pending
@@ -428,13 +428,13 @@ S7 final con seis ítems canónicos concretos: Mailpit/cola, Mailjet staging/DNS
 
 **Gate (auto)**: Inicio de sesion revisable de punta a punta: desde V-25 en la app, credenciales correctas devuelven sesion con el nivel autorizado y persisten tokens; contrasena incorrecta y correo inexistente devuelven la misma respuesta neutra; una cuenta con correo pendiente deriva a V-24 sin emitir sesion; al alcanzar el limite se ve el bloqueo, que sobrevive al reinicio del proceso y se reinicia tras un login exitoso. `Olvide mi contrasena` y `Tengo una invitacion` se ven como destinos no disponibles, sin pantallas simuladas. Suite de integracion de acceso (registro, validacion y login) y de privilegios de rol en verde.
 
-### Session 5 · T2 · open
+### Session 5 · T2 · continue
 
 **Tasks:**
-- [ ] S5.T3
-- [ ] S5.T4
-- [ ] S5.T5
-- [ ] S5.T6
+- [x] S5.T3
+- [x] S5.T4
+- [x] S5.T5
+- [x] S5.T6
 
 **Gate (strong)**: Cuenta V27 muestra CUATRO estados reales: local antes primera red, dispositivo, pendiente y completa. Estado local explica creación identidad con red y permite operación local; acciones V23/V24/V25 y V26/invitación pendientes honestos; Privacidad permanente todos estados, logout revoca sin borrar datos. Suites y widgets verdes tras producción. Verificar cada uno, no cerrar si falta estado.
 
