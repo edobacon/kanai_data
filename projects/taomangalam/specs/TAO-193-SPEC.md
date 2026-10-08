@@ -124,10 +124,10 @@ Contrato: rollback: Revertir el commit de la pantalla V-23 y eliminar `app/test/
 Contrato: rollback: Revertir el commit de la pantalla V-24 y eliminar `app/test/features/cuenta/v24_validar_correo_test.dart`; la app vuelve al estado anterior sin la pantalla. No se tocan datos locales ni sesiones persistidas.. Status: done
 
 #### S4.T8 — PRODUCCION LOGIN COMPLETO (fusiona lo que estaba repartido con S4.T9, eliminada). Implementar POST /auth/login conforme a server/contract/openapi.yaml y DEC-163: verificacion de contrasena con argon2id contra el hash persistido, exigencia de cuenta completa con correo ya validado (correo pendiente no emite sesion y deriva a V-24), emision y persistencia de tokens en el almacenamiento de sesion, bloqueo por fuerza bruta PERSISTIDO en base (5 fallos en ventana de 15 minutos, bloqueo de 15 minutos, parametros configurables) y respuesta neutra que no revela si el correo existe ni si la contrasena es incorrecta. Sin inicio de sesion offline. Toda la suite de login (happy, hash, bloqueo persistido, conformidad de contrato, neutralidad de errores, correo pendiente) vive en una unica ruta: server/src/test/auth/login.test.ts. No crear ni reutilizar otra ruta de suite de login.
-Contrato: rollback: Revertir solo el endpoint de login, su almacenamiento de intentos de bloqueo y su configuracion, conservando cuentas, credenciales y registros existentes.. Status: pending
+Contrato: rollback: Revertir solo el endpoint de login, su almacenamiento de intentos de bloqueo y su configuracion, conservando cuentas, credenciales y registros existentes.. Status: done
 
 #### S4.T10 — Implementar las pantallas reales de inicio de sesion en la app. Scope: `app/lib/features/cuenta/presentation`, `app/lib/features/cuenta/data` y la navegacion de la feature. Provider conectado al cliente HTTP real del contrato (sin stub ni respuesta simulada) que persiste los tokens en el almacenamiento de sesion existente de la app. UI: mostrar u ocultar contrasena de forma accesible, errores por campo que llevan el foco al campo a corregir conservando los valores validos, comportamiento sin conexion con reintento, derivacion a V-24 cuando el correo esta pendiente de validar, y navegacion de retorno al contexto de origen tras iniciar sesion. `Olvide mi contrasena` (V-26) y `Tengo una invitacion` se presentan como destinos pendientes declarados: no se simula un flujo inexistente ni se oculta la accion. Validacion por tests de widget y de integracion de la feature.
-Contrato: rollback: Revertir los archivos agregados o modificados de `app/lib/features/cuenta` sin borrar el almacenamiento de sesion local ni los tokens ya persistidos en dispositivos de prueba.. Status: pending
+Contrato: rollback: Revertir los archivos agregados o modificados de `app/lib/features/cuenta` sin borrar el almacenamiento de sesion local ni los tokens ya persistidos en dispositivos de prueba.. Status: done
 
 #### S5.T3 — Escribir tests de widget SOLO de V27 Cuenta en app/test/features/cuenta para CUATRO estados: local previo primera red (explica cuenta dispositivo se creará con conexión y conserva operación local), dispositivo, pendiente verificación y completa; tipo/implicancias/identidad parcial, acciones V23/V24/V25, destinos V26 e invitación pendientes sin simular, entrada permanente V51 con cualquier estado/cuenta/sin sesión completa y advertencia logout no borra datos. Deben fallar si se omite cualquiera de los cuatro estados o acceso permanente. Ejecutar DESPUÉS producción S5.T6 y provider S5.T5; gate conjunto al finalizar.
 Contrato: rollback: Eliminar los archivos de test agregados bajo `app/test/features/cuenta`, sin tocar codigo de produccion ni datos.. Status: pending
@@ -420,11 +420,11 @@ S7 final con seis ítems canónicos concretos: Mailpit/cola, Mailjet staging/DNS
 
 **Gate (auto)**: Conversion a cuenta completa revisable de punta a punta: desde V-23 en la app se registra un correo y una contrasena, `POST /cuenta/registro` responde 202 con `RegistroCuentaRespuesta` y estado `pendiente_verificacion`, llega el codigo a Mailpit, y desde V-24 se valida el correo dejando la cuenta activa con el mismo id, usos, solicitudes, aceptaciones y consentimiento intactos. Se ve el error por campo con foco, el estado sin conexion, el reenvio sujeto a espera y el rechazo de `PUT /cuenta/correo` sobre cuenta activa. Suite de registro, validacion y privilegios de rol en verde, con el codigo OTP ausente de respuestas y logs.
 
-### Session 4 · T2 · open
+### Session 4 · T2 · continue
 
 **Tasks:**
-- [ ] S4.T8
-- [ ] S4.T10
+- [x] S4.T8
+- [x] S4.T10
 
 **Gate (auto)**: Inicio de sesion revisable de punta a punta: desde V-25 en la app, credenciales correctas devuelven sesion con el nivel autorizado y persisten tokens; contrasena incorrecta y correo inexistente devuelven la misma respuesta neutra; una cuenta con correo pendiente deriva a V-24 sin emitir sesion; al alcanzar el limite se ve el bloqueo, que sobrevive al reinicio del proceso y se reinicia tras un login exitoso. `Olvide mi contrasena` y `Tengo una invitacion` se ven como destinos no disponibles, sin pantallas simuladas. Suite de integracion de acceso (registro, validacion y login) y de privilegios de rol en verde.
 

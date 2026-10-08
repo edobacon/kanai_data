@@ -74,6 +74,36 @@ La reversión de un pago se gobierna con la capability EXISTENTE payments.custom
 > Fuente: backend/jormat-api/migrations/20261003000012_invoices_sales_persistence.ts:31
 
 El contador de la tarjeta Notas de crédito se calcula con un conteo sobre la tabla existente invoices (type_id = 3, is_draft = 0) dentro de la misma agregación filtrada del listado; no se crea tabla, migración ni endpoint propio de notas de crédito (eso es alcance del ticket 5/7).
+
+### REQ-08 `confirmed`
+> Fuente: Adenda 1 - 2026-10-08 (review kn-dredd S1 confirmado); backend/jormat-api/src/payments/payments.service.ts:183-190
+
+GET /pagos/clientes (listado paginado de Cobranza) lee de la DB persistida y no del SEED: cada fila expone id = uuid real de la factura (invoices.id), pending = total - pagos aplicados vigentes (proyeccion de saldo de sales), status derivado (Pagado cuando pending = 0, Vencida cuando pending > 0 e invoices.expiration_date < hoy, Pendiente en el resto), origin tomado de origin_name y formaPago = medio del ultimo pago vigente o 'Sin pago' si la factura no tiene pagos vigentes; se mantienen sin cambios los contratos existentes de filtros, orden y paginacion.
+
+### REQ-09 `confirmed`
+> Fuente: Adenda 1 - 2026-10-08; backend/jormat-api/src/payments/payments.service.ts:278
+
+GET /pagos/clientes/summary agrega sobre el mismo universo leido de la DB que el listado, aplicando exactamente los mismos filtros, de modo que los totales del summary coinciden siempre con el conjunto que devuelve GET /pagos/clientes para esos filtros.
+
+### REQ-10 `confirmed`
+> Fuente: Adenda 1 - 2026-10-08; backend/jormat-api/src/payments/payments.repository.ts:293,353
+
+GET /pagos/clientes/:invoiceId resuelve el detalle contra la DB usando el uuid de la factura (via getInvoiceView de sales) y devuelve la cabecera con los datos del cliente mas la lista de pagos vigentes de esa factura; si el uuid no existe responde 404. Reemplaza por completo la lectura del seed.
+
+### REQ-11 `confirmed`
+> Fuente: Adenda 1 - 2026-10-08; backend/jormat-api/src/payments/payments.service.ts:63
+
+Se retira el SEED y el codigo stub muerto de PaymentsService (incluidas las estructuras en memoria y los helpers que solo las servian): el modulo de Cobranza no conserva ninguna lectura en memoria y todas sus consultas pasan por el repositorio contra la DB.
+
+### ENF-06 `confirmed` `enforcement`
+> Fuente: Adenda 1 - 2026-10-08; backend/jormat-api/src/payments/payments.repository.ts:293,353
+
+El acceso a datos del listado de Cobranza vive en payments.repository.ts (cabecera de factura con join a customers, aplicados por factura y ultimo medio de pago vigente), reutilizando las primitivas existentes de sales (proyeccion de saldo y aplicados por factura) en vez de duplicar SQL de saldo, respetando el aislamiento por workspace via tenantScoped y el patron de uuid ya usado por resolveCustomerId/revertPayment; no se agregan consultas de datos en el controller ni en el service.
+
+### ENF-07 `confirmed` `enforcement`
+> Fuente: Adenda 1 - 2026-10-08 ('Sin cambio de contrato de respuesta ni migracion de DB')
+
+La migracion de la lectura de Cobranza no cambia el contrato de respuesta de los tres endpoints (mismos campos y nombres: id, pending, status, origin, formaPago, paginacion y summary) ni introduce migracion de esquema de DB: no se crean ni alteran tablas para resolver la regresion.
 ## Tasks
 
 #### S1.T1 — Migración de esquema de cobranza: crear customer_payments (cliente, fecha, importe, medio FK a payment_methods, referencia, usuario, estado vigente/revertido) y customer_payment_applications (pago, factura, importe aplicado) con índices por workspace y factura. Reutiliza la tabla payment_methods existente (ENF-01).
@@ -162,6 +192,21 @@ Contrato: rollback: git revert del commit de wiring de filtros; la tabla vuelve 
 
 #### S3.T4 — Tests de UI del listado: render de la columna de estado comercial, de las tres tarjetas comerciales (incluida Notas de crédito en 0 cuando no hay notas emitidas) y de su recálculo al aplicar y limpiar filtros; y regresión de que el selector 'Filtrar por estado del documento' y su chip ya no se renderizan mientras siguen presentes los de tipo, estado SII y estado comercial. Los archivos del listado están en front/jormat-front/src/components/ventas/list/DocumentosListView/ y la tabla en front/jormat-front/src/components/ventas/list/DocumentosTable/DocumentosTable.tsx.
 Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: done
+
+#### S8.T1 — En backend/jormat-api/src/payments/payments.repository.ts agregar el acceso a datos del listado de Cobranza: una consulta tenantScoped que trae la cabecera de invoices con join a customers (uuid, folio, fecha, expiration_date, total, origin_name, rut/razon social), los importes aplicados por factura y el medio del ultimo pago vigente por factura, reutilizando las primitivas de proyeccion de saldo y aplicados por factura de sales (no duplicar SQL de saldo). Debe soportar los filtros, orden y paginacion que hoy acepta el endpoint y exponer tambien el conteo/agregado para el summary sobre el mismo universo filtrado.
+Contrato: rollback: git checkout -- backend/jormat-api/src/payments/payments.repository.ts (el metodo es aditivo: ningun consumidor existente lo llama aun). Status: pending
+
+#### S8.T2 — Migrar findAllCobranza y getSummary de PaymentsService (backend/jormat-api/src/payments/payments.service.ts:183-190,278) para que lean del repositorio en vez del SEED: id = uuid real de invoices, pending = total - pagos aplicados vigentes, status derivado (Pagado si pending=0; Vencida si pending>0 y expiration_date < hoy; Pendiente en el resto), origin desde origin_name y formaPago = medio del ultimo pago vigente o 'Sin pago'. Mantener identicos los nombres de campos y la forma de la respuesta (ENF-07) y que el summary use exactamente los mismos filtros que el listado.
+Contrato: rollback: git checkout -- backend/jormat-api/src/payments/payments.service.ts (vuelve a la lectura del SEED, que aun no fue retirado en esta task). Status: pending
+
+#### S8.T3 — Migrar getInvoice (detalle de Cobranza) para resolver contra la DB por uuid usando getInvoiceView de sales y devolver cabecera con datos del cliente mas los pagos vigentes de esa factura; lanzar NotFoundException (404) cuando el uuid no existe, incluidos los ids con formato de seed 'inv-*'. Quitar la lectura del seed en este camino.
+Contrato: rollback: git checkout -- backend/jormat-api/src/payments/payments.service.ts para restaurar getInvoice sobre el seed. Status: pending
+
+#### S8.T4 — Retirar la constante SEED y todo el codigo stub muerto de PaymentsService (backend/jormat-api/src/payments/payments.service.ts:63 y helpers que solo servian a la semilla), dejando el modulo sin lecturas en memoria. Verificar que el controller (backend/jormat-api/src/payments/payments.controller.ts) sigue delegando los tres endpoints al service sin consultas propias y que no quedan imports huerfanos.
+Contrato: rollback: git checkout -- backend/jormat-api/src/payments/payments.service.ts backend/jormat-api/src/payments/payments.controller.ts. Status: pending
+
+#### S8.T5 — Reescribir los specs de service y controller de payments que hoy afirman el seed (ids 'inv-*' y pagos sembrados) para que afirmen la lectura desde la DB: uuid real en el listado, pending = total - aplicados vigentes, status por expiration_date (caso limite: vencimiento = hoy -> Pendiente; ayer -> Vencida), formaPago del ultimo pago vigente y 'Sin pago' sin pagos, summary coincidente con el listado bajo los mismos filtros, detalle 404 con uuid inexistente y con id 'inv-1', y aislamiento por workspace (factura de otro tenant no aparece). Adaptar el fake de backend/jormat-api/src/payments/payments.persistence.spec.ts al nuevo acceso de datos del repositorio y cubrir el flujo end-to-end aplicar/revertir pago sobre un uuid devuelto por el listado.
+Contrato: rollback: git checkout -- backend/jormat-api/src/payments/payments.service.spec.ts backend/jormat-api/src/payments/payments.controller.spec.ts backend/jormat-api/src/payments/payments.persistence.spec.ts. Status: pending
 ## Cambios al modelo de datos
 
 - tipo: create | objetos: customer_payments | destructivo: no | tarea: S1.T1 | rollback: Ejecutar el down de la migración (knex migrate:rollback) que hace dropTableIfExists de customer_payments.
@@ -226,6 +271,24 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 - move S7.T2 → S3
 - move S7.T3 → S3
 - move S7.T4 → S3
+
+### Enmienda 3
+**REQs:**
+
+- REQ-08 (add) `confirmed`: GET /pagos/clientes (listado paginado de Cobranza) lee de la DB persistida y no del SEED: cada fila expone id = uuid real de la factura (inv
+- REQ-09 (add) `confirmed`: GET /pagos/clientes/summary agrega sobre el mismo universo leido de la DB que el listado, aplicando exactamente los mismos filtros, de modo 
+- REQ-10 (add) `confirmed`: GET /pagos/clientes/:invoiceId resuelve el detalle contra la DB usando el uuid de la factura (via getInvoiceView de sales) y devuelve la cab
+- REQ-11 (add) `confirmed`: Se retira el SEED y el codigo stub muerto de PaymentsService (incluidas las estructuras en memoria y los helpers que solo las servian): el m
+- ENF-06 (add) `confirmed`: El acceso a datos del listado de Cobranza vive en payments.repository.ts (cabecera de factura con join a customers, aplicados por factura y 
+- ENF-07 (add) `confirmed`: La migracion de la lectura de Cobranza no cambia el contrato de respuesta de los tres endpoints (mismos campos y nombres: id, pending, statu
+
+**Tasks agregadas:**
+
+- S8: En backend/jormat-api/src/payments/payments.repository.ts agregar el acceso a datos del listado de Cobranza: una consulta tenantScoped que trae la cabecera de invoices con join a customers (uuid, folio, fecha, expiration_date, total, origin_name, rut/razon social), los importes aplicados por factura y el medio del ultimo pago vigente por factura, reutilizando las primitivas de proyeccion de saldo y aplicados por factura de sales (no duplicar SQL de saldo). Debe soportar los filtros, orden y paginacion que hoy acepta el endpoint y exponer tambien el conteo/agregado para el summary sobre el mismo universo filtrado. (valida: REQ-08, REQ-09, ENF-06; rollback: git checkout -- backend/jormat-api/src/payments/payments.repository.ts (el metodo es aditivo: ningun consumidor existente lo llama aun))
+- S8: Migrar findAllCobranza y getSummary de PaymentsService (backend/jormat-api/src/payments/payments.service.ts:183-190,278) para que lean del repositorio en vez del SEED: id = uuid real de invoices, pending = total - pagos aplicados vigentes, status derivado (Pagado si pending=0; Vencida si pending>0 y expiration_date < hoy; Pendiente en el resto), origin desde origin_name y formaPago = medio del ultimo pago vigente o 'Sin pago'. Mantener identicos los nombres de campos y la forma de la respuesta (ENF-07) y que el summary use exactamente los mismos filtros que el listado. (valida: REQ-08, REQ-09, ENF-07; rollback: git checkout -- backend/jormat-api/src/payments/payments.service.ts (vuelve a la lectura del SEED, que aun no fue retirado en esta task))
+- S8: Migrar getInvoice (detalle de Cobranza) para resolver contra la DB por uuid usando getInvoiceView de sales y devolver cabecera con datos del cliente mas los pagos vigentes de esa factura; lanzar NotFoundException (404) cuando el uuid no existe, incluidos los ids con formato de seed 'inv-*'. Quitar la lectura del seed en este camino. (valida: REQ-10; rollback: git checkout -- backend/jormat-api/src/payments/payments.service.ts para restaurar getInvoice sobre el seed)
+- S8: Retirar la constante SEED y todo el codigo stub muerto de PaymentsService (backend/jormat-api/src/payments/payments.service.ts:63 y helpers que solo servian a la semilla), dejando el modulo sin lecturas en memoria. Verificar que el controller (backend/jormat-api/src/payments/payments.controller.ts) sigue delegando los tres endpoints al service sin consultas propias y que no quedan imports huerfanos. (valida: REQ-11, ENF-06; rollback: git checkout -- backend/jormat-api/src/payments/payments.service.ts backend/jormat-api/src/payments/payments.controller.ts)
+- S8: Reescribir los specs de service y controller de payments que hoy afirman el seed (ids 'inv-*' y pagos sembrados) para que afirmen la lectura desde la DB: uuid real en el listado, pending = total - aplicados vigentes, status por expiration_date (caso limite: vencimiento = hoy -> Pendiente; ayer -> Vencida), formaPago del ultimo pago vigente y 'Sin pago' sin pagos, summary coincidente con el listado bajo los mismos filtros, detalle 404 con uuid inexistente y con id 'inv-1', y aislamiento por workspace (factura de otro tenant no aparece). Adaptar el fake de backend/jormat-api/src/payments/payments.persistence.spec.ts al nuevo acceso de datos del repositorio y cubrir el flujo end-to-end aplicar/revertir pago sobre un uuid devuelto por el listado. (valida: REQ-08, REQ-09, REQ-10, REQ-11, ENF-06, ENF-07, test; rollback: git checkout -- backend/jormat-api/src/payments/payments.service.spec.ts backend/jormat-api/src/payments/payments.controller.spec.ts backend/jormat-api/src/payments/payments.persistence.spec.ts)
 ## Sessions
 
 ### Session 1 · T3 · continue
@@ -278,3 +341,12 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 ### Session 5 · continue
 
 ### Session 7 · continue
+
+### Session 8 · open
+
+**Tasks:**
+- [ ] S8.T1
+- [ ] S8.T2
+- [ ] S8.T3
+- [ ] S8.T4
+- [ ] S8.T5
