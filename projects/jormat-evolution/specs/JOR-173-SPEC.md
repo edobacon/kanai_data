@@ -235,4 +235,4 @@ Contrato: rollback: Eliminar los archivos de test nuevos.. Status: done
 
 **Gate (auto)**: Al anular una factura pagada de $100.000, el popup del cliente y el Estado de cuenta muestran un credito disponible de $100.000. Al aplicar $40.000 a otra factura, se ve la aplicacion vinculada y su saldo baja a $20.000.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
