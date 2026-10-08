@@ -191,7 +191,7 @@ Contrato: rollback: Revertir el commit de las pruebas y, si se tocó, del mapeo 
 
 **Gate (auto)**: El popup de Crear factura muestra contadores numéricos reales en lugar de null. El caso de criterio 24 (Rechazado + Pendiente = 'Cheques: 1') pasa en catalogos.controller.spec.ts y se ve en la UI.
 
-### Session 2 · T2 · iterate
+### Session 2 · T2 · continue
 
 **Tasks:**
 - [x] S2.T1
