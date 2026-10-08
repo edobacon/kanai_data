@@ -88,43 +88,43 @@ Contrato: rollback: Revertir el commit.. Status: done
 Contrato: rollback: Revertir el commit.. Status: done
 
 #### S1.T3 — Endpoint POST de anulacion sobre la factura con un DTO validado {tipo: Devolucion|Falla, observacion} y un guard de capability sales.documents:void (la existente en backend/seeds/05_sales_capabilities.ts:26, sin tocar seeds).
-Contrato: rollback: Revertir el commit del controller y el DTO.. Status: pending
+Contrato: rollback: Revertir el commit del controller y el DTO.. Status: done
 
 #### S1.T3.1 — DTO VoidInvoiceDto con validacion de clase: tipo obligatorio restringido al enum NotaCreditoTipo (Devolucion|Falla) y observacion string opcional con largo maximo acotado por una constante. El DTO no declara lineas, y el ValidationPipe con whitelist descarta las lineas que lleguen en el body.
 Contrato: rollback: Revertir el commit del DTO.. Status: done
 
 #### S1.T3.2 — Ruta POST de anulacion en el controller de documentos de venta (p.ej. POST /sales/documents/:id/void) que delega en voidInvoice con el id de la factura, el DTO y el usuario autenticado, y responde 201 con la nota creada (id, tipo, total, documento origen y saldo disponible).
-Contrato: rollback: Revertir el commit de la ruta en el controller.. Status: pending
+Contrato: rollback: Revertir el commit de la ruta en el controller.. Status: done
 
 #### S1.T3.3 — Proteger la ruta con el guard o decorador de capabilities que ya usa el modulo de ventas, exigiendo la capability existente sales.documents:void. Usuario sin la capability responde 403. Sin cambios en backend/seeds/05_sales_capabilities.ts ni en backend/seeds/10_demo_roles_users.ts.
-Contrato: rollback: Revertir el commit del decorador en la ruta.. Status: pending
+Contrato: rollback: Revertir el commit del decorador en la ruta.. Status: done
 
 #### S1.T3.4 — Mapeo de errores a HTTP sin exponer stack traces: tipo invalido o ausente responde 400, factura inexistente 404, documento que no es factura emitida 422, y factura ya anulada o violacion del indice unico 409 con un mensaje de factura ya anulada.
-Contrato: rollback: Revertir el commit del mapeo de errores.. Status: pending
+Contrato: rollback: Revertir el commit del mapeo de errores.. Status: done
 
 #### S1.T4 — Tests e2e backend de anulacion: criterios 15, 16 y 18, 403 sin capability, 400 por tipo invalido, rollback ante una falla de stock y concurrencia. Regresion de backend/test/e2e/roles-config.e2e-spec.ts.
-Contrato: rollback: Eliminar el archivo de test nuevo.. Status: pending
+Contrato: rollback: Eliminar el archivo de test nuevo.. Status: done
 
 #### S1.T4.1 — Setup del archivo test/e2e/invoice-void.e2e-spec.ts: fixtures con un cliente, la factura emitida de 2 lineas (3 u x $10.000 y 1 u x $70.000, item A en bodega B1), una factura pagada de $100.000, un usuario demo con sales.documents:void y un usuario sin ella, y limpieza entre tests.
-Contrato: rollback: Eliminar el archivo de test nuevo.. Status: pending
+Contrato: rollback: Eliminar el archivo de test nuevo.. Status: done
 
 #### S1.T4.2 — Test de anulacion con tipo Devolucion sobre el fixture de 2 lineas (JOR-173-Q1): la devolucion genera 2 movimientos de inventario, +3 u del item A y +1 u del item B, ambos items con control de stock en la bodega B1 (bodega de origen de cada linea). Ajustar el stock resultante de cada item: el item A sube 3 u y el item B sube 1 u en B1, y los 2 movimientos quedan referenciados a la nota, sin duplicados. Aclarar en el test que el caso de 1 solo movimiento de +3 u corresponde a una factura de UNA sola linea, no al fixture de 2 lineas. Tipo Falla sobre el mismo fixture: 0 movimientos.
-Contrato: rollback: Eliminar el bloque de test.. Status: pending
+Contrato: rollback: Eliminar el bloque de test.. Status: done
 
 #### S1.T4.3 — Caso Falla (criterio 16): deuda de la factura 0, 0 movimientos de stock referenciados a la nota y stock de A en B1 sin cambios. Sobre la factura pagada de $100.000, el pago sigue registrado y la nota queda con saldo disponible $100.000.
-Contrato: rollback: Eliminar el bloque de test.. Status: pending
+Contrato: rollback: Eliminar el bloque de test.. Status: done
 
 #### S1.T4.4 — Unicidad (criterio 18): un segundo POST responde 409 sin cambiar la cantidad de notas, movimientos ni credito. Dos POST concurrentes (Promise.all): exactamente un 201 y un 409, y queda 1 sola nota.
-Contrato: rollback: Eliminar el bloque de test.. Status: pending
+Contrato: rollback: Eliminar el bloque de test.. Status: done
 
 #### S1.T4.5 — Permisos y validacion: usuario sin sales.documents:void responde 403 con la factura intacta; tipo ausente u 'Otro' responde 400; documento en borrador o la propia nota responde 422. En los tres casos no se crea nota ni movimiento.
-Contrato: rollback: Eliminar el bloque de test.. Status: pending
+Contrato: rollback: Eliminar el bloque de test.. Status: done
 
 #### S1.T4.6 — Atomicidad: con jest.spyOn sobre el servicio de movimientos de stock de 2/7 lanzando un error en la segunda linea, la respuesta es error, no queda nota creada, la deuda sigue en $100.000 y no queda ningun movimiento parcial.
-Contrato: rollback: Eliminar el bloque de test.. Status: pending
+Contrato: rollback: Eliminar el bloque de test.. Status: done
 
 #### S1.T4.7 — Regresion: correr backend/test/e2e/roles-config.e2e-spec.ts sin modificarlo y confirmar con git diff que los seeds de capabilities y roles no cambiaron.
-Contrato: rollback: No aplica: no modifica archivos.. Status: pending
+Contrato: rollback: No aplica: no modifica archivos.. Status: done
 
 #### S2.T1 — Agregar al menu de la factura emitida en DocumentoDetalleView la accion 'Convertir en Nota de Credito / Anular', visible solo con sales.documents:void y si la factura no esta anulada. El modal tiene un selector Devolucion/Falla (obligatorio), la observacion y la llamada al endpoint, y maneja el 409.
 Contrato: rollback: Revertir el commit del componente y el modal.. Status: pending
@@ -191,7 +191,7 @@ Contrato: rollback: Eliminar los archivos de test nuevos.. Status: pending
 - edit S3.T3 { desc="Escribir el archivo de test nuevo backend/jormat-api/test/e2e/invoice-void-credit.e2e-spec.ts (config jest.e2e.config.ts) que cubre el criterio 17 (factura pagada de $100.000 deja $100.000 de credito disponible), la aplicacion de $40.000 a otra factura del mismo cliente con vinculo real y saldo restante de $60.000, el rechazo 422 por importe mayor al saldo disponible ($120.000 sobre $100.000), el rechazo 422 por factura de otro cliente y el rechazo por falta de payments.customers:apply-payment. Ejecutar ademas las suites de regresion de JOR-171.", validates=["REQ-05","REQ-06"], isTest=true, verify=["cd backend/jormat-api && npm run test:e2e -- invoice-void-credit"] }
 ## Sessions
 
-### Session 1 · T3 · open
+### Session 1 · T3 · continue
 
 **Tasks:**
 - [x] S1.T1
@@ -201,19 +201,19 @@ Contrato: rollback: Eliminar los archivos de test nuevos.. Status: pending
 - [x] S1.T2.1
 - [x] S1.T2.2
 - [x] S1.T2.3
-- [ ] S1.T3
+- [x] S1.T3
 - [x] S1.T3.1
-- [ ] S1.T3.2
-- [ ] S1.T3.3
-- [ ] S1.T3.4
-- [ ] S1.T4
-- [ ] S1.T4.1
-- [ ] S1.T4.2
-- [ ] S1.T4.3
-- [ ] S1.T4.4
-- [ ] S1.T4.5
-- [ ] S1.T4.6
-- [ ] S1.T4.7
+- [x] S1.T3.2
+- [x] S1.T3.3
+- [x] S1.T3.4
+- [x] S1.T4
+- [x] S1.T4.1
+- [x] S1.T4.2
+- [x] S1.T4.3
+- [x] S1.T4.4
+- [x] S1.T4.5
+- [x] S1.T4.6
+- [x] S1.T4.7
 
 **Gate (auto)**: El e2e backend de anulacion pasa en verde: Devolucion (deuda 0 y stock +N en la bodega de origen), Falla (deuda 0, sin movimientos), 409 en el segundo intento y 403 sin sales.documents:void.
 
