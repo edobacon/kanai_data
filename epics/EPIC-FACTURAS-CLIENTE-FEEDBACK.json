@@ -28,135 +28,6 @@
   "branch": "feature/facturas-cliente-feedback",
   "tickets": [
     {
-      "id": "JOR-169",
-      "title": "Facturas cliente (feedback) 1/7 · Persistencia de ventas y correccion de migraciones de facturas",
-      "body": "## Contexto\n\nParte 1 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). El feedback del cliente prevalece sobre el legacy.\n\nHoy Ventas trabaja en memoria (`backend/jormat-api/src/sales/sales.service.ts:332`, `STUB_DOCUMENTOS`): borradores, emisiones y lineas se pierden al reiniciar y no usan las tablas `invoices` / `invoice_items` creadas en el commit 937de25. Ademas la migracion de datos de facturas falla. Este ticket es la base del resto de la epica.\n## Alcance\n\n1. **T-01 Corregir backfill** de `backend/jormat-api/migrations/20261003000002_invoices_legacy_data.ts`: mapear `customer_id` a `customers.id` (entero), no a `customers.uuid` (hoy PostgreSQL devuelve 42804). Revisar `000004` (corre tarde y retorna si la columna ya es INTEGER). La API sigue exponiendo el UUID.\n2. **T-02 Instalacion desde cero**: `backend/jormat-api/migrations/20260924000000_rbac_bodega_orders_production.ts` falla en base vacia (FK `role_capabilities_role_id_foreign`, depende de `internal-admin`). Garantizar el orden o crear el rol.\n3. **T-04 Persistir Sales** sobre `invoices` / `invoice_items`:\n   - Borrador sin folio, editable y fuera de deuda (R-05).\n   - Emision: folio simulado separado del id, fecha y usuario de emision; emitida inmutable (R-07).\n   - Clonar crea un documento nuevo con identidad nueva.\n   - Integridad: FK de `invoice_items.invoice_id`, `item_id`, `location_id`; UNIQUE en los uuid; CHECK de cantidad positiva; `workspace_id` explicito (hoy default DEV).\n4. **T-03 Unidad del descuento de linea**: persistir porcentaje (y el importe calculado si se guarda), con unidad explicita (P-08.1).\n5. **P-04.1 Copia del receptor en el documento**: RUT, razon social, direccion, ciudad, telefono, guardados en la factura al emitir. Cambiar la ficha del cliente despues no altera la factura emitida.\n6. **T-13 Guardar N.P. y O.C.** en la factura (hoy N.P. solo vive en memoria del borrador, `backend/jormat-api/src/sales/sales.service.ts:610`; en el legacy tampoco se guardaba). Mostrarlos en detalle e impresion.\n7. Guardar en cada linea el **costo neto unitario** al emitir (lo usa la utilidad del ticket 2/7, P-09.2).\n## Criterios de aceptacion\n\n- Migraciones: `migrate:latest` pasa desde base vacia y como upgrade de una base con datos; los snapshots quedan con `customer_id` y `workspace_id` consistentes.\n- Guardar borrador, reiniciar el servicio y retomarlo con todas sus lineas (criterio 14 del doc).\n- Emitir asigna folio simulado; intentar editar una emitida devuelve error en el API.\n- Clonar crea otro documento; el original no cambia.\n- Cambiar la direccion del cliente despues de emitir no cambia la factura emitida (criterio 13).\n- N.P. y O.C. ingresadas se ven en detalle e impresion despues de reiniciar (criterio 27).\n- Tests existentes de `sales` siguen pasando o se adaptan solo si afirman el comportamiento en memoria.\n\n## Fuera de alcance\n\nReglas comerciales de emision (2/7), saldo y pagos (3/7), notas de credito (5/7), SII (7/7). Migracion historica completa de facturas.\n\n## Evidencia\n\nDoc de decisiones secciones 4.2 (P-04.1), 4.3 (P-08.1), 4.7 (P-01.1) y 5 (T-01 a T-04, T-13). La investigacion del backend del 03-10 (KB del proyecto, carpeta tickets) trae las pruebas de migraciones y la auditoria del esquema.",
-      "revision": "3a9b592ed09ef7f53ddd711ed427232a33cf0d4396991f0b940cf5c9fa0c8632",
-      "repo": "monorepo",
-      "aliases": [],
-      "scopeApproved": true,
-      "dependencies": [],
-      "requirements": [],
-      "provides": [],
-      "assets": [
-        {
-          "path": "backend/jormat-api/src/sales/sales.service.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "backend/jormat-api/migrations/20261003000002_invoices_legacy_data.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "backend/jormat-api/migrations/20260924000000_rbac_bodega_orders_production.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        }
-      ],
-      "criteria": [
-        "Migraciones pasan desde base vacia y como upgrade, con customer_id y workspace_id consistentes",
-        "Borrador guardado sobrevive a un reinicio y se retoma con sus lineas",
-        "Emitida no se edita; clonar crea otro documento",
-        "Cambiar la direccion del cliente no altera una factura emitida",
-        "N.P. y O.C. se ven en detalle e impresion despues de reiniciar"
-      ]
-    },
-    {
-      "id": "JOR-170",
-      "title": "Facturas cliente (feedback) 2/7 · Reglas de emision en servidor, Super Usuario y utilidad",
-      "body": "## Contexto\n\nParte 2 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7 (persistencia).\n\nEl cliente exige que las reglas que bloquean la emision se validen en frontend **y** backend con datos reales (feedback §11, R-20). Hoy el backend no valida tope de ficha, bloqueo de descuento, precio minimo ni excepciones (`backend/jormat-api/src/sales/sales.service.ts` no lee `oil`, `maxDiscount` ni `minPrice`); el front tampoco aplica el tope de la ficha en modo importe (`front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx:379`).\n\n**Reemplaza** lo definido en JOR-167 CA-09 (descuento de linea como monto sin tope): el tope se valida en porcentaje; la pantalla puede seguir aceptando importe, convertido a porcentaje para validar.\n## Alcance\n\n### Reglas para todo usuario (T-06, emision transaccional)\n- Cliente bloqueado (`customers.locked`) impide Facturar (R-09, P-07.1). Mensaje de referencia: \"Cliente bloqueado contactar gerencia, imposible generar venta\".\n- Stock de la bodega de origen: si la cantidad supera el disponible (incluido 0) se bloquea Facturar, se identifica el item y la cantidad queda para corregir (R-11, P-06.1). Aplica tambien a Super Usuario. Mensaje de referencia: \"Su sucursal no cuenta con stock suficiente para item ID {id} - Actual: {n}\".\n- Credito: solo 30 o 60 dias; vencimiento = fecha del documento + dias corridos (R-10, P-05.1).\n- Origen = bodega seleccionada; determina stock y ubicaciones (P-02.1).\n- Emision en una transaccion: cabecera, lineas y descuento de stock, con control concurrente; movimientos de inventario referenciados a la factura y sin duplicados ante reintentos (T-07).\n\n### Reglas del usuario comun\n- Descuento de linea en porcentaje sobre precio neto x cantidad, con tope `ds_max_discount` de la ficha (R-12, P-08.1).\n- Descuento general maximo 20%; excluyente con descuentos de linea (R-13, P-08.2).\n- Repuestos con **Bloqueo Descuento** en la ficha: sin descuento de linea y bloquean el descuento general mientras haya al menos uno en la factura (P-08.2).\n- Precio minimo = precio neto de venta vigente de la ficha (`nm_net`, no el costo `net_price`); al retomar borrador se actualiza y se avisa (R-14, P-08.3).\n- Al crear desde otro documento (factura, guia), los valores copiados pasan por estas reglas; si incumplen, se bloquea Facturar (P-01.2, P-01.2.D1).\n\n### T-10 Unificar `oil` y `bloqueo_descuento`\nHoy la ficha y el CSV escriben solo `bloqueo_descuento` (`backend/jormat-api/src/items/items.repository.ts:822`, `backend/jormat-api/src/items/csv/items-import.util.ts:196`) y ventas/compras/guias leen solo `oil`: marcar el bloqueo no tiene efecto. Decision (opcion A): migracion que copia `oil = 1` a `bloqueo_descuento = 1` y elimina `oil`; cambiar lectores (`backend/jormat-api/src/items/dto/item.dto.ts` y listado de `backend/jormat-api/src/items/items.repository.ts`, `front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx`, `front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx`, `front/jormat-front/src/components/compras/builder/PurchaseInvoiceBuilder.tsx`, `front/jormat-front/src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx`, `front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx`); badge \"Aceite\" pasa a \"Bloqueo descuento\". Correr pruebas de Compras, Guias y Solicitudes de pedido.\n\n### Super Usuario (P-09.1, R-15, R-16)\n- Capability nueva (nombre propuesto `sales.invoices:commercial-override`), validada en el backend. `owner` e `internal-admin` la reciben; crear rol \"Super Usuario\" con ella.\n- Habilita: superar tope de ficha y descontar repuestos con Bloqueo Descuento en la linea; descuento general **hasta 80%**; precio bajo el vigente; ver costo y utilidad.\n- No habilita: facturar a cliente bloqueado o sin stock, ni combinar descuento general con un repuesto con Bloqueo Descuento.\n\n### Utilidad (P-09.2, R-17)\nSolo con la capability. Por linea y total: monto = venta neta despues de descuentos - costo neto x cantidad; porcentaje = monto / venta neta x 100 (margen sobre venta). Costo = costo neto de compra de la ficha al emitir, guardado en la linea (1/7). Sin costo o venta 0: \"Sin dato\".\n## Criterios de aceptacion (verificados en API)\n\n- Cliente bloqueado: el API rechaza la emision aunque el front se salte el boton (criterio 6).\n- Stock 3, cantidad 5: rechazo; dos emisiones simultaneas con stock para una no dejan stock negativo (criterio 7).\n- Usuario comun: tope de ficha, precio bajo el vigente o general combinado con linea: rechazo (criterio 8).\n- Repuesto con Bloqueo Descuento + otro repuesto: general bloqueado; quitarlo lo habilita solo si no queda otro (criterio 9).\n- Super Usuario baja precio y supera topes, ve utilidad; no factura a bloqueado ni sin stock (criterio 10). General 80% se acepta, 81% se rechaza; usuario comun limite 20% (criterio 28).\n- Credito solo 30 o 60 (criterio 11).\n- Venta 100.000, costo 80.000: utilidad $20.000 (20%); cambiar el costo de la ficha despues no altera la factura emitida (criterio 26).\n- Marcar Bloqueo de descuento en la ficha (pantalla o CSV) bloquea los descuentos en la factura, tambien en el API (criterio 30).\n\n## Fuera de alcance\n\nSaldo y pagos (3/7). Tarifas por cliente/sucursal. Excepciones de stock para Super Usuario.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-09 a R-17, R-20), 4.2, 4.3, 4.4, 4.7 y 5 (T-06, T-07, T-10). La evidencia del legacy (regla de Bloqueo Descuento, rotulo de la ficha, vista especial con tope 80% y calculo de utilidad), con archivo y linea, esta en esas secciones del doc.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-07 - dev (via opencode)\n\nDecisiones del dev (07-10) que completan el alcance antes de aprobar el spec:\n\n1) Movimientos de inventario (T-07, REQ-03): se crea la tabla nueva `inventory_movements` (workspace_id, item_id, warehouse_id, location_id, quantity entero con signo (negativo=sale, positivo=ingresa), reference_type ('invoice'|'credit_note'), reference_id, created_at, created_by), con unique (workspace_id, reference_type, reference_id, item_id, warehouse_id, location_id) para idempotencia ante reintentos. La emisión inserta un movimiento negativo por línea y decrementa `item_warehouses.item_qty` de la bodega de origen, todo en la misma transacción.\n\n2) Bodega de origen (P-02.1, REQ-02): se resuelve desde el string `origen` del payload contra `warehouse.ds_code` (mismo criterio que Guías y ajustes de stock); si no matchea una bodega del workspace, se rechaza la emisión con mensaje claro. El stock se valida contra `item_warehouses.item_qty` de esa bodega. No se modifica el contrato del payload.\n\n3) T-10 / REQ-10 (ajuste sobre la decisión previa): NO se dropea la columna `items.oil`. La migración solo copia `oil=1 → bloqueo_descuento=1` (UPDATE) y todos los lectores pasan a leer `bloqueo_descuento`. La columna `oil` queda inerte con su dato; su retiro final queda para ops en un ticket de limpieza posterior.\n\n**Motivo**: Resolver el bloqueo del spec (tabla de movimientos y bodega de origen) y ajustar T-10 para no dropear datos.\n\n### Adenda 2 - 2026-10-07 - dev (via opencode)\n\nCorrección de la unificación T-10 (reemplaza el punto 3 de la Adenda 1). Verificado contra el legacy y el feedback: en el legacy la columna real es `items.oil` (la ficha la escribe/lee y la factura la usa; rótulo de pantalla \"Bloqueo Descuento\"); en Evolution se agregó `items.bloqueo_descuento` (JOR-157) que escribe la ficha y el CSV, pero los builders leían solo `oil`.\n\nDecisión vigente (Enfoque C, no destructiva):\n- NO se modifica la tabla `items`: NO hay migración, NO se copia dato, NO se dropea ninguna columna. Se conservan `oil` y `bloqueo_descuento` con sus datos.\n- El bloqueo de descuento se considera ACTIVO si `bloqueo_descuento = 1` O `oil = 1`. El backend expone el flag efectivo y el front lo usa; se conservan ambos campos.\n- El badge \"Aceite\" pasa a decir \"Bloqueo descuento\".\n- El resto del alcance (tabla nueva `inventory_movements`, decremento de `item_warehouses.item_qty`, validaciones en servidor, Super Usuario, utilidad) se mantiene igual.\n\n**Motivo**: Evitar cualquier cambio/migración en la tabla items y conservar ambas columnas; validado contra legacy y feedback del cliente.",
-      "revision": "0d24dba2bd3db069ec0cdef1728e3370cb968334f8e5f72203cf678c5fa79314",
-      "repo": "monorepo",
-      "aliases": [],
-      "scopeApproved": true,
-      "dependencies": [
-        "JOR-169"
-      ],
-      "requirements": [],
-      "provides": [],
-      "assets": [
-        {
-          "path": "backend/jormat-api/src/sales/sales.service.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.tsx",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "backend/jormat-api/src/items/items.repository.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "backend/jormat-api/src/items/csv/items-import.util.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "backend/jormat-api/src/items/dto/item.dto.ts",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "front/jormat-front/src/components/shared/builder/LineItemsTable/LineItemsTable.tsx",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "front/jormat-front/src/components/compras/builder/PurchaseInvoiceBuilder.tsx",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "front/jormat-front/src/components/bodega/guias-despacho/CrearGuiaDespachoView/CrearGuiaDespachoView.tsx",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        },
-        {
-          "path": "front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.tsx",
-          "kind": "input",
-          "sourcePaths": [],
-          "requiredContent": [],
-          "checks": []
-        }
-      ],
-      "criteria": [
-        "Cliente bloqueado y stock insuficiente se rechazan en el API, sin stock negativo con emisiones simultaneas",
-        "Usuario comun: tope de ficha, precio bajo el vigente y descuento general combinado se rechazan; general maximo 20%",
-        "Bloqueo Descuento marcado en la ficha bloquea descuento de linea y general, tambien en el API",
-        "Super Usuario supera topes, general hasta 80% (81% rechazado), ve utilidad; no factura a bloqueado ni sin stock",
-        "Utilidad 100.000 / 80.000 = $20.000 (20%) y no cambia si cambia el costo de la ficha",
-        "Credito solo 30 o 60 dias"
-      ]
-    },
-    {
       "id": "JOR-171",
       "title": "Facturas cliente (feedback) 3/7 · Saldo, pagos y estados comerciales en el listado",
       "body": "## Contexto\n\nParte 3 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7.\n\nEl cliente pide que el listado muestre informacion comercial (pago y vencimiento), no solo estado SII (feedback §3.1 a §3.3, captura p. 6). Hoy Payments usa SEED (`backend/jormat-api/src/payments/payments.service.ts:63`), `applyPayment` no persiste, y la etiqueta Vencida compara vencimiento con estado SII \"aceptado\", que no acredita pago. Ventas y Cobranza no comparten datos.\n## Alcance\n\n1. **P-13.1 Pagos persistidos** en el modulo de Cobranza de Evolution (capabilities existentes `payments.customers:record-payment` y `apply-payment`): pago (cliente, fecha, importe, medio, referencia, usuario, vigente/revertido) y aplicacion a factura (importe aplicado). Reutilizar `payment_methods`.\n2. **T-05 Proyeccion unica de saldo**: saldo = total - pagos aplicados - notas de credito aplicadas. La usan estado, listado, tarjetas, popup (4/7) y Estado de cuenta (4/7). Sin tabla de \"vencidas\".\n3. **Estados comerciales (R-05)**: Borrador (sin folio, fuera de deuda), Pendiente de pago (emitida, saldo > 0, dentro del plazo), Pagada (saldo 0), Vencida (saldo > 0 y plazo de 30/60 dias cumplido). Separados del estado SII simulado.\n4. **Tarjetas (R-02, P-14.2 opcion B)**: Pendientes de pago (con saldo **dentro del plazo**), Vencidos (con saldo y plazo cumplido), Notas de credito (todas las emitidas). Borradores no cuentan. Reemplazan las tarjetas actuales centradas en SII.\n5. **P-14.1 opcion A**: las tarjetas cuentan los documentos que cumplen los filtros activos y el acceso del usuario; se recalculan al aplicar o limpiar filtros. Agregacion en servidor sobre datos persistidos.\n6. **Filtros y busqueda (R-03, R-04)**: RUT, nombre o razon social, Origen, O.C. (columna \"Orden\"), rango de fechas (se mantiene) y estado comercial (Borrador, Pendiente de pago, Pagada, Vencida). Quitar el filtro marcado en la captura p. 6.\n7. **R-01**: excluir guias de despacho del listado.\n\n## Criterios de aceptacion\n\n- Las guias de despacho no aparecen (criterio 1).\n- Credito 30 dias emitida hace 31 dias con saldo: Vencida, cuenta en \"Vencidos\" y no en \"Pendientes de pago\" (criterio 2).\n- Dos pagos parciales que completan el total: Pagada, sale de ambos contadores (criterio 3).\n- Un borrador no cuenta en deuda ni tarjetas (criterio 4).\n- Cada filtro devuelve el conjunto esperado (criterio 5).\n- Con un rango de fechas, los tres contadores coinciden con la tabla filtrada; al limpiar vuelven al total del usuario (criterio 29).\n- Un pago registrado sobrevive a un reinicio y se refleja en estado y tarjetas.\n\n## Fuera de alcance\n\nNotas de credito y su aplicacion (5/7; este ticket deja la proyeccion preparada para sumarlas). Cheques (4/7). Reportes de cobranza.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-01 a R-05), 4.1 (P-13.1, P-14.1, P-14.2) y 5 (T-05). La formula de saldo del legacy (total menos pagos) esta citada con archivo y linea en la seccion 4.1. Summary actual en `backend/jormat-api/src/sales/sales.service.ts:447`.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-08 - dev (via opencode)\n\nCorreccion de regresion (review kn-dredd sobre JOR-171, S1 confirmado): el modulo de Cobranza quedo medio migrado.\n\nJOR-171 hizo PERSISTENTE la escritura (applyPayment/deletePayment contra `invoices` real, id uuid) pero la LECTURA sigue sobre el SEED del stub: `findAllCobranza` / `getSummary` / `getInvoice` devuelven ids sembrados (`inv-*`) y pagos de la semilla (`payments.service.ts:183-190,278`). Consumidores del seed: la vista 09 (listado de cobranza) y la vista 10 (Aplicar pago). Antes de JOR-171 el modulo era consistente (todo en memoria); al persistir solo la escritura quedo inconsistente.\n\nEfecto: al registrar o revertir un pago desde la app, `resolveCustomerId` / `revertPayment` (`payments.repository.ts:293,353`) rechazan el id `inv-*` y el endpoint responde 404 (\"Factura no encontrada\" / \"Pago no encontrado\"). El criterio \"un pago registrado sobrevive a un reinicio\" no es alcanzable desde la UI.\n\nAlcance que se agrega: migrar la LECTURA de Cobranza (listado paginado, summary y detalle) a la DB persistida, reutilizando las primitivas de sales (proyeccion de saldo, aplicados por factura, cabecera con join a `customers`): el listado devuelve el uuid real, `pending` = total - aplicado, el estado derivado con el vencimiento real (`expiration_date`) y la forma de pago del ultimo pago (o 'Sin pago'); el detalle usa `getInvoiceView`. Se retira el `SEED` y el codigo stub muerto. Sin cambio de contrato de respuesta ni migracion de DB.\n\n**Motivo**: Regresion introducida por JOR-171 detectada en el review: el flujo de aplicar/revertir pago de la app queda roto (404) porque la lectura de Cobranza aun sirve ids de la semilla mientras la escritura exige uuid real.",
@@ -179,6 +50,13 @@
         },
         {
           "path": "backend/jormat-api/src/sales/sales.service.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "backend/jormat-api/src/payments/payments.repository.ts",
           "kind": "input",
           "sourcePaths": [],
           "requiredContent": [],
@@ -326,7 +204,14 @@
       ]
     }
   ],
-  "externalEvidence": {},
+  "externalEvidence": {
+    "JOR-169": [
+      "kanai:ticket/JOR-169/closed (2026-10-07 10:39); commits en feature/facturas-cliente-feedback, ultimo 0d882fc"
+    ],
+    "JOR-170": [
+      "kanai:ticket/JOR-170/closed (2026-10-07 19:22); commits en feature/facturas-cliente-feedback, ultimo 16b5927"
+    ]
+  },
   "dependencyWork": [],
   "contracts": [],
   "readPaths": [
@@ -506,10 +391,6 @@
     }
   ],
   "mentionCatalog": {
-    "JOR-157": {
-      "ticketId": "JOR-157",
-      "status": "closed"
-    },
     "JOR-166": {
       "ticketId": "JOR-166",
       "status": "closed"
@@ -526,17 +407,8 @@
   "mentionFamilies": [
     "JOR:2"
   ],
-  "version": 6,
+  "version": 11,
   "dependencies": [
-    {
-      "from": "JOR-169",
-      "to": "JOR-170",
-      "origin": "declared",
-      "reason": "Dependencia declarada",
-      "source": "JOR-170:dependencies",
-      "accepted": true,
-      "dismissed": false
-    },
     {
       "from": "JOR-169",
       "to": "JOR-171",
@@ -611,8 +483,6 @@
     }
   ],
   "order": [
-    "JOR-169",
-    "JOR-170",
     "JOR-171",
     "JOR-172",
     "JOR-173",
@@ -624,7 +494,96 @@
     "reason": "El dev aprueba los cambios sensibles de modelo de datos detectados en la epica (reescritura/borrado en JOR-169 y JOR-170; siembra de capabilities/roles en JOR-170 y JOR-175), tras revisar el detalle.",
     "by": "human-confirmed"
   },
-  "decisionBank": [],
+  "decisionBank": [
+    {
+      "questionId": "JOR-172-Q2",
+      "ticketId": "JOR-172",
+      "question": "¿Que dato muestra la columna 'Origen' de la grilla del Estado de cuenta (sucursal, modulo de origen, documento de origen u otro) y de que campo se obtiene?",
+      "answer": "Supuesto avalado: La columna Origen muestra invoices.origin_name (varchar 120, migracion 20261003000012). Misma definicion que JOR-167-Q5, que sigue abierta: si se redefine alli, se ajusta aqui.",
+      "sourceRevision": "2fad6554bdfc0898c690a814ee4f2cef4c2d88efe1a8343bb2d1f85e39673f5e",
+      "answeredAt": "2026-10-08T18:57:24.965Z"
+    },
+    {
+      "questionId": "JOR-173-Q2",
+      "ticketId": "JOR-173",
+      "question": "¿Que capability protege el endpoint de aplicacion de credito a otra factura (S3.T1): sales.documents:void u otra existente del modulo de ventas o cobranzas?",
+      "answer": "Supuesto avalado: El endpoint de aplicacion de credito a otra factura se protege con payments.customers:apply-payment (aplica saldo, no anula). sales.documents:void queda para la anulacion del documento.",
+      "sourceRevision": "8f7ef292a70bfc497768c2b0fb17939caeeb065ba6ca584b876553a550b5bfc1",
+      "answeredAt": "2026-10-08T18:57:24.998Z"
+    },
+    {
+      "questionId": "JOR-173-Q3",
+      "ticketId": "JOR-173",
+      "question": "¿Cuales son las rutas exactas de las suites de regresion de JOR-171 (proyeccion de saldo) y JOR-172 (popup y Estado de cuenta) que deben correr en el verify de S3.T3?",
+      "answer": "Supuesto avalado: Suites de regresion de JOR-171: backend/jormat-api/src/sales/proyeccion-saldo.spec.ts, src/payments/payments.persistence.spec.ts y src/payments/payments.service.spec.ts. Las de JOR-172 (popup y Estado de cuenta) aun no existen: se fijan al ejecutar JOR-172 y se agregan al verify de S3.T3.",
+      "sourceRevision": "8f7ef292a70bfc497768c2b0fb17939caeeb065ba6ca584b876553a550b5bfc1",
+      "answeredAt": "2026-10-08T18:57:25.029Z"
+    },
+    {
+      "questionId": "JOR-174-Q4",
+      "ticketId": "JOR-174",
+      "question": "¿Cuales son los nombres exactos de las columnas de destinatario, RUT, telefono, direccion, ciudad, transporte y observacion que 1/7 (JOR-168) persistio en la factura, y ya estan en la rama base?",
+      "answer": "Supuesto avalado: Columnas persistidas en invoices (migracion 20261003000012): receiver_razon_social, receiver_rut, receiver_telefono, receiver_ciudad, receiver_direccion. Transporte: transportation_id y transportation_name (migracion 20261003000000). Observacion: en facturas de venta no se verifico una columna propia (commentary existe en provider_invoices); confirmar al planificar. Estan en feature/facturas-cliente-feedback; confirmar su presencia en main.",
+      "sourceRevision": "7cf2861708459ecd50ec7341e00675f0819603442c29272c9086912d2e796b8c",
+      "answeredAt": "2026-10-08T18:57:25.053Z"
+    },
+    {
+      "questionId": "JOR-174-Q5",
+      "ticketId": "JOR-174",
+      "question": "¿Que estados de factura cuentan como 'emitida' para habilitar Entrega Rapida (valor exacto del campo de estado), y se excluyen las anuladas?",
+      "answer": "Supuesto avalado: Emitida = is_draft = 0 con folio no nulo, excluyendo las anuladas (mismo criterio que el listado de cobranza). No existe hoy un estado de anulacion explicito en invoices: lo define JOR-173.",
+      "sourceRevision": "7cf2861708459ecd50ec7341e00675f0819603442c29272c9086912d2e796b8c",
+      "answeredAt": "2026-10-08T18:57:25.077Z"
+    },
+    {
+      "questionId": "JOR-175-Q1",
+      "ticketId": "JOR-175",
+      "question": "¿Estan 5/7 (Anular / nota de credito, sales.documents:void) y 6/7 (Entrega Rapida y Formato Bodega) mergeados en la rama base? Si no lo estan, ¿el menu debe ocultar esas acciones, mostrarlas deshabilitadas, o la sesion 2 debe esperar a esos tickets?",
+      "answer": "No: 5/7 (JOR-173) y 6/7 (JOR-174) aun no se ejecutaron ni estan mergeados. La sesion 2 de JOR-175 espera a esos tickets; el orden de la epica ya lo impone.",
+      "sourceRevision": "8b92b0838e0cd5bd62865ba152e5da70b3b38f634e4a70cd5ffa76685f6ed099",
+      "answeredAt": "2026-10-08T18:57:25.100Z"
+    },
+    {
+      "questionId": "JOR-172-Q1",
+      "ticketId": "JOR-172",
+      "question": "Para el criterio 25, ¿con que valor del popup se compara el Pendiente total del Estado de cuenta, si el popup solo muestra contadores? ¿Debe el popup mostrar ademas un monto total pendiente?",
+      "answer": "Supuesto avalado: No se agrega un monto al popup. El popup solo muestra contadores (decision JOR-167-Q8 del doc de decisiones 06-10). El criterio 25 se compara contra el Pendiente total del Estado de cuenta, y ambos usan la misma proyeccion de saldo T-05. Si el cliente pide el monto en el popup, es un cambio de alcance.",
+      "sourceRevision": "2fad6554bdfc0898c690a814ee4f2cef4c2d88efe1a8343bb2d1f85e39673f5e",
+      "answeredAt": "2026-10-08T18:59:23.999Z"
+    },
+    {
+      "questionId": "JOR-173-Q1",
+      "ticketId": "JOR-173",
+      "question": "En el fixture de S1.T4.1, ¿que item y que bodega tiene la segunda linea (1 u x $70.000)? ¿Es un item con stock (entonces Devolucion genera 2 movimientos) o un item o servicio sin control de stock (entonces 1 movimiento)?",
+      "answer": "Supuesto avalado: La segunda linea del fixture (1 u x $70.000) usa un item con control de stock en la misma bodega que la linea 1, de modo que la devolucion genera 2 movimientos de inventario. No hay dato en el legacy ni en los docs: es decision de diseno de la prueba.",
+      "sourceRevision": "8f7ef292a70bfc497768c2b0fb17939caeeb065ba6ca584b876553a550b5bfc1",
+      "answeredAt": "2026-10-08T18:59:24.036Z"
+    },
+    {
+      "questionId": "JOR-174-Q1",
+      "ticketId": "JOR-174",
+      "question": "¿De donde salen los datos del remitente Jormat para la impresion de despacho (razon social, RUT, direccion, telefono)? ¿Hay una tabla o clave de configuracion de empresa, o se toman del legacy citado en el doc de decisiones, seccion 4.6?",
+      "answer": "Supuesto avalado: Los datos del remitente salen de una constante o config de empresa en Evolution, porque no existe tabla de configuracion. Valores tomados del legacy (print-pack-off.html lineas 72 a 78): Importadora de Repuestos Jormat Ltda, RUT 76.193.704-9, Valdivia 906 Los Angeles, cel +569 92050943, tel +43 2 361215. Confirmar con el cliente que sigan vigentes.",
+      "sourceRevision": "7cf2861708459ecd50ec7341e00675f0819603442c29272c9086912d2e796b8c",
+      "answeredAt": "2026-10-08T18:59:24.063Z"
+    },
+    {
+      "questionId": "JOR-174-Q2",
+      "ticketId": "JOR-174",
+      "question": "¿Cual es la tabla y cuales son las columnas donde se registra la ubicacion fisica de un repuesto por bodega (por ejemplo, tabla, FK de repuesto, FK de bodega y campo de ubicacion)?",
+      "answer": "Se usa la tabla item_warehouse_location (item_id, warehouse_id, location_id; migracion 20260714000000_inventory_schema.ts) junto con location (ds_code, ds_name). Se filtra por warehouse_id igual a la bodega de la factura y se listan todas las ubicaciones del repuesto. Usar LEFT JOIN: un repuesto sin ubicacion se imprime con Sin ubicacion (P-12.1). El legacy usa INNER JOIN en invoices/model.js:344, que lo omitiria.",
+      "sourceRevision": "7cf2861708459ecd50ec7341e00675f0819603442c29272c9086912d2e796b8c",
+      "answeredAt": "2026-10-08T18:59:24.093Z"
+    },
+    {
+      "questionId": "JOR-174-Q3",
+      "ticketId": "JOR-174",
+      "question": "¿Se reutiliza una capability de Bodega existente para Entrega Rapida (¿cual es su nombre exacto?) o se crea una nueva via seed_rbac (¿con que nombre y que roles la reciben?)?",
+      "answer": "Supuesto avalado: Se crea una capability nueva via seed_rbac, porque ninguna capability de Bodega existente cubre Entrega Rapida (hoy: entities.warehouses, entities.locations, entities.orders). Nombre propuesto: sales.documents:quick-delivery. Roles propuestos: bodega, jefe-local, jefe-venta y gerencia. Nombre y roles pendientes de confirmar por el dev.",
+      "sourceRevision": "7cf2861708459ecd50ec7341e00675f0819603442c29272c9086912d2e796b8c",
+      "answeredAt": "2026-10-08T18:59:24.118Z"
+    }
+  ],
   "history": [
     {
       "id": "a863c727-d7a4-4170-967a-bb795393820f",
@@ -6084,6 +6043,255 @@
       "phase": "prepare",
       "source": "kanai-server",
       "durationMs": 237
+    },
+    {
+      "id": "edb35482-0276-49a4-be12-0174c37ca7fe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:24.965Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-172",
+      "reason": "JOR-172-Q2"
+    },
+    {
+      "id": "a2ebb8a6-5077-44a1-8841-63ee81113b5f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:24.998Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-173",
+      "reason": "JOR-173-Q2"
+    },
+    {
+      "id": "358aa5ed-c41f-4902-9036-0f383caa2abb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:25.029Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-173",
+      "reason": "JOR-173-Q3"
+    },
+    {
+      "id": "fea7ac66-7908-4830-aed4-aeddad3dbb9f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:25.053Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-174",
+      "reason": "JOR-174-Q4"
+    },
+    {
+      "id": "226543fb-982d-4fb9-a1b6-85276ace0caf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:25.077Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-174",
+      "reason": "JOR-174-Q5"
+    },
+    {
+      "id": "b19618c3-4cd3-4465-b1d1-7b6e96700d0d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:25.100Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-175",
+      "reason": "JOR-175-Q1"
+    },
+    {
+      "id": "e7142ef6-64e5-4e27-8a58-d339b82988cb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:25.117Z",
+      "kind": "decisions_answered",
+      "planVersion": 6,
+      "reason": "6 respuestas (5 supuestos)"
+    },
+    {
+      "id": "bd081023-b506-409a-b6ae-45db6d56939e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:57:25.124Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "answer_batch",
+      "source": "kanai-server",
+      "durationMs": 176
+    },
+    {
+      "id": "f4bcce92-7ca6-4122-a5fb-e2565d85b5de",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:23.999Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-172",
+      "reason": "JOR-172-Q1"
+    },
+    {
+      "id": "04fcbc78-b385-4f5f-b6d3-5e5cd0798996",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:24.036Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-173",
+      "reason": "JOR-173-Q1"
+    },
+    {
+      "id": "03b108a2-ea1b-44a5-b339-4972a853344d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:24.063Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-174",
+      "reason": "JOR-174-Q1"
+    },
+    {
+      "id": "5db89adb-afe2-41ae-bda7-1303e064a798",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:24.093Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-174",
+      "reason": "JOR-174-Q2"
+    },
+    {
+      "id": "019efa41-7824-4941-aca8-1ce42401142d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:24.118Z",
+      "kind": "decision_banked",
+      "planVersion": 6,
+      "ticketId": "JOR-174",
+      "reason": "JOR-174-Q3"
+    },
+    {
+      "id": "6e6ef617-fb40-4a0a-990b-bb91212f73f8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:24.138Z",
+      "kind": "decisions_answered",
+      "planVersion": 6,
+      "reason": "5 respuestas (4 supuestos)"
+    },
+    {
+      "id": "c0cb8bb1-7e3e-47e2-9598-42699cbc23f0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:24.150Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "answer_batch",
+      "source": "kanai-server",
+      "durationMs": 171
+    },
+    {
+      "id": "10f551dc-3c39-487f-a4a0-847024ed043b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:51.664Z",
+      "kind": "plan_changed",
+      "planVersion": 7
+    },
+    {
+      "id": "38c98ff5-7b3e-43e1-a415-6db54a1b6449",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:59:51.671Z",
+      "kind": "operation_completed",
+      "planVersion": 7,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 186
+    },
+    {
+      "id": "9a27a5ba-7f6f-42b8-a543-7832f7e57310",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:02:20.813Z",
+      "kind": "plan_changed",
+      "planVersion": 8
+    },
+    {
+      "id": "a00fb93d-c615-4db3-849c-fc6712f69b8f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:02:20.819Z",
+      "kind": "tickets_added",
+      "planVersion": 8,
+      "reason": "JOR-172"
+    },
+    {
+      "id": "a7bc0098-d5c5-45a3-8832-d8ee086db528",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:02:20.824Z",
+      "kind": "operation_completed",
+      "planVersion": 8,
+      "phase": "add_tickets",
+      "source": "kanai-server",
+      "durationMs": 100
+    },
+    {
+      "id": "9c3725a3-72b6-4ff2-96e4-7c5446d981d9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:03:06.931Z",
+      "kind": "plan_changed",
+      "planVersion": 9
+    },
+    {
+      "id": "d38fd1fe-8136-4985-89b0-629fbd7453b5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:03:06.937Z",
+      "kind": "tickets_added",
+      "planVersion": 9,
+      "reason": "JOR-173, JOR-174, JOR-175"
+    },
+    {
+      "id": "8ba8c8a7-92ae-4d63-ab92-4ef9d5ea52fe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:03:06.943Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "phase": "add_tickets",
+      "source": "kanai-server",
+      "durationMs": 110
+    },
+    {
+      "id": "545d2635-3a94-43d8-bf85-95cc0c8ecdfc",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:03:51.138Z",
+      "kind": "plan_changed",
+      "planVersion": 10
+    },
+    {
+      "id": "024d5dd6-b1f8-4593-81a4-81ccb31d66e7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:03:51.144Z",
+      "kind": "operation_completed",
+      "planVersion": 10,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 142
+    },
+    {
+      "id": "e2a7d05f-9410-4804-b17d-6aa37af765b9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:04:46.408Z",
+      "kind": "dependency_decided",
+      "planVersion": 11,
+      "ticketId": "JOR-171",
+      "reason": "Ticket cerrado: el alcance ya fue aprobado y ejecutado; se restituye tras reagregarlo a la epica",
+      "evidence": [
+        "{\"ticketId\":\"JOR-171\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "eecaa59b-fe56-4845-9fce-14c3c5f11601",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:04:46.408Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 11,
+      "reason": "1 decisiones; 1 cambios"
+    },
+    {
+      "id": "87cc4e86-1396-4664-8ca2-34d9bee5b9b4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T19:04:46.415Z",
+      "kind": "operation_completed",
+      "planVersion": 11,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 25
     }
   ]
 }
