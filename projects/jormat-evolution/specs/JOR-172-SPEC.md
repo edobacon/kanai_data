@@ -61,31 +61,31 @@ La validacion de que status_id de un cheque pertenece al modulo 3 del catalogo s
 ## Tasks
 
 #### S1.T1 — Crear la migración de la tabla cheques y de la tabla puente cheque_facturas (T-11). Columnas: cliente_id, numero, banco, importe, fecha_emision, fecha_vencimiento, status_id con FK al catálogo statuses módulo 3 (1 Pendiente, 2 Validada, 3 Rechazada, 4 Depositado, ya migrado en migrations/20260914000000_types_statuses_legacy.ts:37), y la relación con facturas. Índice por (cliente_id, status_id) para el COUNT. Sin endpoints de gestión.
-Contrato: rollback: Correr el down de la migración (drop de cheque_facturas y cheques) y borrar el archivo.. Status: pending
+Contrato: rollback: Correr el down de la migración (drop de cheque_facturas y cheques) y borrar el archivo.. Status: done
 
 #### S1.T2 — Contador de Facturas (REQ-01). Se implementa y verifica exclusivamente en sus subtareas; esta task agrupa y no repite su detalle.
-Contrato: rollback: Revertir catalogos.service.ts al commit previo, con lo que los contadores vuelven a null.. Status: pending
+Contrato: rollback: Revertir catalogos.service.ts al commit previo, con lo que los contadores vuelven a null.. Status: done
 
 #### S1.T2.1 — Implementar el conteo de facturas con saldo del cliente (todas las sucursales) separado en Pendiente de pago y Vencida. La clasificacion se obtiene SOLO de derivarEstadoComercialPago (backend/jormat-api/src/sales/proyeccion-saldo.ts) usando invoices.expiration_date como fecha de vencimiento; no se reimplementa la comparacion contra hoy. Antes de codificar, verificar si el repositorio de sales expone una expresion SQL equivalente a calcularSaldoProyectado y derivarEstadoComercialPago. Si existe, reusarla en un COUNT agregado en SQL sobre invoices. Si no existe, partir de las filas ya filtradas por el repositorio (cliente, saldo > 0) y aplicar la funcion TypeScript sin duplicar la regla, dejando un comentario en espanol que lo explique.
-Contrato: rollback: Revertir el bloque del contador de facturas en catalogos.service.ts.. Status: pending
+Contrato: rollback: Revertir el bloque del contador de facturas en catalogos.service.ts.. Status: done
 
 #### S1.T2.3 — Contador de cheques: COUNT de la tabla cheques con status_id = constante CHEQUE_STATUS_RECHAZADA (3), sin número mágico.
-Contrato: rollback: Revertir el bloque del contador de cheques y la constante.. Status: pending
+Contrato: rollback: Revertir el bloque del contador de cheques y la constante.. Status: done
 
 #### S1.T2.4 — Preservar la forma de respuesta de getClienteNotification: credito y bloqueo sin cambios, y los contadores pasan a ser numéricos.
-Contrato: rollback: Revertir el DTO o tipo de respuesta al commit previo.. Status: pending
+Contrato: rollback: Revertir el DTO o tipo de respuesta al commit previo.. Status: done
 
 #### S1.T3 — Mostrar en el popup del frontend (Informacion adicional / Documentos pendientes) los contadores Facturas (Pendiente de pago y Vencida), Notas y Cheques desde la respuesta de getClienteNotification, reusando el componente de popup existente.
-Contrato: rollback: Revertir el componente del popup al commit previo.. Status: pending
+Contrato: rollback: Revertir el componente del popup al commit previo.. Status: done
 
 #### S1.T4 — Tests y regresión: en catalogos.controller.spec.ts y en el spec del service, agregar los casos de REQ-01, REQ-02 y REQ-03 (incluido el criterio 24: un Rechazado y un Pendiente devuelven 1) y verificar que los casos existentes de credito y bloqueo (líneas 262, 281 y 292) pasan sin cambios.
-Contrato: rollback: Revertir los casos agregados en los specs.. Status: pending
+Contrato: rollback: Revertir los casos agregados en los specs.. Status: done
 
 #### S1.T5 — Subtarea de S1.T2 (contador de Notas, REQ-02, opcion A de la Adenda 1). En backend/jormat-api/src/catalogos/catalogos.service.ts, en getClienteNotification, implementar el contador de notas contando las filas emitidas (is_draft = 0) de invoices del cliente con type_id igual a la constante nombrada de nota_credito (valor 3) exportada por backend/jormat-api/src/sales/dte-type-map.ts, sin usar el literal 3. NO calcular saldo disponible ni aplicacion de notas (eso lo introduce JOR-173). Usar un COUNT agregado en SQL, sin traer filas a memoria. Devolver siempre un numero: 0 si el cliente no tiene notas emitidas, nunca null. Preservar el resto del contrato de getClienteNotification (credito, bloqueo y demas campos).
-Contrato: rollback: Revertir los cambios en backend/jormat-api/src/catalogos/catalogos.service.ts (git checkout del archivo).. Status: pending
+Contrato: rollback: Revertir los cambios en backend/jormat-api/src/catalogos/catalogos.service.ts (git checkout del archivo).. Status: done
 
 #### S1.T6 — Implementar en el servicio o repositorio de cheques (T-11) la validacion en codigo de que status_id pertenezca al modulo 3 de statuses, usando las constantes nombradas de estado de cheque (1 Pendiente, 2 Validada, 3 Rechazada, 4 Depositado) y no ids magicos. Si status_id no pertenece al modulo 3 (otro modulo, inexistente, nulo o indefinido), lanzar error de validacion y NO persistir ninguna fila. No depender de la FK sobre statuses.id, que no restringe el modulo. Agregar el test del caso [error] de REQ-03 junto a la implementacion: un status_id de otro modulo y uno inexistente son rechazados sin insertar fila, y los ids 1 a 4 son aceptados. No agregar otro alcance.
-Contrato: rollback: Revertir los cambios en el servicio o repositorio de cheques y su archivo de test (git checkout de esos archivos).. Status: pending
+Contrato: rollback: Revertir los cambios en el servicio o repositorio de cheques y su archivo de test (git checkout de esos archivos).. Status: done
 
 #### S2.T1 — Crear el endpoint de Estado de cuenta del cliente: cabecera (datos del cliente, Activo o Bloqueado) y grilla de facturas con saldo y notas con saldo disponible, con las columnas Tipo documento, N° documento, Origen, Estado, Fecha, Total, Abono y Pendiente, más la suma de Pendiente. Filtro por rango de fechas y paginación en servidor (DET-41), reusando la proyección de 3/7. Sin cheques.
 Contrato: rollback: Eliminar el endpoint y su método de service y revertir el controller.. Status: pending
@@ -176,18 +176,18 @@ Contrato: rollback: Revertir el commit de las pruebas y, si se tocó, del mapeo 
 - S1: Implementar en el servicio o repositorio de cheques (T-11) la validacion en codigo de que status_id pertenezca al modulo 3 de statuses, usando las constantes nombradas de estado de cheque (1 Pendiente, 2 Validada, 3 Rechazada, 4 Depositado) y no ids magicos. Si status_id no pertenece al modulo 3 (otro modulo, inexistente, nulo o indefinido), lanzar error de validacion y NO persistir ninguna fila. No depender de la FK sobre statuses.id, que no restringe el modulo. Agregar el test del caso [error] de REQ-03 junto a la implementacion: un status_id de otro modulo y uno inexistente son rechazados sin insertar fila, y los ids 1 a 4 son aceptados. No agregar otro alcance. (valida: REQ-03, REQ-09; rollback: Revertir los cambios en el servicio o repositorio de cheques y su archivo de test (git checkout de esos archivos).)
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T2.1
-- [ ] S1.T2.3
-- [ ] S1.T2.4
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T2.1
+- [x] S1.T2.3
+- [x] S1.T2.4
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
 
 **Gate (auto)**: El popup de Crear factura muestra contadores numéricos reales en lugar de null. El caso de criterio 24 (Rechazado + Pendiente = 'Cheques: 1') pasa en catalogos.controller.spec.ts y se ve en la UI.
 
