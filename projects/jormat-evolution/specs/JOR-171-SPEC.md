@@ -277,4 +277,4 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 
 ### Session 5 · continue
 
-### Session 7 · open
+### Session 7 · continue

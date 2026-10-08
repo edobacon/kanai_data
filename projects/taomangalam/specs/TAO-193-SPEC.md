@@ -400,7 +400,7 @@ S7 final con seis ítems canónicos concretos: Mailpit/cola, Mailjet staging/DNS
 - edit S6.T5 { desc="Consolidar la evidencia de correo real en staging y el rollback documental del paquete. EJECUTAR el registro y el envio REAL por Mailjet en el entorno de staging con acceso autorizado: disparar el flujo de registro (`POST /cuenta/registro`) contra staging, recibir el correo en la casilla destino y recopilar la evidencia del mensaje recibido -- messageId, fecha, remitente, SHA del commit desplegado y las cabeceras Authentication-Results completas con el resultado de SPF, DKIM y DMARC --, y citarla literal en `docs/development/release-runbook.md` junto al rollback del paquete (revertir los commits conservando datos, aceptaciones y consentimientos). NO basta con consolidar evidencia ajena ni con localizar un reporte previo: la evidencia debe provenir de un envio real ejecutado en esta tarea. Si falta el acceso autorizado a staging, la configuracion de Mailjet, el DNS del dominio o una credencial, PAUSAR registrando el bloqueo y la persona responsable funcional FU20 (identificador de rol, sin inventar un nombre), sin aprobacion del criterio: no se marca como probado, no se sustituye por Mailpit, por documentacion ni por una simulacion, y no se fabrican credenciales ni cabeceras. Documentar ademas, conforme a REQ-09, la superficie de configuracion de correo y cola en `docs/development/configuration.md` y los comandos reproducibles en `docs/development/commands.md` solo en lo que corresponda al runbook de staging." }
 ## Sessions
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
 - [x] S2.T1
