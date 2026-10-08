@@ -106,22 +106,22 @@ Contrato: rollback: No hay cambios de codigo que revertir: si el registro de `ba
 Contrato: rollback: Revertir los commits de esta task: eliminar `EmailService`, sus adaptadores Mailpit/Mailjet, el registro de plantillas por clave, el worker de la cola `pg-boss` con su politica de reintentos e idempotencia, sus tests y las secciones de correo/cola agregadas a `docs/development/configuration.md` y `docs/development/commands.md`. No se tocan datos ni registros existentes y no se revierte la reconciliacion ni el SHA registrado en S2.T1.. Status: done
 
 #### S3.T5 — PRODUCCION. Implementar POST /cuenta/registro 202 RegistroCuentaRespuesta y pendiente_verificacion con contrato actual email/password minimo8, argon2id, unicidad por emailNormalizado y cifrado emailCifrado reutilizando Cuenta existente; idempotencia, conservar cuentaId/usos/solicitudes/aceptaciones/consentimientos sin elevar permisos y encolar correo. Implementar desafío OTP emision/hash exclusivo/singleuse/validación básica POST /cuenta/correo/verificacion, sin código en API/logs. Escribir schema/migración incremental de credenciales/desafío y grants mínimos/inversa conservando datos y grants previos según REQ11 e inspección S2.T1; no modelo Cuenta duplicado ni REVOKE redundante. ESCRIBIR Y CORRER ÚNICAMENTE server/src/test/cuenta/registro-cuenta.test.ts y server/src/test/cuenta/verificacion-correo.test.ts. Las ramas tokens y reenvío son S3.T6, parámetros límite S3.T7, PUT correo pendiente S3.T8; no anticipar sus pruebas.
-Contrato: rollback: Revertir los commits de esta task: eliminar los endpoints `POST /cuenta/registro` y `POST /cuenta/correo/verificacion` agregados aqui, el servicio de OTP y las dos suites nuevas, y aplicar la inversa INCREMENTAL de la migracion, que revierte unicamente las tablas, columnas y grants que esta migracion agrega. Conservar intactos los registros, cuentas, aceptaciones y consentimientos preexistentes, los campos `emailNormalizado`/`emailCifrado` del modelo `Cuenta` y los grants previos definidos por el init y por EP-00/EP-01: no se devuelven los privilegios al estado por defecto del init ni se borran datos.. Status: pending
+Contrato: rollback: Revertir los commits de esta task: eliminar los endpoints `POST /cuenta/registro` y `POST /cuenta/correo/verificacion` agregados aqui, el servicio de OTP y las dos suites nuevas, y aplicar la inversa INCREMENTAL de la migracion, que revierte unicamente las tablas, columnas y grants que esta migracion agrega. Conservar intactos los registros, cuentas, aceptaciones y consentimientos preexistentes, los campos `emailNormalizado`/`emailCifrado` del modelo `Cuenta` y los grants previos definidos por el init y por EP-00/EP-01: no se devuelven los privilegios al estado por defecto del init ni se borran datos.. Status: done
 
 #### S3.T6 — PRODUCCION. Sobre registro/OTP de S3.T5, implementar SOLO las ramas con bearer (tokens nuevos ServicioSesiones existente) y sin bearer (solo validación, sin sesión) de POST /cuenta/correo/verificacion y endpoint de reenvío sujeto a parámetros configurables aplicados en S3.T7. Escribir tests de ambas ramas y reenvío en server/src/test/cuenta/verificacion-correo.test.ts. No implementar TTL ni PUT /cuenta/correo ni login aquí.
-Contrato: rollback: Revertir SOLO el codigo de produccion NUEVO de esta task (ramas con/sin bearer y reenvio) conservando datos, sesiones existentes y el mecanismo de sesiones preexistente intacto.. Status: pending
+Contrato: rollback: Revertir SOLO el codigo de produccion NUEVO de esta task (ramas con/sin bearer y reenvio) conservando datos, sesiones existentes y el mecanismo de sesiones preexistente intacto.. Status: done
 
 #### S3.T7 — PRODUCCION. DEFINIR parámetros configurables en config del servidor y APLICAR TTL OTP10min, máximo5intentos y espera reenvío60sec al desafío y reenvío existentes de S3.T5/T6. Son defaults técnicos inferidos, no decisión humana. Escribir tests de límites y de cambios de configuración en server/src/test/cuenta/verificacion-correo.test.ts. Esta tarea NO implementa login ni tokens ni PUT correo.
-Contrato: rollback: Revertir solo la configuracion y la logica de dominio nuevas de esta tarea, conservando los datos existentes.. Status: pending
+Contrato: rollback: Revertir solo la configuracion y la logica de dominio nuevas de esta tarea, conservando los datos existentes.. Status: done
 
 #### S3.T8 — PRODUCCION. Implementar SOLO PUT /cuenta/correo sobre cuenta pendiente, normalización+cifrado, invalidar desafío anterior al emitir nuevo, idempotencia y rechazo de cuenta activa (HU05 fuera). Escribir tests en server/src/test/cuenta/verificacion-correo.test.ts. No implementar ni verificar login aquí.
-Contrato: rollback: Revertir solo el endpoint y la logica nueva de PUT /cuenta/correo, conservando los registros existentes.. Status: pending
+Contrato: rollback: Revertir solo el endpoint y la logica nueva de PUT /cuenta/correo, conservando los registros existentes.. Status: done
 
 #### S3.T12 — Implementar la pantalla real de V-23 Crear cuenta en la app Flutter conectada a los providers, al cliente HTTP del contrato y al almacenamiento de sesion (mostrar u ocultar contrasena accesible, validacion en UI de la repeticion de contrasena, errores por campo que llevan el foco al campo a corregir conservando los valores validos, comportamiento sin conexion con reintento, navegacion de retorno al contexto de origen) Y, explicitamente, escribir sus tests de widget en `app/test/features/cuenta/v23_crear_cuenta_test.dart` (directorio `app/test/features/cuenta` es suite nueva a crear). Runner Flutter con FVM segun `docs/development/commands.md` y `app/.fvmrc`.
-Contrato: rollback: Revertir el commit de la pantalla V-23 y eliminar `app/test/features/cuenta/v23_crear_cuenta_test.dart`; la app vuelve al estado anterior sin la pantalla. No se tocan datos locales ni sesiones persistidas.. Status: pending
+Contrato: rollback: Revertir el commit de la pantalla V-23 y eliminar `app/test/features/cuenta/v23_crear_cuenta_test.dart`; la app vuelve al estado anterior sin la pantalla. No se tocan datos locales ni sesiones persistidas.. Status: done
 
 #### S3.T13 — Implementar la pantalla real de V-24 Validar correo en la app Flutter conectada a los providers y al cliente HTTP del contrato (campo de codigo, correo parcialmente oculto, reenvio sujeto a espera y limite, mensajes de codigo incorrecto/caducado/intentos agotados, retorno al contexto protegido de origen) Y, explicitamente, escribir sus tests de widget en `app/test/features/cuenta/v24_validar_correo_test.dart`, en el mismo directorio `app/test/features/cuenta` que V-23. Runner Flutter con FVM segun `docs/development/commands.md` y `app/.fvmrc`.
-Contrato: rollback: Revertir el commit de la pantalla V-24 y eliminar `app/test/features/cuenta/v24_validar_correo_test.dart`; la app vuelve al estado anterior sin la pantalla. No se tocan datos locales ni sesiones persistidas.. Status: pending
+Contrato: rollback: Revertir el commit de la pantalla V-24 y eliminar `app/test/features/cuenta/v24_validar_correo_test.dart`; la app vuelve al estado anterior sin la pantalla. No se tocan datos locales ni sesiones persistidas.. Status: done
 
 #### S4.T8 — PRODUCCION LOGIN COMPLETO (fusiona lo que estaba repartido con S4.T9, eliminada). Implementar POST /auth/login conforme a server/contract/openapi.yaml y DEC-163: verificacion de contrasena con argon2id contra el hash persistido, exigencia de cuenta completa con correo ya validado (correo pendiente no emite sesion y deriva a V-24), emision y persistencia de tokens en el almacenamiento de sesion, bloqueo por fuerza bruta PERSISTIDO en base (5 fallos en ventana de 15 minutos, bloqueo de 15 minutos, parametros configurables) y respuesta neutra que no revela si el correo existe ni si la contrasena es incorrecta. Sin inicio de sesion offline. Toda la suite de login (happy, hash, bloqueo persistido, conformidad de contrato, neutralidad de errores, correo pendiente) vive en una unica ruta: server/src/test/auth/login.test.ts. No crear ni reutilizar otra ruta de suite de login.
 Contrato: rollback: Revertir solo el endpoint de login, su almacenamiento de intentos de bloqueo y su configuracion, conservando cuentas, credenciales y registros existentes.. Status: pending
@@ -408,15 +408,15 @@ S7 final con seis ítems canónicos concretos: Mailpit/cola, Mailjet staging/DNS
 
 **Gate (auto)**: Correo observable de punta a punta en local: al disparar el envio de prueba documentado, el mensaje con la plantilla del codigo de validacion aparece en la bandeja de Mailpit; procesar dos veces el mismo job de la cola deja un solo correo y el job agotado queda consultable. Tests del servicio y de la cola en verde (idempotencia, reintento 5xx, plantilla inexistente, agotamiento) y `docs/development/configuration.md` y `commands.md` con las variables y el comando de prueba, sin credenciales reales, con el lint de docs cambiados verde contra el SHA base.
 
-### Session 3 · T3 · open
+### Session 3 · T3 · continue
 
 **Tasks:**
-- [ ] S3.T5
-- [ ] S3.T6
-- [ ] S3.T7
-- [ ] S3.T8
-- [ ] S3.T12
-- [ ] S3.T13
+- [x] S3.T5
+- [x] S3.T6
+- [x] S3.T7
+- [x] S3.T8
+- [x] S3.T12
+- [x] S3.T13
 
 **Gate (auto)**: Conversion a cuenta completa revisable de punta a punta: desde V-23 en la app se registra un correo y una contrasena, `POST /cuenta/registro` responde 202 con `RegistroCuentaRespuesta` y estado `pendiente_verificacion`, llega el codigo a Mailpit, y desde V-24 se valida el correo dejando la cuenta activa con el mismo id, usos, solicitudes, aceptaciones y consentimiento intactos. Se ve el error por campo con foco, el estado sin conexion, el reenvio sujeto a espera y el rechazo de `PUT /cuenta/correo` sobre cuenta activa. Suite de registro, validacion y privilegios de rol en verde, con el codigo OTP ausente de respuestas y logs.
 
