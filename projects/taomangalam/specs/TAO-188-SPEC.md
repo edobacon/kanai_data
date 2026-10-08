@@ -65,13 +65,13 @@ Contrato: rollback: Revertir los estados, guardas de permiso y el retorno accesi
 Contrato: rollback: Eliminar los dos archivos de test nuevos y revertir los ajustes en legal_consent_gate_text_test.dart y legal_consent_view_layout_test.dart a su versión de epic/EP-01a.. Status: done
 
 #### S2.T1 — S2.T1 · Extender V-51 y app/lib/features/legal/data/puerto_analitica.dart para consumir obtenerEstadoConsentimiento y registrarConsentimientoAnalitica existentes, junto con la política de HU-15-03. Presentar acciones equivalentes en opt_in, explicación y retirada según opt_out, y ninguna acción inadmisible en disabled. Actualizar la vista solo con respuesta confirmada, sin sustituir ni borrar eventos previos. Reutilizar la autorización de S1.T2 y tratar denegaciones del backend sin éxito visual; no implementar lógica regional ni backend nuevo.
-Contrato: rollback: Revertir la presentación y conexión de cambios de consentimiento incorporadas, dejando disponible la revisión legal; mantener los eventos append-only ya registrados.. Status: pending
+Contrato: rollback: Revertir la presentación y conexión de cambios de consentimiento incorporadas, dejando disponible la revisión legal; mantener los eventos append-only ya registrados.. Status: done
 
 #### S2.T2 — S2.T2 · Completar el comportamiento de fallo y recuperación del consentimiento en V-51 y app/lib/features/legal/data/puerto_analitica.dart. Escritura requiere red; conservar el último estado confirmado ante error o respuesta perdida y reutilizar la idempotencia literal confirmada del contrato para reintentar. Distinguir política no disponible y política desconocida; consumir el fallback existente de server/src/privacidad/politica-analitica.ts: opt_in, requiereConsentimiento=true, versión 0. No introducir cola offline ni store paralelo. Usar los anuncios accesibles compartidos, errorId y logging existente sin documentos ni valores sensibles.
-Contrato: rollback: Revertir únicamente los estados y conexiones de recuperación añadidos; conservar el estado confirmado y los eventos del servidor, sin reescribir datos locales ni remotos.. Status: pending
+Contrato: rollback: Revertir únicamente los estados y conexiones de recuperación añadidos; conservar el estado confirmado y los eventos del servidor, sin reescribir datos locales ni remotos.. Status: done
 
 #### S2.T3 — Tests de la sesión 2 (consentimiento de analítica). Ampliar el archivo nuevo app/test/navigation/legal_review_view_test.dart creado en S1.T3 con los estados de política opt_in, opt_out y disabled (acciones con el mismo peso visual en opt_in; explicación y retiro en opt_out; ninguna acción en disabled). Ajustar los tests existentes app/test/legal/puerto_analitica_test.dart y app/test/navigation/legal_consent_view_analytics_policy_test.dart para cubrir QA-01-14-03 (de otorgado a retirado: registrarConsentimientoAnalitica agrega el evento nuevo, conserva el anterior y declara la fuente de consentimiento del modo revisión según el contrato OpenAPI, nunca primerUso) y QA-01-14-04 (error de API o pérdida de red: no se comunica éxito prematuro, se conserva el último estado confirmado y el reintento reusa la MISMA clave de idempotencia sin duplicar eventos). Reutilizar app/lib/features/legal/data/puerto_analitica.dart; no modificar modelos de datos, historial append-only ni el proveedor regional de HU-15-03. Comando canónico FVM según docs/development/commands.md y app/.fvmrc.
-Contrato: rollback: Revertir las ampliaciones en legal_review_view_test.dart y los ajustes en puerto_analitica_test.dart y legal_consent_view_analytics_policy_test.dart; los tests vuelven a su cobertura previa sin tocar código de producción.. Status: pending
+Contrato: rollback: Revertir las ampliaciones en legal_review_view_test.dart y los ajustes en puerto_analitica_test.dart y legal_consent_view_analytics_policy_test.dart; los tests vuelven a su cobertura previa sin tocar código de producción.. Status: done
 
 #### S3.T1 — Verificación automatizada declarada por caso de prueba: ejecutar y dejar constancia del mapeo explícito QA-01-14-01 (historial con versión y fecha + apertura de texto) y QA-01-14-02 (leer versión nueva no registra aceptación) contra app/test/navigation/legal_review_view_test.dart; QA-01-14-03 (opt_in otorgado→retirado agrega evento y conserva el previo) y QA-01-14-04 (error o pérdida de red conserva el último estado confirmado y permite reintentar con la misma clave de idempotencia) contra app/test/legal/puerto_analitica_test.dart y app/test/navigation/legal_consent_view_analytics_policy_test.dart; QA-01-14-05 (impersonación: historial legible, acciones no invocables) contra app/test/legal/puerto_revision_legal_test.dart. Regresión del gate obligatorio con app/test/navigation/legal_consent_gate_text_test.dart y app/test/navigation/legal_consent_view_layout_test.dart. Sin requireHuman: todo ítem de esta task es ejecutable en CI con FVM (canon docs/development/commands.md y app/.fvmrc).
 Contrato: rollback: Esta task no modifica código de producción: si falla, no se revierte nada; se reporta el caso QA que no pasa y se corrige en la task de S1/S2 que lo origina.. Status: pending
@@ -127,12 +127,12 @@ Ninguno.
 
 **Gate (auto)**: Desde V-27 se abre una revisión legal de solo lectura con versiones y fechas, documentos en panel-modal, estados de carga/error/caché y retorno que conserva posición y foco.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: La misma revisión muestra opt_in, opt_out y disabled, permite los cambios autorizados y mantiene el estado confirmado ante error o pérdida de red; quedan disponibles pruebas y capturas para Diseño/QA.
 

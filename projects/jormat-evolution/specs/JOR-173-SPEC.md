@@ -67,31 +67,31 @@ Reuso obligatorio: usar la capability existente sales.documents:void (no crear u
 ## Tasks
 
 #### S1.T1 — Modelo de datos de la nota de credito total sobre documentos de venta: migracion aditiva con vinculo a la factura de origen, tipo Devolucion/Falla, observacion, saldo disponible e indice unico parcial para P-10.1.D1. Reutiliza la cabecera y las lineas de documento de venta.
-Contrato: rollback: Correr la migracion down y revertir el commit de entidades.. Status: pending
+Contrato: rollback: Correr la migracion down y revertir el commit de entidades.. Status: done
 
 #### S1.T1.1 — Migracion aditiva: columnas documento_origen_id, tipo_nota_credito, observacion_anulacion y saldo_disponible, e indice unico parcial por documento_origen_id para las notas de credito totales. Los nombres finales siguen la convencion de la tabla real de documentos de venta.
-Contrato: rollback: Migracion down que elimina el indice y las columnas.. Status: pending
+Contrato: rollback: Migracion down que elimina el indice y las columnas.. Status: done
 
 #### S1.T1.2 — Extender la entidad o DTO de documento de venta con los campos nuevos y un enum NotaCreditoTipo {Devolucion, Falla} (sin magic strings).
-Contrato: rollback: Revertir el commit de la entidad y el enum.. Status: pending
+Contrato: rollback: Revertir el commit de la entidad y el enum.. Status: done
 
 #### S1.T2 — Servicio voidInvoice: en una sola transaccion valida que la factura este emitida y no anulada, crea la nota copiando todas las lineas e importes, deja la deuda de la factura en 0 con condicion de anulada y, si el tipo es Devolucion, registra los reingresos con el servicio de stock de 2/7 a la bodega de origen de cada linea, referenciados a la nota. Falla no mueve stock.
-Contrato: rollback: Revertir el commit del servicio. Sin datos persistentes fuera de la transaccion.. Status: pending
+Contrato: rollback: Revertir el commit del servicio. Sin datos persistentes fuera de la transaccion.. Status: done
 
 #### S1.T2.1 — Guardas: factura inexistente (404), documento que no es factura emitida (422) y factura ya anulada (409). La concurrencia se cubre con el indice unico: si se viola, se responde 409.
-Contrato: rollback: Revertir el commit de las guardas.. Status: pending
+Contrato: rollback: Revertir el commit de las guardas.. Status: done
 
 #### S1.T2.2 — Creacion de la nota con las lineas copiadas de la factura (ignora lineas del body), deuda de la factura en 0 y saldo disponible de la nota = importe pagado de la factura.
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S1.T2.3 — Efecto en stock por tipo con el servicio de movimientos de 2/7: con Devolucion, un ingreso por linea en su bodega de origen con referencia a la nota (sin duplicar si se reintenta); con Falla, ningun movimiento.
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S1.T3 — Endpoint POST de anulacion sobre la factura con un DTO validado {tipo: Devolucion|Falla, observacion} y un guard de capability sales.documents:void (la existente en backend/seeds/05_sales_capabilities.ts:26, sin tocar seeds).
 Contrato: rollback: Revertir el commit del controller y el DTO.. Status: pending
 
 #### S1.T3.1 — DTO VoidInvoiceDto con validacion de clase: tipo obligatorio restringido al enum NotaCreditoTipo (Devolucion|Falla) y observacion string opcional con largo maximo acotado por una constante. El DTO no declara lineas, y el ValidationPipe con whitelist descarta las lineas que lleguen en el body.
-Contrato: rollback: Revertir el commit del DTO.. Status: pending
+Contrato: rollback: Revertir el commit del DTO.. Status: done
 
 #### S1.T3.2 — Ruta POST de anulacion en el controller de documentos de venta (p.ej. POST /sales/documents/:id/void) que delega en voidInvoice con el id de la factura, el DTO y el usuario autenticado, y responde 201 con la nota creada (id, tipo, total, documento origen y saldo disponible).
 Contrato: rollback: Revertir el commit de la ruta en el controller.. Status: pending
@@ -194,15 +194,15 @@ Contrato: rollback: Eliminar los archivos de test nuevos.. Status: pending
 ### Session 1 · T3 · open
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T1.1
-- [ ] S1.T1.2
-- [ ] S1.T2
-- [ ] S1.T2.1
-- [ ] S1.T2.2
-- [ ] S1.T2.3
+- [x] S1.T1
+- [x] S1.T1.1
+- [x] S1.T1.2
+- [x] S1.T2
+- [x] S1.T2.1
+- [x] S1.T2.2
+- [x] S1.T2.3
 - [ ] S1.T3
-- [ ] S1.T3.1
+- [x] S1.T3.1
 - [ ] S1.T3.2
 - [ ] S1.T3.3
 - [ ] S1.T3.4
