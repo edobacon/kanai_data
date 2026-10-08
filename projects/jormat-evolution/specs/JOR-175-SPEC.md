@@ -2,7 +2,7 @@
 id: JOR-175-SPEC
 project: jormat-evolution
 ticket: JOR-175
-status: draft
+status: approved
 ---
 
 # JOR-175 · Facturas cliente (feedback) 7/7 · Envío SII simulado, Reenviar y acciones por estado
@@ -13,51 +13,54 @@ Se hace: al Facturar, la factura se emite y se envía de inmediato al SII simula
 
 ## Requirements
 
-#### REQ-01 `inferred`
+### REQ-01 `inferred`
 > Fuente: backend/jormat-api/src/sales/sales.service.ts:523 (issueFactura, ruta a confirmar); backend/jormat-api/src/sales/dto/documento.dto.ts:20 (estados demo)
-> Necesidad: build
+
 Al Facturar, el servidor emite el documento y ejecuta en la misma operación un envío SII simulado. El envío persiste un intento con resultado demo (aceptado, aceptado con reparos o rechazado) y fecha. La UI muestra 'Documento enviado al SII (simulado)' y navega al listado de facturas cliente. Qué: envío inmediato como en el legacy (T-14 / P-15.1). Por qué: el cliente espera el mismo flujo del legacy, y hoy issueFactura solo asigna el folio en memoria.
 
-#### REQ-02 `inferred`
+### REQ-02 `inferred`
 > Fuente: backend/seeds/05_sales_capabilities.ts:40 (sales.invoices:issue)
-> Necesidad: build
+
 Reenviar SII es una acción disponible sobre facturas emitidas para usuarios con sales.invoices:issue, cualquiera sea su estado SII. Registra un intento simulado nuevo sin alterar folio, montos, líneas ni estado comercial del documento. Por qué: el cliente necesita reintentar envíos rechazados como en el legacy, y hoy no existe ni envío ni reenvío.
 
-#### REQ-03 `inferred`
+### REQ-03 `inferred`
 > Fuente: Doc de decisiones sección 4.8 (P-15.1.D1); acciones de Bodega de 6/7
-> Necesidad: build
+
 Ninguna acción de Bodega (Entrega Rápida, Formato Bodega) espera ni consulta el resultado SII. Basta con que la factura esté emitida (P-15.1.D1).
 
-#### REQ-04 `inferred`
+### REQ-04 `inferred`
 > Fuente: backend/seeds/05_sales_capabilities.ts:26,33,40; frontend/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.stories.tsx:36
-> Necesidad: build
+
 Cada fila del listado de facturas cliente muestra un menú de acciones filtrado por estado y permiso (R-06, R-07). Visualizar: siempre. Clonar: siempre, con sales.invoices:edit. Editar: solo Borrador. Anular: emitidas no anuladas, con sales.documents:void. Reenviar SII: emitidas. Entrega Rápida: emitidas no entregadas. Formato Bodega: emitidas.
 
-#### REQ-05 `inferred`
+### REQ-05 `inferred`
 > Fuente: backend/jormat-api/src/sales/sales.service.ts:523 (ruta a confirmar); backend/test/e2e/roles-config.e2e-spec.ts:57
-> Necesidad: build
+
 El API valida estado y permiso en cada acción del menú y rechaza la acción fuera de sus estados, aunque la UI no la ofrezca. Por qué: criterio de aceptación explícito; el filtro solo en la UI no protege.
 
-#### REQ-06 `inferred`
+### REQ-06 `inferred`
 > Fuente: frontend/src/components/shared/SimulacionSiiBanner/SimulacionSiiBanner.stories.tsx:4; frontend/src/components/compras/builder/PurchaseInvoiceBuilder.tsx:409 (uso existente)
-> Necesidad: build
+
 Toda vista que muestra folio o estado SII (builder de factura cliente, detalle y listado) muestra el banner de simulación, y el folio y el estado SII llevan el rótulo 'simulado' (R-21, criterio 22).
 
-#### REQ-07 `confirmed`
+### REQ-07 `confirmed` `enforcement`
 > Fuente: frontend/src/components/shared/SimulacionSiiBanner/SimulacionSiiBanner.stories.tsx:4; backend/src/purchases/facturas-proveedor.controller.spec.ts:41; frontend/src/components/compras/builder/PurchaseInvoiceBuilder.extra.test.tsx:231
-> Necesidad: build
+
 Se reutiliza lo existente: SimulacionSiiBanner (sin un componente nuevo de banner), los estados demo de documento.dto.ts:20 (sin un enum nuevo) y la extensión de issueFactura (sin un segundo flujo de emisión). Los consumidores de issueFactura en compras no cambian de firma.
 
-#### REQ-08 `confirmed`
+### REQ-08 `confirmed` `enforcement`
 > Fuente: backend/seeds/05_sales_capabilities.ts:26,33,40; backend/seeds/10_demo_roles_users.ts:41
-> Necesidad: build
+
 Los permisos usan las capabilities existentes sembradas en 05_sales_capabilities.ts (sales.invoices:issue para Reenviar, sales.invoices:edit y sales.documents:void). No se agrega ninguna capability ni se modifican los roles demo.
 
+### REQ-09 `confirmed`
+> Fuente: JOR-175-Q1 (respuesta registrada): 5/7 (JOR-173) y 6/7 (JOR-174) aún no ejecutados ni mergeados en la rama base; la sesión 2 de JOR-175 espera a esos tickets.
+
+Las acciones del menú que dependen de 5/7 (JOR-173: Anular / nota de crédito, sales.documents:void) y de 6/7 (JOR-174: Entrega Rápida y Formato Bodega) se implementan solo después de que JOR-173 y JOR-174 estén ejecutados e integrados (mergeados) en la rama base. Hoy no lo están, por lo que la sesión 2 de JOR-175 espera a esos tickets; el orden de la épica ya lo impone. No se implementan stubs, ni se duplica lógica de anulación o de Bodega dentro de JOR-175 para adelantarse.
 ## Tasks
 
 #### S1.T1 — Backend: persistir los intentos SII simulados y enviar de inmediato al emitir. Se extiende issueFactura (sales.service.ts:523, ruta a confirmar) sin cambiar su firma.
 Contrato: rollback: git revert de los commits de la task y down de la migración de sii_envio_intento. Status: pending
-Subtasks: 2 (ejecutar hojas; el padre espera a todas)
 
 #### S1.T1.1 — Migración create de sii_envio_intento (documento_id, resultado con los valores demo de documento.dto.ts:20, fecha, origen). Sin columnas en el documento.
 Contrato: rollback: Down de la migración (drop table). Status: pending
@@ -86,6 +89,8 @@ Contrato: rollback: git revert de los cambios de las vistas. Status: pending
 #### S2.T4 — Tests y regresión de la sesión: matriz de menú por estado y permiso (Borrador, emitida, anulada, sin edit); 4xx del API por acción fuera de estado y 200 en el caso válido; Bodega habilitada con un intento rechazado; banner y rótulo en el detalle y el listado; regresión de PurchaseInvoiceBuilder y roles-config.
 Contrato: rollback: git revert de los archivos de test agregados. Status: pending
 
+#### S2.T5 — Precondición de la sesión 2: antes de implementar las acciones del menú que dependen de 5/7 y 6/7 (Anular, Entrega Rápida, Formato Bodega), verificar que JOR-173 (Anular / nota de crédito, sales.documents:void) y JOR-174 (Entrega Rápida y Formato Bodega) estén mergeados en la rama base y que sus endpoints y capabilities existan. Si alguno falta, detener la sesión y reportar el bloqueo sin implementar stubs ni lógica sustituta. Si ya están integrados, integrar esas acciones al menú consumiendo lo entregado por 173 y 174, sin duplicar su lógica.
+Contrato: rollback: Sin cambios de código: solo verificación de precondición. Si se integraron acciones del menú, revertir los commits de esa integración.. Status: pending
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por JOR-175 · Facturas cliente (feedback) 7/7 · Envío SII simulado, Reenviar y acciones por estado
@@ -95,3 +100,42 @@ Contrato: rollback: git revert de los archivos de test agregados. Status: pendin
 ## Cambios al modelo de datos
 
 - tipo: create | objetos: sii_envio_intento (nombre propuesto, a confirmar): id, documento_id, resultado, fecha, origen (emision|reenvio) | destructivo: no | tarea: S1.T1 | rollback: Ejecutar el down de la migración, que hace drop de la tabla nueva; no afecta datos previos porque es una tabla aislada
+
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-09 (add) `confirmed`: Las acciones del menú que dependen de 5/7 (JOR-173: Anular / nota de crédito, sales.documents:void) y de 6/7 (JOR-174: Entrega Rápida y Form
+
+**Tasks agregadas:**
+
+- S2: Precondición de la sesión 2: antes de implementar las acciones del menú que dependen de 5/7 y 6/7 (Anular, Entrega Rápida, Formato Bodega), verificar que JOR-173 (Anular / nota de crédito, sales.documents:void) y JOR-174 (Entrega Rápida y Formato Bodega) estén mergeados en la rama base y que sus endpoints y capabilities existan. Si alguno falta, detener la sesión y reportar el bloqueo sin implementar stubs ni lógica sustituta. Si ya están integrados, integrar esas acciones al menú consumiendo lo entregado por 173 y 174, sin duplicar su lógica. (valida: REQ-09, REQ-04; rollback: Sin cambios de código: solo verificación de precondición. Si se integraron acciones del menú, revertir los commits de esa integración.)
+
+## Sessions
+
+### Session 1 · T2 · open
+
+**Tasks:**
+- [ ] S1.T1
+- [ ] S1.T1.1
+- [ ] S1.T1.2
+- [ ] S1.T2
+- [ ] S1.T3
+- [ ] S1.T4
+
+**Gate (auto)**: En el listado de facturas cliente: Facturar termina en el listado con el aviso 'Documento enviado al SII (simulado)'; la acción Reenviar de una fila emitida crea un intento nuevo, visible en la columna de estado SII, con el documento intacto; los tests de sales de backend pasan.
+
+### Session 2 · T2 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+- [ ] S2.T4
+- [ ] S2.T5
+
+**Gate (auto)**: En el listado, el menú de una fila en Borrador, una emitida y una anulada muestra exactamente las acciones de R-06/R-07; un PATCH a una emitida devuelve 4xx; el detalle y el listado muestran SimulacionSiiBanner y el rótulo 'simulado' en el folio y el estado SII.
+
+### Session 3 · T0 · open
+

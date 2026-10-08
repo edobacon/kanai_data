@@ -2,7 +2,7 @@
 id: JOR-174-SPEC
 project: jormat-evolution
 ticket: JOR-174
-status: draft
+status: approved
 ---
 
 # JOR-174 · Facturas cliente (feedback) 6/7 · Entrega Rapida, Formato Bodega e impresion de despacho
@@ -21,53 +21,56 @@ Datos a confirmar antes de ejecutar:
 
 ## Requirements
 
-#### REQ-01 `confirmed`
-> Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26
-> Necesidad: build
-Entrega Rapida: accion de fila para facturas cliente emitidas y no entregadas que, en un clic y sin exigir pago, marca la factura entregada registrando is_out=true, date_out, user_out_id (usuario actual) y commentary_out; no mueve stock y es idempotente (una segunda llamada no reescribe fecha ni usuario ni mueve stock). Protegida por una capability de Bodega.
+### REQ-01 `confirmed`
+> Fuente: Pedido de cambio: respuestas JOR-174-Q6 y JOR-174-Q10; Request JOR-174 alcance 1 (Entrega Rapida, P-11.1 opcion A)
 
-#### REQ-02 `inferred`
-> Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26
-> Necesidad: build
-Formato Bodega: vista imprimible distinta de la factura comercial, accesible desde el menu de fila y desde Visualizar, con identificacion de la factura, cliente y por cada linea (en el orden de lineas) codigo, descripcion, cantidad y todas las ubicaciones registradas del repuesto en la bodega de origen; un repuesto sin ubicacion se muestra con el texto 'Sin ubicacion'.
+Entrega Rapida: accion de fila para facturas cliente emitidas y no entregadas que, en un clic y sin exigir pago, marca la factura entregada registrando is_out=true, date_out, user_out_id (usuario actual) y commentary_out; no mueve stock y es idempotente (una segunda llamada no reescribe fecha ni usuario ni mueve stock). Se considera emitida una factura con is_draft = 0 y folio no nulo, excluyendo las anuladas (el estado de anulacion lo define JOR-173). Protegida por la capability NUEVA sales.documents:quick-delivery, creada via seed_rbac y asignada a los roles bodega, jefe-local, jefe-venta y gerencia. No se reutiliza ninguna capability de Bodega existente. Nombre y roles estan cerrados (JOR-174-Q6 y Q10).
 
-#### REQ-03 `inferred`
-> Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26
-> Necesidad: build
-Imprimir datos de despacho desde Visualizar: muestra destinatario, RUT, telefono, direccion, ciudad, transporte y observacion guardados en la factura mas un bloque de remitente Jormat; cantidad de bultos, dimensiones, peso y fragil se ingresan en la pantalla de impresion y no se persisten.
+### REQ-02 `confirmed`
+> Fuente: JOR-174-Q2; doc de decisiones 4.6 (R-19, P-12.1 opcion A)
 
-#### REQ-04 `confirmed`
+Formato Bodega: vista imprimible distinta de la factura comercial, accesible desde el menu de fila y desde Visualizar, con identificacion de la factura, cliente y por cada linea (en el orden de lineas) codigo, descripcion, cantidad y todas las ubicaciones registradas del repuesto en la bodega de origen de la factura. La ubicacion se lee de item_warehouse_location (item_id, warehouse_id, location_id) junto con location (ds_code, ds_name), filtrando por la bodega de la factura y listando todas las ubicaciones del repuesto. Se usa LEFT JOIN para que un repuesto sin ubicacion se muestre con el texto 'Sin ubicacion' (el legacy usa INNER JOIN y lo omitiria).
+
+### REQ-03 `confirmed`
+> Fuente: Migraciones 20261003000000_invoices_legacy.ts (invoices.commentary) y 20261003000012 (receiver_*); doc de decisiones seccion 4.6 y 5; legacy print-pack-off.html
+
+Imprimir datos de despacho desde Visualizar: muestra destinatario (invoices.receiver_razon_social), RUT (receiver_rut), telefono (receiver_telefono), direccion (receiver_direccion), ciudad (receiver_ciudad) (migracion 20261003000012), transporte (transportation_id y transportation_name) y observacion (invoices.commentary, varchar 500, migracion 20261003000000_invoices_legacy.ts; el campo equivalente de la entrega es commentary_out), todos guardados en la factura, mas un bloque de remitente Jormat tomado de una constante o config de empresa en Evolution (no existe tabla de configuracion) con los valores del legacy print-pack-off.html: Importadora de Repuestos Jormat Ltda, RUT 76.193.704-9, Valdivia 906 Los Angeles, cel +569 92050943, tel +43 2 361215 (confirmar con el cliente que sigan vigentes). Cantidad de bultos, dimensiones, peso y fragil se ingresan en la pantalla de impresion y no se persisten. Los puntos 2 (tabla de ubicaciones, resuelto en REQ-02 con item_warehouse_location y location) y 6 (remitente, resuelto en REQ-03 y REQ-09) de 'Datos a confirmar' quedan resueltos.
+
+### REQ-04 `confirmed`
 > Fuente: backend/migrations/20260901000001_transport_companies.ts:6
-> Necesidad: build
+
 Selector de transporte T-09 conectado al catalogo real transport_companies (reemplaza la lista simulada), usando la misma fuente que la vista de Transportistas.
 
-#### REQ-05 `inferred`
+### REQ-05 `inferred`
 > Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26
-> Necesidad: build
+
 Visualizar de factura cliente ofrece las acciones Imprimir factura e Imprimir datos de despacho (R-06), ademas del acceso a Formato Bodega.
 
-#### REQ-06 `confirmed`
+### REQ-06 `confirmed`
 > Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26
-> Necesidad: build
+
 Ninguna de las acciones (Entrega Rapida, Formato Bodega, imprimir despacho, imprimir factura) espera ni depende del estado SII de la factura (P-15.1.D1).
 
-#### REQ-07 `confirmed`
+### REQ-07 `confirmed` `enforcement`
 > Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26-29
-> Necesidad: build
+
 Enforcement: Entrega Rapida reutiliza las columnas legacy existentes is_out, user_out_id, commentary_out y date_out de la tabla de facturas; no se crean columnas nuevas ni se reescriben datos migrados.
 
-#### REQ-08 `confirmed`
+### REQ-08 `confirmed` `enforcement`
 > Fuente: frontend/src/components/bodega/transportistas/TransportistasView/TransportistasView.tsx:180
-> Necesidad: build
+
 Enforcement: el selector T-09 consume el mismo origen de datos/servicio de transport_companies que usa TransportistasView, sin duplicar el acceso al catalogo.
 
+### REQ-09 `confirmed` `enforcement`
+> Fuente: JOR-174-Q1 (no existe tabla de configuracion en Evolution)
+
+Enforcement: los datos del remitente Jormat viven en una unica constante o config de empresa en Evolution reutilizada por la impresion de despacho; no se crea tabla de configuracion ni se hardcodean los valores en la plantilla.
 ## Tasks
 
-#### S1.T1 — Backend Entrega Rapida: endpoint que actualiza is_out, date_out, user_out_id, commentary_out (columnas de backend/migrations/20261003000000_invoices_legacy.ts:26-29) solo si is_out=false (UPDATE condicionado WHERE is_out=false para idempotencia atomica), sin tocar stock ni validar pago ni estado SII; protegido por capability de Bodega (reutilizar existente o seed nuevo, ver Datos a confirmar).
+#### S1.T1 — Crear via seed_rbac la capability NUEVA sales.documents:quick-delivery y asignarla a los roles bodega, jefe-local, jefe-venta y gerencia. No reutilizar ninguna capability de Bodega existente. El nombre y los roles estan cerrados (JOR-174-Q6 y Q10): el ejecutor no debe decidirlos ni consultarlos.
 Contrato: rollback: Revertir el commit del endpoint y, si se creo capability, ejecutar el down de su migracion RBAC.. Status: pending
-Subtasks: 2 (ejecutar hojas; el padre espera a todas)
 
-#### S1.T1.1 — Resolver capability: reutilizar la de Bodega existente o crear migracion seed_rbac nueva (requiere aprobacion humana).
+#### S1.T1.1 — Proteger la accion de Entrega Rapida (endpoint y accion de fila) con la capability sales.documents:quick-delivery, creada en S1.T1 via seed_rbac y asignada a bodega, jefe-local, jefe-venta y gerencia. Sin alternativa de reutilizar una capability existente.
 Contrato: rollback: Down de la migracion RBAC o revertir commit.. Status: pending
 
 #### S1.T1.2 — Servicio y ruta de Entrega Rapida con UPDATE condicionado por is_out=false; respuesta devuelve la factura con sus valores actuales en ambos casos.
@@ -96,7 +99,6 @@ Contrato: rollback: Revertir commit de Visualizar y de la vista de despacho.. St
 
 #### S3.T3 — Tests S3: selector con catalogo real y vacio, regresion de TransportistasView.test.tsx, despacho con datos guardados vs ficha de cliente distinta (criterio 21), campos no persistidos, factura sin transporte, botones de Visualizar y formato comercial sin ubicaciones.
 Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status: pending
-
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Imprimir datos de despacho desde Visualizar: muestra destinatario, RUT, telefono, direccion, ciudad, transporte y observacion guardados en la factura mas un bloque de remitente Jormat; cantidad de bultos, dimensiones, peso y fragil se ingresan en la pantalla de impresion y no s
@@ -107,3 +109,67 @@ Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status:
 ## Cambios al modelo de datos
 
 - tipo: seed_rbac | objetos: capability de Bodega para Entrega Rapida (nombre a confirmar; solo si no existe una reutilizable) | destructivo: no | tarea: S1.T1 | rollback: Migracion down que elimina la capability y sus asignaciones a roles; si se reutiliza una existente, no hay cambio de modelo y este item se descarta.
+
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Entrega Rapida: accion de fila para facturas cliente emitidas y no entregadas que, en un clic y sin exigir pago, marca la factura entregada 
+- REQ-02 (edit) `confirmed`: Formato Bodega: vista imprimible distinta de la factura comercial, accesible desde el menu de fila y desde Visualizar, con identificacion de
+- REQ-03 (edit) `confirmed`: Imprimir datos de despacho desde Visualizar: muestra destinatario (receiver_razon_social), RUT (receiver_rut), telefono (receiver_telefono),
+- REQ-09 (add) `confirmed`: Enforcement: los datos del remitente Jormat viven en una unica constante o config de empresa en Evolution reutilizada por la impresion de de
+
+### Enmienda 2
+**REQs:**
+
+- REQ-03 (edit) `confirmed`: Imprimir datos de despacho desde Visualizar: muestra destinatario (invoices.receiver_razon_social), RUT (receiver_rut), telefono (receiver_t
+
+**Task ops:**
+
+- edit S1.T3 { verify=["cd backend/jormat-api && npm test -- quick-delivery"] }
+- edit S2.T3 { verify=["cd backend/jormat-api && npm test -- warehouse-format"] }
+- edit S3.T1 { verify=["cd backend/jormat-api && npm test -- transport"] }
+- edit S3.T3 { verify=["cd front/jormat-front && npm test -- dispatch","cd front/jormat-front && npm test -- TransportistasView.test.tsx"] }
+
+### Enmienda 3
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Entrega Rapida: accion de fila para facturas cliente emitidas y no entregadas que, en un clic y sin exigir pago, marca la factura entregada 
+
+**Task ops:**
+
+- edit S1.T1 { desc="Crear via seed_rbac la capability NUEVA sales.documents:quick-delivery y asignarla a los roles bodega, jefe-local, jefe-venta y gerencia. No reutilizar ninguna capability de Bodega existente. El nombre y los roles estan cerrados (JOR-174-Q6 y Q10): el ejecutor no debe decidirlos ni consultarlos.", validates=["REQ-01"] }
+- edit S1.T1.1 { desc="Proteger la accion de Entrega Rapida (endpoint y accion de fila) con la capability sales.documents:quick-delivery, creada en S1.T1 via seed_rbac y asignada a bodega, jefe-local, jefe-venta y gerencia. Sin alternativa de reutilizar una capability existente.", validates=["REQ-01"] }
+## Sessions
+
+### Session 1 · T2 · open
+
+**Tasks:**
+- [ ] S1.T1
+- [ ] S1.T1.1
+- [ ] S1.T1.2
+- [ ] S1.T2
+- [ ] S1.T3
+
+**Gate (auto)**: En el listado de facturas cliente la accion Entrega Rapida marca la factura entregada; una segunda llamada responde sin cambios (misma date_out y user_out_id, sin movimientos de stock), visible en el listado y en el test del endpoint.
+
+### Session 2 · T2 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+
+**Gate (auto)**: Desde el menu de fila y desde Visualizar se abre el Formato Bodega imprimible; una factura con un repuesto sin ubicacion muestra 'Sin ubicacion' en esa linea y respeta el orden de lineas.
+
+### Session 3 · T2 · open
+
+**Tasks:**
+- [ ] S3.T1
+- [ ] S3.T2
+- [ ] S3.T3
+
+**Gate (auto)**: Visualizar muestra Imprimir factura, Imprimir datos de despacho y Formato Bodega; la impresion de despacho usa los datos guardados de la factura y permite completar bultos/dimensiones/peso/fragil sin guardarlos; el selector T-09 lista las empresas reales de transport_companies.
+
+### Session 4 · T0 · open
