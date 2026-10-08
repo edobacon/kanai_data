@@ -124,14 +124,14 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 
 **Gate (auto)**: Una instalación nueva muestra V-51 antes de la introducción; las tres políticas regionales son revisables y aceptar con red o en modo avión permite llegar a Inicio mediante los proveedores correspondientes.
 
-### Session 3 · T2 · iterate
+### Session 3 · T2 · continue
 
 **Tasks:**
 - [x] S3.T1
 - [x] S3.T2
 - [x] S3.T3
 
-**Gate (auto)**: Tras las correcciones del review, la reaceptación legal (actualización de Privacidad, bloqueo recibido desde otra pantalla y rechazos inmediato/diferido) muestra la versión vigente y devuelve al contexto anterior al aceptar; el gate legal bloquea a pantalla completa mientras resuelve (carga y error) y no permite alcanzar Inicio; la suite del paquete app queda verde. La QA en dispositivo y la aprobación de Diseño se registran en la sesión de verificación y en los casos de fidelidad.
+**Gate (auto)**: Tras las correcciones del review, la reaceptación legal (actualización de Privacidad, bloqueo recibido desde otra pantalla y rechazos inmediato/diferido) muestra la versión vigente y devuelve al contexto anterior al aceptar; el gate legal bloquea a pantalla completa mientras resuelve (carga y error) y no permite alcanzar Inicio; la suite del paquete app queda verde. La QA en dispositivo y la aprobación de Diseño quedan diferidas por la adenda 1 hasta la entrega del arte de HU-02 (FU-22 y FU-25) y no forman parte de este criterio.
 
 ### Session 4 · T0 · continue
 
