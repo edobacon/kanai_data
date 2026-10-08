@@ -159,8 +159,8 @@
     {
       "id": "JOR-171",
       "title": "Facturas cliente (feedback) 3/7 · Saldo, pagos y estados comerciales en el listado",
-      "body": "## Contexto\n\nParte 3 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7.\n\nEl cliente pide que el listado muestre informacion comercial (pago y vencimiento), no solo estado SII (feedback §3.1 a §3.3, captura p. 6). Hoy Payments usa SEED (`backend/jormat-api/src/payments/payments.service.ts:63`), `applyPayment` no persiste, y la etiqueta Vencida compara vencimiento con estado SII \"aceptado\", que no acredita pago. Ventas y Cobranza no comparten datos.\n## Alcance\n\n1. **P-13.1 Pagos persistidos** en el modulo de Cobranza de Evolution (capabilities existentes `payments.customers:record-payment` y `apply-payment`): pago (cliente, fecha, importe, medio, referencia, usuario, vigente/revertido) y aplicacion a factura (importe aplicado). Reutilizar `payment_methods`.\n2. **T-05 Proyeccion unica de saldo**: saldo = total - pagos aplicados - notas de credito aplicadas. La usan estado, listado, tarjetas, popup (4/7) y Estado de cuenta (4/7). Sin tabla de \"vencidas\".\n3. **Estados comerciales (R-05)**: Borrador (sin folio, fuera de deuda), Pendiente de pago (emitida, saldo > 0, dentro del plazo), Pagada (saldo 0), Vencida (saldo > 0 y plazo de 30/60 dias cumplido). Separados del estado SII simulado.\n4. **Tarjetas (R-02, P-14.2 opcion B)**: Pendientes de pago (con saldo **dentro del plazo**), Vencidos (con saldo y plazo cumplido), Notas de credito (todas las emitidas). Borradores no cuentan. Reemplazan las tarjetas actuales centradas en SII.\n5. **P-14.1 opcion A**: las tarjetas cuentan los documentos que cumplen los filtros activos y el acceso del usuario; se recalculan al aplicar o limpiar filtros. Agregacion en servidor sobre datos persistidos.\n6. **Filtros y busqueda (R-03, R-04)**: RUT, nombre o razon social, Origen, O.C. (columna \"Orden\"), rango de fechas (se mantiene) y estado comercial (Borrador, Pendiente de pago, Pagada, Vencida). Quitar el filtro marcado en la captura p. 6.\n7. **R-01**: excluir guias de despacho del listado.\n\n## Criterios de aceptacion\n\n- Las guias de despacho no aparecen (criterio 1).\n- Credito 30 dias emitida hace 31 dias con saldo: Vencida, cuenta en \"Vencidos\" y no en \"Pendientes de pago\" (criterio 2).\n- Dos pagos parciales que completan el total: Pagada, sale de ambos contadores (criterio 3).\n- Un borrador no cuenta en deuda ni tarjetas (criterio 4).\n- Cada filtro devuelve el conjunto esperado (criterio 5).\n- Con un rango de fechas, los tres contadores coinciden con la tabla filtrada; al limpiar vuelven al total del usuario (criterio 29).\n- Un pago registrado sobrevive a un reinicio y se refleja en estado y tarjetas.\n\n## Fuera de alcance\n\nNotas de credito y su aplicacion (5/7; este ticket deja la proyeccion preparada para sumarlas). Cheques (4/7). Reportes de cobranza.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-01 a R-05), 4.1 (P-13.1, P-14.1, P-14.2) y 5 (T-05). La formula de saldo del legacy (total menos pagos) esta citada con archivo y linea en la seccion 4.1. Summary actual en `backend/jormat-api/src/sales/sales.service.ts:447`.",
-      "revision": "0087d904934f9e9b1dcceccd06c5874ed44daf790509da60b3b3f515c06554f1",
+      "body": "## Contexto\n\nParte 3 de 7 de la epica \"Facturas cliente: ajustes del feedback del cliente (JOR-166/JOR-167)\". Fuente de verdad: el documento de decisiones de Facturas Cliente del 06-10 (KB del proyecto, carpeta tickets; en adelante \"doc de decisiones\"). Depende de 1/7.\n\nEl cliente pide que el listado muestre informacion comercial (pago y vencimiento), no solo estado SII (feedback §3.1 a §3.3, captura p. 6). Hoy Payments usa SEED (`backend/jormat-api/src/payments/payments.service.ts:63`), `applyPayment` no persiste, y la etiqueta Vencida compara vencimiento con estado SII \"aceptado\", que no acredita pago. Ventas y Cobranza no comparten datos.\n## Alcance\n\n1. **P-13.1 Pagos persistidos** en el modulo de Cobranza de Evolution (capabilities existentes `payments.customers:record-payment` y `apply-payment`): pago (cliente, fecha, importe, medio, referencia, usuario, vigente/revertido) y aplicacion a factura (importe aplicado). Reutilizar `payment_methods`.\n2. **T-05 Proyeccion unica de saldo**: saldo = total - pagos aplicados - notas de credito aplicadas. La usan estado, listado, tarjetas, popup (4/7) y Estado de cuenta (4/7). Sin tabla de \"vencidas\".\n3. **Estados comerciales (R-05)**: Borrador (sin folio, fuera de deuda), Pendiente de pago (emitida, saldo > 0, dentro del plazo), Pagada (saldo 0), Vencida (saldo > 0 y plazo de 30/60 dias cumplido). Separados del estado SII simulado.\n4. **Tarjetas (R-02, P-14.2 opcion B)**: Pendientes de pago (con saldo **dentro del plazo**), Vencidos (con saldo y plazo cumplido), Notas de credito (todas las emitidas). Borradores no cuentan. Reemplazan las tarjetas actuales centradas en SII.\n5. **P-14.1 opcion A**: las tarjetas cuentan los documentos que cumplen los filtros activos y el acceso del usuario; se recalculan al aplicar o limpiar filtros. Agregacion en servidor sobre datos persistidos.\n6. **Filtros y busqueda (R-03, R-04)**: RUT, nombre o razon social, Origen, O.C. (columna \"Orden\"), rango de fechas (se mantiene) y estado comercial (Borrador, Pendiente de pago, Pagada, Vencida). Quitar el filtro marcado en la captura p. 6.\n7. **R-01**: excluir guias de despacho del listado.\n\n## Criterios de aceptacion\n\n- Las guias de despacho no aparecen (criterio 1).\n- Credito 30 dias emitida hace 31 dias con saldo: Vencida, cuenta en \"Vencidos\" y no en \"Pendientes de pago\" (criterio 2).\n- Dos pagos parciales que completan el total: Pagada, sale de ambos contadores (criterio 3).\n- Un borrador no cuenta en deuda ni tarjetas (criterio 4).\n- Cada filtro devuelve el conjunto esperado (criterio 5).\n- Con un rango de fechas, los tres contadores coinciden con la tabla filtrada; al limpiar vuelven al total del usuario (criterio 29).\n- Un pago registrado sobrevive a un reinicio y se refleja en estado y tarjetas.\n\n## Fuera de alcance\n\nNotas de credito y su aplicacion (5/7; este ticket deja la proyeccion preparada para sumarlas). Cheques (4/7). Reportes de cobranza.\n\n## Evidencia\n\nDoc de decisiones secciones 3 (R-01 a R-05), 4.1 (P-13.1, P-14.1, P-14.2) y 5 (T-05). La formula de saldo del legacy (total menos pagos) esta citada con archivo y linea en la seccion 4.1. Summary actual en `backend/jormat-api/src/sales/sales.service.ts:447`.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-08 - dev (via opencode)\n\nCorreccion de regresion (review kn-dredd sobre JOR-171, S1 confirmado): el modulo de Cobranza quedo medio migrado.\n\nJOR-171 hizo PERSISTENTE la escritura (applyPayment/deletePayment contra `invoices` real, id uuid) pero la LECTURA sigue sobre el SEED del stub: `findAllCobranza` / `getSummary` / `getInvoice` devuelven ids sembrados (`inv-*`) y pagos de la semilla (`payments.service.ts:183-190,278`). Consumidores del seed: la vista 09 (listado de cobranza) y la vista 10 (Aplicar pago). Antes de JOR-171 el modulo era consistente (todo en memoria); al persistir solo la escritura quedo inconsistente.\n\nEfecto: al registrar o revertir un pago desde la app, `resolveCustomerId` / `revertPayment` (`payments.repository.ts:293,353`) rechazan el id `inv-*` y el endpoint responde 404 (\"Factura no encontrada\" / \"Pago no encontrado\"). El criterio \"un pago registrado sobrevive a un reinicio\" no es alcanzable desde la UI.\n\nAlcance que se agrega: migrar la LECTURA de Cobranza (listado paginado, summary y detalle) a la DB persistida, reutilizando las primitivas de sales (proyeccion de saldo, aplicados por factura, cabecera con join a `customers`): el listado devuelve el uuid real, `pending` = total - aplicado, el estado derivado con el vencimiento real (`expiration_date`) y la forma de pago del ultimo pago (o 'Sin pago'); el detalle usa `getInvoiceView`. Se retira el `SEED` y el codigo stub muerto. Sin cambio de contrato de respuesta ni migracion de DB.\n\n**Motivo**: Regresion introducida por JOR-171 detectada en el review: el flujo de aplicar/revertir pago de la app queda roto (404) porque la lectura de Cobranza aun sirve ids de la semilla mientras la escritura exige uuid real.",
+      "revision": "60ebeb556d6b2852c007a3dd0a860d38ab940b29ce64ab246beba3cb2aa66075",
       "repo": "monorepo",
       "aliases": [],
       "scopeApproved": true,
@@ -517,12 +517,16 @@
     "JOR-167": {
       "ticketId": "JOR-167",
       "status": "closed"
+    },
+    "JOR-171": {
+      "ticketId": "JOR-171",
+      "status": "closed"
     }
   },
   "mentionFamilies": [
     "JOR:2"
   ],
-  "version": 5,
+  "version": 6,
   "dependencies": [
     {
       "from": "JOR-169",
@@ -615,836 +619,12 @@
     "JOR-174",
     "JOR-175"
   ],
-  "approvedFingerprint": "8899bb583a4082a703983f5af0989bfe5001b1d1ddc8a429f2b95c12de202844",
-  "approvedBy": "human-confirmed",
   "dataModelAck": {
     "digest": "d0d0d6605389fe15",
     "reason": "El dev aprueba los cambios sensibles de modelo de datos detectados en la epica (reescritura/borrado en JOR-169 y JOR-170; siembra de capabilities/roles en JOR-170 y JOR-175), tras revisar el detalle.",
     "by": "human-confirmed"
   },
-  "accessCheck": {
-    "id": "17374830-0a5e-401f-8bed-4143a4039a22",
-    "harness": "opencode",
-    "harnessVersion": "1.18.35",
-    "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
-    "binding": "fb37e7c18a02ab1ae3eb69167bd6de99881d34ad107bd57f71ecb1639309eb49",
-    "issuedAt": "2026-10-08T11:57:48.838Z",
-    "expiresAt": "2026-10-08T12:12:48.838Z",
-    "validUntil": "2026-10-08T19:58:16.008Z",
-    "probes": [
-      {
-        "id": "04981526-609a-462d-9898-599675042a6b",
-        "action": "read_repo",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-evolution-mono"
-      },
-      {
-        "id": "9af7b41d-d72c-4124-ac1d-d9d5681b4fa6",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/clients/model.js"
-      },
-      {
-        "id": "b4a722de-f833-47e9-af9a-fc7dbda562fb",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/invoices/model.js"
-      },
-      {
-        "id": "12cfd55c-8583-43fa-8feb-5044b572b5b6",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/notes/model.js"
-      },
-      {
-        "id": "2ab50d03-aa27-4c33-8a9e-07ec24a5700c",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/payments/model.js"
-      },
-      {
-        "id": "c0056c90-bb9b-4081-8a99-563c8ddebc8a",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_back_legacy/server/api/warehouseDeliveries/model.js"
-      },
-      {
-        "id": "6e02070a-e33c-45c5-9537-fc99485c83c1",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md"
-      },
-      {
-        "id": "0946fcc5-7c26-488d-a0cd-d41560b4a48b",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat_docs/tickets/JOR-166-JOR-167-investigacion-backend-main-2026-10-03.md"
-      },
-      {
-        "id": "42d19967-eda9-4622-8b64-835c3a128815",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/items/items/update/items-update.html"
-      },
-      {
-        "id": "d6dfe65d-48f6-4713-8569-26bed18459cf",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoices-create-key.html"
-      },
-      {
-        "id": "c2abd152-2758-4784-8b68-23e3663cc73c",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create-access-key/invoicesCreateKeyController.js"
-      },
-      {
-        "id": "a05a779b-8f19-4594-901c-2951555edfc7",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/create/clientsInvoicesCreateController.js"
-      },
-      {
-        "id": "14a5e825-3e5b-4eaa-940a-c725cd71ee81",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/list/dropdownActionsMenu.html"
-      },
-      {
-        "id": "120b38f8-ecd0-4844-b6c3-bf7c18b339b3",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customer-notification.html"
-      },
-      {
-        "id": "ae2f5207-d48f-4f31-b35e-a93c17be2256",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/notifications/customerNotificationController.js"
-      },
-      {
-        "id": "4c749574-2915-4824-8b2e-b0be73cdb832",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/packOff/print-pack-off.html"
-      },
-      {
-        "id": "28dc3685-3f1d-43cb-832b-cbab76ccb50c",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients-invoices/warehouse-print/invoice-warehouse-print.html"
-      },
-      {
-        "id": "a19f97ce-34a7-4be9-9175-eff12fddadd2",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/clients/account/accountStatusController.js"
-      },
-      {
-        "id": "264a2978-562b-43d0-abb5-ae0939a79c5a",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/create/credit-notes-create.html"
-      },
-      {
-        "id": "4402a596-a8ad-464c-a171-ac9933241257",
-        "action": "read_external",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
-        "path": "/Users/edobacon/Workspace/q/jormat_monorepo/jormat-front-legacy/src/app/sales/credit-notes/list/credit-notes-list.html"
-      }
-    ],
-    "report": {
-      "checkId": "17374830-0a5e-401f-8bed-4143a4039a22",
-      "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
-      "results": [
-        {
-          "probeId": "04981526-609a-462d-9898-599675042a6b",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.008Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "9af7b41d-d72c-4124-ac1d-d9d5681b4fa6",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.010Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "b4a722de-f833-47e9-af9a-fc7dbda562fb",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.010Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "12cfd55c-8583-43fa-8feb-5044b572b5b6",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.011Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "2ab50d03-aa27-4c33-8a9e-07ec24a5700c",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.011Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "c0056c90-bb9b-4081-8a99-563c8ddebc8a",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.011Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "6e02070a-e33c-45c5-9537-fc99485c83c1",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.011Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "0946fcc5-7c26-488d-a0cd-d41560b4a48b",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.011Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "42d19967-eda9-4622-8b64-835c3a128815",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.012Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "d6dfe65d-48f6-4713-8569-26bed18459cf",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.012Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "c2abd152-2758-4784-8b68-23e3663cc73c",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.013Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "a05a779b-8f19-4594-901c-2951555edfc7",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.013Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "14a5e825-3e5b-4eaa-940a-c725cd71ee81",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.013Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "120b38f8-ecd0-4844-b6c3-bf7c18b339b3",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.013Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "ae2f5207-d48f-4f31-b35e-a93c17be2256",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.013Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "4c749574-2915-4824-8b2e-b0be73cdb832",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.013Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "28dc3685-3f1d-43cb-832b-cbab76ccb50c",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.014Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "a19f97ce-34a7-4be9-9175-eff12fddadd2",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.014Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "264a2978-562b-43d0-abb5-ae0939a79c5a",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.014Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        },
-        {
-          "probeId": "4402a596-a8ad-464c-a171-ac9933241257",
-          "status": "readable",
-          "checkedAt": "2026-10-08T11:58:16.014Z",
-          "detail": "Lectura comprobada sin exponer contenido"
-        }
-      ]
-    }
-  },
   "decisionBank": [],
-  "run": {
-    "id": "04ba4046-388e-47fb-9ca4-733c618c2b16",
-    "planVersion": 5,
-    "fingerprint": "8899bb583a4082a703983f5af0989bfe5001b1d1ddc8a429f2b95c12de202844",
-    "harness": "opencode",
-    "harnessVersion": "1.18.35",
-    "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
-    "teach": "skip",
-    "humanChecks": "block",
-    "state": "running",
-    "ticketIds": [
-      "JOR-169",
-      "JOR-170",
-      "JOR-171",
-      "JOR-172",
-      "JOR-173",
-      "JOR-174",
-      "JOR-175"
-    ],
-    "current": 3,
-    "step": "intake",
-    "validated": {
-      "JOR-169": {
-        "sha": "16b592716382a9c22417c292502ba199bcbdab24",
-        "evidence": [
-          "kanai:ticket/JOR-169/closed",
-          "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
-          "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
-          "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
-          "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
-          "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
-          "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
-          "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
-          "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
-          "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
-          "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
-          "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
-          "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
-          "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
-          "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
-          "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
-          "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
-          "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
-          "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
-          "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
-          "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
-          "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
-          "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
-          "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
-          "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
-          "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
-          "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
-          "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
-          "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
-          "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
-          "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
-          "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
-          "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
-          "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
-          "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
-          "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
-          "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
-          "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
-          "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
-          "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
-          "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
-          "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
-          "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
-          "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
-          "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
-          "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
-          "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
-        ],
-        "commits": [
-          "0d882fc46dd0b41d831f50eb49cf65e1eae8f210",
-          "33ef0bcf8b982cd20808713dcb513478017252bd",
-          "547e9e5b35043fd99c7df1cd6a67aa2a2b692bb9",
-          "7b43edf912ded57d879fc6a41ba4d85fe5000681",
-          "7e01a9fabbae3392df3a0ab00b00723a5fd4c59d",
-          "cc0dbc06171ef823f1314405f6eaeb09efc07753",
-          "ea935e24a7dd40703b48578fa542323c25ae5b59",
-          "f197bfd72bcc98f67ca2858af128e641e86cf3d1"
-        ]
-      },
-      "JOR-170": {
-        "sha": "16b592716382a9c22417c292502ba199bcbdab24",
-        "evidence": [
-          "kanai:ticket/JOR-170/closed",
-          "JOR-170-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
-          "JOR-170-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
-          "JOR-170-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
-          "JOR-170-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
-          "JOR-170-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
-          "JOR-170-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
-          "JOR-170-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
-          "JOR-170-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
-          "JOR-170-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
-          "JOR-170-TC-REQ-04-1: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_30 con fecha 2026-10-07 vence el 2026-11-06 (30 dias corridos) · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_30 con fecha 2026-10-07 vence el 2026-11-06 (30 dias corridos)",
-          "JOR-170-TC-REQ-04-2: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_60 con fecha 2026-10-07 vence el 2026-12-06 (60 dias corridos) · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_60 con fecha 2026-10-07 vence el 2026-12-06 (60 dias corridos)",
-          "JOR-170-TC-REQ-04-3: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_90 se rechaza: solo se aceptan 30 o 60 dias · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_90 se rechaza: solo se aceptan 30 o 60 dias",
-          "JOR-170-TC-REQ-05-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 10% con tope de ficha 20%: no bloquea Facturar · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 10% con tope de ficha 20%: no bloquea Facturar",
-          "JOR-170-TC-REQ-05-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 25% con tope de ficha 20%: bloquea Facturar y avisa · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 25% con tope de ficha 20%: bloquea Facturar y avisa",
-          "JOR-170-TC-REQ-05-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > importe equivalente al 25% (precio 4000): el % se calcula sobre el subtotal y bloquea · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > importe equivalente al 25% (precio 4000): el % se calcula sobre el subtotal y bloquea",
-          "JOR-170-TC-REQ-06-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 20% sin descuentos de línea: no bloquea Facturar · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 20% sin descuentos de línea: no bloquea Facturar",
-          "JOR-170-TC-REQ-06-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 21%: bloquea Facturar y avisa · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 21%: bloquea Facturar y avisa",
-          "JOR-170-TC-REQ-06-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general > 0 combinado con un descuento de línea: bloquea (excluyentes) · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general > 0 combinado con un descuento de línea: bloquea (excluyentes)",
-          "JOR-170-TC-REQ-07-1: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > un item con bloqueo efectivo bloquea el descuento general de la factura · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > un item con bloqueo efectivo bloquea el descuento general de la factura",
-          "JOR-170-TC-REQ-07-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — item con Bloqueo Descuento (JOR-170) > al quitar el repuesto bloqueado, el descuento general se habilita si no queda otro · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — item con Bloqueo Descuento (JOR-170) > al quitar el repuesto bloqueado, el descuento general se habilita si no queda otro",
-          "JOR-170-TC-REQ-07-3: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1 · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1",
-          "JOR-170-TC-REQ-08-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > precio < piso: muestra el banner y deshabilita \"Facturar\" · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > precio < piso: muestra el banner y deshabilita \"Facturar\"",
-          "JOR-170-TC-REQ-08-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > el piso es el neto de venta (nm_net), no el costo: un precio sobre el costo pero bajo el neto igual bloquea · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > el piso es el neto de venta (nm_net), no el costo: un precio sobre el costo pero bajo el neto igual bloquea",
-          "JOR-170-TC-REQ-08-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — piso re-sembrado al retomar borrador (JOR-170) > re-siembra el piso con el nm_net vigente, avisa y bloquea si el precio quedó bajo el piso · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — piso re-sembrado al retomar borrador (JOR-170) > re-siembra el piso con el nm_net vigente, avisa y bloquea si el precio quedó bajo el piso",
-          "JOR-170-TC-REQ-09-1: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > bloquea el clonado cuando una linea copiada supera el tope de la ficha · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > bloquea el clonado cuando una linea copiada supera el tope de la ficha",
-          "JOR-170-TC-REQ-09-2: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > emite el clonado cuando las lineas copiadas cumplen las reglas · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > emite el clonado cuando las lineas copiadas cumplen las reglas",
-          "JOR-170-TC-REQ-10-1: citado por el subagente: front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea · verificado vs front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea",
-          "JOR-170-TC-REQ-10-2: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1 · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1",
-          "JOR-170-TC-REQ-10-3: citado por el subagente: front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea · verificado vs front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea",
-          "JOR-170-TC-REQ-11-1: citado por el subagente: backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > es idempotente: re-correr no duplica el rol ni el grant · verificado vs backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > es idempotente: re-correr no duplica el rol ni el grant",
-          "JOR-170-TC-REQ-11-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: topes y precio (JOR-170) > sin el override, ese mismo descuento sí bloquea (usuario común, control negativo) · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: topes y precio (JOR-170) > sin el override, ese mismo descuento sí bloquea (usuario común, control negativo)",
-          "JOR-170-TC-REQ-12-1: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta un descuento de linea sobre un item con Bloqueo Descuento · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta un descuento de linea sobre un item con Bloqueo Descuento",
-          "JOR-170-TC-REQ-12-2: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta el descuento general hasta 80% · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta el descuento general hasta 80%",
-          "JOR-170-TC-REQ-12-3: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, SIGUE rechazando el general combinado con un item con Bloqueo Descuento · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, SIGUE rechazando el general combinado con un item con Bloqueo Descuento",
-          "JOR-170-TC-REQ-13-1: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > total: agrega ventas netas y costos de las lineas con costo · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > total: agrega ventas netas y costos de las lineas con costo",
-          "JOR-170-TC-REQ-13-2: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > usa el costo snapshot de la linea (cambiar el costo vigente del item no cambia el resultado) · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > usa el costo snapshot de la linea (cambiar el costo vigente del item no cambia el resultado)",
-          "JOR-170-TC-REQ-13-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: utilidad (JOR-170) > sin el override, la utilidad no se muestra (ni por línea ni total) · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: utilidad (JOR-170) > sin el override, la utilidad no se muestra (ni por línea ni total)",
-          "JOR-170-TC-ENF-01-1: citado por el subagente: backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > crea el rol workspace-scoped Super Usuario y le otorga la capability · verificado vs backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > crea el rol workspace-scoped Super Usuario y le otorga la capability",
-          "JOR-170-TC-ENF-02-1: citado por el subagente: front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > lee la marca nueva `bloqueoDescuento` y muestra el badge \"Bloqueo descuento\" con la línea deshabilitada · verificado vs front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > lee la marca nueva `bloqueoDescuento` y muestra el badge \"Bloqueo descuento\" con la línea deshabilitada",
-          "JOR-170-TC-ENF-03-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — clonado desde documento reusa los gates (origen-factura, REQ-09) > una línea clonada con el precio bajo el piso (nm_net) no habilita Facturar · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — clonado desde documento reusa los gates (origen-factura, REQ-09) > una línea clonada con el precio bajo el piso (nm_net) no habilita Facturar"
-        ],
-        "commits": [
-          "0aecfa9969d395b77238f16e39e6bb9e4fc46ed6",
-          "102dda9b2553de85cfa9c40e29db4cde29c53b6b",
-          "23017081dbaf56d40b8c26039aae865d77caf09d",
-          "2a49ac2493bc699206c12ddb15bbc7a7a9077e3a",
-          "2fdc88030df8de9040a236d31f45dfd6af28f25c",
-          "4a4a8a8fa7a29ab84deaec781953306851c81b6b",
-          "714ccc2850216beb071e53f5c5ee0c252cc2f8c1",
-          "9722cb5b377e1807a15e5ca6a9f062e138f85a40",
-          "a4038ed9888d71078fbf462238a3b7d04dd7e9a4",
-          "f8f4e8fed723acdc94a538a22d25ede1e6eed1c5",
-          "fb7658389509dbfe1b72545f2dc5f4ed1cb0a7c3",
-          "fe3c21a3914ecaf857e2eef550f69ef093732500"
-        ]
-      },
-      "JOR-171": {
-        "sha": "1165c5a9ae13798cacff87bdcf10ee06183b07fa",
-        "evidence": [
-          "kanai:ticket/JOR-171/ready_to_close",
-          "JOR-171-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcTotals — descuento global como porcentaje (JOR-120, sin cambios por JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento de línea $3.000 y global 0 → neto 17.000, IVA 19% (afecta)",
-          "JOR-171-TC-REQ-01-2: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > POST /pagos/clientes/:invoiceId/pagos > 403 con solo record-payment (falta apply-payment — AND)",
-          "JOR-171-TC-REQ-01-3: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.service.spec.ts::PaymentsService — applyPayment persistido > persiste record+apply y proyecta el saldo desde la vista persistida",
-          "JOR-171-TC-REQ-02-1: proyeccion-saldo.spec passed · verificado vs src/sales/proyeccion-saldo.spec.ts::Proyeccion de saldo (calcularSaldoProyectado) > total 100, pagos aplicados 30 y notas de credito aplicadas 20 → saldo 50",
-          "JOR-171-TC-REQ-02-2: proyeccion-saldo.spec passed · verificado vs src/sales/proyeccion-saldo.spec.ts::Proyeccion de saldo (calcularSaldoProyectado) > sin pagos ni notas el saldo es el total; pagos + notas = total → saldo 0",
-          "JOR-171-TC-REQ-02-3: sales.service.spec passed · verificado vs src/sales/sales.service.spec.ts::SalesService > getSummary > proyecta el saldo descontando los pagos aplicados y conserva los campos actuales",
-          "JOR-171-TC-REQ-03-1: Suite sales 151 passed · verificado vs backend/jormat-api/src/sales/proyeccion-saldo.spec.ts::Estado comercial derivado (derivarEstadoComercialPago) > credito 30 emitido hace 31 dias con saldo > 0 → Vencida",
-          "JOR-171-TC-REQ-03-2: Suite sales 151 passed · verificado vs backend/jormat-api/src/sales/proyeccion-saldo.spec.ts::Estado comercial derivado (derivarEstadoComercialPago) > dia 30 → Pendiente de pago; dia 31 → Vencida",
-          "JOR-171-TC-REQ-03-3: Suite sales 151 passed · verificado vs backend/jormat-api/src/sales/proyeccion-saldo.spec.ts::Estado comercial derivado (derivarEstadoComercialPago) > saldo 0 → Pagada",
-          "JOR-171-TC-REQ-04-1: Suite sales 164 passed · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > tarjetas comerciales > una factura pendiente, una vencida y una nota emitida dan 1 en cada tarjeta",
-          "JOR-171-TC-REQ-04-2: Suite sales 164 passed · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > tarjetas comerciales > un borrador no incrementa ninguna de las tres tarjetas",
-          "JOR-171-TC-REQ-04-3: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > tarjetas comerciales > las tarjetas son comerciales: un rechazado SII pendiente de pago cuenta en la tarjeta comercial",
-          "JOR-171-TC-REQ-05-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > contadores sobre el conjunto filtrado (acceso del usuario) > con rango de fechas los contadores coinciden con las filas de la tabla filtrada",
-          "JOR-171-TC-REQ-05-2: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > contadores sobre el conjunto filtrado (acceso del usuario) > al limpiar los filtros los contadores vuelven a los totales del usuario",
-          "JOR-171-TC-REQ-05-3: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > contadores sobre el conjunto filtrado (acceso del usuario) > un usuario sin acceso a ciertos documentos no los ve en la tabla ni en los contadores",
-          "JOR-171-TC-REQ-06-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > filtros y busqueda del listado > estado comercial Vencida devuelve solo saldo>0 con plazo cumplido",
-          "JOR-171-TC-REQ-06-2: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > filtros y busqueda del listado > cada filtro por campo devuelve el conjunto esperado",
-          "JOR-171-TC-REQ-06-3: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/documentos.controller.spec.ts::DocumentosController — integracion HTTP (Supertest, sin DB) > GET /ventas/documentos (list) > ignora el parametro removido estadoDocumento (whitelist: no llega al service)",
-          "JOR-171-TC-REQ-07-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > exclusion de guias de despacho > el listado no devuelve guias de despacho ni las cuenta",
-          "JOR-171-TC-REQ-07-2: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > exclusion de guias de despacho > las facturas siguen mostrandose tras la exclusion",
-          "JOR-171-TC-ENF-01-1: e2e payments-persistence: verificación por join contra payment_methods · verificado vs test/e2e/payments-persistence.e2e-spec.ts::Cobranza persistida (DB real, customer_payments) > registra y aplica el pago de forma atomica y el pago sobrevive al reinicio",
-          "JOR-171-TC-ENF-02-1: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > POST /pagos/clientes/:invoiceId/pagos > 403 con solo record-payment (falta apply-payment — AND)",
-          "JOR-171-TC-ENF-03-1: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > POST /pagos/clientes/:invoiceId/pagos > 201 con record-payment ∧ apply-payment — recalcula el saldo",
-          "JOR-171-TC-ENF-04-1: test:e2e payments-persistence -> 3 passed · verificado vs test/e2e/payments-persistence.e2e-spec.ts::Cobranza persistida (DB real, customer_payments) > la reversion marca el pago como revertido sin borrar la fila ni la aplicacion",
-          "JOR-171-TC-ENF-04-2: payments.controller.spec passed · verificado vs src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > DELETE /pagos/clientes/:invoiceId/pagos/:paymentId > 403 sin :delete — el pago sigue vigente/aplicado (no se revierte)",
-          "JOR-171-TC-ENF-04-3: seeds/__tests__/07_payments_capabilities.spec passed · verificado vs seeds/__tests__/07_payments_capabilities.spec.ts::seed 07_payments_capabilities — catalogo office-payments (JOR-139) > el catalogo payments incluye las 4 caps de customers + las 3 de offices",
-          "JOR-171-TC-ENF-05-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales-tables.spec.ts::persistencia de ventas — tablas > no hay tabla propia de notas de credito: el contador sale del mismo store del listado"
-        ],
-        "commits": [
-          "1f4b3843fcf0fa5379989025f961f44dc73fbecb",
-          "4abdaf13851f595f99852b13789ee1eaff23f472",
-          "cca693f8c0bcac72e365914d7befac2ed3605246"
-        ]
-      }
-    },
-    "grants": [
-      {
-        "actor": "dev",
-        "actions": [
-          "read_repo",
-          "write_repo",
-          "run_tests",
-          "kanai_tools",
-          "git_integrate"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      },
-      {
-        "actor": "dev",
-        "actions": [
-          "read_external"
-        ],
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
-        "expiresAt": "2026-10-10T12:00:00.000Z",
-        "revoked": false
-      }
-    ],
-    "capabilities": [
-      {
-        "action": "read_repo",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
-        "evidence": [
-          "Comprobacion 17374830-0a5e-401f-8bed-4143a4039a22: readable"
-        ]
-      },
-      {
-        "action": "write_repo",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
-      },
-      {
-        "action": "run_tests",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
-      },
-      {
-        "action": "kanai_tools",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
-      },
-      {
-        "action": "git_integrate",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      },
-      {
-        "action": "read_external",
-        "state": "granted",
-        "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
-        "evidence": [
-          "Comprobacion 17374830: readable"
-        ]
-      }
-    ],
-    "requiredActions": [
-      "read_repo",
-      "write_repo",
-      "run_tests",
-      "kanai_tools",
-      "git_integrate"
-    ],
-    "maxAttempts": 5,
-    "attempts": {},
-    "dependencyReceipts": {},
-    "startedAt": "2026-10-08T12:01:25.176Z",
-    "deadline": "2026-10-10T12:00:00.000Z"
-  },
   "history": [
     {
       "id": "a863c727-d7a4-4170-967a-bb795393820f",
@@ -2817,6 +1997,571 @@
       "reason": "ticket_drift",
       "startedAt": "2026-10-08T01:20:33.628Z",
       "deadline": "2026-10-08T09:19:30.989Z"
+    },
+    {
+      "id": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "planVersion": 5,
+      "fingerprint": "8899bb583a4082a703983f5af0989bfe5001b1d1ddc8a429f2b95c12de202844",
+      "harness": "opencode",
+      "harnessVersion": "1.18.35",
+      "harnessSessionId": "80517d66-46e0-498c-b46d-0b9687fa81e5",
+      "teach": "skip",
+      "humanChecks": "block",
+      "state": "cancelled",
+      "ticketIds": [
+        "JOR-169",
+        "JOR-170",
+        "JOR-171",
+        "JOR-172",
+        "JOR-173",
+        "JOR-174",
+        "JOR-175"
+      ],
+      "current": 3,
+      "step": "intake",
+      "validated": {
+        "JOR-169": {
+          "sha": "16b592716382a9c22417c292502ba199bcbdab24",
+          "evidence": [
+            "kanai:ticket/JOR-169/closed",
+            "JOR-169-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+            "JOR-169-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+            "JOR-169-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+            "JOR-169-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+            "JOR-169-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+            "JOR-169-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+            "JOR-169-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+            "JOR-169-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+            "JOR-169-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+            "JOR-169-TC-REQ-04-1: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-1: form sucio: Cancelar intercepta con el diálogo de 3 acciones (incluye \"Guardar borrador\")",
+            "JOR-169-TC-REQ-04-2: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-2: form sucio: \"Salir sin guardar\" descarta y navega sin guardar el borrador",
+            "JOR-169-TC-REQ-04-3: verificado por codigo del caso en el test verde: TransactionBuilder — integración del guard (DC-1) JOR-167-TC-REQ-04-3: form sucio: \"Guardar borrador\" del diálogo guarda y luego sale al listado",
+            "JOR-169-TC-REQ-05-1: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-1: marca exacta llega a listItems",
+            "JOR-169-TC-REQ-05-2: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-2: estado de stock llega a listItems",
+            "JOR-169-TC-REQ-05-3: verificado por codigo del caso en el test verde: useItems — propagación de filtros a listItems (REQ-05) REQ-05-3: id de categoría llega a listItems",
+            "JOR-169-TC-REQ-06-1: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-1: muestra el badge de crédito (\"Sí\") cuando isCredit es true",
+            "JOR-169-TC-REQ-06-2: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-2: actualiza el badge de crédito al recibir una notification distinta sin cerrar el popup",
+            "JOR-169-TC-REQ-06-3: verificado por codigo del caso en el test verde: CustomerNotificationDialog REQ-06-3: tolera isCredit undefined sin romper el popup (se omite el badge, el resto renderiza)",
+            "JOR-169-TC-REQ-07-1: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-1: muestra \"Cancelar\", \"Guardar borrador\" y \"Facturar\" en orden",
+            "JOR-169-TC-REQ-07-2: verificado por codigo del caso en el test verde: TransactionBuilder JOR-167-TC-REQ-07-2: \"Facturar\" es btn-primary; \"Guardar borrador\" es btn-outline",
+            "JOR-169-TC-REQ-07-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > descuento de linea con unidad explicita > el total de la linea sigue siendo precio*cantidad menos el importe del descuento",
+            "JOR-169-TC-REQ-08-1: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > emitir con receptor completo persiste rut, razon social, direccion, ciudad y telefono",
+            "JOR-169-TC-REQ-08-2: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > snapshot del receptor en la factura > cambiar la direccion del cliente tras emitir no altera el snapshot de la factura",
+            "JOR-169-TC-REQ-08-3: jest facturas.controller.spec OK. · verificado vs backend/jormat-api/src/sales/facturas.controller.spec.ts::FacturasController — integracion HTTP (Supertest, sin DB) > POST /ventas/facturas (issueFactura) > 400 al emitir con un receptor sin razonSocial ni rut",
+            "JOR-169-TC-REQ-09-1: verificado por codigo del caso en el test verde: ItemSearchPanel JOR-167-TC-REQ-09-1: \"Filtros\" es un botón outline ubicado a la derecha del campo de búsqueda",
+            "JOR-169-TC-REQ-09-2: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra la N.P. (orderNote) en la cabecera cuando el documento la trae",
+            "JOR-169-TC-REQ-09-3: vitest DocumentoDetalleView 20/20 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.test.tsx::DocumentoDetalleView > muestra Origen, OC y Vencimiento en la cabecera",
+            "JOR-169-TC-REQ-10-1: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-1: muestra las filas en orden Subtotal → Descuento → Neto → IVA → Total",
+            "JOR-169-TC-REQ-10-2: verificado por codigo del caso en el test verde: DocumentSummaryCard fidelidad del resumen (JOR-167-TC-REQ-10) JOR-167-TC-REQ-10-2: la fila \"Total\" se distingue visualmente (mayor peso/tamaño que las demás)",
+            "JOR-169-TC-REQ-10-3: backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts > costo neto unitario por linea > guardar el costo no altera el total, el precio unitario ni los montos de la factura",
+            "JOR-169-TC-ENF-01-1: Verificacion operacional S1.T8: migrate sobre la DB dev ya migrada no aplica nada; idempotencia confirmada; el e2e re-ejecuta up() sin duplicar.",
+            "JOR-169-TC-ENF-01-2: Verificacion operacional S1.T7: rutas (a) base vacia y (b) upgrade sobre copia de la dev, ambas OK; e2e invoices-migrations.",
+            "JOR-169-TC-ENF-02-1: backend/jormat-api/src/sales/sales-tables.spec.ts (guard): conjunto de tablas de src/sales = {invoice_items, invoices, items}",
+            "JOR-169-TC-ENF-03-1: front/jormat-front/src/lib/schemas/ventas.test.ts > documentoDTEDetalleSchema > acepta y expone la N.P. (orderNote) de la respuesta del detalle",
+            "JOR-169-TC-ENF-04-1: jest 91 suites, 1009/1009 OK; e2e 307 OK / 12 preexistentes. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > createDraft > persiste via el repositorio con montos calculados por el backend y estado borrador",
+            "JOR-169-TC-REQ-11-1: verificado por codigo del caso en el test verde: DocumentosListView — fidelidad de la barra de filtros (REQ-10-1, REQ-11-1) muestra Fecha inicio/Fecha fin contiguos con Aplicar/Limpiar fechas",
+            "JOR-169-TC-REQ-11-2: test/e2e/invoices-migrations.e2e-spec.ts > integridad de invoice_items > crea las FK, el UNIQUE de uuid y el CHECK de cantidad con la migracion posterior al backfill",
+            "JOR-169-TC-REQ-11-3: test/e2e/invoices-migrations.e2e-spec.ts > backfill y orden de las migraciones de invoice_items > crear la FK antes del backfill falla con datos sin mapear; el orden garantiza que no ocurra",
+            "JOR-169-TC-REQ-12-1: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > dos Facturas Electronicas consecutivas dan folios N y N+1, distintos del id",
+            "JOR-169-TC-REQ-12-2: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > otro tipoDTE usa su propio correlativo y no consume el de Factura Electronica",
+            "JOR-169-TC-REQ-12-3: test/e2e/sales-invoices-persistence.e2e-spec.ts > REQ-12 folio simulado por tipo de DTE > el primer folio de un type_id sin facturas previas arranca en 1",
+            "JOR-169-TC-REQ-13-1: vitest DocumentoDetalleView.print 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > imprime N.P. y O.C. del documento persistido",
+            "JOR-169-TC-REQ-13-2: vitest 2/2 OK. · verificado vs front/jormat-front/src/components/ventas/detail/DocumentoDetalleView/DocumentoDetalleView.print.test.tsx::DocumentoDetalleView — impresión del documento individual > un documento sin N.P. ni O.C. imprime con guion y sin romper el layout",
+            "JOR-169-TC-REQ-13-3: vitest DocumentosPrintView 9/10 (1 fallo preexistente ajeno). · verificado vs front/jormat-front/src/components/ventas/list/DocumentosPrintView/DocumentosPrintView.test.tsx::DocumentosPrintView (JOR-166 S2.T2) > REQ-04-2: renderiza exactamente las 8 columnas de datos, sin Acciones",
+            "JOR-169-TC-ENF-05-1: test/e2e/invoices-migrations.e2e-spec.ts > referencias reales del esquema > usa los nombres reales de las maestras (items / locations), no un identificador inexistente",
+            "JOR-169-TC-ENF-05-2: Cubierto de facto por el test de integridad de invoice_items (FKs a tablas reales) y por migrate:latest verde."
+          ],
+          "commits": [
+            "0d882fc46dd0b41d831f50eb49cf65e1eae8f210",
+            "33ef0bcf8b982cd20808713dcb513478017252bd",
+            "547e9e5b35043fd99c7df1cd6a67aa2a2b692bb9",
+            "7b43edf912ded57d879fc6a41ba4d85fe5000681",
+            "7e01a9fabbae3392df3a0ab00b00723a5fd4c59d",
+            "cc0dbc06171ef823f1314405f6eaeb09efc07753",
+            "ea935e24a7dd40703b48578fa542323c25ae5b59",
+            "f197bfd72bcc98f67ca2858af128e641e86cf3d1"
+          ]
+        },
+        "JOR-170": {
+          "sha": "16b592716382a9c22417c292502ba199bcbdab24",
+          "evidence": [
+            "kanai:ticket/JOR-170/closed",
+            "JOR-170-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento como monto se resta directo del bruto",
+            "JOR-170-TC-REQ-01-2: verificado por codigo del caso en el test verde: calcLineTotal — modo amount (Ventas, JOR-167) JOR-167-TC-REQ-01-2 [happy]: recalcula el total al editar el descuento (3000 -> 5000)",
+            "JOR-170-TC-REQ-01-3: verificado por codigo del caso en el test verde: lineItemSchema JOR-167-TC-REQ-01-3 [error]: descuento (monto) > subtotal de linea se rechaza",
+            "JOR-170-TC-REQ-02-1: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-1: la funcion acepta el modo por parametro (monto Ventas / porcentaje Compras)",
+            "JOR-170-TC-REQ-02-2: verificado por codigo del caso en el test verde: calcLineTotal — modo percent (default, Compras) JOR-167-TC-REQ-02-2 [regression]: Compras sin pasar el parametro mantiene el porcentaje",
+            "JOR-170-TC-REQ-02-3: verificado por codigo del caso en el test verde: JOR-167-TC-REQ-02 [genericidad]: una sola funcion de calculo, parametrizada por modo REQ-02-3: no hay una segunda copia de la funcion de calculo por dominio (un unico export)",
+            "JOR-170-TC-REQ-03-1: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-1: \"Guardar borrador\" llama el endpoint y muestra toast.success en caso de éxito",
+            "JOR-170-TC-REQ-03-2: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-2: al guardar (no emitir) NO se invoca la mutacion de issue",
+            "JOR-170-TC-REQ-03-3: verificado por codigo del caso en el test verde: TransactionBuilder — Guardar borrador (handleSaveDraft) JOR-167-TC-REQ-03-3: tras guardar un borrador el boton pasa a \"Actualizar borrador\"",
+            "JOR-170-TC-REQ-04-1: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_30 con fecha 2026-10-07 vence el 2026-11-06 (30 dias corridos) · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_30 con fecha 2026-10-07 vence el 2026-11-06 (30 dias corridos)",
+            "JOR-170-TC-REQ-04-2: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_60 con fecha 2026-10-07 vence el 2026-12-06 (60 dias corridos) · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_60 con fecha 2026-10-07 vence el 2026-12-06 (60 dias corridos)",
+            "JOR-170-TC-REQ-04-3: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_90 se rechaza: solo se aceptan 30 o 60 dias · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — credito 30/60 y vencimiento > credito_90 se rechaza: solo se aceptan 30 o 60 dias",
+            "JOR-170-TC-REQ-05-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 10% con tope de ficha 20%: no bloquea Facturar · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 10% con tope de ficha 20%: no bloquea Facturar",
+            "JOR-170-TC-REQ-05-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 25% con tope de ficha 20%: bloquea Facturar y avisa · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > descuento del 25% con tope de ficha 20%: bloquea Facturar y avisa",
+            "JOR-170-TC-REQ-05-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > importe equivalente al 25% (precio 4000): el % se calcula sobre el subtotal y bloquea · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento de línea en porcentaje (JOR-170) > importe equivalente al 25% (precio 4000): el % se calcula sobre el subtotal y bloquea",
+            "JOR-170-TC-REQ-06-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 20% sin descuentos de línea: no bloquea Facturar · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 20% sin descuentos de línea: no bloquea Facturar",
+            "JOR-170-TC-REQ-06-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 21%: bloquea Facturar y avisa · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general 21%: bloquea Facturar y avisa",
+            "JOR-170-TC-REQ-06-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general > 0 combinado con un descuento de línea: bloquea (excluyentes) · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — descuento general (JOR-170) > general > 0 combinado con un descuento de línea: bloquea (excluyentes)",
+            "JOR-170-TC-REQ-07-1: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > un item con bloqueo efectivo bloquea el descuento general de la factura · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > un item con bloqueo efectivo bloquea el descuento general de la factura",
+            "JOR-170-TC-REQ-07-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — item con Bloqueo Descuento (JOR-170) > al quitar el repuesto bloqueado, el descuento general se habilita si no queda otro · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — item con Bloqueo Descuento (JOR-170) > al quitar el repuesto bloqueado, el descuento general se habilita si no queda otro",
+            "JOR-170-TC-REQ-07-3: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1 · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1",
+            "JOR-170-TC-REQ-08-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > precio < piso: muestra el banner y deshabilita \"Facturar\" · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > precio < piso: muestra el banner y deshabilita \"Facturar\"",
+            "JOR-170-TC-REQ-08-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > el piso es el neto de venta (nm_net), no el costo: un precio sobre el costo pero bajo el neto igual bloquea · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.minprice.test.tsx::TransactionBuilder — piso de precio (JOR-121) > el piso es el neto de venta (nm_net), no el costo: un precio sobre el costo pero bajo el neto igual bloquea",
+            "JOR-170-TC-REQ-08-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — piso re-sembrado al retomar borrador (JOR-170) > re-siembra el piso con el nm_net vigente, avisa y bloquea si el precio quedó bajo el piso · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — piso re-sembrado al retomar borrador (JOR-170) > re-siembra el piso con el nm_net vigente, avisa y bloquea si el precio quedó bajo el piso",
+            "JOR-170-TC-REQ-09-1: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > bloquea el clonado cuando una linea copiada supera el tope de la ficha · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > bloquea el clonado cuando una linea copiada supera el tope de la ficha",
+            "JOR-170-TC-REQ-09-2: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > emite el clonado cuando las lineas copiadas cumplen las reglas · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::createDraft — clonado aplica las reglas comerciales > emite el clonado cuando las lineas copiadas cumplen las reglas",
+            "JOR-170-TC-REQ-10-1: citado por el subagente: front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea · verificado vs front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea",
+            "JOR-170-TC-REQ-10-2: citado por el subagente: backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1 · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::issueFactura — bloqueo de descuento efectivo (criterio 30) > rechaza el descuento de linea sobre un item con bloqueoDescuento=1",
+            "JOR-170-TC-REQ-10-3: citado por el subagente: front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea · verificado vs front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > también lee la marca legacy `oil=1` (ambas columnas se conservan) y bloquea la línea",
+            "JOR-170-TC-REQ-11-1: citado por el subagente: backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > es idempotente: re-correr no duplica el rol ni el grant · verificado vs backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > es idempotente: re-correr no duplica el rol ni el grant",
+            "JOR-170-TC-REQ-11-2: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: topes y precio (JOR-170) > sin el override, ese mismo descuento sí bloquea (usuario común, control negativo) · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: topes y precio (JOR-170) > sin el override, ese mismo descuento sí bloquea (usuario común, control negativo)",
+            "JOR-170-TC-REQ-12-1: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta un descuento de linea sobre un item con Bloqueo Descuento · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta un descuento de linea sobre un item con Bloqueo Descuento",
+            "JOR-170-TC-REQ-12-2: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta el descuento general hasta 80% · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, acepta el descuento general hasta 80%",
+            "JOR-170-TC-REQ-12-3: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, SIGUE rechazando el general combinado con un item con Bloqueo Descuento · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::validarReglasDescuentoYPrecio — override comercial (JOR-170) > con override, SIGUE rechazando el general combinado con un item con Bloqueo Descuento",
+            "JOR-170-TC-REQ-13-1: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > total: agrega ventas netas y costos de las lineas con costo · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > total: agrega ventas netas y costos de las lineas con costo",
+            "JOR-170-TC-REQ-13-2: citado por el subagente: backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > usa el costo snapshot de la linea (cambiar el costo vigente del item no cambia el resultado) · verificado vs backend/jormat-api/src/sales/calc-totals.spec.ts::utilidad de Ventas (JOR-170) > usa el costo snapshot de la linea (cambiar el costo vigente del item no cambia el resultado)",
+            "JOR-170-TC-REQ-13-3: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: utilidad (JOR-170) > sin el override, la utilidad no se muestra (ni por línea ni total) · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.override.test.tsx::TransactionBuilder — override comercial: utilidad (JOR-170) > sin el override, la utilidad no se muestra (ni por línea ni total)",
+            "JOR-170-TC-ENF-01-1: citado por el subagente: backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > crea el rol workspace-scoped Super Usuario y le otorga la capability · verificado vs backend/jormat-api/src/permissions/commercial-override-capability.spec.ts::capability sales.invoices:commercial-override — catalogo y roles (JOR-170) > crea el rol workspace-scoped Super Usuario y le otorga la capability",
+            "JOR-170-TC-ENF-02-1: citado por el subagente: front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > lee la marca nueva `bloqueoDescuento` y muestra el badge \"Bloqueo descuento\" con la línea deshabilitada · verificado vs front/jormat-front/src/components/bodega/solicitudes-pedido/CrearSolicitudPedidoView/CrearSolicitudPedidoView.bloqueo.test.tsx::CrearSolicitudPedidoView · bloqueo de descuento efectivo (JOR-170) > lee la marca nueva `bloqueoDescuento` y muestra el badge \"Bloqueo descuento\" con la línea deshabilitada",
+            "JOR-170-TC-ENF-03-1: citado por el subagente: front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — clonado desde documento reusa los gates (origen-factura, REQ-09) > una línea clonada con el precio bajo el piso (nm_net) no habilita Facturar · verificado vs front/jormat-front/src/components/ventas/builder/TransactionBuilder/TransactionBuilder.descuentos.test.tsx::TransactionBuilder — clonado desde documento reusa los gates (origen-factura, REQ-09) > una línea clonada con el precio bajo el piso (nm_net) no habilita Facturar"
+          ],
+          "commits": [
+            "0aecfa9969d395b77238f16e39e6bb9e4fc46ed6",
+            "102dda9b2553de85cfa9c40e29db4cde29c53b6b",
+            "23017081dbaf56d40b8c26039aae865d77caf09d",
+            "2a49ac2493bc699206c12ddb15bbc7a7a9077e3a",
+            "2fdc88030df8de9040a236d31f45dfd6af28f25c",
+            "4a4a8a8fa7a29ab84deaec781953306851c81b6b",
+            "714ccc2850216beb071e53f5c5ee0c252cc2f8c1",
+            "9722cb5b377e1807a15e5ca6a9f062e138f85a40",
+            "a4038ed9888d71078fbf462238a3b7d04dd7e9a4",
+            "f8f4e8fed723acdc94a538a22d25ede1e6eed1c5",
+            "fb7658389509dbfe1b72545f2dc5f4ed1cb0a7c3",
+            "fe3c21a3914ecaf857e2eef550f69ef093732500"
+          ]
+        },
+        "JOR-171": {
+          "sha": "1165c5a9ae13798cacff87bdcf10ee06183b07fa",
+          "evidence": [
+            "kanai:ticket/JOR-171/ready_to_close",
+            "JOR-171-TC-REQ-01-1: verificado por codigo del caso en el test verde: calcTotals — descuento global como porcentaje (JOR-120, sin cambios por JOR-167) JOR-167-TC-REQ-01-1 [happy]: descuento de línea $3.000 y global 0 → neto 17.000, IVA 19% (afecta)",
+            "JOR-171-TC-REQ-01-2: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > POST /pagos/clientes/:invoiceId/pagos > 403 con solo record-payment (falta apply-payment — AND)",
+            "JOR-171-TC-REQ-01-3: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.service.spec.ts::PaymentsService — applyPayment persistido > persiste record+apply y proyecta el saldo desde la vista persistida",
+            "JOR-171-TC-REQ-02-1: proyeccion-saldo.spec passed · verificado vs src/sales/proyeccion-saldo.spec.ts::Proyeccion de saldo (calcularSaldoProyectado) > total 100, pagos aplicados 30 y notas de credito aplicadas 20 → saldo 50",
+            "JOR-171-TC-REQ-02-2: proyeccion-saldo.spec passed · verificado vs src/sales/proyeccion-saldo.spec.ts::Proyeccion de saldo (calcularSaldoProyectado) > sin pagos ni notas el saldo es el total; pagos + notas = total → saldo 0",
+            "JOR-171-TC-REQ-02-3: sales.service.spec passed · verificado vs src/sales/sales.service.spec.ts::SalesService > getSummary > proyecta el saldo descontando los pagos aplicados y conserva los campos actuales",
+            "JOR-171-TC-REQ-03-1: Suite sales 151 passed · verificado vs backend/jormat-api/src/sales/proyeccion-saldo.spec.ts::Estado comercial derivado (derivarEstadoComercialPago) > credito 30 emitido hace 31 dias con saldo > 0 → Vencida",
+            "JOR-171-TC-REQ-03-2: Suite sales 151 passed · verificado vs backend/jormat-api/src/sales/proyeccion-saldo.spec.ts::Estado comercial derivado (derivarEstadoComercialPago) > dia 30 → Pendiente de pago; dia 31 → Vencida",
+            "JOR-171-TC-REQ-03-3: Suite sales 151 passed · verificado vs backend/jormat-api/src/sales/proyeccion-saldo.spec.ts::Estado comercial derivado (derivarEstadoComercialPago) > saldo 0 → Pagada",
+            "JOR-171-TC-REQ-04-1: Suite sales 164 passed · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > tarjetas comerciales > una factura pendiente, una vencida y una nota emitida dan 1 en cada tarjeta",
+            "JOR-171-TC-REQ-04-2: Suite sales 164 passed · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > tarjetas comerciales > un borrador no incrementa ninguna de las tres tarjetas",
+            "JOR-171-TC-REQ-04-3: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > tarjetas comerciales > las tarjetas son comerciales: un rechazado SII pendiente de pago cuenta en la tarjeta comercial",
+            "JOR-171-TC-REQ-05-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > contadores sobre el conjunto filtrado (acceso del usuario) > con rango de fechas los contadores coinciden con las filas de la tabla filtrada",
+            "JOR-171-TC-REQ-05-2: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > contadores sobre el conjunto filtrado (acceso del usuario) > al limpiar los filtros los contadores vuelven a los totales del usuario",
+            "JOR-171-TC-REQ-05-3: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > contadores sobre el conjunto filtrado (acceso del usuario) > un usuario sin acceso a ciertos documentos no los ve en la tabla ni en los contadores",
+            "JOR-171-TC-REQ-06-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > filtros y busqueda del listado > estado comercial Vencida devuelve solo saldo>0 con plazo cumplido",
+            "JOR-171-TC-REQ-06-2: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > filtros y busqueda del listado > cada filtro por campo devuelve el conjunto esperado",
+            "JOR-171-TC-REQ-06-3: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/documentos.controller.spec.ts::DocumentosController — integracion HTTP (Supertest, sin DB) > GET /ventas/documentos (list) > ignora el parametro removido estadoDocumento (whitelist: no llega al service)",
+            "JOR-171-TC-REQ-07-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > exclusion de guias de despacho > el listado no devuelve guias de despacho ni las cuenta",
+            "JOR-171-TC-REQ-07-2: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales.service.spec.ts::SalesService > listado comercial (contadores, filtros y guias) > exclusion de guias de despacho > las facturas siguen mostrandose tras la exclusion",
+            "JOR-171-TC-ENF-01-1: e2e payments-persistence: verificación por join contra payment_methods · verificado vs test/e2e/payments-persistence.e2e-spec.ts::Cobranza persistida (DB real, customer_payments) > registra y aplica el pago de forma atomica y el pago sobrevive al reinicio",
+            "JOR-171-TC-ENF-02-1: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > POST /pagos/clientes/:invoiceId/pagos > 403 con solo record-payment (falta apply-payment — AND)",
+            "JOR-171-TC-ENF-03-1: Suite payments 74 passed · verificado vs backend/jormat-api/src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > POST /pagos/clientes/:invoiceId/pagos > 201 con record-payment ∧ apply-payment — recalcula el saldo",
+            "JOR-171-TC-ENF-04-1: test:e2e payments-persistence -> 3 passed · verificado vs test/e2e/payments-persistence.e2e-spec.ts::Cobranza persistida (DB real, customer_payments) > la reversion marca el pago como revertido sin borrar la fila ni la aplicacion",
+            "JOR-171-TC-ENF-04-2: payments.controller.spec passed · verificado vs src/payments/payments.controller.spec.ts::PaymentsController — integracion HTTP (Supertest, sin DB) > DELETE /pagos/clientes/:invoiceId/pagos/:paymentId > 403 sin :delete — el pago sigue vigente/aplicado (no se revierte)",
+            "JOR-171-TC-ENF-04-3: seeds/__tests__/07_payments_capabilities.spec passed · verificado vs seeds/__tests__/07_payments_capabilities.spec.ts::seed 07_payments_capabilities — catalogo office-payments (JOR-139) > el catalogo payments incluye las 4 caps de customers + las 3 de offices",
+            "JOR-171-TC-ENF-05-1: Suite sales 164 passed. · verificado vs backend/jormat-api/src/sales/sales-tables.spec.ts::persistencia de ventas — tablas > no hay tabla propia de notas de credito: el contador sale del mismo store del listado"
+          ],
+          "commits": [
+            "1f4b3843fcf0fa5379989025f961f44dc73fbecb",
+            "4abdaf13851f595f99852b13789ee1eaff23f472",
+            "cca693f8c0bcac72e365914d7befac2ed3605246"
+          ]
+        }
+      },
+      "grants": [
+        {
+          "actor": "dev",
+          "actions": [
+            "read_repo",
+            "write_repo",
+            "run_tests",
+            "kanai_tools",
+            "git_integrate"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        },
+        {
+          "actor": "dev",
+          "actions": [
+            "read_external"
+          ],
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+          "expiresAt": "2026-10-10T12:00:00.000Z",
+          "revoked": false
+        }
+      ],
+      "capabilities": [
+        {
+          "action": "read_repo",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback",
+          "evidence": [
+            "Comprobacion 17374830-0a5e-401f-8bed-4143a4039a22: readable"
+          ]
+        },
+        {
+          "action": "write_repo",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "run_tests",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "kanai_tools",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "git_integrate",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback"
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fclients%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Finvoices%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fnotes%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2Fpayments%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_back_legacy%2Fserver%2Fapi%2FwarehouseDeliveries%2Fmodel.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-decisiones-desarrollo-2026-10-06.md",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat_docs%2Ftickets%2FJOR-166-JOR-167-investigacion-backend-main-2026-10-03.md",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fitems%2Fitems%2Fupdate%2Fitems-update.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2Finvoices-create-key.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate-access-key%2FinvoicesCreateKeyController.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fcreate%2FclientsInvoicesCreateController.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Flist%2FdropdownActionsMenu.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2Fcustomer-notification.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fnotifications%2FcustomerNotificationController.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2FpackOff%2Fprint-pack-off.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients-invoices%2Fwarehouse-print%2Finvoice-warehouse-print.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fclients%2Faccount%2FaccountStatusController.js",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Fcreate%2Fcredit-notes-create.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        },
+        {
+          "action": "read_external",
+          "state": "granted",
+          "resource": "jormat-evolution/monorepo/feature/facturas-cliente-feedback/read/%2FUsers%2Fedobacon%2FWorkspace%2Fq%2Fjormat_monorepo%2Fjormat-front-legacy%2Fsrc%2Fapp%2Fsales%2Fcredit-notes%2Flist%2Fcredit-notes-list.html",
+          "evidence": [
+            "Comprobacion 17374830: readable"
+          ]
+        }
+      ],
+      "requiredActions": [
+        "read_repo",
+        "write_repo",
+        "run_tests",
+        "kanai_tools",
+        "git_integrate"
+      ],
+      "maxAttempts": 5,
+      "attempts": {},
+      "dependencyReceipts": {},
+      "reason": "Resincronizar el plan: el cuerpo de JOR-171 cambio (adenda de correccion de la lectura de Cobranza) y su SHA registrado no incluye los commits de S8",
+      "startedAt": "2026-10-08T12:01:25.176Z",
+      "deadline": "2026-10-10T12:00:00.000Z"
     }
   ],
   "events": [
@@ -6202,6 +5947,143 @@
       "phase": "integrate",
       "source": "kanai-server",
       "durationMs": 281
+    },
+    {
+      "id": "fb60f2fe-fc2a-4fc5-aba9-cf2bc0c0102d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:26:49.584Z",
+      "kind": "paused",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "reason": "Identifica la sesión actual del harness antes de continuar la corrida"
+    },
+    {
+      "id": "477d6246-2006-4fa3-8abd-f9b4e4c7fdac",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:26:49.591Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 60
+    },
+    {
+      "id": "341beacc-29d8-4f89-a616-57271bed3db6",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:27:11.034Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 69
+    },
+    {
+      "id": "da2b4f40-1cbd-490b-a653-481a72d50bd9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:27:38.080Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 86
+    },
+    {
+      "id": "80cfab7c-111b-4a44-9fe1-0da5d8fe43d3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:27:50.287Z",
+      "kind": "resumed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16"
+    },
+    {
+      "id": "7df51ca3-d3e6-4b9d-a5df-d29cc987ac08",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:27:50.294Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "phase": "resume",
+      "source": "kanai-server",
+      "durationMs": 68
+    },
+    {
+      "id": "4aa7140f-5503-499a-a545-e3af06d7fc34",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:00.894Z",
+      "kind": "paused",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "reason": "El SHA confirmado no contiene todo el trabajo del ticket"
+    },
+    {
+      "id": "d1fec27d-7c07-41bb-9cb9-99c949accbed",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:00.902Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 536
+    },
+    {
+      "id": "9499de80-6872-4014-8297-5bd5bc64426f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:38.598Z",
+      "kind": "paused",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "reason": "Resincronizar el plan: el cuerpo de JOR-171 cambio (adenda de correccion de la lectura de Cobranza) y su SHA registrado no incluye los commits de S8"
+    },
+    {
+      "id": "95e28268-853f-422a-b313-2c83a983ed57",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:38.605Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "phase": "pause",
+      "source": "kanai-server",
+      "durationMs": 16
+    },
+    {
+      "id": "a4c21934-3e77-4a08-9ae9-8f0a1177af63",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:44.942Z",
+      "kind": "cancelled",
+      "planVersion": 5,
+      "runId": "04ba4046-388e-47fb-9ca4-733c618c2b16",
+      "reason": "plan_superseded"
+    },
+    {
+      "id": "f0ec696f-3429-4c0e-b144-45ffb6f38c11",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:44.954Z",
+      "kind": "plan_changed",
+      "planVersion": 6
+    },
+    {
+      "id": "2b545057-20d4-42d3-b7c4-06e3110db0ba",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:28:44.962Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 142
+    },
+    {
+      "id": "0a7870d3-f91a-4ddc-ae5f-541fb3bc58d6",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-08T18:37:24.710Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 237
     }
   ]
 }
