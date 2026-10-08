@@ -127,13 +127,13 @@ Contrato: rollback: Eliminar el bloque de test.. Status: done
 Contrato: rollback: No aplica: no modifica archivos.. Status: done
 
 #### S2.T1 — Agregar al menu de la factura emitida en DocumentoDetalleView la accion 'Convertir en Nota de Credito / Anular', visible solo con sales.documents:void y si la factura no esta anulada. El modal tiene un selector Devolucion/Falla (obligatorio), la observacion y la llamada al endpoint, y maneja el 409.
-Contrato: rollback: Revertir el commit del componente y el modal.. Status: pending
+Contrato: rollback: Revertir el commit del componente y el modal.. Status: done
 
 #### S2.T2 — Detalle de la factura anulada: mostrar la condicion Anulada y el vinculo navegable a la nota (tipo, observacion e importe), reusando los componentes de detalle existentes.
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S2.T3 — Stories y tests de UI: extender DocumentoDetalleView.stories.tsx con los estados con permiso, sin permiso y factura anulada, y un test de interaccion del modal (confirmar deshabilitado sin tipo, payload enviado, error 409). Regresion de las stories existentes (lineas 36, 59 y 85).
-Contrato: rollback: Revertir los cambios en las stories y el test.. Status: pending
+Contrato: rollback: Revertir los cambios en las stories y el test.. Status: done
 
 #### S3.T1 — Implementar en backend/jormat-api el endpoint de aplicacion de credito de una nota a otra factura, protegido con la capability payments.customers:apply-payment validada en el backend. Registra el vinculo real (nota -> factura destino, importe) y reduce el saldo disponible de la nota. Validaciones: el importe aplicado no puede superar el saldo disponible de la nota (aplicar $120.000 sobre $100.000 responde HTTP 422) y la factura destino debe ser del mismo cliente que la nota (factura de otro cliente responde HTTP 422). Los tests de esta funcionalidad se escriben y ejecutan en S3.T3.
 Contrato: rollback: Migracion down que elimina la tabla de aplicaciones y revertir el commit del servicio y el endpoint.. Status: pending
@@ -217,12 +217,12 @@ Contrato: rollback: Eliminar los archivos de test nuevos.. Status: pending
 
 **Gate (auto)**: El e2e backend de anulacion pasa en verde: Devolucion (deuda 0 y stock +N en la bodega de origen), Falla (deuda 0, sin movimientos), 409 en el segundo intento y 403 sin sales.documents:void.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: En Storybook (DocumentoDetalleView) y en el app: la accion Anular aparece solo con permiso y en factura no anulada, el modal envia tipo y observacion, y la factura anulada muestra el badge Anulada y el enlace a la nota.
 
