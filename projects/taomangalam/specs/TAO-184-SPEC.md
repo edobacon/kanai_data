@@ -78,7 +78,7 @@ Contrato: rollback: Revertir los métodos nuevos, el modelo, su integración y l
 Contrato: rollback: Revertir el reporter, sus conexiones y pruebas; conservar el mecanismo de logging y las métricas existentes.. Status: done
 
 #### S2.T4 — Ampliar app/test/core/http/app_release_test.dart para probar el consumidor obligatorio con el proveedor HTTP/PostgreSQL real de server/src/release-provider-fixture.ts: build18/mínima20, consulta GET /v1/version después de 426 sin rechazo del gate y recuperación offline. Ajustar la fixture únicamente con contenido/URL de release de prueba y escenarios de respuesta para fallo de la lectura; su almacenamiento es la base efímera local ya usada por el runner. Añadir pruebas de concurrencia y fallback al gate test de S2.T1 y ampliar el store test de S2.T2 con builds18/19/20/21, cambio de versión semántica, registro inválido, otra plataforma y conservación de claves existentes. Ajustar app/test/features/splash/splash_startup_contract_test.dart y app/test/navigation/legal_consent_gate_text_test.dart para verificar salida normal, ausencia de Inicio bajo obligación y precedencia del aviso sobre V-51, preservando los comportamientos existentes cuando no hay obligación. Ejecutar el runner existente scripts/ci/ep01-release-provider.mjs con --app-only: pasa RELEASE_PROVIDER_URL al archivo app_release_test.dart; requiere Node >=24.21.0 <25, dependencias instaladas y PostgreSQL local disponible según la fixture. Completar QA-01-18-01 a QA-01-18-04 en Android/iPhone contra staging, incluyendo tienda real y gestos; mantener QA-01-18-05 y la aprobación de Diseño de S1.T4. Las pruebas automatizadas no acreditan por sí solas esos resultados humanos.
-Contrato: rollback: Revertir los ajustes de pruebas y fixture realizados por esta tarea; conservar los casos anteriores del proveedor y registrar la evidencia humana obtenida con su versión de código.. Status: pending
+Contrato: rollback: Revertir los ajustes de pruebas y fixture realizados por esta tarea; conservar los casos anteriores del proveedor y registrar la evidencia humana obtenida con su versión de código.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Presentar un panel-modal no descartable a pantalla completa con título, versión disponible, mensaje y notas breves cuando existan. Atrapar el foco y bloquear navegación, interacción y trabajo local; Atrás, Escape, toque exterior y gesto no lo cierran. Heredar el fondo de la vis
@@ -131,13 +131,13 @@ Ninguno.
 
 **Gate (auto)**: En Widgetbook se puede revisar el aviso obligatorio con contenido completo y URL nula, comprobar que no se descarta, y observar teléfono, tablet, texto al 200 % y movimiento reducido. El preview todavía no acredita la integración del servidor.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
 - [x] S2.T1
 - [x] S2.T2
 - [x] S2.T3
-- [ ] S2.T4
+- [x] S2.T4
 
 **Gate (auto)**: La app con build 18/mínima 20 presenta el aviso al terminar la splash y ante un 426 sobre una vista; se puede comprobar recuperación offline, ausencia de bloqueo en instalación offline nueva y desaparición con build 20, con evidencia de integración y telemetría.
 
