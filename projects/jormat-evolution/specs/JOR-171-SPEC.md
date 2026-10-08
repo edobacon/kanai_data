@@ -152,16 +152,16 @@ Contrato: rollback: git revert del commit de filtros; la query vuelve a los par�
 Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: done
 
 #### S3.T1 — Reemplazar las tarjetas centradas en SII por las tres tarjetas comerciales (Pendientes de pago, Vencidos, Notas de crédito) conectadas a la agregación del servidor y recalculadas con los filtros activos.
-Contrato: rollback: git revert del commit de tarjetas; se restauran las tarjetas centradas en SII.. Status: pending
+Contrato: rollback: git revert del commit de tarjetas; se restauran las tarjetas centradas en SII.. Status: done
 
 #### S3.T2 — Mostrar el estado comercial por documento en el listado y dejar el filtro de estado comercial (Borrador, Pendiente de pago, Pagada, Vencida). Eliminar el último selector de la fila de filtros, 'estado del documento' (Todas/Borrador/Emitida) de front/jormat-front/src/components/ventas/list/DocumentosListView/DocumentosListView.tsx:637-654 (aria-label 'Filtrar por estado del documento'), junto con el estado estadoDocumentoFilter (:199), su chip de filtro activo (:148, :165-169, :298-300, :318), el parámetro estadoDocumento de listParams/summaryFilters/export/print (:244, :261, :385-387, :438-440), el tipo EstadoDocumentoFiltro de src/services/api/ventas/documentos.ts y las constantes ESTADO_DOCUMENTO_FILTRO / ESTADO_DOCUMENTO_FILTRO_LABEL de src/lib/schemas/ventas.ts, y borrar DocumentosListView.estadoDocumento.test.tsx. Mantener los selectores de tipo de documento, estado SII y estado comercial.
-Contrato: rollback: git revert del commit de estado/filtro; se restaura la columna y los filtros previos.. Status: pending
+Contrato: rollback: git revert del commit de estado/filtro; se restaura la columna y los filtros previos.. Status: done
 
 #### S3.T3 — Conectar los filtros de RUT, nombre/razón social, Origen, O.C. y rango de fechas para que la tabla y las tres tarjetas se recalculen al aplicar o limpiar filtros.
-Contrato: rollback: git revert del commit de wiring de filtros; la tabla vuelve a no disparar recálculo de tarjetas.. Status: pending
+Contrato: rollback: git revert del commit de wiring de filtros; la tabla vuelve a no disparar recálculo de tarjetas.. Status: done
 
 #### S3.T4 — Tests de UI del listado: render de la columna de estado comercial, de las tres tarjetas comerciales (incluida Notas de crédito en 0 cuando no hay notas emitidas) y de su recálculo al aplicar y limpiar filtros; y regresión de que el selector 'Filtrar por estado del documento' y su chip ya no se renderizan mientras siguen presentes los de tipo, estado SII y estado comercial. Los archivos del listado están en front/jormat-front/src/components/ventas/list/DocumentosListView/ y la tabla en front/jormat-front/src/components/ventas/list/DocumentosTable/DocumentosTable.tsx.
-Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: pending
+Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: done
 ## Cambios al modelo de datos
 
 - tipo: create | objetos: customer_payments | destructivo: no | tarea: S1.T1 | rollback: Ejecutar el down de la migración (knex migrate:rollback) que hace dropTableIfExists de customer_payments.
@@ -265,13 +265,13 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 
 **Gate (auto)**: El endpoint de listado de Facturas cliente devuelve cada documento con su estado comercial, aplica los filtros (RUT, nombre/razón social, Origen, O.C., rango de fechas y estado comercial), excluye guías de despacho y devuelve los tres contadores calculados sobre el conjunto filtrado del usuario; verificable por API y tests.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 **Gate (auto)**: En el listado de Facturas cliente se ve la columna de estado comercial, las tres tarjetas comerciales que se recalculan al aplicar o limpiar filtros, y los filtros nuevos sin el filtro removido de la captura p.6; verificable en la app con datos de prueba.
 
