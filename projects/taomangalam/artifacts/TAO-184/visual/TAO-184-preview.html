@@ -1,0 +1,373 @@
+Voy a revisar el contrato y las referencias visuales disponibles para preparar la maqueta.
+La referencia usa marfil, tinta azul noche y un fondo heredado detrás del oscurecimiento. Incluiré el aviso normal, la recuperación sin conexión, la lectura fallida y la acción deshabilitada, con controles para revisar teléfono, tablet y texto al 200 %.
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HU-01-18 · Actualización obligatoria</title>
+<style>
+:root{
+  color-scheme:light;
+  --canvas:#ede8db;--background:#faf7f0;--surface:#fffdf8;
+  --muted:#f3efe4;--ink:#141a37;--secondary:#6b665b;
+  --action:#071a33;--gold:#785d33;--focus:#946e2f;
+  --divider:#e4ddd1;--error:#a23a32;
+  --serif:Georgia,"Times New Roman",serif;
+  --system:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--background);color:var(--ink);font-family:var(--system)}
+button,select{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
+[hidden]{display:none!important}
+.review-header{padding:24px 32px;border-bottom:1px solid var(--divider);display:flex;justify-content:space-between;gap:24px;align-items:center}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1.8px;color:var(--gold);font-weight:700}
+.review-header h1{font:normal 28px/1.2 var(--serif);margin:8px 0}
+.review-header p{font-size:13px;color:var(--secondary);margin:0;line-height:1.6}
+.fixture-badge{padding:8px 12px;border:1px solid var(--divider);border-radius:999px;font-size:11px;white-space:nowrap;color:var(--secondary)}
+.workspace{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:calc(100vh - 122px)}
+.controls{padding:28px 24px;border-right:1px solid var(--divider)}
+.controls h2{font-size:12px;font-weight:600;margin:0 0 16px}
+.state-list{display:grid;gap:8px}
+.state-button{border:1px solid transparent;background:transparent;border-radius:10px;text-align:left;padding:12px;color:var(--ink);line-height:1.4}
+.state-button span{display:block;font-size:13px;font-weight:600}
+.state-button small{display:block;font-size:11px;color:var(--secondary);margin-top:4px}
+.state-button[aria-pressed="true"]{border-color:#d7c9b0;background:var(--muted);box-shadow:inset 3px 0 var(--gold)}
+.controls hr{border:0;border-top:1px solid var(--divider);margin:24px 0}
+.control-label{font-size:12px;display:block;margin-bottom:8px}
+select{width:100%;padding:10px;border:1px solid #857c6e;border-radius:6px;color:var(--ink);background:var(--surface)}
+.checkbox{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:16px}
+.checkbox input{width:18px;height:18px;accent-color:var(--action)}
+.review-note{font-size:12px;line-height:1.7;color:var(--secondary);margin:20px 0 0}
+.stage-area{padding:24px 32px 32px;min-width:0}
+.stage-heading{display:flex;justify-content:space-between;gap:16px;align-items:start;max-width:1040px;margin:auto auto 18px}
+.stage-heading h2{font:normal 23px/1.3 var(--serif);margin:0}
+.stage-heading p{font-size:12px;color:var(--secondary);margin:7px 0 0;line-height:1.5}
+.measure{font:11px/1.6 ui-monospace,SFMono-Regular,monospace;text-align:right;white-space:nowrap;color:var(--secondary)}
+.stage{overflow:auto;padding:24px;display:flex;justify-content:center;background:#e8e4dc;border:1px solid var(--divider);border-radius:14px}
+.device{
+  --scale:1;position:relative;width:360px;height:800px;flex-shrink:0;
+  background:var(--background);border:1px solid #b6b0a4;border-radius:20px;
+  overflow:hidden;box-shadow:0 12px 40px #07101b1a;font-family:var(--serif)
+}
+.device.tablet{width:960px;height:600px;border-radius:14px}
+.device.large-text{--scale:2}
+.host{position:absolute;inset:0;isolation:isolate;background:var(--background)}
+.landscape{position:absolute;inset:0;width:100%;height:100%;opacity:.18;z-index:-1}
+.host.home .landscape{transform:scaleX(-1)}
+.statusbar{height:32px;padding:9px 20px 0;display:flex;justify-content:space-between;font:11px var(--system);color:var(--ink)}
+.brand{display:flex;align-items:center;justify-content:center;gap:12px;padding:25px 16px;font-size:25px;font-weight:600}
+.brand-mark{width:36px;height:36px;border:3px solid var(--action);border-radius:50%;position:relative;transform:rotate(-12deg)}
+.brand-mark:after{content:"";position:absolute;background:#7f0e06;width:13px;height:13px;border-radius:50%;inset:8px}
+.identity .brand{margin-top:100px}
+.host-content{padding:12px 24px}
+.host-content h2{font-size:32px;text-align:center;margin:16px 0 36px}
+.host-card{padding:24px;background:var(--surface);border:1px solid #d7c9b0;border-radius:14px;margin:24px 0}
+.host-card h3{font-size:22px;margin:0 0 28px}
+.host-card p{font-size:25px;margin:0}
+.house-number{display:inline-flex;justify-content:center;align-items:center;width:56px;height:56px;background:var(--action);color:#f9d788;border:2px solid #b5863a;border-radius:50%;margin-right:16px}
+.host-row{padding:24px 0;border-top:1px solid var(--divider);font-size:21px;display:flex;justify-content:space-between}
+.offline-label{font:12px var(--system);color:var(--secondary);text-align:center;padding:10px}
+.host-footer{position:absolute;bottom:24px;left:0;right:0;text-align:center;color:var(--secondary);font-size:14px}
+.overlay{position:absolute;inset:0;background:rgba(7,16,27,.65);display:flex;align-items:center;justify-content:center;padding:16px;z-index:2}
+.panel{
+  width:100%;max-width:480px;max-height:100%;display:flex;flex-direction:column;
+  background:var(--surface);border:1px solid #d7c9b0;border-radius:20px;
+  box-shadow:0 16px 48px rgba(7,16,27,.22);
+  animation:enter 240ms cubic-bezier(.16,1,.3,1)
+}
+.panel-content{padding:28px 24px 20px;overflow:auto;min-height:0;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#c6bda9 transparent}
+.panel h2{font-size:calc(28px * var(--scale));line-height:1.2;font-weight:600;letter-spacing:-.2px;margin:0 0 18px;overflow-wrap:anywhere}
+.panel h2:focus{outline:none}
+.rule{height:1px;background:var(--divider);margin-bottom:20px}
+.version{font:500 calc(12px * var(--scale))/1.45 ui-monospace,SFMono-Regular,monospace;letter-spacing:.3px;color:var(--gold);margin:0 0 16px;overflow-wrap:anywhere}
+.message{font-size:calc(18px * var(--scale));line-height:1.55;margin:0}
+.notes{padding:16px;margin:20px 0 0;background:var(--muted);border-radius:10px}
+.notes h3{font-size:calc(16px * var(--scale));line-height:1.3;margin:0 0 8px}
+.notes ul{padding-left:20px;margin:0;font-size:calc(14px * var(--scale));line-height:1.5}
+.notes li+li{margin-top:6px}
+.connection{font-size:calc(14px * var(--scale));line-height:1.45;margin:18px 0 0;color:var(--secondary)}
+.panel-actions{padding:20px 24px 24px;flex-shrink:0;border-top:1px solid var(--divider);background:var(--surface);border-radius:0 0 20px 20px}
+.update{display:flex;justify-content:center;align-items:center;gap:10px;width:100%;min-height:52px;border:0;border-radius:999px;background:var(--action);color:var(--surface);font:600 calc(16px * var(--scale))/1.25 var(--serif);padding:14px 20px}
+.update svg{flex-shrink:0;width:20px;height:20px}
+.update:hover:not(:disabled){background:#162a3f}
+.update:disabled{background:#a1a8b1;color:#fffdf8}
+.button-caption{font-size:calc(12px * var(--scale));line-height:1.45;text-align:center;color:var(--secondary);margin:12px 0 0}
+.disabled-reason{font-size:calc(14px * var(--scale));line-height:1.45;margin:0 0 16px;color:var(--error)}
+.progress{display:flex;align-items:center;gap:10px;font-size:calc(14px * var(--scale));color:var(--secondary);margin-top:18px}
+.progress-mark{height:16px;width:16px;flex-shrink:0;border:2px solid #d7c9b0;border-top-color:var(--gold);border-radius:50%}
+.device.tablet .panel-content{padding:32px 32px 24px}
+.device.tablet .panel-actions{padding:20px 32px 28px}
+.device.tablet .brand{justify-content:flex-start;padding:24px 32px}
+.device.tablet .identity .brand{margin:70px auto;justify-content:center}
+.device.tablet .host-content{max-width:660px;margin:auto}
+.system-back{position:absolute;bottom:4px;left:calc(50% - 24px);width:48px;height:22px;background:transparent;border:0;color:#fffdf8;z-index:3;font:18px var(--system)}
+.device:not(.blocked) .system-back{color:var(--ink)}
+.device.large-text .panel-content{padding:24px 20px 18px}
+.device.large-text .panel-actions{padding:16px 20px 20px}
+.evidence{max-width:1040px;margin:22px auto 0;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.evidence h3{font-size:12px;margin:0 0 8px}
+.evidence p{font-size:12px;line-height:1.7;color:var(--secondary);margin:0}
+.demo-feedback{min-height:20px;margin:14px auto 0;max-width:1040px;font-size:12px;color:var(--gold);line-height:1.5}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@keyframes enter{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.reduced .panel{animation:fade 120ms linear}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.panel{animation:none}}
+@media(max-width:1150px){.stage:has(.tablet){justify-content:flex-start}}
+@media(max-width:760px){
+  .review-header{padding:20px;align-items:start}.review-header h1{font-size:24px}.fixture-badge{display:none}
+  .workspace{display:block}.controls{padding:20px;border-right:0;border-bottom:1px solid var(--divider)}
+  .state-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .controls hr{margin:16px 0}.review-note{margin-top:12px}
+  .stage-area{padding:20px 0}.stage-heading,.evidence,.demo-feedback{margin-left:16px;margin-right:16px}
+  .stage{padding:16px 0;border-radius:0;border-right:0;border-left:0}
+  .device{width:min(360px,100vw);border-radius:0;border-left:0;border-right:0}
+  .evidence{grid-template-columns:1fr;gap:16px}
+}
+@media(forced-colors:active){.panel,.update,.notes{border:1px solid CanvasText}.overlay{background:Canvas}.landscape{display:none}}
+</style>
+</head>
+<body>
+<header class="review-header">
+  <div>
+    <div class="eyebrow">Tao Mangalam · V-31</div>
+    <h1>Actualización obligatoria</h1>
+    <p>HU-01-18 · Una acción para volver a una versión admitida.</p>
+  </div>
+  <span class="fixture-badge">Maqueta de revisión · textos provisionales</span>
+</header>
+
+<main class="workspace">
+  <aside class="controls" aria-label="Controles de la maqueta">
+    <h2>Estado que quieres revisar</h2>
+    <div class="state-list">
+      <button class="state-button" data-state="opening" aria-pressed="true"><span>01 · Al abrir</span><small>Con conexión · con notas</small></button>
+      <button class="state-button" data-state="interrupted" aria-pressed="false"><span>02 · Durante el uso</span><small>Bloqueo sobre Inicio</small></button>
+      <button class="state-button" data-state="loading" aria-pressed="false"><span>03 · Completando aviso</span><small>El bloqueo ya está activo</small></button>
+      <button class="state-button" data-state="fallback" aria-pressed="false"><span>04 · Lectura fallida</span><small>Mensaje genérico · sin notas</small></button>
+      <button class="state-button" data-state="offline" aria-pressed="false"><span>05 · Sin conexión</span><small>Obligación conocida y guardada</small></button>
+      <button class="state-button" data-state="missing" aria-pressed="false"><span>06 · Sin enlace de tienda</span><small>Actualizar deshabilitado</small></button>
+      <button class="state-button" data-state="newOffline" aria-pressed="false"><span>07 · Sin estado previo</span><small>Sin conexión · sin aviso</small></button>
+      <button class="state-button" data-state="updated" aria-pressed="false"><span>08 · Versión admitida</span><small>Después de actualizar · sin aviso</small></button>
+    </div>
+    <hr>
+    <label class="control-label" for="format">Formato de revisión</label>
+    <select id="format">
+      <option value="phone">Teléfono · 360 × 800</option>
+      <option value="large">Teléfono · texto al 200 %</option>
+      <option value="tablet">Tablet horizontal · 960 × 600</option>
+    </select>
+    <label class="checkbox"><input id="motion" type="checkbox">Movimiento reducido</label>
+    <p class="review-note">Acciones simuladas. «Actualizar» indica la salida a la tienda sin abrir un enlace inventado. Los controles de revisión están fuera de la app.</p>
+    <p class="review-note">Fondo y tipografías aproximados con recursos integrados. La aprobación de fidelidad contra los assets canónicos queda pendiente.</p>
+  </aside>
+
+  <section class="stage-area" aria-label="Vista previa">
+    <div class="stage-heading">
+      <div><h2 id="scenario-title">Al terminar la apertura</h2><p id="scenario-subtitle">El aviso aparece antes de llegar a Inicio.</p></div>
+      <div class="measure" id="measure">360 × 800<br>Texto · 100 %</div>
+    </div>
+    <div class="stage">
+      <div class="device blocked" id="device">
+        <div class="host identity" id="host" inert aria-hidden="true">
+          <!-- Recurso vectorial integrado de la vista anfitriona; el modal no añade un fondo propio. -->
+          <svg class="landscape" viewBox="0 0 360 800" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="mountain-wash" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2c4e69"/><stop offset="1" stop-color="#faf7f0"/></linearGradient>
+              <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#faf7f0" stop-opacity="0"/><stop offset="1" stop-color="#faf7f0"/></linearGradient>
+            </defs>
+            <circle cx="276" cy="572" r="25" fill="#9a2b20" opacity=".6"/>
+            <path d="M0 557 22 528 39 539 65 467 80 490 97 466 121 516 139 500 161 545 177 520 215 570 242 549 273 585 302 570 326 534 360 553V800H0Z" fill="url(#mountain-wash)" opacity=".55"/>
+            <path d="M0 616 35 556 53 580 85 532 106 549 123 584 145 564 178 618 212 591 234 622 265 598 284 637 318 594 360 623V800H0Z" fill="url(#mountain-wash)" opacity=".7"/>
+            <path d="m31 559 9 28 12-6 9 30m18-68 7 29 10 9 17 39m10-44 11 24 11-8 9 27m179-19-13 22-15 10" fill="none" stroke="#162a3f" stroke-width="2" opacity=".4"/>
+            <path d="M0 645H360V715H0Z" fill="url(#mist)"/>
+            <path d="M0 691Q65 658 116 699T234 700T360 708M48 733Q107 719 185 736T334 736M16 763Q123 748 266 769" fill="none" stroke="#2c4e69" opacity=".5"/>
+            <path d="M0 667 14 637 31 647 52 627 71 647 97 651 126 685 74 707 27 726 0 724Z" fill="#1d3953"/>
+            <path d="M0 767 24 742 46 744 72 727 109 743 143 779 183 793H0Z" fill="#162a3f"/>
+            <g fill="none" stroke="#162a3f" stroke-linecap="round">
+              <path d="M20 694Q37 630 23 570M30 642 62 608M27 623 5 597M27 598 44 582" stroke-width="4"/>
+              <path d="M325 740Q312 704 326 666M319 705 293 690M322 687 345 674" stroke-width="3"/>
+            </g>
+            <g fill="#162a3f">
+              <ellipse cx="22" cy="575" rx="23" ry="7"/><ellipse cx="43" cy="582" rx="17" ry="6"/>
+              <ellipse cx="61" cy="608" rx="25" ry="7"/><ellipse cx="10" cy="598" rx="19" ry="6"/>
+              <ellipse cx="294" cy="690" rx="22" ry="6"/><ellipse cx="345" cy="674" rx="21" ry="6"/>
+              <ellipse cx="325" cy="663" rx="19" ry="6"/>
+            </g>
+          </svg>
+          <div class="statusbar"><span>9:41</span><span id="connectivity">Con conexión · ▰</span></div>
+          <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Tao Mangalam</span></div>
+          <div class="host-content" id="home-content" hidden>
+            <h2>Inicio</h2>
+            <div class="offline-label" id="home-offline" hidden>Sin conexión</div>
+            <div class="host-card"><h3>Proyecto</h3><p><span class="house-number">5</span>Casa 5</p></div>
+            <div class="host-row"><span>Preparar sesión</span><span aria-hidden="true">›</span></div>
+            <div class="host-row"><span>Práctica pendiente</span><span aria-hidden="true">›</span></div>
+          </div>
+          <div class="host-footer" id="identity-footer">Un espacio para tu recorrido</div>
+        </div>
+
+        <div class="overlay" id="overlay">
+          <section class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-version">
+            <div class="panel-content" id="panel-content">
+              <h2 id="modal-title" tabindex="-1" data-i18n="update.required.title">Actualiza para continuar</h2>
+              <div class="rule" aria-hidden="true"></div>
+              <p class="version" id="modal-version">Versión disponible · 1.2.0</p>
+              <p class="message" id="modal-message" data-i18n="update.required.message">Esta versión de Tao Mangalam ya no está admitida. Actualiza la app para continuar con tu recorrido.</p>
+              <div class="notes" id="release-notes">
+                <h3>Novedades de esta versión</h3>
+                <ul><li>Mejoras de estabilidad.</li><li>Correcciones al guardar tu recorrido.</li></ul>
+              </div>
+              <div class="progress" id="loading-message" hidden role="status"><span class="progress-mark" aria-hidden="true"></span><span>Obteniendo detalles de la actualización…</span></div>
+              <p class="connection" id="offline-message" hidden data-i18n="update.required.offline">Estás sin conexión. Conéctate para descargar la actualización desde la tienda.</p>
+            </div>
+            <div class="panel-actions">
+              <p class="disabled-reason" id="disabled-reason" hidden data-i18n="update.required.storeUnavailable">El enlace de la tienda no está disponible. No puedes actualizar desde este aviso por el momento.</p>
+              <button class="update" id="update-button" data-i18n="update.required.action">
+                <span>Actualizar</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4 10 14M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"/></svg>
+              </button>
+              <p class="button-caption" id="button-caption" data-i18n="update.required.storeHint">Se abrirá la tienda de tu dispositivo.</p>
+            </div>
+          </section>
+        </div>
+        <button class="system-back" id="back-button" aria-label="Simular Atrás del dispositivo" tabindex="-1">‹</button>
+      </div>
+    </div>
+    <p class="demo-feedback" id="demo-feedback" role="status" aria-live="polite"></p>
+    <div class="evidence">
+      <div><h3>Comportamiento esperado</h3><p id="behavior">El aviso bloquea navegación y trabajo local. Atrás, Escape y el toque exterior conservan el aviso. No hay acción para posponerlo.</p></div>
+      <div><h3>Datos de este ejemplo</h3><p id="fixture">Compilación instalada: 18. Mínima: 20. Versión disponible: 1.2.0. Mensaje y notas de ejemplo.</p></div>
+    </div>
+    <div class="sr-only" id="announcement" aria-live="polite"></div>
+  </section>
+</main>
+<script>
+(function(){
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const states={
+    opening:{
+      title:"Al terminar la apertura",subtitle:"El aviso aparece antes de llegar a Inicio.",
+      home:false,notes:true,version:"Versión disponible · 1.2.0",
+      message:"Esta versión de Tao Mangalam ya no está admitida. Actualiza la app para continuar con tu recorrido.",
+      fixture:"Compilación instalada: 18. Mínima: 20. Versión disponible: 1.2.0. Mensaje y notas de ejemplo."
+    },
+    interrupted:{
+      title:"Sobre la vista que estabas usando",subtitle:"Inicio permanece visible detrás del aviso, sin interacción.",
+      home:true,notes:true,version:"Versión disponible · 1.2.0",
+      message:"Esta versión de Tao Mangalam ya no está admitida. Actualiza la app para continuar con tu recorrido.",
+      fixture:"Compilación instalada: 18. Mínima: 20. Una petición rechaza la versión instalada y se completan los detalles del aviso."
+    },
+    loading:{
+      title:"Completando los detalles",subtitle:"El bloqueo se mantiene mientras se obtiene el contenido del aviso.",
+      home:true,loading:true,version:"Compilación mínima · 20",
+      message:"Necesitas una versión más reciente de Tao Mangalam para continuar.",
+      fixture:"Rechazo de versión recibido. Consulta de detalles en curso. Este ejemplo conserva un enlace de tienda válido previamente recibido."
+    },
+    fallback:{
+      title:"Si no se pueden obtener los detalles",subtitle:"El aviso conserva el mensaje genérico y la mínima conocida.",
+      home:true,version:"Compilación mínima · 20",
+      message:"Necesitas una versión más reciente de Tao Mangalam para continuar.",
+      fixture:"Compilación instalada: 18. Mínima recibida: 20. Sin notas ni versión comercial inventadas. Enlace válido previamente recibido."
+    },
+    offline:{
+      title:"Al volver a abrir sin conexión",subtitle:"Se reaplica una obligación recibida anteriormente.",
+      offline:true,home:false,notes:true,version:"Versión disponible · 1.2.0",
+      message:"Esta versión de Tao Mangalam ya no está admitida. Actualiza la app para continuar con tu recorrido.",
+      fixture:"Compilación instalada: 18. Mínima guardada: 20. Se conservan el contenido y el enlace de tienda del último aviso conocido."
+    },
+    missing:{
+      title:"Enlace de tienda no disponible",subtitle:"La acción permanece visible y se explica por qué está deshabilitada.",
+      home:false,notes:true,missing:true,version:"Versión disponible · 1.2.0",
+      message:"Esta versión de Tao Mangalam ya no está admitida. Actualiza la app para continuar con tu recorrido.",
+      fixture:"Compilación instalada: 18. Mínima: 20. Enlace de tienda nulo. El producto registra un error de configuración sin datos personales."
+    },
+    newOffline:{
+      title:"Sin conexión y sin obligación conocida",subtitle:"La apertura continúa hacia su destino normal.",
+      home:true,offline:true,clear:true,
+      fixture:"Instalación sin estado obligatorio recibido. No se deduce una actualización por falta de conexión.",
+      behavior:"No aparece el aviso. La persona puede usar las funciones locales disponibles de Inicio."
+    },
+    updated:{
+      title:"Después de actualizar",subtitle:"La compilación instalada ya cumple la mínima guardada.",
+      home:true,clear:true,
+      fixture:"Compilación instalada: 20. Mínima guardada: 20. El estado anterior deja de bloquear. Los estados «al día» y «actualización recomendada» tampoco muestran este aviso.",
+      behavior:"No aparece el aviso obligatorio. Se llega al destino normal y la app permite continuar."
+    }
+  };
+  let current="opening";
+  function render(key,focus){
+    current=key;
+    const s=states[key];
+    document.querySelectorAll("[data-state]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.state===key)));
+    $("scenario-title").textContent=s.title;
+    $("scenario-subtitle").textContent=s.subtitle;
+    $("fixture").textContent=s.fixture;
+    $("behavior").textContent=s.behavior||"El aviso bloquea navegación y trabajo local. Atrás, Escape y el toque exterior conservan el aviso. No hay acción para posponerlo.";
+    $("host").className="host "+(s.home?"home":"identity");
+    $("host").inert=!s.clear;
+    if(s.clear) $("host").removeAttribute("aria-hidden");
+    else $("host").setAttribute("aria-hidden","true");
+    $("home-content").hidden=!s.home;
+    $("identity-footer").hidden=!!s.home;
+    $("home-offline").hidden=!s.offline;
+    $("connectivity").textContent=s.offline?"Sin conexión · ▰":"Con conexión · ▰";
+    $("overlay").hidden=!!s.clear;
+    $("device").classList.toggle("blocked",!s.clear);
+    $("release-notes").hidden=!s.notes;
+    $("loading-message").hidden=!s.loading;
+    $("offline-message").hidden=!s.offline;
+    $("disabled-reason").hidden=!s.missing;
+    $("update-button").disabled=!!s.missing;
+    if(s.missing) $("update-button").setAttribute("aria-describedby","disabled-reason");
+    else $("update-button").removeAttribute("aria-describedby");
+    $("button-caption").hidden=!!s.missing;
+    $("modal-version").textContent=s.version||"";
+    $("modal-message").textContent=s.message||"";
+    $("modal-message").dataset.i18n=(key==="fallback"||key==="loading")?"update.required.genericMessage":"update.required.message";
+    $("demo-feedback").textContent="";
+    $("panel-content").scrollTop=0;
+    $("panel").style.animation="none";
+    void $("panel").offsetWidth;
+    $("panel").style.animation="";
+    if(focus&&!s.clear) $("modal-title").focus({preventScroll:true});
+  }
+  document.querySelectorAll("[data-state]").forEach(b=>b.addEventListener("click",()=>render(b.dataset.state,true)));
+  $("format").addEventListener("change",function(){
+    $("device").classList.toggle("tablet",this.value==="tablet");
+    $("device").classList.toggle("large-text",this.value==="large");
+    $("measure").innerHTML=this.value==="tablet"?"960 × 600<br>Texto · 100 %":this.value==="large"?"360 × 800<br>Texto · 200 %":"360 × 800<br>Texto · 100 %";
+    $("panel-content").scrollTop=0;
+  });
+  $("motion").addEventListener("change",function(){
+    $("device").classList.toggle("reduced",this.checked);
+  });
+  $("update-button").addEventListener("click",()=>{
+    $("demo-feedback").textContent="Acción simulada: se abriría el enlace de tienda recibido para esta plataforma. El aviso permanece al volver a la app.";
+  });
+  function preserve(){
+    if(states[current].clear)return;
+    $("announcement").textContent="";
+    requestAnimationFrame(()=>{$("announcement").textContent="La actualización es obligatoria. El aviso permanece abierto.";});
+  }
+  $("back-button").addEventListener("click",preserve);
+  $("overlay").addEventListener("click",e=>{if(e.target===$("overlay"))preserve();});
+  $("panel").addEventListener("keydown",e=>{
+    if(e.key==="Escape"){e.preventDefault();e.stopPropagation();preserve();}
+    if(e.key==="Tab"){
+      e.preventDefault();
+      const target=$("update-button").disabled?$("modal-title"):$("update-button");
+      target.focus({preventScroll:true});
+    }
+  });
+  render("opening",false);
+  requestAnimationFrame(()=>$("modal-title").focus({preventScroll:true}));
+})();
+</script>
+</body>
+</html>
