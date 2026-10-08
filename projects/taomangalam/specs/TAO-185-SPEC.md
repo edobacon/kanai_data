@@ -2,7 +2,7 @@
 id: TAO-185-SPEC
 project: taomangalam
 ticket: TAO-185
-status: draft
+status: approved
 ---
 
 # TAO-185 · HU-01-13 · V-51: lectura y aceptación legal obligatoria
@@ -39,9 +39,9 @@ Qué: abrir el texto completo de cada documento y regresar al mismo punto de V-5
 Qué: consumir obtenerPoliticaAnalitica y presentar opt_in con Aceptar analítica/Rechazar analítica equivalentes, opt_out con aviso de actividad e instrucciones para desactivarla, y disabled sin bloque. Delegar el registro a HU-15-03/04, sin usar el consentimiento para perfilar. Por qué: respetar la política regional sin inducir la elección.
 
 ### REQ-04 `confirmed`
-> Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1658
+> Fuente: Request TAO-185 · Adenda 1 - 2026-10-08 - dev (edobacon); Alcance «Aceptar y continuar invoca la aceptación de HU-03a-11 (con conexión) o el registro local de HU-03a-12 (sin conexión)»; casos QA-01-13-01, QA-01-13-02, QA-01-13-03
 
-Qué: Aceptar y continuar delega la aceptación versionada a HU-03a-11 con red y a HU-03a-12 sin red; continúa a Inicio y su introducción, o al contexto conservado, cuando el proveedor confirma el resultado. Mantener la verificación de documento_legal.aceptar en el servidor. Por qué: conectar la presentación con los mecanismos legales existentes sin duplicar persistencia ni cola.
+Qué: Aceptar y continuar delega la aceptación versionada a HU-03a-11 con red y a HU-03a-12 sin red; continúa a Inicio y su introducción, o al contexto conservado, cuando el proveedor confirma el resultado. Mantener la verificación de documento_legal.aceptar en el servidor. Por qué: conectar la presentación con los mecanismos legales existentes sin duplicar persistencia ni cola. La adenda 1 del pedido sanciona que la QA en teléfono Android y tablet con modo avión real (QA-01-13-01, 02 y 03) y la auditoría con lectores de pantalla (FU-12) quedan diferidas a la entrega del arte de HU-02 (FU-22); sus casos se verifican con widget tests y con el recorrido en el simulador de iOS.
 
 ### REQ-05 `confirmed`
 > Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1661
@@ -54,9 +54,9 @@ Qué: presentar V-51 al abrir con versiones pendientes, ante version_legal_pendi
 Qué: en teléfono presentar un bloque por documento y acciones al final; en tablet horizontal mostrar resumen y texto lado a lado. Admitir textos variables sin cortes y escala 200 %, con foco inicial en el título y lectura accesible. Por qué: permitir completar la aceptación en teléfono, tablet y con ayudas de accesibilidad.
 
 ### REQ-07 `confirmed`
-> Fuente: taomangalam/docs/backlog/EP-01_sistema_visual_navegacion_y_accesibilidad.md:1720
+> Fuente: Request TAO-185 · Adenda 1 - 2026-10-08 - dev (edobacon); Referencias canónicas (fondo heredado, DEC-235, maqueta-direccion-consolidada.png); caso QA-01-13-04 [fidelity]
 
-Qué: entregar la composición visual de V-51 como panel-modal a pantalla completa: primer uso con el fondo Identidad/entrada de V-31, actualizaciones con el fondo anfitrión y texto legal sobre superficies opacas. Por qué: cumplir doc 43 §9, DEC-235 y la aprobación de Diseño requerida para cerrar.
+Qué: entregar la composición visual de V-51 como panel-modal a pantalla completa: primer uso con el fondo Identidad/entrada de V-31, actualizaciones con el fondo anfitrión y texto legal sobre superficies opacas. Por qué: cumplir doc 43 §9, DEC-235 y la aprobación de Diseño requerida para cerrar. La adenda 1 del pedido sanciona que la aprobación de Diseño del fondo y la composición de V-51 (casos de fidelidad REQ-07-3 y REQ-07-4, QA-01-13-04) queda diferida a la entrega del arte de HU-02 (FU-22 y FU-25), con lo que esa condición de cierre se modifica de forma explícita; esta historia verifica la estructura de la composición y el respaldo de la capa de fondo, no su fidelidad visual.
 
 ### REQ-08 `confirmed` `enforcement`
 > Fuente: taomangalam/app/lib/core/images/background_layer.dart:89; taomangalam/app/lib/design_system/app_theme.dart:345; taomangalam/app/lib/design_system/overlays/tao_banner_host.dart:24; taomangalam/app/lib/l10n/app_localizations.dart:412
@@ -135,6 +135,14 @@ Contrato: rollback: Ante fallo, mantener el ticket abierto y revertir solo los c
 
 ### Session 4 · T0 · continue
 
-### Session 5 · T2 · iterate
+### Session 5 · T2 · continue
 
 **Gate (auto)**: La reaceptación legal (actualización de Privacidad, bloqueo recibido desde otra pantalla y rechazos inmediato/diferido) muestra la versión vigente y devuelve al contexto anterior al aceptar; el gate legal bloquea a pantalla completa mientras resuelve (carga y error) y no permite alcanzar Inicio.
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-04 (edit) `confirmed`: Qué: Aceptar y continuar delega la aceptación versionada a HU-03a-11 con red y a HU-03a-12 sin red; continúa a Inicio y su introducción, o a
+- REQ-07 (edit) `confirmed`: Qué: entregar la composición visual de V-51 como panel-modal a pantalla completa: primer uso con el fondo Identidad/entrada de V-31, actuali
+
