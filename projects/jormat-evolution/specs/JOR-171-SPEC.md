@@ -131,25 +131,25 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: done
 
 #### S2.T3 — Agregación en servidor de las tres tarjetas (Pendientes de pago, Vencidos, Notas de crédito) sobre el conjunto filtrado y con el acceso del usuario, recalculada al aplicar o limpiar filtros.
-Contrato: rollback: git revert del commit de agregación; los contadores dejan de devolverse.. Status: pending
+Contrato: rollback: git revert del commit de agregación; los contadores dejan de devolverse.. Status: done
 
 #### S2.T3.1 — Contadores de Pendientes de pago (saldo>0 dentro del plazo) y Vencidos (saldo>0 y plazo cumplido), excluyendo borradores.
-Contrato: rollback: git revert del commit de contadores de pago/vencido.. Status: pending
+Contrato: rollback: git revert del commit de contadores de pago/vencido.. Status: done
 
 #### S2.T3.2 — Contador de Notas de crédito integrado a la misma agregación: conteo de documentos de la tabla invoices con type_id = 3 (nota_credito, backend/jormat-api/src/sales/dte-type-map.ts:14) e is_draft = 0 (todas las emitidas), respetando los filtros activos y el acceso del usuario. No se crea tabla ni endpoint de notas de crédito. Con los datos reales de hoy el contador da 0 porque el builder aún no genera notas de crédito: ese 0 es el resultado esperado hasta el ticket 5/7, no un defecto.
-Contrato: rollback: git revert del commit del contador de notas de crédito.. Status: pending
+Contrato: rollback: git revert del commit del contador de notas de crédito.. Status: done
 
 #### S2.T3.3 — Exponer el contrato de contadores en la respuesta del listado, calculados sobre el mismo conjunto filtrado del usuario.
-Contrato: rollback: git revert del commit de contrato de contadores.. Status: pending
+Contrato: rollback: git revert del commit de contrato de contadores.. Status: done
 
 #### S2.T5 — Exponer el estado comercial por documento en el listado y excluir las guías de despacho en la consulta de sales.service.ts.
-Contrato: rollback: git revert del commit del listado; se restaura la consulta previa sin estado comercial ni exclusión.. Status: pending
+Contrato: rollback: git revert del commit del listado; se restaura la consulta previa sin estado comercial ni exclusión.. Status: done
 
 #### S2.T6 — Filtros y búsqueda del lado servidor en el listado: RUT, nombre/razón social, Origen, O.C. (columna 'Orden'), rango de fechas y estado comercial. Eliminar el parámetro estadoDocumento del contrato del listado: quitarlo de backend/jormat-api/src/sales/dto/list-documentos-query.dto.ts:50 y la rama que lo aplica en backend/jormat-api/src/sales/sales.service.ts:41 y :130-132, y borrar los casos que lo ejercían en backend/jormat-api/src/sales/sales.service.spec.ts:314-345. Mantener los filtros de tipoDTE, estadoSII y estadoComercial; el campo estadoDocumento del documento en la respuesta (sales.repository.ts:197) NO se toca, solo se quita el filtro.
-Contrato: rollback: git revert del commit de filtros; la query vuelve a los parámetros previos.. Status: pending
+Contrato: rollback: git revert del commit de filtros; la query vuelve a los parámetros previos.. Status: done
 
 #### S2.T7 — Tests del listado: estado comercial por documento, cada filtro por campo, exclusión de guías de despacho y coincidencia de los tres contadores con la tabla filtrada (con y sin rango de fechas).
-Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: pending
+Contrato: rollback: git revert del commit de tests; no afecta código de producción.. Status: done
 
 #### S3.T1 — Reemplazar las tarjetas centradas en SII por las tres tarjetas comerciales (Pendientes de pago, Vencidos, Notas de crédito) conectadas a la agregación del servidor y recalculadas con los filtros activos.
 Contrato: rollback: git revert del commit de tarjetas; se restauran las tarjetas centradas en SII.. Status: pending
@@ -252,16 +252,16 @@ Contrato: rollback: git revert del commit de tests; no afecta código de producc
 
 **Gate (auto)**: Vía API, registrar y aplicar un pago actualiza el saldo proyectado y el estado comercial de la factura y el pago persiste tras reiniciar el servicio; verificable por endpoints y por los tests del módulo payments/sales.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T3
-- [ ] S2.T3.1
-- [ ] S2.T3.2
-- [ ] S2.T3.3
-- [ ] S2.T5
-- [ ] S2.T6
-- [ ] S2.T7
+- [x] S2.T3
+- [x] S2.T3.1
+- [x] S2.T3.2
+- [x] S2.T3.3
+- [x] S2.T5
+- [x] S2.T6
+- [x] S2.T7
 
 **Gate (auto)**: El endpoint de listado de Facturas cliente devuelve cada documento con su estado comercial, aplica los filtros (RUT, nombre/razón social, Origen, O.C., rango de fechas y estado comercial), excluye guías de despacho y devuelve los tres contadores calculados sobre el conjunto filtrado del usuario; verificable por API y tests.
 
