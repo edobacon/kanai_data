@@ -1,0 +1,392 @@
+{
+  "run_id": "epic-preparacion-r1",
+  "plan_id": "epic-preparacion-2026-10-07",
+  "ts_start": "2026-10-07T23:00:00-03:00",
+  "ts_end": "2026-10-07T23:20:00-03:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "fe1e9c991f4819c1833b5d1fdd248d1bcbb30d35",
+  "head_ref": "1f0e717ad89a39a15ce72b48d850fa896435f824",
+  "repo": "kanai-app",
+  "judge_scope": "full",
+  "findings": {
+    "S0": 0,
+    "S1": 3,
+    "S2": 5,
+    "S3": 2,
+    "consulta": 1
+  },
+  "max_severity": "S1",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S1",
+      "kind": "intent_gap",
+      "title": "La reutilizacion del banco aplica una respuesta propuesta sin confirmacion humana en lote",
+      "where": "server/dispatch/specMissingValues.ts:103",
+      "evidence": "openMissingValueQuestions con prepareEnabled() crea la pregunta ya answered via addOpenQuestion(reused); no pasa por preview_preparation ni answer_batch; bridge solo entrega preguntas open, asi que el runner no pausa.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f2",
+      "severity": "S1",
+      "kind": "correctness",
+      "title": "La similitud Jaccard 0,30 da falsos positivos entre preguntas que solo difieren en el dato",
+      "where": "server/epics/decisionBank.ts:12",
+      "evidence": "Medido: URL de staging vs produccion 0,50; tabla de inventario vs caja 0,60; todos sobre el umbral. Con f1 el valor equivocado se aplica sin humano.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "security",
+      "title": "answer_open_question sin autorizacion humana alimenta el banco como respuesta humana, y la reutilizacion se encadena",
+      "where": "server/mcp/tools.ts:4014",
+      "evidence": "El handler no usa withHumanAuthorization (ya era asi en la base); el cambio llama bankAnsweredQuestion. reusableAnswers toma como propias las nacidas por reutilizacion.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f4",
+      "severity": "S1",
+      "kind": "correctness",
+      "title": "Bloqueo sin salida: prepare exige dataModelAck pero este solo se escribe en approve, que exige preparacion",
+      "where": "server/epics/preparation.ts:76",
+      "evidence": "dataModelPending mantiene ready=false; dataModelAck se escribe solo en planner.ts approvePlan tras assertPrepared. Epica nueva con hallazgos de modelo de datos queda sin salida con el flag.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f5",
+      "severity": "S2",
+      "kind": "scope_creep",
+      "title": "runner.ts escribe /tmp/kanai-drift.log en cada ticket_drift, con catch vacio y sin flag",
+      "where": "server/epics/runner.ts:117",
+      "evidence": "Codigo de depuracion ajeno al plan, colado en el commit de F2 por un git add -A sobre cambios sin commitear de otra mano.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f6",
+      "severity": "S2",
+      "kind": "error_handling",
+      "title": "answer_batch no es atomico: si bankAnswer lanza quedan respuestas aplicadas a medias",
+      "where": "server/epics/preparation.ts:136",
+      "evidence": "applyAnswerBatch aplica answerOpenQuestion y luego bankAnswer sin try; store.list valida todas las epicas.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f7",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "La doc y el comentario dicen que los contratos van detras del flag; el codigo no los condiciona",
+      "where": "server/epics/contracts.ts:3",
+      "evidence": "contracts.ts y .env.example/configuration.md dicen detras del flag o fases siguientes; planner y runner los aplican siempre.",
+      "info_class": "contradiction_contract",
+      "info_floor": true,
+      "outcome": "pending"
+    },
+    {
+      "id": "f8",
+      "severity": "S2",
+      "kind": "intent_gap",
+      "title": "Un contrato pasa a agreed por update (no humano) y la confirmacion de approve no muestra los valores",
+      "where": "server/epics/schema.ts:74",
+      "evidence": "update no esta en HUMAN_OPERATIONS; el texto de confirmacion de approve no lista contratos.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f9",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "answer_batch y preview_preparation funcionan con el flag apagado",
+      "where": "server/epics/preparation.ts:112",
+      "evidence": "Solo prepareEpic verifica el flag; answer_batch llena el banco con el flag apagado.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f10",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "La reutilizacion dentro del ticket ignora la revision del cuerpo",
+      "where": "server/dispatch/specMissingValues.ts:28",
+      "evidence": "bankCandidates descarta por sourceRevision pero las respuestas propias del ticket no.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    },
+    {
+      "id": "f11",
+      "severity": "consulta",
+      "kind": "correctness",
+      "title": "preparationPanel no aisla los errores de observe por ticket",
+      "where": "server/epics/preparation.ts:53",
+      "evidence": "Un ticket ready_to_close sin evidencia rompe todo el panel; el throw ya existia en la base y la corrida se bloquea igual.",
+      "info_class": "none",
+      "info_floor": false,
+      "outcome": "pending"
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 27,
+    "read_full": 21,
+    "skimmed": 5,
+    "not_read": 1,
+    "files": {
+      "read_full": [
+        ".env.example",
+        "docs/README.md",
+        "docs/configuration.md",
+        "docs/development/epic-execution.md",
+        "docs/epicas-preparacion.md",
+        "server/dispatch/specMissingValues.ts",
+        "server/epics/bridge.ts",
+        "server/epics/contracts.ts",
+        "server/epics/decisionBank.ts",
+        "server/epics/metrics.ts",
+        "server/epics/phase.ts",
+        "server/epics/planner.ts",
+        "server/epics/preparation.ts",
+        "server/epics/preparedGate.ts",
+        "server/epics/runner.ts",
+        "server/epics/schema.ts",
+        "server/epics/service.ts",
+        "server/mcp/epicTools.ts",
+        "server/mcp/tools.ts",
+        "server/repo/investigation.ts",
+        "skills/claude/kn-epic/SKILL.md"
+      ],
+      "skimmed": [
+        "tests/unit/epic-contracts.test.ts",
+        "tests/unit/epic-decision-bank.test.ts",
+        "tests/unit/epic-decision-missing.test.ts",
+        "tests/unit/epic-preparation.test.ts",
+        "tests/unit/epic-prepared-gate.test.ts"
+      ],
+      "not_read": [
+        "tests/unit/epic-preparation-metrics.test.ts"
+      ]
+    },
+    "plan_files": [
+      {
+        "path": ".env.example",
+        "lines": 5,
+        "blob": "fed23488a3912e88d8db949767c17f2cc7ad9d20",
+        "deleted": false
+      },
+      {
+        "path": "docs/configuration.md",
+        "lines": 1,
+        "blob": "3fbb2e623ce186900eae4da66d7b76fd943d5195",
+        "deleted": false
+      },
+      {
+        "path": "docs/development/epic-execution.md",
+        "lines": 10,
+        "blob": "b12771695bdbba06368ce51ded7169d47847f9cc",
+        "deleted": false
+      },
+      {
+        "path": "docs/epicas-preparacion.md",
+        "lines": 231,
+        "blob": "33d3230707d607d95e79a9b173d19868882eaf3c",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "0b8428129e66cbb8089b2a4c5ab5e4c7ebaed03a",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/specMissingValues.ts",
+        "lines": 28,
+        "blob": "1dd660715b6db7af5940f5a70d24ca8d2bb0d750",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/bridge.ts",
+        "lines": 5,
+        "blob": "9339fdfefb21044df72d8497a0c4b39e11afa99d",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/contracts.ts",
+        "lines": 47,
+        "blob": "f21049933cb520958f92592c99143d5f3ed3fd0e",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/decisionBank.ts",
+        "lines": 93,
+        "blob": "f075c2857f887f84f8fbced78f399e87574fa1df",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/metrics.ts",
+        "lines": 9,
+        "blob": "8f19bb1564b8b1ed03ae4e81f4ba622dc790aa48",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/phase.ts",
+        "lines": 9,
+        "blob": "77d2a27be01957945bb06cd70331d2abf76c867b",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/planner.ts",
+        "lines": 9,
+        "blob": "8eddf50c2c8a0e37cd100e7a3c69f5df2cb7f6ac",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/preparation.ts",
+        "lines": 144,
+        "blob": "28b7870fab69f730892cd8e68a446a350dc64292",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/preparedGate.ts",
+        "lines": 33,
+        "blob": "75c68cfe29a967c537ee7b5493db7f1cc36691ae",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/runner.ts",
+        "lines": 27,
+        "blob": "7f4d34e5e18e4cd546854182b90442a44cf9430a",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/schema.ts",
+        "lines": 20,
+        "blob": "784f08e3f707238563e69e91dad42e0c1f28ade4",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/service.ts",
+        "lines": 20,
+        "blob": "5c1748325ff69397c9a7edfa4535182d8ef9b95d",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/epicTools.ts",
+        "lines": 4,
+        "blob": "f2179dcb47efb9875bbac576509376e1b81d610c",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 2,
+        "blob": "dae36dd2897957ecb00aeab82fd8d8c5ac87fb04",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/investigation.ts",
+        "lines": 9,
+        "blob": "74bbfcfb5b547c45fde099d2c1651f3d6e255dc0",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-epic/SKILL.md",
+        "lines": 27,
+        "blob": "24b3ebabb177530b4e03f2bb205580c75e4fa5fb",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-contracts.test.ts",
+        "lines": 134,
+        "blob": "3c9d1c53c6457945247e53a638e4d73309c98831",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-decision-bank.test.ts",
+        "lines": 156,
+        "blob": "c7618ba5ebdd05a6784a1af27051f57593499f99",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-decision-missing.test.ts",
+        "lines": 61,
+        "blob": "6fa2b442b09f9abafac70d9959a30c708b6916a4",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-preparation-metrics.test.ts",
+        "lines": 36,
+        "blob": "a4721d2ed6ce01cf0746f27522e09ce578bb1f76",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-preparation.test.ts",
+        "lines": 172,
+        "blob": "b5dcbc9641af21e67283ae8600ef5b343577d13b",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-prepared-gate.test.ts",
+        "lines": 99,
+        "blob": "95f2f7679b04b03794b22ba1467cb2affc2eecb5",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      ".env.example": "fed23488a3912e88d8db949767c17f2cc7ad9d20",
+      "docs/README.md": "0b8428129e66cbb8089b2a4c5ab5e4c7ebaed03a",
+      "docs/configuration.md": "3fbb2e623ce186900eae4da66d7b76fd943d5195",
+      "docs/development/epic-execution.md": "b12771695bdbba06368ce51ded7169d47847f9cc",
+      "docs/epicas-preparacion.md": "33d3230707d607d95e79a9b173d19868882eaf3c",
+      "server/dispatch/specMissingValues.ts": "1dd660715b6db7af5940f5a70d24ca8d2bb0d750",
+      "server/epics/bridge.ts": "9339fdfefb21044df72d8497a0c4b39e11afa99d",
+      "server/epics/contracts.ts": "f21049933cb520958f92592c99143d5f3ed3fd0e",
+      "server/epics/decisionBank.ts": "f075c2857f887f84f8fbced78f399e87574fa1df",
+      "server/epics/metrics.ts": "8f19bb1564b8b1ed03ae4e81f4ba622dc790aa48",
+      "server/epics/phase.ts": "77d2a27be01957945bb06cd70331d2abf76c867b",
+      "server/epics/planner.ts": "8eddf50c2c8a0e37cd100e7a3c69f5df2cb7f6ac",
+      "server/epics/preparation.ts": "28b7870fab69f730892cd8e68a446a350dc64292",
+      "server/epics/preparedGate.ts": "75c68cfe29a967c537ee7b5493db7f1cc36691ae",
+      "server/epics/runner.ts": "7f4d34e5e18e4cd546854182b90442a44cf9430a",
+      "server/epics/schema.ts": "784f08e3f707238563e69e91dad42e0c1f28ade4",
+      "server/epics/service.ts": "5c1748325ff69397c9a7edfa4535182d8ef9b95d",
+      "server/mcp/epicTools.ts": "f2179dcb47efb9875bbac576509376e1b81d610c",
+      "server/mcp/tools.ts": "dae36dd2897957ecb00aeab82fd8d8c5ac87fb04",
+      "server/repo/investigation.ts": "74bbfcfb5b547c45fde099d2c1651f3d6e255dc0",
+      "skills/claude/kn-epic/SKILL.md": "24b3ebabb177530b4e03f2bb205580c75e4fa5fb"
+    },
+    "summary": {
+      "files": 27,
+      "reviewed_files": 21,
+      "lines": 1392,
+      "reviewed_lines": 734,
+      "pct_lines": 52,
+      "excluded": []
+    }
+  },
+  "batches": 1,
+  "consumers": 31,
+  "lines_judged": 1392,
+  "plan_phase_ids": [
+    "F0",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6"
+  ],
+  "verdict_expected_by_rubric": "iterar"
+}
