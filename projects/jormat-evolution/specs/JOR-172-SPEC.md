@@ -202,7 +202,7 @@ Contrato: rollback: Revertir el commit de las pruebas y, si se tocó, del mapeo 
 
 **Gate (auto)**: 'Mas detalles' abre en una pestaña nueva el Estado de cuenta con la grilla de facturas y notas emitidas. El Pendiente total (solo facturas con saldo) coincide con el Pendiente del listado de 3/7 (criterio 25 reemplazado por la Adenda 1); no se compara contra ningun monto del popup, que muestra solo contadores. La columna Estado usa derivarEstadoComercialPago y la columna Origen muestra invoices.origin_name.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
 ## Decisions
 
 ### DEC-LOCAL-01: plan-dedup → auto-pruned
