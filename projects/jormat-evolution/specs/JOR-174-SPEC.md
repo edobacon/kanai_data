@@ -68,19 +68,19 @@ Enforcement: los datos del remitente Jormat viven en una unica constante o confi
 ## Tasks
 
 #### S1.T1 — Crear via seed_rbac la capability NUEVA sales.documents:quick-delivery y asignarla a los roles bodega, jefe-local, jefe-venta y gerencia. No reutilizar ninguna capability de Bodega existente. El nombre y los roles estan cerrados (JOR-174-Q6 y Q10): el ejecutor no debe decidirlos ni consultarlos.
-Contrato: rollback: Revertir el commit del endpoint y, si se creo capability, ejecutar el down de su migracion RBAC.. Status: pending
+Contrato: rollback: Revertir el commit del endpoint y, si se creo capability, ejecutar el down de su migracion RBAC.. Status: done
 
 #### S1.T1.1 — Proteger la accion de Entrega Rapida (endpoint y accion de fila) con la capability sales.documents:quick-delivery, creada en S1.T1 via seed_rbac y asignada a bodega, jefe-local, jefe-venta y gerencia. Sin alternativa de reutilizar una capability existente.
-Contrato: rollback: Down de la migracion RBAC o revertir commit.. Status: pending
+Contrato: rollback: Down de la migracion RBAC o revertir commit.. Status: done
 
 #### S1.T1.2 — Servicio y ruta de Entrega Rapida con UPDATE condicionado por is_out=false; respuesta devuelve la factura con sus valores actuales en ambos casos.
-Contrato: rollback: Revertir commit del servicio y la ruta.. Status: pending
+Contrato: rollback: Revertir commit del servicio y la ruta.. Status: done
 
 #### S1.T2 — Frontend: accion de fila 'Entrega Rapida' en el listado de facturas cliente, visible solo para emitidas con is_out=false y usuarios con la capability; modal con comentario opcional y refresco de la fila.
-Contrato: rollback: Revertir el commit del componente de accion.. Status: pending
+Contrato: rollback: Revertir el commit del componente de accion.. Status: done
 
 #### S1.T3 — Tests S1: endpoint (feliz, criterio 19 idempotencia con otro usuario, 403 sin capability, estado SII pendiente, factura migrada con is_out=true) y visibilidad de la accion de fila.
-Contrato: rollback: Eliminar los archivos de test agregados.. Status: pending
+Contrato: rollback: Eliminar los archivos de test agregados.. Status: done
 
 #### S2.T1 — Backend Formato Bodega: endpoint de lectura que devuelve cabecera (numero, fecha, cliente) y lineas en orden con codigo, descripcion, cantidad y lista de ubicaciones del repuesto en la bodega de origen (tabla de ubicaciones a confirmar), en una sola consulta agregada por factura (acotado a las lineas de esa factura, sin N+1); sin dependencia del estado SII.
 Contrato: rollback: Revertir commit del endpoint.. Status: pending
@@ -143,14 +143,14 @@ Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status:
 - edit S1.T1.1 { desc="Proteger la accion de Entrega Rapida (endpoint y accion de fila) con la capability sales.documents:quick-delivery, creada en S1.T1 via seed_rbac y asignada a bodega, jefe-local, jefe-venta y gerencia. Sin alternativa de reutilizar una capability existente.", validates=["REQ-01"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T1.1
-- [ ] S1.T1.2
-- [ ] S1.T2
-- [ ] S1.T3
+- [x] S1.T1
+- [x] S1.T1.1
+- [x] S1.T1.2
+- [x] S1.T2
+- [x] S1.T3
 
 **Gate (auto)**: En el listado de facturas cliente la accion Entrega Rapida marca la factura entregada; una segunda llamada responde sin cambios (misma date_out y user_out_id, sin movimientos de stock), visible en el listado y en el test del endpoint.
 
