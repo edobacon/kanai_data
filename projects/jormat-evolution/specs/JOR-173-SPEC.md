@@ -136,13 +136,13 @@ Contrato: rollback: Revertir el commit.. Status: done
 Contrato: rollback: Revertir los cambios en las stories y el test.. Status: done
 
 #### S3.T1 — Implementar en backend/jormat-api el endpoint de aplicacion de credito de una nota a otra factura, protegido con la capability payments.customers:apply-payment validada en el backend. Registra el vinculo real (nota -> factura destino, importe) y reduce el saldo disponible de la nota. Validaciones: el importe aplicado no puede superar el saldo disponible de la nota (aplicar $120.000 sobre $100.000 responde HTTP 422) y la factura destino debe ser del mismo cliente que la nota (factura de otro cliente responde HTTP 422). Los tests de esta funcionalidad se escriben y ejecutan en S3.T3.
-Contrato: rollback: Migracion down que elimina la tabla de aplicaciones y revertir el commit del servicio y el endpoint.. Status: pending
+Contrato: rollback: Migracion down que elimina la tabla de aplicaciones y revertir el commit del servicio y el endpoint.. Status: done
 
 #### S3.T2 — Integrar las notas en la proyeccion de saldo de 3/7 (sumar las notas aplicadas con agregados SQL por factura y cliente, DET-41) y exponer el credito disponible en el popup del cliente y en el Estado de cuenta de 4/7, incluida la nota con su saldo.
-Contrato: rollback: Revertir el commit de la proyeccion y las vistas.. Status: pending
+Contrato: rollback: Revertir el commit de la proyeccion y las vistas.. Status: done
 
 #### S3.T3 — Escribir el archivo de test nuevo backend/jormat-api/test/e2e/invoice-void-credit.e2e-spec.ts (config jest.e2e.config.ts) que cubre el criterio 17 (factura pagada de $100.000 deja $100.000 de credito disponible), la aplicacion de $40.000 a otra factura del mismo cliente con vinculo real y saldo restante de $60.000, el rechazo 422 por importe mayor al saldo disponible ($120.000 sobre $100.000), el rechazo 422 por factura de otro cliente y el rechazo por falta de payments.customers:apply-payment. Ejecutar ademas las suites de regresion de JOR-171.
-Contrato: rollback: Eliminar los archivos de test nuevos.. Status: pending
+Contrato: rollback: Eliminar los archivos de test nuevos.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: UI: el menu de la factura emitida en DocumentoDetalleView ofrece 'Convertir en Nota de Credito / Anular' solo si el usuario tiene sales.documents:void y la factura no esta anulada. Abre un modal con un selector Devolucion/Falla y una observacion, y al confirmar llama al endpoin
@@ -226,12 +226,12 @@ Contrato: rollback: Eliminar los archivos de test nuevos.. Status: pending
 
 **Gate (auto)**: En Storybook (DocumentoDetalleView) y en el app: la accion Anular aparece solo con permiso y en factura no anulada, el modal envia tipo y observacion, y la factura anulada muestra el badge Anulada y el enlace a la nota.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Al anular una factura pagada de $100.000, el popup del cliente y el Estado de cuenta muestran un credito disponible de $100.000. Al aplicar $40.000 a otra factura, se ve la aplicacion vinculada y su saldo baja a $20.000.
 
