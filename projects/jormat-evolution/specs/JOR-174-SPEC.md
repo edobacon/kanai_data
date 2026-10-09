@@ -204,7 +204,7 @@ Contrato: rollback: Revertir con git los cambios a los archivos de test ajustado
 
 **Gate (auto)**: Visualizar muestra Imprimir factura, Imprimir datos de despacho y Formato Bodega; la impresion de despacho usa los datos guardados de la factura y permite completar bultos/dimensiones/peso/fragil sin guardarlos; el selector T-09 lista las empresas reales de transport_companies.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
 
 ### Session 5 · continue
 
