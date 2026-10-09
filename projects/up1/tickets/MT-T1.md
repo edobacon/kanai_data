@@ -1,0 +1,14 @@
+---
+id: MT-T1
+project: up1
+type: ticket
+status: open
+work_type: implement
+autopilot: manual
+verification_policy: ask
+teach_policy: ask
+draft_policy: ask
+review_policy: auto
+---
+
+# ticket a materializar
