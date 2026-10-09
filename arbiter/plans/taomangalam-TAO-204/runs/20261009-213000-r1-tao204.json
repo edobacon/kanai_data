@@ -1,0 +1,172 @@
+{
+  "run_id": "r1-tao204",
+  "plan_id": "taomangalam-TAO-204",
+  "ts_start": "2026-10-09T21:10:00Z",
+  "ts_end": "2026-10-09T21:30:00Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "0c4c24ab6b1b19c259ea868bf8c34a0dc776a600",
+  "head_ref": "worktree",
+  "repo": "taomangalam",
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 2,
+    "S3": 4,
+    "consulta": 1
+  },
+  "max_severity": "S2",
+  "verdict": "iterar",
+  "batches": 2,
+  "lines_judged": 3074,
+  "plan_phase_ids": [
+    "S1",
+    "S2",
+    "S3"
+  ],
+  "ticket": {
+    "id": "TAO-204",
+    "kanai_id": "TAO-204",
+    "project": "taomangalam",
+    "scope": "whole_ticket",
+    "resolution": "explicit",
+    "context_path": "/private/tmp/claude-501/-Users-edobacon-Workspace-kanai/305d15ce-bb36-4cdf-b878-c178e934d524/scratchpad/arbiter204/ticket_context.md"
+  },
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "Dos pedidos simultaneos del mismo derivado descargan dos veces y la segunda promocion reescribe en sitio el archivo ya entregado",
+      "where": "app/lib/core/assets/downloadable_asset_manager.dart:98",
+      "repo": "taomangalam",
+      "family": "concurrency:inflight-dedup",
+      "evidence": "watch() no deduplica pedidos en vuelo; ambos llegan a _promote y storage.promote hace cache.putFile con la misma clave sha256, que en flutter_cache_manager 3.4.5 reescribe en sitio el archivo ya entregado; un tercer pedido durante la escritura falla en _matchesManifest y expulsa el archivo entregado. Trazado estatico, no reproducido en runtime.",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "intent_gap",
+      "title": "Ningun test afirma las metricas del caso de la adenda 3 con primer intento alterado y reintento correcto (success sin hashMismatch)",
+      "where": "app/test/core/assets/downloadable_asset_manager_test.dart:179",
+      "repo": "taomangalam",
+      "family": "missing-test:metrics-retry-success",
+      "evidence": "El test del reintento exitoso solo comprueba bytes y 2 solicitudes; no lee manager.metrics. El codigo es correcto (IntegrityFailure continua y VerifiedDownload llega a recordSuccess).",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    },
+    {
+      "id": "f3",
+      "severity": "S3",
+      "kind": "error_handling",
+      "title": "Los fallos de disco al escribir el temporal se cuentan como offline en las metricas",
+      "where": "app/lib/core/assets/derivative_downloader.dart:130",
+      "repo": "taomangalam",
+      "family": "error-handling:failure-kind-misclassified",
+      "evidence": "_classifyFailure mapea cualquier Exception que no sea cancelacion a NetworkFailure, incluidas las FileSystemException de partialDirectory.create, openWrite, readAsBytes y el cuerpo nulo.",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    },
+    {
+      "id": "f4",
+      "severity": "S3",
+      "kind": "correctness",
+      "title": "TaoDownloadableImage.didUpdateWidget compara resolver y family por identidad: reconstruir el padre cancela y reinicia la descarga",
+      "where": "app/lib/core/images/downloadable_image.dart:191",
+      "repo": "taomangalam",
+      "family": "correctness:widget-resubscribe-identity",
+      "evidence": "sameRequest usa == sobre DownloadableImageResolver e ImageFamilyContract, que no sobrescriben operator ==.",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    },
+    {
+      "id": "f5",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "La regla del alt anunciable esta duplicada entre downloadable_image.dart e image_drawing.dart",
+      "where": "app/lib/core/images/downloadable_image.dart:130",
+      "repo": "taomangalam",
+      "family": "maintainability:announceable-alt-duplicated",
+      "evidence": "_announceableAlt reimplementa _announceableLabel.",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    },
+    {
+      "id": "f6",
+      "severity": "S3",
+      "kind": "doc_drift",
+      "title": "configuration.md dice que el fallo de carga del manifiesto o del almacenamiento se descarta, pero el gestor lo propaga y solo no lo memoriza",
+      "where": "docs/development/configuration.md:288",
+      "repo": "taomangalam",
+      "family": "doc-drift:manager-load-failure-propagation",
+      "evidence": "El docstring del gestor y el test de recuperacion afirman la propagacion al llamador.",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    },
+    {
+      "id": "f7",
+      "severity": "consulta",
+      "kind": "intent_gap",
+      "title": "El camino descargable siempre pide y dibuja el derivado 1x; los derivados 2.0x y 3.0x del manifiesto nunca se piden",
+      "where": "app/lib/core/images/downloadable_image.dart:26",
+      "repo": "taomangalam",
+      "family": "intent:density-variant-selection",
+      "evidence": "manifestPathFor usa asset.path y se dibuja FileImage sin escala; el camino del bundle elige la variante por densidad. Ningun REQ ni adenda fija la densidad: decision del dev si corresponde a este ticket o a otro.",
+      "stuck_rounds": 0,
+      "family_rounds": 0
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 22,
+    "read_full": 21,
+    "skimmed": 0,
+    "not_read": 1,
+    "files": {
+      "read_full": [
+        "app/pubspec.yaml",
+        "app/lib/core/assets/derivative_downloader.dart",
+        "app/lib/core/assets/download_metrics.dart",
+        "app/lib/core/assets/download_url_provider.dart",
+        "app/lib/core/assets/downloadable_asset_manager.dart",
+        "app/lib/core/assets/downloadable_asset_providers.dart",
+        "app/lib/core/assets/downloadable_asset_state.dart",
+        "app/lib/core/assets/downloadable_asset_storage.dart",
+        "app/lib/core/assets/downloadable_manifest.dart",
+        "app/lib/core/images/downloadable_image.dart",
+        "app/lib/core/images/image_drawing.dart",
+        "app/lib/core/images/image_family_resolver.dart",
+        "app/test/core/assets/downloadable_asset_manager_test.dart",
+        "app/test/core/assets/downloadable_asset_providers_test.dart",
+        "app/test/core/assets/downloadable_asset_recovery_test.dart",
+        "app/test/core/assets/fake_download_url_provider.dart",
+        "app/test/core/assets/local_asset_server.dart",
+        "app/test/core/images/downloadable_image_failure_test.dart",
+        "app/test/core/images/downloadable_image_test.dart",
+        "docs/development/configuration.md",
+        "scripts/assets/README.md"
+      ],
+      "skimmed": [],
+      "not_read": [
+        "app/lib/core/assets/downloadable_asset_providers.g.dart"
+      ]
+    },
+    "plan_files": [],
+    "reviewed": {
+      "app/pubspec.yaml": "00f4b56a74f7baff141b46c568be590034118ab4",
+      "app/lib/core/images/image_drawing.dart": "5e0bc4593e481ce4e569ca3134d44ce177871e08",
+      "app/lib/core/images/image_family_resolver.dart": "03ba7a7e9e04fa2c145f665a66d30e55ac8e938b",
+      "docs/development/configuration.md": "1a387b02fa9ccaf0f8c9e5f8d56ec677234d44cb",
+      "scripts/assets/README.md": "4e204c25fa8a81c68c6014d5b1a186b50b721ad7"
+    },
+    "summary": {
+      "files": 0,
+      "reviewed_files": 0,
+      "lines": 0,
+      "reviewed_lines": 0,
+      "pct_lines": 100,
+      "excluded": []
+    }
+  },
+  "verdict_expected_by_rubric": "iterar"
+}

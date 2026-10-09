@@ -1,0 +1,592 @@
+{
+  "id": "taomangalam-ep-02-autonomia-prueba",
+  "projectId": "taomangalam",
+  "title": "EP-02 prueba de autonomía: catálogos de ritual y signos, y derivado de referencia en server/",
+  "objective": "Probar que una corrida autónoma de Kanai puede ejecutar de punta a punta tres historias independientes de EP-02 (dos catálogos de contenido y un derivado de referencia en server/ con check de CI), sin preguntas ni intervención durante la ejecución.",
+  "scope": [
+    "TAO-202: catálogo del ritual de consulta y de los materiales de la sesión, trazado a la fuente",
+    "TAO-203: catálogo de signos y personalidades con rasgos y procedimiento del cálculo, trazado a la fuente",
+    "TAO-212: derivado de referencia del contenido en server/ con verificación de vigencia en CI",
+    "Fuera de alcance: TAO-199, TAO-204 y el resto de EP-02; cambios al contenido canónico de docs/content/ que no pidan estas tres historias"
+  ],
+  "exclusions": [],
+  "criteria": [
+    "Cada historia cumple sus propios criterios de aceptación y casos de prueba",
+    "Los tres tickets quedan integrados en la rama de la épica con commits conservados",
+    "El CI integral de la rama de la épica queda verde",
+    "Todo dato de contenido traza a una fuente de docs/content/ y no se inventa contenido"
+  ],
+  "requiredChecks": [
+    "quality-gate"
+  ],
+  "repo": "taomangalam",
+  "baseBranch": "main",
+  "branch": "epic/EP-02",
+  "tickets": [
+    {
+      "id": "TAO-202",
+      "title": "[HU-02-17][Content] Catálogo del ritual de consulta y de los materiales de la sesión que muestra Preparar sesión, trazado a la fuente",
+      "body": "> **ID estable:** `HU-02-17` · **Estado:** `Ready` · **Orden recomendado:** `8` · **Puntos publicados:** `2`\n\n## Objetivo\nResultado: un catálogo versionado con los seis pasos del ritual de consulta y la lista de\nmateriales de la sesión, generado desde la fuente con el patrón de HU-02-04, para que Preparar\nsesión (V-04) los muestre en M1a sin textos fijos en el código (DEC-231, punto 3). Consumidores:\nHU-07-04 (V-04) y, en M1b, V-46 Instructivo (HU-10-04), que usa la misma fuente.\n\n## Alcance\n**Incluye**\n- Generador determinista, JSON Schema, registro de correcciones editoriales, pruebas de fidelidad y\n  modo `--check` con el patrón de HU-02-04.\n- Ritual de consulta: introducción (`tm-src-como-usar#p0009`) y los seis pasos en el orden de la\n  fuente (`p0010`), cada uno con `content_key` estable, `text`, `sourceText` y `sourceRefs`; la\n  división en seis pasos sigue V-04 («Los seis pasos») y se registra como resolución editorial si\n  el texto de un paso difiere del fragmento de la fuente.\n- Materiales de la sesión en el orden de V-04 y DEC-071: mantel de uso exclusivo, tablero, imagen\n  del Dharani Deva, vela, campanilla, los tres dados (12, 8 y 4 caras) y péndulo, cada uno con\n  `content_key` y referencia a la fuente o a la decisión que lo declara.\n- `catalogVersion` como `content_version`, copia a `app/assets/catalogos/` verificada en CI y\n  cargador Dart de solo lectura (DEC-230).\n\n**No incluye**\n- Materiales de la práctica y la reparación (japa mala, corrector, minerales, tablilla RKL):\n  HU-02-10 (M1b).\n- Ilustraciones de los pasos del ritual: HU-02-14 (M1b).\n- Capítulos del Instructivo: HU-10-04 (M1b).\n- Interfaz del asistente: HU-07-04.\n\n## Referencias canónicas\n- Vistas: ninguna (lo consume V-04, de EP-07)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-231, DEC-069, DEC-071, DEC-178, DEC-094, DEC-230\n- Datos: referencia del método en bundle; `content_key` y `content_version` (tecnologia/20 §1)\n- API: ninguna\n- Capacidades: ninguna en el catálogo; la vista usa `vista.tablero.acceder`\n- Contenido/assets: `docs/content/fuentes/02_como_usar_tao_mangalam.md` (`p0009`, `p0010`) y\n  DEC-071: aprobado como fuente; catálogo: faltante\n\n## Criterios de aceptación\n- [ ] Dado el catálogo generado, cuando se valida contra su esquema, entonces tiene seis pasos del\n  ritual y siete materiales con `content_key` único.\n- [ ] Dados los seis pasos, cuando corren las pruebas de fidelidad, entonces su orden y su texto\n  coinciden con `p0010` o declaran una resolución editorial válida.\n- [ ] Dado el paso 6, cuando se lee, entonces dice que se toman en las manos todos los dados y el\n  péndulo y se dan tres soplidos sobre ellos.\n- [ ] Dada la lista de materiales, cuando se lee, entonces coincide con V-04 y DEC-071 y no incluye\n  kuberani, corrector ni minerales.\n- [ ] Dado `p0010` modificado sin regenerar, cuando corre CI, entonces `--check` falla nombrando el\n  archivo.\n- [ ] Dado el cargador Dart, cuando lee el catálogo empaquetado, entonces entrega los pasos y los\n  materiales inmutables con su `content_key` y `content_version`.\n\n## Requisitos transversales\n- Permisos: no aplica.\n- Offline/sync: empaquetado y legible sin red (DEC-094).\n- Seguridad/privacidad: no aplica.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: CI nombra el nodo o archivo que rompe la fidelidad.\n- Compatibilidad/migración: un cambio de texto sube `catalogVersion`.\n\n## Casos de prueba\n- [ ] QA-02-17-01 · Dado el repositorio limpio, cuando corren el generador con `--check` y las\n  pruebas, entonces terminan sin errores con seis pasos y siete materiales.\n- [ ] QA-02-17-02 · Dado el orden de dos pasos invertido a mano en el JSON (error), cuando corre CI,\n  entonces falla la prueba de fidelidad.\n- [ ] QA-02-17-03 · Dado el catálogo cargado en la app (borde), cuando se lee el primer paso,\n  entonces es el mantel de uso exclusivo.\n\n## Pruebas y evidencia\n- Unitarias: esquema, fidelidad y orden; cargador Dart.\n- Widget/integración/E2E: job de CI con generador y verificación de la copia en `app/`.\n- QA humana y dispositivos: revisión de Contenido del texto de los pasos.\n- Preview/captura/artifact: salida de CI.\n\n## Planificación\n- Hito: M1a · Prioridad: P1 · Puntos: 2 · Riesgo: bajo\n- Bloqueada por: HU-02-04 | Bloquea: HU-07-04\n\n## Campos de GitHub Projects\n- Prioridad: P1\n- Incremento: M1a\n- Área: Contenido\n- Plataforma: Todas\n- Esfuerzo: 2\n- Riesgo: Bajo\n- Vista: V-04\n- Decisión: DEC-231, DEC-069, DEC-071, DEC-178, DEC-094, DEC-230\n\n## Handoff a Kanai\n- Tipo de trabajo: `implement` · Módulo: `EP-02` · Estimación publicada: 2 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-02-17-*` de esta historia.\n- Referencia externa: `GH-75` · https://github.com/edobacon/taomangalam/issues/75\n- Rollback: restaurar el catálogo anterior del ritual y materiales; mantener intactas las fuentes editoriales. Comprobación: schema y pruebas de fidelidad pasan, y HU-07-04 lee la versión restaurada.\n- Diseño: no aplica a interfaz propia; Contenido revisa fidelidad del ritual y materiales contra las fuentes citadas.",
+      "revision": "05d446b7ccf9cfc95a48f9caa2ffa6b09c05a614b9d345b8013ff25077cfb557",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-75"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-198"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/content/fuentes/02_como_usar_tao_mangalam.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Fuente editorial aprobada y existente; solo lectura. El generador la lee y no la modifica.",
+          "checks": [
+            "El archivo existe y contiene los anclajes p0009 y p0010"
+          ]
+        }
+      ],
+      "criteria": [
+        "El catálogo valida contra su esquema con seis pasos del ritual y siete materiales con content_key único",
+        "Orden y texto de los seis pasos coinciden con p0010 o declaran resolución editorial válida; el paso 6 menciona los dados, el péndulo y los tres soplidos",
+        "La lista de materiales coincide con V-04 y DEC-071 y no incluye kuberani, corrector ni minerales",
+        "--check falla nombrando el archivo si p0010 cambia sin regenerar",
+        "El cargador Dart entrega pasos y materiales inmutables con content_key y content_version"
+      ]
+    },
+    {
+      "id": "TAO-203",
+      "title": "[HU-02-06][Content] Catálogo de signos y personalidades con rasgos y procedimiento del cálculo, trazado a la fuente",
+      "body": "> **ID estable:** `HU-02-06` · **Estado:** `Ready` · **Orden recomendado:** `9` · **Puntos publicados:** `5`\n\n## Objetivo\nResultado: un catálogo versionado de los doce signos y las nueve personalidades, generado desde\n`docs/content/signos/` y `docs/content/personalidad/`, con sus lecturas, luces y sombras, rangos de\nfechas y el procedimiento del cálculo, cada nodo con su profundidad. Consumidores: HU-04-02 (cálculo),\nHU-04-03 a HU-04-05 (V-29) y EP-07 en M1b (sombras en el diagnóstico).\n\n## Alcance\n**Incluye**\n- Generador determinista, JSON Schema, correcciones editoriales, pruebas de fidelidad y `--check`\n  con el patrón de HU-02-04.\n- Por signo (`content_key` estable por número 1 a 12): nombre, glifo, ecuación del signo, palabras\n  mágicas con variantes por bloque (DEC-139), bloques del hombre y de la mujer en el orden de la\n  fuente (DEC-072) con presentación, luces, sombras, trabajo y amor, características generales,\n  regente y elemento solo donde la fuente los declara.\n- Rangos de fechas: fila de la fuente y fila del producto (DEC-073, DEC-031), con la del producto\n  marcada como la que usa el cálculo.\n- Por personalidad (1 a 9): síntesis, luces y sombras resumidas y lista completa de rasgos.\n- Procedimiento del cálculo del número personal desde la fuente (`tm-src-numerologia#p0016` a\n  `p0017`).\n- Profundidad por nodo según V-29: lo de \"Solo en Avanzado\" (características generales, regente y\n  elemento, presentación, trabajo, amor, lista completa y procedimiento del cálculo) marcado como\n  Avanzado.\n- Copia a `app/assets/catalogos/`, verificación en CI y cargador Dart de solo lectura.\n\n**No incluye**\n- Cálculo del número y del signo: HU-04-02.\n- Láminas de signos: HU-02-18 (M1a, DEC-231).\n- Interfaz del perfil: EP-04.\n\n## Referencias canónicas\n- Vistas: ninguna (lo consume V-29, de EP-04)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-178, DEC-031, DEC-072, DEC-073, DEC-139, DEC-008, DEC-223, DEC-230\n- Datos: referencia del método en bundle; `content_key` y `content_version`\n- API: ninguna\n- Capacidades: ninguna en el catálogo; las vistas usan `personalidad.ver`, `signo.ver` y\n  `personalidad.detalle.ver`\n- Contenido/assets: `docs/content/signos/` (12 fichas), `docs/content/personalidad/` (9 fichas) y\n  sus transcripciones: aprobado como fuente; catálogo: faltante\n\n## Criterios de aceptación\n- [ ] Dado el catálogo generado, cuando se valida contra su esquema, entonces tiene 12 signos y 9\n  personalidades con `content_key` único.\n- [ ] Dado cada nodo textual, cuando corren las pruebas de fidelidad, entonces coincide con su\n  fuente o declara resolución editorial, y cada ancla existe.\n- [ ] Dado Tauro, cuando se leen sus palabras mágicas, entonces el bloque del hombre dice\n  `estabilidad y belleza` y el de la mujer `belleza y fertilidad` (DEC-139); los otros signos\n  comparten la misma lista en ambos bloques.\n- [ ] Dado Libra, cuando se lee su regente, entonces el campo se omite porque la fuente no lo dice;\n  dado un signo distinto de Aries, cuando se lee su elemento, entonces se omite.\n- [ ] Dado cada signo, cuando se leen sus rangos, entonces trae la fila de la fuente y la del\n  producto, con la del producto marcada como la del cálculo.\n- [ ] Dado cada nodo, cuando se lee, entonces declara su profundidad según V-29.\n- [ ] Dada una ficha fuente modificada sin regenerar, cuando corre CI, entonces `--check` falla.\n\n## Requisitos transversales\n- Permisos: control de profundidad en la interfaz (DEC-223).\n- Offline/sync: empaquetado y legible sin red.\n- Seguridad/privacidad: no aplica.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: CI nombra el nodo que rompe la fidelidad.\n- Compatibilidad/migración: un cambio de texto sube `catalogVersion`.\n\n## Casos de prueba\n- [ ] QA-02-06-01 · Dado el repositorio limpio, cuando corren generador y pruebas, entonces\n  terminan sin errores con 12 signos y 9 personalidades.\n- [ ] QA-02-06-02 · Dado un rasgo de personalidad editado a mano (error), cuando corre CI, entonces\n  falla la fidelidad.\n- [ ] QA-02-06-03 · Dada la fecha del 21 de mayo (borde), cuando se consulta el signo con la fila\n  del producto, entonces tiene signo asignado aunque la fila de la fuente no lo cubra.\n\n## Pruebas y evidencia\n- Unitarias: esquema, fidelidad, omisiones, variantes de palabras mágicas; cargador Dart.\n- Widget/integración/E2E: job de CI con generador y verificación de la copia.\n- QA humana y dispositivos: revisión de Contenido de la marca de profundidad.\n- Preview/captura/artifact: salida de CI.\n\n## Planificación\n- Hito: M1a · Prioridad: P1 · Puntos: 5 · Riesgo: medio\n- Bloqueada por: HU-02-04 | Bloquea: HU-04-03\n\n## Campos de GitHub Projects\n- Prioridad: P1\n- Incremento: M1a\n- Área: Contenido\n- Plataforma: Todas\n- Esfuerzo: 5\n- Riesgo: Medio\n- Vista: V-29\n- Decisión: DEC-178, DEC-031, DEC-072, DEC-073, DEC-139, DEC-008, DEC-223, DEC-230\n\n## Handoff a Kanai\n- Tipo de trabajo: `implement` · Módulo: `EP-02` · Estimación publicada: 5 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-02-06-*` de esta historia.\n- Referencia externa: `GH-76` · https://github.com/edobacon/taomangalam/issues/76\n- Rollback: restaurar los catálogos empaquetados anteriores; mantener intactas las fuentes y el procedimiento de cálculo. Comprobación: CI confirma claves, versiones y cálculo contra las fuentes restauradas.\n- Diseño: no aplica a interfaz propia; Contenido revisa rasgos y procedimiento frente a las fuentes citadas.",
+      "revision": "808f577d090324730eb780962ae32c6d965498647b8fff00d7102228e73012b5",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-76"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-198"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "El catálogo valida contra su esquema con 12 signos y 9 personalidades con content_key único",
+        "Cada nodo textual coincide con su fuente o declara resolución editorial, y cada ancla existe",
+        "Tauro tiene las palabras mágicas diferenciadas por bloque (DEC-139); Libra omite regente y solo Aries declara elemento",
+        "Cada signo trae fila de la fuente y fila del producto, con la del producto marcada como la del cálculo, y cada nodo declara su profundidad según V-29",
+        "--check falla si una ficha fuente cambia sin regenerar"
+      ]
+    },
+    {
+      "id": "TAO-212",
+      "title": "[HU-02-16][Historia] Derivado de referencia del contenido en `server/` (recurso o seed) con verificación de vigencia en CI",
+      "body": "> **ID estable:** `HU-02-16` · **Estado:** `Ready` · **Orden recomendado:** `18` · **Puntos publicados:** `2`\n\n## Objetivo\nResultado: el servidor empaqueta un derivado versionado del contenido de referencia que necesita,\ngenerado desde las fuentes canónicas de `docs/content/`, sin leer documentos editoriales durante la\nejecución. CI demuestra que el artefacto corresponde a las fuentes y versiones vigentes. Consumidores:\nservicios del servidor que requieran el contenido del método y la futura consulta administrativa de\nEP-14b; no habilita por sí sola una API de consulta.\n\n## Alcance\n**Incluye**\n- Definir el subconjunto de catálogos aprobado para el servidor y el formato de salida como recurso\ngenerado bajo `server/resources/` o seed de Prisma, manteniendo la fuente editorial en `docs/content/`.\n- Reutilizar el generador y los catálogos de HU-02-04; conservar `content_key`, `content_version`,\n  referencias de fuente y las resoluciones editoriales aplicadas.\n- Generar el artefacto de forma determinista y añadir un modo `--check` a CI que falle si las fuentes\n  cambiaron y el recurso o seed no fue regenerado.\n- Incluir y leer el derivado desde el build de `server/`, sin dependencia de rutas fuera de su Root\n  Directory y sin incluir maestros de imagen ni documentos fuente (DEC-205).\n- Probar que las claves y versiones del derivado coinciden con los catálogos de referencia de la app.\n\n**No incluye**\n- Cambios al contenido canónico o aprobación de nuevas correcciones editoriales: Contenido resuelve\n  esas modificaciones en `docs/content/` antes de regenerar.\n- Endpoints de consulta o administración del contenido: los implementan sus historias consumidoras.\n- La pantalla de trazabilidad editorial del Administrador: EP-14b, M4 (DEC-234 punto 13).\n- Lectura de DOCX, imágenes o del árbol `docs/` en runtime: DEC-205.\n\n## Referencias canónicas\n- Vistas: ninguna.\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-205, DEC-230, DEC-234 punto 13.\n- Datos: contenido de referencia empaquetado, `content_key` y `content_version` (tecnologia/20 §1).\n- API: ninguna; esta historia no agrega operaciones al contrato.\n- Capacidades: ninguna.\n- Contenido/assets: catálogos generados por HU-02-04 desde `docs/content/`; destino dentro de `server/resources/` o seed versionado, definido durante la implementación.\n\n## Criterios de aceptación\n- [ ] Dado el catálogo vigente producido por HU-02-04, cuando se genera el recurso del servidor,\n  entonces conserva los `content_key`, `content_version`, textos y referencias editoriales del\n  subconjunto aprobado.\n- [ ] Dada una fuente de `docs/content/` modificada sin regenerar el derivado, cuando corre el check\n  de CI, entonces falla indicando el catálogo o recurso desactualizado.\n- [ ] Dado el derivado regenerado dos veces sin cambios en las fuentes, cuando se comparan los\n  resultados, entonces son idénticos y no dejan diff.\n- [ ] Dado el build de `server/`, cuando se ejecuta desde su Root Directory, entonces incluye y puede\n  leer el derivado sin acceder a `docs/`, `app/` ni archivos externos a `server/` (DEC-205).\n- [ ] Dada una clave o versión distinta entre el catálogo de app y el derivado del servidor, cuando\n  corre CI, entonces falla indicando la clave y ambas versiones.\n- [ ] Dado el artefacto generado, cuando se inspecciona el paquete del servidor, entonces no contiene\n  maestros de imagen, DOCX ni otros archivos fuente editoriales.\n\n## Requisitos transversales\n- Permisos: no aplica; no publicar contenido nuevo ni ampliar acceso por API.\n- Offline/sync: no aplica al bundle de la app; el artefacto del servidor queda disponible con cada\n  despliegue que lo requiera.\n- Seguridad/privacidad: el derivado contiene solo contenido aprobado del método; no incluye datos de\n  personas, cuentas o consultas.\n- Accesibilidad/responsive: no aplica (sin interfaz propia).\n- Observabilidad: CI identifica catálogo, clave o archivo obsoleto; no registrar contenido personal.\n- Compatibilidad/migración: conservar claves estables y versiones semánticas; los consumidores\n  históricos no reinterpretan su versión guardada (DEC-178, tecnologia/20 §1).\n\n## Casos de prueba\n- [ ] QA-02-16-01 · Dado un catálogo canónico sin cambios, cuando corre el generador y luego `--check`,\n  entonces el recurso de `server/` queda actualizado y el segundo paso termina sin diferencias.\n- [ ] QA-02-16-02 · Dada una fuente editorial modificada sin regenerar el artefacto, cuando corre CI,\n  entonces falla con el catálogo afectado y no publica un derivado obsoleto.\n- [ ] QA-02-16-03 · Dado un build limpio ejecutado desde `server/`, cuando carga el contenido de\n  referencia, entonces lo obtiene del artefacto empaquetado sin leer rutas externas a `server/`.\n- [ ] QA-02-16-04 · Dado un artefacto con una clave o `content_version` distinta al catálogo de app,\n  cuando corre la comparación, entonces CI informa la clave y las dos versiones.\n- [ ] QA-02-16-05 · Dado el paquete de servidor, cuando se inspecciona su contenido, entonces incluye\n  solo el recurso generado aprobado y excluye DOCX, imágenes maestras y archivos de `docs/`.\n\n## Pruebas y evidencia\n- Unitarias: determinismo del generador, conservación de claves/versiones y reporte de diferencias.\n- Widget/integración/E2E: build de `server/` y carga del recurso empaquetado desde su Root Directory.\n- QA humana y dispositivos: revisión de Contenido de una muestra frente a las fuentes canónicas.\n- Preview/captura/artifact: diff del derivado, salida de `--check` y listado del paquete de servidor\n  adjuntos al PR.\n\n## Planificación\n- Hito: M2 · Prioridad: P1 · Puntos: 2 · Riesgo: bajo.\n- Bloqueada por: HU-02-04, HU-00-04 | Bloquea: ninguna en M2; deja listo el recurso para consumidores\n  posteriores, incluida la consulta administrativa de EP-14b en M4.\n\n## Campos de GitHub Projects\n- Prioridad: P1\n- Incremento: M2\n- Área: Backend\n- Plataforma: Backend\n- Esfuerzo: 2\n- Riesgo: Bajo\n- Vista: -\n- Decisión: DEC-205, DEC-230, DEC-234\n\n## Handoff a Kanai\n- Tipo de trabajo: `implement` · Módulo: `EP-02` · Estimación publicada: 2 puntos; tier por intake.\n- Fuentes por criterio/caso: DEC-205 (derivados bajo `server/` y Root Directory), DEC-230\n  (`content_key`/`content_version`), DEC-234 punto 13 (M2), tecnologia/20 §1 y casos `QA-02-16-*`.\n- Referencia externa: `GH-85` · https://github.com/edobacon/taomangalam/issues/85\n- Rollback: revertir el generador y restaurar el último derivado aprobado; si ya está desplegado,\n  redeplegar el SHA anterior. Comprobación: CI valida el derivado restaurado y el servidor carga ese\n  recurso sin leer rutas externas.\n- Diseño: no aplica a interfaz; Contenido compara una muestra del recurso con las fuentes y revisa\n  claves, versiones y referencias antes de aprobarlo.",
+      "revision": "f6f53d22dc0aafae9743a9024247099776a9aa97dd7d2fe750bd86770ef15957",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-85"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-198",
+        "TAO-092"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "El recurso de server/ conserva content_key, content_version, textos y referencias del subconjunto aprobado",
+        "El check de CI falla indicando el catálogo o recurso desactualizado si una fuente cambia sin regenerar",
+        "Regenerar dos veces sin cambios no deja diff",
+        "El build desde el Root Directory de server/ incluye y lee el derivado sin acceder a docs/, app/ ni rutas externas (DEC-205)",
+        "El paquete no contiene maestros de imagen, DOCX ni archivos fuente editoriales"
+      ]
+    }
+  ],
+  "externalEvidence": {
+    "TAO-198": [
+      "Integrado en epic/EP-02 por el commit 0c4c24a (Integra GH-71: pipeline de catálogos versionados en EP-02); la rama de esta épica parte de epic/EP-02"
+    ],
+    "TAO-092": [
+      "Integrado en la base por el merge 690dff3 (PR 27, GH-5 esqueleto Express) presente en epic/EP-02"
+    ]
+  },
+  "dependencyWork": [],
+  "contracts": [],
+  "readPaths": [],
+  "repositoryRoot": "/Users/edobacon/Workspace/taomangalam",
+  "readRequirements": [],
+  "mentionCatalog": {
+    "HU-00-04": {
+      "ticketId": "TAO-092",
+      "status": "closed"
+    },
+    "HU-02-04": {
+      "ticketId": "TAO-198",
+      "status": "closed"
+    },
+    "GH-75": {
+      "ticketId": "TAO-202",
+      "status": "open"
+    },
+    "HU-02-17": {
+      "ticketId": "TAO-202",
+      "status": "open"
+    },
+    "GH-76": {
+      "ticketId": "TAO-203",
+      "status": "open"
+    },
+    "HU-02-06": {
+      "ticketId": "TAO-203",
+      "status": "open"
+    },
+    "HU-02-18": {
+      "ticketId": "TAO-205",
+      "status": "open"
+    },
+    "HU-02-10": {
+      "ticketId": "TAO-207",
+      "status": "open"
+    },
+    "HU-02-14": {
+      "ticketId": "TAO-210",
+      "status": "open"
+    },
+    "GH-85": {
+      "ticketId": "TAO-212",
+      "status": "open"
+    },
+    "HU-02-16": {
+      "ticketId": "TAO-212",
+      "status": "open"
+    }
+  },
+  "mentionFamilies": [
+    "EPIC:TAOMANGALAM:4",
+    "GH:2",
+    "HU:3",
+    "TAO:2",
+    "TASK:5"
+  ],
+  "version": 5,
+  "dependencies": [
+    {
+      "from": "TAO-198",
+      "to": "TAO-202",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-202:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-07-04",
+      "to": "TAO-202",
+      "origin": "inferred",
+      "reason": "Es un consumidor futuro (V-04), no un bloqueo.",
+      "source": "TAO-202:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-04",
+      "to": "TAO-202",
+      "origin": "inferred",
+      "reason": "Es un consumidor futuro (Instructivo, M1b), no un bloqueo.",
+      "source": "TAO-202:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-207",
+      "to": "TAO-202",
+      "origin": "inferred",
+      "reason": "Mención en el alcance como lo que NO incluye; es contexto.",
+      "source": "TAO-202:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-210",
+      "to": "TAO-202",
+      "origin": "inferred",
+      "reason": "Mención en el alcance como lo que NO incluye; es contexto.",
+      "source": "TAO-202:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-198",
+      "to": "TAO-203",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-203:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-04-02",
+      "to": "TAO-203",
+      "origin": "inferred",
+      "reason": "Es un consumidor futuro (cálculo), no un bloqueo.",
+      "source": "TAO-203:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-04-03",
+      "to": "TAO-203",
+      "origin": "inferred",
+      "reason": "Es un consumidor futuro (V-29), no un bloqueo.",
+      "source": "TAO-203:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-04-05",
+      "to": "TAO-203",
+      "origin": "inferred",
+      "reason": "Es un consumidor futuro (V-29), no un bloqueo.",
+      "source": "TAO-203:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-205",
+      "to": "TAO-203",
+      "origin": "inferred",
+      "reason": "Mención en el alcance como lo que NO incluye (láminas); es contexto.",
+      "source": "TAO-203:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-198",
+      "to": "TAO-212",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-212:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "TAO-092",
+      "to": "TAO-212",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-212:dependencies",
+      "accepted": true,
+      "dismissed": false
+    }
+  ],
+  "order": [
+    "TAO-202",
+    "TAO-203",
+    "TAO-212"
+  ],
+  "decisionBank": [],
+  "history": [],
+  "events": [
+    {
+      "id": "5d02823d-9cf4-4b68-a9e6-20a11997920d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:04.211Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "create",
+      "source": "kanai-server",
+      "durationMs": 78
+    },
+    {
+      "id": "17cfea0b-b1ad-4601-bbe0-112ced55bf9e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:06.192Z",
+      "kind": "plan_evaluated",
+      "planVersion": 1
+    },
+    {
+      "id": "f1ae57ba-0028-4a85-94fd-59a949aad79f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:06.194Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 16
+    },
+    {
+      "id": "f4b7342f-81b6-4157-b086-85f60566b3ae",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-202",
+      "reason": "Alcance acotado a un catálogo con patrón ya implementado en TAO-198; sin interfaz ni API.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-202\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "d9d2b64d-ef18-495f-8b5e-26d975da42b6",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-203",
+      "reason": "Alcance acotado a un catálogo con patrón ya implementado en TAO-198; sin interfaz ni API.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-203\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "95d09e6e-c29e-471f-b1b1-8f4bf4f05891",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-212",
+      "reason": "Alcance acotado a un derivado generado y su check de CI en server/; sin endpoints.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-212\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "4a99fc49-b1a8-441f-a94a-3f574b76d34e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-202",
+      "reason": "Es un consumidor futuro (V-04), no un bloqueo.",
+      "evidence": [
+        "{\"from\":\"HU-07-04\",\"to\":\"TAO-202\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d45fac09-20f6-4d7c-99b4-5fd8bccaed82",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-202",
+      "reason": "Es un consumidor futuro (Instructivo, M1b), no un bloqueo.",
+      "evidence": [
+        "{\"from\":\"HU-10-04\",\"to\":\"TAO-202\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b55ed389-d64c-459c-bb9a-ddc009a63693",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-202",
+      "reason": "Mención en el alcance como lo que NO incluye; es contexto.",
+      "evidence": [
+        "{\"from\":\"TAO-207\",\"to\":\"TAO-202\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "86a704ef-3836-4bcc-bda6-2ead94ce439a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-202",
+      "reason": "Mención en el alcance como lo que NO incluye; es contexto.",
+      "evidence": [
+        "{\"from\":\"TAO-210\",\"to\":\"TAO-202\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "56193cbf-d17b-409c-a598-5049e9d3c07f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-203",
+      "reason": "Es un consumidor futuro (cálculo), no un bloqueo.",
+      "evidence": [
+        "{\"from\":\"HU-04-02\",\"to\":\"TAO-203\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "08a9fc7e-55bf-41dd-a14e-fa3bdeb40f9e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-203",
+      "reason": "Es un consumidor futuro (V-29), no un bloqueo.",
+      "evidence": [
+        "{\"from\":\"HU-04-03\",\"to\":\"TAO-203\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2b1eb820-e214-4d6f-827f-3e357c8f3f00",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-203",
+      "reason": "Es un consumidor futuro (V-29), no un bloqueo.",
+      "evidence": [
+        "{\"from\":\"HU-04-05\",\"to\":\"TAO-203\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "9aa5c2c3-0e29-4b24-b960-bab0f56b1212",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-203",
+      "reason": "Mención en el alcance como lo que NO incluye (láminas); es contexto.",
+      "evidence": [
+        "{\"from\":\"TAO-205\",\"to\":\"TAO-203\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "180653ef-bbef-4e6b-aaf2-edd11757584d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.525Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 2,
+      "reason": "11 decisiones; 11 cambios"
+    },
+    {
+      "id": "91aaf0ca-4fea-4f24-ab49-775bf2474576",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:14.527Z",
+      "kind": "operation_completed",
+      "planVersion": 2,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 18
+    },
+    {
+      "id": "12de450b-127e-4302-b099-04a37f86da6f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:26.807Z",
+      "kind": "plan_changed",
+      "planVersion": 3
+    },
+    {
+      "id": "6a359f8f-4616-47c9-9f4c-0a32dbc37a36",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:26.809Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 122
+    },
+    {
+      "id": "d27f40d8-2a02-4ebd-9f24-851ad28f1fff",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:30.939Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "TAO-202",
+      "reason": "Alcance acotado a un catálogo con patrón ya implementado en TAO-198; sin interfaz ni API.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-202\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "b1073810-33bd-4715-a4bd-f9ec3f0a5d82",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:30.939Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "TAO-203",
+      "reason": "Alcance acotado a un catálogo con patrón ya implementado en TAO-198; sin interfaz ni API.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-203\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "46646057-e77a-45b6-a629-5ec825b6fb01",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:30.939Z",
+      "kind": "dependency_decided",
+      "planVersion": 4,
+      "ticketId": "TAO-212",
+      "reason": "Alcance acotado a un derivado generado y su check de CI en server/; sin endpoints.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-212\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "8c61a4bc-a402-4a51-906a-faa922ec3c75",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:30.939Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 4,
+      "reason": "3 decisiones; 3 cambios"
+    },
+    {
+      "id": "e41514cd-5710-4a63-b37e-aadbd63f3d6e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:02:30.943Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 18
+    },
+    {
+      "id": "0b1be433-b768-40d9-837d-681ce1c4e9c4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:09:25.868Z",
+      "kind": "plan_changed",
+      "planVersion": 5
+    },
+    {
+      "id": "6af71946-e5e2-48d8-adf0-10c06f39112b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:09:25.873Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 317
+    },
+    {
+      "id": "36caadbb-8836-422c-abf9-9b963435b0f8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:09:40.840Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 7587
+    },
+    {
+      "id": "59e6a0ae-0fad-4a2b-b64a-3f9c5239d2dd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:09:52.046Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 7598
+    },
+    {
+      "id": "229d400f-d0cb-4c81-8216-c9f4d7f5e592",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-09T21:12:41.346Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 7604
+    }
+  ]
+}
