@@ -108,19 +108,19 @@ Contrato: rollback: git revert de los cambios del builder de factura cliente y d
 Contrato: rollback: git revert de los archivos de test agregados. Status: done
 
 #### S2.T1 — Backend: guardas de estado por acción (Editar solo Borrador; Anular emitida no anulada; Reenviar emitida; Entrega Rápida emitida no entregada; Formato Bodega emitida, sin consultar el resultado SII) con 4xx y un mensaje claro. Se reutilizan las capabilities sales.invoices:edit, sales.invoices:issue y sales.documents:void.
-Contrato: rollback: git revert de las guardas. Status: pending
+Contrato: rollback: git revert de las guardas. Status: done
 
 #### S2.T2 — Frontend: menú de acciones por fila en el listado de facturas cliente, con visibilidad derivada del estado y de los permisos del usuario. Entrega Rápida, Formato Bodega y Anular enlazan a las acciones de 5/7 y 6/7 si existen; no se reimplementan.
-Contrato: rollback: git revert del componente del menú. Status: pending
+Contrato: rollback: git revert del componente del menú. Status: done
 
 #### S2.T3 — Frontend: montar SimulacionSiiBanner (componente existente) en el builder, el detalle (DocumentoDetalleView) y el listado de facturas cliente, y agregar el rótulo 'simulado' al folio y al estado SII. No se crea un banner nuevo.
-Contrato: rollback: git revert de los cambios de las vistas. Status: pending
+Contrato: rollback: git revert de los cambios de las vistas. Status: done
 
 #### S2.T4 — Tests y regresión de la sesión: matriz de menú por estado y permiso (Borrador, emitida, anulada, sin edit); 4xx del API por acción fuera de estado y 200 en el caso válido; Bodega habilitada con un intento rechazado; banner y rótulo en el detalle y el listado; regresión de PurchaseInvoiceBuilder y roles-config.
-Contrato: rollback: git revert de los archivos de test agregados. Status: pending
+Contrato: rollback: git revert de los archivos de test agregados. Status: done
 
 #### S2.T5 — Precondición de la sesión 2: antes de implementar las acciones del menú que dependen de 5/7 y 6/7 (Anular, Entrega Rápida, Formato Bodega), verificar que JOR-173 (Anular / nota de crédito, sales.documents:void) y JOR-174 (Entrega Rápida y Formato Bodega) estén mergeados en la rama base y que sus endpoints y capabilities existan. Si alguno falta, detener la sesión y reportar el bloqueo sin implementar stubs ni lógica sustituta. Si ya están integrados, integrar esas acciones al menú consumiendo lo entregado por 173 y 174, sin duplicar su lógica.
-Contrato: rollback: Sin cambios de código: solo verificación de precondición. Si se integraron acciones del menú, revertir los commits de esa integración.. Status: pending
+Contrato: rollback: Sin cambios de código: solo verificación de precondición. Si se integraron acciones del menú, revertir los commits de esa integración.. Status: done
 
 #### S3.T1 — Corrección 1: anulación rápida desde DocumentosTable. Contrastar antes con jormat_back_legacy, jormat-front-legacy, jormat_docs y el pedido original del cliente; si se contradicen, reportar sin decidir. Luego hacer que la anulación sin cuerpo no responda 400: usar un motivo por defecto o pedir el motivo en la UI. Mantener el rechazo del API por estado inválido. Casos de test: anular rápido sin cuerpo responde 2xx y la factura queda anulada; con motivo explícito se respeta; anular una ya anulada se rechaza por estado.
 Contrato: rollback: Revertir el commit de la tarea; la anulación sin cuerpo vuelve a responder 400.. Status: pending
@@ -229,14 +229,14 @@ Contrato: rollback: Revertir los commits de las correcciones (git revert); el re
 
 **Gate (auto)**: En el listado de facturas cliente: Facturar termina en el listado con el aviso 'Documento enviado al SII (simulado)'; la acción Reenviar de una fila emitida crea un intento nuevo, visible en la columna de estado SII, con el documento intacto; los tests de sales de backend pasan.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: En el listado, el menú de una fila en Borrador, una emitida y una anulada muestra exactamente las acciones de R-06/R-07; un PATCH a una emitida devuelve 4xx; el detalle y el listado muestran SimulacionSiiBanner y el rótulo 'simulado' en el folio y el estado SII.
 
