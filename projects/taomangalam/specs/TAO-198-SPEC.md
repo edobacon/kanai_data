@@ -77,22 +77,22 @@ Contrato: rollback: Revertir docs/backlog/EP-02_contenido_empaquetado_y_assets.m
 Contrato: rollback: Revertir los casos agregados en el archivo de prueba de esquema.. Status: done
 
 #### S2.T1 — Extraer el patrón común de catálogo desde scripts/build_result_catalog.py a un módulo compartido de scripts/ (nombre propuesto scripts/catalog_common.py): serialización JSON determinista, modo --check (compara y sale distinto de 0 nombrando el archivo), carga del registro de correcciones editoriales, verificación de fidelidad text vs sourceText con editorialResolutionId que nombra el nodo, omisión de campos no declarados y validación de esquema draft 2020-12. Extraer solo lo que reusarán HU-02-05/06/10/11; no crear sus generadores.
-Contrato: rollback: Revertir el commit: build_result_catalog.py vuelve a su forma autocontenida y se borra el módulo común.. Status: pending
+Contrato: rollback: Revertir el commit: build_result_catalog.py vuelve a su forma autocontenida y se borra el módulo común.. Status: done
 
 #### S2.T1.1 — Crear el módulo común con las funciones puras (dump determinista, check de archivo, carga de correcciones, fidelidad, validación de esquema) copiando la lógica actual sin cambiar su comportamiento.
-Contrato: rollback: Borrar el módulo nuevo.. Status: pending
+Contrato: rollback: Borrar el módulo nuevo.. Status: done
 
 #### S2.T1.2 — Refactorizar scripts/build_result_catalog.py para que use el módulo común, manteniendo la CLI (--check) y la salida idéntica byte a byte.
-Contrato: rollback: git checkout main -- scripts/build_result_catalog.py. Status: pending
+Contrato: rollback: git checkout main -- scripts/build_result_catalog.py. Status: done
 
 #### S2.T1.3 — Migrar SOLO la prueba nueva tests/test_result_catalog_schema.py (creada en S1.T1 con jsonschema directo) para que use el módulo scripts/catalog_common.py. tests/test_result_catalog.py no se toca (ni imports ni aserciones). No se modifica resultados.v1.schema.json ni se regenera resultados.v1.json: el esquema ya declara additionalProperties:false y catalogVersion en required, y el catálogo debe quedar idéntico byte a byte (git diff vacío).
-Contrato: rollback: Revertir tests/test_result_catalog_schema.py a la versión de S1.T1 (jsonschema directo). tests/test_result_catalog.py no requiere rollback porque no se toca.. Status: pending
+Contrato: rollback: Revertir tests/test_result_catalog_schema.py a la versión de S1.T1 (jsonschema directo). tests/test_result_catalog.py no requiere rollback porque no se toca.. Status: done
 
 #### S2.T2 — Documentar el patrón común en docs/content/catalogos/README.md (cómo un catálogo nuevo se apoya en el módulo: generador, esquema, correcciones, fidelidad, --check), manteniendo el archivo compliant con el linter de docs.
-Contrato: rollback: git checkout del README a su estado de S1.. Status: pending
+Contrato: rollback: git checkout del README a su estado de S1.. Status: done
 
 #### S2.T3 — Tests y regresión: prueba unitaria del módulo común sobre un catálogo mínimo de prueba (un nodo válido, un nodo con text distinto sin editorialResolutionId que falla nombrándolo, un campo opcional ausente que no se serializa como null) y el caso QA-02-04-02 (text de la Casa 3 editado sobre una copia temporal hace fallar --check y la fidelidad).
-Contrato: rollback: Borrar el archivo de prueba del módulo común.. Status: pending
+Contrato: rollback: Borrar el archivo de prueba del módulo común.. Status: done
 
 #### S3.T1 — Script de scripts/ (nombre propuesto scripts/sync_app_catalogs.py) que copia los catálogos generados de docs/content/catalogos/ a app/assets/catalogos/ reusando el check de archivo del módulo común. Con --check sale distinto de 0 imprimiendo cada ruta desactualizada o faltante. Generar la copia inicial, declarar assets/catalogos/ en flutter.assets de app/pubspec.yaml y agregar python3 scripts/sync_app_catalogs.py --check al paso 'Gates de build documental (--check)' de ci-pr.yml y nightly.yml.
 Contrato: rollback: Borrar el script y app/assets/catalogos/, revertir app/pubspec.yaml y los pasos agregados en los dos workflows.. Status: pending
@@ -166,15 +166,15 @@ Ninguno.
 
 **Gate (auto)**: python3 -m unittest discover -s tests muestra la prueba de esquema pasando. Un JSON alterado en una copia temporal la hace fallar con la ruta del error. ci-pr.yml y nightly.yml instalan jsonschema con la versión de Python decidida, y el README de catálogos pasa el linter.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: build_result_catalog.py --check pasa usando el módulo común y el JSON regenerado no cambia ni un byte. Si se edita a mano el text de la Casa 3, fallan --check y la fidelidad nombrando house-03. El módulo común tiene su propia prueba sobre un catálogo mínimo.
 
