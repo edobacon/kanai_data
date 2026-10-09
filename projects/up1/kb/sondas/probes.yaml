@@ -13,6 +13,8 @@ catalog:
     - retention-wellbeing
     - uengagement-up1
     - up1-manager
+  # Repos cuyas sondas se calibraron con ruido medido (barrido de develop, 2026-10-09); el barrido advierte el resto.
+  calibrated: [academic-scheduling, curriculum-design, curriculum-mapping]
   objects: "objects/**/*.json"
   # Etiquetas de negocio de los campos (i18n por objeto): un pedido que dice "peso" encuentra rollupWeight.
   fieldLabels:
@@ -80,3 +82,36 @@ probes:
       source: "src/**"
       paths: ["docs/**", "scripts/**", "tests/**"]
       maxSourceFiles: 8
+
+  # Sondas de la verificacion de consistencia (plan sp13). Todas con trigger: sin el, el ruido sobre el conjunto
+  # de referencia llega a 1.00 tarjeta por ticket; con el, 0.20 (F8).
+  - id: guardas-de-entrada
+    kind: entry-guards
+    trigger: '\bpermiso|\bcapability|\bautoriz|\bguard|\bacceso|\brol\b'
+    params:
+      source: graphql
+      schemas: 'logic/*.graphql'
+      resolvers: 'logic/*.resolver.js'
+      helpers: 'logic/**/*.js'
+      guards: ['\w*[cC]heckCapability', '\bhasCapability', '\brequireCapability', '\bcheckObjectPermissions', '\bloadCheckObjectPermissions', '\bcheckPermission', '\bwithObjectAuth', '\bwithCapability']
+      declaredOpen: 'sin capability custom|sin rbac propio|lectura autenticada|solo exige sesion'
+
+  - id: claves-de-idioma
+    kind: field-keys
+    trigger: 'lista|listado|columna|campo|idioma|traduc|etiqueta|layout|pantalla|grilla|tabla|vista'
+    params:
+      lang: 'lang/{locale}/{object}.i18n.json'
+      common: ['lang/{locale}/common.i18n.json']
+      locales: [es, en, pt]
+      layouts: 'config/layouts/*.json'
+
+  - id: relaciones-de-lista
+    kind: list-relations
+    trigger: 'lista|listado|columna|campo|layout|pantalla|grilla|tabla|vista'
+
+  - id: alcance-organizacional
+    kind: org-scope
+    trigger: 'permiso|organizacion|alcance|tenant|contexto|objeto nuevo|nuevo objeto|crear objeto|rol|capability'
+    params:
+      coreObjects: ['objects/business/Base/*.json', 'objects/business/RecordTypes/*.json', 'objects/core/*.json']
+      exempt: [core_User, core_Role, core_Capability, core_Context, core_RoleAssignment, core_RoleCapability, core_ObjectDefinition, core_FieldDefinition, core_Tenant, up1_suite_app, up1_layen_layout, up1_notification, Feedback]
