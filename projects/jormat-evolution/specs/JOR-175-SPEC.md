@@ -90,22 +90,22 @@ Cada corrección de la Adenda 1 contrasta antes con el legacy de Jormat (jormat_
 ## Tasks
 
 #### S1.T1 — Backend: persistir los intentos SII simulados y enviar de inmediato al emitir. Se extiende issueFactura (sales.service.ts:523, ruta a confirmar) sin cambiar su firma.
-Contrato: rollback: git revert de los commits de la task y down de la migración de sii_envio_intento. Status: pending
+Contrato: rollback: git revert de los commits de la task y down de la migración de sii_envio_intento. Status: done
 
 #### S1.T1.1 — Migración create de sii_envio_intento (documento_id, resultado con los valores demo de documento.dto.ts:20, fecha, origen). Sin columnas en el documento.
-Contrato: rollback: Down de la migración (drop table). Status: pending
+Contrato: rollback: Down de la migración (drop table). Status: done
 
 #### S1.T1.2 — Simulador SII acotado a un solo documento por llamada: elige un estado demo y registra el intento con la fecha actual. Al final de issueFactura se invoca dentro de la misma transacción.
-Contrato: rollback: git revert del simulador y del cambio en issueFactura. Status: pending
+Contrato: rollback: git revert del simulador y del cambio en issueFactura. Status: done
 
 #### S1.T2 — Backend: endpoint Reenviar. Valida que la factura esté emitida y que el usuario tenga sales.invoices:issue (capability existente, 05_sales_capabilities.ts:40), y registra un intento con origen 'reenvio' sin escribir sobre el documento.
-Contrato: rollback: git revert del endpoint y del método de servicio. Status: pending
+Contrato: rollback: git revert del endpoint y del método de servicio. Status: done
 
 #### S1.T3 — Frontend: Facturar muestra el aviso 'Documento enviado al SII (simulado)' y navega al listado. La acción Reenviar de la fila llama al endpoint y refresca el estado SII mostrado.
-Contrato: rollback: git revert de los cambios del builder de factura cliente y del listado. Status: pending
+Contrato: rollback: git revert de los cambios del builder de factura cliente y del listado. Status: done
 
 #### S1.T4 — Tests y regresión de la sesión: specs de backend para la emisión con intento, el rollback de la emisión fallida y Reenviar (happy, 4xx en Borrador, 403 sin permiso); test de frontend del aviso y la navegación; regresión de issueFactura en compras.
-Contrato: rollback: git revert de los archivos de test agregados. Status: pending
+Contrato: rollback: git revert de los archivos de test agregados. Status: done
 
 #### S2.T1 — Backend: guardas de estado por acción (Editar solo Borrador; Anular emitida no anulada; Reenviar emitida; Entrega Rápida emitida no entregada; Formato Bodega emitida, sin consultar el resultado SII) con 4xx y un mensaje claro. Se reutilizan las capabilities sales.invoices:edit, sales.invoices:issue y sales.documents:void.
 Contrato: rollback: git revert de las guardas. Status: pending
@@ -217,15 +217,15 @@ Contrato: rollback: Revertir los commits de las correcciones (git revert); el re
 - edit S4.T4 { desc="Crédito aplicado: si la factura destino se anula después, el crédito aplicado se revierte y el saldo disponible de la nota se restituye, de forma idempotente. Primero, ANTES de modificar código, contrastar con el legacy de Jormat (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido original del cliente, y registrar ese contraste en el reporte de la sesión; si se contradicen, reportar y no decidir. Después aplicar la corrección y su test." }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T1.1
-- [ ] S1.T1.2
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
+- [x] S1.T1
+- [x] S1.T1.1
+- [x] S1.T1.2
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
 
 **Gate (auto)**: En el listado de facturas cliente: Facturar termina en el listado con el aviso 'Documento enviado al SII (simulado)'; la acción Reenviar de una fila emitida crea un intento nuevo, visible en la columna de estado SII, con el documento intacto; los tests de sales de backend pasan.
 
