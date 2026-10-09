@@ -134,25 +134,25 @@ Contrato: rollback: Borrar el grupo de pruebas de --check.. Status: done
 Contrato: rollback: Sin cambios de código; si la regresión falla, revertir lo que la rompió en las subtasks anteriores.. Status: done
 
 #### S2.T1 — Copiar el catálogo a app/assets/catalogos/casas.v1.json con python3 scripts/sync_app_catalogs.py (ya existente, no se reescribe). app/assets/catalogos/ ya está declarado como directorio en app/pubspec.yaml por HU-02-04, por lo tanto no hace falta declarar casas.v1.json en el pubspec.
-Contrato: rollback: Revertir la copia de app/assets/catalogos/casas.v1.json.. Status: pending
+Contrato: rollback: Revertir la copia de app/assets/catalogos/casas.v1.json.. Status: done
 
 #### S2.T2 — Crear el cargador Dart de solo lectura del catálogo de casas, replicando el cargador de resultados de HU-02-04 (DEC-230). Lee el asset sin red y expone una lista no modificable de 12 casas con content_key, content_version, energización por vía (days, repetitions, sourceRefs), arcanos y depth por nodo.
-Contrato: rollback: Borrar el archivo del cargador Dart y su export.. Status: pending
+Contrato: rollback: Borrar el archivo del cargador Dart y su export.. Status: done
 
 #### S2.T3 — En .github/workflows/ci-pr.yml y .github/workflows/nightly.yml agregar build_house_catalog.py --check donde falte; conservar los que ya están (build_result_catalog.py --check y python3 scripts/sync_app_catalogs.py --check).
-Contrato: rollback: Revertir los cambios en .github/workflows/ci-pr.yml y .github/workflows/nightly.yml con git checkout de esos dos archivos.. Status: pending
+Contrato: rollback: Revertir los cambios en .github/workflows/ci-pr.yml y .github/workflows/nightly.yml con git checkout de esos dos archivos.. Status: done
 
 #### S2.T4 — Dejar compliant con el lint de docs todo documento del baseline que el ticket modifique, normalizando el patron que el linter rechaza; solo se normalizan los documentos efectivamente editados y no se modifican las fuentes de solo lectura docs/content/fuentes/03_tablero_tao_mangalam.md ni docs/content/SCHEMA.md. Si no se edita ningun .md de docs/content, alcanza con check:changed.
-Contrato: rollback: Revertir la normalización de formato de los docs tocados.. Status: pending
+Contrato: rollback: Revertir la normalización de formato de los docs tocados.. Status: done
 
 #### S2.T5 — Crear el test Dart del cargador de casas (solo lectura, DEC-230) en app/test/catalogos/: entrega 12 casas inmutables con su content_key (house-01 a house-12) y su content_version; en house-02 la via del consultante trae days 3 y sourceRefs tm-src-tablero#p0189; modificar un elemento de la lista o de un nodo lanza UnsupportedError. La copia alterada se prueba en tests/test_sync_app_catalogs.py.
-Contrato: rollback: Revertir los cambios del test Dart de casas en app/test/catalogos.. Status: pending
+Contrato: rollback: Revertir los cambios del test Dart de casas en app/test/catalogos.. Status: done
 
 #### S2.T6 — En tests/test_sync_app_catalogs.py (directorios temporales, mecanismo existente de scripts/sync_app_catalogs.py) agregar los casos de copia alterada, faltante y huerfana de casas.v1.json: el --check informa DESACTUALIZADO, FALTANTE y HUERFANO nombrando el archivo y termina distinto de 0. Los nombres de las pruebas nuevas contienen casas para que el filtro -k casas las seleccione.
-Contrato: rollback: Revertir los casos agregados en tests/test_sync_app_catalogs.py con git checkout del archivo.. Status: pending
+Contrato: rollback: Revertir los casos agregados en tests/test_sync_app_catalogs.py con git checkout del archivo.. Status: done
 
 #### S2.T7 — Piso de regresion de la variante de docs: la verificacion de docs sobre los cambios contra main pasa y las fuentes de solo lectura docs/content/fuentes/03_tablero_tao_mangalam.md y docs/content/SCHEMA.md quedan sin cambios.
-Contrato: rollback: Sin cambios de codigo: si falla, revertir los cambios a las fuentes de solo lectura o corregir los docs tocados.. Status: pending
+Contrato: rollback: Sin cambios de codigo: si falla, revertir los cambios a las fuentes de solo lectura o corregir los docs tocados.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -307,15 +307,15 @@ Ninguno.
 
 **Gate (auto)**: El catálogo docs/content/catalogos/casas.v1.json está generado con 12 casas. python3 scripts/build_house_catalog.py --check y tests/test_house_catalog.py pasan en verde, y se ven las casas 1, 2 y 12 con los valores de los criterios.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
-- [ ] S2.T6
-- [ ] S2.T7
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
+- [x] S2.T6
+- [x] S2.T7
 
 **Gate (auto)**: La copia app/assets/catalogos/casas.v1.json se carga con el cargador Dart y su test pasa (12 casas inmutables con content_key y content_version, y la energización de house-02). En ci-pr.yml y en nightly.yml se corren build_house_catalog.py --check y sync_app_catalogs.py --check, y los docs del baseline que se modificaron pasan markdownlint, cspell y vale.
