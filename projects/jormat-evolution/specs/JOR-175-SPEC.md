@@ -123,19 +123,19 @@ Contrato: rollback: git revert de los archivos de test agregados. Status: done
 Contrato: rollback: Sin cambios de código: solo verificación de precondición. Si se integraron acciones del menú, revertir los commits de esa integración.. Status: done
 
 #### S3.T1 — Corrección 1: anulación rápida desde DocumentosTable. Contrastar antes con jormat_back_legacy, jormat-front-legacy, jormat_docs y el pedido original del cliente; si se contradicen, reportar sin decidir. Luego hacer que la anulación sin cuerpo no responda 400: usar un motivo por defecto o pedir el motivo en la UI. Mantener el rechazo del API por estado inválido. Casos de test: anular rápido sin cuerpo responde 2xx y la factura queda anulada; con motivo explícito se respeta; anular una ya anulada se rechaza por estado.
-Contrato: rollback: Revertir el commit de la tarea; la anulación sin cuerpo vuelve a responder 400.. Status: pending
+Contrato: rollback: Revertir el commit de la tarea; la anulación sin cuerpo vuelve a responder 400.. Status: done
 
 #### S3.T2 — Corrección 2: el listado de documentos no muestra 'Pagada' en una factura anulada, muestra 'Anulada'. Contrastar antes con el legacy de Jormat y el pedido original del cliente; si se contradicen, reportar sin decidir. Casos de test: una factura anulada con pagos muestra Anulada; una factura pagada no anulada sigue mostrando Pagada.
-Contrato: rollback: Revertir el commit de la tarea; el listado vuelve a derivar el estado como antes.. Status: pending
+Contrato: rollback: Revertir el commit de la tarea; el listado vuelve a derivar el estado como antes.. Status: done
 
 #### S3.T3 — Corrección 3: el resumen de ventas no suma las notas (crédito y débito) como deuda del cliente. Contrastar antes con el legacy de Jormat y el pedido original del cliente; si se contradicen, reportar sin decidir. Casos de test: el resumen con una nota no incrementa la deuda; el resumen solo con facturas pendientes conserva su total.
-Contrato: rollback: Revertir el commit de la tarea; el resumen vuelve a su cálculo anterior.. Status: pending
+Contrato: rollback: Revertir el commit de la tarea; el resumen vuelve a su cálculo anterior.. Status: done
 
 #### S3.T4 — Corrección 4: al anular la factura destino de un crédito aplicado, revertir el crédito y restituir el saldo disponible de la nota, de forma idempotente. Contrastar antes con el legacy de Jormat y el pedido original del cliente; si se contradicen, reportar sin decidir. Reutilizar el flujo de anulación existente (5/7), sin duplicar su lógica. Casos de test: anular la factura destino restituye el saldo de la nota; repetir la anulación no restituye dos veces; anular una factura sin crédito no cambia saldos.
-Contrato: rollback: Revertir el commit de la tarea; el saldo de la nota deja de restituirse al anular.. Status: pending
+Contrato: rollback: Revertir el commit de la tarea; el saldo de la nota deja de restituirse al anular.. Status: done
 
 #### S3.T5 — Corrección 5: clasificar los fallos de tests preexistentes contra una base limpia (roles-config e2e con deriva de conteos por rol, sales-invoices-persistence e2e, catalogos-clientes-reuse e2e y los fallos del frontend, distinguiendo flaky). Corregir los reales sin aflojar aserciones y documentar los no relacionados. Casos de test: cada suite queda en verde o documentada como no relacionada; ninguna aserción eliminada o relajada.
-Contrato: rollback: Revertir los commits de las correcciones de tests; la clasificación documentada se conserva.. Status: pending
+Contrato: rollback: Revertir los commits de las correcciones de tests; la clasificación documentada se conserva.. Status: done
 
 #### S4.T1 — Anulación rápida desde DocumentosTable (vía B). Primero, ANTES de modificar código, contrastar el comportamiento con el legacy de Jormat (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido original del cliente, y registrar ese contraste en el reporte de la sesión; si se contradicen, reportar al usuario y detenerse sin decidir. Después implementar la decisión del usuario del 2026-10-09 (supuesto pendiente de su confirmación): la UI pide el motivo al usuario antes de llamar al API; el API sigue exigiendo el motivo y rechazando por estado inválido; no existe motivo por defecto. Reutilizar el endpoint de anulación existente de JOR-173 sin duplicar lógica de anulación.
 Contrato: rollback: Revertir el commit de la task (git revert): vuelve el comportamiento previo de la anulación rápida sin cuerpo; no hay migraciones ni datos que deshacer.. Status: done
@@ -240,14 +240,14 @@ Contrato: rollback: Revertir los commits de las correcciones (git revert); el re
 
 **Gate (auto)**: En el listado, el menú de una fila en Borrador, una emitida y una anulada muestra exactamente las acciones de R-06/R-07; un PATCH a una emitida devuelve 4xx; el detalle y el listado muestran SimulacionSiiBanner y el rótulo 'simulado' en el folio y el estado SII.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
-- [ ] S3.T5
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
+- [x] S3.T5
 
 ### Session 4 · continue
 
