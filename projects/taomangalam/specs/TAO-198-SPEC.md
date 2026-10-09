@@ -95,25 +95,25 @@ Contrato: rollback: git checkout del README a su estado de S1.. Status: done
 Contrato: rollback: Borrar el archivo de prueba del módulo común.. Status: done
 
 #### S3.T1 — Script de scripts/ (nombre propuesto scripts/sync_app_catalogs.py) que copia los catálogos generados de docs/content/catalogos/ a app/assets/catalogos/ reusando el check de archivo del módulo común. Con --check sale distinto de 0 imprimiendo cada ruta desactualizada o faltante. Generar la copia inicial, declarar assets/catalogos/ en flutter.assets de app/pubspec.yaml y agregar python3 scripts/sync_app_catalogs.py --check al paso 'Gates de build documental (--check)' de ci-pr.yml y nightly.yml.
-Contrato: rollback: Borrar el script y app/assets/catalogos/, revertir app/pubspec.yaml y los pasos agregados en los dos workflows.. Status: pending
+Contrato: rollback: Borrar el script y app/assets/catalogos/, revertir app/pubspec.yaml y los pasos agregados en los dos workflows.. Status: done
 
 #### S3.T2 — Cargador Dart de solo lectura (ruta propuesta app/lib/catalogos/) que lee el asset con rootBundle, verifica el schemaVersion soportado antes de construir nada y lanza una excepción tipada propia sin devolver datos parciales. Mapea a modelos inmutables (campos final, listas no modificables, constructores const cuando aplique) con locale es, y expone content_key = id y content_version = catalogVersion por nodo, con la Casa 12 solo con plantilla closure y regression ausente.
-Contrato: rollback: Borrar el directorio del cargador; ningún consumidor existe todavía.. Status: pending
+Contrato: rollback: Borrar el directorio del cargador; ningún consumidor existe todavía.. Status: done
 
 #### S3.T2.1 — Modelos inmutables (catálogo, casa, anillo, plantilla) con content_key y content_version, y la excepción tipada de versión no soportada.
-Contrato: rollback: Borrar los archivos de modelos.. Status: pending
+Contrato: rollback: Borrar los archivos de modelos.. Status: done
 
 #### S3.T2.2 — Función de carga: parseo del JSON, validación de schemaVersion antes de mapear y construcción atómica (o todo o excepción).
-Contrato: rollback: Borrar el archivo del cargador.. Status: pending
+Contrato: rollback: Borrar el archivo del cargador.. Status: done
 
 #### S3.T3 — Documentar en docs/content/catalogos/README.md el script de copia, su --check en CI y el cargador, manteniendo el README compliant con el linter de docs.
-Contrato: rollback: git checkout del README a su estado de S2.. Status: pending
+Contrato: rollback: git checkout del README a su estado de S2.. Status: done
 
 #### S3.T4 — Describir las pruebas Dart del cargador, que corren solo en local hasta que HU-00-02 habilite el entorno Flutter (sin agregar flutter test a ci-pr.yml ni nightly.yml): conteos (12 casas, 8 anillos), Casa 12 solo con plantilla closure y sin objeto regression, schemaVersion 99 lanza el error tipado sin datos parciales (QA-02-04-03), y la Casa 1 expone content_key house-01 y content_version 1.0.0 (QA-02-04-04). Las pruebas del script de copia están en la task de tests/test_sync_app_catalogs.py, no aquí.
-Contrato: rollback: Borrar los archivos de prueba nuevos.. Status: pending
+Contrato: rollback: Borrar los archivos de prueba nuevos.. Status: done
 
 #### S3.T5 — Antes de implementar el script de copia, crear tests/test_sync_app_catalogs.py (unittest, Python 3.12) contra scripts/sync_app_catalogs.py, trabajando sobre directorios temporales. Casos: (1) con un byte cambiado en app/assets/catalogos/resultados.v1.json, --check sale distinto de 0 y nombra resultados.v1.json; (2) con el archivo borrado, --check falla nombrando el archivo faltante; (3) un segundo run del script de copia no modifica nada (idempotente); (4) solo se copian los JSON de catálogo, no el esquema, las correcciones editoriales ni los README. La prueba debe fallar mientras el script no exista.
-Contrato: rollback: Borrar tests/test_sync_app_catalogs.py; no toca ningún otro archivo.. Status: pending
+Contrato: rollback: Borrar tests/test_sync_app_catalogs.py; no toca ningún otro archivo.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -178,15 +178,15 @@ Ninguno.
 
 **Gate (auto)**: build_result_catalog.py --check pasa usando el módulo común y el JSON regenerado no cambia ni un byte. Si se edita a mano el text de la Casa 3, fallan --check y la fidelidad nombrando house-03. El módulo común tiene su propia prueba sobre un catálogo mínimo.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T2.1
-- [ ] S3.T2.2
-- [ ] S3.T3
-- [ ] S3.T4
-- [ ] S3.T5
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T2.1
+- [x] S3.T2.2
+- [x] S3.T3
+- [x] S3.T4
+- [x] S3.T5
 
 **Gate (auto)**: app/assets/catalogos/resultados.v1.json es igual a la fuente y el gate de CI falla nombrando el archivo cuando difieren. En flutter test se ve que la Casa 1 da house-01 / 1.0.0, que hay 12 casas y 8 anillos con la Casa 12 solo closure, y que schemaVersion 99 lanza el error tipado.
