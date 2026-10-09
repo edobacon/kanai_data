@@ -107,10 +107,10 @@ Contrato: rollback: Eliminar los archivos del gestor en app/lib/core/assets/ y s
 Contrato: rollback: Eliminar los dos archivos de prueba en app/test/core/assets/ con git revert de la task.. Status: done
 
 #### S2.T5 — Pruebas en app/test/core/images/. Antes de escribirlas confirma con Grep que EditorialIllustration (app/lib/core/images/editorial_illustration.dart) consume ResolvedImage; si no, monta un widget minimo de prueba que lo consuma. Casos: secuencia descargando y disponible; descargando y respaldo cuando falla el hash; asset cacheado y valido emite disponible sin pasar por descargando; Semantics.label igual al alt aportado por el resolvedor o identity_assets.dart con un Text de relleno visible (QA-02-09-02); tester.takeException() == null sin red; desmontaje con descarga en curso sin setState tras dispose y sin parciales; tras el desmontaje, un pedido posterior con red completa la descarga desde cero. Los casos del gestor viven en S1.T7.
-Contrato: rollback: Revertir los archivos de prueba agregados o ajustados en app/test/core/images/ con git revert de la task.. Status: pending
+Contrato: rollback: Revertir los archivos de prueba agregados o ajustados en app/test/core/images/ con git revert de la task.. Status: done
 
 #### S2.T6 — Integra el gestor con el resolvedor de HU-01-02. Antes de implementar lee app/lib/core/images/image_family_resolver.dart y app/lib/core/images/identity_assets.dart y confirma si ResolvedImage (sellado) puede expresar 'descargando' sin cambiar la firma pública de ImageFamilyResolver. Si requiere una variante nueva del sellado, agrégala, adapta los switch de todos los consumidores y repórtalos. El alt lo sigue aportando el resolvedor o identity_assets.dart. Los tests de regresión están en app/test/core/images/.
-Contrato: rollback: Revertir los cambios en app/lib/core/images/ y los consumidores adaptados con git revert de la task.. Status: pending
+Contrato: rollback: Revertir los cambios en app/lib/core/images/ y los consumidores adaptados con git revert de la task.. Status: done
 
 #### S3.T4 — Documentar el uso del gestor, la configuracion del origen de descarga (DownloadUrlProvider y URL presignada de corta vida) y el comportamiento sin conexion en docs/development/configuration.md y en scripts/assets/README.md, enlazando la DEC-240. No se tocan README.md raiz, CONTRIBUTING.md, docs/development/commands.md ni docs/development/release-runbook.md.
 Contrato: rollback: Revertir el commit de la task: restaurar docs/development/configuration.md y scripts/assets/README.md.. Status: pending
@@ -260,11 +260,11 @@ Ninguno.
 
 **Gate (auto)**: `cd app && fvm flutter analyze lib/core/assets` y `cd app && fvm flutter test test/core/assets/downloadable_asset_manager_test.dart` pasan: un archivo correcto se entrega y queda en la caché, un byte alterado se rechaza con exactamente 2 solicitudes, cancelar o truncar el cuerpo no deja parciales, un sha256 nuevo en el manifiesto reemplaza a la entrada anterior y las métricas solo traen conteos y tamaños agregados.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T5
-- [ ] S2.T6
+- [x] S2.T5
+- [x] S2.T6
 
 **Gate (auto)**: El resolvedor expone los tres estados (descargando, disponible, superficie de respaldo) para un asset descargable y los empaquetados siguen resolviendose sin descarga. cd app && fvm flutter analyze, cd app && fvm flutter test test/core/images y cd app && fvm flutter test test/core/assets pasan en verde, sin cambiar la firma publica de ImageFamilyResolver.
 
