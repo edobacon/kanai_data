@@ -92,13 +92,13 @@ Contrato: rollback: Revertir commit de la vista y de los accesos.. Status: done
 Contrato: rollback: Eliminar los archivos de test agregados.. Status: done
 
 #### S3.T1 — T-09: reemplazar la lista simulada del selector de transporte por el catalogo transport_companies (backend/migrations/20260901000001_transport_companies.ts:6), reutilizando el acceso a datos que usa TransportistasView (frontend/src/components/bodega/transportistas/TransportistasView/TransportistasView.tsx:180).
-Contrato: rollback: Revertir commit; el selector vuelve a la lista previa.. Status: pending
+Contrato: rollback: Revertir commit; el selector vuelve a la lista previa.. Status: done
 
 #### S3.T2 — Visualizar: agregar acciones Imprimir factura (formato comercial existente) e Imprimir datos de despacho; vista de despacho con destinatario, RUT, telefono, direccion, ciudad, transporte y observacion leidos de la factura guardada (columnas de 1/7), bloque remitente Jormat y campos locales no persistidos de bultos, dimensiones, peso y fragil.
-Contrato: rollback: Revertir commit de Visualizar y de la vista de despacho.. Status: pending
+Contrato: rollback: Revertir commit de Visualizar y de la vista de despacho.. Status: done
 
 #### S3.T3 — Tests S3: selector con catalogo real y vacio, regresion de TransportistasView.test.tsx, despacho con datos guardados vs ficha de cliente distinta (criterio 21), campos no persistidos, factura sin transporte, botones de Visualizar y formato comercial sin ubicaciones.
-Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status: pending
+Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Imprimir datos de despacho desde Visualizar: muestra destinatario, RUT, telefono, direccion, ciudad, transporte y observacion guardados en la factura mas un bloque de remitente Jormat; cantidad de bultos, dimensiones, peso y fragil se ingresan en la pantalla de impresion y no s
@@ -163,12 +163,12 @@ Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status:
 
 **Gate (auto)**: Desde el menu de fila y desde Visualizar se abre el Formato Bodega imprimible; una factura con un repuesto sin ubicacion muestra 'Sin ubicacion' en esa linea y respeta el orden de lineas.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Visualizar muestra Imprimir factura, Imprimir datos de despacho y Formato Bodega; la impresion de despacho usa los datos guardados de la factura y permite completar bultos/dimensiones/peso/fragil sin guardarlos; el selector T-09 lista las empresas reales de transport_companies.
 
