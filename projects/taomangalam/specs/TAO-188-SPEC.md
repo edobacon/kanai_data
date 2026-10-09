@@ -74,10 +74,10 @@ Contrato: rollback: Revertir únicamente los estados y conexiones de recuperaci�
 Contrato: rollback: Revertir las ampliaciones en legal_review_view_test.dart y los ajustes en puerto_analitica_test.dart y legal_consent_view_analytics_policy_test.dart; los tests vuelven a su cobertura previa sin tocar código de producción.. Status: done
 
 #### S3.T1 — Verificación automatizada declarada por caso de prueba: ejecutar y dejar constancia del mapeo explícito QA-01-14-01 (historial con versión y fecha + apertura de texto) y QA-01-14-02 (leer versión nueva no registra aceptación) contra app/test/navigation/legal_review_view_test.dart; QA-01-14-03 (opt_in otorgado→retirado agrega evento y conserva el previo) y QA-01-14-04 (error o pérdida de red conserva el último estado confirmado y permite reintentar con la misma clave de idempotencia) contra app/test/legal/puerto_analitica_test.dart y app/test/navigation/legal_consent_view_analytics_policy_test.dart; QA-01-14-05 (impersonación: historial legible, acciones no invocables) contra app/test/legal/puerto_revision_legal_test.dart. Regresión del gate obligatorio con app/test/navigation/legal_consent_gate_text_test.dart y app/test/navigation/legal_consent_view_layout_test.dart. Sin requireHuman: todo ítem de esta task es ejecutable en CI con FVM (canon docs/development/commands.md y app/.fvmrc).
-Contrato: rollback: Esta task no modifica código de producción: si falla, no se revierte nada; se reporta el caso QA que no pasa y se corrige en la task de S1/S2 que lo origina.. Status: pending
+Contrato: rollback: Esta task no modifica código de producción: si falla, no se revierte nada; se reporta el caso QA que no pasa y se corrige en la task de S1/S2 que lo origina.. Status: done
 
 #### S3.T2 — Verificación humana (requireHuman: no automatizable, no se acredita con tests): (a) QA-01-14-06 comparación visual canónica del modo revisión en teléfono y tablet contra docs/product/43_guia_maestra_de_diseno.md §9 (línea 274) y la especificación docs/product/vistas/V-51_privacidad_y_consentimientos.md. La maqueta consolidada de V-51 no está localizada en el repo ni en Workspace: es una CONDICIÓN EXTERNA a cargo de Diseño aportar la referencia canónica; no inventar ruta ni sustituirla por un mockup genérico, no quitar el criterio y no declarar fidelity aprobada sin ella. Registrar explícitamente el estado: spec preparado e implementado ≠ evidencia de fidelity obtenida. (b) QA humana en dispositivos con VoiceOver y TalkBack: anuncio del resultado de la acción, foco sin saltos sin aviso, y lectura/acciones a escala de texto 200 % en teléfono y tablet. Evidencia: capturas del modo revisión y sus estados principales (carga, error, sin conexión, política no disponible) en ambos formatos, adjuntas al ticket.
-Contrato: rollback: No aplica cambio de código. Si Diseño rechaza la fidelity o no aporta la maqueta, se deja el hallazgo registrado como falta externa y el modo de revisión se mantiene tal cual hasta recibir la referencia canónica.. Status: pending
+Contrato: rollback: No aplica cambio de código. Si Diseño rechaza la fidelity o no aporta la maqueta, se deja el hallazgo registrado como falta externa y el modo de revisión se mantiene tal cual hasta recibir la referencia canónica.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Qué: presentar en V-51 el historial propio de términos y privacidad con versión y fecha, consultar los textos aceptados y vigentes, y distinguir si corresponde nueva aceptación. Por qué: permitir revisar decisiones sin registrar aceptación al abrir o leer. Consumir listarMisAce
@@ -136,8 +136,8 @@ Ninguno.
 
 **Gate (auto)**: La misma revisión muestra opt_in, opt_out y disabled, permite los cambios autorizados y mantiene el estado confirmado ante error o pérdida de red; quedan disponibles pruebas y capturas para Diseño/QA.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · gate
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
+- [x] S3.T1
+- [x] S3.T2

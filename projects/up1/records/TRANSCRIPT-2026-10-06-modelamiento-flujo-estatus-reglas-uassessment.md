@@ -3,6 +3,14 @@ id: TRANSCRIPT-2026-10-06-modelamiento-flujo-estatus-reglas-uassessment
 project: up1
 type: transcript
 module: curriculum-design
+tags:
+  - vigencia
+  - workflow
+  - estados
+  - versionamiento
+  - sp12
+  - curriculum-design
+  - curriculum-mapping
 ---
 
 ## Metadata de la reunion
