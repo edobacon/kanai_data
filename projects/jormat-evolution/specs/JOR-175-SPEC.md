@@ -138,22 +138,22 @@ Contrato: rollback: Revertir el commit de la tarea; el saldo de la nota deja de 
 Contrato: rollback: Revertir los commits de las correcciones de tests; la clasificación documentada se conserva.. Status: pending
 
 #### S4.T1 — Anulación rápida desde DocumentosTable (vía B). Primero, ANTES de modificar código, contrastar el comportamiento con el legacy de Jormat (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido original del cliente, y registrar ese contraste en el reporte de la sesión; si se contradicen, reportar al usuario y detenerse sin decidir. Después implementar la decisión del usuario del 2026-10-09 (supuesto pendiente de su confirmación): la UI pide el motivo al usuario antes de llamar al API; el API sigue exigiendo el motivo y rechazando por estado inválido; no existe motivo por defecto. Reutilizar el endpoint de anulación existente de JOR-173 sin duplicar lógica de anulación.
-Contrato: rollback: Revertir el commit de la task (git revert): vuelve el comportamiento previo de la anulación rápida sin cuerpo; no hay migraciones ni datos que deshacer.. Status: pending
+Contrato: rollback: Revertir el commit de la task (git revert): vuelve el comportamiento previo de la anulación rápida sin cuerpo; no hay migraciones ni datos que deshacer.. Status: done
 
 #### S4.T2 — Listado de documentos: una factura anulada se muestra como 'Anulada' y no como 'Pagada'. Primero, ANTES de modificar código, contrastar con el legacy de Jormat (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido original del cliente, y registrar ese contraste en el reporte de la sesión; si se contradicen, reportar y no decidir. Después aplicar la corrección y su test.
-Contrato: rollback: Revertir el commit de la task (git revert); no hay cambios de datos ni migraciones.. Status: pending
+Contrato: rollback: Revertir el commit de la task (git revert); no hay cambios de datos ni migraciones.. Status: done
 
 #### S4.T3 — Resumen de ventas: las notas (de crédito y de débito) no se suman como deuda del cliente. Primero, ANTES de modificar código, contrastar con el legacy de Jormat (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido original del cliente, y registrar ese contraste en el reporte de la sesión; si se contradicen, reportar y no decidir. Después aplicar la corrección y su test.
-Contrato: rollback: Revertir el commit de la task (git revert); no hay cambios de datos ni migraciones.. Status: pending
+Contrato: rollback: Revertir el commit de la task (git revert); no hay cambios de datos ni migraciones.. Status: done
 
 #### S4.T4 — Crédito aplicado: si la factura destino se anula después, el crédito aplicado se revierte y el saldo disponible de la nota se restituye, de forma idempotente. Primero, ANTES de modificar código, contrastar con el legacy de Jormat (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido original del cliente, y registrar ese contraste en el reporte de la sesión; si se contradicen, reportar y no decidir. Después aplicar la corrección y su test.
-Contrato: rollback: Revertir el commit de la task (git revert); si se probó sobre datos, restaurar la copia de la base de prueba (nunca sobre el store vivo).. Status: pending
+Contrato: rollback: Revertir el commit de la task (git revert); si se probó sobre datos, restaurar la copia de la base de prueba (nunca sobre el store vivo).. Status: done
 
 #### S4.T5 — S4.T5 (REQ-14): Correr contra una base limpia backend/jormat-api/test/e2e/roles-config.e2e-spec.ts, backend/jormat-api/test/e2e/sales-invoices-persistence.e2e-spec.ts, backend/jormat-api/test/e2e/catalogos-clientes-reuse.e2e-spec.ts y la suite del front. Clasificar cada fallo como real, flaky (repetir para distinguir) o deriva (p. ej. conteos por rol en roles-config) y registrar la clasificación en el reporte de la sesión. No se modifica código ni tests en esta task.
-Contrato: rollback: Sin cambios de código; basta descartar el reporte de clasificación si fuera incorrecto.. Status: pending
+Contrato: rollback: Sin cambios de código; basta descartar el reporte de clasificación si fuera incorrecto.. Status: done
 
 #### S4.T6 — S4.T6 (REQ-14/15): Corregir los fallos clasificados como reales en S4.T5 sin aflojar aserciones (no borrar ni relajar expects; corregir el código o la deriva de datos de prueba con aprobación del usuario si implica modificar un test). Los fallos flaky o no relacionados se documentan, no se corrigen. Dejar en el reporte de la sesión el registro del contraste con legacy (jormat_back_legacy, jormat-front-legacy, jormat_docs) y con el pedido del cliente de cada corrección de S4.T1..S4.T4, indicando cualquier contradicción reportada.
-Contrato: rollback: Revertir los commits de las correcciones (git revert); el registro del reporte se puede rehacer sin efecto en el código.. Status: pending
+Contrato: rollback: Revertir los commits de las correcciones (git revert); el registro del reporte se puede rehacer sin efecto en el código.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por JOR-175 · Facturas cliente (feedback) 7/7 · Envío SII simulado, Reenviar y acciones por estado
@@ -249,14 +249,14 @@ Contrato: rollback: Revertir los commits de las correcciones (git revert); el re
 - [ ] S3.T4
 - [ ] S3.T5
 
-### Session 4 · open
+### Session 4 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
-- [ ] S4.T3
-- [ ] S4.T4
-- [ ] S4.T5
-- [ ] S4.T6
+- [x] S4.T1
+- [x] S4.T2
+- [x] S4.T3
+- [x] S4.T4
+- [x] S4.T5
+- [x] S4.T6
 
 **Gate (auto)**: Resultados observables: (1) anular rápido desde DocumentosTable pide el motivo en la UI y el API anula con 2xx, rechaza por estado si ya está anulada; (2) el listado muestra Anulada y no Pagada para facturas anuladas; (3) el resumen de ventas no suma notas como deuda; (4) al anular la factura destino se restituye el saldo de la nota de crédito aplicada, una sola vez; (5) las suites roles-config, sales-invoices-persistence, catalogos-clientes-reuse y los tests del front quedan clasificados (preexistente real, flaky, deriva) y los reales corregidos sin aflojar aserciones.
