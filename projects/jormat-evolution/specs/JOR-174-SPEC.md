@@ -52,9 +52,9 @@ Visualizar de factura cliente ofrece las acciones Imprimir factura e Imprimir da
 Ninguna de las acciones (Entrega Rapida, Formato Bodega, imprimir despacho, imprimir factura) espera ni depende del estado SII de la factura (P-15.1.D1).
 
 ### REQ-07 `confirmed` `enforcement`
-> Fuente: backend/migrations/20261003000000_invoices_legacy.ts:26-29
+> Fuente: Adenda 2 de JOR-174 (2026-10-09, usuario eduardo.bacon), decision 1b
 
-Enforcement: Entrega Rapida reutiliza las columnas legacy existentes is_out, user_out_id, commentary_out y date_out de la tabla de facturas; no se crean columnas nuevas ni se reescriben datos migrados.
+Enforcement: Entrega Rapida reutiliza las columnas legacy existentes is_out, user_out_id, commentary_out y date_out de la tabla de facturas; no se crean columnas nuevas ni se reescriben datos migrados. Excepcion (Adenda 2, 2026-10-09): la columna invoices.user_out_id cambia de integer a varchar(64) porque el usuario actual es un uuid y no cabe en un entero. El resto de las columnas legacy (is_out, date_out, commentary_out) se reutiliza sin cambios.
 
 ### REQ-08 `confirmed` `enforcement`
 > Fuente: frontend/src/components/bodega/transportistas/TransportistasView/TransportistasView.tsx:180
@@ -65,6 +65,16 @@ Enforcement: el selector T-09 consume el mismo origen de datos/servicio de trans
 > Fuente: JOR-174-Q1 (no existe tabla de configuracion en Evolution)
 
 Enforcement: los datos del remitente Jormat viven en una unica constante o config de empresa en Evolution reutilizada por la impresion de despacho; no se crea tabla de configuracion ni se hardcodean los valores en la plantilla.
+
+### REQ-10 `confirmed`
+> Fuente: Adenda 2 de JOR-174 (2026-10-09), decision 1b; migracion 20261012000000
+
+Migracion de tipo backend/migrations/20261012000000_invoices_user_out_text.ts: up cambia invoices.user_out_id de integer a varchar(64) con USING user_out_id::text. El down es con perdida: los valores uuid (no numericos) pasan a NULL y los valores numericos se conservan al volver a integer.
+
+### REQ-11 `confirmed`
+> Fuente: Adenda 2 de JOR-174 (2026-10-09), decisiones 2a y 3a; migracion 20261013000000
+
+Migracion de grants backend/migrations/20261013000000_role_grants_delivery_view_transport y seeds 10 y 20 equivalentes: sales.documents:quick-delivery para bodega, jefe-local, jefe-venta, gerencia, owner e internal-admin (paridad con los seeds); sales.documents:view para bodega; entities.transport_companies:view para vendedor (lo exige el selector de transportistas del REQ-04). El down es simetrico: retira todos esos grants sin borrar las capabilities.
 ## Tasks
 
 #### S1.T1 — Crear via seed_rbac la capability NUEVA sales.documents:quick-delivery y asignarla a los roles bodega, jefe-local, jefe-venta y gerencia. No reutilizar ninguna capability de Bodega existente. El nombre y los roles estan cerrados (JOR-174-Q6 y Q10): el ejecutor no debe decidirlos ni consultarlos.
@@ -99,6 +109,15 @@ Contrato: rollback: Revertir commit de Visualizar y de la vista de despacho.. St
 
 #### S3.T3 — Tests S3: selector con catalogo real y vacio, regresion de TransportistasView.test.tsx, despacho con datos guardados vs ficha de cliente distinta (criterio 21), campos no persistidos, factura sin transporte, botones de Visualizar y formato comercial sin ubicaciones.
 Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status: done
+
+#### S5.T1 — Registrar y verificar la migracion de tipo backend/migrations/20261012000000_invoices_user_out_text.ts (up con USING user_out_id::text; down con perdida: uuid a NULL, numericos conservados). YA ESTA IMPLEMENTADA en la rama feature/facturas-cliente-feedback: no reescribirla, solo confirmar que existe y cumple REQ-07 y REQ-10.
+Contrato: rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion.. Status: pending
+
+#### S5.T2 — Registrar y verificar la migracion de grants backend/migrations/20261013000000_role_grants_delivery_view_transport y los seeds 10 y 20 equivalentes (quick-delivery para bodega, jefe-local, jefe-venta, gerencia, owner e internal-admin; sales.documents:view para bodega; entities.transport_companies:view para vendedor; down simetrico sin borrar capabilities). YA ESTAN IMPLEMENTADOS en los commits b248333 y 9c787a1 de la rama feature/facturas-cliente-feedback: no reescribirlos, solo confirmar que existen y cumplen REQ-11.
+Contrato: rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion ni los seeds.. Status: pending
+
+#### S5.T3 — Verificar los tests existentes migrations-user-out-and-grants.e2e-spec.ts y el e2e de documentos-quick-delivery, y ajustarlos solo si faltan casos: user_out_id acepta uuid; down deja NULL los uuid y conserva numericos; cada rol recibe la capability o permiso indicado (en especial vendedor con entities.transport_companies:view); down simetrico; Entrega Rapida idempotente con user_out_id uuid sobre la columna migrada; Entrega Rapida concurrente con anulacion responde 422.
+Contrato: rollback: Revertir con git los cambios a los archivos de test ajustados; si no se ajusto nada, no hay nada que revertir.. Status: pending
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Imprimir datos de despacho desde Visualizar: muestra destinatario, RUT, telefono, direccion, ciudad, transporte y observacion guardados en la factura mas un bloque de remitente Jormat; cantidad de bultos, dimensiones, peso y fragil se ingresan en la pantalla de impresion y no s
@@ -141,6 +160,19 @@ Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status:
 
 - edit S1.T1 { desc="Crear via seed_rbac la capability NUEVA sales.documents:quick-delivery y asignarla a los roles bodega, jefe-local, jefe-venta y gerencia. No reutilizar ninguna capability de Bodega existente. El nombre y los roles estan cerrados (JOR-174-Q6 y Q10): el ejecutor no debe decidirlos ni consultarlos.", validates=["REQ-01"] }
 - edit S1.T1.1 { desc="Proteger la accion de Entrega Rapida (endpoint y accion de fila) con la capability sales.documents:quick-delivery, creada en S1.T1 via seed_rbac y asignada a bodega, jefe-local, jefe-venta y gerencia. Sin alternativa de reutilizar una capability existente.", validates=["REQ-01"] }
+
+### Enmienda 4
+**REQs:**
+
+- REQ-07 (edit) `confirmed`: Enforcement: Entrega Rapida reutiliza las columnas legacy existentes is_out, user_out_id, commentary_out y date_out de la tabla de facturas;
+- REQ-10 (add) `confirmed`: Migracion de tipo backend/migrations/20261012000000_invoices_user_out_text.ts: up cambia invoices.user_out_id de integer a varchar(64) con U
+- REQ-11 (add) `confirmed`: Migracion de grants backend/migrations/20261013000000_role_grants_delivery_view_transport y seeds 10 y 20 equivalentes: sales.documents:quic
+
+**Tasks agregadas:**
+
+- S5: Registrar y verificar la migracion de tipo backend/migrations/20261012000000_invoices_user_out_text.ts (up con USING user_out_id::text; down con perdida: uuid a NULL, numericos conservados). YA ESTA IMPLEMENTADA en la rama feature/facturas-cliente-feedback: no reescribirla, solo confirmar que existe y cumple REQ-07 y REQ-10. (valida: REQ-07, REQ-10; rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion.)
+- S5: Registrar y verificar la migracion de grants backend/migrations/20261013000000_role_grants_delivery_view_transport y los seeds 10 y 20 equivalentes (quick-delivery para bodega, jefe-local, jefe-venta, gerencia, owner e internal-admin; sales.documents:view para bodega; entities.transport_companies:view para vendedor; down simetrico sin borrar capabilities). YA ESTAN IMPLEMENTADOS en los commits b248333 y 9c787a1 de la rama feature/facturas-cliente-feedback: no reescribirlos, solo confirmar que existen y cumplen REQ-11. (valida: REQ-11, REQ-04; rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion ni los seeds.)
+- S5: Verificar los tests existentes migrations-user-out-and-grants.e2e-spec.ts y el e2e de documentos-quick-delivery, y ajustarlos solo si faltan casos: user_out_id acepta uuid; down deja NULL los uuid y conserva numericos; cada rol recibe la capability o permiso indicado (en especial vendedor con entities.transport_companies:view); down simetrico; Entrega Rapida idempotente con user_out_id uuid sobre la columna migrada; Entrega Rapida concurrente con anulacion responde 422. (valida: REQ-07, REQ-10, REQ-11, test; rollback: Revertir con git los cambios a los archivos de test ajustados; si no se ajusto nada, no hay nada que revertir.)
 ## Sessions
 
 ### Session 1 · T2 · continue
@@ -173,3 +205,10 @@ Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status:
 **Gate (auto)**: Visualizar muestra Imprimir factura, Imprimir datos de despacho y Formato Bodega; la impresion de despacho usa los datos guardados de la factura y permite completar bultos/dimensiones/peso/fragil sin guardarlos; el selector T-09 lista las empresas reales de transport_companies.
 
 ### Session 4 · T0 · open
+
+### Session 5 · open
+
+**Tasks:**
+- [ ] S5.T1
+- [ ] S5.T2
+- [ ] S5.T3
