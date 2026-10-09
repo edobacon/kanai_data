@@ -82,16 +82,16 @@ Contrato: rollback: Eliminar la entrada de Widgetbook. Status: done
 Contrato: rollback: Eliminar el archivo de test nuevo. Status: done
 
 #### S2.T1 — Implementar RecommendedUpdatePolicy como función pura. Recibe el resultado de obtenerVersionApp (respuesta | error | sin conexión), la compilación instalada, el flag de pospuesto en sesión y si hay modales visibles (V-51 o introductorio). Devuelve mostrar | esperar | no_mostrar. Las reglas: obligatoria y al_dia dan no_mostrar; error y sin conexión dan no_mostrar; si hay modales visibles, esperar; la comparación es por número de compilación (DEC-086). Reutilizar el cliente de versión de HU-01-18, sin una segunda llamada.
-Contrato: rollback: Eliminar la política, que no tiene consumidores fuera de este ticket. Status: pending
+Contrato: rollback: Eliminar la política, que no tiene consumidores fuera de este ticket. Status: done
 
 #### S2.T2 — Conectar el disparador de apertura en el flujo de la splash (V-31). Tras la splash, aplicar la política sobre la respuesta que obtuvo HU-01-18. Si toca esperar, presentar el modal al cerrarse V-51 y el modal introductorio. Guardar el pospuesto solo en memoria de sesión (sin persistirlo) para que la siguiente apertura vuelva a comprobar. Exponer presentRecommendedUpdate(VersionApp, disparador: manual) como punto de entrada para HU-10-12.
-Contrato: rollback: Quitar la conexión en el flujo de la splash; la app vuelve al comportamiento sin aviso recomendado y HU-01-18 queda intacta. Status: pending
+Contrato: rollback: Quitar la conexión en el flujo de la splash; la app vuelve al comportamiento sin aviso recomendado y HU-01-18 queda intacta. Status: done
 
 #### S2.T3 — Registrar los eventos de aparición y de elección (actualizar | mas_tarde) con plataforma, compilación y disparador (apertura | manual), usando el mismo mecanismo de registro que HU-01-18 y sin datos personales.
-Contrato: rollback: Quitar las llamadas de registro. Status: pending
+Contrato: rollback: Quitar las llamadas de registro. Status: done
 
 #### S2.T4 — Tests unitarios de RecommendedUpdatePolicy (recomendada 20 sobre compilación 18 y mínima 15, 500, sin conexión, obligatoria, al_dia, pospuesto, espera por V-51 o introductorio). Integración con un servidor local que responde recomendada: modal tras la splash, Más tarde sin repetición en la sesión, nueva sesión que vuelve a mostrar, primer uso con V-51 en espera, eventos con el disparador correcto, invocación manual. Regresión: el modal obligatorio de HU-01-18 sigue apareciendo solo.
-Contrato: rollback: Eliminar los archivos de test nuevos. Status: pending
+Contrato: rollback: Eliminar los archivos de test nuevos. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Con estado actualizacion_recomendada, la app presenta un modal descartable con título por clave i18n, la versión disponible (versionRecomendada), el mensaje genérico por clave i18n, las notas solo cuando existan, y las acciones Actualizar (abre urlTienda de la plataforma) y Más
@@ -124,13 +124,13 @@ Ninguno.
 
 **Gate (auto)**: Widget tests del modal en verde y entrada en Widgetbook con los casos con notas, sin notas, urlTienda nula y movimiento reducido, más capturas de teléfono y tablet
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: La integración contra el servidor local muestra el modal tras la splash con recomendada 20. No aparece con 500, sin red ni con obligatoria. Espera a V-51 y al modal introductorio, y no se repite en la sesión tras Más tarde. Los tests unitarios de la decisión están en verde.
 
