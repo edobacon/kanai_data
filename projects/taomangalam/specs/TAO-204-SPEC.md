@@ -95,16 +95,16 @@ Variante docs, guarda de alcance: los documentos de superficie raíz no se modif
 ## Tasks
 
 #### S1.T1 — Agregar la dependencia con `cd app && fvm flutter pub add flutter_cache_manager` usando el Flutter de .fvmrc. Debe quedar ^x.y.z en app/pubspec.yaml y la versión exacta en app/pubspec.lock. No se prueban otras versiones.
-Contrato: rollback: Revertir app/pubspec.yaml y app/pubspec.lock con git checkout y correr `cd app && fvm flutter pub get`.. Status: pending
+Contrato: rollback: Revertir app/pubspec.yaml y app/pubspec.lock con git checkout y correr `cd app && fvm flutter pub get`.. Status: done
 
 #### S1.T5 — Define en app/lib/core/assets/ solo la interfaz DownloadUrlProvider (recibe la clave derivados/<sha256>/<nombre>.webp y devuelve la URL presignada) y la constante con nombre kMaxHashRetries = 1 (2 solicitudes en total ante hash invalido). No crea implementacion simulada ni endpoint real.
-Contrato: rollback: Eliminar los archivos de la interfaz DownloadUrlProvider y de la constante kMaxHashRetries creados en app/lib/core/assets/ (git checkout -- app/lib/core/assets o borrar los archivos nuevos); no queda ninguna otra referencia.. Status: pending
+Contrato: rollback: Eliminar los archivos de la interfaz DownloadUrlProvider y de la constante kMaxHashRetries creados en app/lib/core/assets/ (git checkout -- app/lib/core/assets o borrar los archivos nuevos); no queda ninguna otra referencia.. Status: done
 
 #### S1.T6 — Crear el gestor de descargas en app/lib/core/assets/ sobre flutter_cache_manager (agregado en S1.T1), dio, crypto (^3.0.7) y path_provider; importa DownloadUrlProvider y kMaxHashRetries de S1.T5. (a) Lee app/assets/manifest.json y toma solo id, mode y, por derivado, path, bytes y sha256; filtra mode == descargable y nunca solicita un asset empaquetado; version y priority no existen; alt existe en la entrada pero lo aporta el resolvedor o identity_assets.dart y no se copia al gestor. (b) Para un descargable no cacheado con red, pide al DownloadUrlProvider la clave derivados/<sha256>/<nombre>.webp (nombre = ultimo segmento de path, con su extension .webp) y usa solo la URL presignada que entrega; la clave de cache es el sha256. (c) Descarga a un archivo temporal y lo promueve a la cache solo tras verificar el SHA-256 y que el tamano recibido coincide con bytes del manifiesto. (d) Ante hash invalido reintenta exactamente kMaxHashRetries veces (2 solicitudes en total); si falla el segundo intento informa el error por tipo, devuelve el estado de superficie de respaldo y no cachea nada. (e) Reverifica el SHA-256 al leer de la cache; si no coincide descarta el archivo y lo trata como no cacheado. (f) Ante un sha256 nuevo en el manifiesto descarga la clave nueva y elimina la entrada anterior; sin red no entrega la anterior. (g) Al cancelar o truncarse el cuerpo borra el temporal y no deja parciales expuestos. (h) Metricas solo como conteos y tamanos agregados por tipo (success, hashMismatch, offline, cancelled, bytes), sin claves, nombres de archivo ni URLs. (i) Se expone como provider Riverpod con @Riverpod(keepAlive: true), con el mismo mecanismo de generacion de codigo que app/lib/core/preferences/ (por ejemplo preference_controller.dart); si requiere archivos .g.dart se generan con el comando que ya usa el repo y se versionan como los existentes. Implementar por incisos usando S1.T7 como red de seguridad.
-Contrato: rollback: Eliminar los archivos del gestor en app/lib/core/assets/ y su provider generado con git revert de la task.. Status: pending
+Contrato: rollback: Eliminar los archivos del gestor en app/lib/core/assets/ y su provider generado con git revert de la task.. Status: done
 
 #### S1.T7 — Crear app/test/core/assets/fake_download_url_provider.dart (implementacion simulada de DownloadUrlProvider, solo en tests) y app/test/core/assets/downloadable_asset_manager_test.dart con un servidor HTTP local, importando kMaxHashRetries y DownloadUrlProvider de produccion. Casos: descarga valida (File con bytes identicos, queda en cache); byte alterado (rechazo, 2 solicitudes en total, nada en cache); primer intento alterado y reintento correcto (2 solicitudes); servido desde cache sin red; con red y manifiesto sin cambios un segundo pedido no genera solicitud (contador del servidor = 1); nunca descargado y sin red (respaldo); sha256 nuevo descarga la clave nueva y elimina la anterior; con v1 cacheada, sha256 nuevo y sin red: respaldo y no entrega v1; cache alterada en disco (se descarta); asset empaquetado: 0 solicitudes; clave pedida derivados/<sha256>/<nombre>.webp (por ejemplo animales-ashura/casa-01-lobo-miniatura.webp da casa-01-lobo-miniatura.webp) y URL usada exactamente la del proveedor sin datos de la persona; cancelacion y cuerpo truncado sin parciales; metricas exactas (success=2, bytes=150, hashMismatch=1; offline=1 sin bytes; cancelled=1 sin bytes) y volcado sin claves, nombres ni URLs; el provider es keepAlive (dos lecturas en el mismo ProviderContainer devuelven la misma instancia); no existe flag de desactivacion.
-Contrato: rollback: Eliminar los dos archivos de prueba en app/test/core/assets/ con git revert de la task.. Status: pending
+Contrato: rollback: Eliminar los dos archivos de prueba en app/test/core/assets/ con git revert de la task.. Status: done
 
 #### S2.T5 — Pruebas en app/test/core/images/. Antes de escribirlas confirma con Grep que EditorialIllustration (app/lib/core/images/editorial_illustration.dart) consume ResolvedImage; si no, monta un widget minimo de prueba que lo consuma. Casos: secuencia descargando y disponible; descargando y respaldo cuando falla el hash; asset cacheado y valido emite disponible sin pasar por descargando; Semantics.label igual al alt aportado por el resolvedor o identity_assets.dart con un Text de relleno visible (QA-02-09-02); tester.takeException() == null sin red; desmontaje con descarga en curso sin setState tras dispose y sin parciales; tras el desmontaje, un pedido posterior con red completa la descarga desde cero. Los casos del gestor viven en S1.T7.
 Contrato: rollback: Revertir los archivos de prueba agregados o ajustados en app/test/core/images/ con git revert de la task.. Status: pending
@@ -250,13 +250,13 @@ Ninguno.
 - delete S3.T6
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T5
-- [ ] S1.T6
-- [ ] S1.T7
+- [x] S1.T1
+- [x] S1.T5
+- [x] S1.T6
+- [x] S1.T7
 
 **Gate (auto)**: `cd app && fvm flutter analyze lib/core/assets` y `cd app && fvm flutter test test/core/assets/downloadable_asset_manager_test.dart` pasan: un archivo correcto se entrega y queda en la caché, un byte alterado se rechaza con exactamente 2 solicitudes, cancelar o truncar el cuerpo no deja parciales, un sha256 nuevo en el manifiesto reemplaza a la entrada anterior y las métricas solo traen conteos y tamaños agregados.
 
