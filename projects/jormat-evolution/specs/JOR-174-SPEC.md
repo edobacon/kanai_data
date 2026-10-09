@@ -111,13 +111,13 @@ Contrato: rollback: Revertir commit de Visualizar y de la vista de despacho.. St
 Contrato: rollback: Eliminar o revertir los archivos de test agregados.. Status: done
 
 #### S5.T1 — Registrar y verificar la migracion de tipo backend/migrations/20261012000000_invoices_user_out_text.ts (up con USING user_out_id::text; down con perdida: uuid a NULL, numericos conservados). YA ESTA IMPLEMENTADA en la rama feature/facturas-cliente-feedback: no reescribirla, solo confirmar que existe y cumple REQ-07 y REQ-10.
-Contrato: rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion.. Status: pending
+Contrato: rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion.. Status: done
 
 #### S5.T2 — Registrar y verificar la migracion de grants backend/migrations/20261013000000_role_grants_delivery_view_transport y los seeds 10 y 20 equivalentes (quick-delivery para bodega, jefe-local, jefe-venta, gerencia, owner e internal-admin; sales.documents:view para bodega; entities.transport_companies:view para vendedor; down simetrico sin borrar capabilities). YA ESTAN IMPLEMENTADOS en los commits b248333 y 9c787a1 de la rama feature/facturas-cliente-feedback: no reescribirlos, solo confirmar que existen y cumplen REQ-11.
-Contrato: rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion ni los seeds.. Status: pending
+Contrato: rollback: No hay cambio de codigo que revertir; si la verificacion falla, solo se reporta el hallazgo sin modificar la migracion ni los seeds.. Status: done
 
 #### S5.T3 — Verificar los tests existentes migrations-user-out-and-grants.e2e-spec.ts y el e2e de documentos-quick-delivery, y ajustarlos solo si faltan casos: user_out_id acepta uuid; down deja NULL los uuid y conserva numericos; cada rol recibe la capability o permiso indicado (en especial vendedor con entities.transport_companies:view); down simetrico; Entrega Rapida idempotente con user_out_id uuid sobre la columna migrada; Entrega Rapida concurrente con anulacion responde 422.
-Contrato: rollback: Revertir con git los cambios a los archivos de test ajustados; si no se ajusto nada, no hay nada que revertir.. Status: pending
+Contrato: rollback: Revertir con git los cambios a los archivos de test ajustados; si no se ajusto nada, no hay nada que revertir.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: Imprimir datos de despacho desde Visualizar: muestra destinatario, RUT, telefono, direccion, ciudad, transporte y observacion guardados en la factura mas un bloque de remitente Jormat; cantidad de bultos, dimensiones, peso y fragil se ingresan en la pantalla de impresion y no s
@@ -206,9 +206,9 @@ Contrato: rollback: Revertir con git los cambios a los archivos de test ajustado
 
 ### Session 4 · T0 · open
 
-### Session 5 · open
+### Session 5 · continue
 
 **Tasks:**
-- [ ] S5.T1
-- [ ] S5.T2
-- [ ] S5.T3
+- [x] S5.T1
+- [x] S5.T2
+- [x] S5.T3
