@@ -61,22 +61,22 @@ La evidencia de latencia se registra solo con los valores de la adenda 1: ningun
 ## Tasks
 
 #### S1.T1 — Registrar en la sección de evidencia de docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md la medición remota del 2026-10-09 con los datos literales de la adenda 1. Método: bucket temporal en staging, región iad junto a server (us-east4), 6 derivados de 14 a 500 KB con la clave derivados/<sha256>/<nombre>.webp, URLs presignadas de 15 minutos, 10 descargas por archivo con fetch de Node 24 desde server vía railway ssh de solo lectura, bucket eliminado al terminar. Incluir la tabla de p50 de primer byte y total por tamaño, el peor caso de 212 ms y la referencia desde el equipo del dev rotulada como no Railway. Agregar los límites (solo iad, 6 de 405 derivados, sin medición desde un teléfono), los pasos repetibles sin URLs ni credenciales y la conclusión de que no contradice el origen. Quitar la marca de evidencia pendiente. No volver a medir ni crear recursos en Railway.
-Contrato: rollback: git checkout origin/main -- docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md. Status: pending
+Contrato: rollback: git checkout origin/main -- docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md. Status: done
 
 #### S1.T2 — Agregar en la DEC-240 la tabla comparativa de bucket solo (elegido), bucket con CDN delante y volumen servido por un servicio, con una fila por criterio: costo de almacenamiento, egress, latencia, URLs inmutables, invalidación, disponibilidad y operación desde Railway. La celda de latencia del bucket solo cita la medición de iad; donde no haya medición o fuente, escribir 'sin medición' o 'no evaluado'. Debajo de la tabla, escribir el motivo de descarte de cada alternativa no elegida. Reusar como base la tabla parcial existente de modalidades dentro de Railway en lugar de duplicarla.
-Contrato: rollback: git checkout origin/main -- docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md. Status: pending
+Contrato: rollback: git checkout origin/main -- docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md. Status: done
 
 #### S1.T3 — Declarar en la sección de método de la DEC-240 (cerca de las líneas 78 a 81) la herramienta cwebp 1.6.0 con q=82 y method=6 como parte explícita del método reproducible, junto con el comando `python3 scripts/assets/measure_webp_budget.py [--sample 2] [--json]`. Revisar scripts/assets/measure_webp_budget.py y conservar solo los cambios necesarios para que la salida sea determinista. Hoy ya documenta q=82 y method=6 en su docstring (línea 4) y usa una muestra determinista; si no hace falta ningún cambio, dejarlo intacto.
-Contrato: rollback: git checkout origin/main -- docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md scripts/assets/measure_webp_budget.py. Status: pending
+Contrato: rollback: git checkout origin/main -- docs/product/decisiones/DEC-240-origen-y-presupuesto-de-assets-sobre-railway.md scripts/assets/measure_webp_budget.py. Status: done
 
 #### S1.T4 — Actualizar scripts/assets/README.md (hoy menciona cwebp y q=82/method=6 en la línea 8) con una sección para measure_webp_budget.py: uso, parámetros --sample y --json, ejemplo de invocación, requisito de cwebp 1.6.0 y un enlace a la DEC-240 como fuente del método de latencia remota. No tocar README raíz, CONTRIBUTING, docs/development/commands.md ni release-runbook.
-Contrato: rollback: git checkout origin/main -- scripts/assets/README.md. Status: pending
+Contrato: rollback: git checkout origin/main -- scripts/assets/README.md. Status: done
 
 #### S1.T5 — Alinear la sección 5 del doc 47 y la sección 4.4 del doc 42 con la DEC-240 actualizada: quitar cualquier mención de latencia remota pendiente, mantener el origen bucket solo sin CDN en M1a y referenciar la DEC-240 en lugar de repetir cifras. Si algún doc cita cifras, que coincidan con las de la DEC. Confirmar antes las rutas exactas de ambos docs.
-Contrato: rollback: git checkout origin/main -- <ruta del doc 47> <ruta del doc 42>. Status: pending
+Contrato: rollback: git checkout origin/main -- <ruta del doc 47> <ruta del doc 42>. Status: done
 
 #### S1.T6 — Regresión y verificación: (1) correr `python3 -m unittest discover -s tests -p "test_assets_*.py"` y confirmar OK sin cambios en serve_derivative.py, test_assets_origin.py ni ep01-assets-provider.mjs. (2) Correr `python3 scripts/assets/measure_webp_budget.py --json` dos veces y comparar con diff; las cifras deben coincidir con la tabla de la DEC-240. (3) Correr el linter de docs del job de docs de ci-pr.yml sobre DEC-240, los docs 47 y 42 y scripts/assets/README.md, y revisar .docs-baseline.txt y cspell-project-words.txt. (4) Confirmar que el diff no incluye README raíz, CONTRIBUTING, commands.md ni release-runbook, y que no hay URLs presignadas.
-Contrato: rollback: No modifica código; si falla, revertir la task que introdujo la falla con git checkout origin/main -- <archivo>.. Status: pending
+Contrato: rollback: No modifica código; si falla, revertir la task que introdujo la falla con git checkout origin/main -- <archivo>.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -96,14 +96,14 @@ Ninguno.
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
 
 **Gate (auto)**: La DEC-240 en la rama muestra la latencia de iad con método, fecha y límites, la tabla de siete criterios con motivos de descarte y el método cwebp 1.6.0 con q=82 y method=6. La reejecución del script de presupuesto reproduce las cifras, los tests de assets pasan y el linter de docs queda en verde sobre los archivos tocados.
