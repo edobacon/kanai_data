@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""Sonda desechable (solo lectura): 4 comprobaciones de consistencia entre capas de up1.
+Salida: JSON por stdout. Uso: consistency-probe.py <ruta up1>"""
+import json, os, re, sys, glob
+from collections import deque
+
+UP1 = sys.argv[1]
+MODS_DIR = os.path.join(UP1, "mods")
+TARGET_MODS = ["academic-scheduling", "curriculum-design", "curriculum-mapping"]
+ALL_MODS = sorted(d for d in os.listdir(MODS_DIR) if os.path.isdir(os.path.join(MODS_DIR, d)) and os.path.isdir(os.path.join(MODS_DIR, d, "objects")))
+SYSTEM_FIELDS = {"id", "personalInfo"}
+LOCALES = ["es", "en", "pt"]
+
+
+def read_json(p):
+    with open(p, encoding="utf8") as f:
+        return json.load(f)
+
+
+# ---------- modelo de objetos (core + mods) ----------
+objects = {}  # nombre en minuscula -> {props, sources:[...]}
+common = read_json(os.path.join(UP1, "object-manager/objects/business/common.json"))
+COMMON_PROPS = common.get("properties", common)
+
+
+def add_object(path, origin):
+    d = read_json(path)
+    name = os.path.splitext(os.path.basename(path))[0].lower()
+    ent = objects.setdefault(name, {"props": {}, "origins": [], "display": os.path.splitext(os.path.basename(path))[0]})
+    ent["props"].update(d.get("properties", {}))
+    ent["origins"].append(origin)
+
+
+for p in glob.glob(os.path.join(UP1, "object-manager/objects/business/Base/*.json")):
+    add_object(p, "core")
+for m in ALL_MODS:
+    for p in glob.glob(os.path.join(MODS_DIR, m, "objects/*.json")):
+        add_object(p, m)
+
+# ---------- COMPROBACION 1: guardas de permiso en resolvers de lectura ----------
+GUARD_DIRECT = re.compile(r"(?:\b\w*[cC]heckCapability|\bhasCapability|\brequireCapability|\bcheckObjectPermissions|\bloadCheckObjectPermissions|\bcheckPermission|\bwithObjectAuth|\bwithCapability)\s*\(")
+DECLARED_OPEN = re.compile(r"sin capability custom|sin rbac propio|lectura autenticada|solo exige sesion", re.I)
+
+
+def function_bodies(text):
+    """Devuelve {nombre: cuerpo} de `export (async) function nombre`."""
+    out = {}
+    for m in re.finditer(r"export\s+(?:async\s+)?function\s+(\w+)", text):
+        start = m.end()
+        nxt = re.search(r"\n(?:export\s|function\s|async\s+function\s)", text[start:])
+        out[m.group(1)] = text[start:start + (nxt.start() if nxt else len(text))]
+    return out
+
+
+def schema_ops(mod):
+    """{operacion: (tipo, archivo schema)} desde logic/*.graphql (type/extend type Query|Mutation)."""
+    ops = {}
+    for p in glob.glob(os.path.join(MODS_DIR, mod, "logic/*.graphql")):
+        txt = open(p, encoding="utf8").read()
+        txt = re.sub(r'"""[\s\S]*?"""', "", txt)
+        txt = re.sub(r'"(?:[^"\\]|\\.)*"', '""', txt)
+        txt = re.sub(r"#.*", "", txt)
+        for blk in re.finditer(r"type\s+(Query|Mutation)\s*\{([\s\S]*?)\n\}", txt):
+            body = blk.group(2)
+            prev = None
+            while prev != body:
+                prev = body
+                body = re.sub(r"\([^()]*\)", "", body)
+            for n in re.findall(r"^\s*(\w+)\s*:", body, re.M):
+                ops[n] = (blk.group(1), os.path.basename(p))
+    return ops
+
+
+def analyze_resolvers(mod):
+    logic = os.path.join(MODS_DIR, mod, "logic")
+    files = sorted(glob.glob(os.path.join(logic, "**/*.js"), recursive=True))
+    texts = {f: open(f, encoding="utf8").read() for f in files}
+    # helpers de guarda: funciones exportadas cuyo cuerpo llama a checkCapability
+    helpers = {}
+    for f, t in texts.items():
+        for name, body in function_bodies(t).items():
+            if GUARD_DIRECT.search(body):
+                helpers[name] = os.path.relpath(f, logic)
+    ops = schema_ops(mod)
+    rows = []
+    for f in files:
+        rel = os.path.relpath(f, logic)
+        if not rel.endswith(".resolver.js") or "/" in rel:
+            continue
+        t = texts[f]
+        defined = [o for o in ops if re.search(r"^\s*(?:async\s+)?" + re.escape(o) + r"\s*[:(]", t, re.M)]
+        read_ops = [o for o in defined if ops[o][0] == "Query"]
+        write_ops = [o for o in defined if ops[o][0] == "Mutation"]
+        if not defined:
+            continue
+        direct = bool(GUARD_DIRECT.search(t))
+        via = sorted({h for h in helpers if re.search(r"\b" + h + r"\s*\(", t) and helpers[h] != rel})
+        has_auth = bool(re.search(r"requireAuth|context\.user|user\?\.id|isAuthenticated", t))
+        if direct or via:
+            state = "guardado"
+        elif has_auth:
+            state = "solo sesion"
+        else:
+            state = "sin guarda visible"
+        rows.append({"file": rel, "state": state, "declaredOpen": bool(DECLARED_OPEN.search(t)), "directGuard": direct, "helpers": via, "queries": read_ops, "mutations": write_ops})
+    return {"helpers": helpers, "rows": rows}
+
+
+check1 = {m: analyze_resolvers(m) for m in TARGET_MODS}
+
+# ---------- COMPROBACION 2 y 3: layouts de lista (columnas i18n y FK) ----------
+def lang_keys(mod, objname):
+    keys = {}
+    for loc in LOCALES:
+        ks = set()
+        for fname in {objname, "common"}:
+            p = os.path.join(MODS_DIR, mod, "lang", loc, fname + ".i18n.json")
+            if os.path.exists(p):
+                col = read_json(p).get("column", {})
+                if isinstance(col, dict):
+                    ks |= set(col.keys())
+        keys[loc] = ks
+    return keys
+
+
+def lang_file_for(mod, objname):
+    d = os.path.join(MODS_DIR, mod, "lang", "es")
+    if not os.path.isdir(d):
+        return None
+    for f in os.listdir(d):
+        if f.lower() == objname.lower() + ".i18n.json":
+            return f[:-len(".i18n.json")]
+    return None
+
+
+def selectable_fields(objkey):
+    ent = objects[objkey]
+    props = {}
+    props.update({k: v for k, v in COMMON_PROPS.items() if isinstance(v, dict)})
+    props.update(ent["props"])
+    out = {}
+    for k, v in props.items():
+        if k in SYSTEM_FIELDS:
+            continue
+        if v.get("type") in ("object", "array"):
+            continue
+        out[k] = v
+    return out
+
+
+check2, check3 = [], []
+layoutStats = {m: {"recordLists": 0, "evaluated": 0, "skipped": []} for m in TARGET_MODS}
+seen_objects = set()
+for m in TARGET_MODS:
+    for p in sorted(glob.glob(os.path.join(MODS_DIR, m, "config/layouts/*.json"))):
+        try:
+            d = read_json(p)
+        except Exception:
+            continue
+        if d.get("layoutType") != "RecordList":
+            continue
+        layoutStats[m]["recordLists"] += 1
+        on = (d.get("objectName") or "").lower()
+        if on not in objects:
+            layoutStats[m]["skipped"].append(d.get("objectName"))
+            continue
+        layoutStats[m]["evaluated"] += 1
+        cfg = d.get("layoutConfig", {})
+        fields = selectable_fields(on)
+        langname = lang_file_for(m, objects[on]["display"])
+        # Comprobacion 2: una vez por (mod, objeto)
+        key2 = (m, on)
+        if key2 not in seen_objects:
+            seen_objects.add(key2)
+            lk = lang_keys(m, langname or objects[on]["display"]) if langname else {loc: set() for loc in LOCALES}
+            row = {"mod": m, "object": objects[on]["display"], "layout": os.path.basename(p), "fields": len(fields), "langFile": bool(langname)}
+            SYS = {"createdAt", "updatedAt", "updatedById", "internalId"}
+            for loc in LOCALES:
+                missing = sorted(f for f in fields if f not in lk[loc])
+                row["missing_" + loc] = missing
+                row["missingBiz_" + loc] = [f for f in missing if f not in SYS]
+            row["titles"] = {f: fields[f].get("title") for f in row["missing_es"] if f in fields}
+            row["bizFields"] = len([f for f in fields if f not in SYS])
+            check2.append(row)
+        # Comprobacion 3: FK frente a relations/relationDisplayFields
+        declared = {r.lower() for r in cfg.get("relations", []) or []}
+        declared |= {k.lower() for k in (cfg.get("relationDisplayFields") or {})}
+        fks = {}
+        for f, v in fields.items():
+            if v.get("isForeignKey") and v.get("references"):
+                fks[f] = v["references"]
+        uncovered = {f: ref for f, ref in fks.items() if (f[:-2] if f.endswith("Id") else f).lower() not in declared}
+        visible = {c["key"] for c in cfg.get("columns", []) if isinstance(c, dict) and "key" in c}
+        check3.append({"mod": m, "object": objects[on]["display"], "layout": os.path.basename(p), "fkTotal": len(fks), "declared": sorted(declared), "uncovered": uncovered,
+                       "visibleFkWithoutRelation": sorted(f for f in uncovered if f in visible)})
+
+# ---------- COMPROBACION 4: alcance organizacional (camino de FK al ancla) ----------
+ANCHOR = "organization"
+adj = {}
+for name, ent in objects.items():
+    for f, v in ent["props"].items():
+        if isinstance(v, dict) and v.get("isForeignKey") and v.get("references"):
+            ref = v["references"].lower()
+            adj.setdefault(name, set()).add(ref)
+            adj.setdefault(ref, set()).add(name)  # el filtro del core recorre FK directas e inversas
+
+
+def path_to_anchor(start):
+    """BFS no dirigido como el del core. Devuelve (profundidad, direccion del primer salto) o (None, None)."""
+    if start == ANCHOR:
+        return 0, "ancla"
+    seen = {start}
+    q = deque([(start, 0, None)])
+    fwd = {n: set() for n in adj}
+    while q:
+        n, d, first = q.popleft()
+        for nb in adj.get(n, ()):
+            if nb in seen:
+                continue
+            is_fwd = any(isinstance(v, dict) and v.get("isForeignKey") and str(v.get("references", "")).lower() == nb for v in objects.get(n, {"props": {}})["props"].values())
+            direction = "directa" if is_fwd else "inversa"
+            f = first or direction
+            if nb == ANCHOR:
+                return d + 1, f
+            seen.add(nb)
+            q.append((nb, d + 1, f))
+    return None, None
+
+
+EXEMPT = {"core_user", "core_role", "core_capability", "core_context", "core_roleassignment", "core_rolecapability", "core_objectdefinition", "core_fielddefinition", "core_tenant", "up1_suite_app", "up1_layen_layout", "up1_notification", "feedback"}
+POLY_MARKERS = ("ownerType", "targetType", "entityType", "refType")
+check4 = []
+for m in TARGET_MODS:
+    for p in sorted(glob.glob(os.path.join(MODS_DIR, m, "objects/*.json"))):
+        name = os.path.splitext(os.path.basename(p))[0].lower()
+        ent = objects[name]
+        dpt, firstHop = path_to_anchor(name)
+        poly = [k for k in POLY_MARKERS if k in ent["props"]]
+        fkcount = sum(1 for v in ent["props"].values() if isinstance(v, dict) and v.get("isForeignKey"))
+        check4.append({"mod": m, "object": ent["display"], "exempt": name in EXEMPT, "depth": dpt, "firstHop": firstHop, "poly": poly, "fks": fkcount})
+
+print(json.dumps({"check1": check1, "check2": check2, "check3": check3, "check4": check4, "objectsLoaded": len(objects), "layoutStats": layoutStats}, ensure_ascii=False, indent=1))

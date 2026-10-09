@@ -1,0 +1,535 @@
+<title>Atlas de reglas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: informe de una columna; tablero por mod arriba, método y evidencia debajo, tablas anchas con scroll propio */
+:root {
+  --bg: #f4f6f7;
+  --surface: #ffffff;
+  --fg: #16232b;
+  --muted: #5a6b75;
+  --line: #d9e0e4;
+  --accent: #0e6a73;
+  --accent-soft: #dcefef;
+  --ok: #1f7a4d;
+  --ok-soft: #dff2e6;
+  --warn: #a35a00;
+  --warn-soft: #fbe9cf;
+  --info: #3d5a99;
+  --info-soft: #e1e8f6;
+  --bar-bg: #e6ecef;
+  --code-bg: #101c23;
+  --code-fg: #d7e4ea;
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1a20;
+    --surface: #16252d;
+    --fg: #e3edf1;
+    --muted: #93a6b0;
+    --line: #29404b;
+    --accent: #5cc4cc;
+    --accent-soft: #15383d;
+    --ok: #6fd39b;
+    --ok-soft: #153a29;
+    --warn: #f0b15c;
+    --warn-soft: #3d2c12;
+    --info: #9db7f0;
+    --info-soft: #1c2a4a;
+    --bar-bg: #243842;
+    --code-bg: #0a1318;
+    --code-fg: #d7e4ea;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1a20;
+  --surface: #16252d;
+  --fg: #e3edf1;
+  --muted: #93a6b0;
+  --line: #29404b;
+  --accent: #5cc4cc;
+  --accent-soft: #15383d;
+  --ok: #6fd39b;
+  --ok-soft: #153a29;
+  --warn: #f0b15c;
+  --warn-soft: #3d2c12;
+  --info: #9db7f0;
+  --info-soft: #1c2a4a;
+  --bar-bg: #243842;
+  --code-bg: #0a1318;
+  --code-fg: #d7e4ea;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  padding-inline: 16px;
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 1080px; margin-inline: auto; display: flex; flex-direction: column; gap: 40px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+.lede { color: var(--muted); max-width: 72ch; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+header { display: flex; flex-direction: column; gap: 12px; }
+.note { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 6px; padding: 10px 14px; font-size: 14px; max-width: 84ch; }
+.note.warn { background: var(--warn-soft); border-color: var(--warn); }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; }
+
+/* Chips y pastillas */
+.chip { display: inline-block; font-family: var(--font-mono); font-size: 11px; padding: 1px 7px; border-radius: 999px; white-space: nowrap; }
+.chip.ok { background: var(--ok-soft); color: var(--ok); }
+.chip.info { background: var(--info-soft); color: var(--info); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.mute { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 11.5px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.info { background: var(--info-soft); color: var(--info); }
+.pill.mute { background: var(--bar-bg); color: var(--muted); }
+
+/* Tablas */
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; background: var(--bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Tablero */
+table.board { min-width: 760px; }
+table.board th.mod { text-align: left; min-width: 190px; }
+.dimname { font-weight: 600; }
+.dimname small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.newdim { color: var(--accent); }
+.wt { width: 64px; font-family: var(--font-mono); font-size: 13px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--fg); text-align: right; }
+.cell { display: flex; flex-direction: column; gap: 4px; min-width: 150px; }
+.cell .top { display: flex; align-items: baseline; gap: 8px; }
+.cell .score { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.cell .score.none { color: var(--muted); font-weight: 500; }
+.bar { height: 6px; border-radius: 3px; background: var(--bar-bg); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.bar.med > i { background: var(--ok); }
+.bar.dec > i { background: var(--info); }
+.cell .sub { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.cell .base { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+tr.totals td { background: var(--bg); border-top: 2px solid var(--line); }
+tr.totals .score { font-size: 26px; }
+.delta.up { color: var(--ok); }
+.delta.down { color: var(--warn); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); align-items: center; }
+
+/* Tarjetas */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card h3 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13.5px; }
+.card dt { color: var(--muted); }
+.card dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+/* Código */
+pre.term { background: var(--code-bg); color: var(--code-fg); font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 0; }
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.limits { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.sumcard { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.sumcard .n { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.sumcard .l { font-size: 13px; color: var(--muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .cols2 { grid-template-columns: 1fr; }
+  h1 { font-size: 25px; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">up1/mcp · herramienta de desarrollo</span>
+  <h1>Atlas de reglas</h1>
+  <p class="lede">Evalúa cada mod en varias dimensiones, con un porcentaje por dimensión, su fórmula, su fuente y su nivel de confianza. Parte de la matriz de preparación del MCP de sp11 y la vuelve medible: lo que se puede calcular leyendo código se calcula, y lo que no se puede queda declarado y marcado como tal.</p>
+  <p class="note"><b>Muestra con datos reales.</b> La herramienta todavía no existe. Un script de prueba de solo lectura leyó hoy los tres mods activos de up1 y su MCP. La línea base es la matriz de sp11 del 14 de septiembre. Los valores marcados <span class="chip info">declarado</span> vienen de esa matriz y no se verificaron desde entonces.</p>
+</header>
+
+<!-- 1. TABLERO -->
+<section id="tablero">
+  <div class="sec-head">
+    <span class="eyebrow">1 · Tablero por mod</span>
+    <h2>Siete dimensiones, tres mods</h2>
+    <p class="lede">Las cinco primeras son las de sp11. Las dos últimas las agrega el atlas. Cambia un peso y el total de cada mod se recalcula. Un total solo se muestra si hay datos de al menos tres dimensiones con peso.</p>
+  </div>
+
+  <div class="legend">
+    <span><span class="chip ok">medido</span> calculado hoy leyendo código</span>
+    <span><span class="chip info">declarado</span> viene de un inventario o de sp11</span>
+    <span><span class="chip mute">sin dato</span> no se puede puntuar todavía</span>
+  </div>
+
+  <div class="tablebox">
+    <table class="board" id="board">
+      <thead>
+        <tr>
+          <th>Dimensión</th>
+          <th class="num">Peso</th>
+          <th class="mod">curriculum-design</th>
+          <th class="mod">curriculum-mapping</th>
+          <th class="mod">academic-scheduling</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-dim="seg">
+          <td><span class="dimname">Escritura segura<small>El asistente no escribe saltándose las reglas</small></span></td>
+          <td class="num"><input class="wt" id="w-seg" type="number" min="0" max="100" value="20" aria-label="Peso de Escritura segura"></td>
+          <td data-score="85"><div class="cell"><div class="top"><span class="score">85%</span><span class="chip info">declarado</span></div><div class="bar dec"><i style="width:85%"></i></div><span class="sub">Seguro por reglas en el servidor. 0 de 13 objetos con postura declarada</span><span class="base">sp11: 85%</span></div></td>
+          <td data-score="100"><div class="cell"><div class="top"><span class="score">100%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:100%"></i></div><span class="sub">10 de 10 objetos con bloqueo o gobernados</span><span class="base">sp11: 0%</span></div></td>
+          <td data-score=""><div class="cell"><div class="top"><span class="score none">sin dato</span><span class="chip mute">sin dato</span></div><span class="sub">0 de 31 objetos con postura. Falta el inventario de dónde viven las reglas</span></div></td>
+        </tr>
+        <tr data-dim="comp">
+          <td><span class="dimname">Escritura completa<small>Operaciones del dominio invocables con reglas</small></span></td>
+          <td class="num"><input class="wt" id="w-comp" type="number" min="0" max="100" value="25" aria-label="Peso de Escritura completa"></td>
+          <td data-score="78"><div class="cell"><div class="top"><span class="score">78%</span><span class="chip info">declarado</span></div><div class="bar dec"><i style="width:78%"></i></div><span class="sub">Código: 3 de 7 mutations con tool. El resto se reproduce por el CRUD genérico</span><span class="base">sp11: 78%</span></div></td>
+          <td data-score="92"><div class="cell"><div class="top"><span class="score">92%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:92%"></i></div><span class="sub">22 de 24 mutations con tool. Las 2 restantes tienen versión por lote: 100% con esa equivalencia</span><span class="base">sp11: 5%</span></div></td>
+          <td data-score=""><div class="cell"><div class="top"><span class="score none">sin dato</span><span class="chip mute">sin dato</span></div><span class="sub">4 de 23 mutations con tool. Sin clasificar cuáles debería exponer el asistente</span></div></td>
+        </tr>
+        <tr data-dim="int">
+          <td><span class="dimname">Integridad<small>Reglas que no viven solo en el cliente</small></span></td>
+          <td class="num"><input class="wt" id="w-int" type="number" min="0" max="100" value="20" aria-label="Peso de Integridad"></td>
+          <td data-score="65"><div class="cell"><div class="top"><span class="score">65%</span><span class="chip info">declarado</span></div><div class="bar dec"><i style="width:65%"></i></div><span class="sub">4 reglas solo en el cliente, una vigente (prerrequisitos al agregar)</span><span class="base">sp11: 65%</span></div></td>
+          <td data-score="90"><div class="cell"><div class="top"><span class="score">90%</span><span class="chip info">declarado</span></div><div class="bar dec"><i style="width:90%"></i></div><span class="sub">1 regla pendiente (B.4). Sin verificar desde sp11</span><span class="base">sp11: 90%</span></div></td>
+          <td data-score=""><div class="cell"><div class="top"><span class="score none">sin dato</span><span class="chip mute">sin dato</span></div><span class="sub">Nadie auditó las reglas del cliente de este mod</span></div></td>
+        </tr>
+        <tr data-dim="lec">
+          <td><span class="dimname">Lectura<small>El agente lee el estado agregado</small></span></td>
+          <td class="num"><input class="wt" id="w-lec" type="number" min="0" max="100" value="20" aria-label="Peso de Lectura"></td>
+          <td data-score="15"><div class="cell"><div class="top"><span class="score">15%</span><span class="chip info">declarado</span></div><div class="bar dec"><i style="width:15%"></i></div><span class="sub">Código: 2 de 3 queries con tool. Las lecturas que importan (malla, árbol de requisitos) no existen y el código no las puede contar</span><span class="base">sp11: 15%</span></div></td>
+          <td data-score="100"><div class="cell"><div class="top"><span class="score">100%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:100%"></i></div><span class="sub">9 de 9 queries con tool</span><span class="base">sp11: 15%</span></div></td>
+          <td data-score=""><div class="cell"><div class="top"><span class="score none">sin dato</span><span class="chip mute">sin dato</span></div><span class="sub">4 de 30 queries con tool. Muchas son de la pantalla; falta clasificarlas</span></div></td>
+        </tr>
+        <tr data-dim="gui">
+          <td><span class="dimname">Guía<small>Contratos y descripciones de campos</small></span></td>
+          <td class="num"><input class="wt" id="w-gui" type="number" min="0" max="100" value="15" aria-label="Peso de Guía"></td>
+          <td data-score="8"><div class="cell"><div class="top"><span class="score">8%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:8%"></i></div><span class="sub">1 de 13 objetos con contrato. Campos descritos: 13 de 15</span><span class="base">sp11: 10%</span></div></td>
+          <td data-score="30"><div class="cell"><div class="top"><span class="score">30%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:30%"></i></div><span class="sub">3 de 10 objetos con contrato. Campos descritos: 19 de 44</span><span class="base">sp11: 30%</span></div></td>
+          <td data-score="3"><div class="cell"><div class="top"><span class="score">3%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:3%"></i></div><span class="sub">1 de 31 objetos con contrato</span><span class="base">sp11: sin dato</span></div></td>
+        </tr>
+        <tr data-dim="fid">
+          <td><span class="dimname newdim">Fidelidad · nueva<small>Lo que el MCP afirma es cierto en el mod</small></span></td>
+          <td class="num"><input class="wt" id="w-fid" type="number" min="0" max="100" value="0" aria-label="Peso de Fidelidad"></td>
+          <td data-score="67"><div class="cell"><div class="top"><span class="score">67%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:67%"></i></div><span class="sub">4 de 6 comprobaciones sin diferencia</span></div></td>
+          <td data-score="29"><div class="cell"><div class="top"><span class="score">29%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:29%"></i></div><span class="sub">2 de 7. Con 2 excepciones propuestas (campo virtual, campos de sistema) sube a 86%</span></div></td>
+          <td data-score="100"><div class="cell"><div class="top"><span class="score">100%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:100%"></i></div><span class="sub">4 de 4 comprobaciones sin diferencia</span></div></td>
+        </tr>
+        <tr data-dim="acc">
+          <td><span class="dimname newdim">Acceso · nueva<small>Tools de escritura gobernadas por capability</small></span></td>
+          <td class="num"><input class="wt" id="w-acc" type="number" min="0" max="100" value="0" aria-label="Peso de Acceso"></td>
+          <td data-score="0"><div class="cell"><div class="top"><span class="score">0%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:0%"></i></div><span class="sub">0 de 3 tools de escritura con capability</span></div></td>
+          <td data-score="100"><div class="cell"><div class="top"><span class="score">100%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:100%"></i></div><span class="sub">20 de 20 tools de escritura con capability</span></div></td>
+          <td data-score="75"><div class="cell"><div class="top"><span class="score">75%</span><span class="chip ok">medido</span></div><div class="bar med"><i style="width:75%"></i></div><span class="sub">3 de 4. Ninguna de las 3 capabilities tiene perfil en el repositorio</span></div></td>
+        </tr>
+        <tr class="totals" id="totals">
+          <td><span class="dimname">Total ponderado<small id="coverageNote">Con los pesos de sp11</small></span></td>
+          <td class="num" id="wsum">100</td>
+          <td data-total="cd" data-base="54"></td>
+          <td data-total="cm" data-base="27"></td>
+          <td data-total="as" data-base=""></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lede" style="font-size:13.5px">Lectura del tablero: curriculum-mapping pasa de 27% a 86% porque entre sp11 y hoy se declaró su bloqueo de escritura y se construyeron sus tools. El código lo confirma. En curriculum-design el total se mantiene en 54% porque nada de lo declarado cambió, y su cuello de botella sigue siendo la lectura.</p>
+</section>
+
+<!-- 2. CÓMO SE MIDE -->
+<section id="metodo">
+  <div class="sec-head">
+    <span class="eyebrow">2 · Cómo se mide cada dimensión</span>
+    <h2>Fórmula, fuente y confianza</h2>
+    <p class="lede">Cada dimensión es una ficha: qué mide, cómo se calcula, de dónde sale el dato y cuánto se puede confiar en él.</p>
+  </div>
+  <div class="cards">
+    <article class="card">
+      <h3>Guía <span class="chip ok">automática</span></h3>
+      <dl>
+        <dt>Mide</dt><dd>Cuánto del mod tiene contrato y descripciones para que el asistente sepa llenar cada objeto.</dd>
+        <dt>Fórmula</dt><dd>Objetos con contrato / objetos propios. Es el criterio de sp11. Aparte, informativo: campos descritos / propiedades.</dd>
+        <dt>Fuente</dt><dd><code>ai/contracts.js</code> y <code>objects/*.json</code></dd>
+        <dt>Confianza</dt><dd>Alta. Reproduce 1 de 13 y 3 de 10 de sp11 sin cambios.</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <h3>Lectura <span class="chip info">semiautomática</span></h3>
+      <dl>
+        <dt>Mide</dt><dd>Qué parte de las lecturas del dominio puede usar el asistente.</dd>
+        <dt>Fórmula</dt><dd>Queries del esquema con tool / queries de dominio. Las lecturas esperadas que no existen se cuentan desde el inventario.</dd>
+        <dt>Fuente</dt><dd><code>logic/*.schema.graphql</code> leído con el parser de GraphQL, <code>ai/tools.js</code> e inventario</dd>
+        <dt>Confianza</dt><dd>Media. Necesita clasificar qué queries son "de dominio" y cuáles solo de la pantalla.</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <h3>Escritura completa <span class="chip info">semiautomática</span></h3>
+      <dl>
+        <dt>Mide</dt><dd>Qué operaciones de escritura del dominio puede invocar el asistente respetando las reglas.</dd>
+        <dt>Fórmula</dt><dd>Mutations con tool (o con equivalencia declarada) / mutations del dominio.</dd>
+        <dt>Fuente</dt><dd>Esquema GraphQL, <code>ai/tools.js</code> e inventario de equivalencias</dd>
+        <dt>Confianza</dt><dd>Media. Que el CRUD genérico cubra una operación es una decisión que hay que declarar.</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <h3>Escritura segura <span class="chip info">mixta</span></h3>
+      <dl>
+        <dt>Mide</dt><dd>Que el asistente no pueda escribir saltándose las reglas de negocio.</dd>
+        <dt>Fórmula</dt><dd>Objetos bloqueados o gobernados + objetos declarados seguros por sus reglas en el servidor / objetos propios.</dd>
+        <dt>Fuente</dt><dd><code>blockGenericMutation</code>, <code>governedObjects</code> e inventario de dónde vive cada regla</dd>
+        <dt>Confianza</dt><dd>Alta para lo bloqueado. Media para lo declarado seguro: lo decide una persona que leyó los resolvers.</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <h3>Integridad <span class="chip info">declarada</span></h3>
+      <dl>
+        <dt>Mide</dt><dd>Reglas de negocio que viven solo en el cliente y que el asistente se saltaría.</dd>
+        <dt>Fórmula</dt><dd>Reglas cerradas / reglas identificadas. El atlas lleva el registro y comprueba que cada referencia <code>archivo:línea</code> siga existiendo.</dd>
+        <dt>Fuente</dt><dd>Inventario por mod, hoy en el análisis de sp11</dd>
+        <dt>Confianza</dt><dd>Media. Descubrir las reglas sigue siendo trabajo humano: comparar la lógica Vue con los resolvers no se resuelve con reglas fijas.</dd>
+      </dl>
+    </article>
+    <article class="card">
+      <h3>Fidelidad · acceso <span class="chip ok">automáticas</span></h3>
+      <dl>
+        <dt>Mide</dt><dd>Fidelidad: lo que el contrato afirma es cierto en el mod. Acceso: las tools de escritura declaran la capability que exigen.</dd>
+        <dt>Fórmula</dt><dd>Comprobaciones sin diferencia / evaluadas. Tools de escritura con capability / tools de escritura.</dd>
+        <dt>Fuente</dt><dd>Reglas R01 a R09 de la muestra anterior</dd>
+        <dt>Confianza</dt><dd>Alta, salvo la comprobación del texto de estado, que es heurística.</dd>
+      </dl>
+    </article>
+  </div>
+</section>
+
+<!-- 3. MATRIZ VIVA -->
+<section id="matriz">
+  <div class="sec-head">
+    <span class="eyebrow">3 · La matriz de sp11, con el estado calculado</span>
+    <h2>Cada elemento, antes y ahora</h2>
+    <p class="lede">Las mismas filas de la matriz del 14 de septiembre. El estado de hoy sale del código cuando se puede y del inventario cuando no. El esfuerzo abierto es la suma de los rangos de sp11 solo de lo que sigue pendiente.</p>
+  </div>
+
+  <div class="summary">
+    <div class="sumcard"><span class="n">12,5 a 22,5</span><span class="l">puntos restantes de cm en sp11</span></div>
+    <div class="sumcard"><span class="n">2,5 a 5,5</span><span class="l">puntos abiertos de cm hoy (M4, M6, M7, M8)</span></div>
+    <div class="sumcard"><span class="n">12 a 22</span><span class="l">puntos abiertos de cd, sin cambio frente a sp11</span></div>
+  </div>
+
+  <h3>curriculum-mapping</h3>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>#</th><th>Elemento</th><th>Dimensión</th><th>sp11</th><th>Hoy</th><th>Cómo se sabe</th><th class="num">SP abiertos</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">M1</td><td>Declarar el bloqueo de los 10 objetos</td><td>Escritura segura</td><td><span class="pill warn">Falta</span></td><td><span class="pill ok">Hecho</span> 3 con bloqueo y 7 gobernados</td><td><span class="chip ok">medido</span></td><td class="num">0</td></tr>
+        <tr><td class="mono">M2 · M3</td><td>Tools compuestas y simples de escritura</td><td>Escritura completa</td><td><span class="pill warn">Falta</span></td><td><span class="pill ok">Hecho</span> 22 de 24 mutations. Las 2 restantes son la versión de a una de cerrar y retirar adopción, cubiertas por su versión por lote</td><td><span class="chip ok">medido</span></td><td class="num">0</td></tr>
+        <tr><td class="mono">M4</td><td>Cerrar la regla B.4 en el resolver</td><td>Integridad</td><td><span class="pill warn">Falta</span></td><td><span class="pill mute">Sin verificar</span></td><td><span class="chip info">declarado</span></td><td class="num">1 a 2</td></tr>
+        <tr><td class="mono">M5</td><td>Exponer las queries de dominio</td><td>Lectura</td><td><span class="pill warn">Falta</span></td><td><span class="pill ok">Hecho</span> 9 de 9 queries con tool</td><td><span class="chip ok">medido</span></td><td class="num">0</td></tr>
+        <tr><td class="mono">M6</td><td>Contratos para los 7 objetos sin guía</td><td>Guía</td><td><span class="pill info">Parcial 3/10</span></td><td><span class="pill info">Parcial 3/10</span> sin cambio</td><td><span class="chip ok">medido</span></td><td class="num">1 a 2</td></tr>
+        <tr><td class="mono">M7</td><td>Deuda documental</td><td>Guía</td><td><span class="pill warn">Falta</span></td><td><span class="pill mute">Sin verificar</span></td><td><span class="chip info">declarado</span></td><td class="num">0,5</td></tr>
+        <tr><td class="mono">M8</td><td>Migrar <code>as_set_rule_value</code> a <code>up1.write</code></td><td>Dependencia externa</td><td><span class="pill warn">Falta</span></td><td><span class="pill mute">Sin verificar</span> es una tool registrada a mano, el atlas no ve su contenido</td><td><span class="chip info">declarado</span></td><td class="num">0 a 1</td></tr>
+        <tr><td class="mono">M9</td><td>Huecos de servidor RM7 y RP5</td><td>Fuera de alcance</td><td><span class="pill mute">Fuera</span></td><td><span class="pill mute">Fuera</span> decisión del PO</td><td><span class="chip info">declarado</span></td><td class="num">no cuenta</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>curriculum-design</h3>
+  <div class="tablebox">
+    <table>
+      <thead><tr><th>#</th><th>Elemento</th><th>Dimensión</th><th>sp11</th><th>Hoy</th><th>Cómo se sabe</th><th class="num">SP abiertos</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">D1</td><td>Declarar postura de los 13 objetos</td><td>Escritura segura</td><td><span class="pill warn">Falta</span></td><td><span class="pill warn">Falta</span> 0 de 13 con postura</td><td><span class="chip ok">medido</span></td><td class="num">1 y decisiones</td></tr>
+        <tr><td class="mono">D2</td><td>Escritura por CRUD genérico y 4 tools</td><td>Escritura completa</td><td><span class="pill ok">Funciona</span></td><td><span class="pill ok">Funciona</span> con un hallazgo: 3 tools de escritura sin capability</td><td><span class="chip ok">medido</span></td><td class="num">0</td></tr>
+        <tr><td class="mono">D3</td><td>Cerrar los 4 huecos que solo están en el cliente</td><td>Integridad</td><td><span class="pill warn">Falta</span></td><td><span class="pill mute">Sin verificar</span></td><td><span class="chip info">declarado</span></td><td class="num">5 a 8</td></tr>
+        <tr><td class="mono">D4</td><td>Lecturas de la malla y del árbol de requisitos</td><td>Lectura</td><td><span class="pill warn">Falta</span></td><td><span class="pill warn">Falta</span> 2 de 3 queries con tool, las agregaciones no existen</td><td><span class="chip ok">medido</span> <span class="chip info">declarado</span></td><td class="num">3 a 6</td></tr>
+        <tr><td class="mono">D5</td><td>Contratos para los 12 objetos sin guía</td><td>Guía</td><td><span class="pill info">Parcial 1/13</span></td><td><span class="pill info">Parcial 1/13</span> sin cambio</td><td><span class="chip ok">medido</span></td><td class="num">1 a 3</td></tr>
+        <tr><td class="mono">D6</td><td>Tool para mover una materia de forma atómica</td><td>Escritura completa</td><td><span class="pill mute">Opcional</span></td><td><span class="pill mute">Opcional</span> <code>movePlanEntry</code> sin tool</td><td><span class="chip ok">medido</span></td><td class="num">2 a 4</td></tr>
+        <tr><td class="mono">D7</td><td>Sincronizar los 2 huecos de alta</td><td>Integridad</td><td><span class="pill ok">Funciona</span></td><td><span class="pill mute">Sin verificar</span></td><td><span class="chip info">declarado</span></td><td class="num">0</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 4. LO QUE EL CÓDIGO NO PUEDE CONTAR -->
+<section id="limites-medicion">
+  <div class="sec-head">
+    <span class="eyebrow">4 · Lo que el código no puede contar</span>
+    <h2>Por qué hace falta un inventario declarado</h2>
+  </div>
+  <div class="cols2">
+    <div class="box">
+      <h3>Lo que no existe no se cuenta</h3>
+      <p style="font-size:13.5px">En curriculum-design, el código ve 3 queries y 2 tienen tool: un 67% engañoso. Las lecturas que el asistente necesita, la malla y el árbol de requisitos, no existen todavía, así que ningún script las puede encontrar. Por eso el tablero mantiene el 15% de sp11 y muestra el dato del código como contexto.</p>
+    </div>
+    <div class="box">
+      <h3>Lo equivalente hay que decirlo</h3>
+      <p style="font-size:13.5px">Dos mutations de curriculum-mapping figuran sin tool, pero el esquema explica que su versión por lote las reemplaza. Sin una equivalencia declarada, el atlas las cuenta como hueco y la dimensión queda en 92% en vez de 100%.</p>
+    </div>
+    <div class="box">
+      <h3>Lo que es de la pantalla no es del asistente</h3>
+      <p style="font-size:13.5px">academic-scheduling tiene 30 queries y solo 4 con tool. La mayoría alimentan el calendario, el Excel y los PDF de la pantalla. Hasta que alguien clasifique cuáles debería leer el asistente, ese porcentaje no puntúa.</p>
+    </div>
+    <div class="box">
+      <h3>Los porcentajes de sp11 eran estimaciones</h3>
+      <p style="font-size:13.5px">sp11 lo dice en sus caveats: los % son reproducibles con un criterio, no medidas exactas. El atlas deja el criterio escrito como fórmula y señala qué valores se midieron y cuáles se heredaron.</p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:8px">El inventario declarado, por mod</h3>
+  <p class="lede">Es la matriz de sp11 convertida en un archivo versionado en el repositorio del mod. El atlas lo lee y completa el estado de lo que puede verificar. El ejemplo es ilustrativo: la referencia de archivo y línea es un marcador, no un dato real.</p>
+<pre class="term">{
+  "mod": "curriculum-mapping",
+  "equivalencias": [
+    { "mutation": "closeMatrixAdoptionValidated",
+      "cubiertaPor": "cm_close_matrix_adoptions",
+      "motivo": "versión por lote; la de a una sirve al botón de la fila" }
+  ],
+  "lecturasEsperadas": [],
+  "reglasSoloCliente": [
+    { "id": "B.4", "estado": "abierta",
+      "ancla": "logic/&lt;resolver&gt;.js:&lt;línea&gt;",
+      "decide": "equipo de cm" }
+  ],
+  "elementos": [
+    { "id": "M4", "dimension": "integridad", "depende": [],
+      "esfuerzo": [1, 2], "estado": "abierto" }
+  ]
+}</pre>
+</section>
+
+<!-- 5. HALLAZGOS -->
+<section id="hallazgos">
+  <div class="sec-head">
+    <span class="eyebrow">5 · Lo que alimenta Fidelidad y Acceso</span>
+    <h2>Hallazgos concretos de la corrida</h2>
+  </div>
+  <div class="cards">
+    <article class="card">
+      <h3>3 tools de escritura de cd y 1 de as sin capability <span class="pill warn">media</span></h3>
+      <p style="font-size:13.5px"><code>cd_create_formtemplate_for_activity</code>, <code>cd_add_plan_entries_batch</code>, <code>cd_remove_plan_entries_batch</code> y <code>as_run_scenario</code>. Se ofrecen a todos y el rechazo llega al final. Explica el 0% de cd y el 75% de as en Acceso.</p>
+    </article>
+    <article class="card">
+      <h3>Texto de estado de Activity <span class="pill warn">baja</span></h3>
+      <p style="font-size:13.5px">La lista de caminos válidos no nombra el paso de En revisión a Aprobado. Es una comprobación heurística sobre prosa.</p>
+    </article>
+    <article class="card">
+      <h3>Campos sin describir <span class="pill warn">baja</span></h3>
+      <p style="font-size:13.5px">Activity: <code>version</code> y <code>externalId</code>. Matriz de competencias: <code>matrixType</code>, <code>performanceScaleId</code>, <code>status</code>. Explican la baja Fidelidad de cm hasta aceptar las excepciones.</p>
+    </article>
+    <article class="card">
+      <h3>Capabilities sin perfil en el repositorio <span class="pill info">info</span></h3>
+      <p style="font-size:13.5px">Las 3 de planificación académica están declaradas, pero no hay carpeta de perfiles. El baseline de RBAC del 2 de septiembre las lista, así que el atlas debería leerlo como fuente.</p>
+    </article>
+  </div>
+</section>
+
+<!-- 6. LÍMITES -->
+<section id="limites">
+  <div class="sec-head">
+    <span class="eyebrow">6 · Lo que esta muestra no resuelve</span>
+    <h2>Límites y calibración</h2>
+  </div>
+  <div class="box">
+    <ul class="limits">
+      <li><b>Los valores declarados no se verificaron desde sp11.</b> Escritura segura de cd, Integridad de ambos y Lectura de cd vienen de la matriz del 14 de septiembre. Es probable que alguno haya cambiado, como pasó con cm.</li>
+      <li><b>El cambio frente a sp11 mezcla dos cosas:</b> el avance real del mod y el cambio de instrumento. Mis fórmulas no son idénticas al criterio manual de sp11. Antes de usar los totales como compromiso hay que reproducir primero los valores que coinciden (Guía de cd y de cm) y alinear los demás.</li>
+      <li><b>El primer cálculo de mutations y queries dio ruido.</b> Una primera versión con expresiones regulares tomó fragmentos de las descripciones como si fueran operaciones. Con el parser de GraphQL que ya usa <code>up1/mcp</code> los números son estables.</li>
+      <li><b>Las tools registradas a mano,</b> como <code>as_set_rule_value</code>, solo se reconocen por nombre. Su capability y su contenido no se leen.</li>
+      <li><b>Un total sin datos suficientes no se muestra.</b> academic-scheduling aparece como incompleto en vez de recibir un número que parezca más sólido de lo que es.</li>
+      <li><b>Sin historial todavía.</b> Esta es la primera corrida. La tendencia por mod aparece a partir de la segunda.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function () {
+  var DIMS = ["seg", "comp", "int", "lec", "gui", "fid", "acc"];
+  var MODS = ["cd", "cm", "as"];
+  var MIN_DIMS = 3;
+  function weight(d) {
+    var el = document.getElementById("w-" + d);
+    var v = parseFloat(el.value);
+    return isFinite(v) && v > 0 ? v : 0;
+  }
+  function render(td, text, delta) {
+    td.innerHTML = "";
+    var cell = document.createElement("div");
+    cell.className = "cell";
+    var top = document.createElement("div");
+    top.className = "top";
+    var sc = document.createElement("span");
+    sc.className = text === null ? "score none" : "score";
+    sc.textContent = text === null ? "incompleto" : text + "%";
+    top.appendChild(sc);
+    cell.appendChild(top);
+    if (text !== null) {
+      var bar = document.createElement("div");
+      bar.className = "bar";
+      var i = document.createElement("i");
+      i.style.width = text + "%";
+      bar.appendChild(i);
+      cell.appendChild(bar);
+    }
+    var sub = document.createElement("span");
+    sub.className = "sub";
+    sub.textContent = delta;
+    cell.appendChild(sub);
+    td.appendChild(cell);
+  }
+  function recalc() {
+    var rows = {};
+    DIMS.forEach(function (d) { rows[d] = document.querySelector('tr[data-dim="' + d + '"]'); });
+    var wsum = 0;
+    DIMS.forEach(function (d) { wsum += weight(d); });
+    document.getElementById("wsum").textContent = wsum;
+    MODS.forEach(function (m, idx) {
+      var num = 0, den = 0, present = 0, weighted = 0;
+      DIMS.forEach(function (d) {
+        var w = weight(d);
+        if (w <= 0) return;
+        weighted++;
+        var td = rows[d].children[2 + idx];
+        var raw = td.getAttribute("data-score");
+        if (raw === null || raw === "") return;
+        present++;
+        num += parseFloat(raw) * w;
+        den += w;
+      });
+      var cell = document.querySelector('td[data-total="' + m + '"]');
+      var base = cell.getAttribute("data-base");
+      if (present < MIN_DIMS || den === 0) {
+        render(cell, null, present + " de " + weighted + " dimensiones con dato");
+        return;
+      }
+      var total = Math.round(num / den);
+      var note = present + " de " + weighted + " dimensiones con dato";
+      if (base !== null && base !== "") {
+        var diff = total - parseFloat(base);
+        note += " · sp11: " + base + "% · " + (diff >= 0 ? "+" : "") + diff + " puntos";
+      }
+      render(cell, total, note);
+    });
+  }
+  DIMS.forEach(function (d) {
+    document.getElementById("w-" + d).addEventListener("input", recalc);
+  });
+  recalc();
+})();
+</script>

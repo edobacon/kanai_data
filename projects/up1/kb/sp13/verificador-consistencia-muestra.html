@@ -1,0 +1,221 @@
+<title>Consistencia entre capas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>
+/* Concepto: informe de verificador de código, columna única, tablas densas y un veredicto por comprobación */
+:root {
+  --bg: #f3f4f1; --surface: #ffffff; --ink: #1d2428; --muted: #5b676e; --line: #d9ddd6;
+  --accent: #0d6b66; --accent-soft: #dcefec;
+  --ok: #2c7a3f; --ok-soft: #e1f1e4; --warn: #9a5b00; --warn-soft: #fbeccf; --bad: #a8321f; --bad-soft: #f8dcd6;
+  --code-bg: #eceee9;
+  --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14191b; --surface: #1c2326; --ink: #e6eae8; --muted: #9aa7ad; --line: #2f3a3e;
+    --accent: #5fc4bc; --accent-soft: #1b3331;
+    --ok: #7bcf8e; --ok-soft: #1c3322; --warn: #e9b35a; --warn-soft: #3a2c12; --bad: #f09a88; --bad-soft: #3d1f19;
+    --code-bg: #263033; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14191b; --surface: #1c2326; --ink: #e6eae8; --muted: #9aa7ad; --line: #2f3a3e;
+  --accent: #5fc4bc; --accent-soft: #1b3331;
+  --ok: #7bcf8e; --ok-soft: #1c3322; --warn: #e9b35a; --warn-soft: #3a2c12; --bad: #f09a88; --bad-soft: #3d1f19;
+  --code-bg: #263033; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 64px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 0 0 10px; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 26px; line-height: 1.2; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 26px 0 8px; font-weight: 600; }
+p { margin: 0 0 12px; max-width: 70ch; }
+.lede { font-size: 17px; color: var(--muted); max-width: 66ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 14px; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; display: inline-block; margin: 1px 0; }
+code.hl { background: var(--bad-soft); color: var(--bad); }
+.sub { font-size: 12px; color: var(--muted); font-family: var(--body); }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 26px 0 8px; }
+.sum { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.sum .k { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.sum .v { font-family: var(--display); font-size: 30px; line-height: 1.15; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+.sum .t { font-size: 13px; color: var(--muted); }
+section { margin-top: 44px; padding-top: 6px; border-top: 2px solid var(--ink); }
+.verdict { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 14px 0; max-width: 72ch; }
+.verdict b { color: var(--accent); }
+.rule { font-size: 13.5px; color: var(--muted); max-width: 72ch; }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--code-bg); white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+td.ok { color: var(--ok); } td.warn { color: var(--warn); } td.bad { color: var(--bad); }
+.chip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
+.chip-ok { background: var(--ok-soft); color: var(--ok); }
+.chip-warn { background: var(--warn-soft); color: var(--warn); }
+.chip-bad { background: var(--bad-soft); color: var(--bad); }
+.ticket { font-family: var(--mono); font-size: 12px; background: var(--accent-soft); color: var(--accent); padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.two > * { min-width: 0; }
+.limits li { margin-bottom: 8px; max-width: 72ch; }
+ul { padding-left: 20px; margin: 0 0 12px; }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; } th, td { padding: 8px 10px; } }
+</style>
+<div class="wrap">
+  <header>
+    <h1>Consistencia entre capas</h1>
+    <p class="lede">Cuatro comprobaciones que leen el código de up1 sin ejecutarlo y sin LLM. Cada una reproduce un hallazgo que hoy tiene su ticket en Jira, y marca otros que todavía no lo tienen.</p>
+    <div class="meta">
+      <span>corrida: 2026-10-09</span>
+      <span>solo lectura, 90 objetos cargados (core + mods)</span>
+      <span>up1 2c19522 · academic-scheduling 3908d9c · curriculum-design 6e2988f · curriculum-mapping a456b14</span>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="sum"><div class="k">1 · Guardas de permiso</div><div class="v">19 de 42</div><div class="t">consultas custom sin chequeo de capability</div></div>
+    <div class="sum"><div class="k">2 · Claves de columnas</div><div class="v">50 de 135</div><div class="t">campos de negocio sin traducción de columna (es)</div></div>
+    <div class="sum"><div class="k">3 · FK en listas</div><div class="v">27 de 43</div><div class="t">relaciones sin declarar en el layout de lista</div></div>
+    <div class="sum"><div class="k">4 · Alcance organizacional</div><div class="v">2 + 13</div><div class="t">objetos sin camino y con camino solo por referencias inversas</div></div>
+  </div>
+
+  <section>
+    <h2>1. Guardas de permiso en consultas de lectura</h2>
+    <p class="rule">Compara cada <code>Query</code> custom del esquema del mod con su resolver. Se considera guardada si el archivo llama a <code>checkCapability</code>, <code>checkObjectPermissions</code>, <code>checkPermission</code>, <code>withObjectAuth</code> o a un helper que los llama (por ejemplo <code>requireScenarioView</code>). El core no envuelve las consultas custom, así que sin esa llamada solo se exige sesión.</p>
+    <div class="verdict"><b>Reproduce</b> <span class="ticket">UPONE-2036</span> y sus 7 archivos. Hoy 12 de las 30 consultas de academic-scheduling ya están guardadas (el arreglo de <span class="ticket">UPONE-1611</span>); 16 declaran en un comentario que son de lectura autenticada y 2 no dicen nada. Curriculum-mapping tiene sus 9 consultas guardadas.</div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Mod</th><th class="num">Consultas</th><th class="num">Guardadas</th><th class="num">Abiertas declaradas</th><th class="num">Sin guarda</th></tr></thead>
+      <tbody><tr><td class="mono">academic-scheduling</td><td class="num">30</td><td class="num ok">12</td><td class="num warn">16</td><td class="num bad">2</td></tr><tr><td class="mono">curriculum-design</td><td class="num">3</td><td class="num ok">2</td><td class="num warn">0</td><td class="num bad">1</td></tr><tr><td class="mono">curriculum-mapping</td><td class="num">9</td><td class="num ok">9</td><td class="num warn">0</td><td class="num bad">0</td></tr></tbody>
+    </table></div>
+    <h3>Consultas sin chequeo de capability</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Archivo</th><th>Consultas</th><th>Estado</th></tr></thead>
+      <tbody><tr><td class="mono">scenario-calendar.resolver.js<div class="sub">academic-scheduling</div></td><td><code>scenarioCalendar</code> <code>scenarioCalendarBlock</code> <code>scenarioCalendarFilterOptions</code> </td><td><span class="chip chip-warn">abierta declarada</span></td></tr>
+<tr><td class="mono">scenario-candidate-sections.resolver.js<div class="sub">academic-scheduling</div></td><td><code>scenarioCandidateSections</code> <code>scenarioCandidateSectionRefs</code> <code>scenarioCandidateSectionAreas</code> </td><td><span class="chip chip-warn">abierta declarada</span></td></tr>
+<tr><td class="mono">scenario-detail.resolver.js<div class="sub">academic-scheduling</div></td><td><code>scenarioCreatedBy</code> <code>scenarioSectionIdsByAssignment</code> </td><td><span class="chip chip-bad">sin guarda</span></td></tr>
+<tr><td class="mono">scenario-occupancy.resolver.js<div class="sub">academic-scheduling</div></td><td><code>scenarioBlockOccupancy</code> <code>scenarioSectionIdsForBlock</code> </td><td><span class="chip chip-warn">abierta declarada</span></td></tr>
+<tr><td class="mono">scenario-summary.resolver.js<div class="sub">academic-scheduling</div></td><td><code>scenarioSummary</code> <code>scenarioInstructorLoad</code> <code>scenarioCourseCoverage</code> <code>scenarioConflicts</code> </td><td><span class="chip chip-warn">abierta declarada</span></td></tr>
+<tr><td class="mono">section-conflict.resolver.js<div class="sub">academic-scheduling</div></td><td><code>sectionConflictDetail</code> </td><td><span class="chip chip-warn">abierta declarada</span></td></tr>
+<tr><td class="mono">unified-assignment.resolver.js<div class="sub">academic-scheduling</div></td><td><code>unifiedAssignmentForSection</code> <code>scenarioSectionRequirements</code> <code>unifiedRuleCheck</code> </td><td><span class="chip chip-warn">abierta declarada</span></td></tr>
+<tr><td class="mono">activity.resolver.js<div class="sub">curriculum-design</div></td><td><code>validateActivityEvaluations</code> </td><td><span class="chip chip-bad">sin guarda</span></td></tr></tbody>
+    </table></div>
+    <h3>Lectura de los resultados</h3>
+    <ul class="limits">
+      <li><b>Abierta declarada</b> significa que el propio archivo dice "sin capability custom", "sin RBAC propio" o "lectura autenticada". Es una decisión escrita, no un olvido. La comprobación la separa del olvido real, que es lo que importa al revisar un PR.</li>
+      <li><b>Sin guarda</b> son <code>scenarioCreatedBy</code>, <code>scenarioSectionIdsByAssignment</code> y <code>validateActivityEvaluations</code>. Son los tres que ningún comentario justifica; hay que revisarlos a mano porque pueden recibir el control desde una consulta ya guardada.</li>
+      <li>La guarda se atribuye por archivo, no por función. Un archivo con una guarda y una consulta sin ella aparece como guardado. Hay que pasar a análisis por función antes de usarlo como compuerta.</li>
+      <li>No se evaluaron las mutations. Las que delegan en el CRUD genérico (<code>curriculum-create</code>) heredan la guarda del core. Quedan 4 con solo sesión y 4 sin guarda visible en los 3 mods, por revisar.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Claves de traducción de columnas frente a campos del objeto</h2>
+    <p class="rule">El selector "Personalizar columnas" muestra cada campo con la clave <code>column.&lt;campo&gt;</code> del archivo de idioma del objeto. Si no existe, cae al <code>title</code> del JSON, que está en inglés. La comprobación toma los campos de cada objeto con una lista (excluye <code>id</code>, JSON y arreglos, y los de sistema <code>createdAt</code>, <code>updatedAt</code>, <code>updatedById</code>, <code>internalId</code>) y busca la clave en <code>lang/es</code>, <code>lang/en</code> y <code>lang/pt</code>.</p>
+    <div class="verdict"><b>Reproduce</b> <span class="ticket">UPONE-2038</span> sin error: los 8 campos de Sección que el ticket nombra (Course, Term, Org Unit, Shift, Modality, Required Instructors, Accessibility Required, Section Cluster) son exactamente los 8 que faltan aquí. En Docentes faltan <code>instructorType</code>, <code>gender</code> y <code>preferredName</code>, los que cita <span class="ticket">UPONE-2041</span> y <span class="ticket">UPONE-2043</span>.</div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Objeto</th><th class="num">Sin clave (es)</th><th>Campos</th></tr></thead>
+      <tbody><tr><td class="mono">offering<div class="sub">curriculum-design</div></td><td class="num">11 de 19<div class="sub">58%</div></td><td><code>availableEvents</code> <code>description</code> <code>generalModality</code> <code>imageUrl</code> <code>language</code> <code>lmsId</code> <code>maxCapacity</code> <code>modalityId</code> <code>sessionMode</code> <code>shiftId</code>  <span class="sub">+1</span> </td></tr>
+<tr><td class="mono">section<div class="sub">academic-scheduling</div></td><td class="num">8 de 15<div class="sub">53%</div></td><td><code>accessibilityRequired</code> <code>activityId</code> <code>modalityId</code> <code>orgUnitId</code> <code>requiredInstructors</code> <code>sectionClusterId</code> <code>shiftId</code> <code>termId</code>  </td></tr>
+<tr><td class="mono">scenario<div class="sub">academic-scheduling</div></td><td class="num">5 de 9<div class="sub">56%</div></td><td><code>active</code> <code>importLocked</code> <code>lastRunDuration</code> <code>ruleSetId</code> <code>sourceScenarioId</code>  </td></tr>
+<tr><td class="mono">instructor<div class="sub">academic-scheduling</div></td><td class="num">4 de 8<div class="sub">50%</div></td><td><code>gender</code> <code>instructorType</code> <code>preferredName</code> <code>userId</code>  </td></tr>
+<tr><td class="mono">activity<div class="sub">curriculum-design</div></td><td class="num">4 de 17<div class="sub">24%</div></td><td><code>formTemplateId</code> <code>planningUnitId</code> <code>previousVersionId</code> <code>recordType</code>  </td></tr>
+<tr><td class="mono">contract<div class="sub">academic-scheduling</div></td><td class="num">3 de 3<div class="sub">100%</div></td><td><code>code</code> <code>name</code> <code>priority</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">contractrestriction<div class="sub">academic-scheduling</div></td><td class="num">3 de 3<div class="sub">100%</div></td><td><code>contractId</code> <code>restrictionDefinitionId</code> <code>value</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">instructorcourseassignment<div class="sub">academic-scheduling</div></td><td class="num">2 de 2<div class="sub">100%</div></td><td><code>activityId</code> <code>instructorId</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">sectioninstructor<div class="sub">academic-scheduling</div></td><td class="num">2 de 2<div class="sub">100%</div></td><td><code>instructorId</code> <code>sectionId</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">resourcetypeassignment<div class="sub">academic-scheduling</div></td><td class="num">2 de 2<div class="sub">100%</div></td><td><code>resourceId</code> <code>resourceTypeId</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">resourcetypes<div class="sub">academic-scheduling</div></td><td class="num">2 de 2<div class="sub">100%</div></td><td><code>name</code> <code>priority</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">ruleset<div class="sub">academic-scheduling</div></td><td class="num">2 de 2<div class="sub">100%</div></td><td><code>description</code> <code>name</code>  <span class="chip chip-bad">sin archivo de idioma</span></td></tr>
+<tr><td class="mono">resource<div class="sub">academic-scheduling</div></td><td class="num">1 de 9<div class="sub">11%</div></td><td><code>chairUsagePercentage</code>  </td></tr>
+<tr><td class="mono">curriculum<div class="sub">curriculum-design</div></td><td class="num">1 de 11<div class="sub">9%</div></td><td><code>previousVersionId</code>  </td></tr></tbody>
+    </table></div>
+    <h3>Lectura de los resultados</h3>
+    <ul class="limits">
+      <li>7 objetos de academic-scheduling con lista no tienen ningún archivo de idioma. En ellos todos los campos de negocio caen al texto en inglés.</li>
+      <li><code>bibliographyreference</code> tiene claves en español pero ninguna en inglés ni portugués (11 campos).</li>
+      <li>Solo se evaluaron las listas cuyo objeto tiene JSON propio: 14 de 14 en academic-scheduling, 6 de 7 en curriculum-design y 1 de 3 en curriculum-mapping (el resto apunta a tipos de registro).</li>
+      <li>No se sabe si los campos de sistema tienen traducción en otra parte. Por eso se excluyen del total y no se cuentan como faltantes.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Relaciones FK sin declarar en las listas</h2>
+    <p class="rule">Una lista resuelve el nombre de un registro relacionado solo si el layout lo declara en <code>relations</code> (y su campo de nombre en <code>relationDisplayFields</code>). Si no, la celda muestra el identificador interno. La comprobación cruza las claves foráneas de cada objeto con las relaciones declaradas, con la convención del layout: nombre del campo sin el sufijo <code>Id</code>.</p>
+    <div class="verdict"><b>Reproduce</b> <span class="ticket">UPONE-2039</span> sin error: <code>section-list.json</code> declara <code>activity</code> y <code>term</code> y le faltan exactamente <code>shift</code>, <code>orgunit</code>, <code>modality</code> y <code>sectioncluster</code>, las 4 que el ticket enumera. Encuentra otros 14 layouts con el mismo patrón y un caso nuevo que ya está a la vista: la columna <code>executionUnitId</code> de la lista de Activity.</div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Layout</th><th class="num">Sin declarar</th><th>Claves foráneas (en rojo: columna ya visible)</th></tr></thead>
+      <tbody><tr><td class="mono">default_Activity_list.json<div class="sub">curriculum-design · activity</div></td><td class="num">4 de 4</td><td><code class="">previousVersionId</code> <code class="hl">executionUnitId</code> <code class="">planningUnitId</code> <code class="">formTemplateId</code> <div class="sub">declaradas: orgunit</div></td></tr>
+<tr><td class="mono">section-list.json<div class="sub">academic-scheduling · section</div></td><td class="num">4 de 6</td><td><code class="">orgUnitId</code> <code class="">shiftId</code> <code class="">modalityId</code> <code class="">sectionClusterId</code> <div class="sub">declaradas: activity, term</div></td></tr>
+<tr><td class="mono">AcademicProgram_list_gestor.json<div class="sub">curriculum-design · academicprogram</div></td><td class="num">3 de 3</td><td><code class="">institutionId</code> <code class="">governanceUnitId</code> <code class="">executionUnitId</code> <div class="sub">declaradas: ninguna</div></td></tr>
+<tr><td class="mono">default_Offering_syllabus_list.json<div class="sub">curriculum-design · offering</div></td><td class="num">3 de 5</td><td><code class="">activityId</code> <code class="">shiftId</code> <code class="">modalityId</code> <div class="sub">declaradas: activityline, term</div></td></tr>
+<tr><td class="mono">default_AcademicProgram_list.json<div class="sub">curriculum-design · academicprogram</div></td><td class="num">2 de 3</td><td><code class="">governanceUnitId</code> <code class="">executionUnitId</code> <div class="sub">declaradas: institution</div></td></tr>
+<tr><td class="mono">default_Curriculum_list.json<div class="sub">curriculum-design · curriculum</div></td><td class="num">2 de 2</td><td><code class="">institutionId</code> <code class="">previousVersionId</code> <div class="sub">declaradas: ninguna</div></td></tr>
+<tr><td class="mono">contractrestriction-list-view.json<div class="sub">academic-scheduling · contractrestriction</div></td><td class="num">1 de 2</td><td><code class="">contractId</code> <div class="sub">declaradas: restrictiondefinition</div></td></tr>
+<tr><td class="mono">contractrestriction-list.json<div class="sub">academic-scheduling · contractrestriction</div></td><td class="num">1 de 2</td><td><code class="">contractId</code> <div class="sub">declaradas: restrictiondefinition</div></td></tr>
+<tr><td class="mono">default_InstructorCourseAssignment_list.json<div class="sub">academic-scheduling · instructorcourseassignment</div></td><td class="num">1 de 2</td><td><code class="">instructorId</code> <div class="sub">declaradas: activity</div></td></tr>
+<tr><td class="mono">default_SectionInstructor_list.json<div class="sub">academic-scheduling · sectioninstructor</div></td><td class="num">1 de 2</td><td><code class="">sectionId</code> <div class="sub">declaradas: instructor</div></td></tr>
+<tr><td class="mono">instructor-list.json<div class="sub">academic-scheduling · instructor</div></td><td class="num">1 de 1</td><td><code class="">userId</code> <div class="sub">declaradas: ninguna</div></td></tr>
+<tr><td class="mono">resource-list.json<div class="sub">academic-scheduling · resource</div></td><td class="num">1 de 1</td><td><code class="">orgUnitId</code> <div class="sub">declaradas: ninguna</div></td></tr>
+<tr><td class="mono">resource-resourcetypes-list.json<div class="sub">academic-scheduling · resourcetypeassignment</div></td><td class="num">1 de 2</td><td><code class="">resourceId</code> <div class="sub">declaradas: resourcetype, resourcetypes</div></td></tr>
+<tr><td class="mono">scenario-list.json<div class="sub">academic-scheduling · scenario</div></td><td class="num">1 de 4</td><td><code class="">ruleSetId</code> <div class="sub">declaradas: orgunit, shift, sourcescenario</div></td></tr>
+<tr><td class="mono">default_DevelopmentLevel_list.json<div class="sub">curriculum-mapping · developmentlevel</div></td><td class="num">1 de 1</td><td><code class="">parentId</code> <div class="sub">declaradas: ninguna</div></td></tr></tbody>
+    </table></div>
+    <h3>Lectura de los resultados</h3>
+    <ul class="limits">
+      <li>Solo la fila de Activity tiene una columna visible sin relación declarada. No lo comprobé en pantalla: el layout trae <code>relationDisplayFields</code> para <code>OrgUnit</code> y puede resolverse por otro camino. Es la prioridad de revisión de esta tabla.</li>
+      <li>Las demás son defectos latentes: la relación se vuelve visible el día que alguien agrega la columna desde "Personalizar columnas", como pasó en Secciones.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4. Alcance organizacional de cada objeto</h2>
+    <p class="rule">Un usuario con rol acotado a una facultad o departamento solo ve las filas que tienen camino de claves foráneas hasta la organización. El core hace una búsqueda en anchura sobre las FK en ambas direcciones (<code>findPathToAnchor</code>). La comprobación repite esa búsqueda sobre los JSON de los objetos, sin base de datos, y anota si el primer salto es una FK propia (<i>directa</i>) o una referencia desde otro objeto (<i>inversa</i>).</p>
+    <div class="verdict"><b>Reproduce</b> <span class="ticket">UPONE-2061</span>: <code>requirement</code> no tiene ningún camino a la organización, por eso un usuario acotado ve sus requisitos vacíos. Los objetos polimórficos con camino solo inverso (<code>curricularsection</code>, <code>developmentlevel</code>, <code>performancescale</code>) son coherentes con lo que describe el ticket: de las secciones solo se ven las modalidades que usan las secciones del alcance del usuario (no verificado en un tenant).</div>
+    <div class="two">
+      <div>
+        <h3>Sin camino (2)</h3>
+        <div class="tablewrap"><table><thead><tr><th>Objeto</th><th class="num">Camino</th><th>Marca</th></tr></thead><tbody><tr><td class="mono">instructionalcomponenttype<div class="sub">curriculum-design</div></td><td class="num">sin camino</td><td></td></tr>
+<tr><td class="mono">requirement<div class="sub">curriculum-design</div></td><td class="num">sin camino</td><td><span class="chip chip-warn">polimórfico: ownerType</span></td></tr></tbody></table></div>
+        <h3>Polimórficos con camino directo (1)</h3>
+        <div class="tablewrap"><table><thead><tr><th>Objeto</th><th class="num">Camino</th><th>Marca</th></tr></thead><tbody><tr><td class="mono">curriculum<div class="sub">curriculum-design</div></td><td class="num">2 saltos</td><td><span class="chip chip-warn">polimórfico: ownerType</span></td></tr></tbody></table></div>
+      </div>
+      <div>
+        <h3>Solo por referencias inversas (13)</h3>
+        <div class="tablewrap"><table><thead><tr><th>Objeto</th><th class="num">Camino</th><th>Marca</th></tr></thead><tbody><tr><td class="mono">curricularsection<div class="sub">curriculum-design</div></td><td class="num">3 saltos</td><td><span class="chip chip-warn">polimórfico: ownerType</span></td></tr>
+<tr><td class="mono">developmentlevel<div class="sub">curriculum-mapping</div></td><td class="num">5 saltos</td><td><span class="chip chip-warn">polimórfico: ownerType</span></td></tr>
+<tr><td class="mono">performancescale<div class="sub">curriculum-mapping</div></td><td class="num">6 saltos</td><td><span class="chip chip-warn">polimórfico: ownerType</span></td></tr>
+<tr><td class="mono">contract<div class="sub">academic-scheduling</div></td><td class="num">3 saltos</td><td></td></tr>
+<tr><td class="mono">resourcetypes<div class="sub">academic-scheduling</div></td><td class="num">4 saltos</td><td></td></tr>
+<tr><td class="mono">restrictiondefinition<div class="sub">academic-scheduling</div></td><td class="num">5 saltos</td><td></td></tr>
+<tr><td class="mono">ruledefinition<div class="sub">academic-scheduling</div></td><td class="num">5 saltos</td><td></td></tr>
+<tr><td class="mono">ruleset<div class="sub">academic-scheduling</div></td><td class="num">3 saltos</td><td></td></tr>
+<tr><td class="mono">sectioncluster<div class="sub">academic-scheduling</div></td><td class="num">3 saltos</td><td></td></tr>
+<tr><td class="mono">shift<div class="sub">academic-scheduling</div></td><td class="num">3 saltos</td><td></td></tr>
+<tr><td class="mono">term<div class="sub">academic-scheduling</div></td><td class="num">3 saltos</td><td></td></tr>
+<tr><td class="mono">termtype<div class="sub">academic-scheduling</div></td><td class="num">4 saltos</td><td></td></tr>
+<tr><td class="mono">competencynode<div class="sub">curriculum-mapping</div></td><td class="num">3 saltos</td><td></td></tr></tbody></table></div>
+      </div>
+    </div>
+    <h3>Lectura de los resultados</h3>
+    <ul class="limits">
+      <li>De 54 objetos de los 3 mods, 39 tienen camino por una FK propia y no se destacan.</li>
+      <li>"Solo inversa" no es un error por sí mismo: un catálogo como <code>shift</code> o <code>term</code> se ve a través de los registros que lo usan. Importa cuando el objeto debería verse completo para el usuario acotado, y esa decisión es de negocio.</li>
+      <li><code>instructionalcomponenttype</code> no tiene FK en ningún sentido. Puede ser un catálogo de configuración a propósito; falta confirmarlo.</li>
+      <li>El core arma el grafo desde <code>core_FieldDefinition</code> en la base de datos y puede guardar el camino precalculado. Esto lo aproxima con los archivos <code>objects/*.json</code> y no contempla el desvío entre ambos.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Qué se calibró y qué falta</h2>
+    <ul class="limits">
+      <li>La primera versión de la comprobación 1 marcó como sin guarda a <code>scenario-excel</code> y <code>scheduling-inputs</code>, que sí validan. Una usa el helper <code>requireScenarioView</code>; la otra llama a <code>_checkCapability</code> con guion bajo. Cada mod nombra su guarda distinto (<code>checkCapability</code>, <code>checkObjectPermissions</code>, <code>checkPermission</code>, <code>withObjectAuth</code>), y ese vocabulario hay que mantenerlo como configuración.</li>
+      <li>La comprobación 3 comparó primero contra el nombre del objeto referenciado y daba un falso positivo en <code>sourceScenarioId</code>. La convención correcta es el nombre del campo sin <code>Id</code>.</li>
+      <li>Falta una comprobación de renombres (<span class="ticket">UPONE-2062</span>, <span class="ticket">UPONE-1847</span>): quién usa un objeto o campo antes de cambiarlo. No entró en esta muestra.</li>
+      <li>Todo está medido sobre las ramas <code>develop</code> locales del 8 de octubre. Un ticket en Jira puede seguir en Backlog con el código ya corregido, como <span class="ticket">UPONE-2036</span>.</li>
+    </ul>
+  </section>
+</div>
