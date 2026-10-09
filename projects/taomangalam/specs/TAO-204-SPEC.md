@@ -113,10 +113,10 @@ Contrato: rollback: Revertir los archivos de prueba agregados o ajustados en app
 Contrato: rollback: Revertir los cambios en app/lib/core/images/ y los consumidores adaptados con git revert de la task.. Status: done
 
 #### S3.T4 — Documentar el uso del gestor, la configuracion del origen de descarga (DownloadUrlProvider y URL presignada de corta vida) y el comportamiento sin conexion en docs/development/configuration.md y en scripts/assets/README.md, enlazando la DEC-240. No se tocan README.md raiz, CONTRIBUTING.md, docs/development/commands.md ni docs/development/release-runbook.md.
-Contrato: rollback: Revertir el commit de la task: restaurar docs/development/configuration.md y scripts/assets/README.md.. Status: pending
+Contrato: rollback: Revertir el commit de la task: restaurar docs/development/configuration.md y scripts/assets/README.md.. Status: done
 
 #### S3.T5 — Validar los documentos tocados con el linter de docs: markdownlint-cli2, cspell y vale sobre docs/development/configuration.md y scripts/assets/README.md, y la verificacion de docs sobre los cambios contra main. Los enlaces rotos los detecta lychee dentro de docs.mjs check, no markdownlint.
-Contrato: rollback: Sin cambios de codigo: si el lint falla, corregir los documentos de la task anterior; no hay nada que revertir en esta task.. Status: pending
+Contrato: rollback: Sin cambios de codigo: si el lint falla, corregir los documentos de la task anterior; no hay nada que revertir en esta task.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -268,10 +268,10 @@ Ninguno.
 
 **Gate (auto)**: El resolvedor expone los tres estados (descargando, disponible, superficie de respaldo) para un asset descargable y los empaquetados siguen resolviendose sin descarga. cd app && fvm flutter analyze, cd app && fvm flutter test test/core/images y cd app && fvm flutter test test/core/assets pasan en verde, sin cambiar la firma publica de ImageFamilyResolver.
 
-### Session 3 · T1 · open
+### Session 3 · T1 · continue
 
 **Tasks:**
-- [ ] S3.T4
-- [ ] S3.T5
+- [x] S3.T4
+- [x] S3.T5
 
 **Gate (auto)**: docs/development/configuration.md y scripts/assets/README.md documentan el origen, las URLs inmutables, la verificación SHA-256 y el uso sin conexión con enlace a la DEC-240, el lint de docs sobre ambos termina en 0 y no hay cambios en README, CONTRIBUTING, commands.md ni release-runbook.
