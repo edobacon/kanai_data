@@ -49,4 +49,6 @@ Ninguno.
 
 ## Decisiones del dev
 
-Ninguna.
+| id | decision | sobre | motivo | fecha |
+| --- | --- | --- | --- | --- |
+| d1 | desvio aceptado | Adenda 3 de TAO-204: hashMismatch cuenta una vez por pedido | El dev sanciona contar hashMismatch una vez por descarga compartida y no una vez por pedido: las metricas son conteos agregados sin nombres (DEC-202), reflejan lo que ocurrio en la red y las consumen HU-02-15 y EP-17. Cambiarlo obligaria a rehacer el conteo sin ganancia. Decision del 2026-10-10. | 2026-10-09T23:53:46.201Z |
