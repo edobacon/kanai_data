@@ -263,6 +263,6 @@ Contrato: rollback: Revertir el commit del mapeo en la vista; la vista vuelve a 
 
 **Gate (auto)**: Tests de integración en verde con almacenamiento simulado: QA-02-15-01 (tope de 50 MB, se borran los menos usados y ningún empaquetado), QA-02-15-02 (no se borra nada y el resultado es la superficie de respaldo), QA-02-15-03 (3 GB ignorado), la caché vaciada por el sistema se re-descarga y verifica, y el registro de liberaciones solo contiene tamaños y resultados.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
 
 ### Session 4 · T0 · open
