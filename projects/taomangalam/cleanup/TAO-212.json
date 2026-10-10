@@ -1,0 +1,1612 @@
+{
+  "ticketId": "TAO-212",
+  "projectId": "taomangalam",
+  "createdAt": "2026-10-10T04:01:10.070Z",
+  "updatedAt": "2026-10-10T04:01:10.070Z",
+  "status": "proposed",
+  "branch": "epic/EP-02-autonomia",
+  "repos": [
+    {
+      "name": "taomangalam",
+      "localPath": "/Users/edobacon/Workspace/taomangalam",
+      "base": "9ad15b2ec7e5d9f2fdc177f2bfba75348783f2c2"
+    }
+  ],
+  "items": [
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:27",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.test.ts",
+      "startLine": 27,
+      "endLine": 33,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Derivado del contenido de referencia del servidor (GH-85).",
+        " *",
+        " * Las pruebas que modifican la fuente o el derivado trabajan sobre copias en un",
+        " * directorio temporal: nunca escriben en `docs/content/catalogos/` ni en",
+        " * `server/resources/`.",
+        " */"
+      ],
+      "comment": "/**\n* Derivado del contenido de referencia del servidor (GH-85).\n*\n* Las pruebas que modifican la fuente o el derivado trabajan sobre copias en un\n* directorio temporal: nunca escriben en `docs/content/catalogos/` ni en\n* `server/resources/`.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:74",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.test.ts",
+      "startLine": 74,
+      "endLine": 74,
+      "kind": "block",
+      "lines": [
+        "/** Salida en memoria del script: los mensajes informados y los de error. */"
+      ],
+      "comment": "/** Salida en memoria del script: los mensajes informados y los de error. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:100",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.test.ts",
+      "startLine": 100,
+      "endLine": 100,
+      "kind": "block",
+      "lines": [
+        "/** Valores de `editorialResolutionId` en cualquier nivel de [valor]. */"
+      ],
+      "comment": "/** Valores de `editorialResolutionId` en cualquier nivel de [valor]. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:115",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.test.ts",
+      "startLine": 115,
+      "endLine": 115,
+      "kind": "block",
+      "lines": [
+        "/** Hash de cada archivo de [directorio] (recursivo), para detectar escrituras. */"
+      ],
+      "comment": "/** Hash de cada archivo de [directorio] (recursivo), para detectar escrituras. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:129",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.test.ts",
+      "startLine": 129,
+      "endLine": 132,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Directorio temporal con una copia de los catalogos, otra de la copia de la app",
+        " * (los que existan en `app/assets/catalogos/`) y un destino para el derivado.",
+        " */"
+      ],
+      "comment": "/**\n* Directorio temporal con una copia de los catalogos, otra de la copia de la app\n* (los que existan en `app/assets/catalogos/`) y un destino para el derivado.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:5",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 5,
+      "endLine": 33,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Genera el derivado del contenido de referencia que viaja en la imagen del backend.",
+        " *",
+        " * Los catalogos canonicos viven en `docs/content/catalogos/` (los produce el",
+        " * pipeline de catalogos de HU-02-04), pero el build se hace con contexto",
+        " * `server/` y no puede leerlos: la imagen lleva `server/resources/contenido-referencia.v1.json`,",
+        " * armado aqui a partir de los catalogos de `CATALOGOS_INCLUIDOS`. Cada nodo de",
+        " * contenido queda como una entrada con su `content_key` (el `id` del nodo) y su",
+        " * `content_version` (el `catalogVersion` del catalogo), y conserva intactos sus",
+        " * textos, `sourceRefs` y `editorialResolutionId`, junto con las fuentes y las",
+        " * resoluciones editoriales del catalogo.",
+        " *",
+        " * - `pnpm recurso:contenido` regenera el derivado. Arma el resultado completo en",
+        " *   memoria y lo escribe en una sola operacion (archivo temporal y `rename`): ante",
+        " *   un error no deja un derivado parcial ni toca el anterior.",
+        " * - `pnpm recurso:contenido:check` regenera en memoria y compara sin escribir:",
+        " *   termina en 1 si el derivado falta o no corresponde a los catalogos. Con el",
+        " *   derivado al dia verifica ademas la paridad con la copia de la app",
+        " *   (`app/assets/catalogos/`): compara por `content_key` y falla con una linea",
+        " *   `CLAVE: app=A servidor=B` por cada clave que falta en un lado o cuya version",
+        " *   difiere. Solo este modo lee `app/`; generar el derivado no la necesita.",
+        " *",
+        " * La version de cada entrada es el `catalogVersion` de la raiz de su catalogo:",
+        " * el JSON Schema del catalogo lo declara solo a ese nivel y no define una",
+        " * version por nodo, asi que todas las entradas de un catalogo comparten la suya.",
+        " *",
+        " * La serializacion es determinista (claves ordenadas, 2 espacios, salto de linea",
+        " * final): dos corridas sin cambios en la fuente producen los mismos bytes.",
+        " */"
+      ],
+      "comment": "/**\n* Genera el derivado del contenido de referencia que viaja en la imagen del backend.\n*\n* Los catalogos canonicos viven en `docs/content/catalogos/` (los produce el\n* pipeline de catalogos de HU-02-04), pero el build se hace con contexto\n* `server/` y no puede leerlos: la imagen lleva `server/resources/contenido-referencia.v1.json`,\n* armado aqui a partir de los catalogos de `CATALOGOS_INCLUIDOS`. Cada nodo de\n* contenido queda como una entrada con su `content_key` (el `id` del nodo) y su\n* `content_version` (el `catalogVersion` del catalogo), y conserva intactos sus\n* textos, `sourceRefs` y `editorialResolutionId`, junto con las fuentes y las\n* resoluciones editoriales del catalogo.\n*\n* - `pnpm recurso:contenido` regenera el derivado. Arma el resultado completo en\n*   memoria y lo escribe en una sola operacion (archivo temporal y `rename`): ante\n*   un error no deja un derivado parcial ni toca el anterior.\n* - `pnpm recurso:contenido:check` regenera en memoria y compara sin escribir:\n*   termina en 1 si el derivado falta o no corresponde a los catalogos. Con el\n*   derivado al dia verifica ademas la paridad con la copia de la app\n*   (`app/assets/catalogos/`): compara por `content_key` y falla con una linea\n*   `CLAVE: app=A servidor=B` por cada clave que falta en un lado o cuya version\n*   difiere. Solo este modo lee `app/`; generar el derivado no la necesita.\n*\n* La version de cada entrada es el `catalogVersion` de la raiz de su catalogo:\n* el JSON Schema del catalogo lo declara solo a ese nivel y no define una\n* version por nodo, asi que todas las entradas de un catalogo comparten la suya.\n*\n* La serializacion es determinista (claves ordenadas, 2 espacios, salto de linea\n* final): dos corridas sin cambios en la fuente producen los mismos bytes.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:35",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 35,
+      "endLine": 35,
+      "kind": "block",
+      "lines": [
+        "/** Catalogos de `docs/content/catalogos/` que forman el derivado del servidor. */"
+      ],
+      "comment": "/** Catalogos de `docs/content/catalogos/` que forman el derivado del servidor. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:40",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 40,
+      "endLine": 40,
+      "kind": "block",
+      "lines": [
+        "/** Colecciones de nodos con `content_key` propio de cada catalogo incluido. */"
+      ],
+      "comment": "/** Colecciones de nodos con `content_key` propio de cada catalogo incluido. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:45",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 45,
+      "endLine": 45,
+      "kind": "block",
+      "lines": [
+        "/** Version del formato del derivado (independiente del `catalogVersion`). */"
+      ],
+      "comment": "/** Version del formato del derivado (independiente del `catalogVersion`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:48",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 48,
+      "endLine": 48,
+      "kind": "block",
+      "lines": [
+        "/** Ruta del derivado relativa a la raiz del repositorio, para los mensajes. */"
+      ],
+      "comment": "/** Ruta del derivado relativa a la raiz del repositorio, para los mensajes. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:51",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 51,
+      "endLine": 51,
+      "kind": "block",
+      "lines": [
+        "/** Copia de los catalogos en la app relativa a la raiz del repositorio, para los mensajes. */"
+      ],
+      "comment": "/** Copia de los catalogos en la app relativa a la raiz del repositorio, para los mensajes. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:54",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 54,
+      "endLine": 54,
+      "kind": "block",
+      "lines": [
+        "/** Version que muestra el mensaje de paridad del lado donde falta la clave. */"
+      ],
+      "comment": "/** Version que muestra el mensaje de paridad del lado donde falta la clave. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:62",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 62,
+      "endLine": 62,
+      "kind": "block",
+      "lines": [
+        "  /** Directorio con los catalogos fuente (`docs/content/catalogos/`). */"
+      ],
+      "comment": "/** Directorio con los catalogos fuente (`docs/content/catalogos/`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:64",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 64,
+      "endLine": 64,
+      "kind": "block",
+      "lines": [
+        "  /** Archivo del derivado (`server/resources/contenido-referencia.v1.json`). */"
+      ],
+      "comment": "/** Archivo del derivado (`server/resources/contenido-referencia.v1.json`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:66",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 66,
+      "endLine": 66,
+      "kind": "block",
+      "lines": [
+        "  /** Copia de los catalogos en la app (`app/assets/catalogos/`); solo la lee `--check`. */"
+      ],
+      "comment": "/** Copia de los catalogos en la app (`app/assets/catalogos/`); solo la lee `--check`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:70",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 70,
+      "endLine": 70,
+      "kind": "block",
+      "lines": [
+        "/** Destino de los mensajes del script; inyectable en las pruebas. */"
+      ],
+      "comment": "/** Destino de los mensajes del script; inyectable en las pruebas. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:76",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 76,
+      "endLine": 76,
+      "kind": "block",
+      "lines": [
+        "/** Catalogo fuente ausente, ilegible o con una forma que el derivado no admite. */"
+      ],
+      "comment": "/** Catalogo fuente ausente, ilegible o con una forma que el derivado no admite. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:93",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 93,
+      "endLine": 93,
+      "kind": "block",
+      "lines": [
+        "/** Nombre del archivo fuente de [catalogo] (p. ej. `resultados.v1.json`). */"
+      ],
+      "comment": "/** Nombre del archivo fuente de [catalogo] (p. ej. `resultados.v1.json`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:102",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 102,
+      "endLine": 102,
+      "kind": "block",
+      "lines": [
+        "/** Lee y parsea [archivo]; falla nombrando el catalogo si falta o no es JSON. */"
+      ],
+      "comment": "/** Lee y parsea [archivo]; falla nombrando el catalogo si falta o no es JSON. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:112",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 112,
+      "endLine": 112,
+      "kind": "line",
+      "lines": [
+        "    // El detalle del parser puede citar fragmentos del archivo: se reemplaza por un mensaje fijo."
+      ],
+      "comment": "// El detalle del parser puede citar fragmentos del archivo: se reemplaza por un mensaje fijo.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:121",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 121,
+      "endLine": 121,
+      "kind": "block",
+      "lines": [
+        "/** Campo de texto obligatorio de [objeto]; falla nombrando el catalogo. */"
+      ],
+      "comment": "/** Campo de texto obligatorio de [objeto]; falla nombrando el catalogo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:130",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 130,
+      "endLine": 130,
+      "kind": "block",
+      "lines": [
+        "/** Entradas con `content_key` de las colecciones de [catalogo]. */"
+      ],
+      "comment": "/** Entradas con `content_key` de las colecciones de [catalogo]. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:160",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 160,
+      "endLine": 160,
+      "kind": "block",
+      "lines": [
+        "/** Seccion del derivado para [catalogo]: metadatos, fuentes, resoluciones y entradas. */"
+      ],
+      "comment": "/** Seccion del derivado para [catalogo]: metadatos, fuentes, resoluciones y entradas. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:169",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 169,
+      "endLine": 170,
+      "kind": "line",
+      "lines": [
+        "  // Todo lo que no es una coleccion de nodos se conserva tal cual (fuentes,",
+        "  // reglas, plantillas, resoluciones editoriales), salvo el generador de origen."
+      ],
+      "comment": "// Todo lo que no es una coleccion de nodos se conserva tal cual (fuentes,\n// reglas, plantillas, resoluciones editoriales), salvo el generador de origen.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:184",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 184,
+      "endLine": 184,
+      "kind": "block",
+      "lines": [
+        "/** Copia de [valor] con las claves de cada objeto en orden lexicografico. */"
+      ],
+      "comment": "/** Copia de [valor] con las claves de cada objeto en orden lexicografico. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:199",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 199,
+      "endLine": 199,
+      "kind": "block",
+      "lines": [
+        "/** Arma el derivado completo en memoria a partir de los catalogos de [directorioCatalogos]. */"
+      ],
+      "comment": "/** Arma el derivado completo en memoria a partir de los catalogos de [directorioCatalogos]. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:217",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 217,
+      "endLine": 217,
+      "kind": "block",
+      "lines": [
+        "/** Serializacion determinista del derivado: claves ordenadas y salto de linea final. */"
+      ],
+      "comment": "/** Serializacion determinista del derivado: claves ordenadas y salto de linea final. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:222",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 222,
+      "endLine": 222,
+      "kind": "block",
+      "lines": [
+        "/** Bytes esperados del derivado para los catalogos de [directorioCatalogos]. */"
+      ],
+      "comment": "/** Bytes esperados del derivado para los catalogos de [directorioCatalogos]. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:227",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 227,
+      "endLine": 227,
+      "kind": "block",
+      "lines": [
+        "/** Version de cada `content_key`: el `catalogVersion` del catalogo que la declara. */"
+      ],
+      "comment": "/** Version de cada `content_key`: el `catalogVersion` del catalogo que la declara. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:230",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 230,
+      "endLine": 230,
+      "kind": "block",
+      "lines": [
+        "/** Versiones por clave de los catalogos incluidos tal como estan en [directorio]. */"
+      ],
+      "comment": "/** Versiones por clave de los catalogos incluidos tal como estan en [directorio]. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:244",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 244,
+      "endLine": 244,
+      "kind": "block",
+      "lines": [
+        "/** Versiones por clave del derivado: cada entrada toma el `catalogVersion` de su seccion. */"
+      ],
+      "comment": "/** Versiones por clave del derivado: cada entrada toma el `catalogVersion` de su seccion. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:259",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 259,
+      "endLine": 263,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Diferencias de paridad entre la app y el derivado, ordenadas por clave: una",
+        " * linea `CLAVE: app=A servidor=B` por cada clave que falta en un lado (con",
+        " * `ausente` en su lugar) o cuya version difiere. Sin diferencias, lista vacia.",
+        " */"
+      ],
+      "comment": "/**\n* Diferencias de paridad entre la app y el derivado, ordenadas por clave: una\n* linea `CLAVE: app=A servidor=B` por cada clave que falta en un lado (con\n* `ausente` en su lugar) o cuya version difiere. Sin diferencias, lista vacia.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:275",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 275,
+      "endLine": 275,
+      "kind": "block",
+      "lines": [
+        "/** Versiones de la copia de la app; un fallo de lectura nombra `app/assets/catalogos`. */"
+      ],
+      "comment": "/** Versiones de la copia de la app; un fallo de lectura nombra `app/assets/catalogos`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:287",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 287,
+      "endLine": 287,
+      "kind": "block",
+      "lines": [
+        "/** Escribe [contenido] en [ruta] via archivo temporal hermano y `rename` atomico. */"
+      ],
+      "comment": "/** Escribe [contenido] en [ruta] via archivo temporal hermano y `rename` atomico. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:302",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 302,
+      "endLine": 302,
+      "kind": "block",
+      "lines": [
+        "/** Lineas de error de la paridad del derivado con la app; vacia si coinciden. */"
+      ],
+      "comment": "/** Lineas de error de la paridad del derivado con la app; vacia si coinciden. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:320",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 320,
+      "endLine": 323,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Compara el derivado versionado con [recurso] (su vigencia respecto de los",
+        " * catalogos y su paridad con la app); devuelve el codigo de salida.",
+        " */"
+      ],
+      "comment": "/**\n* Compara el derivado versionado con [recurso] (su vigencia respecto de los\n* catalogos y su paridad con la app); devuelve el codigo de salida.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:355",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 355,
+      "endLine": 355,
+      "kind": "block",
+      "lines": [
+        "/** Escribe el derivado si difiere; idempotente. Devuelve el codigo de salida. */"
+      ],
+      "comment": "/** Escribe el derivado si difiere; idempotente. Devuelve el codigo de salida. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:371",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 371,
+      "endLine": 374,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Ejecuta el script con [argumentos] (`--check` o ninguno) y devuelve el codigo",
+        " * de salida. Los errores salen como mensaje seguro, sin traza.",
+        " */"
+      ],
+      "comment": "/**\n* Ejecuta el script con [argumentos] (`--check` o ninguno) y devuelve el codigo\n* de salida. Los errores salen como mensaje seguro, sin traza.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:400",
+      "repo": "taomangalam",
+      "path": "server/scripts/generar-recurso-contenido.ts",
+      "startLine": 400,
+      "endLine": 400,
+      "kind": "line",
+      "lines": [
+        "// Solo corre como CLI: importado desde las pruebas expone las funciones sin ejecutar nada."
+      ],
+      "comment": "// Solo corre como CLI: importado desde las pruebas expone las funciones sin ejecutar nada.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:15",
+      "repo": "taomangalam",
+      "path": "server/scripts/paridad-contenido-referencia.test.ts",
+      "startLine": 15,
+      "endLine": 23,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Paridad del derivado del servidor con la copia de los catalogos en la app (GH-85).",
+        " *",
+        " * `--check` compara por `content_key` el derivado contra",
+        " * `app/assets/catalogos/resultados.v1.json`; la version de cada clave es el",
+        " * `catalogVersion` de su catalogo. Los casos de diferencia arman catalogos",
+        " * minimos en un directorio temporal: nunca escriben en `docs/`, `app/` ni",
+        " * `server/resources/`.",
+        " */"
+      ],
+      "comment": "/**\n* Paridad del derivado del servidor con la copia de los catalogos en la app (GH-85).\n*\n* `--check` compara por `content_key` el derivado contra\n* `app/assets/catalogos/resultados.v1.json`; la version de cada clave es el\n* `catalogVersion` de su catalogo. Los casos de diferencia arman catalogos\n* minimos en un directorio temporal: nunca escriben en `docs/`, `app/` ni\n* `server/resources/`.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:36",
+      "repo": "taomangalam",
+      "path": "server/scripts/paridad-contenido-referencia.test.ts",
+      "startLine": 36,
+      "endLine": 36,
+      "kind": "block",
+      "lines": [
+        "/** Salida en memoria del script: los mensajes informados y los de error. */"
+      ],
+      "comment": "/** Salida en memoria del script: los mensajes informados y los de error. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:50",
+      "repo": "taomangalam",
+      "path": "server/scripts/paridad-contenido-referencia.test.ts",
+      "startLine": 50,
+      "endLine": 50,
+      "kind": "block",
+      "lines": [
+        "/** Directorios temporales vacios para los catalogos, su copia en la app y el derivado. */"
+      ],
+      "comment": "/** Directorios temporales vacios para los catalogos, su copia en la app y el derivado. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:77",
+      "repo": "taomangalam",
+      "path": "server/scripts/paridad-contenido-referencia.test.ts",
+      "startLine": 77,
+      "endLine": 80,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Genera el derivado desde [servidor] y deja [app] como copia de la app; devuelve",
+        " * el resultado de `--check` sobre esas rutas.",
+        " */"
+      ],
+      "comment": "/**\n* Genera el derivado desde [servidor] y deja [app] como copia de la app; devuelve\n* el resultado de `--check` sobre esas rutas.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:5",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 5,
+      "endLine": 15,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Lectura del contenido de referencia empaquetado en el backend.",
+        " *",
+        " * El derivado `resources/contenido-referencia.v1.json` lo genera",
+        " * `pnpm recurso:contenido` desde los catalogos de `docs/content/catalogos/` y",
+        " * viaja en la imagen junto al build. Este modulo lo resuelve desde su propia",
+        " * ubicacion hacia `resources/` de la raiz de `server/`: en el checkout",
+        " * `src/contenido-referencia/` y en la imagen `dist/contenido-referencia/` estan a",
+        " * la misma profundidad, asi que la ruta queda siempre dentro de `server/` (o de",
+        " * `/app` en la imagen) y nunca lee `docs/` ni `app/` (DEC-205).",
+        " */"
+      ],
+      "comment": "/**\n* Lectura del contenido de referencia empaquetado en el backend.\n*\n* El derivado `resources/contenido-referencia.v1.json` lo genera\n* `pnpm recurso:contenido` desde los catalogos de `docs/content/catalogos/` y\n* viaja en la imagen junto al build. Este modulo lo resuelve desde su propia\n* ubicacion hacia `resources/` de la raiz de `server/`: en el checkout\n* `src/contenido-referencia/` y en la imagen `dist/contenido-referencia/` estan a\n* la misma profundidad, asi que la ruta queda siempre dentro de `server/` (o de\n* `/app` en la imagen) y nunca lee `docs/` ni `app/` (DEC-205).\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:17",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 17,
+      "endLine": 17,
+      "kind": "block",
+      "lines": [
+        "/** Ruta del derivado relativa a la raiz de `server/`, para los mensajes. */"
+      ],
+      "comment": "/** Ruta del derivado relativa a la raiz de `server/`, para los mensajes. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:20",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 20,
+      "endLine": 20,
+      "kind": "block",
+      "lines": [
+        "/** Raiz de `server/` (o `/app` en la imagen), dos niveles arriba de este modulo. */"
+      ],
+      "comment": "/** Raiz de `server/` (o `/app` en la imagen), dos niveles arriba de este modulo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:27",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 27,
+      "endLine": 27,
+      "kind": "block",
+      "lines": [
+        "/** Ruta absoluta por defecto del derivado, dentro de la raiz de `server/`. */"
+      ],
+      "comment": "/** Ruta absoluta por defecto del derivado, dentro de la raiz de `server/`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:30",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 30,
+      "endLine": 30,
+      "kind": "block",
+      "lines": [
+        "/** Nodo de contenido con su identidad y version estables (tecnologia/20 §1). */"
+      ],
+      "comment": "/** Nodo de contenido con su identidad y version estables (tecnologia/20 §1). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:32",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 32,
+      "endLine": 32,
+      "kind": "block",
+      "lines": [
+        "  /** Identidad estable del nodo (su `id` en el catalogo, p. ej. `house-01`). */"
+      ],
+      "comment": "/** Identidad estable del nodo (su `id` en el catalogo, p. ej. `house-01`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:34",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 34,
+      "endLine": 34,
+      "kind": "block",
+      "lines": [
+        "  /** Version del contenido: el `catalogVersion` del catalogo de origen. */"
+      ],
+      "comment": "/** Version del contenido: el `catalogVersion` del catalogo de origen. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:36",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 36,
+      "endLine": 36,
+      "kind": "block",
+      "lines": [
+        "  /** Catalogo de origen (p. ej. `resultados`). */"
+      ],
+      "comment": "/** Catalogo de origen (p. ej. `resultados`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:38",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 38,
+      "endLine": 38,
+      "kind": "block",
+      "lines": [
+        "  /** Coleccion del catalogo a la que pertenece el nodo (p. ej. `houses`). */"
+      ],
+      "comment": "/** Coleccion del catalogo a la que pertenece el nodo (p. ej. `houses`). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:40",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 40,
+      "endLine": 40,
+      "kind": "block",
+      "lines": [
+        "  /** Nodo tal como esta en el catalogo: textos, `sourceRefs` y resoluciones. */"
+      ],
+      "comment": "/** Nodo tal como esta en el catalogo: textos, `sourceRefs` y resoluciones. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:45",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 45,
+      "endLine": 45,
+      "kind": "block",
+      "lines": [
+        "  /** Entrada de [contentKey], o `undefined` si el derivado no la incluye. */"
+      ],
+      "comment": "/** Entrada de [contentKey], o `undefined` si el derivado no la incluye. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:47",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 47,
+      "endLine": 47,
+      "kind": "block",
+      "lines": [
+        "  /** Claves incluidas en el derivado, en el orden del archivo. */"
+      ],
+      "comment": "/** Claves incluidas en el derivado, en el orden del archivo. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:51",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 51,
+      "endLine": 51,
+      "kind": "block",
+      "lines": [
+        "/** Derivado ausente o con una forma que el lector no admite. Mensaje sin rutas absolutas. */"
+      ],
+      "comment": "/** Derivado ausente o con una forma que el lector no admite. Mensaje sin rutas absolutas. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:77",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 77,
+      "endLine": 77,
+      "kind": "block",
+      "lines": [
+        "/** Convierte una entrada cruda del derivado en una entrada tipada e inmutable. */"
+      ],
+      "comment": "/** Convierte una entrada cruda del derivado en una entrada tipada e inmutable. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:91",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 91,
+      "endLine": 91,
+      "kind": "block",
+      "lines": [
+        "/** Indexa por `content_key` las entradas de todos los catalogos del derivado. */"
+      ],
+      "comment": "/** Indexa por `content_key` las entradas de todos los catalogos del derivado. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:113",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 113,
+      "endLine": 117,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Lee y parsea el derivado de [ruta] (por defecto, el empaquetado en `server/`).",
+        " * Falla con `ContenidoReferenciaInvalidoError` si falta, no es JSON o no tiene",
+        " * la forma esperada; no busca el contenido en ninguna otra ubicacion.",
+        " */"
+      ],
+      "comment": "/**\n* Lee y parsea el derivado de [ruta] (por defecto, el empaquetado en `server/`).\n* Falla con `ContenidoReferenciaInvalidoError` si falta, no es JSON o no tiene\n* la forma esperada; no busca el contenido en ninguna otra ubicacion.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:128",
+      "repo": "taomangalam",
+      "path": "server/src/contenido-referencia/lectura.ts",
+      "startLine": 128,
+      "endLine": 128,
+      "kind": "line",
+      "lines": [
+        "    // El detalle del parser puede citar fragmentos del archivo: se reemplaza por un mensaje fijo."
+      ],
+      "comment": "// El detalle del parser puede citar fragmentos del archivo: se reemplaza por un mensaje fijo.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:5",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/aislamiento.test.ts",
+      "startLine": 5,
+      "endLine": 15,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Aislamiento del codigo de runtime del backend respecto de `app/` y `docs/` (GH-85).",
+        " *",
+        " * El build de la imagen solo ve `server/` (DEC-205): el lector del contenido de",
+        " * referencia y el resto del codigo de `src/` no pueden leer los catalogos de la",
+        " * app ni la documentacion. Solo el script `recurso:contenido` (fuera de `src/`)",
+        " * y las pruebas acceden a esas carpetas. La busqueda descarta comentarios y",
+        " * analiza el codigo: literales con rutas hacia `app/` o `docs/`, segmentos de",
+        " * ruta `'app'`/`'docs'` (junto a `'..'` o seguidos de otro segmento) e imports",
+        " * de `scripts/`.",
+        " */"
+      ],
+      "comment": "/**\n* Aislamiento del codigo de runtime del backend respecto de `app/` y `docs/` (GH-85).\n*\n* El build de la imagen solo ve `server/` (DEC-205): el lector del contenido de\n* referencia y el resto del codigo de `src/` no pueden leer los catalogos de la\n* app ni la documentacion. Solo el script `recurso:contenido` (fuera de `src/`)\n* y las pruebas acceden a esas carpetas. La busqueda descarta comentarios y\n* analiza el codigo: literales con rutas hacia `app/` o `docs/`, segmentos de\n* ruta `'app'`/`'docs'` (junto a `'..'` o seguidos de otro segmento) e imports\n* de `scripts/`.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:20",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/aislamiento.test.ts",
+      "startLine": 20,
+      "endLine": 20,
+      "kind": "block",
+      "lines": [
+        "/** Carpetas de `src/` que no son codigo de runtime: pruebas y cliente generado. */"
+      ],
+      "comment": "/** Carpetas de `src/` que no son codigo de runtime: pruebas y cliente generado. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:23",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/aislamiento.test.ts",
+      "startLine": 23,
+      "endLine": 28,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Referencias a `docs/` anteriores al contenido de referencia y ajenas a el: el",
+        " * registro legal lee `docs/legal` como fuente de `legal:registrar` y como",
+        " * respaldo del texto empaquetado en un checkout sin sincronizar. Se admiten solo",
+        " * en ese archivo y con ese segmento exacto; cualquier otra referencia falla.",
+        " */"
+      ],
+      "comment": "/**\n* Referencias a `docs/` anteriores al contenido de referencia y ajenas a el: el\n* registro legal lee `docs/legal` como fuente de `legal:registrar` y como\n* respaldo del texto empaquetado en un checkout sin sincronizar. Se admiten solo\n* en ese archivo y con ese segmento exacto; cualquier otra referencia falla.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:42",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/aislamiento.test.ts",
+      "startLine": 42,
+      "endLine": 42,
+      "kind": "block",
+      "lines": [
+        "/** Referencias de [codigo] a rutas de `app/` o `docs/` o a los scripts de generacion. */"
+      ],
+      "comment": "/** Referencias de [codigo] a rutas de `app/` o `docs/` o a los scripts de generacion. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:57",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/aislamiento.test.ts",
+      "startLine": 57,
+      "endLine": 57,
+      "kind": "block",
+      "lines": [
+        "/** Archivos `.ts` de runtime de `src/` (sin pruebas ni codigo generado), relativos a `src/`. */"
+      ],
+      "comment": "/** Archivos `.ts` de runtime de `src/` (sin pruebas ni codigo generado), relativos a `src/`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/compilado.test.ts:8",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/compilado.test.ts",
+      "startLine": 8,
+      "endLine": 17,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Lector del contenido de referencia compilado con la configuracion del build (GH-85).",
+        " *",
+        " * La imagen arranca `node dist/index.js` con WORKDIR `/app`, asi que el lector",
+        " * corre desde `dist/contenido-referencia/` y debe resolver `resources/` en la",
+        " * misma raiz que desde `src/`. Para no depender de un `dist/` previo (que puede",
+        " * estar desactualizado) se compila con `tsconfig.build.json` a un directorio",
+        " * temporal hermano de `dist/` dentro de `server/`, a la misma profundidad, y se",
+        " * borra al terminar.",
+        " */"
+      ],
+      "comment": "/**\n* Lector del contenido de referencia compilado con la configuracion del build (GH-85).\n*\n* La imagen arranca `node dist/index.js` con WORKDIR `/app`, asi que el lector\n* corre desde `dist/contenido-referencia/` y debe resolver `resources/` en la\n* misma raiz que desde `src/`. Para no depender de un `dist/` previo (que puede\n* estar desactualizado) se compila con `tsconfig.build.json` a un directorio\n* temporal hermano de `dist/` dentro de `server/`, a la misma profundidad, y se\n* borra al terminar.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/compilado.test.ts:21",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/compilado.test.ts",
+      "startLine": 21,
+      "endLine": 21,
+      "kind": "line",
+      "lines": [
+        "// La compilacion completa tarda unos segundos; se deja margen para maquinas lentas."
+      ],
+      "comment": "// La compilacion completa tarda unos segundos; se deja margen para maquinas lentas.",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:5",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/empaquetado.test.ts",
+      "startLine": 5,
+      "endLine": 11,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Empaquetado del contenido de referencia en la imagen del backend (GH-85).",
+        " *",
+        " * El contexto de build es `server/` (DEC-205): la etapa runtime copia",
+        " * `resources/` igual que `legal/`, `.dockerignore` no lo excluye y la imagen no",
+        " * lleva `docs/`, `app/`, DOCX ni maestros de imagen.",
+        " */"
+      ],
+      "comment": "/**\n* Empaquetado del contenido de referencia en la imagen del backend (GH-85).\n*\n* El contexto de build es `server/` (DEC-205): la etapa runtime copia\n* `resources/` igual que `legal/`, `.dockerignore` no lo excluye y la imagen no\n* lleva `docs/`, `app/`, DOCX ni maestros de imagen.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:18",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/empaquetado.test.ts",
+      "startLine": 18,
+      "endLine": 18,
+      "kind": "block",
+      "lines": [
+        "/** Instrucciones del Dockerfile (sin comentarios ni lineas vacias). */"
+      ],
+      "comment": "/** Instrucciones del Dockerfile (sin comentarios ni lineas vacias). */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:26",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/empaquetado.test.ts",
+      "startLine": 26,
+      "endLine": 26,
+      "kind": "block",
+      "lines": [
+        "/** Instrucciones de la etapa `runtime` del Dockerfile. */"
+      ],
+      "comment": "/** Instrucciones de la etapa `runtime` del Dockerfile. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:34",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/empaquetado.test.ts",
+      "startLine": 34,
+      "endLine": 37,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Rutas de origen que las instrucciones COPY/ADD toman del contexto de build",
+        " * (`server/`). Las copias `--from=<etapa>` leen de otra etapa, no del contexto.",
+        " */"
+      ],
+      "comment": "/**\n* Rutas de origen que las instrucciones COPY/ADD toman del contexto de build\n* (`server/`). Las copias `--from=<etapa>` leen de otra etapa, no del contexto.\n*/",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:50",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/empaquetado.test.ts",
+      "startLine": 50,
+      "endLine": 50,
+      "kind": "block",
+      "lines": [
+        "/** Patrones activos de `server/.dockerignore`. */"
+      ],
+      "comment": "/** Patrones activos de `server/.dockerignore`. */",
+      "ids": [],
+      "commentedCode": false
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/lectura.test.ts:12",
+      "repo": "taomangalam",
+      "path": "server/src/test/contenido-referencia/lectura.test.ts",
+      "startLine": 12,
+      "endLine": 17,
+      "kind": "block",
+      "lines": [
+        "/**",
+        " * Lector del contenido de referencia empaquetado en `server/resources/` (GH-85).",
+        " *",
+        " * El lector resuelve el derivado dentro de la raiz de `server/` y no recurre a",
+        " * `docs/` ni a `app/`: el build de la imagen solo ve `server/` (DEC-205).",
+        " */"
+      ],
+      "comment": "/**\n* Lector del contenido de referencia empaquetado en `server/resources/` (GH-85).\n*\n* El lector resuelve el derivado dentro de la raiz de `server/` y no recurre a\n* `docs/` ni a `app/`: el build de la imagen solo ve `server/` (DEC-205).\n*/",
+      "ids": [],
+      "commentedCode": false
+    }
+  ],
+  "decisions": [
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:27",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:74",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:100",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:115",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.test.ts:129",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:5",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "/**",
+        " * Genera el derivado del contenido de referencia que viaja en la imagen del backend.",
+        " *",
+        " * Los catalogos canonicos viven en `docs/content/catalogos/` (los produce el",
+        " * pipeline de catalogos), pero el build se hace con contexto",
+        " * `server/` y no puede leerlos: la imagen lleva `server/resources/contenido-referencia.v1.json`,",
+        " * armado aqui a partir de los catalogos de `CATALOGOS_INCLUIDOS`. Cada nodo de",
+        " * contenido queda como una entrada con su `content_key` (el `id` del nodo) y su",
+        " * `content_version` (el `catalogVersion` del catalogo), y conserva intactos sus",
+        " * textos, `sourceRefs` y `editorialResolutionId`, junto con las fuentes y las",
+        " * resoluciones editoriales del catalogo.",
+        " *",
+        " * - `pnpm recurso:contenido` regenera el derivado. Arma el resultado completo en",
+        " *   memoria y lo escribe en una sola operacion (archivo temporal y `rename`): ante",
+        " *   un error no deja un derivado parcial ni toca el anterior.",
+        " * - `pnpm recurso:contenido:check` regenera en memoria y compara sin escribir:",
+        " *   termina en 1 si el derivado falta o no corresponde a los catalogos. Con el",
+        " *   derivado al dia verifica ademas la paridad con la copia de la app",
+        " *   (`app/assets/catalogos/`): compara por `content_key` y falla con una linea",
+        " *   `CLAVE: app=A servidor=B` por cada clave que falta en un lado o cuya version",
+        " *   difiere. Solo este modo lee `app/`; generar el derivado no la necesita.",
+        " *",
+        " * La version de cada entrada es el `catalogVersion` de la raiz de su catalogo:",
+        " * el JSON Schema del catalogo lo declara solo a ese nivel y no define una",
+        " * version por nodo, asi que todas las entradas de un catalogo comparten la suya.",
+        " *",
+        " * La serializacion es determinista (claves ordenadas, 2 espacios, salto de linea",
+        " * final): dos corridas sin cambios en la fuente producen los mismos bytes.",
+        " */"
+      ]
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:35",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:40",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:45",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:48",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:51",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:54",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:62",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:64",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:66",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:70",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:76",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:93",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:102",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:112",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:121",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:130",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:160",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:169",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:184",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:199",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:217",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:222",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:227",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:230",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:244",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:259",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:275",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:287",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:302",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:320",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:355",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:371",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/generar-recurso-contenido.ts:400",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:15",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:36",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:50",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/scripts/paridad-contenido-referencia.test.ts:77",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:5",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "/**",
+        " * Lectura del contenido de referencia empaquetado en el backend.",
+        " *",
+        " * El derivado `resources/contenido-referencia.v1.json` lo genera",
+        " * `pnpm recurso:contenido` desde los catalogos de `docs/content/catalogos/` y",
+        " * viaja en la imagen junto al build. Este modulo lo resuelve desde su propia",
+        " * ubicacion hacia `resources/` de la raiz de `server/`: en el checkout",
+        " * `src/contenido-referencia/` y en la imagen `dist/contenido-referencia/` estan a",
+        " * la misma profundidad, asi que la ruta queda siempre dentro de `server/` (o de",
+        " * `/app` en la imagen) y nunca lee `docs/` ni `app/`.",
+        " */"
+      ]
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:17",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:20",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:27",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:30",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:32",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:34",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:36",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:38",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:40",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:45",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:47",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:51",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:77",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:91",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:113",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/contenido-referencia/lectura.ts:128",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:5",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "/**",
+        " * Aislamiento del codigo de runtime del backend respecto de `app/` y `docs/` (GH-85).",
+        " *",
+        " * El build de la imagen solo ve `server/`: el lector del contenido de",
+        " * referencia y el resto del codigo de `src/` no pueden leer los catalogos de la",
+        " * app ni la documentacion. Solo el script `recurso:contenido` (fuera de `src/`)",
+        " * y las pruebas acceden a esas carpetas. La busqueda descarta comentarios y",
+        " * analiza el codigo: literales con rutas hacia `app/` o `docs/`, segmentos de",
+        " * ruta `'app'`/`'docs'` (junto a `'..'` o seguidos de otro segmento) e imports",
+        " * de `scripts/`.",
+        " */"
+      ]
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:20",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:23",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:42",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/aislamiento.test.ts:57",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/compilado.test.ts:8",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/compilado.test.ts:21",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:5",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "/**",
+        " * Empaquetado del contenido de referencia en la imagen del backend (GH-85).",
+        " *",
+        " * El contexto de build es `server/`: la etapa runtime copia",
+        " * `resources/` igual que `legal/`, `.dockerignore` no lo excluye y la imagen no",
+        " * lleva `docs/`, `app/`, DOCX ni maestros de imagen.",
+        " */"
+      ]
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:18",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:26",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:34",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/empaquetado.test.ts:50",
+      "action": "keep",
+      "codes": []
+    },
+    {
+      "id": "taomangalam:server/src/test/contenido-referencia/lectura.test.ts:12",
+      "action": "rewrite",
+      "codes": [
+        "R1"
+      ],
+      "replacement": [
+        "/**",
+        " * Lector del contenido de referencia empaquetado en `server/resources/` (GH-85).",
+        " *",
+        " * El lector resuelve el derivado dentro de la raiz de `server/` y no recurre a",
+        " * `docs/` ni a `app/`: el build de la imagen solo ve `server/`.",
+        " */"
+      ]
+    }
+  ],
+  "omitted": 0,
+  "unsupported": {
+    "yml": 10,
+    "py": 1
+  },
+  "failures": [],
+  "skipped": [],
+  "sessions": [
+    "TAO-212-S1",
+    "TAO-212-S2"
+  ]
+}

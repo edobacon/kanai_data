@@ -89,22 +89,22 @@ Contrato: rollback: Revertir el módulo lector y sus tests con git checkout; el 
 Contrato: rollback: Eliminar la imagen de prueba con 'docker rmi tao-server:ep02-check'. No hay cambios en archivos del repo que revertir.. Status: done
 
 #### S2.T1 — Verificación de paridad (REQ-04): comparar por content_key el derivado server/resources/contenido-referencia.v1.json contra app/assets/catalogos/resultados.v1.json. Cuando una clave falte o la versión difiera, el mensaje de error usa el formato literal 'CONTENT_KEY: app=A servidor=B', donde CONTENT_KEY es la content_key real de la entrada, A es la versión del lado app y B es la versión del lado servidor. Ejemplo concreto: 'resultado.ejemplo: app=1.0.0 servidor=1.1.0'. La versión de cada entrada es el catalogVersion de su catálogo, salvo que el JSON Schema de TAO-198 defina content_version por entrada. Leer app/ solo en el modo --check y en las pruebas de vitest, nunca en runtime ni en el build de la imagen. Las pruebas deben afirmar el texto exacto del mensaje con el ejemplo 'resultado.ejemplo: app=1.0.0 servidor=1.1.0'.
-Contrato: rollback: Revertir los cambios de la task en el script y en sus pruebas con git (git checkout de esos archivos); el derivado y los catálogos no se tocan.. Status: pending
+Contrato: rollback: Revertir los cambios de la task en el script y en sus pruebas con git (git checkout de esos archivos); el derivado y los catálogos no se tocan.. Status: done
 
 #### S2.T2 — Registrar 'pnpm -C server run recurso:contenido:check' como un paso nuevo en el job de .github/workflows/ci-pr.yml que ya compila o verifica server/. Sin quitar ni alterar los pasos existentes, y sin tocar el job docs (líneas 1175-1204 con build_result_catalog.py --check).
-Contrato: rollback: Quitar el paso agregado de ci-pr.yml.. Status: pending
+Contrato: rollback: Quitar el paso agregado de ci-pr.yml.. Status: done
 
 #### S2.T3 — Documentar en docs/development/commands.md los comandos recurso:contenido y recurso:contenido:check. Incluir para qué sirven, qué catálogo procesan (resultados.v1.json, según la constante CATALOGOS_INCLUIDOS), dónde escriben (server/resources/contenido-referencia.v1.json), la verificación de paridad con app/ y un ejemplo de salida con el derivado desactualizado. El archivo está en .docs-baseline.txt y debe quedar compliant con markdownlint-cli2.
-Contrato: rollback: Revertir la sección agregada en docs/development/commands.md.. Status: pending
+Contrato: rollback: Revertir la sección agregada en docs/development/commands.md.. Status: done
 
 #### S2.T4 — Tests de vitest de paridad: igualdad sin diferencias, versión distinta (mensaje con la clave, 1.0.0 y 1.1.0) y clave faltante de cada lado, con fixtures temporales. Agregar una prueba que confirme que server/src/ no referencia app/ ni docs/. Correr markdownlint sobre commands.md como evidencia de REQ-06 y REQ-07.
-Contrato: rollback: Borrar los tests de paridad agregados.. Status: pending
+Contrato: rollback: Borrar los tests de paridad agregados.. Status: done
 
 #### S2.T5 — Ajuste S2.T1 (hallazgo 3): antes de implementar la paridad, leer en docs/content/catalogos/resultados.v1.json y en su JSON Schema de TAO-198 dónde vive catalogVersion. Si es a nivel de catálogo, comparar por content_key y usar el catalogVersion del catálogo para todas sus entradas (app y derivado); si el schema define versión por entrada, usarla. Registrar en la descripción de la task la ubicación exacta del campo encontrada. El error nombra la clave y ambas versiones.
-Contrato: rollback: Revertir la lógica de paridad y sus tests con git checkout sobre server/scripts/generar-recurso-contenido.ts y su test.. Status: pending
+Contrato: rollback: Revertir la lógica de paridad y sus tests con git checkout sobre server/scripts/generar-recurso-contenido.ts y su test.. Status: done
 
 #### S2.T6 — Ajuste S2.T2 (hallazgos 4 y 6): registrar el paso recurso:contenido:check en el job de ci-pr.yml que compila o verifica server/ (no en el job docs) y apuntar el sourceRef de REQ-02 a ese job. Además del git diff, correr localmente desde la raíz del repo el comando exacto del paso de CI (recurso:contenido:check, con el mismo --dir/--filter que use el workflow) y verificar que sale en 0. Confirmar que el job elegido hace checkout de docs/ y app/ (sin sparse-checkout que los excluya). Si el repo usa actionlint, validarlo sobre .github/workflows/ci-pr.yml. Confirmar con git diff que no se quitaron ni alteraron pasos existentes.
-Contrato: rollback: Revertir .github/workflows/ci-pr.yml con git checkout.. Status: pending
+Contrato: rollback: Revertir .github/workflows/ci-pr.yml con git checkout.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -150,15 +150,15 @@ Ninguno.
 
 **Gate (auto)**: pnpm -C server run recurso:contenido genera server/resources/contenido-referencia.v1.json sin diff en una segunda corrida. recurso:contenido:check pasa en verde y falla con un fixture alterado nombrando resultados.v1.json. Las pruebas de vitest del lector pasan desde server/. La imagen construida desde server/ lista resources/ sin DOCX ni imágenes maestras.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
-- [ ] S2.T6
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
+- [x] S2.T6
 
 **Gate (auto)**: recurso:contenido:check informa la clave y las dos versiones ante una discrepancia con app/assets/catalogos/resultados.v1.json (prueba visible en vitest). ci-pr.yml muestra el paso nuevo en el job de server/ sin cambios a los pasos existentes. docs/development/commands.md documenta el comando y pasa markdownlint.
 
