@@ -119,19 +119,19 @@ Contrato: rollback: Revertir los casos de fidelidad en tests/test_sign_catalog.p
 Contrato: rollback: Revertir los casos de regresión en tests/test_sign_catalog.py. Status: done
 
 #### S2.T1 — Agregar al generador la escritura de app/assets/catalogos/signos_personalidades.v1.json y el modo --check, usando el check de catalog_common.py: compara la fuente regenerada con la copia y falla nombrando el archivo que difiere. Registrar el asset en app/pubspec.yaml junto a los catálogos existentes.
-Contrato: rollback: Revertir el modo --check y la escritura de la copia en build_sign_catalog.py, quitar la entrada de app/pubspec.yaml y borrar app/assets/catalogos/signos_personalidades.v1.json. Status: pending
+Contrato: rollback: Revertir el modo --check y la escritura de la copia en build_sign_catalog.py, quitar la entrada de app/pubspec.yaml y borrar app/assets/catalogos/signos_personalidades.v1.json. Status: done
 
 #### S2.T2 — Agregar 'python3 scripts/build_sign_catalog.py --check' en el paso 'Gates de build documental (--check)' de .github/workflows/ci-pr.yml (líneas 1199 a 1204), conservando las líneas de build_fichas, build_manual_y_personalidad, build_signos y build_result_catalog, y las que hayan agregado TAO-199 y TAO-202.
-Contrato: rollback: Quitar la línea agregada en .github/workflows/ci-pr.yml. Status: pending
+Contrato: rollback: Quitar la línea agregada en .github/workflows/ci-pr.yml. Status: done
 
 #### S2.T3 — Documentar en docs/development/commands.md el uso de build_sign_catalog.py y de su --check, con parámetros, un ejemplo y la regla de subir catalogVersion ante un cambio de texto. La sección debe quedar compliant con el linter de docs del baseline.
-Contrato: rollback: Revertir la sección agregada en docs/development/commands.md. Status: pending
+Contrato: rollback: Revertir la sección agregada en docs/development/commands.md. Status: done
 
 #### S2.T4 — Crear app/lib/catalogos/catalogo_signos_personalidades.dart (modelos inmutables: signo, bloque, rango, personalidad, procedimiento y profundidad) y app/lib/catalogos/cargador_catalogo_signos_personalidades.dart, de solo lectura, que carga el asset empaquetado sin red y lanza los errores de errores_catalogo.dart ante una versión o un campo inválidos, siguiendo el cargador de resultados de TAO-198.
-Contrato: rollback: Eliminar los dos archivos Dart nuevos de app/lib/catalogos/. Status: pending
+Contrato: rollback: Eliminar los dos archivos Dart nuevos de app/lib/catalogos/. Status: done
 
 #### S2.T5 — Pruebas de la etapa. Escribir app/test/catalogos/cargador_catalogo_signos_personalidades_test.dart (12/9 y versión '1.0.0', Libra sin regente, variantes de Tauro, 21 de mayo con signo en el rango del producto, error tipado ante un JSON inválido) y ampliar tests/test_sign_catalog.py con estos casos: --check falla ante una ficha sin regenerar y ante una copia editada nombrando el archivo, build_result_catalog.py --check sigue en verde, ci-pr.yml conserva las líneas previas y commands.md contiene la sección del generador.
-Contrato: rollback: Eliminar el test Dart y revertir los casos agregados en tests/test_sign_catalog.py. Status: pending
+Contrato: rollback: Eliminar el test Dart y revertir los casos agregados en tests/test_sign_catalog.py. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -157,14 +157,14 @@ Ninguno.
 
 **Gate (auto)**: docs/content/catalogos/signos_personalidades.v1.json se genera con 12 signos y 9 personalidades y valida contra su schema. tests/test_sign_catalog.py pasa en verde y muestra el caso QA-02-06-02 fallando con el content_key y el nodo nombrados cuando se edita un rasgo.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: python3 scripts/build_sign_catalog.py --check pasa y falla nombrando el archivo cuando la copia o la fuente difieren. ci-pr.yml corre ese --check junto a las líneas existentes, commands.md documenta el generador sin errores de lint y el test Dart de app/test/catalogos/ carga 12 signos y 9 personalidades.
 
