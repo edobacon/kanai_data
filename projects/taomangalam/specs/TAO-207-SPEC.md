@@ -213,25 +213,25 @@ Contrato: rollback: Borrar tests/test_practice_materials.py.. Status: done
 Contrato: rollback: Eliminar tests/test_practice_docs_baseline.py.. Status: done
 
 #### S4.T1 — Prueba de cierre de la sesión B (anillos, Casa 12 y profundidad): comprobar que el sistema queda funcional con generador, --check y pruebas de anillos (repeticiones 3, 5, 5, 5, 5, 5, 7 y octavo sin número, acción del octavo con p0110 y p0111, mismos content_key de resultados.v1.json), cierre de Casa 12 (acciones finales, referencias por contentKey a la energización, sin reparación) y profundidad DEC-027 en verde, antes del gate de la sesión.
-Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: pending
+Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: done
 
 #### S4.T2 — Detalle de los ocho anillos para V-10 con los content_key ring-01 a ring-08 de resultados.v1.json, sin duplicar Rhibu, patrón ni acción: desarrollo, paso previo donde la fuente lo declara, repeticiones como número (3, 5, 5, 5, 5, 5, 7; el octavo sin número, DEC-147) y regla de medición RKL. Incluye el registro editorial del punto 15 de docs/content/99_inconsistencias_por_resolver.md para el anillo 8 (p0110 y p0111) en docs/content/catalogos/correcciones_editoriales_practica.v1.json, y la acción del octavo anillo que combina ambos párrafos.
-Contrato: rollback: Quitar rings del generador y regenerar.. Status: pending
+Contrato: rollback: Quitar rings del generador y regenerar.. Status: done
 
 #### S4.T3 — Cierre de Casa 12 desde docs/content/casas/12_casa_12.md y fuentes/03_tablero_tao_mangalam.md: acciones finales con content_key (mirar al Este, esfera azul dorada, Rhema mantra 3, Logo Shamkya 108 x 3 días, 'Bendigo, agradezco y amo') con anclas p1713/p1724, vía del consultor p1729, nota final p1734 y textos de remisión p1759 a p1784, sin plan de reparación (DEC-032, DEC-204). Cuando una acción coincide con la energización de la Casa 12 del catálogo de HU-02-05, se emite ref a su content_key en lugar de texto.
-Contrato: rollback: Quitar house12Closing del generador y regenerar.. Status: pending
+Contrato: rollback: Quitar house12Closing del generador y regenerar.. Status: done
 
 #### S4.T4 — Asignar depth a cada nodo según DEC-027. Estándar: línea directiva del Ashura, procedimiento, chakras, minerales, días, repeticiones y regla de repetir bajo 9.000. Avanzado: desarrollo y simbología del Ashura, mensaje de Thot, desarrollo del patrón, contexto de medición y escala RKL. El generador imprime un resumen de nodos por casa y anillo (para adjuntar al PR).
-Contrato: rollback: Quitar la asignación de depth y el resumen; regenerar.. Status: pending
+Contrato: rollback: Quitar la asignación de depth y el resumen; regenerar.. Status: done
 
 #### S4.T5 — Agregar la clase RingsTest: repeticiones de ring-01 a ring-07 = [3,5,5,5,5,5,7] y ring-08 sin repeticiones numéricas; la acción de ring-08 tiene sourceRefs a p0110 y p0111; el conjunto de content_key de anillos es igual al de resultados.v1.json; ningún nodo de anillo trae los campos Rhibu, patrón ni acción del resultado.
-Contrato: rollback: Quitar RingsTest del archivo de pruebas.. Status: pending
+Contrato: rollback: Quitar RingsTest del archivo de pruebas.. Status: done
 
 #### S4.T6 — Agregar la clase House12ClosingTest: las cinco acciones finales con repeticiones 3 y 108, 3 días y sourceRefs a p1713 o p1724; vía del consultor con ancla p1729, nota final con p1734 y textos de remisión con anclas en p1759 a p1784; una acción que coincide con la energización de HU-02-05 trae ref a su content_key sin texto propio; QA-02-10-04 (house-12 con acciones finales y sin procedimiento de reparación).
-Contrato: rollback: Quitar House12ClosingTest del archivo de pruebas.. Status: pending
+Contrato: rollback: Quitar House12ClosingTest del archivo de pruebas.. Status: done
 
 #### S4.T7 — Agregar la clase DepthTest: todos los nodos del catálogo tienen depth en {estandar, avanzado} y el esquema rechaza un nodo sin depth; la escala RKL y el desarrollo del patrón son avanzado; la regla de repetir bajo 9.000 es estandar; en las 11 casas el mensaje de Thot es avanzado y la línea directiva del Ashura es estandar.
-Contrato: rollback: Quitar DepthTest del archivo de pruebas.. Status: pending
+Contrato: rollback: Quitar DepthTest del archivo de pruebas.. Status: done
 
 #### S5.T1 — Registrar practica.v1.json en scripts/sync_app_catalogs.py para que la copia app/assets/catalogos/practica.v1.json se genere con ese script, siguiendo la forma en que ya registra resultados.v1.json y casas.v1.json. El generador scripts/build_practice_catalog.py no copia nada a app/. Tras registrarlo, ejecutar el script para generar la copia.
 Contrato: rollback: Quitar la entrada de practica.v1.json de scripts/sync_app_catalogs.py y borrar app/assets/catalogos/practica.v1.json.. Status: pending
@@ -499,16 +499,16 @@ Ninguno.
 
 **Gate (auto)**: El documento único de materiales existe en docs/content/materiales_practica_y_reparacion.md, pasa el linter de docs (DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check) y queda listo para la aprobación de Contenido. El catálogo tiene la sección de materiales con función, uso, producto, anclas y la marca de provisional, y la prueba tests/test_practice_catalog_materials.py pasa. Los docs del baseline que aparezcan en el diff pasan el linter.
 
-### Session 4 · T2 · open
+### Session 4 · T2 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
-- [ ] S4.T3
-- [ ] S4.T4
-- [ ] S4.T5
-- [ ] S4.T6
-- [ ] S4.T7
+- [x] S4.T1
+- [x] S4.T2
+- [x] S4.T3
+- [x] S4.T4
+- [x] S4.T5
+- [x] S4.T6
+- [x] S4.T7
 
 **Gate (auto)**: Etapa B. El generador con --check pasa y el JSON generado tiene los 8 anillos con repeticiones [3,5,5,5,5,5,7,null] y los mismos content_key que resultados.v1.json sin duplicar Rhibu, patrón ni acción, el cierre de la Casa 12 con sus anclas y sin reparación, y depth estándar o avanzado en cada nodo. Las pruebas de anillos, Casa 12 y profundidad pasan: python3 -m unittest discover -s tests -p 'test_practice*.py'.
 
