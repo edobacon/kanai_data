@@ -127,16 +127,16 @@ Contrato: rollback: Quitar la actualización de ultimoAcceso y los campos aditiv
 Contrato: rollback: Eliminar el archivo o los casos de prueba agregados; no afecta código de producción.. Status: done
 
 #### S2.T1 — Integrar la política en el gestor de HU-02-09 antes de cada descarga. Pedir el plan y borrar los candidatos del plan; si el plan es `bloqueado`, no descargar ni borrar nada y devolver el resultado que la vista mapea a su superficie de respaldo existente. Si un archivo indexado falta (caché vaciada por el sistema), re-descargar y verificar con la verificación SHA-256 existente, y sin red devolver la superficie de respaldo. Exponer un interruptor para desactivar la política como rollback.
-Contrato: rollback: Desactivar la política con el interruptor, o revertir el commit. El gestor vuelve a descargar sin borrar nada y no se tocan assets esenciales ni datos de la persona.. Status: pending
+Contrato: rollback: Desactivar la política con el interruptor, o revertir el commit. El gestor vuelve a descargar sin borrar nada y no se tocan assets esenciales ni datos de la persona.. Status: done
 
 #### S2.T3 — Prueba de integración de la política de caché en app/test/core/assets/cache/cache_policy_integration_test.dart (archivo que crea este ticket; se ejecuta desde app/; app/test/core/http/app_release_test.dart ya existe y sirve de referencia de ruta y patrón). Usa almacenamiento simulado bajo (interfaz inyectable de espacio libre) y almacén en memoria inyectado, con constantes compartidas sin literales repetidos. Casos: (1) QA-02-15-01: con tope reducido a 50 MB mediante cacheTopeMb, al descargar assets hasta superarlo se borran por LRU los menos usados y nunca los empaquetados; (2) QA-02-15-02: dispositivo casi lleno con solo adjuntos de la persona sin respaldar (solo_local, pendiente, subiendo), al pedir una descarga no se borra ningún dato y el resultado bloqueado se mapea a la superficie de respaldo; (3) QA-02-15-03: configuración pública con cacheTopeMb mayor al permitido se ignora y rige el tope de DEC-202; (4) caché vaciada por el sistema operativo: con red, la vista pide el asset y se vuelve a descargar y verificar SHA-256 sin error. Valida REQ-04, REQ-05, REQ-10 y REQ-13.
-Contrato: rollback: Borrar los archivos de test nuevos.. Status: pending
+Contrato: rollback: Borrar los archivos de test nuevos.. Status: done
 
 #### S2.T4 — Registrar la telemetría de liberaciones y bloqueos. Primer paso dentro de esta tarea: ubicar el canal de observabilidad existente de la app y usarlo; si no hay uno adecuado, registrar solo tamaños y resultados agregados detrás de una interfaz inyectable. El evento contiene únicamente tamaños y resultados (bytes liberados, cantidad de archivos, resultado liberado o bloqueado), sin clase de dispositivo, nombres, rutas, ids ni contenido de archivos. La prueba exige que el evento contenga únicamente tamaños y resultados y falla si aparece cualquier otro campo.
-Contrato: rollback: Revertir el commit del emisor de telemetría; la política sigue funcionando sin registrar métricas.. Status: pending
+Contrato: rollback: Revertir el commit del emisor de telemetría; la política sigue funcionando sin registrar métricas.. Status: done
 
 #### S2.T5 — Confirmar en el código el componente existente de superficie de respaldo y mapear a él el resultado bloqueado de la política en la vista. Agregar prueba de widget del mapeo (bloqueado muestra la superficie de respaldo; descarga exitosa no).
-Contrato: rollback: Revertir el commit del mapeo en la vista; la vista vuelve a su comportamiento previo.. Status: pending
+Contrato: rollback: Revertir el commit del mapeo en la vista; la vista vuelve a su comportamiento previo.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: El tope blando de caché depende de la clase de dispositivo: 1 GB en teléfono y 2 GB en tablet. La clase se decide por el lado corto de la pantalla con el umbral documentado en tecnologia/10. Además se exige una reserva mínima de 1 GB libre (DEC-202).
@@ -253,13 +253,13 @@ Contrato: rollback: Revertir el commit del mapeo en la vista; la vista vuelve a 
 
 **Gate (auto)**: Tests unitarios en verde que muestran: tope de 1 GB en teléfono y 2 GB en tablet, 500 MB aplicado y 3 GB ignorado, y LRU que solo devuelve derivados verificados, con una prueba explícita de que empaquetados, archivos sin verificar y adjuntos de la persona nunca se eligen.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: Tests de integración en verde con almacenamiento simulado: QA-02-15-01 (tope de 50 MB, se borran los menos usados y ningún empaquetado), QA-02-15-02 (no se borra nada y el resultado es la superficie de respaldo), QA-02-15-03 (3 GB ignorado), la caché vaciada por el sistema se re-descarga y verifica, y el registro de liberaciones solo contiene tamaños y resultados.
 
