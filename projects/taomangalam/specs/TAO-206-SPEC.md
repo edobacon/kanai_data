@@ -184,19 +184,19 @@ Contrato: rollback: Revertir los cambios en scripts/validate_editorial_catalog.p
 Contrato: rollback: Revertir el commit en scripts/catalog_common.py y en los generadores; todos los nodos salen provisional sin lectura de approvals.. Status: done
 
 #### S6.T1 — Escribir los tests del validador contra los catálogos reales (el validador pasa sobre glosario, acerca_de e instructivo reales) y fixtures solo para los casos de error: término inexistente, procedimiento inexistente (QA-02-11-03, nombra capítulo y clave) e ilustración fuera del manifiesto; caso borde con practica.v1.json ausente. Archivo: tests/test_validador_catalogo_editorial.py.
-Contrato: rollback: Eliminar tests/test_validador_catalogo_editorial.py o revertir los casos agregados.. Status: pending
+Contrato: rollback: Eliminar tests/test_validador_catalogo_editorial.py o revertir los casos agregados.. Status: done
 
 #### S6.T2 — Registrar glosario.v1.json, acerca_de.v1.json e instructivo.v1.json en scripts/sync_app_catalogs.py para copiarlos a app/assets/catalogos/ (los generadores no copian por sí mismos) y generar las copias. El --check de cada generador falla si la copia difiere.
-Contrato: rollback: Quitar los tres registros de scripts/sync_app_catalogs.py y eliminar las copias en app/assets/catalogos/.. Status: pending
+Contrato: rollback: Quitar los tres registros de scripts/sync_app_catalogs.py y eliminar las copias en app/assets/catalogos/.. Status: done
 
 #### S6.T3 — Crear tres cargadores Dart de solo lectura (glosario, Acerca de, Instructivo) junto al cargador de arcanos; confirmar la ruta real con Glob en app/lib antes de crearlos. Leen app/assets/catalogos/*.v1.json sin red y entregan los nodos con content_key y content_version.
-Contrato: rollback: Eliminar los tres cargadores Dart y sus exports; el cargador de arcanos no cambia.. Status: pending
+Contrato: rollback: Eliminar los tres cargadores Dart y sus exports; el cargador de arcanos no cambia.. Status: done
 
 #### S6.T4 — Escribir las pruebas Dart de los tres cargadores contra los assets reales: 16 términos, 8 bloques y 9 capítulos con content_key y content_version, junto a la prueba del cargador de arcanos.
-Contrato: rollback: Eliminar los archivos de prueba Dart nuevos.. Status: pending
+Contrato: rollback: Eliminar los archivos de prueba Dart nuevos.. Status: done
 
 #### S6.T5 — Escribir tests de aprobación editorial (editorialStatus provisional por defecto, approvals con nodeKeys y con "all", rechazo de valores inválidos en el esquema, ausencia de approvedBy en el catálogo generado) para glosario, Acerca de e Instructivo, en tests/test_editorial_approvals.py.
-Contrato: rollback: Eliminar tests/test_editorial_approvals.py.. Status: pending
+Contrato: rollback: Eliminar tests/test_editorial_approvals.py.. Status: done
 
 #### S7.T1 — Agregar a .github/workflows/ci-pr.yml, en el paso Gates de build documental (--check) del job docs, los comandos python3 scripts/build_glosario_catalog.py --check y python3 scripts/build_acerca_instructivo_catalog.py --check.
 Contrato: rollback: Quitar las dos líneas agregadas en ci-pr.yml.. Status: pending
@@ -438,14 +438,14 @@ Ninguno.
 
 **Gate (auto)**: Se generan acerca_de.v1.json e instructivo.v1.json con 8 y 9 nodos, el --check de cada uno termina en 0 y pasan sus tests.
 
-### Session 6 · open
+### Session 6 · continue
 
 **Tasks:**
-- [ ] S6.T1
-- [ ] S6.T2
-- [ ] S6.T3
-- [ ] S6.T4
-- [ ] S6.T5
+- [x] S6.T1
+- [x] S6.T2
+- [x] S6.T3
+- [x] S6.T4
+- [x] S6.T5
 
 **Gate (auto)**: El validador editorial pasa sobre los catálogos reales (glosario, Acerca de, Instructivo, procedimientos y manifiesto) y falla nombrando el apartado con los fixtures de error; pasa cd app && flutter test de los cargadores.
 
