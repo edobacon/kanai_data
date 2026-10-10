@@ -199,13 +199,13 @@ Contrato: rollback: Eliminar los archivos de prueba Dart nuevos.. Status: done
 Contrato: rollback: Eliminar tests/test_editorial_approvals.py.. Status: done
 
 #### S7.T1 — Agregar a .github/workflows/ci-pr.yml, en el paso Gates de build documental (--check) del job docs, los comandos python3 scripts/build_glosario_catalog.py --check y python3 scripts/build_acerca_instructivo_catalog.py --check.
-Contrato: rollback: Quitar las dos líneas agregadas en ci-pr.yml.. Status: pending
+Contrato: rollback: Quitar las dos líneas agregadas en ci-pr.yml.. Status: done
 
 #### S7.T2 — Documentar en docs/development/commands.md los generadores scripts/build_glosario_catalog.py y scripts/build_acerca_instructivo_catalog.py con su --check (uso, parámetros y ejemplo), con el patrón de los generadores de TAO-198 y TAO-199.
-Contrato: rollback: Revertir las secciones agregadas en docs/development/commands.md.. Status: pending
+Contrato: rollback: Revertir las secciones agregadas en docs/development/commands.md.. Status: done
 
 #### S7.T3 — Escribir en docs/content/SCHEMA.md la sección de glosario, Acerca de e Instructivo, y dejar compliant con el linter todo doc de .docs-baseline.txt que se haya tocado (por ejemplo docs/content/10_registro_cierre_y_glosario.md si se modifica), normalizando el patrón que el linter rechaza. Comando: DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check.
-Contrato: rollback: Revertir la sección de SCHEMA.md y la normalización de formato de los docs tocados.. Status: pending
+Contrato: rollback: Revertir la sección de SCHEMA.md y la normalización de formato de los docs tocados.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -449,11 +449,11 @@ Ninguno.
 
 **Gate (auto)**: El validador editorial pasa sobre los catálogos reales (glosario, Acerca de, Instructivo, procedimientos y manifiesto) y falla nombrando el apartado con los fixtures de error; pasa cd app && flutter test de los cargadores.
 
-### Session 7 · open
+### Session 7 · continue
 
 **Tasks:**
-- [ ] S7.T1
-- [ ] S7.T2
-- [ ] S7.T3
+- [x] S7.T1
+- [x] S7.T2
+- [x] S7.T3
 
 **Gate (auto)**: El job docs de ci-pr.yml incluye los --check de cada generador nuevo y DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check pasa sin ampliar .docs-baseline.txt.
