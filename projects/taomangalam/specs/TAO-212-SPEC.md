@@ -65,28 +65,28 @@ La evidencia de QA-02-16-05 es el listado real del contenido de la imagen constr
 ## Tasks
 
 #### S1.T1 — Crear server/scripts/generar-recurso-contenido.ts (tsx) con el patrón de server/scripts/sincronizar-legal.ts. Declara una constante CATALOGOS_INCLUIDOS = ['resultados'], lee docs/content/catalogos/resultados.v1.json, conserva content_key, content_version (catalogVersion), textos, sourceRefs y resoluciones editoriales, serializa con orden de claves estable y salto de línea final, y escribe server/resources/contenido-referencia.v1.json. Agregar a server/package.json los scripts recurso:contenido y recurso:contenido:check (este último pasa --check). Commitear el derivado generado. No editar docs/content/catalogos/.
-Contrato: rollback: Borrar server/scripts/generar-recurso-contenido.ts, server/resources/contenido-referencia.v1.json y los dos scripts de server/package.json (git revert del commit).. Status: pending
+Contrato: rollback: Borrar server/scripts/generar-recurso-contenido.ts, server/resources/contenido-referencia.v1.json y los dos scripts de server/package.json (git revert del commit).. Status: done
 
 #### S1.T2 — Implementar el modo --check en generar-recurso-contenido.ts. Regenera en memoria y compara con server/resources/contenido-referencia.v1.json sin escribir. Si difiere o falta, sale con código 1 y un mensaje seguro (sin stack trace) que nombra el catálogo (resultados.v1.json) y el recurso desactualizado.
-Contrato: rollback: Revertir la rama --check del script; recurso:contenido queda solo como generador.. Status: pending
+Contrato: rollback: Revertir la rama --check del script; recurso:contenido queda solo como generador.. Status: done
 
 #### S1.T3 — Crear en server/src/ un módulo lector del contenido de referencia, con el mismo estilo de capas que el resto de server/src/. Resuelve server/resources/contenido-referencia.v1.json de forma relativa al Root Directory de server/ (sin '..' hacia docs/ o app/), lo parsea y expone la búsqueda por content_key con su content_version. Si el archivo falta, falla con un mensaje seguro.
-Contrato: rollback: Borrar el módulo lector; ningún consumidor lo usa todavía en este ticket.. Status: pending
+Contrato: rollback: Borrar el módulo lector; ningún consumidor lo usa todavía en este ticket.. Status: done
 
 #### S1.T4 — Agregar en server/Dockerfile la copia explícita de resources/ en la misma etapa donde hoy se copia legal/ (las copias actuales son src, contract, prisma y legal). Verificar que server/.dockerignore no excluye resources/. No copiar nada de docs/ ni app/.
-Contrato: rollback: Quitar la línea COPY de resources/ del server/Dockerfile y cualquier cambio en server/.dockerignore.. Status: pending
+Contrato: rollback: Quitar la línea COPY de resources/ del server/Dockerfile y cualquier cambio en server/.dockerignore.. Status: done
 
 #### S1.T5 — Tests de vitest en server/: (a) determinismo: dos generaciones dan bytes iguales; (b) conservación de content_key, content_version, textos, sourceRefs y resoluciones contra la fuente; (c) solo se incluye resultados; (d) --check falla con un fixture alterado y con el recurso ausente, nombrando resultados.v1.json; (e) el lector devuelve una clave conocida desde server/ y su path resuelto queda dentro de server/; (f) el contenido del paquete: server/resources/ no tiene .docx ni imágenes maestras, y el Dockerfile copia resources/ y no copia docs/ ni app/. Usar fixtures temporales, sin tocar docs/content/catalogos/.
-Contrato: rollback: Borrar los archivos de test agregados.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados.. Status: done
 
 #### S1.T6 — Ajuste S1.T1 (hallazgo 1): en server/scripts/generar-recurso-contenido.ts, si docs/content/catalogos/resultados.v1.json no existe o no es JSON válido, terminar con process.exit distinto de 0 con mensaje seguro que nombre el catálogo. Armar el derivado completo en memoria y escribirlo al final en una sola operación (escritura atómica: archivo temporal en server/resources/ y rename), sin dejar derivado parcial ni tocar el previo ante error. Agregar a S1.T5 el caso (g): fixture con catálogo ausente y fixture con catálogo JSON inválido, ambos verificando código distinto de 0, nombre del catálogo y derivado previo intacto.
-Contrato: rollback: Revertir los cambios del script y del caso (g) con git checkout sobre server/scripts/generar-recurso-contenido.ts y su archivo de test.. Status: pending
+Contrato: rollback: Revertir los cambios del script y del caso (g) con git checkout sobre server/scripts/generar-recurso-contenido.ts y su archivo de test.. Status: done
 
 #### S1.T7 — Ajuste S1.T3 (hallazgo 2): el módulo lector de server/src/ resuelve la ruta con import.meta.url hacia la carpeta resources/ del Root Directory de server/, válida desde src/ y desde dist/. Al implementar, confirmar contra el WORKDIR y CMD de server/Dockerfile que la ruta relativa resultante existe en la imagen y registrar la verificación en la task. Agregar un test que lea el recurso desde src/ y otro que, tras pnpm build, lea el recurso desde el módulo compilado en dist/ y compare claves y versiones.
-Contrato: rollback: Revertir el módulo lector y sus tests con git checkout; el Dockerfile no se altera en esta task.. Status: pending
+Contrato: rollback: Revertir el módulo lector y sus tests con git checkout; el Dockerfile no se altera en esta task.. Status: done
 
 #### S1.T8 — Evidencia de QA-02-16-05 (REQ-08): construir la imagen de server/ y listar su contenido real. Comandos exactos, ejecutados desde la raíz del repo: (1) 'docker build -t tao-server:ep02-check server/'; (2) 'docker run --rm --entrypoint ls tao-server:ep02-check -R /app/resources'; (3) 'docker run --rm --entrypoint ls tao-server:ep02-check -a /app'. Confirmar que /app/resources contiene solo contenido-referencia.v1.json y que /app no contiene DOCX, maestros de imagen ni documentos de docs/. Adjuntar los listados como evidencia. Si Docker no está disponible en la sesión, reportar la evidencia como no ejecutada, nunca como pasada.
-Contrato: rollback: Eliminar la imagen de prueba con 'docker rmi tao-server:ep02-check'. No hay cambios en archivos del repo que revertir.. Status: pending
+Contrato: rollback: Eliminar la imagen de prueba con 'docker rmi tao-server:ep02-check'. No hay cambios en archivos del repo que revertir.. Status: done
 
 #### S2.T1 — Verificación de paridad (REQ-04): comparar por content_key el derivado server/resources/contenido-referencia.v1.json contra app/assets/catalogos/resultados.v1.json. Cuando una clave falte o la versión difiera, el mensaje de error usa el formato literal 'CONTENT_KEY: app=A servidor=B', donde CONTENT_KEY es la content_key real de la entrada, A es la versión del lado app y B es la versión del lado servidor. Ejemplo concreto: 'resultado.ejemplo: app=1.0.0 servidor=1.1.0'. La versión de cada entrada es el catalogVersion de su catálogo, salvo que el JSON Schema de TAO-198 defina content_version por entrada. Leer app/ solo en el modo --check y en las pruebas de vitest, nunca en runtime ni en el build de la imagen. Las pruebas deben afirmar el texto exacto del mensaje con el ejemplo 'resultado.ejemplo: app=1.0.0 servidor=1.1.0'.
 Contrato: rollback: Revertir los cambios de la task en el script y en sus pruebas con git (git checkout de esos archivos); el derivado y los catálogos no se tocan.. Status: pending
@@ -136,17 +136,17 @@ Ninguno.
 - edit S2.T1 { desc="Verificación de paridad (REQ-04): comparar por content_key el derivado server/resources/contenido-referencia.v1.json contra app/assets/catalogos/resultados.v1.json. Cuando una clave falte o la versión difiera, el mensaje de error usa el formato literal 'CONTENT_KEY: app=A servidor=B', donde CONTENT_KEY es la content_key real de la entrada, A es la versión del lado app y B es la versión del lado servidor. Ejemplo concreto: 'resultado.ejemplo: app=1.0.0 servidor=1.1.0'. La versión de cada entrada es el catalogVersion de su catálogo, salvo que el JSON Schema de TAO-198 defina content_version por entrada. Leer app/ solo en el modo --check y en las pruebas de vitest, nunca en runtime ni en el build de la imagen. Las pruebas deben afirmar el texto exacto del mensaje con el ejemplo 'resultado.ejemplo: app=1.0.0 servidor=1.1.0'.", rollback="Revertir los cambios de la task en el script y en sus pruebas con git (git checkout de esos archivos); el derivado y los catálogos no se tocan." }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
-- [ ] S1.T7
-- [ ] S1.T8
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
+- [x] S1.T7
+- [x] S1.T8
 
 **Gate (auto)**: pnpm -C server run recurso:contenido genera server/resources/contenido-referencia.v1.json sin diff en una segunda corrida. recurso:contenido:check pasa en verde y falla con un fixture alterado nombrando resultados.v1.json. Las pruebas de vitest del lector pasan desde server/. La imagen construida desde server/ lista resources/ sin DOCX ni imágenes maestras.
 
