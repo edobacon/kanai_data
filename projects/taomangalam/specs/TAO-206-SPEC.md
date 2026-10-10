@@ -106,28 +106,28 @@ Lo que no se puede generar desde la documentación queda marcado provisional. El
 ## Tasks
 
 #### S1.T1 — Implementar el generador scripts/build_arcanos_catalog.py y su --check, con el patrón de scripts/build_house_catalog.py y scripts/catalog_common.py (no build_result_catalog.py). Salidas: docs/content/catalogos/arcanos.v1.json y docs/content/catalogos/arcanos.v1.schema.json (22 arcanos, ids 0 a 21, alias 22 solo en El Loco, sin campos de interpretación). Aplica las correcciones de docs/content/catalogos/correcciones_editoriales_arcanos.v1.json. Esta task no toca ci-pr.yml ni docs/development/commands.md (van en S1.T3).
-Contrato: rollback: Eliminar scripts/build_arcanos_catalog.py, docs/content/catalogos/arcanos.v1.json y docs/content/catalogos/arcanos.v1.schema.json; el resto del repo no cambia.. Status: pending
+Contrato: rollback: Eliminar scripts/build_arcanos_catalog.py, docs/content/catalogos/arcanos.v1.json y docs/content/catalogos/arcanos.v1.schema.json; el resto del repo no cambia.. Status: done
 
 #### S1.T1.1 — Schema JSON de arcanos con additionalProperties:false, ids 0..21, alias opcional con valor constante 22, sourceRefs obligatorios en la palabra mágica, invitación y id de lámina.
-Contrato: rollback: Borrar el archivo de schema.. Status: pending
+Contrato: rollback: Borrar el archivo de schema.. Status: done
 
 #### S1.T1.2 — Reutilizar scripts/catalog_common.py y el patrón de scripts/build_house_catalog.py para el hash de contenido, la escritura determinista y el modo --check. No tomar scripts/build_result_catalog.py como patrón.
-Contrato: rollback: Borrar el script y los JSON generados.. Status: pending
+Contrato: rollback: Borrar el script y los JSON generados.. Status: done
 
 #### S1.T1.3 — Implementar UNA sola vez, como funciones reutilizables en scripts/catalog_common.py, la validación de coherencia con docs/content/catalogos/casas.v1.json (nombre y palabra mágica por arcano asociado a una casa; reparto de una casa por arcano, Casa 2 con arcanos 2 y 12) y la validación de existencia del id de lámina en app/assets/manifest.json. El generador y scripts/validate_editorial_catalog.py solo las invocan.
-Contrato: rollback: Revertir los cambios en scripts/catalog_common.py (la utilidad común de comprobación de casas y manifiesto); los generadores existentes siguen usando sus versiones previas.. Status: pending
+Contrato: rollback: Revertir los cambios en scripts/catalog_common.py (la utilidad común de comprobación de casas y manifiesto); los generadores existentes siguen usando sus versiones previas.. Status: done
 
 #### S1.T2 — Mantener lo ya descrito. Esta tarea es el único dueño de la normalización de formato de docs/content/imagenes/01_arcanos.md para el linter (sin cambios de contenido; las correcciones van en correcciones_editoriales_arcanos.v1.json). Verificar con DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check.
-Contrato: rollback: git checkout -- docs/content/imagenes/01_arcanos.md y de los demás docs normalizados; revertir también su línea en .docs-baseline.txt si se quitó.. Status: pending
+Contrato: rollback: git checkout -- docs/content/imagenes/01_arcanos.md y de los demás docs normalizados; revertir también su línea en .docs-baseline.txt si se quitó.. Status: done
 
 #### S1.T3 — Integración en CI y documentación, sin lógica del generador. (1) Agregar python3 scripts/build_arcanos_catalog.py --check al paso Gates de build documental (--check) del job docs de .github/workflows/ci-pr.yml, localizándolo por nombre. (2) Escribir en docs/development/commands.md la entrada del generador build_arcanos_catalog.py con su uso, la opción --check y un ejemplo, siguiendo el patrón de las entradas de TAO-198 y TAO-199. Valida REQ-04 y REQ-07. S1.T1 conserva la implementación del generador y del schema.
-Contrato: rollback: Quitar la línea del --check de arcanos en .github/workflows/ci-pr.yml y la entrada de build_arcanos_catalog.py en docs/development/commands.md.. Status: pending
+Contrato: rollback: Quitar la línea del --check de arcanos en .github/workflows/ci-pr.yml y la entrada de build_arcanos_catalog.py en docs/development/commands.md.. Status: done
 
 #### S1.T4 — Mantener lo ya descrito y reincorporar estos casos en tests/test_catalogo_arcanos.py: QA-02-11-02 (El Loco con id 22 en un catálogo de prueba hace fallar el validador nombrando El Loco); el esquema rechaza un campo de interpretación agregado a un arcano (DEC-048); arcano 8 = La Fuerza con «audacia, fuerza» y arcano 11 = La Justicia con «sabiduría social. El afán debe ser justo»; El Loco tiene número 0, alias 22 y pertenece a la Casa 12, y ningún otro arcano tiene alias. Esta tarea es la que ejecuta el verify de test_catalogo_arcanos.py, que corre después de S1.T1 y S1.T5.
-Contrato: rollback: Eliminar tests/test_catalogo_arcanos.py; no hay otros efectos.. Status: pending
+Contrato: rollback: Eliminar tests/test_catalogo_arcanos.py; no hay otros efectos.. Status: done
 
 #### S1.T5 — Mantener lo ya descrito. Esta tarea es el único dueño del hash de catalogVersion: hash del contenido versionado almacenado junto al catálogo, con las utilidades de scripts/catalog_common.py. Su verify de test_catalogo_arcanos.py se ejecuta en S1.T4, no aquí.
-Contrato: rollback: Revertir el registro de arcanos en scripts/sync_app_catalogs.py, eliminar la copia en app/assets/catalogos/ y el hash almacenado junto a docs/content/catalogos/arcanos.v1.json.. Status: pending
+Contrato: rollback: Revertir el registro de arcanos en scripts/sync_app_catalogs.py, eliminar la copia en app/assets/catalogos/ y el hash almacenado junto a docs/content/catalogos/arcanos.v1.json.. Status: done
 
 #### S2.T1 — Crear el esquema editorial común docs/content/catalogos/editorial.v1.schema.json para Acerca de (bloques con claves de HU-10-15) e Instructivo (nueve capítulos de V-46 con apartados), con catalogVersion obligatorio y claves validadas por el patrón ^[a-z0-9]+(-[a-z0-9]+)*$, no por enum. Cada apartado lleva content_key, texto y fuente, y puede referenciar procedimiento, término del glosario e ilustración del manifiesto. Se prueba solo con fixtures en tests/fixtures/editorial/.
 Contrato: rollback: Eliminar docs/content/catalogos/editorial.v1.schema.json y los fixtures en tests/fixtures/editorial/.. Status: pending
@@ -384,17 +384,17 @@ Ninguno.
 - edit S5.T1 { desc="Extender el JSON Schema editorial común ya definido para Acerca de e Instructivo con los campos de los catálogos nuevos (glosario, bloques de Acerca de, capítulos con apartados) y el campo opcional editorialStatus con valor \"provisional\" por nodo. No crear un esquema paralelo: los esquemas de glosario.v1.json, acerca_de.v1.json e instructivo.v1.json referencian/extienden el común. Mantener el patrón de contentKey ^[a-z0-9]+(-[a-z0-9]+)*$ y catalogVersion obligatorio.", validates=["REQ-03","REQ-10","REQ-16"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T1.1
-- [ ] S1.T1.2
-- [ ] S1.T1.3
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
+- [x] S1.T1
+- [x] S1.T1.1
+- [x] S1.T1.2
+- [x] S1.T1.3
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
 
 **Gate (auto)**: Pasan python3 -m unittest discover -s tests -p test_catalogo_arcanos.py y python3 -m unittest discover -s tests -p test_arcanos_correcciones_editoriales.py; el generador con --check termina en 0 y el linter de docs no reporta los archivos tocados.
 
