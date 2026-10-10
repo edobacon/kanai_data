@@ -234,19 +234,19 @@ Contrato: rollback: Quitar House12ClosingTest del archivo de pruebas.. Status: d
 Contrato: rollback: Quitar DepthTest del archivo de pruebas.. Status: done
 
 #### S5.T1 — Registrar practica.v1.json en scripts/sync_app_catalogs.py para que la copia app/assets/catalogos/practica.v1.json se genere con ese script, siguiendo la forma en que ya registra resultados.v1.json y casas.v1.json. El generador scripts/build_practice_catalog.py no copia nada a app/. Tras registrarlo, ejecutar el script para generar la copia.
-Contrato: rollback: Quitar la entrada de practica.v1.json de scripts/sync_app_catalogs.py y borrar app/assets/catalogos/practica.v1.json.. Status: pending
+Contrato: rollback: Quitar la entrada de practica.v1.json de scripts/sync_app_catalogs.py y borrar app/assets/catalogos/practica.v1.json.. Status: done
 
 #### S5.T2 — Crear el cargador Dart de solo lectura del catálogo de práctica, junto al cargador de resultados.v1.json de TAO-198, en la misma carpeta y con el mismo estilo. Confirmar la ruta real con Glob en app/lib antes de crear el archivo. Lee el asset app/assets/catalogos/practica.v1.json con rootBundle, sin red (DEC-094), y expone modelos inmutables (listas no modificables) con contentKey y contentVersion. Incluye repairFor(houseKey) que devuelve null para house-12 y house12Closing con las acciones finales de la Casa 12.
-Contrato: rollback: Borrar el archivo del cargador nuevo y sus modelos.. Status: pending
+Contrato: rollback: Borrar el archivo del cargador nuevo y sus modelos.. Status: done
 
 #### S5.T3 — Agregar python3 scripts/build_practice_catalog.py --check al paso 'Gates de build documental (--check)' del job docs en .github/workflows/ci-pr.yml y en .github/workflows/nightly.yml (ubicar el paso por su nombre, no por número de línea), junto con la verificación de que la copia en app/assets/catalogos/practica.v1.json es idéntica a la generada. Documentar en docs/development/commands.md el comando python3 scripts/build_practice_catalog.py y su --check (uso, parámetros y ejemplo) con el mismo formato de los generadores de TAO-198 y TAO-199. Mantener commands.md compliant con el linter de docs.
-Contrato: rollback: Quitar las líneas agregadas en ci-pr.yml, nightly.yml y commands.md.. Status: pending
+Contrato: rollback: Quitar las líneas agregadas en ci-pr.yml, nightly.yml y commands.md.. Status: done
 
 #### S5.T4 — Prueba de integración y del cargador. Escribir tests/test_practice_catalog_ci.py (unittest) que compruebe que ci-pr.yml y nightly.yml contienen el --check del generador, que docs/development/commands.md menciona build_practice_catalog.py y --check, y que la copia en app/assets/catalogos/practica.v1.json es idéntica a la generada. Agregar la prueba Dart del cargador junto al test del cargador de resultados.v1.json de TAO-198 bajo app/test/ (confirmar la ruta real con Glob antes de crear el archivo): nodos inmutables con content_key y content_version, ocho anillos y las acciones finales de la Casa 12, y repairFor(house-12) igual a null.
-Contrato: rollback: Borrar el test Dart nuevo y tests/test_practice_catalog_ci.py.. Status: pending
+Contrato: rollback: Borrar el test Dart nuevo y tests/test_practice_catalog_ci.py.. Status: done
 
 #### S5.T5 — Tarea de test (REQ-12, REQ-13 y REQ-15). (a) REQ-12: si app/assets/catalogos/practica.v1.json está desactualizada respecto de docs/content/catalogos/practica.v1.json, la verificación falla nombrando el archivo de la copia. (b) REQ-13: el test del cargador Dart bajo app/test/ comprueba que el catálogo empaquetado entrega 11 reparaciones y 6 minerales, con nodos inmutables con content_key y content_version. (c) REQ-15: los jobs docs de .github/workflows/ci-pr.yml y nightly.yml conservan las líneas --check de los otros generadores existentes además de la de build_practice_catalog.py.
-Contrato: rollback: Revertir los tests añadidos en tests/ y app/test/ sin tocar el cargador ni los workflows.. Status: pending
+Contrato: rollback: Revertir los tests añadidos en tests/ y app/test/ sin tocar el cargador ni los workflows.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -512,13 +512,13 @@ Ninguno.
 
 **Gate (auto)**: Etapa B. El generador con --check pasa y el JSON generado tiene los 8 anillos con repeticiones [3,5,5,5,5,5,7,null] y los mismos content_key que resultados.v1.json sin duplicar Rhibu, patrón ni acción, el cierre de la Casa 12 con sus anclas y sin reparación, y depth estándar o avanzado en cada nodo. Las pruebas de anillos, Casa 12 y profundidad pasan: python3 -m unittest discover -s tests -p 'test_practice*.py'.
 
-### Session 5 · T2 · open
+### Session 5 · T2 · continue
 
 **Tasks:**
-- [ ] S5.T1
-- [ ] S5.T2
-- [ ] S5.T3
-- [ ] S5.T4
-- [ ] S5.T5
+- [x] S5.T1
+- [x] S5.T2
+- [x] S5.T3
+- [x] S5.T4
+- [x] S5.T5
 
 **Gate (auto)**: La copia del catálogo está en app/assets/catalogos/ vía scripts/sync_app_catalogs.py y CI verifica que sea idéntica a la generada. El test Dart del cargador pasa (nodos inmutables con content_key y content_version, 8 anillos, house-12 sin reparación y con acciones finales). ci-pr.yml y nightly.yml corren el --check nuevo y docs/development/commands.md documenta el comando.
