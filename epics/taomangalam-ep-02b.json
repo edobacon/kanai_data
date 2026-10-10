@@ -1,0 +1,2516 @@
+{
+  "id": "taomangalam-ep-02b",
+  "projectId": "taomangalam",
+  "title": "EP-02b: catálogos editoriales y tope de caché",
+  "objective": "Completar la parte de EP-02 que sigue a los catálogos de casas y a la descarga bajo demanda: catálogo de los 22 arcanos con esquema editorial, catálogo de anillos, prácticas, reparación, minerales y materiales, y tope de caché por tipo de dispositivo.",
+  "scope": [
+    "TAO-206: catálogo de los 22 arcanos y esquema de los catálogos editoriales de Acerca de e Instructivo",
+    "TAO-207: catálogo de anillos, procedimientos de práctica y reparación, minerales y materiales",
+    "TAO-211: tope de caché por tipo de dispositivo con reserva mínima y LRU que nunca borra assets esenciales"
+  ],
+  "exclusions": [],
+  "criteria": [
+    "Cada ticket cumple sus criterios de aceptación con los gates locales en verde",
+    "Los catálogos quedan trazados a la fuente y validados por el pipeline de catálogos de TAO-198",
+    "El tope de caché nunca elimina assets esenciales ni medios de la persona"
+  ],
+  "requiredChecks": [
+    "quality-gate"
+  ],
+  "repo": "taomangalam",
+  "baseBranch": "epic/EP-02",
+  "branch": "epic/EP-02",
+  "tickets": [
+    {
+      "id": "TAO-206",
+      "title": "[HU-02-11][Content] Catálogo de los 22 arcanos y esquema de los catálogos editoriales de Acerca de e Instructivo, trazados a la fuente",
+      "body": "> **ID estable:** `HU-02-11` · **Estado:** `Ready` · **Orden recomendado:** `12` · **Puntos publicados:** `5`\n\n## Objetivo\nResultado: un catálogo versionado de los 22 arcanos para la galería y el visor contextual, y el\nesquema común con el que `EP-10` empaqueta los textos de Acerca de y los capítulos del\nInstructivo, con referencias verificadas a otros catálogos, al glosario y al manifiesto.\nConsumidores: HU-10-08 y HU-10-11 (V-30), HU-10-07 (búsqueda de Biblioteca), HU-10-03 (Acerca de)\ny HU-10-04 y HU-10-13 (Instructivo).\n\n## Alcance\n**Incluye**\n- Generador, JSON Schema, correcciones editoriales, pruebas de fidelidad y `--check` con el patrón\n  de HU-02-04.\n- Por arcano (ids `0` a `21`, `content_key` estable por número): número, nombre de la lista\n  canónica de `docs/content/imagenes/01_arcanos.md`, alias `22` solo en El Loco, palabra mágica\n  con el `sourceRefs` del párrafo de la casa que la declara, casa o casas a las que pertenece,\n  invitación al contacto intuitivo (`tm-src-tablero#p0128`) y el `id` de su lámina en el\n  manifiesto.\n- Orden del documento (Rider-Waite): 8 = La Fuerza y 11 = La Justicia.\n- Sin campo de interpretación: el esquema no admite significado ni texto explicativo (DEC-048).\n- Coherencia cruzada con el catálogo de casas de HU-02-05: mismo nombre y palabra mágica para cada\n  arcano asociado a una casa.\n- Esquema editorial para Acerca de (bloques, reutilizando las claves de HU-10-15) y para el\n  Instructivo (los nueve capítulos de V-46 con apartados): cada apartado lleva `content_key`,\n  texto y fuente, y puede referenciar por `content_key` un procedimiento de otro catálogo en vez\n  de copiarlo (V-46: los procedimientos no se duplican), un término del glosario de HU-10-01 y\n  una ilustración del manifiesto por su `id`.\n- Validador que falla ante referencias rotas a catálogos, glosario o manifiesto.\n- `catalogVersion` como `content_version`, copia a `app/assets/catalogos/` y cargador Dart.\n\n**No incluye**\n- Glosario: HU-10-01. Textos de Acerca de: HU-10-03. Capítulos del Instructivo: HU-10-04.\n- Marcado de términos consultables: HU-10-02.\n- Derivados de las láminas: HU-02-12.\n- Interfaz de galería, visor y Biblioteca: EP-10.\n\n## Referencias canónicas\n- Vistas: ninguna (lo consumen V-15, V-30, V-45 y V-46, de EP-10)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-048, DEC-090, DEC-027, DEC-178, DEC-094, DEC-230, DEC-231\n- Datos: referencia del método en bundle; `content_key` y `content_version`; el progreso del\n  Instructivo guarda la `content_version` en `estado_onboarding` (tecnologia/20)\n- API: ninguna\n- Capacidades: ninguna en el catálogo; las vistas usan `vista.arcanos.acceder`, `arcano.ver`,\n  `vista.biblioteca.acceder`, `vista.acercade.acceder` y `vista.instructivo.acceder`\n- Contenido/assets: `docs/content/imagenes/01_arcanos.md` y transcripción del tablero: aprobado\n  como fuente; catálogo de arcanos y esquema editorial: faltante\n\n## Criterios de aceptación\n- [ ] Dado el catálogo generado, cuando se valida contra su esquema, entonces tiene 22 arcanos con\n  ids `0` a `21`, sin huecos ni el id `22`.\n- [ ] Dado El Loco, cuando se lee, entonces su número es `0`, su alias es `22` y pertenece a la\n  Casa 12; ningún otro arcano tiene alias.\n- [ ] Dados los arcanos 8 y 11, cuando se leen, entonces son La Fuerza con «audacia, fuerza» y La\n  Justicia con «sabiduría social. El afán debe ser justo».\n- [ ] Dado el reparto, cuando se valida, entonces cada arcano pertenece a exactamente una casa y la\n  Casa 2 tiene los arcanos 2 y 12.\n- [ ] Dado cada arcano asociado a una casa, cuando se compara con el catálogo de casas, entonces el\n  nombre y la palabra mágica coinciden.\n- [ ] Dado un arcano con un campo de interpretación agregado, cuando se valida, entonces el esquema\n  lo rechaza.\n- [ ] Dado cada arcano, cuando se valida, entonces el `id` de su lámina existe en el manifiesto.\n- [ ] Dado un apartado del Instructivo que referencia un `content_key`, un término o una\n  ilustración inexistente, cuando corre el validador, entonces falla nombrando el apartado.\n- [ ] Dado el cargador Dart, cuando lee el catálogo, entonces entrega los arcanos ordenados por\n  número con su `content_key` y `content_version`.\n\n## Requisitos transversales\n- Permisos: la galería es de acceso libre; la navegación a casas relacionadas la controla la\n  interfaz (DEC-048).\n- Offline/sync: empaquetado y legible sin red.\n- Seguridad/privacidad: no aplica.\n- Accesibilidad/responsive: número y nombre disponibles para el texto alternativo de cada lámina.\n- Observabilidad: CI nombra el nodo o la referencia rota.\n- Compatibilidad/migración: un cambio de texto sube `catalogVersion`; el progreso del Instructivo\n  guarda la versión del contenido.\n\n## Casos de prueba\n- [ ] QA-02-11-01 · Dado el repositorio limpio, cuando corren generador y pruebas, entonces\n  terminan sin errores con 22 arcanos.\n- [ ] QA-02-11-02 · Dado El Loco con id `22` en un catálogo de prueba (error), cuando corre el\n  validador, entonces falla nombrando el arcano.\n- [ ] QA-02-11-03 · Dado un capítulo de prueba que referencia un procedimiento inexistente\n  (borde), cuando corre el validador, entonces falla nombrando el capítulo y la clave.\n\n## Pruebas y evidencia\n- Unitarias: esquema, fidelidad, reparto, coherencia con casas y referencias; cargador Dart.\n- Widget/integración/E2E: job de CI con generador y verificación de la copia.\n- QA humana y dispositivos: revisión de Contenido de nombres y palabras mágicas.\n- Preview/captura/artifact: salida de CI.\n\n## Planificación\n- Hito: M1b · Prioridad: P1 · Puntos: 5 · Riesgo: bajo\n- Bloqueada por: HU-02-04, HU-02-05 | Bloquea: HU-10-03, HU-10-04, HU-10-08\n\n## Campos de GitHub Projects\n- Prioridad: P1\n- Incremento: M1b\n- Área: Contenido\n- Plataforma: Todas\n- Esfuerzo: 5\n- Riesgo: Bajo\n- Vista: V-15,V-30,V-45,V-46\n- Decisión: DEC-048, DEC-090, DEC-027, DEC-178, DEC-094, DEC-230, DEC-231\n\n## Handoff a Kanai\n- Tipo de trabajo: `implement` · Módulo: `EP-02` · Estimación publicada: 5 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-02-11-*` de esta historia.\n- Referencia externa: `GH-79` · https://github.com/edobacon/taomangalam/issues/79\n- Rollback: restaurar el catálogo de arcanos y el esquema editorial anteriores; conservar fuentes y textos de EP-10. Comprobación: CI valida claves, versiones y referencias de catálogo.\n- Diseño: no aplica a interfaz propia; Contenido verifica nombres, palabras mágicas y trazabilidad contra las fuentes canónicas.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisiones y datos de entrada del ticket:\n1. Glosario (HU-10-01): este ticket define el contrato de entrada del validador y lo prueba solo con fixtures. Ruta del glosario: docs/content/catalogos/glosario.v1.json; campo clave de cada término: contentKey. Los fixtures se reemplazan por el catálogo real en TAO-215. Las claves de bloque de Acerca de (HU-10-15) y los nueve capítulos de V-46 también se prueban con fixtures y se enumeran en el esquema.\n2. Referencias a procedimientos por content_key: el validador las resuelve contra los catálogos *.v1.json de docs/content/catalogos/ por contentKey. Hoy existe ritual_sesion.v1.json (claves como ritual-step-01); el catálogo de TAO-207 se agrega cuando exista, y mientras tanto se prueba con fixture.\n3. Catálogo de casas: docs/content/catalogos/casas.v1.json (cada casa trae id, contentKey, name y arcana). La coherencia de nombre y palabra mágica de cada arcano se verifica contra ese archivo.\n4. Manifiesto de láminas: app/assets/manifest.json (inventario de TAO-190).\n5. Comando del linter de docs: node scripts/dev/docs.mjs check, con DOCS_DIFF_BASE=origin/main (job docs de .github/workflows/ci-pr.yml). El baseline es .docs-baseline.txt: una ruta por línea, # para comentarios.\n6. Generador: scripts/build_arcanos_catalog.py y --check, con el patrón de scripts/build_house_catalog.py y scripts/catalog_common.py. Unificar este nombre en el reviewOutcome de la sesión 1.\n7. catalogVersion: el cambio de nombre de un arcano sin subir catalogVersion debe hacer fallar --check; el mecanismo es un hash del contenido versionado almacenado junto al catálogo, como el de los catálogos existentes, y se explicita en la tarea del generador.\n8. Correcciones editoriales de nombres o palabras mágicas entre 01_arcanos.md y las casas: se registran en docs/content/catalogos/correcciones_editoriales_arcanos.v1.json, con el patrón de los demás correcciones_editoriales_*.v1.json.\n\n**Motivo**: Respuestas a las preguntas del juez de spec (TAO-206-Q1 y Q2) y hechos verificados en el repo.\n\n### Adenda 2 - 2026-10-10 - dev\n\nClaves de Acerca de y capítulos del Instructivo, definidas en docs/backlog/EP-10_biblioteca_ayuda_y_aprendizaje.md. HU-10-15 (líneas 137 a 166) define los bloques sin fijar las claves finales; HU-10-04 (línea 613 en adelante) define los nueve capítulos de V-46. Este ticket define el patrón de claves y las prueba solo con fixtures: patrón contentKey en minúsculas con guiones. Bloques de Acerca de de ejemplo: intro-no-es-oraculo, intro-cada-proyecto-es-un-viaje, intro-participacion-activa, intro-metodo-fisico, intro-que-es-tao-mangalam, intro-para-que-sirve, intro-elementos-fisicos e intro-recorrido. Capítulos del Instructivo: instructivo-cap-01 a instructivo-cap-09 con los títulos de HU-10-04 (1 preparación y elementos físicos; 2 persona, personalidad y creación de una consulta; 3 tablero y comienzo en Casa 1; 4 ritual de preparación; 5 tirada física y registro de D12, D8 y D4; 6 Avance, Permanencia, Retroceso y Cierre; 7 Casas, anillos, prácticas y reparación; 8 tareas, cumplimiento y siguiente tirada; 9 historial, respaldo y recuperación del trabajo). Las claves definitivas las fija HU-10-15 y el reemplazo de estos fixtures es TAO-215. El esquema no depende de los valores exactos, solo del patrón.\nCorrecciones del spec que pidió el juez (aplicar en el spec, no durante la ejecución): (a) el comando del linter de docs en todos los verify y test cases es DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check, no markdownlint-cli2; (b) el reviewOutcome de la sesión 1 usa scripts/build_arcanos_catalog.py; (c) REQ-09 (correcciones editoriales) debe tener una tarea de test que lo valide; (d) las subtareas reutilizan scripts/catalog_common.py y scripts/build_house_catalog.py como patrón, no build_result_catalog.py; (e) el verify de S2.T4 ejecuta scripts/validate_editorial_catalog.py o su pytest, no el generador; (f) la resolución de procedimientos usa una lista explícita de catálogos de procedimientos (hoy ritual_sesion.v1.json, más el de TAO-207 cuando exista), no un glob que incluya casas, glosario ni correcciones; (g) no duplicar la validación de casas y manifiesto entre el generador y el validador editorial.\n\n**Motivo**: Respuesta a TAO-206-Q3: claves de Acerca de y capítulos del Instructivo.\n\n### Adenda 3 - 2026-10-10 - dev\n\nDecisión del dev (2026-10-10), alcance ampliado: este ticket cierra todo lo que puede generarse desde la documentación disponible, sin fixtures para esos casos. Reemplaza lo dicho en la Adenda 1 punto 1 y en la Adenda 2 sobre pruebas solo con fixtures, y deja sin efecto la necesidad de TAO-215.\n1. Glosario real: este ticket genera docs/content/catalogos/glosario.v1.json (con su esquema, correcciones editoriales y generador con --check, patrón de scripts/catalog_common.py) desde los 16 términos de docs/content/10_registro_cierre_y_glosario.md: Anillo, Ashura, Campanilla, Casa o reino, Chakras, Coherencia vibracional, Corrector energético, Dados, Dharani Deva, Flujo energético, Kipot, Kuberani, Péndulo, Registro, Rhibu y Sentencia de Tao. Por término: contentKey estable en minúsculas con guiones (el ancla del documento), término canónico, definición breve, tags tomados del front matter del documento, text, sourceText y sourceRefs a los párrafos citados de fuentes/02_como_usar_tao_mangalam.md (con editorialResolutionId si el texto difiere). La explicación ampliada, sinónimos, relacionados y contextos NO existen en la documentación: no se inventan y se omiten (no aparecen como null). El validador de referencias a términos se prueba contra este catálogo real y, para los casos de error, contra fixtures.\n2. Acerca de: este ticket genera el catálogo de bloques de la introducción y de Acerca de desde docs/content/fuentes/01_que_es_tao_mangalam.md, con los bloques de la Adenda 2 (intro-no-es-oraculo, intro-cada-proyecto-es-un-viaje, intro-participacion-activa, intro-metodo-fisico, intro-que-es-tao-mangalam, intro-para-que-sirve, intro-elementos-fisicos e intro-recorrido), texto, fuente trazable y la marca provisional hasta la aprobación editorial de Contenido (DEC-082, sin origen, autoría ni créditos).\n3. Instructivo: este ticket genera el catálogo de los nueve capítulos instructivo-cap-01 a instructivo-cap-09 con los títulos de HU-10-04 en docs/backlog/EP-10_biblioteca_ayuda_y_aprendizaje.md y sus referencias por content_key a los procedimientos de ritual_sesion.v1.json y, cuando exista, de practica.v1.json, validadas contra los catálogos reales. El texto de cada apartado se redacta solo con lo que HU-10-04 y las fuentes declaran; lo que no esté declarado se omite y queda marcado provisional.\n4. Lo que no se puede generar queda marcado provisional y fuera del contenido aprobado: la aprobación editorial de Contenido. Los catálogos generados llevan esa marca hasta que una persona la apruebe.\n5. Rutas: scripts/build_glosario_catalog.py, scripts/build_acerca_instructivo_catalog.py (o un solo generador con las tres salidas si reutiliza el patrón sin duplicar), schemas y correcciones editoriales con el patrón de los demás catálogos, copia en app/assets/catalogos/ vía scripts/sync_app_catalogs.py y cargador Dart junto al de arcanos.\n6. Sesiones: partir el trabajo en sesiones de máximo 5 tareas con su gate, por ejemplo arcanos y esquema, glosario, Acerca de e Instructivo, y CI, cargador y linter.\n7. TAO-215 queda sin objeto una vez integrado este ticket.\n\n**Motivo**: Pedido del dev: los tickets deben cerrar todo y lo que falte se genera desde la documentación disponible.\n\n### Adenda 4 - 2026-10-10 - dev\n\nRespuestas a TAO-206-Q5 y Q6 y correcciones de estructura pedidas por el juez.\n1. Marca provisional: campo opcional editorialStatus con valor \"provisional\" por nodo, definido en el esquema editorial común (el mismo para glosario.v1.json, acerca_de.v1.json e instructivo.v1.json). Un nodo aprobado no lo lleva. No hay convención previa en los catálogos actuales.\n2. Aprobación editorial: se registra en docs/content/catalogos/correcciones_editoriales_<catálogo>.v1.json, en una lista approvals con {nodeKeys o \"all\", approvedBy, approvedAt, reference}. El generador quita editorialStatus de los nodos cubiertos; sin aprobación el nodo sale \"provisional\". El catálogo no guarda nombres de personas.\n3. Restaurar las tareas de REQ-09 (crear correcciones_editoriales_arcanos.v1.json y aplicarlas en scripts/build_arcanos_catalog.py, y tests/test_arcanos_correcciones_editoriales.py) en la sesión de arcanos, o reubicarlas explícitamente.\n4. Partir las sesiones 1 y 2 en sesiones de máximo 5 tareas, cada una con su gate (reviewOutcome observable): arcanos y esquema, correcciones y validador, glosario, Acerca de e Instructivo, validador real y cargadores Dart, CI y linter. Ejemplos de gate: pasan tests/test_catalogo_glosario.py y el --check del glosario con 16 términos; se generan acerca_de.v1.json e instructivo.v1.json con 8 y 9 nodos y pasan sus tests; el validador pasa sobre los catálogos reales y flutter test de los cargadores; el job docs incluye los --check y DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check pasa.\n5. El esquema editorial de los catálogos nuevos extiende el esquema editorial común ya definido; no se crea uno paralelo.\n6. El validador editorial valida solo manifiesto, glosario y procedimientos; no valida casas (Adenda 2 g).\n7. Si fuentes/01_que_es_tao_mangalam.md o el glosario no traen material para algún bloque o ancla, el nodo se omite o queda provisional, sin inventar texto.\n\n**Motivo**: Respuestas a las preguntas del juez de spec (TAO-206-Q5 y Q6) y correcciones de estructura.",
+      "revision": "1fa07022987b48b6d465e44c6091ce28c6158c5f617ffb01788d9a7b24a2119e",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-79"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-198",
+        "TAO-199",
+        "TAO-207"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/content/imagenes/01_arcanos.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/10_registro_cierre_y_glosario.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/fuentes/01_que_es_tao_mangalam.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/fuentes/02_como_usar_tao_mangalam.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/catalogos/casas.v1.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/catalogos/ritual_sesion.v1.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/catalogos/practica.v1.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "app/assets/manifest.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/backlog/EP-10_biblioteca_ayuda_y_aprendizaje.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": ".docs-baseline.txt",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": ".v1.json",
+          "kind": "generated",
+          "sourcePaths": [
+            "docs/content/catalogos/glosario.v1.json",
+            "docs/content/catalogos/acerca_de.v1.json",
+            "docs/content/catalogos/instructivo.v1.json"
+          ],
+          "requiredContent": [],
+          "preparation": "Comodín de los catálogos *.v1.json de docs/content/catalogos/ citado por el validador; no es un archivo. Lo producen los generadores de este ticket.",
+          "checks": [
+            "python3 -m unittest discover -s tests -p test_catalogo_editorial.py"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/glosario.v1.json",
+          "kind": "generated",
+          "sourcePaths": [
+            "docs/content/10_registro_cierre_y_glosario.md",
+            "docs/content/fuentes/02_como_usar_tao_mangalam.md"
+          ],
+          "requiredContent": [],
+          "preparation": "Generar con scripts/build_glosario_catalog.py",
+          "checks": [
+            "python3 scripts/build_glosario_catalog.py --check"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/acerca_de.v1.json",
+          "kind": "generated",
+          "sourcePaths": [
+            "docs/content/fuentes/01_que_es_tao_mangalam.md"
+          ],
+          "requiredContent": [],
+          "preparation": "Generar con scripts/build_acerca_instructivo_catalog.py",
+          "checks": [
+            "python3 scripts/build_acerca_instructivo_catalog.py --check"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/instructivo.v1.json",
+          "kind": "generated",
+          "sourcePaths": [
+            "docs/backlog/EP-10_biblioteca_ayuda_y_aprendizaje.md"
+          ],
+          "requiredContent": [],
+          "preparation": "Generar con scripts/build_acerca_instructivo_catalog.py",
+          "checks": [
+            "python3 scripts/build_acerca_instructivo_catalog.py --check"
+          ]
+        },
+        {
+          "path": ".github/workflows/ci-pr.yml",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Agregar los pasos de --check de los generadores nuevos al job de gates de build documental",
+          "checks": [
+            "DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/correcciones_editoriales_arcanos.v1.json",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Crear el registro de correcciones editoriales de arcanos con la misma forma que los demás correcciones_editoriales_*.v1.json",
+          "checks": [
+            "python3 -m unittest discover -s tests -p test_arcanos_correcciones_editoriales.py"
+          ]
+        }
+      ],
+      "criteria": [
+        "El catálogo tiene 22 arcanos con ids 0 a 21, sin huecos ni id 22; El Loco (0) tiene alias 22 y pertenece a la Casa 12, y ningún otro arcano tiene alias",
+        "Arcano 8 es La Fuerza «audacia, fuerza» y arcano 11 es La Justicia «sabiduría social. El afán debe ser justo»",
+        "Cada arcano pertenece a exactamente una casa (la Casa 2 tiene los arcanos 2 y 12) y su nombre y palabra mágica coinciden con el catálogo de casas",
+        "El esquema rechaza un campo de interpretación en un arcano",
+        "El id de la lámina de cada arcano existe en el manifiesto",
+        "El validador falla nombrando el apartado cuando el Instructivo referencia un content_key, término o ilustración inexistente",
+        "El cargador Dart entrega los arcanos ordenados por número con content_key y content_version",
+        "El glosario real tiene los 16 términos de docs/content/10_registro_cierre_y_glosario.md con fuente trazable, sin campos inventados ni null",
+        "Acerca de e Instructivo se generan desde la documentación y llevan la marca provisional hasta la aprobación editorial"
+      ]
+    },
+    {
+      "id": "TAO-207",
+      "title": "[HU-02-10][Content] Catálogo de anillos, procedimientos de práctica y reparación, minerales y materiales de la práctica y la reparación, trazado a la fuente",
+      "body": "> **ID estable:** `HU-02-10` · **Estado:** `Ready` · **Orden recomendado:** `13` · **Puntos publicados:** `8`\n\n## Objetivo\nResultado: un catálogo versionado, generado desde las transcripciones con el patrón de HU-02-04,\nque trae todo lo que M1b necesita para continuar un retroceso y cerrar en Casa 12: ficha y\nprocedimiento de reparación de las casas 1 a 11, coherencia vibracional con chakras, minerales y\nescala RKL, detalle completo de los ocho anillos, acciones finales de Casa 12, y los catálogos de\nminerales y de materiales de la práctica y la reparación. Consumidores: HU-06-10, HU-06-11 y\nHU-06-12 (planes), HU-07-15, HU-07-16 y HU-07-17 (V-09, V-10 y V-05 de reparación), HU-08-07,\nHU-08-09 y HU-08-14 (V-11, V-12 y V-14) y HU-10-04 (Instructivo).\n\n## Alcance\n**Incluye**\n- Generador determinista en `scripts/`, JSON Schema, registro de correcciones editoriales, pruebas\n  de fidelidad y modo `--check`, reutilizando los extractores de `build_fichas.py` que ya usa\n  `build_result_catalog.py` (campos de reparación, remisión y anillos).\n- Ficha de reparación de las casas 1 a 11 con el `content_key` de su casa (`house-01` a\n  `house-11`): Prakriti Deva, fundamento, mensaje, Rhema mantra, solicitud, Logo Shamkya,\n  coherencia vibratoria, Thot y bloque Ashura. Los campos que la fuente no declara se omiten\n  (DEC-148: casas 3, 5 y 8 sin mensaje de reparación). Rótulos únicos `Logo Shamkya` y `Rhema\n  mantra` con el valor separado del rótulo (DEC-141, DEC-142); el literal de la fuente queda en\n  `sourceText`.\n- Procedimiento de reparación por casa como pasos ordenados según V-11, cada uno con\n  `content_key`, texto, vía (consultante o consultor), orientación que declara la casa,\n  repeticiones y días como números y `sourceRefs`: leer el anillo y reconocer; corrector con la\n  frase del anillo; solicitud al Prakriti Deva y Rhema mantra una vez; Logo Shamkya 108 veces\n  durante 3 días; vía del consultor (kuberani sobre el router, Rhema mantra 108 veces, envío\n  diario por 3 días) donde la casa la declara; quema del kuberani; kuberani nuevo y energización\n  de la casa a la que avanza el flujo. Nota 1 enlazada a los pasos con días y Nota 2 a la quema.\n- Coherencia vibracional de cada casa que la indica: chakras como números, minerales como\n  referencias al catálogo de minerales agrupados en conjunción («y») o alternativa («o»),\n  duración de 3 minutos, 3 días y las dos formas de apoyo cuando la casa ofrece ambas (V-12).\n- Escala RKL estructurada en tramos excluyentes (DEC-065, DEC-137): 9.000 o más sin días; 8.000\n  a 8.999, 3 días; 5.000 a 7.999, 3 días repitiendo la acción; menos de 5.000, 9 días y nueva\n  medición (DEC-135). El nodo operativo de menos de 5.000 no expone la expresión «tecnología\n  sagrada», que queda solo en `sourceText` con su resolución editorial.\n- Detalle de los ocho anillos para V-10 con los mismos `content_key` de `resultados.v1.json`\n  (`ring-01` a `ring-08`), sin duplicar Rhibu, patrón ni acción: desarrollo, paso previo de\n  contenido donde la fuente lo declara, repeticiones como número (3, 5, 5, 5, 5, 5 y 7; el\n  octavo sin número, DEC-147), acción del octavo combinando `p0110` y `p0111`\n  (`99_inconsistencias_por_resolver.md`, punto 15) y la regla de medición RKL del anillo.\n- Cierre de Casa 12: acciones finales de V-14 con `content_key` (mirar al Este, visualizar la\n  esfera azul dorada, Rhema mantra tres veces, Logo Shamkya 108 veces durante 3 días, «Bendigo,\n  agradezco y amo») desde `p1713` y `p1724`, vía del consultor (`p1729`), nota final (`p1734`) y\n  los textos de «Remitido a casa 12, no hay kipot que corregir» (`p1759` a `p1784`), sin plan de\n  reparación (DEC-032, DEC-204). Cuando una acción coincide con un nodo de energización de la\n  Casa 12 de HU-02-05, se referencia su `content_key` en vez de copiarlo.\n- Profundidad por nodo según DEC-027: línea directiva del Ashura, procedimiento, chakras,\n  minerales, días, repeticiones y la regla de repetir si el RKL baja de 9.000 son Estándar;\n  desarrollo y simbología del Ashura, mensaje de Thot, desarrollo del patrón, contexto de la\n  medición y escala RKL con sus tramos son Avanzado. Todo viaja en la app (DEC-223).\n- Catálogo de minerales: cornalina, amatista, cuarzo citrino, aguamarina (alias `agua marina`),\n  lapislázuli y cuarzo rosado, con `content_key`, nombre, alias y el `id` de su pieza en el\n  manifiesto; informativos, sin producto ni código (DEC-120).\n- Catálogo de materiales de la práctica y la reparación desde el documento único de materiales\n  (DEC-145): kuberani, corrector energético, resonador y minerales, japa mala y tablilla RKL, con\n  función (enlace, corrección, resonancia mineral, elemento de ritual o instrumento de medición),\n  cuándo se usa (DEC-071), si es producto con código (solo kuberani y corrector: DEC-060,\n  DEC-066, DEC-136) y `sourceRefs` a la fuente (`tm-src-como-usar#p0092`, `p0115`, `p0118`,\n  `p0130`). Los materiales de la sesión se referencian por su `content_key` de HU-02-17, sin\n  duplicarse.\n- Redacción del documento único de materiales en `docs/content/` como fuente del catálogo, con\n  aprobación editorial de Contenido (DEC-145 lo deja como trabajo de contenido).\n- `catalogVersion` como `content_version`, copia a `app/assets/catalogos/` verificada en CI y\n  cargador Dart de solo lectura (DEC-230).\n\n**No incluye**\n- Generación de planes, ciclos RKL y conteo de días: HU-06-10, HU-06-11 y HU-06-12.\n- Interfaz de diagnóstico, anillo, reparación, coherencia y cierre: EP-07 y EP-08.\n- Validación de códigos de corrector y kuberani: HU-11-06 y HU-11-07.\n- Ficha de resultado del retroceso (animal, Ashura, Rhibu, patrón y acción del anillo): ya viene\n  en `resultados.v1.json` (HU-02-04).\n- Glosario: HU-10-01. Arte de minerales y materiales: HU-02-12; ilustraciones de pasos: HU-02-14.\n\n## Referencias canónicas\n- Vistas: ninguna (lo consumen V-05, V-09, V-10, V-11, V-12 y V-14, de EP-07 y EP-08)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-027, DEC-032, DEC-060, DEC-062, DEC-065, DEC-066, DEC-071, DEC-120, DEC-135,\n  DEC-136, DEC-137, DEC-141, DEC-142, DEC-145, DEC-147, DEC-148, DEC-178, DEC-204, DEC-206,\n  DEC-223, DEC-230\n- Datos: referencia del método en bundle; `content_key` y `content_version` (tecnologia/20 §1),\n  que `accion_practica.content_key` y `plan_practica.content_version` referencian (tecnologia/20\n  §5)\n- API: ninguna\n- Capacidades: ninguna en el catálogo; las vistas usan `anillo.ver`, `metodo.detalle_avanzado.ver`,\n  `rkl.registrar`, `diagnostico.registrar` y `practica.cumplir`\n- Contenido/assets: `docs/content/casas/01_casa_1.md` a `12_casa_12.md`,\n  `docs/content/anillos/01_anillo_1.md` a `08_anillo_8.md` y sus transcripciones\n  (`fuentes/03_tablero_tao_mangalam.md`, `fuentes/04_anillos_tao_mangalam.md`,\n  `fuentes/02_como_usar_tao_mangalam.md`): aprobado como fuente; documento único de materiales:\n  faltante; catálogo: faltante\n\n## Criterios de aceptación\n- [ ] Dado el catálogo generado, cuando se valida contra su esquema, entonces tiene ficha y\n  procedimiento de reparación para las casas 1 a 11, ninguno para la Casa 12, ocho anillos y seis\n  minerales con `content_key` único.\n- [ ] Dado cada nodo textual, cuando corren las pruebas de fidelidad, entonces coincide con su\n  `sourceText` o declara un `editorialResolutionId` válido, y cada `sourceRefs` existe.\n- [ ] Dada la reparación de la Casa 5, cuando se lee, entonces orienta al norte, pide el Rhema\n  mantra una vez y el Logo Shamkya 108 veces durante 3 días, y no trae mensaje de reparación.\n- [ ] Dadas las casas 1 a 11, cuando se lee la orientación del paso de la solicitud, entonces es\n  Este en las casas 1 y 2, norte en la 3 a la 5, oeste en la 6 a la 8 y sur en la 9 a la 11,\n  cada una con el ancla del párrafo de su casa.\n- [ ] Dada una casa cuya fuente escribe `Logo Samkhya` o `Rhema - Mantras`, cuando se genera,\n  entonces el rótulo es `Logo Shamkya` o `Rhema mantra` y `sourceText` conserva el literal.\n- [ ] Dada la coherencia de la Casa 8, cuando se leen sus minerales, entonces forman una\n  alternativa entre aguamarina y lapislázuli; la Casa 9 pide cuarzo citrino y una de esas dos; la\n  Casa 4, cuarzo rosado.\n- [ ] Dada la escala RKL, cuando se consulta con 9.500, 8.500, 6.000 y 4.000, entonces devuelve\n  un solo tramo cada vez con 0, 3, 3 y 9 días adicionales, y solo el último exige nueva medición.\n- [ ] Dados los anillos, cuando se leen sus repeticiones, entonces son 3, 5, 5, 5, 5, 5 y 7 para\n  los anillos 1 a 7, el octavo no tiene número y su acción une `p0110` y `p0111`.\n- [ ] Dado un anillo, cuando se compara con `resultados.v1.json`, entonces usa el mismo\n  `content_key` y no repite su Rhibu, patrón ni acción.\n- [ ] Dado cada nodo, cuando se lee, entonces declara su profundidad según DEC-027, con la escala\n  RKL y el desarrollo del patrón como Avanzado y la regla de repetir bajo 9.000 como Estándar.\n- [ ] Dada la Casa 12, cuando se leen sus acciones finales, entonces incluyen mirar al Este, la\n  esfera azul dorada, el Rhema mantra tres veces, el Logo Shamkya 108 veces durante 3 días y\n  «Bendigo, agradezco y amo», con sus anclas.\n- [ ] Dado el catálogo de materiales, cuando se lee, entonces solo kuberani y corrector están\n  marcados como producto con código y cada material declara una de las cinco funciones.\n- [ ] Dado cada mineral, cuando se valida, entonces el `id` de su pieza existe en el manifiesto.\n- [ ] Dada una ficha fuente modificada sin regenerar, cuando corre CI, entonces `--check` falla\n  nombrando el archivo.\n- [ ] Dado el cargador Dart, cuando lee el catálogo empaquetado, entonces entrega los nodos\n  inmutables con su `content_key` y `content_version`.\n\n## Requisitos transversales\n- Permisos: el contenido Avanzado viaja en la app; la interfaz controla su visibilidad (DEC-223).\n- Offline/sync: empaquetado y legible sin red (DEC-094).\n- Seguridad/privacidad: no aplica; no contiene datos de personas.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: CI nombra el nodo o archivo que rompe la fidelidad.\n- Compatibilidad/migración: un cambio de texto sube `catalogVersion`; los planes guardan la versión\n  con que se generaron (DEC-178).\n\n## Casos de prueba\n- [ ] QA-02-10-01 · Dado el repositorio limpio, cuando corren el generador con `--check` y las\n  pruebas, entonces terminan sin errores con 11 reparaciones, 8 anillos y 6 minerales.\n- [ ] QA-02-10-02 · Dado el Logo Shamkya de la Casa 3 editado a mano en el JSON (error), cuando\n  corre CI, entonces fallan `--check` y la prueba de fidelidad.\n- [ ] QA-02-10-03 · Dada una medición de exactamente 5.000 RKL (borde), cuando se consulta la\n  escala, entonces cae en el tramo de 5.000 a 7.999 con 3 días y sin nueva medición.\n- [ ] QA-02-10-04 · Dada la Casa 12 cargada en la app (borde), cuando se pide su reparación,\n  entonces no existe y sí existen sus acciones finales.\n\n## Pruebas y evidencia\n- Unitarias: esquema, fidelidad, omisiones, orientación por casa, grupos de minerales, tramos RKL y\n  repeticiones; cargador Dart.\n- Widget/integración/E2E: job de CI con generador, pruebas y verificación de la copia en `app/`.\n- QA humana y dispositivos: revisión de Contenido de la marca de profundidad, los pasos de\n  reparación y el documento de materiales.\n- Preview/captura/artifact: salida de CI y resumen de nodos por casa y anillo adjunto al PR.\n\n## Planificación\n- Hito: M1b · Prioridad: P1 · Puntos: 8 · Riesgo: medio\n- Bloqueada por: HU-02-04, HU-02-05 | Bloquea: HU-06-10, HU-06-11, HU-06-12, HU-07-15, HU-07-16,\n  HU-07-17, HU-08-01, HU-08-07, HU-08-09, HU-08-14, HU-08-16, HU-10-02\n- Entregable de Contenido: redacción y aprobación del documento único de materiales (DEC-145,\n  DEC-234 punto 14).\n- Entregable de Contenido: resolución editorial de la agrupación de minerales de la Casa 7\n  («resonadores de lapislázuli, o aguamarina y amatista», `tm-src-tablero#p1044`), que admite\n  dos lecturas; se estructura según esa resolución (DEC-234 punto 14).\n\n## Campos de GitHub Projects\n- Prioridad: P1\n- Incremento: M1b\n- Área: Contenido\n- Plataforma: Todas\n- Esfuerzo: 8\n- Riesgo: Medio\n- Vista: V-05,V-09,V-10,V-11,V-12,V-14\n- Decisión: DEC-027, DEC-032, DEC-060, DEC-062, DEC-065, DEC-066, DEC-071, DEC-120, DEC-135, DEC-136, DEC-137, DEC-141, DEC-142, DEC-145, DEC-147, DEC-148, DEC-178, DEC-204, DEC-206, DEC-223, DEC-230\n\n## Handoff a Kanai\n- Tipo de trabajo: `implement` · Módulo: `EP-02` · Estimación publicada: 8 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-02-10-*` de esta historia.\n- Referencia externa: `GH-80` · https://github.com/edobacon/taomangalam/issues/80\n- Rollback: restaurar el catálogo anterior; conservar fuentes, resolución editorial y aprobaciones. Comprobación: esquema y pruebas de fidelidad pasan con el catálogo restaurado.\n- Diseño: no aplica a interfaz propia; Contenido aprueba materiales y resolución de la agrupación mineral antes de regenerar el catálogo.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisiones y datos de entrada del ticket:\n1. Transcripciones fuente: docs/content/fuentes/02_como_usar_tao_mangalam.md, docs/content/fuentes/03_tablero_tao_mangalam.md y docs/content/fuentes/04_anillos_tao_mangalam.md. Fichas: docs/content/casas/01_casa_1.md a 12_casa_12.md y docs/content/anillos/01_anillo_1.md a 08_anillo_8.md. Resultados: docs/content/catalogos/resultados.v1.json.\n2. Casa 7 (tm-src-tablero#p1044): sin resolución de Contenido todavía. Se estructura provisionalmente como «lapislázuli o (aguamarina y amatista)», con un editorialResolutionId propio marcado como provisional. Mientras la resolución esté pendiente, --check ADVIERTE y no falla; la advertencia nombra el nodo. El reemplazo por la resolución aprobada lo hace TAO-216.\n3. Documento único de materiales: docs/content/materiales_practica_y_reparacion.md, creado por este ticket como borrador y nacido compliant con el linter. La aprobación editorial es de Contenido: la persona la designa el dev y su nombre queda por confirmar antes de aprobar (se registra en TAO-216). El catálogo lo marca como provisional hasta esa aprobación.\n4. Linter de docs: node scripts/dev/docs.mjs check, con DOCS_DIFF_BASE=origin/main (job docs de .github/workflows/ci-pr.yml). Baseline .docs-baseline.txt: una ruta por línea, # para comentarios. Normalizar solo los docs del baseline que el ticket realmente modifique; no ampliar el diff a los demás.\n5. Casa 12: la fuente de la energización es docs/content/catalogos/casas.v1.json, houses[11].energization (consultante y consultor). Los pasos de energización de la Casa 12 hoy NO tienen contentKey. Decisión: agregar contentKey a esos pasos en el catálogo de casas (cambio pequeño en scripts/build_house_catalog.py y house_catalog_nodes.py), subir su catalogVersion, regenerar y sincronizar la copia en app/assets/catalogos/. Luego las acciones de cierre de la Casa 12 de este ticket los referencian por contentKey en lugar de copiarlos. Convención sugerida: house-12-energization-consultante-01, house-12-energization-consultante-02 y house-12-energization-consultor-01; usar la que ya siga el generador si difiere.\n6. HU-02-17 es TAO-202, cerrado e integrado en epic/EP-02. Su catálogo es docs/content/catalogos/ritual_sesion.v1.json con contentKey material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados y material-pendulo. Los materiales de la sesión se referencian por esas claves sin duplicarse.\n7. Rutas de salida: docs/content/catalogos/practica.v1.json (con su practica.v1.schema.json y correcciones_editoriales_practica.v1.json), generador scripts/build_practice_catalog.py, copia en app/assets/catalogos/ vía scripts/sync_app_catalogs.py, y prueba del cargador Dart junto a la del cargador de los catálogos existentes bajo app/test/.\n8. Sesión 2 con más de 5 tareas: partirla en minerales, coherencia y RKL por un lado y anillos, Casa 12 y profundidad por otro.\n9. Seguimiento de lo provisional: TAO-216.\n\n**Motivo**: Respuestas a las preguntas del juez de spec (TAO-207-Q1 a Q6) y hechos verificados en el repo.\n\n### Adenda 2 - 2026-10-10 - dev\n\nManifiesto de assets: app/assets/manifest.json (schemaVersion 2, inventario de TAO-190, no el manifiesto de TAO-196 que fue descartado). Ids de pieza de los minerales, todos de la familia mineral-illustration: cornalina = mineral-carnelian; amatista = mineral-amethyst; cuarzo citrino = mineral-citrine-quartz; aguamarina = mineral-aquamarine; lapislázuli = mineral-lapis-lazuli; cuarzo rosado = mineral-rose-quartz. Kuberani, corrector, resonador y tablilla RKL no tienen pieza.\nCorrecciones de estructura del spec que pidió el juez (aplicar en el spec): (a) partir la sesión 2 en dos sesiones con su gate: A = minerales, coherencia y RKL (S2.T1.1 a S2.T1.3 con S2.T2.1 a S2.T2.3) y B = anillos, Casa 12 y profundidad (S2.T1.4 a S2.T1.6 con S2.T2.4 a S2.T2.6); las tareas deben validar REQ-19; (b) borrar S3.T1 (duplica S1.T5) y mover el registro editorial del punto 15 del anillo 8 (p0110 y p0111) a S2.T1.4; (c) borrar S4.T5 (duplica S4.T3 y S3.T3); (d) el comportamiento de --check que advierte con código 0 ante una resolución provisional (hoy S3.T5) debe implementarse antes de S2.T1.2, en la sesión 1; (e) S4.T1 registra practica.v1.json en scripts/sync_app_catalogs.py y no copia desde el generador; (f) agregar una tarea de test de REQ-18 en la sesión 1 (contentKey único por paso de energización de la Casa 12, catalogVersion de casas mayor que el anterior, copia en app idéntica, y pruebas y cargador Dart de casas en verde); (g) el registro de correcciones es docs/content/catalogos/correcciones_editoriales_practica.v1.json, con practica.v1.schema.json; (h) S3.T3 normaliza solo los docs del baseline que aparezcan realmente en el diff; (i) el comando del linter de docs en S3.T4 es DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check; (j) S3.T4 comprueba también que el catálogo marca como provisional el documento de materiales hasta la aprobación de Contenido (REQ-10).\n\n**Motivo**: Respuesta a TAO-207-Q7 y correcciones de estructura pedidas por el juez de spec.\n\n### Adenda 3 - 2026-10-10 - dev\n\ncatalogVersion de casas.v1.json: hoy es 1.0.0 en epic/EP-02; el cambio de REQ-18 lo sube a 1.1.0 y la prueba compara contra el literal 1.0.0. Resolución editorial de «tecnología sagrada»: el contexto existe en docs/content/99_inconsistencias_por_resolver.md (tabla de la escala RKL, fila de menos de 5 mil, y su nota); si no hay un editorialResolutionId registrado, la tarea lo crea en docs/content/catalogos/correcciones_editoriales_practica.v1.json. Correcciones de estructura pedidas por el juez: (a) agregar en la sesión 3 una tarea de implementación que genere la sección materials en scripts/build_practice_catalog.py desde docs/content/materiales_practica_y_reparacion.md (función, cuándo se usa, esProducto, sourceRefs, refs a material-* de ritual_sesion.v1.json, marca provisional); (b) runner único de pruebas Python: python3 -m unittest discover -s tests -p 'test_practice*.py' (tests/), sin pytest ni scripts/tests; (c) la sesión 1 incluye una prueba (isTest) de que --check advierte con código 0 nombrando el nodo ante una resolución provisional y falla ante un nodo no provisional editado; (d) S2.T2.2 asserta la forma provisional de la Casa 7 (grupo o con lapislázuli y subgrupo y con aguamarina y amatista) y su marca provisional; (e) implementar y probar la regla de subida de catalogVersion en el generador (si cambia el texto de un nodo sin subir catalogVersion, --check falla); (f) la regresión de REQ-18 incluye el flutter test del cargador de casas; (g) las tareas padre S2.T1 y S2.T2 describen solo la etapa A; (h) cada rollback corresponde a lo que su tarea cambia; (i) el sourceRef de REQ-14 apunta a scripts/build_fichas.py; (j) una prueba afirma que .docs-baseline.txt no gana entradas nuevas.\n\n**Motivo**: Respuesta a TAO-207-Q8 y correcciones de estructura de la tercera revisión del juez de spec.",
+      "revision": "bbcb021fb94c817a9407a22c398bc34dad297d24c544b959005cff771a64d356",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-80"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-198",
+        "TAO-199"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/content/catalogos/resultados.v1.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/99_inconsistencias_por_resolver.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/casas/01_casa_1.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/casas/12_casa_12.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/anillos/01_anillo_1.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/anillos/08_anillo_8.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/fuentes/02_como_usar_tao_mangalam.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/fuentes/03_tablero_tao_mangalam.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/fuentes/04_anillos_tao_mangalam.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/catalogos/ritual_sesion.v1.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "app/assets/manifest.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": ".docs-baseline.txt",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": ".github/workflows/ci-pr.yml",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "docs/content/catalogos/casas.v1.json",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Agregar contentKey a los pasos de energización de la Casa 12, subir catalogVersion a 1.1.0 y regenerar",
+          "checks": [
+            "python3 -m unittest discover -s tests -p test_practice*.py"
+          ]
+        },
+        {
+          "path": "docs/content/materiales_practica_y_reparacion.md",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Redactar el documento único de materiales como borrador compliant con el linter, marcado provisional hasta la aprobación de Contenido",
+          "checks": [
+            "DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/practica.v1.schema.json",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Escribir el JSON Schema del catálogo de práctica",
+          "checks": [
+            "python3 -m unittest discover -s tests -p test_practice*.py"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/correcciones_editoriales_practica.v1.json",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Crear el registro de resoluciones editoriales, con la Casa 7 provisional y tecnología sagrada",
+          "checks": [
+            "python3 -m unittest discover -s tests -p test_practice*.py"
+          ]
+        },
+        {
+          "path": "docs/content/catalogos/practica.v1.json",
+          "kind": "generated",
+          "sourcePaths": [
+            "docs/content/casas/01_casa_1.md",
+            "docs/content/anillos/01_anillo_1.md",
+            "docs/content/fuentes/02_como_usar_tao_mangalam.md",
+            "docs/content/materiales_practica_y_reparacion.md"
+          ],
+          "requiredContent": [],
+          "preparation": "Generar con scripts/build_practice_catalog.py",
+          "checks": [
+            "python3 scripts/build_practice_catalog.py --check"
+          ]
+        }
+      ],
+      "criteria": [
+        "El catálogo valida contra su esquema con ficha y reparación de las casas 1 a 11, ninguna para la Casa 12, ocho anillos y seis minerales con content_key único",
+        "La fidelidad de cada nodo coincide con su sourceText o declara un editorialResolutionId válido, y cada sourceRefs existe",
+        "La reparación de la Casa 5 orienta al norte, pide el Rhema mantra una vez y el Logo Shamkya 108 veces durante 3 días, sin mensaje de reparación",
+        "La orientación de la solicitud es Este en casas 1 y 2, norte en 3 a 5, oeste en 6 a 8 y sur en 9 a 11",
+        "Los rótulos Logo Shamkya y Rhema mantra se normalizan y sourceText conserva el literal",
+        "Coherencia: Casa 8 alternativa aguamarina o lapislázuli, Casa 9 cuarzo citrino y una de esas dos, Casa 4 cuarzo rosado",
+        "La escala RKL devuelve un solo tramo con 0, 3, 3 y 9 días para 9.500, 8.500, 6.000 y 4.000, y solo el último exige nueva medición; 5.000 cae en el tramo de 3 días",
+        "Anillos con repeticiones 3, 5, 5, 5, 5, 5 y 7 (octavo sin número, acción une p0110 y p0111), mismos content_key que resultados.v1.json sin duplicar Rhibu, patrón ni acción",
+        "Cada nodo declara su profundidad según DEC-027",
+        "Casa 12 trae las acciones finales (Este, esfera azul dorada, Rhema mantra tres veces, Logo Shamkya 108 veces durante 3 días, «Bendigo, agradezco y amo») con sus anclas y sin reparación",
+        "En materiales solo kuberani y corrector son producto con código y cada uno declara una de las cinco funciones",
+        "El id de la pieza de cada mineral existe en el manifiesto",
+        "Una ficha fuente modificada sin regenerar hace fallar --check nombrando el archivo",
+        "El cargador Dart entrega nodos inmutables con content_key y content_version"
+      ]
+    },
+    {
+      "id": "TAO-211",
+      "title": "[HU-02-15][Historia] Tope de caché por tipo de dispositivo con reserva mínima y LRU que nunca borra assets esenciales",
+      "body": "> **ID estable:** `HU-02-15` · **Estado:** `Ready` · **Orden recomendado:** `17` · **Puntos publicados:** `3`\n\n## Objetivo\nResultado: la caché de assets descargables respeta un tope por tipo de dispositivo y una reserva\nmínima de espacio libre, libera por LRU solo archivos recuperables y verificados, nunca borra\nassets esenciales ni medios de la persona, y avisa en vez de borrar cuando no hay candidatos\nseguros (DEC-202). Consumidores: HU-02-09 (gestor de descarga y caché) y, en M2, la acción\n`Liberar de este dispositivo` de EP-09.\n\n## Alcance\n**Incluye**\n- Tope blando de 1 GB en teléfono y 2 GB en tablet, más reserva mínima de 1 GB libre en el\n  dispositivo (DEC-202).\n- Reducción opcional de esos límites desde el backend con una clave de `otras` en la configuración\n  pública (`obtenerConfiguracionPublica`); un valor mayor al tope de DEC-202 se ignora.\n- Clase de dispositivo teléfono o tablet según el lado corto de la pantalla, con el umbral fijado\n  en el refinamiento técnico y documentado en tecnologia/10.\n- Al superar el tope o la reserva, borrado por LRU de derivados descargados ya verificados por\n  SHA-256, que siempre pueden volver a descargarse.\n- Nunca se borran automáticamente: assets empaquetados, archivos con hash no verificado ni medios\n  creados por la persona (adjuntos `solo_local`, `pendiente` o `subiendo`, HU-08-13).\n- Sin candidatos seguros: la descarga nueva no se hace, la vista usa la superficie de respaldo y\n  se registra el bloqueo, sin borrar datos.\n- Telemetría agregada de tamaños y resultados, sin nombres ni contenido de archivos.\n\n**No incluye**\n- Acción `Liberar de este dispositivo` y respaldo de medios: EP-09 (M2).\n- Descarga y verificación: HU-02-09.\n\n## Referencias canónicas\n- Vistas: ninguna\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-202, DEC-173, DEC-196\n- Datos: caché de archivos de la app en la capa de operación local (tecnologia/20 §1)\n- API: `obtenerConfiguracionPublica`\n- Capacidades: ninguna\n- Contenido/assets: derivados con modo `descargable` del manifiesto: según inventario\n\n## Criterios de aceptación\n- [ ] Dado un teléfono con la caché en 1 GB, cuando se descarga un asset nuevo, entonces se borra\n  primero el asset verificado usado hace más tiempo y la caché queda bajo el tope.\n- [ ] Dada una tablet, cuando se calcula el tope, entonces es 2 GB salvo que el backend lo reduzca.\n- [ ] Dado un dispositivo con menos de 1 GB libre, cuando se pide una descarga, entonces se libera\n  por LRU hasta recuperar la reserva o, si no alcanza, la descarga no se hace.\n- [ ] Dada una configuración pública que fija el tope en 500 MB, cuando se aplica, entonces se usa\n  500 MB; dada una que fija 3 GB, entonces se mantiene el tope de DEC-202.\n- [ ] Dado un archivo con hash no verificado o un adjunto de la persona sin respaldar, cuando se\n  libera espacio, entonces nunca se borra.\n- [ ] Dado que no hay candidatos seguros, cuando se pide una descarga, entonces la vista muestra la\n  superficie de respaldo y no se borra ningún dato.\n- [ ] Dado que el sistema operativo vació la caché, cuando la vista pide un asset con red, entonces\n  se vuelve a descargar y verificar sin error.\n- [ ] Dado el registro de métricas, cuando se revisa, entonces solo contiene tamaños y resultados\n  agregados.\n\n## Requisitos transversales\n- Permisos: no aplica.\n- Offline/sync: sin red, lo borrado por LRU se muestra con la superficie de respaldo hasta volver a\n  descargarse.\n- Seguridad/privacidad: la telemetría no incluye nombres ni contenido de archivos.\n- Accesibilidad/responsive: tope distinto por teléfono y tablet.\n- Observabilidad: resultado de cada liberación (bytes liberados, bloqueos) agregado.\n- Compatibilidad/migración: la política aplica igual a futuros assets oscuros (DEC-202).\n\n## Casos de prueba\n- [ ] QA-02-15-01 · Dada una caché de prueba con tope reducido a 50 MB, cuando se descargan assets\n  hasta superarlo, entonces se borran los menos usados y nunca los empaquetados.\n- [ ] QA-02-15-02 · Dado un dispositivo con almacenamiento casi lleno y solo adjuntos sin respaldar\n  (borde), cuando se pide una descarga, entonces no se borra nada y se ve la superficie de\n  respaldo.\n- [ ] QA-02-15-03 · Dada una configuración pública con un tope mayor al permitido (error), cuando\n  se aplica, entonces se ignora y rige el de DEC-202.\n\n## Pruebas y evidencia\n- Unitarias: selección LRU, candidatos seguros, tope por clase de dispositivo y reducción desde la\n  configuración.\n- Widget/integración/E2E: integración con almacenamiento simulado bajo y caché vaciada por el\n  sistema.\n- QA humana y dispositivos: teléfono y tablet con almacenamiento bajo.\n- Preview/captura/artifact: registro de liberaciones en una sesión de prueba.\n\n## Planificación\n- Hito: M1b · Prioridad: P2 · Puntos: 3 · Riesgo: medio\n- Bloqueada por: HU-02-09 | Bloquea: ninguna\n\n## Campos de GitHub Projects\n- Prioridad: P2\n- Incremento: M1b\n- Área: Assets\n- Plataforma: Todas\n- Esfuerzo: 3\n- Riesgo: Medio\n- Vista: -\n- Decisión: DEC-202, DEC-173, DEC-196\n\n## Handoff a Kanai\n- Tipo de trabajo: `implement` · Módulo: `EP-02` · Estimación publicada: 3 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-02-15-*` de esta historia.\n- Referencia externa: `GH-84` · https://github.com/edobacon/taomangalam/issues/84\n- Rollback: desactivar la política de expulsión y restaurar el comportamiento anterior; no eliminar recursos esenciales ni datos de la persona. Comprobación: pruebas confirman que ningún asset esencial ni medio de la persona se elimina.\n- Diseño: no aplica a interfaz propia; verificar límites, reserva y protección de assets esenciales mediante los casos QA.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisiones y datos de entrada del ticket:\n1. Clase de dispositivo: se reutiliza TaoBreakpoint.mediumMin = 600 (app/lib/design_system/tokens/tokens.g.dart), con la misma convención de app/lib/core/images/image_family_resolver.dart: lado corto lógico menor a 600 es teléfono; 600 o más es tablet (un valor igual al umbral cuenta como tablet). El umbral se documenta en tecnologia/10 sin definir un número nuevo.\n2. Configuración pública: las claves viven dentro de otras en obtenerConfiguracionPublica y se llaman cacheTopeMb y cacheReservaMb, ambas en MB enteros. Un valor ausente, no numérico, no entero, menor o igual a cero, o mayor al tope de DEC-202 (1 GB teléfono, 2 GB tablet para el tope; 1 GB para la reserva) se ignora y rige DEC-202. La reducción solo puede bajar el tope, nunca subirlo; para la reserva, el valor configurado nunca puede ser menor que el de DEC-202 en el sentido de dejar menos espacio libre que 1 GB.\n3. Lectura del espacio libre: device_info_plus y path_provider (ya en app/pubspec.yaml) no lo entregan. Se agrega una dependencia nueva para leer el espacio libre del dispositivo (candidato disk_space_plus; verificar mantenimiento, licencia y soporte de iOS y Android antes de adoptarla). La nueva dependencia se registra como decisión técnica en el ticket y se inyecta detrás de una interfaz para poder simularla en las pruebas.\n4. Los adjuntos de la persona (solo_local, pendiente, subiendo, HU-08-13) quedan fuera del conjunto de candidatos de la caché de assets: el ticket ubica explícitamente dónde viven respecto del índice de caché de HU-02-09 y los excluye por pertenencia, no por nombre.\n5. Observabilidad: ubicar el canal de observabilidad existente de la app antes de la sesión 2 y usar ese; si no existe uno adecuado, registrar solo tamaños y resultados agregados detrás de una interfaz.\n6. Superficie de respaldo: confirmar el componente existente al que la vista mapea el resultado bloqueado y agregar una prueba del mapeo en la vista.\n7. Ruta de prueba: app/test/core/http/app_release_test.dart existe (se ejecuta desde app/); app/test/core/assets/cache/cache_policy_integration_test.dart lo crea el ticket.\n\n**Motivo**: Respuestas a las preguntas del juez de spec (TAO-211-Q1 a Q3) y hechos verificados en el repo.\n\n### Adenda 2 - 2026-10-10 - dev\n\nAclaración del punto 2 de la adenda 1, que prevalece sobre su redacción: tanto cacheTopeMb como cacheReservaMb solo pueden REDUCIR el límite de DEC-202. Cualquier valor mayor a su límite (tope: 1 GB teléfono y 2 GB tablet; reserva: 1 GB) se ignora y rige DEC-202, igual que el valor ausente, no numérico, no entero o menor o igual a cero.\n\n**Motivo**: Corrige la redacción del punto 2 de la adenda 1 sobre la reserva.\n\n### Adenda 3 - 2026-10-10 - dev\n\nConfirmo la decisión de diseño de REQ-04: si los candidatos seguros no alcanzan para cumplir el tope o la reserva, no se borra ninguno (sin borrado parcial) y la descarga nueva no se hace.\nCorrecciones de estructura del spec (aplicar en el spec): (a) quitar de S1.T2 la clase de dispositivo y la nota en tecnologia/10; la clase de dispositivo vive solo en S1.T5 y reutiliza TaoBreakpoint.mediumMin = 600; no se define número nuevo; (b) S1.T2 conserva solo las constantes de DEC-202 y el fallback ante FallaDeRed y FallaDelServidor; la reducción desde la configuración vive solo en S1.T6 con las claves cacheTopeMb y cacheReservaMb (enteros en MB, solo reducen, cualquier valor mayor o inválido se ignora); (c) S1.T3 opera solo sobre las entradas del índice de caché de HU-02-09 y delega la exclusión de adjuntos a la pertenencia definida en S1.T8, no a un filtro por estado; (d) fusionar S2.T2 en S2.T4 y S2.T6 en S2.T3; (e) test [boundary] de REQ-01: lado corto 600 es tablet y 599 es teléfono; (f) test [edge] de REQ-09: si falla la lectura del espacio libre, el resultado es bloqueado, sin borrar ningún dato; (g) no citar líneas concretas de archivos en los test cases; (h) el ejecutor registra en el ticket la vista y el componente elegidos para la superficie de respaldo; (i) antes de la sesión 1, verificar que el gestor y el índice de HU-02-09 (TAO-204) están en la rama de la épica (lo están, merge 2987477).\n\n**Motivo**: Correcciones de estructura del spec pedidas por el juez y confirmación de una decisión de diseño.\n\n### Adenda 4 - 2026-10-10 - dev\n\n(a) Una tarea concreta de la sesión 1 verifica o agrega de forma aditiva los campos ultimoAcceso y verificado en el índice de caché de HU-02-09 y actualiza ultimoAcceso en cada lectura de un asset servida por el gestor; con una prueba de regresión: un asset leído recientemente no es el primer candidato de la liberación por LRU. (b) El rollback de S1.T1 corresponde a su descripción (solo verificación); los campos aditivos y su rollback pertenecen a la tarea que los implementa. (c) Pruebas de cacheReservaMb: con cacheReservaMb=500 la reserva efectiva es 524288000 bytes; con un valor mayor a 1024 se ignora y rige DEC-202. (d) La narrativa del spec ya no lista como pendientes la clave de configuración, el umbral ni la dependencia, y menciona epic/EP-02 y no origin/main; la verificación runtime es sin interfaz propia.\n\n**Motivo**: Correcciones de estructura de la tercera revisión del juez de spec.",
+      "revision": "df2aebc55c63f507339e6175e09a2097cfc33c68223613701e326366b4d2e2f0",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-84"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-204"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "app/lib/design_system/tokens/tokens.g.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "app/lib/core/images/image_family_resolver.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "app/test/core/http/app_release_test.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": []
+        },
+        {
+          "path": "app/pubspec.yaml",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Agregar la dependencia que lee el espacio libre del dispositivo detrás de la interfaz inyectada",
+          "checks": [
+            "cd app && flutter pub get"
+          ]
+        },
+        {
+          "path": "app/test/core/assets/cache/cache_policy_integration_test.dart",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "Crear la prueba de integración de la política de caché",
+          "checks": [
+            "cd app && flutter test test/core/assets/cache/cache_policy_integration_test.dart"
+          ]
+        }
+      ],
+      "criteria": [
+        "En un teléfono con la caché en 1 GB, una descarga nueva borra primero el asset verificado menos usado y la caché queda bajo el tope",
+        "En una tablet el tope es 2 GB salvo que el backend lo reduzca",
+        "Con menos de 1 GB libre se libera por LRU hasta recuperar la reserva o, si no alcanza, no se descarga",
+        "Una configuración pública de 500 MB se aplica y una de 3 GB se ignora manteniendo el tope de DEC-202",
+        "Nunca se borra un archivo con hash no verificado ni un adjunto de la persona sin respaldar",
+        "Sin candidatos seguros la vista muestra la superficie de respaldo y no se borra ningún dato",
+        "Si el sistema operativo vació la caché, el asset se vuelve a descargar y verificar sin error",
+        "El registro de métricas solo contiene tamaños y resultados agregados"
+      ]
+    }
+  ],
+  "externalEvidence": {
+    "TAO-198": [
+      "Integrado en epic/EP-02 por el merge 0c4c24a (GH-71, pipeline de catálogos versionados)"
+    ],
+    "TAO-199": [
+      "Integrado en epic/EP-02 por el merge 7bdfdd6 (GH-72, catálogo de las 12 casas)"
+    ],
+    "TAO-204": [
+      "Integrado en epic/EP-02 por el merge 2987477 (GH-77, descarga bajo demanda y caché de assets)"
+    ],
+    "docs/content/catalogos/glosario.v1.json": [
+      "Catálogo de HU-10-01, fuera de alcance de TAO-206; el esquema solo referencia términos por content_key y no lo lee"
+    ],
+    ".v1.json": [
+      "No es un archivo: fragmento de texto del spec que alude a los catálogos versionados"
+    ]
+  },
+  "dependencyWork": [],
+  "contracts": [],
+  "readPaths": [
+    "docs/content/catalogos/*.v1.json"
+  ],
+  "repositoryRoot": "/Users/edobacon/Workspace/taomangalam",
+  "readRequirements": [],
+  "mentionCatalog": {
+    "TAO-190": {
+      "ticketId": "TAO-190",
+      "status": "closed"
+    },
+    "TAO-196": {
+      "ticketId": "TAO-196",
+      "status": "discarded"
+    },
+    "HU-02-04": {
+      "ticketId": "TAO-198",
+      "status": "closed"
+    },
+    "HU-02-05": {
+      "ticketId": "TAO-199",
+      "status": "closed"
+    },
+    "TAO-202": {
+      "ticketId": "TAO-202",
+      "status": "closed"
+    },
+    "HU-02-17": {
+      "ticketId": "TAO-202",
+      "status": "closed"
+    },
+    "TAO-204": {
+      "ticketId": "TAO-204",
+      "status": "closed"
+    },
+    "HU-02-09": {
+      "ticketId": "TAO-204",
+      "status": "closed"
+    },
+    "GH-79": {
+      "ticketId": "TAO-206",
+      "status": "in_progress"
+    },
+    "HU-02-11": {
+      "ticketId": "TAO-215",
+      "status": "discarded"
+    },
+    "TAO-207": {
+      "ticketId": "TAO-207",
+      "status": "in_progress"
+    },
+    "GH-80": {
+      "ticketId": "TAO-207",
+      "status": "in_progress"
+    },
+    "HU-02-10": {
+      "ticketId": "TAO-216",
+      "status": "open"
+    },
+    "HU-02-12": {
+      "ticketId": "TAO-208",
+      "status": "open"
+    },
+    "HU-02-14": {
+      "ticketId": "TAO-210",
+      "status": "open"
+    },
+    "GH-84": {
+      "ticketId": "TAO-211",
+      "status": "in_progress"
+    },
+    "HU-02-15": {
+      "ticketId": "TAO-211",
+      "status": "in_progress"
+    },
+    "TAO-215": {
+      "ticketId": "TAO-215",
+      "status": "discarded"
+    },
+    "TAO-216": {
+      "ticketId": "TAO-216",
+      "status": "open"
+    }
+  },
+  "mentionFamilies": [
+    "EPIC:TAOMANGALAM:4",
+    "GH:2",
+    "HU:3",
+    "TAO:2",
+    "TASK:5"
+  ],
+  "version": 21,
+  "dependencies": [
+    {
+      "from": "TAO-207",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "TAO-206 referencia practica.v1.json, que genera TAO-207: debe correr después.",
+      "source": "TAO-206:assets",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "TAO-206",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Mención cruzada como contexto; no hay prerrequisito entre ambos.",
+      "source": "TAO-207:assets",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-198",
+      "to": "TAO-206",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-206:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "TAO-199",
+      "to": "TAO-206",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-206:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-10-08",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-11",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-07",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-03",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-04",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-13",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-15",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Solo aporta claves de referencia de Acerca de; contexto, no prerrequisito.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-01",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "El glosario es otra historia (No incluye); el esquema solo referencia términos por content_key. Contexto.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-02",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Marcado de términos fuera de alcance; contexto.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-208",
+      "to": "TAO-206",
+      "origin": "inferred",
+      "reason": "Derivados de las láminas están fuera de alcance (No incluye); contexto.",
+      "source": "TAO-206:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-198",
+      "to": "TAO-207",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-207:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "TAO-199",
+      "to": "TAO-207",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-207:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-06-10",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-11",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-07-15",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-07-16",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-07-17",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-07",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-09",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-14",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-04",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-11-06",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Validación de códigos fuera de alcance; contexto.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-11-07",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Validación de códigos fuera de alcance; contexto.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-01",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Glosario fuera de alcance; contexto.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-208",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Arte de minerales y materiales fuera de alcance; contexto.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-210",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Ilustraciones de pasos fuera de alcance; contexto.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-01",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-16",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-10-02",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Consumidor, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-216",
+      "to": "TAO-207",
+      "origin": "inferred",
+      "reason": "Ticket de seguimiento de lo provisional; contexto, no prerrequisito.",
+      "source": "TAO-207:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-204",
+      "to": "TAO-211",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-211:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-08-13",
+      "to": "TAO-211",
+      "origin": "inferred",
+      "reason": "Solo define qué adjuntos de la persona no se borran; contexto, el estado de respaldo se trata como dato de entrada.",
+      "source": "TAO-211:body",
+      "accepted": false,
+      "dismissed": true
+    }
+  ],
+  "order": [
+    "TAO-207",
+    "TAO-206",
+    "TAO-211"
+  ],
+  "approvedFingerprint": "7c3119eadec79a731ca8f0b7700e67f9e44b7295a550f9685104f17ca0216aa5",
+  "approvedBy": "human-confirmed",
+  "dataModelAck": {
+    "digest": "027718e126a79d43",
+    "reason": "Solo se regeneran catálogos JSON del repo; no hay datos de personas ni migraciones, y el rollback es restaurar el catálogo anterior",
+    "by": "human-confirmed"
+  },
+  "accessCheck": {
+    "id": "b5ce674f-6a60-4f3c-8d9c-500beea29037",
+    "harness": "claude-code",
+    "harnessVersion": "2.1.294",
+    "harnessSessionId": "302f1f7c-3501-4064-ae15-d076b548bd49",
+    "binding": "ec911b5df52dc57b03760154ff1c99d1929946c58f46f899cdbf4f1e2b9c1da5",
+    "issuedAt": "2026-10-10T13:38:50.524Z",
+    "expiresAt": "2026-10-10T13:53:50.524Z",
+    "validUntil": "2026-10-10T21:38:57.450Z",
+    "probes": [
+      {
+        "id": "017cb63e-13ac-4113-a22a-ced0b1bccb2a",
+        "action": "read_repo",
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "path": "/Users/edobacon/Workspace/taomangalam"
+      }
+    ],
+    "report": {
+      "checkId": "b5ce674f-6a60-4f3c-8d9c-500beea29037",
+      "harnessSessionId": "302f1f7c-3501-4064-ae15-d076b548bd49",
+      "results": [
+        {
+          "probeId": "017cb63e-13ac-4113-a22a-ced0b1bccb2a",
+          "status": "readable",
+          "checkedAt": "2026-10-10T13:38:57.450Z",
+          "detail": "Lectura comprobada sin exponer contenido"
+        }
+      ]
+    }
+  },
+  "decisionBank": [],
+  "preparation": {
+    "at": "2026-10-10T13:38:40.312Z",
+    "by": "prepare",
+    "revisions": {
+      "TAO-206": "1fa07022987b48b6d465e44c6091ce28c6158c5f617ffb01788d9a7b24a2119e",
+      "TAO-207": "bbcb021fb94c817a9407a22c398bc34dad297d24c544b959005cff771a64d356",
+      "TAO-211": "df2aebc55c63f507339e6175e09a2097cfc33c68223613701e326366b4d2e2f0"
+    }
+  },
+  "run": {
+    "id": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+    "planVersion": 21,
+    "fingerprint": "7c3119eadec79a731ca8f0b7700e67f9e44b7295a550f9685104f17ca0216aa5",
+    "harness": "claude-code",
+    "harnessVersion": "2.1.294",
+    "harnessSessionId": "302f1f7c-3501-4064-ae15-d076b548bd49",
+    "teach": "skip",
+    "humanChecks": "defer",
+    "state": "running",
+    "ticketIds": [
+      "TAO-206",
+      "TAO-207",
+      "TAO-211"
+    ],
+    "current": 0,
+    "step": "execute",
+    "validated": {},
+    "grants": [
+      {
+        "actor": "eduardo.bacon@uplanner.com",
+        "actions": [
+          "read_repo",
+          "write_repo",
+          "run_tests",
+          "kanai_tools",
+          "git_integrate"
+        ],
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "expiresAt": "2026-10-11T13:30:00.000Z",
+        "revoked": false
+      }
+    ],
+    "capabilities": [
+      {
+        "action": "read_repo",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "evidence": [
+          "Comprobación b5ce674f-6a60-4f3c-8d9c-500beea29037 desde sesión 302f1f7c-3501-4064-ae15-d076b548bd49: readable"
+        ],
+        "restartRequired": false
+      },
+      {
+        "action": "write_repo",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "evidence": [
+          "Sesión claude-code: terminal nativa confirma escritura en el repo y en .git (test -w), rama epic/EP-02"
+        ],
+        "restartRequired": false
+      },
+      {
+        "action": "run_tests",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "evidence": [
+          "Sesión claude-code: terminal nativa ejecuta node v22.22.2 y python3 3.9.25 en el repo"
+        ],
+        "restartRequired": false
+      },
+      {
+        "action": "kanai_tools",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "evidence": [
+          "Sesión claude-code: herramientas MCP de Kanai invocadas con éxito"
+        ],
+        "restartRequired": false
+      },
+      {
+        "action": "git_integrate",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-02",
+        "evidence": [
+          "Sesión claude-code: git local operativo en el repo (branch, log)"
+        ],
+        "restartRequired": false
+      }
+    ],
+    "requiredActions": [
+      "read_repo",
+      "write_repo",
+      "run_tests",
+      "kanai_tools",
+      "git_integrate"
+    ],
+    "maxAttempts": 3,
+    "attempts": {},
+    "dependencyReceipts": {},
+    "pendingKey": "f2897dbd-f37a-4857-805a-76ff51a3f0b9:TAO-207:{\"tool\":\"plan_task_execution\",\"args\":{\"projectId\":\"taomangalam\",\"ticketId\":\"TAO-207\",\"taskCode\":\"S2.T1.1\",\"sessionScope\":true}}",
+    "startedAt": "2026-10-10T13:43:06.687Z",
+    "deadline": "2026-10-11T13:30:00.000Z"
+  },
+  "history": [
+    {
+      "id": "c6708b14-60c8-41d1-894f-0e5a65771e9b",
+      "planVersion": 16,
+      "fingerprint": "db30896b1395a03bdf322c3d23bebd35784072f92d9b2b983d2c3bb764a526f9",
+      "harness": "claude-code",
+      "harnessVersion": "2.1.294",
+      "harnessSessionId": "302f1f7c-3501-4064-ae15-d076b548bd49",
+      "teach": "skip",
+      "humanChecks": "defer",
+      "state": "cancelled",
+      "ticketIds": [
+        "TAO-206",
+        "TAO-207",
+        "TAO-211"
+      ],
+      "current": 0,
+      "step": "intake",
+      "validated": {},
+      "grants": [
+        {
+          "actor": "eduardo.bacon@uplanner.com",
+          "actions": [
+            "read_repo",
+            "write_repo",
+            "run_tests",
+            "kanai_tools",
+            "git_integrate"
+          ],
+          "resource": "taomangalam/taomangalam/epic/EP-02",
+          "expiresAt": "2026-10-11T13:30:00.000Z",
+          "revoked": false
+        }
+      ],
+      "capabilities": [
+        {
+          "action": "read_repo",
+          "state": "granted",
+          "resource": "taomangalam/taomangalam/epic/EP-02",
+          "evidence": [
+            "Comprobación 4855884a-4cab-4cfb-abc9-48002c5c52d1 desde sesión 302f1f7c-3501-4064-ae15-d076b548bd49: readable"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "write_repo",
+          "state": "granted",
+          "resource": "taomangalam/taomangalam/epic/EP-02",
+          "evidence": [
+            "Sesión claude-code: terminal nativa confirma escritura en el repo y en .git (test -w), rama epic/EP-02"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "run_tests",
+          "state": "granted",
+          "resource": "taomangalam/taomangalam/epic/EP-02",
+          "evidence": [
+            "Sesión claude-code: terminal nativa ejecuta node v22.22.2 y python3 3.9.25 en el repo"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "kanai_tools",
+          "state": "granted",
+          "resource": "taomangalam/taomangalam/epic/EP-02",
+          "evidence": [
+            "Sesión claude-code: herramientas MCP de Kanai invocadas con éxito"
+          ],
+          "restartRequired": false
+        },
+        {
+          "action": "git_integrate",
+          "state": "granted",
+          "resource": "taomangalam/taomangalam/epic/EP-02",
+          "evidence": [
+            "Sesión claude-code: git local operativo en el repo (branch, log)"
+          ],
+          "restartRequired": false
+        }
+      ],
+      "requiredActions": [
+        "read_repo",
+        "write_repo",
+        "run_tests",
+        "kanai_tools",
+        "git_integrate"
+      ],
+      "maxAttempts": 3,
+      "attempts": {},
+      "dependencyReceipts": {},
+      "reason": "Assets de entrada pendientes antes de consumir: docs/content/catalogos/practica.v1.json",
+      "startedAt": "2026-10-10T13:36:59.537Z",
+      "deadline": "2026-10-11T13:30:00.000Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "b920b08f-7894-40e5-8f33-7d776ad1eab8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:03:47.243Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "create",
+      "source": "kanai-server",
+      "durationMs": 74
+    },
+    {
+      "id": "59674620-a3b5-4f1e-a3c8-f089c7528d4d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:03:49.850Z",
+      "kind": "plan_evaluated",
+      "planVersion": 1
+    },
+    {
+      "id": "61009295-7cd4-485b-ae08-a072acb13212",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:03:49.852Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 21
+    },
+    {
+      "id": "2c480f07-0d1a-4c50-88e8-138ae5dab847",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.073Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Alcance del ticket tal como está en Kanai (catálogo de 22 arcanos y esquema editorial); dependencias TAO-198 y TAO-199 ya integradas en epic/EP-02.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-206\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "78e59917-536c-4367-a630-e69aa5e8d6a5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Alcance del ticket tal como está en Kanai; dependencias TAO-198, TAO-199 y TAO-202 integradas. Los entregables de Contenido (documento único de materiales, agrupación mineral de la Casa 7) quedan como revisión humana.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-207\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "b42068bc-8cdb-4be8-a0fa-8d0be07017cf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-211",
+      "reason": "Alcance del ticket tal como está en Kanai; depende de TAO-204, ya integrado.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-211\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "3b7716a8-aa62-4b08-9ca3-d067f6aabefb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-08\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e8ac434e-b097-4834-82a2-0e9d2035f07c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-11\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2594aa87-d002-44fa-aa8e-98dcfbafe202",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-07\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a5a98954-81a5-406e-b0a5-ead72fe72461",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-03\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "036481d8-4b76-4262-ba67-4521427bd63c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-04\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "34f170a9-f808-44f5-b0ed-6664a69b1112",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Consumidor de TAO-206, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-13\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "57ed6b48-40c3-4f87-a606-18fb7e342db5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Solo aporta claves de referencia de Acerca de; contexto, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-15\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "92378650-5e24-4aca-a08b-119f5e92a2c2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "El glosario es otra historia (No incluye); el esquema solo referencia términos por content_key. Contexto.",
+      "evidence": [
+        "{\"from\":\"HU-10-01\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "9376f4e2-d315-498c-8add-0ac88f8a08ed",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Marcado de términos fuera de alcance; contexto.",
+      "evidence": [
+        "{\"from\":\"HU-10-02\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "901856ce-d89a-4569-ac0b-c0e924ea58e1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-206",
+      "reason": "Derivados de las láminas están fuera de alcance (No incluye); contexto.",
+      "evidence": [
+        "{\"from\":\"TAO-208\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1e233af1-3250-4298-8dc6-627f0f8b93f5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-06-10\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e91ce8b2-e8ef-4899-a1a7-974d638eb387",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-06-11\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d1f02ac7-480e-45f9-82ca-a39293c0c69c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "fdbc55c6-88f9-46b2-b4d3-61f8c3ba765f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-07-15\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "c1696ea6-fe26-43e4-aa18-4fa068399fd5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-07-16\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "904f4eda-6980-4a54-8c9d-5232078ff1a8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-07-17\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "78337f57-8c86-4ac6-a2a8-5fa96c7b7e0f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-08-07\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b35dbcda-9316-4cae-ba97-e33f85b45e40",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-08-09\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2599e6f6-ad65-48a5-88de-1af40cafc749",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-08-14\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "90b68841-9879-41a0-9d80-b3b39be7e524",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-04\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "025de576-3905-41ab-816a-289d9f64b060",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Validación de códigos fuera de alcance; contexto.",
+      "evidence": [
+        "{\"from\":\"HU-11-06\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b85948a7-bff6-4cd4-90ba-c579d9485fa0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Validación de códigos fuera de alcance; contexto.",
+      "evidence": [
+        "{\"from\":\"HU-11-07\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "418c210a-cb38-455e-b4da-eeb95b728f24",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Glosario fuera de alcance; contexto.",
+      "evidence": [
+        "{\"from\":\"HU-10-01\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "05cc9112-049e-4fe6-8122-63dff544ac9c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Arte de minerales y materiales fuera de alcance; contexto.",
+      "evidence": [
+        "{\"from\":\"TAO-208\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e773f69b-eba0-4f54-b314-1fc237a954f3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Ilustraciones de pasos fuera de alcance; contexto.",
+      "evidence": [
+        "{\"from\":\"TAO-210\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "dd7b0e7b-1959-4e0c-ac77-3b919aaaf84a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-08-01\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "9f5a907a-3d18-4736-b7bd-a983f81a6ec3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-08-16\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "910bdee7-46e9-495a-8a38-5d4830878a39",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-207",
+      "reason": "Consumidor, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"HU-10-02\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b71b2855-fc0d-4706-8535-fda2a8d3e93c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-211",
+      "reason": "Solo define qué adjuntos de la persona no se borran; contexto, el estado de respaldo se trata como dato de entrada.",
+      "evidence": [
+        "{\"from\":\"HU-08-13\",\"to\":\"TAO-211\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1a54e1d0-eb04-4a9c-99c9-2cd0205c3753",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.074Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 2,
+      "reason": "32 decisiones; 32 cambios"
+    },
+    {
+      "id": "604c5c89-5568-480a-9d9b-7b340fc9f859",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:07.077Z",
+      "kind": "operation_completed",
+      "planVersion": 2,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 26
+    },
+    {
+      "id": "96a4d0f4-8681-4cee-a22a-5e7c7115f14c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:34.502Z",
+      "kind": "plan_changed",
+      "planVersion": 3
+    },
+    {
+      "id": "0ffd7848-72a9-4a15-89ff-2fbbf55b0073",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T12:04:34.505Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 43
+    },
+    {
+      "id": "da0557e6-97d8-46ed-8f03-6e37747d4363",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:12:53.139Z",
+      "kind": "plan_evaluated",
+      "planVersion": 3
+    },
+    {
+      "id": "f54c1285-0832-4d79-bb6c-e8486555ebe5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:12:53.141Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 11
+    },
+    {
+      "id": "1114dac6-54c8-491a-a0cb-6e9911b7a13a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:12:59.541Z",
+      "kind": "plan_changed",
+      "planVersion": 4
+    },
+    {
+      "id": "6dc0e51a-82c4-473f-8e00-7bcea79dac4e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:12:59.543Z",
+      "kind": "tickets_refreshed",
+      "planVersion": 4,
+      "reason": "TAO-206, TAO-207, TAO-211"
+    },
+    {
+      "id": "d8aee415-8251-467c-a90f-e35e530b203b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:12:59.544Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 45
+    },
+    {
+      "id": "db28c348-38c2-4c59-96f7-e7541c6a492c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:18.028Z",
+      "kind": "plan_changed",
+      "planVersion": 5
+    },
+    {
+      "id": "309ca97a-5a10-43e3-b51a-faa7c2c6dd1d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:18.030Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 58
+    },
+    {
+      "id": "791a7b29-4440-4052-97c2-55cff070d8f0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "dependency_decided",
+      "planVersion": 6,
+      "ticketId": "TAO-206",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-206\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "6e83ee5b-d19e-46ee-b5f9-7286b6412648",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "dependency_decided",
+      "planVersion": 6,
+      "ticketId": "TAO-207",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-207\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "e0c80515-13c1-4f52-adda-4a2efa20d533",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "dependency_decided",
+      "planVersion": 6,
+      "ticketId": "TAO-211",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-211\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "8146e553-91fe-4559-9d6c-8b8df9b2bd9e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "dependency_decided",
+      "planVersion": 6,
+      "ticketId": "TAO-206",
+      "reason": "Ticket de seguimiento de fixtures; contexto, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"TAO-215\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e4f9809b-b363-467a-826d-e07183e53a0b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "dependency_decided",
+      "planVersion": 6,
+      "ticketId": "TAO-206",
+      "reason": "Mención cruzada como contexto; no hay prerrequisito entre ambos.",
+      "evidence": [
+        "{\"from\":\"TAO-207\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8d57638d-b1e0-4688-9e7c-ea07a63d2a39",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "dependency_decided",
+      "planVersion": 6,
+      "ticketId": "TAO-207",
+      "reason": "Ticket de seguimiento de lo provisional; contexto, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"TAO-216\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "51d7cc47-8e80-468a-9cd1-5fa7cef9eff3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.779Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 6,
+      "reason": "6 decisiones; 6 cambios"
+    },
+    {
+      "id": "ebef035c-dc96-4dbf-aa75-438f81b7a673",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:35.788Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 42
+    },
+    {
+      "id": "e606dc89-f0ae-42dd-825e-a054463d68ff",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:55.947Z",
+      "kind": "plan_changed",
+      "planVersion": 7
+    },
+    {
+      "id": "401673e5-cbdc-4dd9-92f0-711d125c51de",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:14:55.952Z",
+      "kind": "operation_completed",
+      "planVersion": 7,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 76
+    },
+    {
+      "id": "a6fe4f28-6d7d-4c1a-9011-7c394fb2b012",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:23.667Z",
+      "kind": "plan_changed",
+      "planVersion": 8
+    },
+    {
+      "id": "5047f6e5-8bff-4471-8fd7-5cffe470d0ca",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:23.670Z",
+      "kind": "operation_completed",
+      "planVersion": 8,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 44
+    },
+    {
+      "id": "1de311ef-c590-4574-9236-b2469e89fedf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:49.599Z",
+      "kind": "plan_changed",
+      "planVersion": 9
+    },
+    {
+      "id": "cca566bf-891c-4587-81c8-919c387df20c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:49.601Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 51
+    },
+    {
+      "id": "e7ff12d9-abc2-4c30-9f88-cdcf50a81f6a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-206",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-206\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "7dbc035d-b6ae-48c0-9718-bcbb593f78ac",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-207",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-207\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "b4e34285-d6f2-4b8f-a767-fd8927e9efa3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-211",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-211\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "dd3ee9ce-8dff-430d-a24d-e92bd3db425b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-206",
+      "reason": "Ticket de seguimiento de fixtures; contexto, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"TAO-215\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":true}}"
+      ]
+    },
+    {
+      "id": "d3299b92-c133-4195-a899-d253a19715c8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-206",
+      "reason": "Mención cruzada como contexto; no hay prerrequisito entre ambos.",
+      "evidence": [
+        "{\"from\":\"TAO-207\",\"to\":\"TAO-206\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":true}}"
+      ]
+    },
+    {
+      "id": "98a37dd9-9326-4d88-96a5-2b525399ef36",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-207",
+      "reason": "Mención cruzada como contexto; no hay prerrequisito entre ambos.",
+      "evidence": [
+        "{\"from\":\"TAO-206\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e42883c2-031c-407a-90e3-cb3767d5154f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "dependency_decided",
+      "planVersion": 10,
+      "ticketId": "TAO-207",
+      "reason": "Ticket de seguimiento de lo provisional; contexto, no prerrequisito.",
+      "evidence": [
+        "{\"from\":\"TAO-216\",\"to\":\"TAO-207\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":true}}"
+      ]
+    },
+    {
+      "id": "036e22aa-f530-4bf7-8827-565bdee33e59",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.109Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 10,
+      "reason": "7 decisiones; 4 cambios"
+    },
+    {
+      "id": "0c8c04e5-e08c-49b3-a49e-7c5306b6cbc9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:15:54.112Z",
+      "kind": "operation_completed",
+      "planVersion": 10,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 42
+    },
+    {
+      "id": "31dd95a4-fbea-4fdf-9819-bac2fb3179d4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:16:44.703Z",
+      "kind": "plan_changed",
+      "planVersion": 11
+    },
+    {
+      "id": "c913db50-e7a1-4a88-875c-b19fb5862a30",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:16:44.706Z",
+      "kind": "operation_completed",
+      "planVersion": 11,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 55
+    },
+    {
+      "id": "93618021-628f-498d-9e72-087364f515f1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:23:45.891Z",
+      "kind": "plan_changed",
+      "planVersion": 12
+    },
+    {
+      "id": "61899b8c-252a-44ed-ad65-e336f2b33654",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:23:45.894Z",
+      "kind": "tickets_refreshed",
+      "planVersion": 12,
+      "reason": "TAO-206"
+    },
+    {
+      "id": "9bb52a51-3016-44d9-a4bb-b47f43f2ba04",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:23:45.896Z",
+      "kind": "operation_completed",
+      "planVersion": 12,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 54
+    },
+    {
+      "id": "d1219e67-cd05-42dd-a9ee-1eae1e0a40c9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:24:16.031Z",
+      "kind": "plan_changed",
+      "planVersion": 13
+    },
+    {
+      "id": "eb267698-972c-44b2-8a8a-43fa4ddd5867",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:24:16.033Z",
+      "kind": "operation_completed",
+      "planVersion": 13,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 40
+    },
+    {
+      "id": "0e2911cf-2b3c-438e-84a8-c81d0e562291",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:01.335Z",
+      "kind": "plan_changed",
+      "planVersion": 14
+    },
+    {
+      "id": "4485fcbd-446c-4fa6-9078-583d6265d27f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:01.337Z",
+      "kind": "operation_completed",
+      "planVersion": 14,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 48
+    },
+    {
+      "id": "847490b2-2617-495c-a107-93c9d219a1f4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:31.981Z",
+      "kind": "plan_changed",
+      "planVersion": 15
+    },
+    {
+      "id": "1ca293b5-ee93-45e9-89a2-b45cc6e44791",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:31.983Z",
+      "kind": "operation_completed",
+      "planVersion": 15,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 44
+    },
+    {
+      "id": "6656f35c-bbb7-4290-ba0c-5847a6d8b3b9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:34.907Z",
+      "kind": "dependency_decided",
+      "planVersion": 16,
+      "ticketId": "TAO-206",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-206\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "c9d492d2-56dc-4cd0-ab4a-64ef3d40b649",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:34.907Z",
+      "kind": "dependency_decided",
+      "planVersion": 16,
+      "ticketId": "TAO-207",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-207\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "f71a6ab7-a4f7-4b0a-8b9e-310a4e25d526",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:34.907Z",
+      "kind": "dependency_decided",
+      "planVersion": 16,
+      "ticketId": "TAO-211",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-211\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "04b38715-c639-4206-8194-64297d11e9d3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:34.907Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 16,
+      "reason": "3 decisiones; 3 cambios"
+    },
+    {
+      "id": "eb30b6c8-ab99-4d3d-b5b4-631b8a08eb48",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:34.909Z",
+      "kind": "operation_completed",
+      "planVersion": 16,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 39
+    },
+    {
+      "id": "71ba21c3-0dd6-44f3-a95e-4662827ea6d1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:25:38.860Z",
+      "kind": "operation_completed",
+      "planVersion": 16,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 1185
+    },
+    {
+      "id": "0b71336b-a0be-4559-802d-5f8c3e1cae21",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:26:36.782Z",
+      "kind": "operation_completed",
+      "planVersion": 16,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 1349
+    },
+    {
+      "id": "9e5c725b-90f1-4ec0-ae5e-e1f24b025db9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:26:46.045Z",
+      "kind": "epic_prepared",
+      "planVersion": 16
+    },
+    {
+      "id": "f177ccd3-ce01-4438-a60c-e3485c359827",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:26:46.047Z",
+      "kind": "operation_completed",
+      "planVersion": 16,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 115
+    },
+    {
+      "id": "37e61550-9453-43af-8442-5ca8415fe7b1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:26:55.312Z",
+      "kind": "access_check_prepared",
+      "planVersion": 16
+    },
+    {
+      "id": "17668197-d1c6-4f10-a97a-2434ebc2c7df",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:27:04.251Z",
+      "kind": "access_check_reported",
+      "planVersion": 16,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "17dee11d-0cd7-4d0e-8614-ab6caaf019e4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:27:13.338Z",
+      "kind": "access_check_prepared",
+      "planVersion": 16
+    },
+    {
+      "id": "57de0731-9d83-4210-a4d0-1e9d0343e4d6",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:30:58.475Z",
+      "kind": "access_check_reported",
+      "planVersion": 16,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "e7aa5fe9-90bc-4834-823a-92bcb918d738",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:36:59.469Z",
+      "kind": "plan_approved",
+      "planVersion": 16
+    },
+    {
+      "id": "477f6650-ae7f-453f-aae8-06d7e68463d1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:36:59.537Z",
+      "kind": "run_started",
+      "planVersion": 16,
+      "runId": "c6708b14-60c8-41d1-894f-0e5a65771e9b"
+    },
+    {
+      "id": "a905179a-cafe-47b9-891d-8a54d74c22df",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:36:59.537Z",
+      "kind": "teach_selected",
+      "planVersion": 16,
+      "runId": "c6708b14-60c8-41d1-894f-0e5a65771e9b",
+      "reason": "skip"
+    },
+    {
+      "id": "972ed57b-9d32-4a09-a215-1919b4558eb5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:36:59.544Z",
+      "kind": "operation_completed",
+      "planVersion": 16,
+      "runId": "c6708b14-60c8-41d1-894f-0e5a65771e9b",
+      "phase": "launch",
+      "source": "kanai-server",
+      "durationMs": 110
+    },
+    {
+      "id": "21366b37-a768-46c0-a296-e67e167038b2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:01.869Z",
+      "kind": "paused",
+      "planVersion": 16,
+      "runId": "c6708b14-60c8-41d1-894f-0e5a65771e9b",
+      "reason": "Assets de entrada pendientes antes de consumir: docs/content/catalogos/practica.v1.json"
+    },
+    {
+      "id": "add2b662-9383-42e8-87c1-ed40e7bac0e5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:01.872Z",
+      "kind": "operation_completed",
+      "planVersion": 16,
+      "runId": "c6708b14-60c8-41d1-894f-0e5a65771e9b",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 42
+    },
+    {
+      "id": "f9ed3f64-1c90-4e51-b64d-376a4b43e113",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:35.105Z",
+      "kind": "cancelled",
+      "planVersion": 16,
+      "runId": "c6708b14-60c8-41d1-894f-0e5a65771e9b",
+      "reason": "plan_superseded"
+    },
+    {
+      "id": "a9499384-0ba7-41a1-85f6-b615487469ed",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:35.123Z",
+      "kind": "plan_changed",
+      "planVersion": 17
+    },
+    {
+      "id": "bdd26f54-eb1f-4f5b-ab94-207f90e621bb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:35.126Z",
+      "kind": "operation_completed",
+      "planVersion": 17,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 60
+    },
+    {
+      "id": "35846ac4-7140-43e4-a205-186f367219fd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:37.883Z",
+      "kind": "dependency_decided",
+      "planVersion": 18,
+      "ticketId": "TAO-206",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-206\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "f5360dce-f095-4ce3-aebf-e2b33bee74b5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:37.883Z",
+      "kind": "dependency_decided",
+      "planVersion": 18,
+      "ticketId": "TAO-207",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-207\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "b505844e-ef6c-42ff-a9c4-933923c14e1a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:37.883Z",
+      "kind": "dependency_decided",
+      "planVersion": 18,
+      "ticketId": "TAO-211",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-211\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "aad5e735-de56-4efe-a907-156bc23dcf8c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:37.883Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 18,
+      "reason": "3 decisiones; 3 cambios"
+    },
+    {
+      "id": "f22341c4-c7b9-4071-aead-577bd6cad5bd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:37.886Z",
+      "kind": "operation_completed",
+      "planVersion": 18,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 40
+    },
+    {
+      "id": "8a4f6798-7ec2-4190-a8a9-a512ca1932c5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:37:48.206Z",
+      "kind": "operation_completed",
+      "planVersion": 18,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 4
+    },
+    {
+      "id": "f4b78f44-b10f-4460-94d6-b08eb45d61a2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:20.202Z",
+      "kind": "plan_changed",
+      "planVersion": 19
+    },
+    {
+      "id": "fa18f766-9320-4e73-99e5-94e109abd922",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:20.205Z",
+      "kind": "operation_completed",
+      "planVersion": 19,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 50
+    },
+    {
+      "id": "5805a982-be22-4f2f-adbe-abb4d4334353",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:27.373Z",
+      "kind": "dependency_decided",
+      "planVersion": 20,
+      "ticketId": "TAO-206",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-206\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "1f7c3fcb-5b2e-4c3a-8eaa-210245fddd1c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:27.373Z",
+      "kind": "dependency_decided",
+      "planVersion": 20,
+      "ticketId": "TAO-207",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-207\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "cf5e0635-97b7-4f25-af8e-61e4349295ba",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:27.373Z",
+      "kind": "dependency_decided",
+      "planVersion": 20,
+      "ticketId": "TAO-211",
+      "reason": "Contribuye al objetivo de la épica.",
+      "evidence": [
+        "{\"ticketId\":\"TAO-211\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "04deb175-fdf0-4494-b72c-31a15b235a0a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:27.373Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 20,
+      "reason": "3 decisiones; 3 cambios"
+    },
+    {
+      "id": "5b1bd2fa-c2e3-46e2-af57-fb4bbff8d7ea",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:27.377Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 47
+    },
+    {
+      "id": "051662aa-b00b-4b7c-a5fd-9c97e8eb4692",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:37.465Z",
+      "kind": "dependency_decided",
+      "planVersion": 21,
+      "ticketId": "TAO-206",
+      "reason": "TAO-206 referencia practica.v1.json, que genera TAO-207: debe correr después.",
+      "evidence": [
+        "{\"from\":\"TAO-207\",\"to\":\"TAO-206\",\"accepted\":true,\"before\":{\"accepted\":false,\"dismissed\":true}}"
+      ]
+    },
+    {
+      "id": "05c3adc2-b616-49ef-9519-6cdcbf846e1b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:37.465Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 21,
+      "reason": "1 decisiones; 1 cambios"
+    },
+    {
+      "id": "1a562da9-87e1-4332-80a3-f94a87aab383",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:37.468Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 37
+    },
+    {
+      "id": "6319fcaf-3ffe-475f-bca1-810b7b23a3d1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:40.312Z",
+      "kind": "epic_prepared",
+      "planVersion": 21
+    },
+    {
+      "id": "8c426b30-5980-4ba9-b3cd-78ae884ba220",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:40.315Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 127
+    },
+    {
+      "id": "ae5d2d44-313e-44f3-a584-091cf5fc77fc",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:38:50.527Z",
+      "kind": "access_check_prepared",
+      "planVersion": 21
+    },
+    {
+      "id": "31578350-63da-49ca-a7f1-5995452923f0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:39:00.137Z",
+      "kind": "access_check_reported",
+      "planVersion": 21,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "4f390bbb-e8ac-4594-8e15-990470348edf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:43:06.635Z",
+      "kind": "plan_approved",
+      "planVersion": 21
+    },
+    {
+      "id": "3bcc1653-2d98-46e8-96bd-d9aeab7f8786",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:43:06.687Z",
+      "kind": "run_started",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9"
+    },
+    {
+      "id": "ac3b9636-b572-4798-ad65-3ff03d20b2a0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:43:06.687Z",
+      "kind": "teach_selected",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "reason": "skip"
+    },
+    {
+      "id": "dc35a0e0-012f-401c-acfc-71c9cc7439d0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:43:06.692Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "phase": "launch",
+      "source": "kanai-server",
+      "durationMs": 83
+    },
+    {
+      "id": "0029da6d-61ba-4af6-bc34-56a7b8ac0793",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:43:08.986Z",
+      "kind": "action_requested",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "ticketId": "TAO-207",
+      "phase": "execute"
+    },
+    {
+      "id": "e1a3541b-aeb0-4043-8433-ef5b85e22b8c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T13:43:08.988Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 113
+    },
+    {
+      "id": "57ea0cbc-2a9b-4d89-8c3c-28c2324c0faf",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:03:04.470Z",
+      "kind": "action_requested",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "ticketId": "TAO-207",
+      "phase": "execute"
+    },
+    {
+      "id": "2e41177c-104d-4cbd-8296-8e0b2669a815",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:03:04.472Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 150
+    },
+    {
+      "id": "ce5d1865-00b5-4a5a-be71-5c70c0d345f2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:16:39.407Z",
+      "kind": "action_requested",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "ticketId": "TAO-207",
+      "phase": "execute"
+    },
+    {
+      "id": "2ab32b9d-6a70-4494-9a1c-a63078968b73",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:16:39.412Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 157
+    },
+    {
+      "id": "422cbb01-0ffe-452c-9c08-a7b6da86c11e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:32:33.714Z",
+      "kind": "action_requested",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "ticketId": "TAO-207",
+      "phase": "verify"
+    },
+    {
+      "id": "0e8839ab-3e26-4b90-8ab6-8f9a6584917e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:32:33.717Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 147
+    },
+    {
+      "id": "312ed9c5-bd22-4701-b331-f6bcf29ea3fd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:33:32.090Z",
+      "kind": "action_requested",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "ticketId": "TAO-207",
+      "phase": "execute"
+    },
+    {
+      "id": "d30e1b91-7a28-4cac-a15e-3038f27d6589",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T14:33:32.093Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "f2897dbd-f37a-4857-805a-76ff51a3f0b9",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 130
+    }
+  ]
+}

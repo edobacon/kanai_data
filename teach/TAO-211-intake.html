@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Intake TAO-211 (HU-02-15): tope de caché por dispositivo con reserva y LRU</title>
+<!-- ticket: TAO-211 · kind: intake · project: taomangalam · generated: 2026-10-10 -->
+</head>
+<body>
+<h1>Intake TAO-211 (HU-02-15)</h1>
+<div class="panel tldr" data-dkc-block="tldr"><p><strong>Qué quedó resuelto:</strong> política de caché de assets sobre el gestor de TAO-204: tope por clase de dispositivo (1 GB teléfono, 2 GB tablet, reducible por configuración pública y nunca ampliable sobre DEC-202), reserva mínima de 1 GB libre y liberación LRU que solo borra derivados verificados del índice de caché. Sin candidatos seguros, bloquea y la vista muestra la superficie de respaldo.</p></div>
+<h2>Estado verificado del repo (epic/EP-02)</h2>
+<ul>
+<li>El gestor de descarga y caché está en app/lib/core/assets/ (TAO-204, integrado, merge 2987477). El índice no guarda ultimoAcceso ni verificado: se agregan con alteración aditiva y un índice antiguo se lee sin error, sin candidatos.</li>
+<li>TaoBreakpoint.mediumMin = 600: lado corto 600 es tablet y 599 teléfono. El test fija ambos lados.</li>
+<li>device_info_plus y path_provider no entregan el espacio libre: se lee detrás de una interfaz inyectada, con un paquete nuevo en app/pubspec.yaml solo en su implementación. Si la lectura falla, el resultado es bloqueado y no se borra nada.</li>
+<li>Las claves cacheTopeMb y cacheReservaMb se leen de la configuración pública; valores inválidos o mayores al límite se ignoran y rige DEC-202.</li>
+</ul>
+<h2>Decisiones ya tomadas</h2>
+<div class="callout" data-dkc-block="callout"><ul>
+<li>La política puede desactivarse por una bandera; desactivada, una descarga sobre el tope no borra nada.</li>
+<li>El evento de métrica contiene únicamente bytes liberados, cantidad de archivos y resultado; sin clase de dispositivo, nombres, rutas ni ids.</li>
+<li>El plan de liberación se arma en una unidad propia: acumula candidatos LRU hasta cumplir tope y reserva; si no alcanzan, no borra ninguno.</li>
+<li>Ticket sin interfaz propia: la verificación visual es una prueba de widget de la superficie de respaldo existente.</li>
+</ul></div>
+<h2>Verificación</h2>
+<pre data-dkc-block="code">cd app &amp;&amp; flutter pub get
+cd app &amp;&amp; flutter test test/core/assets/cache/cache_policy_integration_test.dart
+cd app &amp;&amp; flutter test test/core/http/app_release_test.dart</pre>
+<h2>Riesgos</h2>
+<ul>
+<li>Borrar datos de la persona: el candidato siempre sale del índice de caché; un adjunto con nombre parecido no entra.</li>
+<li>Depende de TAO-204 (integrado) y toca app/pubspec.yaml: ejecutar pub get y flutter test desde app/.</li>
+</ul>
+</body>
+</html>

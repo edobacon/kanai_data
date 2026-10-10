@@ -1,0 +1,524 @@
+---
+id: TAO-207-SPEC
+project: taomangalam
+ticket: TAO-207
+status: approved
+---
+
+# TAO-207 · HU-02-10 Catálogo versionado de reparación, anillos, cierre de Casa 12, minerales y materiales trazado a la fuente
+
+## Resumen ejecutivo
+
+Se construye un generador determinista en scripts/ (patrón de build_result_catalog.py, reutilizando los extractores de build_fichas.py) que produce un catálogo JSON versionado con JSON Schema. El catálogo trae: ficha y procedimiento de reparación de las casas 1 a 11, coherencia vibracional, escala RKL, detalle de los ocho anillos, cierre de Casa 12 y los catálogos de minerales y de materiales. También incluye el registro de correcciones editoriales, las pruebas de fidelidad, el modo --check en los jobs docs de ci-pr.yml y nightly.yml, la copia a app/assets/catalogos/ verificada en CI y el cargador Dart de solo lectura. NO incluye: planes, ciclos RKL ni conteo de días (HU-06-10/11/12), interfaz (EP-07/EP-08), validación de códigos (HU-11-06/07), ficha de resultado del retroceso (ya está en resultados.v1.json), glosario ni arte. No hay cambios de modelo de datos: el catálogo es JSON empaquetado y accion_practica.content_key / plan_practica.content_version solo lo referencian. Se sabe que funciona cuando --check y las pruebas pasan con 11 reparaciones, 8 anillos y 6 minerales, la escala RKL devuelve 0/3/3/9 días para 9.500/8.500/6.000/4.000 (5.000 cae en 3 días sin nueva medición) y el cargador Dart entrega nodos inmutables con content_key y content_version. Tamaño: 8 puntos en 4 sesiones, dentro del techo. ADVERTENCIAS: (1) hay dos entregables de Contenido que bloquean la regeneración final: la aprobación del documento único de materiales (DEC-145) y la resolución editorial de la agrupación de minerales de la Casa 7 (tm-src-tablero#p1044). Sin ellas, la sesión 3 deja el documento como borrador y la Casa 7 queda marcada como pendiente. (2) El catálogo de materiales referencia los content_key de HU-02-17, que no figura en 'Bloqueada por'; si HU-02-17 no está integrada, esas referencias no se pueden validar. (3) El cierre de Casa 12 depende del catálogo de HU-02-05 (bloqueante declarado). Datos a confirmar antes de ejecutar: (a) ruta real de resultados.v1.json, de su JSON Schema y del cargador Dart de TAO-198, para copiar el patrón y los nombres de archivo (aquí se proponen scripts/build_practice_catalog.py, practica.v1.json y practica.v1.schema.json, que se ajustan a la convención real); (b) ruta y content_key del catálogo de casas de HU-02-05 para la Casa 12; (c) los id de las piezas de los seis minerales en el manifiesto v2 de TAO-196; (d) el comando exacto del linter de docs y el formato de .docs-baseline.txt; (e) la ruta del test Dart de TAO-198 (app/test/...) para ubicar el test del cargador nuevo; (f) el nombre del documento único de materiales dentro de docs/content/ y quién de Contenido lo aprueba.
+
+## Requirements
+
+### REQ-01 `confirmed`
+> Fuente: Adenda 2, correcciones (d) y (g)
+
+Un generador determinista en scripts/build_practice_catalog.py construye docs/content/catalogos/practica.v1.json desde las fichas (docs/content/casas/01_casa_1.md a 12_casa_12.md, docs/content/anillos/01_anillo_1.md a 08_anillo_8.md) y las transcripciones (docs/content/fuentes/02_como_usar_tao_mangalam.md, 03_tablero_tao_mangalam.md y 04_anillos_tao_mangalam.md). Lo valida contra docs/content/catalogos/practica.v1.schema.json y aplica el registro docs/content/catalogos/correcciones_editoriales_practica.v1.json con editorialResolutionId. En modo --check falla nombrando el archivo fuente o el nodo desactualizado, salvo por los nodos con resolución editorial provisional: esos solo producen una ADVERTENCIA que nombra el nodo y el comando termina con código 0. Este comportamiento se implementa en la sesión 1, antes de S2.T1.2.
+
+### REQ-02 `confirmed`
+> Fuente: taomangalam/docs/backlog/EP-02_contenido_empaquetado_y_assets.md:518
+
+El catálogo trae la ficha de reparación de las casas 1 a 11 (content_key house-01 a house-11) con Prakriti Deva, fundamento, mensaje, Rhema mantra, solicitud, Logo Shamkya, coherencia vibratoria, Thot y bloque Ashura. Omite los campos que la fuente no declara (DEC-148) y normaliza los rótulos a 'Logo Shamkya' y 'Rhema mantra', con el valor separado del rótulo y el literal en sourceText (DEC-141, DEC-142). La Casa 12 no tiene ficha de reparación.
+
+### REQ-03 `confirmed`
+> Fuente: taomangalam/docs/backlog/EP-02_contenido_empaquetado_y_assets.md:585
+
+Cada casa de la 1 a la 11 tiene un procedimiento de reparación con pasos ordenados según V-11. Cada paso trae content_key, texto, vía (consultante o consultor), orientación, repeticiones y días como números y sourceRefs. La orientación es Este en las casas 1 y 2, norte de la 3 a la 5, oeste de la 6 a la 8 y sur de la 9 a la 11, con el ancla del párrafo de su casa. La vía del consultor aparece solo donde la casa la declara. La Nota 1 se enlaza a los pasos con días y la Nota 2 a la quema.
+
+### REQ-04 `confirmed`
+> Fuente: adenda 1, punto 2
+
+La coherencia vibracional de cada casa que la indica expresa los chakras como números y los minerales como referencias al catálogo de minerales, agrupados en conjunción ('y') o alternativa ('o'). Trae duración de 3 minutos, 3 días y las dos formas de apoyo cuando la casa ofrece ambas (V-12). La Casa 7 (tm-src-tablero#p1044) no tiene resolución de Contenido todavía: se estructura provisionalmente como lapislázuli o (aguamarina y amatista) con un editorialResolutionId propio marcado como provisional. El reemplazo por la resolución aprobada lo hace TAO-216.
+
+### REQ-05 `confirmed`
+> Fuente: Adenda 2, manifiesto de assets
+
+El catálogo de minerales trae cornalina, amatista, cuarzo citrino, aguamarina (alias 'agua marina'), lapislázuli y cuarzo rosado, con content_key, nombre, alias y el id de su pieza en app/assets/manifest.json (schemaVersion 2, inventario de TAO-190, familia mineral-illustration): cornalina = mineral-carnelian; amatista = mineral-amethyst; cuarzo citrino = mineral-citrine-quartz; aguamarina = mineral-aquamarine; lapislázuli = mineral-lapis-lazuli; cuarzo rosado = mineral-rose-quartz. Kuberani, corrector, resonador y tablilla RKL no tienen pieza. Son informativos, sin producto ni código (DEC-120).
+
+### REQ-06 `confirmed`
+> Fuente: taomangalam/docs/backlog/EP-02_contenido_empaquetado_y_assets.md:509
+
+La escala RKL tiene tramos excluyentes (DEC-065, DEC-137): 9.000 o más sin días; de 8.000 a 8.999, 3 días; de 5.000 a 7.999, 3 días repitiendo la acción; menos de 5.000, 9 días y nueva medición (DEC-135). El nodo operativo de menos de 5.000 no expone 'tecnología sagrada': esa expresión queda solo en sourceText con su resolución editorial.
+
+### REQ-07 `confirmed`
+> Fuente: taomangalam/docs/backlog/EP-02_contenido_empaquetado_y_assets.md:531
+
+El detalle de los ocho anillos para V-10 usa los content_key ring-01 a ring-08 de resultados.v1.json, sin duplicar Rhibu, patrón ni acción. Trae desarrollo, paso previo donde la fuente lo declara, repeticiones como número (3, 5, 5, 5, 5, 5, 7; el octavo sin número, DEC-147), la acción del octavo combinando p0110 y p0111 (punto 15 de 99_inconsistencias_por_resolver.md) y la regla de medición RKL del anillo.
+
+### REQ-08 `confirmed`
+> Fuente: adenda 1, punto 5
+
+El cierre de Casa 12 trae las acciones finales de V-14 con content_key y anclas: mirar al Este, visualizar la esfera azul dorada, Rhema mantra 3 veces, Logo Shamkya 108 veces durante 3 días y 'Bendigo, agradezco y amo' (p1713, p1724). También trae la vía del consultor (p1729), la nota final (p1734) y los textos de 'Remitido a casa 12, no hay kipot que corregir' (p1759 a p1784), sin plan de reparación (DEC-032, DEC-204). Cuando una acción coincide con un paso de energización de la Casa 12 (docs/content/catalogos/casas.v1.json, houses[11].energization, consultante y consultor), se referencia su contentKey (house-12-energization-consultante-01, house-12-energization-consultante-02, house-12-energization-consultor-01, o la convención que ya siga el generador) en lugar de copiar el texto.
+
+### REQ-09 `confirmed`
+> Fuente: taomangalam/docs/backlog/EP-02_contenido_empaquetado_y_assets.md:123
+
+Cada nodo declara su profundidad según DEC-027. Son Estándar: la línea directiva del Ashura, el procedimiento, los chakras, los minerales, los días, las repeticiones y la regla de repetir si el RKL baja de 9.000. Son Avanzado: el desarrollo y la simbología del Ashura, el mensaje de Thot, el desarrollo del patrón, el contexto de la medición y la escala RKL con sus tramos. Todo viaja en la app (DEC-223).
+
+### REQ-10 `confirmed`
+> Fuente: adenda 1, puntos 3 y 6
+
+El documento único de materiales docs/content/materiales_practica_y_reparacion.md (DEC-145), creado por este ticket como borrador y nacido compliant con el linter de docs, es la fuente del catálogo de materiales: kuberani, corrector energético, resonador y minerales, japa mala y tablilla RKL. Cada material trae una de cinco funciones (enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición), cuándo se usa (DEC-071), si es producto con código (solo kuberani y corrector: DEC-060, DEC-066, DEC-136) y sourceRefs (tm-src-como-usar#p0092, p0115, p0118, p0130). Los materiales de la sesión se referencian por los contentKey de docs/content/catalogos/ritual_sesion.v1.json (HU-02-17 = TAO-202): material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados y material-pendulo, sin duplicarse. Hasta la aprobación editorial de Contenido (persona por confirmar, se registra en TAO-216) el catálogo marca el documento como provisional.
+
+### REQ-11 `confirmed`
+> Fuente: taomangalam/docs/backlog/EP-02_contenido_empaquetado_y_assets.md:540
+
+Las pruebas de fidelidad comprueban que cada nodo textual coincide con su sourceText o declara un editorialResolutionId que existe en el registro, y que cada sourceRef apunta a un ancla existente en las transcripciones. Si algo falla, CI nombra el nodo y el archivo.
+
+### REQ-12 `confirmed`
+> Fuente: pedido de cambio punto 10
+
+El catálogo expone catalogVersion como content_version, con valor inicial 1.0.0 en practica.v1.json. Se copia a app/assets/catalogos/ y CI verifica que la copia sea idéntica a la generada. Un cambio de texto sube catalogVersion (DEC-178, DEC-230).
+
+### REQ-13 `inferred`
+> Fuente: adenda 1, punto 7
+
+Un cargador Dart de solo lectura lee el catálogo empaquetado sin red (DEC-094) y entrega los nodos inmutables con su content_key y content_version, siguiendo el cargador de resultados.v1.json de TAO-198. Su prueba vive bajo app/test/ junto a la del cargador de los catálogos existentes. La copia app/assets/catalogos/practica.v1.json se genera con scripts/sync_app_catalogs.py.
+
+### REQ-14 `confirmed` `enforcement`
+> Fuente: scripts/build_fichas.py
+
+El generador reutiliza los extractores de build_fichas.py (campos de reparación, remisión y anillos) y el patrón de build_result_catalog.py (schema, --check, copia y cargador de TAO-198). No reimplementa el parsing de fichas ni duplica nodos de resultados.v1.json, de HU-02-05 o de HU-02-17: los referencia por content_key.
+
+### REQ-15 `confirmed` `enforcement`
+> Fuente: taomangalam/.github/workflows/nightly.yml:150
+
+El --check del generador nuevo y sus pruebas corren en los jobs docs de ci-pr.yml (paso 'Gates de build documental (--check)') y de nightly.yml, junto a los generadores existentes.
+
+### REQ-16 `confirmed` `variant`
+> Fuente: sonda:card-docs-de-superficie-6c8ae176a6
+
+docs/development/commands.md documenta el comando del generador del catálogo de anillos, reparación, minerales y materiales (python3 scripts/build_practice_catalog.py) y su --check (uso, parámetros y ejemplo), siguiendo el patrón con que están documentados los generadores de TAO-198 y TAO-199.
+
+### REQ-17 `confirmed`
+> Fuente: pedido de cambio punto 9
+
+Todo doc del baseline de lint (.docs-baseline.txt, una ruta por línea) que el ticket realmente modifique queda compliant con node scripts/dev/docs.mjs check, normalizando el patrón rechazado. Dos comparaciones distintas y deliberadas: el linter corre con DOCS_DIFF_BASE=origin/main (job docs de .github/workflows/ci-pr.yml), y la prueba de que .docs-baseline.txt no gana entradas nuevas se compara contra epic/EP-02. Ambas bases se mantienen así y se documentan explícitamente en la prueba y en la task. Candidatos: casas 01 y 12, anillos 01 y 08, 99_inconsistencias_por_resolver.md, fuentes 02, 03 y 04, SCHEMA.md y docs/PLAN.md. No se amplía el diff a docs del baseline que el ticket no toque. El documento único de materiales nace compliant.
+
+### REQ-18 `confirmed`
+> Fuente: adenda 1, punto 5
+
+El catálogo de casas agrega contentKey a los pasos de energización de la Casa 12 (houses[11].energization, consultante y consultor) en scripts/build_house_catalog.py y house_catalog_nodes.py, con la convención house-12-energization-consultante-01, house-12-energization-consultante-02 y house-12-energization-consultor-01 salvo que el generador ya siga otra. Sube su catalogVersion, regenera docs/content/catalogos/casas.v1.json y sincroniza la copia en app/assets/catalogos/ con scripts/sync_app_catalogs.py. Los consumidores existentes del catálogo de casas no se rompen.
+
+### REQ-19 `confirmed`
+> Fuente: adenda 2 (a) y pedido de cambio A y J
+
+La Sesión 2 original se parte en dos etapas con su gate, que dejan el sistema funcional y con sus pruebas en verde: la etapa A (sesión 2) cubre minerales, coherencia vibracional y escala RKL (S2.T1.1 a S2.T1.3 con S2.T2.1 a S2.T2.3); la etapa B (sesión 4) cubre ocho anillos, cierre de Casa 12 y profundidad, con sus clases de test y la prueba de cierre de la etapa B, y corre antes de la sesión 5 (sync de app, cargador Dart, línea de CI y test Dart). Orden final: sesión 1 reparación y base, sesión 2 etapa A, sesión 3 materiales y docs, sesión 4 etapa B, sesión 5 sync, cargador, CI y test Dart. Las tareas de las sesiones 2 y 4 validan REQ-19.
+
+### REQ-20 `confirmed` `enforcement`
+> Fuente: pedido de cambio puntos 2 y 8
+
+Todos los verify de pruebas Python del ticket usan el runner único 'python3 -m unittest discover -s tests -p test_practice*.py' (o el patrón de un solo archivo, por ejemplo -p test_practice_materials.py), sin referencias de módulo del tipo tests.test_practice_*. El test de materiales se llama tests/test_practice_materials.py en la tarea, su rollback y el gate de la sesión 3.
+
+### REQ-21 `confirmed` `variant`
+> Fuente: sonda:card-lint-de-docs-4d9deffd06
+
+Los docs del baseline de lint (.docs-baseline.txt) que el ticket modifica, docs/content/99_inconsistencias_por_resolver.md y docs/content/materiales_practica_y_reparacion.md, se normalizan (reemplazando el patrón que el linter rechaza) para que pasen DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check. .docs-baseline.txt no gana entradas nuevas. No se amplía el diff a otros docs del baseline.
+## Tasks
+
+#### S1.T1 — Crear la base del generador scripts/build_practice_catalog.py reutilizando los extractores de build_fichas.py y el patrón de build_result_catalog.py. El esquema practica.v1.schema.json vive en la ruta fija docs/content/catalogos/practica.v1.schema.json y el registro de correcciones editoriales en la ruta fija docs/content/catalogos/correcciones_editoriales_practica.v1.json (con editorialResolutionId por entrada). Salida: docs/content/catalogos/practica.v1.json.
+Contrato: rollback: Borrar scripts/build_practice_catalog.py, el schema y el registro editorial nuevos; ningún archivo existente se modifica.. Status: done
+
+#### S1.T2 — Implementar la ficha y el procedimiento de reparación de las casas 1 a 11, importando los extractores de reparación y remisión de scripts/build_fichas.py (sin parsers propios) desde docs/content/casas/01_casa_1.md a 11_casa_11.md. Ficha: Prakriti Deva, fundamento, mensaje (omitido en 3, 5 y 8), Rhema mantra, solicitud, Logo Shamkya, coherencia vibratoria, Thot y bloque Ashura. Normalizar los rótulos 'Logo Samkhya'→'Logo Shamkya' y 'Rhema - Mantras'→'Rhema mantra', con el literal en sourceText. Procedimiento: pasos V-11 en orden, con via, orientación (Este 1-2, norte 3-5, oeste 6-8, sur 9-11), repeticiones (1 y 108) y días (3) como números, sourceRefs al párrafo de la casa, vía del consultor solo donde la casa la declara, Nota 1 en los pasos con días y Nota 2 en la quema.
+Contrato: rollback: Revertir los módulos de reparación del generador y regenerar el JSON; las fichas fuente no se tocan.. Status: done
+
+#### S1.T3 — Las pruebas de esta tarea viven en el mismo archivo tests/test_practice_repair.py que consolida S1.T7: no se crea un archivo de prueba aparte; se agregan alli las clases de esta tarea.
+Contrato: rollback: Borrar tests/test_practice_repair.py y revertir los cambios de la task con git checkout sobre los archivos que tocó.. Status: done
+
+#### S1.T4 — Agregar contentKey a los pasos de energización de la Casa 12 (houses[11].energization, consultante y consultor) en scripts/build_house_catalog.py y house_catalog_nodes.py con la convención house-12-energization-consultante-01, house-12-energization-consultante-02 y house-12-energization-consultor-01 (usar la que ya siga el generador si difiere). Subir catalogVersion, regenerar docs/content/catalogos/casas.v1.json y sincronizar la copia en app/assets/catalogos/ con scripts/sync_app_catalogs.py.
+Contrato: rollback: git revert del commit: restaura los generadores, casas.v1.json y la copia en app/assets/catalogos/ al catalogVersion anterior.. Status: done
+
+#### S1.T5 — Redactar docs/content/materiales_practica_y_reparacion.md como borrador compliant con el linter de docs (kuberani, corrector energético, resonador y minerales, japa mala, tablilla RKL; función, cuándo se usa, producto con código solo kuberani y corrector, sourceRefs a tm-src-como-usar#p0092, p0115, p0118 y p0130; materiales de sesión referenciados por los material-* de ritual_sesion.v1.json). No agregarlo al baseline. Marcar el documento como provisional hasta la aprobación de Contenido.
+Contrato: rollback: Eliminar docs/content/materiales_practica_y_reparacion.md; no hay otros archivos afectados.. Status: done
+
+#### S1.T6 — Implementar en build_practice_catalog.py el --check que ADVIERTE (nombrando el nodo) y termina con código 0 ante una resolución editorial provisional, y falla con código distinto de 0 ante cualquier otra desactualización. Además crear en docs/content/catalogos/correcciones_editoriales_practica.v1.json la entrada provisional de la Casa 7, marcada como provisional y trazada a tm-src-tablero#p1044, con la forma lapislázuli o (aguamarina y amatista): grupo con op 'o' que contiene lapislázuli y un subgrupo con op 'y' que contiene aguamarina y amatista. S2.T1.2 consume esta entrada y S2.T2.2 asserta esa forma y la marca provisional.
+Contrato: rollback: Revertir en scripts/build_practice_catalog.py los cambios que introduce esta tarea y regenerar docs/content/catalogos/practica.v1.json con el generador.. Status: done
+
+#### S1.T7 — Consolidar en un unico archivo, tests/test_practice_repair.py, las pruebas de la ficha de reparacion (REQ-02) y del procedimiento de reparacion (REQ-03): casas 1 a 11 con ficha y procedimiento, Casa 12 sin ninguno, omisiones DEC-148 (casas 3, 5 y 8 sin mensaje), rotulos Logo Shamkya y Rhema mantra con sourceText literal, orientacion por casa (Este 1 y 2, norte 3 a 5, oeste 6 a 8, sur 9 a 11) y Casa 5 con Rhema mantra una vez y Logo Shamkya 108 veces durante 3 dias.
+Contrato: rollback: Eliminar los archivos de prueba agregados; no afecta código de producción.. Status: done
+
+#### S1.T8 — Implementar en scripts/build_practice_catalog.py la regla de catalogVersion: si el texto de un nodo cambia respecto del catálogo versionado sin subir catalogVersion, --check falla nombrando el nodo. Si catalogVersion sube, la comparación pasa.
+Contrato: rollback: Quitar del generador la comprobación de catalogVersion.. Status: done
+
+#### S1.T9 — Prueba tests/test_practice_catalog_version.py: cambiar el texto de un nodo sin subir catalogVersion hace fallar --check nombrando el nodo; subir catalogVersion lo deja pasar.
+Contrato: rollback: Borrar tests/test_practice_catalog_version.py.. Status: done
+
+#### S1.T10 — Prueba tests/test_practice_catalog_provisional.py: (a) --check con una resolución editorial provisional sale con código 0 y su salida nombra el nodo con una ADVERTENCIA; (b) un nodo no provisional editado a mano en el JSON hace fallar --check con código distinto de 0; (c) la Casa 7 provisional tiene la forma grupo 'o' (lapislázuli, grupo 'y' (aguamarina, amatista)) y la marca provisional con su editorialResolutionId propio.
+Contrato: rollback: Borrar tests/test_practice_catalog_provisional.py.. Status: done
+
+#### S1.T11 — Tarea de test (REQ-01 y REQ-14) en tests/test_practice_catalog_base.py. Asserts de error y reuso: (a) un practica.v1.json con content_key duplicado es rechazado por practica.v1.schema.json; (b) un catálogo con reparación para la Casa 12 es rechazado por el esquema; (c) el generador importa los extractores de campos de reparación, remisión y anillos desde scripts/build_fichas.py y no define parsers propios (se comprueba por import y por ausencia de reimplementación); (d) no duplica nodos de resultados.v1.json, casas.v1.json ni ritual_sesion.v1.json: los referencia por content_key.
+Contrato: rollback: Eliminar tests/test_practice_catalog_base.py.. Status: done
+
+#### S1.T12 — Registrar en docs/content/catalogos/correcciones_editoriales_practica.v1.json la resolución editorial de 'tecnología sagrada' si no existe ya un editorialResolutionId para ella. El contexto está en docs/content/99_inconsistencias_por_resolver.md (tabla de la escala RKL, fila de menos de 5 mil, y su nota). El nodo operativo de menos de 5.000 no expone la expresión y esta queda solo en sourceText con esa resolución.
+Contrato: rollback: Quitar del registro de correcciones la entrada de 'tecnología sagrada' que esta tarea agregó.. Status: done
+
+#### S1.T13 — Implementar en scripts/build_practice_catalog.py la validacion de fidelidad (REQ-11): cada nodo textual debe coincidir con su sourceText o declarar un editorialResolutionId que exista en docs/content/catalogos/correcciones_editoriales_practica.v1.json, y cada sourceRef (formato tm-src-<fuente>#pNNNN) debe apuntar a un ancla existente en docs/content/fuentes/02_como_usar_tao_mangalam.md, 03_tablero_tao_mangalam.md o 04_anillos_tao_mangalam.md. Ante un fallo, el mensaje nombra el nodo (content_key) y el archivo, y el comando sale con codigo distinto de 0.
+Contrato: rollback: Quitar de scripts/build_practice_catalog.py la funcion de validacion de fidelidad y su llamada desde el flujo de generacion y de --check.. Status: done
+
+#### S1.T14 — Escribir tests/test_practice_fidelity.py (runner: python3 -m unittest discover -s tests -p 'test_practice*.py'). Casos de REQ-11: (a) Logo Shamkya de house-03 editado a mano en el JSON generado hace fallar la prueba de fidelidad nombrando house-03; (b) un sourceRef con ancla inexistente p9999 falla nombrando el nodo; (c) un editorialResolutionId fuera del registro correcciones_editoriales_practica.v1.json falla nombrando el nodo. Casos de REQ-01: (d) modificar docs/content/casas/03_casa_3.md sin regenerar hace fallar --check nombrando ese archivo (usar una copia temporal, sin tocar el repo); (e) dos corridas del generador producen bytes identicos. Casos de REQ-14: (f) python3 scripts/build_fichas.py --check y python3 scripts/build_result_catalog.py --check siguen terminando con codigo 0.
+Contrato: rollback: Eliminar tests/test_practice_fidelity.py.. Status: done
+
+#### S1.T15 — Escribir tests/test_practice_house_keys.py con la prueba de REQ-18: (a) cada paso de houses[11].energization (consultante y consultor) en docs/content/catalogos/casas.v1.json tiene un contentKey unico; (b) el catalogVersion de casas.v1.json es mayor que el literal 1.0.0 (hoy 1.1.0); (c) app/assets/catalogos/casas.v1.json es identico byte a byte a docs/content/catalogos/casas.v1.json. Ejecutar ademas el flutter test del cargador de casas existente, ubicando su archivo bajo app/test/ con Glob antes de correrlo.
+Contrato: rollback: Eliminar tests/test_practice_house_keys.py.. Status: done
+
+#### S1.T16 — Restaurar en tests/test_practice_repair.py (consolidada con las pruebas de casas) los asserts de REQ-03: (a) los pasos de cada casa 1 a 11 siguen el orden V-11 (leer anillo y reconocer; corrector con frase del anillo; solicitud al Prakriti Deva y Rhema mantra una vez; Logo Shamkya 108 veces durante 3 días; vía del consultor donde la casa la declara; quema del kuberani; kuberani nuevo y energización de la casa a la que avanza el flujo); (b) la Nota 1 está enlazada a los pasos con días y la Nota 2 a la quema; (c) una casa sin vía del consultor no trae ningún paso con via=consultor. Assertar valores concretos, no solo existencia.
+Contrato: rollback: Revertir los asserts agregados en tests/test_practice_repair.py (git checkout del archivo al estado previo); no se borra el archivo.. Status: done
+
+#### S2.T1 — Etapa A (REQ-19): minerales, coherencia vibracional y escala RKL del generador scripts/build_practice_catalog.py. Sin anillos, Casa 12 ni profundidad (etapa B, sesión 4).
+Contrato: rollback: Revertir las subtasks en orden inverso y regenerar el JSON.. Status: pending
+
+#### S2.T1.1 — Generar el catálogo de minerales (cornalina, amatista, cuarzo citrino, aguamarina con alias 'agua marina', lapislázuli y cuarzo rosado) con content_key, nombre, alias y el id de su pieza validado contra app/assets/manifest.json (schemaVersion 2, familia mineral-illustration): cornalina = mineral-carnelian; amatista = mineral-amethyst; cuarzo citrino = mineral-citrine-quartz; aguamarina = mineral-aquamarine; lapislázuli = mineral-lapis-lazuli; cuarzo rosado = mineral-rose-quartz. Informativos, sin producto ni código (DEC-120).
+Contrato: rollback: Quitar la sección minerals del generador y regenerar.. Status: pending
+
+#### S2.T1.2 — Estructurar la coherencia vibracional de la etapa A (chakras como números, minerales como referencias al catálogo agrupados en conjunción 'y' o alternativa 'o', 3 minutos, 3 días y las dos formas de apoyo V-12). La Casa 7 (tm-src-tablero#p1044) queda con resolución editorial provisional: forma 'lapislázuli o (aguamarina y amatista)', la entrada provisional en correcciones_editoriales_practica.v1.json ya la crea S1.T6 (no volver a crearla), y el --check ADVIERTE nombrando el nodo y termina con código 0.
+Contrato: rollback: Quitar la coherencia del generador y regenerar.. Status: pending
+
+#### S2.T1.3 — Estructurar la escala RKL en tramos excluyentes (9.000 o más sin días; 8.000 a 8.999, 3 días; 5.000 a 7.999, 3 días repitiendo la acción; menos de 5.000, 9 días y nueva medición). El nodo operativo de menos de 5.000 no expone 'tecnología sagrada'; esa expresión queda solo en sourceText y su editorialResolutionId ya está registrado por S1.T12 (solo referenciarlo, no registrarlo aquí).
+Contrato: rollback: Quitar rklScale del generador y regenerar.. Status: pending
+
+#### S2.T2 — Etapa A (REQ-19): pruebas de minerales, coherencia vibracional y escala RKL. Sin anillos, Casa 12 ni profundidad (etapa B, sesión 4).
+Contrato: rollback: Borrar tests/test_practice_catalog_content.py.. Status: pending
+
+#### S2.T2.1 — Crear tests/test_practice_catalog_content.py con un helper que genera el catálogo una sola vez (setUpClass) y la clase MineralsTest: exactamente 6 minerales con content_key único; aguamarina con alias 'agua marina'; ningún mineral con producto ni código; y, sobre una copia temporal del manifiesto sin el id de un mineral, la validación falla con un mensaje que nombra ese mineral.
+Contrato: rollback: Borrar tests/test_practice_catalog_content.py.. Status: pending
+
+#### S2.T2.2 — Asertar la coherencia de la Casa 7 en su forma provisional: grupo 'o' con lapislázuli y subgrupo 'y' con aguamarina y amatista, con su marca provisional y su editorialResolutionId propio. Asertar también la Casa 8 (alternativa aguamarina o lapislázuli), la Casa 9 (cuarzo citrino y una de esas dos) y la Casa 4 (cuarzo rosado).
+Contrato: rollback: Quitar CoherenceTest del archivo de pruebas.. Status: pending
+
+#### S2.T2.3 — Agregar la clase RklScaleTest: el helper de consulta devuelve un solo tramo para 9.500/8.500/6.000/4.000 con 0/3/3/9 días y nueva medición solo en 4.000; QA-02-10-03 (5.000 → 3 días sin nueva medición); bordes 9.000 (sin días) y 8.999 (3 días); el texto operativo del tramo <5000 no contiene 'tecnología sagrada' y su sourceText sí, junto con un editorialResolutionId.
+Contrato: rollback: Quitar RklScaleTest del archivo de pruebas.. Status: pending
+
+#### S2.T3 — Prueba de cierre de la sesión A (minerales, coherencia y escala RKL): comprobar que el sistema queda funcional con generador, esquema, --check y pruebas de minerales (ids del manifiesto app/assets/manifest.json), coherencia (Casa 4, 8, 9 y la Casa 7 provisional) y tramos RKL (9.500, 8.500, 6.000, 5.000 y 4.000) en verde, antes del gate de la sesión.
+Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: pending
+
+#### S2.T5 — Tarea de test (REQ-04) en tests/test_practice_catalog_coherencia.py: una referencia de mineral inexistente en el catálogo de minerales (content_key que no está entre los seis) hace fallar la validación del generador y del esquema, y el error nombra el nodo y el content_key faltante.
+Contrato: rollback: Eliminar tests/test_practice_catalog_coherencia.py.. Status: pending
+
+#### S3.T2 — Normalizar al linter de docs solo los docs del baseline (.docs-baseline.txt) que aparezcan realmente en el diff del ticket; no ampliar el diff a los demás docs del baseline. El documento nuevo docs/content/materiales_practica_y_reparacion.md debe nacer compliant.
+Contrato: rollback: Revertir los cambios de formato de esos docs y restaurar .docs-baseline.txt.. Status: pending
+
+#### S3.T4 — Ejecutar el linter de docs con DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check, comprobar que el catálogo marca como provisional el documento de materiales hasta la aprobación de Contenido (REQ-10) y que .docs-baseline.txt no gana entradas nuevas (REQ-17).
+Contrato: rollback: Revertir las normalizaciones de formato aplicadas a los docs del baseline por esta tarea.. Status: pending
+
+#### S3.T5 — Primera tarea de la sesión 3 (NO test). Implementar en scripts/build_practice_catalog.py la sección `materials`, leída de docs/content/materiales_practica_y_reparacion.md (DEC-145). Cada material trae: `function` (enum cerrado de cinco: enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición), `whenUsed` (DEC-071), `isProduct` (true solo para kuberani y corrector energético: DEC-060, DEC-066, DEC-136) y `sourceRefs` (tm-src-como-usar#p0092, p0115, p0118, p0130). Los materiales de la sesión se referencian por contentKey de docs/content/catalogos/ritual_sesion.v1.json (material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados, material-pendulo), sin duplicar su texto. El catálogo marca la sección como provisional hasta la aprobación editorial de Contenido (TAO-216). Declarar la sección y el enum en docs/content/catalogos/practica.v1.schema.json y regenerar docs/content/catalogos/practica.v1.json.
+Contrato: rollback: Quitar la sección materials del generador scripts/build_practice_catalog.py y de practica.v1.schema.json, y regenerar practica.v1.json.. Status: pending
+
+#### S3.T6 — Probar la sección materials del generador con tests/test_practice_materials.py (nombre único del test de materiales): cinco funciones válidas, solo kuberani y corrector como producto con código, sourceRefs existentes, referencias a material-* de ritual_sesion.v1.json sin duplicar, y marca provisional del documento hasta la aprobación de Contenido.
+Contrato: rollback: Borrar tests/test_practice_materials.py.. Status: pending
+
+#### S3.T7 — Escribir tests/test_practice_docs_baseline.py con la prueba de REQ-17: el conjunto de rutas de .docs-baseline.txt (una ruta por linea, ignorando lineas con #) no gana entradas respecto de origin/epic/EP-02 (obtener la version base con git show origin/epic/EP-02:.docs-baseline.txt y comparar conjuntos: el actual debe ser subconjunto del base).
+Contrato: rollback: Eliminar tests/test_practice_docs_baseline.py.. Status: pending
+
+#### S4.T1 — Prueba de cierre de la sesión B (anillos, Casa 12 y profundidad): comprobar que el sistema queda funcional con generador, --check y pruebas de anillos (repeticiones 3, 5, 5, 5, 5, 5, 7 y octavo sin número, acción del octavo con p0110 y p0111, mismos content_key de resultados.v1.json), cierre de Casa 12 (acciones finales, referencias por contentKey a la energización, sin reparación) y profundidad DEC-027 en verde, antes del gate de la sesión.
+Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: pending
+
+#### S4.T2 — Detalle de los ocho anillos para V-10 con los content_key ring-01 a ring-08 de resultados.v1.json, sin duplicar Rhibu, patrón ni acción: desarrollo, paso previo donde la fuente lo declara, repeticiones como número (3, 5, 5, 5, 5, 5, 7; el octavo sin número, DEC-147) y regla de medición RKL. Incluye el registro editorial del punto 15 de docs/content/99_inconsistencias_por_resolver.md para el anillo 8 (p0110 y p0111) en docs/content/catalogos/correcciones_editoriales_practica.v1.json, y la acción del octavo anillo que combina ambos párrafos.
+Contrato: rollback: Quitar rings del generador y regenerar.. Status: pending
+
+#### S4.T3 — Cierre de Casa 12 desde docs/content/casas/12_casa_12.md y fuentes/03_tablero_tao_mangalam.md: acciones finales con content_key (mirar al Este, esfera azul dorada, Rhema mantra 3, Logo Shamkya 108 x 3 días, 'Bendigo, agradezco y amo') con anclas p1713/p1724, vía del consultor p1729, nota final p1734 y textos de remisión p1759 a p1784, sin plan de reparación (DEC-032, DEC-204). Cuando una acción coincide con la energización de la Casa 12 del catálogo de HU-02-05, se emite ref a su content_key en lugar de texto.
+Contrato: rollback: Quitar house12Closing del generador y regenerar.. Status: pending
+
+#### S4.T4 — Asignar depth a cada nodo según DEC-027. Estándar: línea directiva del Ashura, procedimiento, chakras, minerales, días, repeticiones y regla de repetir bajo 9.000. Avanzado: desarrollo y simbología del Ashura, mensaje de Thot, desarrollo del patrón, contexto de medición y escala RKL. El generador imprime un resumen de nodos por casa y anillo (para adjuntar al PR).
+Contrato: rollback: Quitar la asignación de depth y el resumen; regenerar.. Status: pending
+
+#### S4.T5 — Agregar la clase RingsTest: repeticiones de ring-01 a ring-07 = [3,5,5,5,5,5,7] y ring-08 sin repeticiones numéricas; la acción de ring-08 tiene sourceRefs a p0110 y p0111; el conjunto de content_key de anillos es igual al de resultados.v1.json; ningún nodo de anillo trae los campos Rhibu, patrón ni acción del resultado.
+Contrato: rollback: Quitar RingsTest del archivo de pruebas.. Status: pending
+
+#### S4.T6 — Agregar la clase House12ClosingTest: las cinco acciones finales con repeticiones 3 y 108, 3 días y sourceRefs a p1713 o p1724; vía del consultor con ancla p1729, nota final con p1734 y textos de remisión con anclas en p1759 a p1784; una acción que coincide con la energización de HU-02-05 trae ref a su content_key sin texto propio; QA-02-10-04 (house-12 con acciones finales y sin procedimiento de reparación).
+Contrato: rollback: Quitar House12ClosingTest del archivo de pruebas.. Status: pending
+
+#### S4.T7 — Agregar la clase DepthTest: todos los nodos del catálogo tienen depth en {estandar, avanzado} y el esquema rechaza un nodo sin depth; la escala RKL y el desarrollo del patrón son avanzado; la regla de repetir bajo 9.000 es estandar; en las 11 casas el mensaje de Thot es avanzado y la línea directiva del Ashura es estandar.
+Contrato: rollback: Quitar DepthTest del archivo de pruebas.. Status: pending
+
+#### S5.T1 — Registrar practica.v1.json en scripts/sync_app_catalogs.py para que la copia app/assets/catalogos/practica.v1.json se genere con ese script, siguiendo la forma en que ya registra resultados.v1.json y casas.v1.json. El generador scripts/build_practice_catalog.py no copia nada a app/. Tras registrarlo, ejecutar el script para generar la copia.
+Contrato: rollback: Quitar la entrada de practica.v1.json de scripts/sync_app_catalogs.py y borrar app/assets/catalogos/practica.v1.json.. Status: pending
+
+#### S5.T2 — Crear el cargador Dart de solo lectura del catálogo de práctica, junto al cargador de resultados.v1.json de TAO-198, en la misma carpeta y con el mismo estilo. Confirmar la ruta real con Glob en app/lib antes de crear el archivo. Lee el asset app/assets/catalogos/practica.v1.json con rootBundle, sin red (DEC-094), y expone modelos inmutables (listas no modificables) con contentKey y contentVersion. Incluye repairFor(houseKey) que devuelve null para house-12 y house12Closing con las acciones finales de la Casa 12.
+Contrato: rollback: Borrar el archivo del cargador nuevo y sus modelos.. Status: pending
+
+#### S5.T3 — Agregar python3 scripts/build_practice_catalog.py --check al paso 'Gates de build documental (--check)' del job docs en .github/workflows/ci-pr.yml y en .github/workflows/nightly.yml (ubicar el paso por su nombre, no por número de línea), junto con la verificación de que la copia en app/assets/catalogos/practica.v1.json es idéntica a la generada. Documentar en docs/development/commands.md el comando python3 scripts/build_practice_catalog.py y su --check (uso, parámetros y ejemplo) con el mismo formato de los generadores de TAO-198 y TAO-199. Mantener commands.md compliant con el linter de docs.
+Contrato: rollback: Quitar las líneas agregadas en ci-pr.yml, nightly.yml y commands.md.. Status: pending
+
+#### S5.T4 — Prueba de integración y del cargador. Escribir tests/test_practice_catalog_ci.py (unittest) que compruebe que ci-pr.yml y nightly.yml contienen el --check del generador, que docs/development/commands.md menciona build_practice_catalog.py y --check, y que la copia en app/assets/catalogos/practica.v1.json es idéntica a la generada. Agregar la prueba Dart del cargador junto al test del cargador de resultados.v1.json de TAO-198 bajo app/test/ (confirmar la ruta real con Glob antes de crear el archivo): nodos inmutables con content_key y content_version, ocho anillos y las acciones finales de la Casa 12, y repairFor(house-12) igual a null.
+Contrato: rollback: Borrar el test Dart nuevo y tests/test_practice_catalog_ci.py.. Status: pending
+
+#### S5.T5 — Tarea de test (REQ-12, REQ-13 y REQ-15). (a) REQ-12: si app/assets/catalogos/practica.v1.json está desactualizada respecto de docs/content/catalogos/practica.v1.json, la verificación falla nombrando el archivo de la copia. (b) REQ-13: el test del cargador Dart bajo app/test/ comprueba que el catálogo empaquetado entrega 11 reparaciones y 6 minerales, con nodos inmutables con content_key y content_version. (c) REQ-15: los jobs docs de .github/workflows/ci-pr.yml y nightly.yml conservan las líneas --check de los otros generadores existentes además de la de build_practice_catalog.py.
+Contrato: rollback: Revertir los tests añadidos en tests/ y app/test/ sin tocar el cargador ni los workflows.. Status: pending
+## Cambios al modelo de datos
+
+Ninguno.
+
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Un generador determinista en scripts/build_practice_catalog.py construye docs/content/catalogos/practica.v1.json desde las fichas (docs/cont
+- REQ-04 (edit) `confirmed`: La coherencia vibracional de cada casa que la indica expresa los chakras como números y los minerales como referencias al catálogo de minera
+- REQ-08 (edit) `confirmed`: El cierre de Casa 12 trae las acciones finales de V-14 con content_key y anclas: mirar al Este, visualizar la esfera azul dorada, Rhema mant
+- REQ-10 (edit) `confirmed`: El documento único de materiales docs/content/materiales_practica_y_reparacion.md (DEC-145), creado por este ticket como borrador y nacido c
+- REQ-13 (edit) `inferred`: Un cargador Dart de solo lectura lee el catálogo empaquetado sin red (DEC-094) y entrega los nodos inmutables con su content_key y content_v
+- REQ-16 (edit) `confirmed`: docs/development/commands.md documenta el comando del generador del catálogo de anillos, reparación, minerales y materiales (python3 scripts
+- REQ-17 (edit) `confirmed`: Todo doc del baseline de lint (.docs-baseline.txt, una ruta por línea) que el ticket realmente modifique queda compliant con node scripts/de
+- REQ-18 (add) `confirmed`: El catálogo de casas agrega contentKey a los pasos de energización de la Casa 12 (houses[11].energization, consultante y consultor) en scrip
+- REQ-19 (add) `confirmed`: La Sesión 2 se parte en dos etapas revisables: (a) minerales, coherencia y escala RKL; (b) anillos, cierre de Casa 12 y profundidad. Cada et
+
+**Tasks agregadas:**
+
+- S1: Agregar contentKey a los pasos de energización de la Casa 12 (houses[11].energization, consultante y consultor) en scripts/build_house_catalog.py y house_catalog_nodes.py con la convención house-12-energization-consultante-01, house-12-energization-consultante-02 y house-12-energization-consultor-01 (usar la que ya siga el generador si difiere). Subir catalogVersion, regenerar docs/content/catalogos/casas.v1.json y sincronizar la copia en app/assets/catalogos/ con scripts/sync_app_catalogs.py. (valida: REQ-18, REQ-08; rollback: git revert del commit: restaura los generadores, casas.v1.json y la copia en app/assets/catalogos/ al catalogVersion anterior.)
+- S1: Redactar docs/content/materiales_practica_y_reparacion.md como borrador compliant con el linter de docs (kuberani, corrector energético, resonador y minerales, japa mala, tablilla RKL; función, cuándo se usa, producto con código solo kuberani y corrector, sourceRefs a tm-src-como-usar#p0092, p0115, p0118 y p0130; materiales de sesión referenciados por los material-* de ritual_sesion.v1.json). No agregarlo al baseline. Marcar el documento como provisional hasta la aprobación de Contenido. (valida: REQ-10, REQ-17; rollback: Eliminar docs/content/materiales_practica_y_reparacion.md; no hay otros archivos afectados.)
+- S3: Implementar en build_practice_catalog.py el editorialResolutionId provisional de la Casa 7 (lapislázuli o (aguamarina y amatista), tm-src-tablero#p1044) en correcciones_editoriales_practica.v1.json y hacer que --check emita una advertencia con el content_key del nodo sin fallar (código de salida 0) mientras la resolución esté provisional. Agregar pruebas de la advertencia y de que un nodo no provisional editado sí falla. (valida: REQ-01, REQ-04, test; rollback: git revert del commit: --check vuelve a no distinguir resoluciones provisionales y se retira la entrada del registro de correcciones.)
+- S4: Documentar en docs/development/commands.md el comando python3 scripts/build_practice_catalog.py y su --check (uso, parámetros y ejemplo) siguiendo el patrón de TAO-198 y TAO-199. Normalizar con node scripts/dev/docs.mjs check (DOCS_DIFF_BASE=origin/main) solo los docs del baseline que el ticket realmente modifique, sin ampliar el diff a los demás. (valida: REQ-16, REQ-17; rollback: git revert del commit: commands.md y los docs normalizados vuelven a su estado previo.)
+
+### Enmienda 2
+**REQs:**
+
+- REQ-19 (edit) `confirmed`: La Sesión 2 se parte en dos sesiones, cada una con su gate, que dejan el sistema funcional y con sus pruebas en verde: la sesión A cubre min
+- REQ-05 (edit) `confirmed`: El catálogo de minerales trae cornalina, amatista, cuarzo citrino, aguamarina (alias 'agua marina'), lapislázuli y cuarzo rosado, con conten
+- REQ-01 (edit) `confirmed`: Un generador determinista en scripts/build_practice_catalog.py construye docs/content/catalogos/practica.v1.json desde las fichas (docs/cont
+
+**Tasks agregadas:**
+
+- S1: Implementar en scripts/build_practice_catalog.py el comportamiento de --check ante resoluciones editoriales provisionales: el nodo con editorialResolutionId marcado provisional (Casa 7, tm-src-tablero#p1044) produce una ADVERTENCIA que nombra el nodo y el comando termina con código 0; cualquier otra diferencia sigue fallando con código distinto de 0 nombrando archivo o nodo. Debe quedar listo antes de S2.T1.2. Agregar la prueba unitaria correspondiente. (valida: REQ-01; rollback: Revertir el cambio en scripts/build_practice_catalog.py y su prueba con git revert del commit de la task.)
+- S1: Prueba de REQ-18: verificar que cada paso de energización de houses[11].energization en docs/content/catalogos/casas.v1.json tiene contentKey único (convención house-12-energization-consultante-01, house-12-energization-consultante-02, house-12-energization-consultor-01, o la que ya siga el generador), que catalogVersion de casas es mayor que el anterior, que la copia en app/assets/catalogos/casas.v1.json es idéntica a la generada, y que las pruebas y el cargador Dart de casas siguen en verde. (valida: REQ-18, test; rollback: Eliminar los archivos de prueba agregados; no afecta código de producción.)
+- S2: Prueba de cierre de la sesión A (minerales, coherencia y escala RKL): comprobar que el sistema queda funcional con generador, esquema, --check y pruebas de minerales (ids del manifiesto app/assets/manifest.json), coherencia (Casa 4, 8, 9 y la Casa 7 provisional) y tramos RKL (9.500, 8.500, 6.000, 5.000 y 4.000) en verde, antes del gate de la sesión. (valida: REQ-19, REQ-04, REQ-05, REQ-06, test; rollback: Eliminar los archivos de prueba agregados en esta task.)
+- S5: Prueba de cierre de la sesión B (anillos, Casa 12 y profundidad): comprobar que el sistema queda funcional con generador, --check y pruebas de anillos (repeticiones 3, 5, 5, 5, 5, 5, 7 y octavo sin número, acción del octavo con p0110 y p0111, mismos content_key de resultados.v1.json), cierre de Casa 12 (acciones finales, referencias por contentKey a la energización, sin reparación) y profundidad DEC-027 en verde, antes del gate de la sesión. (valida: REQ-19, REQ-07, REQ-08, REQ-09, test; rollback: Eliminar los archivos de prueba agregados en esta task.)
+
+**Task ops:**
+
+- delete S3.T1
+- delete S4.T5
+- edit S2.T1.4 { desc="Detalle de los ocho anillos para V-10 con los content_key ring-01 a ring-08 de resultados.v1.json, sin duplicar Rhibu, patrón ni acción: desarrollo, paso previo donde la fuente lo declara, repeticiones como número (3, 5, 5, 5, 5, 5, 7; el octavo sin número, DEC-147) y regla de medición RKL. Incluye el registro editorial del punto 15 de docs/content/99_inconsistencias_por_resolver.md para el anillo 8 (p0110 y p0111) en docs/content/catalogos/correcciones_editoriales_practica.v1.json, y la acción del octavo anillo que combina ambos párrafos." }
+- move S2.T1.4 → S5
+- move S2.T1.5 → S5
+- move S2.T1.6 → S5
+- move S2.T2.4 → S5
+- move S2.T2.5 → S5
+- move S2.T2.6 → S5
+- edit S4.T1 { desc="Registrar practica.v1.json en scripts/sync_app_catalogs.py para que app/assets/catalogos/practica.v1.json se copie desde docs/content/catalogos/practica.v1.json con ese script. El generador scripts/build_practice_catalog.py NO copia a app/.", verify=["python3 scripts/sync_app_catalogs.py --check"] }
+- edit S3.T3 { desc="Normalizar al patrón que rechaza el linter solo los docs de .docs-baseline.txt que aparezcan realmente en el diff del ticket. No ampliar el diff a docs del baseline que no se modifiquen.", verify=["DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check"] }
+- edit S3.T4 { desc="Ejecutar el linter de docs con DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check y confirmar que pasa, incluido docs/content/materiales_practica_y_reparacion.md. Comprobar además que el catálogo marca como provisional el documento de materiales hasta la aprobación editorial de Contenido (REQ-10).", verify=["DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check","python3 -m pytest scripts/tests -k practice_materials -q"] }
+
+### Enmienda 3
+**REQs:**
+
+- REQ-19 (edit) `confirmed`: La Sesión 2 original se parte en dos etapas con su gate, que dejan el sistema funcional y con sus pruebas en verde: la etapa A (sesión 2) cu
+
+**Task ops:**
+
+- edit S1.T1 { desc="Crear la base del generador scripts/build_practice_catalog.py reutilizando los extractores de build_fichas.py y el patrón de build_result_catalog.py. El esquema practica.v1.schema.json vive en la ruta fija docs/content/catalogos/practica.v1.schema.json y el registro de correcciones editoriales en la ruta fija docs/content/catalogos/correcciones_editoriales_practica.v1.json (con editorialResolutionId por entrada). Salida: docs/content/catalogos/practica.v1.json." }
+- edit S1.T5 { verify=["DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check"] }
+- edit S1.T6 { desc="Implementar en build_practice_catalog.py el --check que ADVIERTE (nombrando el nodo) y termina con código 0 ante una resolución editorial provisional, y falla con código distinto de 0 ante cualquier otra desactualización. Además crear en docs/content/catalogos/correcciones_editoriales_practica.v1.json la entrada provisional de la Casa 7, marcada como provisional y trazada a tm-src-tablero#p1044, con la forma lapislázuli o (aguamarina y amatista): grupo con op 'o' que contiene lapislázuli y un subgrupo con op 'y' que contiene aguamarina y amatista. S2.T1.2 consume esta entrada y S2.T2.2 asserta esa forma y la marca provisional.", verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'"] }
+- edit S2.T1.1 { desc="Generar el catálogo de minerales (cornalina, amatista, cuarzo citrino, aguamarina con alias 'agua marina', lapislázuli y cuarzo rosado) con content_key, nombre, alias y el id de su pieza validado contra app/assets/manifest.json (schemaVersion 2, familia mineral-illustration): cornalina = mineral-carnelian; amatista = mineral-amethyst; cuarzo citrino = mineral-citrine-quartz; aguamarina = mineral-aquamarine; lapislázuli = mineral-lapis-lazuli; cuarzo rosado = mineral-rose-quartz. Informativos, sin producto ni código (DEC-120)." }
+- edit S2.T1.3 { desc="Estructurar la escala RKL en tramos excluyentes (9.000 o más sin días; 8.000 a 8.999, 3 días; 5.000 a 7.999, 3 días repitiendo la acción, con 5.000 incluido; menos de 5.000, 9 días y nueva medición). El texto operativo del tramo menor a 5.000 reemplaza 'tecnología sagrada' citando la resolución editorial registrada en docs/content/99_inconsistencias_por_resolver.md y su editorialResolutionId; la expresión original queda solo en sourceText." }
+- edit S3.T2 { desc="Agregar tests/test_practice_catalog_materials.py que prueba REQ-10: solo kuberani y corrector tienen esProducto true; la función de cada material pertenece al enum cerrado de cinco funciones (enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición); los sourceRefs incluyen tm-src-como-usar#p0092, p0115, p0118 y p0130; los materiales de la sesión son referencias a los material-* de docs/content/catalogos/ritual_sesion.v1.json (material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados, material-pendulo) sin duplicarse; y el catálogo marca como provisional el documento de materiales hasta la aprobación de Contenido.", validates=["REQ-10"], isTest=true, verify=["python3 -m unittest discover -s tests -p 'test_practice_catalog_materials.py'"] }
+- edit S3.T3 { desc="Normalizar al linter de docs solo los docs del baseline (.docs-baseline.txt) que aparezcan realmente en el diff del ticket; no ampliar el diff a los demás docs del baseline. El documento nuevo docs/content/materiales_practica_y_reparacion.md debe nacer compliant.", verify=["DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check"] }
+- edit S4.T1 { desc="Registrar practica.v1.json en scripts/sync_app_catalogs.py para que la copia app/assets/catalogos/practica.v1.json se genere con ese script. El generador build_practice_catalog.py no copia nada a app/.", rollback="Quitar la entrada de practica.v1.json de scripts/sync_app_catalogs.py y borrar app/assets/catalogos/practica.v1.json.", verify=["python3 scripts/sync_app_catalogs.py","cmp docs/content/catalogos/practica.v1.json app/assets/catalogos/practica.v1.json"] }
+- edit S4.T3 { verify=["DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check","python3 scripts/build_practice_catalog.py --check"] }
+- edit S4.T4 { desc="Agregar la prueba Dart del cargador de practica.v1.json junto al test del cargador de resultados.v1.json de TAO-198 bajo app/test/. Confirmar la ruta real de ese test existente (Glob en app/test/) antes de crear el archivo. Comprueba nodos inmutables con content_key y content_version, ocho anillos y las acciones finales de la Casa 12." }
+- move S4.T1 → S5
+- move S4.T2 → S5
+- move S4.T3 → S5
+- move S4.T4 → S5
+- move S5.T1 → S4
+- move S5.T2 → S4
+- move S5.T3 → S4
+- move S5.T4 → S4
+- move S5.T5 → S4
+- move S5.T6 → S4
+- move S5.T7 → S4
+
+### Enmienda 4
+
+**Task ops:**
+
+- move S5.T1 → S6
+- move S5.T2 → S6
+- move S5.T3 → S6
+- move S5.T4 → S6
+
+### Enmienda 5
+
+**Tasks agregadas:**
+
+- S5: Registrar practica.v1.json en scripts/sync_app_catalogs.py para que la copia app/assets/catalogos/practica.v1.json se genere con ese script, siguiendo la forma en que ya registra resultados.v1.json y casas.v1.json. El generador scripts/build_practice_catalog.py no copia nada a app/. Tras registrarlo, ejecutar el script para generar la copia. (valida: REQ-12; rollback: Quitar la entrada de practica.v1.json de scripts/sync_app_catalogs.py y borrar app/assets/catalogos/practica.v1.json.)
+- S5: Crear el cargador Dart de solo lectura del catálogo de práctica, junto al cargador de resultados.v1.json de TAO-198, en la misma carpeta y con el mismo estilo. Confirmar la ruta real con Glob en app/lib antes de crear el archivo. Lee el asset app/assets/catalogos/practica.v1.json con rootBundle, sin red (DEC-094), y expone modelos inmutables (listas no modificables) con contentKey y contentVersion. Incluye repairFor(houseKey) que devuelve null para house-12 y house12Closing con las acciones finales de la Casa 12. (valida: REQ-13; rollback: Borrar el archivo del cargador nuevo y sus modelos.)
+- S5: Agregar python3 scripts/build_practice_catalog.py --check al paso 'Gates de build documental (--check)' del job docs en .github/workflows/ci-pr.yml y en .github/workflows/nightly.yml (ubicar el paso por su nombre, no por número de línea), junto con la verificación de que la copia en app/assets/catalogos/practica.v1.json es idéntica a la generada. Documentar en docs/development/commands.md el comando python3 scripts/build_practice_catalog.py y su --check (uso, parámetros y ejemplo) con el mismo formato de los generadores de TAO-198 y TAO-199. Mantener commands.md compliant con el linter de docs. (valida: REQ-15, REQ-16; rollback: Quitar las líneas agregadas en ci-pr.yml, nightly.yml y commands.md.)
+- S5: Prueba de integración y del cargador. Escribir tests/test_practice_catalog_ci.py (unittest) que compruebe que ci-pr.yml y nightly.yml contienen el --check del generador, que docs/development/commands.md menciona build_practice_catalog.py y --check, y que la copia en app/assets/catalogos/practica.v1.json es idéntica a la generada. Agregar la prueba Dart del cargador junto al test del cargador de resultados.v1.json de TAO-198 bajo app/test/ (confirmar la ruta real con Glob antes de crear el archivo): nodos inmutables con content_key y content_version, ocho anillos y las acciones finales de la Casa 12, y repairFor(house-12) igual a null. (valida: REQ-12, REQ-13, REQ-15, REQ-16, test; rollback: Borrar el test Dart nuevo y tests/test_practice_catalog_ci.py.)
+
+### Enmienda 6
+**REQs:**
+
+- REQ-14 (edit) `confirmed`: El generador reutiliza los extractores de build_fichas.py (campos de reparación, remisión y anillos) y el patrón de build_result_catalog.py 
+- REQ-17 (edit) `confirmed`: Todo doc del baseline de lint (.docs-baseline.txt, una ruta por línea) que el ticket realmente modifique queda compliant con node scripts/de
+
+**Tasks agregadas:**
+
+- S3: Implementar en scripts/build_practice_catalog.py la generación de la sección materials desde docs/content/materiales_practica_y_reparacion.md. Cada material (kuberani, corrector energético, resonador y minerales, japa mala, tablilla RKL) trae: función como enum cerrado de cinco valores (enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición), cuándo se usa (DEC-071), esProducto (true solo para kuberani y corrector: DEC-060, DEC-066, DEC-136) y sourceRefs (tm-src-como-usar#p0092, p0115, p0118, p0130). Los materiales de la sesión se referencian por sus contentKey de docs/content/catalogos/ritual_sesion.v1.json (material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados, material-pendulo) sin duplicar su texto. Marca la sección como provisional hasta la aprobación editorial de Contenido. Agregar la sección al practica.v1.schema.json con la función como enum de cinco. (valida: REQ-10; rollback: Quitar del generador la función que produce la sección materials y regenerar el catálogo con el generador previo.)
+- S1: Implementar en scripts/build_practice_catalog.py la regla de catalogVersion: si el texto de un nodo cambia respecto del catálogo versionado sin subir catalogVersion, --check falla nombrando el nodo. Si catalogVersion sube, la comparación pasa. (valida: REQ-12, REQ-01; rollback: Quitar del generador la comprobación de catalogVersion.)
+- S1: Prueba tests/test_practice_catalog_version.py: cambiar el texto de un nodo sin subir catalogVersion hace fallar --check nombrando el nodo; subir catalogVersion lo deja pasar. (valida: REQ-12, test; rollback: Borrar tests/test_practice_catalog_version.py.)
+- S1: Prueba tests/test_practice_catalog_provisional.py: (a) --check con una resolución editorial provisional sale con código 0 y su salida nombra el nodo con una ADVERTENCIA; (b) un nodo no provisional editado a mano en el JSON hace fallar --check con código distinto de 0; (c) la Casa 7 provisional tiene la forma grupo 'o' (lapislázuli, grupo 'y' (aguamarina, amatista)) y la marca provisional con su editorialResolutionId propio. (valida: REQ-01, REQ-04, test; rollback: Borrar tests/test_practice_catalog_provisional.py.)
+- S2: Registrar en docs/content/catalogos/correcciones_editoriales_practica.v1.json la resolución editorial de 'tecnología sagrada' si no existe ya un editorialResolutionId para ella. El contexto está en docs/content/99_inconsistencias_por_resolver.md (tabla de la escala RKL, fila de menos de 5 mil, y su nota). El nodo operativo de menos de 5.000 no expone la expresión y esta queda solo en sourceText con esa resolución. (valida: REQ-06; rollback: Quitar del registro de correcciones la entrada de 'tecnología sagrada' que esta tarea agregó.)
+
+**Task ops:**
+
+- edit S1.T7 { desc="Regresión de REQ-18: prueba de que cada paso de energización de la Casa 12 (houses[11].energization) tiene contentKey único (house-12-energization-consultante-01, house-12-energization-consultante-02, house-12-energization-consultor-01 o la convención que ya siga el generador); catalogVersion de casas.v1.json es mayor que el literal 1.0.0 (valor en epic/EP-02), es decir 1.1.0; la copia en app/assets/catalogos/ es idéntica a la generada; y las pruebas Python y el flutter test del cargador de casas existente (ubicarlo con Glob en app/test) siguen en verde.", verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'","cd app && flutter test test/ --name casas"] }
+- edit S2.T3 { verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'"] }
+- edit S3.T3 { verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'","DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check"] }
+- edit S4.T1 { verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'"] }
+- edit S2.T1 { desc="Etapa A (REQ-19): minerales, coherencia vibracional y escala RKL del generador scripts/build_practice_catalog.py. Sin anillos, Casa 12 ni profundidad (etapa B, sesión 4).", validates=["REQ-04","REQ-05","REQ-06","REQ-19"] }
+- edit S2.T2 { desc="Etapa A (REQ-19): pruebas de minerales, coherencia vibracional y escala RKL. Sin anillos, Casa 12 ni profundidad (etapa B, sesión 4).", validates=["REQ-04","REQ-05","REQ-06","REQ-19"] }
+- edit S2.T2.2 { desc="Asertar la coherencia de la Casa 7 en su forma provisional: grupo 'o' con lapislázuli y subgrupo 'y' con aguamarina y amatista, con su marca provisional y su editorialResolutionId propio. Asertar también la Casa 8 (alternativa aguamarina o lapislázuli), la Casa 9 (cuarzo citrino y una de esas dos) y la Casa 4 (cuarzo rosado).", validates=["REQ-04","REQ-19"], isTest=true, verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'"] }
+- edit S3.T1 { rollback="Revertir el documento docs/content/materiales_practica_y_reparacion.md a su versión previa o borrarlo si lo creó esta tarea." }
+- edit S3.T4 { desc="Ejecutar el linter de docs con DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check, comprobar que el catálogo marca como provisional el documento de materiales hasta la aprobación de Contenido (REQ-10) y que .docs-baseline.txt no gana entradas nuevas (REQ-17).", rollback="Revertir las normalizaciones de formato aplicadas a los docs del baseline por esta tarea.", validates=["REQ-10","REQ-17"], verify=["DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check","python3 -m unittest discover -s tests -p 'test_practice*.py'"] }
+
+### Enmienda 7
+
+**Tasks agregadas:**
+
+- S3: Primera tarea de la sesión 3 (NO test). Implementar en scripts/build_practice_catalog.py la sección `materials`, leída de docs/content/materiales_practica_y_reparacion.md (DEC-145). Cada material trae: `function` (enum cerrado de cinco: enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición), `whenUsed` (DEC-071), `isProduct` (true solo para kuberani y corrector energético: DEC-060, DEC-066, DEC-136) y `sourceRefs` (tm-src-como-usar#p0092, p0115, p0118, p0130). Los materiales de la sesión se referencian por contentKey de docs/content/catalogos/ritual_sesion.v1.json (material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados, material-pendulo), sin duplicar su texto. El catálogo marca la sección como provisional hasta la aprobación editorial de Contenido (TAO-216). Declarar la sección y el enum en docs/content/catalogos/practica.v1.schema.json y regenerar docs/content/catalogos/practica.v1.json. (valida: REQ-10; rollback: Quitar la sección materials del generador scripts/build_practice_catalog.py y de practica.v1.schema.json, y regenerar practica.v1.json.)
+- S1: Tarea de test (REQ-01 y REQ-14) en tests/test_practice_catalog_base.py. Asserts de error y reuso: (a) un practica.v1.json con content_key duplicado es rechazado por practica.v1.schema.json; (b) un catálogo con reparación para la Casa 12 es rechazado por el esquema; (c) el generador importa los extractores de campos de reparación, remisión y anillos desde scripts/build_fichas.py y no define parsers propios (se comprueba por import y por ausencia de reimplementación); (d) no duplica nodos de resultados.v1.json, casas.v1.json ni ritual_sesion.v1.json: los referencia por content_key. (valida: REQ-01, REQ-14, test; rollback: Eliminar tests/test_practice_catalog_base.py.)
+- S2: Tarea de test (REQ-04) en tests/test_practice_catalog_coherencia.py: una referencia de mineral inexistente en el catálogo de minerales (content_key que no está entre los seis) hace fallar la validación del generador y del esquema, y el error nombra el nodo y el content_key faltante. (valida: REQ-04, REQ-19, test; rollback: Eliminar tests/test_practice_catalog_coherencia.py.)
+- S3: Tarea de test (REQ-10) en tests/test_practice_catalog_materials.py: un material cuya función queda fuera del enum cerrado de cinco (enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición) es rechazado por el esquema; solo kuberani y corrector tienen isProduct true; los refs material-* existen en ritual_sesion.v1.json; el catálogo marca el documento como provisional. (valida: REQ-10, test; rollback: Eliminar tests/test_practice_catalog_materials.py.)
+- S5: Tarea de test (REQ-12, REQ-13 y REQ-15). (a) REQ-12: si app/assets/catalogos/practica.v1.json está desactualizada respecto de docs/content/catalogos/practica.v1.json, la verificación falla nombrando el archivo de la copia. (b) REQ-13: el test del cargador Dart bajo app/test/ comprueba que el catálogo empaquetado entrega 11 reparaciones y 6 minerales, con nodos inmutables con content_key y content_version. (c) REQ-15: los jobs docs de .github/workflows/ci-pr.yml y nightly.yml conservan las líneas --check de los otros generadores existentes además de la de build_practice_catalog.py. (valida: REQ-12, REQ-13, REQ-15, test; rollback: Revertir los tests añadidos en tests/ y app/test/ sin tocar el cargador ni los workflows.)
+
+**Task ops:**
+
+- move S4.T1 → S4
+- move S2.T4 → S1
+- edit S2.T1.3 { desc="Estructurar la escala RKL en tramos excluyentes (DEC-065, DEC-137): 9.000 o más sin días; 8.000 a 8.999, 3 días; 5.000 a 7.999, 3 días repitiendo la acción; menos de 5.000, 9 días y nueva medición (DEC-135). El nodo operativo de menos de 5.000 no expone «tecnología sagrada»: esa expresión queda solo en sourceText. Su editorialResolutionId vive en docs/content/catalogos/correcciones_editoriales_practica.v1.json (registrado antes en la sesión 1 por la tarea movida desde S2.T4); el contexto está en docs/content/99_inconsistencias_por_resolver.md (tabla de la escala RKL, fila de menos de 5 mil, y su nota). Profundidad Avanzado para la escala y Estándar para la regla de repetir bajo 9.000.", validates=["REQ-06","REQ-19"] }
+- edit S2.T1.1 { validates=["REQ-05","REQ-19"] }
+- edit S2.T1.2 { validates=["REQ-04","REQ-19"] }
+- edit S4.T2 { validates=["REQ-07","REQ-19"] }
+- edit S4.T3 { validates=["REQ-08","REQ-19"] }
+- edit S4.T4 { validates=["REQ-09","REQ-19"] }
+- edit S1.T3 { desc="Agregar los asserts de REQ-03 a la prueba de procedimiento de reparación: (a) los pasos de cada casa 1 a 11 respetan el orden de V-11 (leer el anillo y reconocer; corrector con la frase del anillo; solicitud al Prakriti Deva y Rhema mantra una vez; Logo Shamkya 108 veces durante 3 días; vía del consultor donde la casa la declara; quema del kuberani; kuberani nuevo y energización de la casa a la que avanza el flujo); (b) la Nota 1 está enlazada a los pasos con días y la Nota 2 al paso de la quema; (c) una casa sin vía del consultor no trae pasos con via=consultor. Se mantienen los asserts ya existentes de la tarea.", validates=["REQ-03"], isTest=true }
+- edit S1.T7 { desc="Fijar el archivo de la prueba en tests/test_practice_catalog_casas.py (cae en el patrón test_practice*.py del runner único de Python). Cubre la ficha y el procedimiento de reparación de las casas 1 a 11 y la ausencia de reparación en la Casa 12.", isTest=true, verify=["python3 -m unittest discover -s tests -p 'test_practice*.py'"] }
+
+### Enmienda 8
+
+**Tasks agregadas:**
+
+- S1: Implementar en scripts/build_practice_catalog.py la validacion de fidelidad (REQ-11): cada nodo textual debe coincidir con su sourceText o declarar un editorialResolutionId que exista en docs/content/catalogos/correcciones_editoriales_practica.v1.json, y cada sourceRef (formato tm-src-<fuente>#pNNNN) debe apuntar a un ancla existente en docs/content/fuentes/02_como_usar_tao_mangalam.md, 03_tablero_tao_mangalam.md o 04_anillos_tao_mangalam.md. Ante un fallo, el mensaje nombra el nodo (content_key) y el archivo, y el comando sale con codigo distinto de 0. (valida: REQ-11; rollback: Quitar de scripts/build_practice_catalog.py la funcion de validacion de fidelidad y su llamada desde el flujo de generacion y de --check.)
+- S1: Escribir tests/test_practice_fidelity.py (runner: python3 -m unittest discover -s tests -p 'test_practice*.py'). Casos de REQ-11: (a) Logo Shamkya de house-03 editado a mano en el JSON generado hace fallar la prueba de fidelidad nombrando house-03; (b) un sourceRef con ancla inexistente p9999 falla nombrando el nodo; (c) un editorialResolutionId fuera del registro correcciones_editoriales_practica.v1.json falla nombrando el nodo. Casos de REQ-01: (d) modificar docs/content/casas/03_casa_3.md sin regenerar hace fallar --check nombrando ese archivo (usar una copia temporal, sin tocar el repo); (e) dos corridas del generador producen bytes identicos. Casos de REQ-14: (f) python3 scripts/build_fichas.py --check y python3 scripts/build_result_catalog.py --check siguen terminando con codigo 0. (valida: REQ-01, REQ-11, REQ-14, test; rollback: Eliminar tests/test_practice_fidelity.py.)
+- S1: Escribir tests/test_practice_house_keys.py con la prueba de REQ-18: (a) cada paso de houses[11].energization (consultante y consultor) en docs/content/catalogos/casas.v1.json tiene un contentKey unico; (b) el catalogVersion de casas.v1.json es mayor que el literal 1.0.0 (hoy 1.1.0); (c) app/assets/catalogos/casas.v1.json es identico byte a byte a docs/content/catalogos/casas.v1.json. Ejecutar ademas el flutter test del cargador de casas existente, ubicando su archivo bajo app/test/ con Glob antes de correrlo. (valida: REQ-18, test; rollback: Eliminar tests/test_practice_house_keys.py.)
+- S3: Escribir tests/test_practice_docs_baseline.py con la prueba de REQ-17: el conjunto de rutas de .docs-baseline.txt (una ruta por linea, ignorando lineas con #) no gana entradas respecto de origin/epic/EP-02 (obtener la version base con git show origin/epic/EP-02:.docs-baseline.txt y comparar conjuntos: el actual debe ser subconjunto del base). (valida: REQ-17, test; rollback: Eliminar tests/test_practice_docs_baseline.py.)
+
+**Task ops:**
+
+- edit S1.T7 { desc="Consolidar en un unico archivo, tests/test_practice_repair.py, las pruebas de la ficha de reparacion (REQ-02) y del procedimiento de reparacion (REQ-03): casas 1 a 11 con ficha y procedimiento, Casa 12 sin ninguno, omisiones DEC-148 (casas 3, 5 y 8 sin mensaje), rotulos Logo Shamkya y Rhema mantra con sourceText literal, orientacion por casa (Este 1 y 2, norte 3 a 5, oeste 6 a 8, sur 9 a 11) y Casa 5 con Rhema mantra una vez y Logo Shamkya 108 veces durante 3 dias.", validates=["REQ-02","REQ-03"], isTest=true, verify=["python3 -m unittest tests.test_practice_repair"] }
+- edit S1.T3 { desc="Las pruebas de esta tarea viven en el mismo archivo tests/test_practice_repair.py que consolida S1.T7: no se crea un archivo de prueba aparte; se agregan alli las clases de esta tarea.", verify=["python3 -m unittest tests.test_practice_repair"] }
+- edit S1.T6 { rollback="Revertir en scripts/build_practice_catalog.py los cambios que introduce esta tarea y regenerar docs/content/catalogos/practica.v1.json con el generador." }
+- delete S3.T1
+- edit S3.T6 { desc="Probar el catalogo de materiales (REQ-10) en tests/test_practice_materials.py: solo kuberani y corrector estan marcados como producto con codigo; cada material declara una de las cinco funciones (enlace, correccion, resonancia mineral, elemento de ritual, instrumento de medicion); los materiales de sesion se referencian por los content_key material-* de ritual_sesion.v1.json sin duplicarse; el documento se marca provisional hasta la aprobacion de Contenido; y los sourceRefs incluyen tm-src-como-usar#p0092, tm-src-como-usar#p0115, tm-src-como-usar#p0118 y tm-src-como-usar#p0130.", validates=["REQ-10"], isTest=true, verify=["python3 -m unittest tests.test_practice_materials"] }
+- edit S2.T1.3 { desc="Estructurar la escala RKL en tramos excluyentes (DEC-065, DEC-137): 9.000 o mas sin dias; 8.000 a 8.999, 3 dias; 5.000 a 7.999, 3 dias repitiendo la accion; menos de 5.000, 9 dias y nueva medicion (DEC-135). El nodo operativo de menos de 5.000 no expone 'tecnologia sagrada'; la expresion queda solo en sourceText con su editorialResolutionId (registrarlo en correcciones_editoriales_practica.v1.json si no existe). La etapa A no asigna profundidad: la asigna S4.T4." }
+- move S4.T1 → S4
+- edit S5.T4 { verify=["flutter test $(find app/test -name '*practica*_test.dart')"] }
+
+### Enmienda 9
+**REQs:**
+
+- REQ-12 (edit) `confirmed`: El catálogo expone catalogVersion como content_version, con valor inicial 1.0.0 en practica.v1.json. Se copia a app/assets/catalogos/ y CI v
+- REQ-17 (edit) `confirmed`: Todo doc del baseline de lint (.docs-baseline.txt, una ruta por línea) que el ticket realmente modifique queda compliant con node scripts/de
+- REQ-20 (add) `confirmed`: Todos los verify de pruebas Python del ticket usan el runner único 'python3 -m unittest discover -s tests -p test_practice*.py' (o el patrón
+
+**Tasks agregadas:**
+
+- S1: Restaurar en tests/test_practice_repair.py (consolidada con las pruebas de casas) los asserts de REQ-03: (a) los pasos de cada casa 1 a 11 siguen el orden V-11 (leer anillo y reconocer; corrector con frase del anillo; solicitud al Prakriti Deva y Rhema mantra una vez; Logo Shamkya 108 veces durante 3 días; vía del consultor donde la casa la declara; quema del kuberani; kuberani nuevo y energización de la casa a la que avanza el flujo); (b) la Nota 1 está enlazada a los pasos con días y la Nota 2 a la quema; (c) una casa sin vía del consultor no trae ningún paso con via=consultor. Assertar valores concretos, no solo existencia. (valida: REQ-03, test; rollback: Revertir los asserts agregados en tests/test_practice_repair.py (git checkout del archivo al estado previo); no se borra el archivo.)
+
+**Task ops:**
+
+- edit S1.T3 { rollback="Borrar tests/test_practice_repair.py y revertir los cambios de la task con git checkout sobre los archivos que tocó." }
+- edit S1.T15 { verify=["python3 -m unittest discover -s tests -p test_practice*.py","cd app && flutter test test/ --name casas"] }
+- edit S2.T1.2 { desc="Estructurar la coherencia vibracional de la etapa A (chakras como números, minerales como referencias al catálogo agrupados en conjunción 'y' o alternativa 'o', 3 minutos, 3 días y las dos formas de apoyo V-12). La Casa 7 (tm-src-tablero#p1044) queda con resolución editorial provisional: forma 'lapislázuli o (aguamarina y amatista)', la entrada provisional en correcciones_editoriales_practica.v1.json ya la crea S1.T6 (no volver a crearla), y el --check ADVIERTE nombrando el nodo y termina con código 0.", verify=["python3 -m unittest discover -s tests -p test_practice*.py"] }
+- edit S2.T1.3 { desc="Estructurar la escala RKL en tramos excluyentes (9.000 o más sin días; 8.000 a 8.999, 3 días; 5.000 a 7.999, 3 días repitiendo la acción; menos de 5.000, 9 días y nueva medición). El nodo operativo de menos de 5.000 no expone 'tecnología sagrada'; esa expresión queda solo en sourceText y su editorialResolutionId ya está registrado por S1.T12 (solo referenciarlo, no registrarlo aquí).", verify=["python3 -m unittest discover -s tests -p test_practice*.py"] }
+- edit S3.T6 { desc="Probar la sección materials del generador con tests/test_practice_materials.py (nombre único del test de materiales): cinco funciones válidas, solo kuberani y corrector como producto con código, sourceRefs existentes, referencias a material-* de ritual_sesion.v1.json sin duplicar, y marca provisional del documento hasta la aprobación de Contenido.", rollback="Borrar tests/test_practice_materials.py.", verify=["python3 -m unittest discover -s tests -p test_practice_materials.py"] }
+- edit S5.T4 { verify=["cd app && flutter test test/<ruta real ubicada con Glob>"] }
+
+### Enmienda 10
+**REQs:**
+
+- REQ-21 (add) `confirmed`: Los docs del baseline de lint (.docs-baseline.txt) que el ticket modifica, docs/content/99_inconsistencias_por_resolver.md y docs/content/ma
+
+**Task ops:**
+
+- edit S3.T2 { validates=["REQ-21"] }
+- edit S3.T3 { validates=["REQ-21"] }
+- edit S3.T4 { validates=["REQ-21"] }
+## Sessions
+
+### Session 1 · T2 · continue
+
+**Tasks:**
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
+- [x] S1.T7
+- [x] S1.T8
+- [x] S1.T9
+- [x] S1.T10
+- [x] S1.T11
+- [x] S1.T12
+- [x] S1.T13
+- [x] S1.T14
+- [x] S1.T15
+- [x] S1.T16
+
+**Gate (auto)**: `python3 scripts/build_practice_catalog.py --check` pasa y el JSON generado tiene la ficha y el procedimiento de reparación de house-01 a house-11 (orientaciones, omisiones DEC-148, rótulos normalizados). La prueba de fidelidad y --check fallan si se edita a mano el Logo Shamkya de la Casa 3.
+
+### Session 2 · T3 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T1.1
+- [ ] S2.T1.2
+- [ ] S2.T1.3
+- [ ] S2.T2
+- [ ] S2.T2.1
+- [ ] S2.T2.2
+- [ ] S2.T2.3
+- [ ] S2.T3
+- [ ] S2.T5
+
+**Gate (auto)**: Etapa A. El generador con --check pasa y el JSON generado tiene la coherencia vibracional con minerales agrupados (y, o), el catálogo de 6 minerales con ids de pieza de app/assets/manifest.json, la escala RKL con tramos excluyentes y la entrada provisional de la Casa 7 que --check advierte sin fallar. Las pruebas de la etapa A pasan: python3 -m unittest discover -s tests -p 'test_practice*.py'. No contiene anillos, Casa 12 ni profundidad.
+
+### Session 3 · T2 · open
+
+**Tasks:**
+- [ ] S3.T2
+- [ ] S3.T4
+- [ ] S3.T5
+- [ ] S3.T6
+- [ ] S3.T7
+
+**Gate (auto)**: El documento único de materiales existe en docs/content/materiales_practica_y_reparacion.md, pasa el linter de docs (DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check) y queda listo para la aprobación de Contenido. El catálogo tiene la sección de materiales con función, uso, producto, anclas y la marca de provisional, y la prueba tests/test_practice_catalog_materials.py pasa. Los docs del baseline que aparezcan en el diff pasan el linter.
+
+### Session 4 · T2 · open
+
+**Tasks:**
+- [ ] S4.T1
+- [ ] S4.T2
+- [ ] S4.T3
+- [ ] S4.T4
+- [ ] S4.T5
+- [ ] S4.T6
+- [ ] S4.T7
+
+**Gate (auto)**: Etapa B. El generador con --check pasa y el JSON generado tiene los 8 anillos con repeticiones [3,5,5,5,5,5,7,null] y los mismos content_key que resultados.v1.json sin duplicar Rhibu, patrón ni acción, el cierre de la Casa 12 con sus anclas y sin reparación, y depth estándar o avanzado en cada nodo. Las pruebas de anillos, Casa 12 y profundidad pasan: python3 -m unittest discover -s tests -p 'test_practice*.py'.
+
+### Session 5 · T2 · open
+
+**Tasks:**
+- [ ] S5.T1
+- [ ] S5.T2
+- [ ] S5.T3
+- [ ] S5.T4
+- [ ] S5.T5
+
+**Gate (auto)**: La copia del catálogo está en app/assets/catalogos/ vía scripts/sync_app_catalogs.py y CI verifica que sea idéntica a la generada. El test Dart del cargador pasa (nodos inmutables con content_key y content_version, 8 anillos, house-12 sin reparación y con acciones finales). ci-pr.yml y nightly.yml corren el --check nuevo y docs/development/commands.md documenta el comando.

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Intake TAO-206 (HU-02-11): catálogo de arcanos y catálogos editoriales</title>
+<!-- ticket: TAO-206 · kind: intake · project: taomangalam · generated: 2026-10-10 -->
+</head>
+<body>
+<h1>Intake TAO-206 (HU-02-11)</h1>
+<div class="panel tldr" data-dkc-block="tldr"><p><strong>Qué quedó resuelto:</strong> generar desde la documentación cuatro catálogos versionados (22 arcanos, glosario real de 16 términos, bloques de Acerca de y nueve capítulos del Instructivo), con esquema editorial común, validador de referencias, copia en app/assets/catalogos/, cargador Dart y --check en CI. Sin fixtures donde la documentación ya trae el dato (Adendas 3 y 4).</p></div>
+<h2>Resultado esperado</h2>
+<div class="callout" data-dkc-block="callout"><p>Arcanos con ids 0 a 21 y El Loco con alias 22 en la Casa 12; arcano 8 La Fuerza y 11 La Justicia; reparto por casa (la Casa 2 tiene los arcanos 2 y 12); coherencia de nombre y palabra mágica con casas.v1.json; esquema que rechaza campo de interpretación; lámina de cada arcano en el manifiesto.</p></div>
+<h2>Estado verificado del repo (epic/EP-02)</h2>
+<ul>
+<li>Catálogos existentes en docs/content/catalogos/: casas, resultados, ritual_sesion y signos_personalidades, cada uno con su esquema y su correcciones_editoriales_*.v1.json (forma: schemaVersion, policy, resolutions).</li>
+<li>Patrón a reutilizar: scripts/build_house_catalog.py y scripts/catalog_common.py; copia con scripts/sync_app_catalogs.py. No se usa build_result_catalog.py como patrón.</li>
+<li>Manifiesto de láminas: app/assets/manifest.json (schemaVersion 2, inventario de TAO-190).</li>
+<li>Fuentes: docs/content/imagenes/01_arcanos.md; docs/content/10_registro_cierre_y_glosario.md (16 términos con ancla y párrafos citados); docs/content/fuentes/01_que_es_tao_mangalam.md; HU-10-04 y HU-10-15 en docs/backlog/EP-10_biblioteca_ayuda_y_aprendizaje.md.</li>
+<li>No existen todavía: glosario.v1.json, acerca_de.v1.json, instructivo.v1.json, el catálogo de arcanos ni el esquema editorial común.</li>
+</ul>
+<h2>Decisiones ya tomadas</h2>
+<div class="callout" data-dkc-block="callout"><ul>
+<li>Marca provisional: campo opcional editorialStatus con valor "provisional" por nodo. La aprobación editorial se registra en la lista approvals de correcciones_editoriales_&lt;catálogo&gt;.v1.json y el generador quita la marca.</li>
+<li>Lo que la documentación no trae (explicación ampliada, sinónimos, relacionados y contextos del glosario) se omite, sin null y sin inventarlo.</li>
+<li>El validador valida solo manifiesto, glosario y procedimientos, no casas. Los procedimientos se resuelven contra una lista explícita de catálogos (ritual_sesion.v1.json y practica.v1.json cuando exista), nunca un glob.</li>
+<li>Runner de pruebas: python3 -m unittest discover -s tests. Linter: DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check; .docs-baseline.txt no gana entradas.</li>
+</ul></div>
+<h2>Verificación</h2>
+<pre data-dkc-block="code">python3 scripts/build_arcanos_catalog.py --check
+python3 -m unittest discover -s tests -p test_catalogo_arcanos.py
+python3 -m unittest discover -s tests -p test_arcanos_correcciones_editoriales.py
+cd app &amp;&amp; flutter test</pre>
+<h2>Riesgos y dependencias</h2>
+<ul>
+<li>Depende de TAO-198 y TAO-199, integrados en epic/EP-02. practica.v1.json lo produce TAO-207; este ticket lo referencia solo si existe al ejecutarse.</li>
+<li>Ambos tickets editan .github/workflows/ci-pr.yml: este ticket es dueño del paso nuevo y TAO-207 suma el suyo después.</li>
+<li>Cambiar el nombre de un arcano sin subir catalogVersion debe hacer fallar --check (hash del contenido, como los catálogos existentes).</li>
+<li>La aprobación editorial de Contenido no se puede generar: glosario, Acerca de e Instructivo salen provisionales.</li>
+</ul>
+</body>
+</html>
