@@ -97,34 +97,34 @@ El índice de caché de HU-02-09 lleva los campos ultimoAcceso y verificado, ver
 ## Tasks
 
 #### S1.T1 — Solo verificación: confirmar que el gestor de descarga y caché y el índice de HU-02-09 (TAO-204) existen en la rama epic/EP-02 (merge 2987477). No modifica código.
-Contrato: rollback: No aplica: la tarea es solo de verificación y no hay cambios que revertir.. Status: pending
+Contrato: rollback: No aplica: la tarea es solo de verificación y no hay cambios que revertir.. Status: done
 
 #### S1.T2 — Constantes de DEC-202 (tope blando 1 GB teléfono y 2 GB tablet; reserva mínima 1 GB libre) y fallback ante FallaDeRed y FallaDelServidor al leer la configuración pública, de modo que rija DEC-202. Esta task conserva solo eso: no define la clase de dispositivo (vive en S1.T5) ni la reducción desde la configuración (vive en S1.T6). Valida REQ-08.
-Contrato: rollback: Revertir el commit. Es un módulo nuevo sin consumidores todavía.. Status: pending
+Contrato: rollback: Revertir el commit. Es un módulo nuevo sin consumidores todavía.. Status: done
 
 #### S1.T3 — Implementar la selección LRU de candidatos seguros operando solo sobre las entradas del índice de caché de HU-02-09 (derivados descargables con SHA-256 verificado, el de último acceso más antiguo primero). La exclusión de adjuntos de la persona se delega a la pertenencia definida en S1.T8, no a un filtro por estado ni por nombre.
-Contrato: rollback: Revertir el commit. Es un módulo nuevo sin consumidores.. Status: pending
+Contrato: rollback: Revertir el commit. Es un módulo nuevo sin consumidores.. Status: done
 
 #### S1.T4 — En la política de liberación, si falla la lectura del espacio libre del dispositivo (interfaz inyectable de REQ-09), el resultado es bloqueado y no se borra ningún dato. Agregar la prueba que simula la falla de lectura y verifica el resultado bloqueado y que ningún archivo del índice se borra.
-Contrato: rollback: Borrar los archivos de test nuevos.. Status: pending
+Contrato: rollback: Borrar los archivos de test nuevos.. Status: done
 
 #### S1.T5 — Resolver la clase de dispositivo (única unidad que la define) reutilizando TaoBreakpoint.mediumMin = 600 (app/lib/design_system/tokens/tokens.g.dart) con la convención de app/lib/core/images/image_family_resolver.dart: lado corto lógico menor a 600 es teléfono; 600 o más es tablet. No se define un número nuevo. Documentar el umbral en tecnologia/10. Incluir test boundary: 600 es tablet y 599 es teléfono.
-Contrato: rollback: Revertir el commit de la clase de dispositivo y de la nota en tecnologia/10; el resto de la política no depende de ella hasta integrarse.. Status: pending
+Contrato: rollback: Revertir el commit de la clase de dispositivo y de la nota en tecnologia/10; el resto de la política no depende de ella hasta integrarse.. Status: done
 
 #### S1.T6 — Aplicar la reducción desde la configuración pública (única unidad que la implementa) leyendo cacheTopeMb y cacheReservaMb dentro de `otras` de obtenerConfiguracionPublica, enteros en MB. Solo pueden reducir el límite de DEC-202; un valor ausente, no numérico, no entero, menor o igual a cero, o mayor a su límite (tope 1 GB teléfono y 2 GB tablet; reserva 1 GB) se ignora y rige DEC-202.
-Contrato: rollback: Revertir el commit del resolvedor de límites; los límites vuelven a ser las constantes de DEC-202.. Status: pending
+Contrato: rollback: Revertir el commit del resolvedor de límites; los límites vuelven a ser las constantes de DEC-202.. Status: done
 
 #### S1.T7 — Verificar la dependencia para leer el espacio libre (candidato disk_space_plus): mantenimiento, licencia y soporte de iOS y Android. Si es adecuada, agregarla a app/pubspec.yaml y registrar la decisión técnica en el ticket; si no, proponer alternativa antes de adoptar. Definir una interfaz (p. ej. FreeSpaceReader) con implementación real que envuelve el plugin y una simulada para pruebas; ningún otro archivo importa el plugin.
-Contrato: rollback: Quitar la dependencia de app/pubspec.yaml y la implementación real, dejando solo la interfaz; revertir el registro de la decisión.. Status: pending
+Contrato: rollback: Quitar la dependencia de app/pubspec.yaml y la implementación real, dejando solo la interfaz; revertir el registro de la decisión.. Status: done
 
 #### S1.T8 — Ubicar y documentar en el ticket dónde viven los adjuntos de la persona (solo_local, pendiente, subiendo, HU-08-13) respecto del índice de caché y del directorio de HU-02-09, y excluirlos por pertenencia (no están en el índice ni en su directorio), no por nombre, extensión ni estado. S1.T3 delega en esta pertenencia.
-Contrato: rollback: Revertir el filtro de pertenencia y la exclusión de adjuntos de la persona del conjunto de candidatos. No menciona el flag de desactivación, que se crea en S2.T1.. Status: pending
+Contrato: rollback: Revertir el filtro de pertenencia y la exclusión de adjuntos de la persona del conjunto de candidatos. No menciona el flag de desactivación, que se crea en S2.T1.. Status: done
 
 #### S1.T9 — Verificar o agregar de forma aditiva los campos ultimoAcceso y verificado en el índice de caché de HU-02-09 (un índice antiguo sin esos campos se lee sin error) y actualizar ultimoAcceso en cada lectura de un asset servida por el gestor. Regla: una entrada sin el campo verificado nunca es candidata a borrado; una entrada sin ultimoAcceso se ordena como la más reciente y no se borra primero. Este es el modelo de datos de ultimoAcceso y verificado (no S1.T1).
-Contrato: rollback: Quitar la actualización de ultimoAcceso y los campos aditivos ultimoAcceso y verificado, que se ignoran al leer; no se pierden datos del índice.. Status: pending
+Contrato: rollback: Quitar la actualización de ultimoAcceso y los campos aditivos ultimoAcceso y verificado, que se ignoran al leer; no se pierden datos del índice.. Status: done
 
 #### S1.T10 — Crear app/test/core/assets/cache/cache_index_access_test.dart con la prueba de regresión del LRU: un asset leído recientemente no es el primer candidato de la liberación por LRU. Cubrir además la regla de entradas incompletas: una entrada sin verificado nunca es candidata, y una entrada sin ultimoAcceso se ordena como la más reciente y no se borra primero. Este archivo lo crea S1.T10; app/test/core/assets/cache/cache_policy_integration_test.dart lo crea S2.T3, no esta task.
-Contrato: rollback: Eliminar el archivo o los casos de prueba agregados; no afecta código de producción.. Status: pending
+Contrato: rollback: Eliminar el archivo o los casos de prueba agregados; no afecta código de producción.. Status: done
 
 #### S2.T1 — Integrar la política en el gestor de HU-02-09 antes de cada descarga. Pedir el plan y borrar los candidatos del plan; si el plan es `bloqueado`, no descargar ni borrar nada y devolver el resultado que la vista mapea a su superficie de respaldo existente. Si un archivo indexado falta (caché vaciada por el sistema), re-descargar y verificar con la verificación SHA-256 existente, y sin red devolver la superficie de respaldo. Exponer un interruptor para desactivar la política como rollback.
 Contrato: rollback: Desactivar la política con el interruptor, o revertir el commit. El gestor vuelve a descargar sin borrar nada y no se tocan assets esenciales ni datos de la persona.. Status: pending
@@ -237,19 +237,19 @@ Contrato: rollback: Revertir el commit del mapeo en la vista; la vista vuelve a 
 - edit S1.T4 { desc="En la política de liberación, si falla la lectura del espacio libre del dispositivo (interfaz inyectable de REQ-09), el resultado es bloqueado y no se borra ningún dato. Agregar la prueba que simula la falla de lectura y verifica el resultado bloqueado y que ningún archivo del índice se borra.", validates=["REQ-09"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
-- [ ] S1.T7
-- [ ] S1.T8
-- [ ] S1.T9
-- [ ] S1.T10
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
+- [x] S1.T7
+- [x] S1.T8
+- [x] S1.T9
+- [x] S1.T10
 
 **Gate (auto)**: Tests unitarios en verde que muestran: tope de 1 GB en teléfono y 2 GB en tablet, 500 MB aplicado y 3 GB ignorado, y LRU que solo devuelve derivados verificados, con una prueba explícita de que empaquetados, archivos sin verificar y adjuntos de la persona nunca se eligen.
 
