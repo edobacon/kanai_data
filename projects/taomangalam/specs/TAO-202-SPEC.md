@@ -75,13 +75,13 @@ Contrato: rollback: Revertir la sección añadida en docs/development/commands.m
 Contrato: rollback: Eliminar tests/test_ritual_catalog.py.. Status: done
 
 #### S2.T1 — Escribir en tests/test_ritual_catalog.py (reutilizando helpers de tests/test_catalog_common.py, sin duplicar fixtures) los tests que verifican: (a) que app/assets/catalogos/ritual_sesion.v1.json es byte a byte idéntico al generado y a docs/content/catalogos/ritual_sesion.v1.json, y que la prueba falla nombrando el archivo cuando difieren; (b) que app/pubspec.yaml registra app/assets/catalogos/ritual_sesion.v1.json en la sección de assets. Esta tarea solo agrega los tests; no modifica el generador, la copia ni pubspec.
-Contrato: rollback: Revertir el test agregado en tests/test_ritual_catalog.py. El rollback de la copia app/assets/catalogos/ritual_sesion.v1.json y del registro en app/pubspec.yaml pertenece a S1.T1.. Status: pending
+Contrato: rollback: Revertir el test agregado en tests/test_ritual_catalog.py. El rollback de la copia app/assets/catalogos/ritual_sesion.v1.json y del registro en app/pubspec.yaml pertenece a S1.T1.. Status: done
 
 #### S2.T2 — Crear el cargador Dart de solo lectura en app/lib/catalogos/cargador_catalogo_ritual_sesion.dart y app/lib/catalogos/catalogo_ritual_sesion.dart, reutilizando errores_catalogo.dart.
-Contrato: rollback: Eliminar ambos archivos Dart.. Status: pending
+Contrato: rollback: Eliminar ambos archivos Dart.. Status: done
 
 #### S2.T3 — Escribir app/test/catalogos/cargador_catalogo_ritual_sesion_test.dart: entrega pasos y materiales inmutables con content_key y content_version. QA-02-17-03 se prueba sobre la lista de materiales (el mantel de uso exclusivo es el primer material) y se deja constancia para que Contenido lo confirme.
-Contrato: rollback: Eliminar app/test/catalogos/cargador_catalogo_ritual_sesion_test.dart.. Status: pending
+Contrato: rollback: Eliminar app/test/catalogos/cargador_catalogo_ritual_sesion_test.dart.. Status: done
 ## Cambios al modelo de datos
 
 - tipo: seed_catalog | objetos: app/assets/catalogos/ritual_sesion.v1.json (catálogo empaquetado, sin base de datos) | destructivo: no | tarea: S1.T1 | rollback: Revertir el commit que agrega el JSON, su copia en app/ y el cargador. Las fuentes editoriales quedan intactas y HU-07-04 todavía no lo consume.
@@ -144,12 +144,12 @@ Contrato: rollback: Eliminar app/test/catalogos/cargador_catalogo_ritual_sesion_
 
 **Gate (auto)**: --check pasa en el repo limpio y la suite tests/test_ritual_catalog.py pasa en verde con 6 pasos y 7 materiales. Al invertir dos pasos, la prueba de fidelidad falla nombrando los content_key. commands.md documenta el comando.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: La copia en app/assets/catalogos/ritual_sesion.v1.json coincide con la generada y CI lo verifica. El test Dart del cargador pasa: 6 pasos, 7 materiales inmutables, primer material mantel de uso exclusivo y content_version igual a catalogVersion.
 
