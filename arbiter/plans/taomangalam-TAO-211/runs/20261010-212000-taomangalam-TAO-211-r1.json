@@ -1,0 +1,469 @@
+{
+  "run_id": "taomangalam-TAO-211-r1",
+  "plan_id": "taomangalam-TAO-211",
+  "repo": "taomangalam",
+  "head_ref": "287c8ea",
+  "base_ref_used": "0195455e97729303199d60198596f543ab7ccb6b",
+  "mode": "end_of_plan",
+  "ts_start": "2026-10-10T21:00:00.000Z",
+  "ts_end": "2026-10-10T21:20:00.000Z",
+  "verdict": "iterar",
+  "max_severity": "S2",
+  "batches": 3,
+  "consumers": 21,
+  "lines_judged": 4719,
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 5,
+    "S3": 5
+  },
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "Los planes serializados no descuentan los bytes de descargas autorizadas aun en vuelo",
+      "where": "app/lib/core/assets/cache/cache_room_keeper.dart:86",
+      "evidence": "El plan mide lo ocupado desde el indice y el espacio libre actuales; la descarga autorizada se promueve despues, asi que N descargas simultaneas ven el mismo estado y pueden superar el tope o la reserva.",
+      "mechanism": "CacheRoomKeeper libera el turno al terminar el plan sin llevar bytes reservados",
+      "family": "concurrency:plan-ignores-inflight-bytes"
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Sin test la serializacion de planes de CacheRoomKeeper ni el borrado dentro de la cola por hash",
+      "where": "app/lib/core/assets/cache/cache_room_keeper.dart:66",
+      "evidence": "Ningun test lanza dos planes ni dos resolve a la vez; quitar _tail o la cola del expulsor deja la suite en verde.",
+      "mechanism": "exclusion mutua sin cobertura",
+      "family": "missing-test:cache-plan-concurrency"
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "El test de espacio libre no aisla el disparo por reserva",
+      "where": "app/test/core/assets/cache/cache_eviction_free_space_test.dart:48",
+      "evidence": "La cache de la fixture suma 1024 MB igual al tope, asi que el borrado ocurre por tope aunque se quitara el calculo de la reserva.",
+      "mechanism": "fixture en el tope enmascara la reserva",
+      "family": "weak-test:free-space-trigger-not-isolated"
+    },
+    {
+      "id": "f4",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "El bloqueo con borrado parcial no verifica freedBytes ni evictedCount",
+      "where": "app/test/core/assets/cache/cache_eviction_policy_test.dart:466",
+      "evidence": "El test solo verifica reason, attempted y evicted; los contadores alimentan la telemetria del evento bloqueado y ningun test los verifica.",
+      "mechanism": "contadores del bloqueo parcial sin test",
+      "family": "missing-test:partial-eviction-counters"
+    },
+    {
+      "id": "f5",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "currentDeviceClass no tiene ningun test",
+      "where": "app/lib/core/assets/cache/platform_cache_room_keeper.dart:50",
+      "evidence": "La conversion lado corto fisico / devicePixelRatio y el caso sin pantalla no se ejercitan; device_class_test solo cubre deviceClassFor.",
+      "mechanism": "clasificacion real del dispositivo sin test",
+      "family": "missing-test:current-device-class"
+    },
+    {
+      "id": "f6",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "Aserciones decorativas sobre adjuntos que no pueden fallar",
+      "where": "app/test/core/assets/cache/cache_candidates_test.dart:206",
+      "evidence": "Aserciones sobre el estado que arma el propio test o sobre archivos fuera del alcance del evictor; tambien manager_cache_policy_test.dart:159-187.",
+      "mechanism": "aserciones decorativas",
+      "family": "weak-test:decorative-attachment-asserts"
+    },
+    {
+      "id": "f7",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "Literales, helpers y tests duplicados entre archivos de test",
+      "where": "app/test/core/assets/cache/cache_eviction_policy_test.dart:19",
+      "evidence": "Lista de estados de adjunto y helper _mb repetidos en varios archivos; casos solapados en cache_limits_test.",
+      "mechanism": "duplicacion",
+      "family": "dup:test-literals-cache"
+    },
+    {
+      "id": "f8",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "StorageCacheEvictor y EvictionBlocked.fallback viven en lib pero solo los usan los tests",
+      "where": "app/lib/core/assets/cache/cache_index_reader.dart:66",
+      "evidence": "Produccion usa _QueuedCacheEvictor; StorageCacheEvictor borra fuera de la cola por hash.",
+      "mechanism": "API publica sin consumidor de produccion",
+      "family": "maintainability:test-only-lib-api"
+    },
+    {
+      "id": "f9",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "downloadable_asset_providers.g.dart no se regenero",
+      "where": "app/lib/core/assets/downloadable_asset_providers.dart:35",
+      "evidence": "El docstring del provider cambio y el .g.dart conserva el texto anterior.",
+      "mechanism": "codegen sin regenerar",
+      "family": "codegen-drift:riverpod-providers",
+      "info_class": "stale_trivial"
+    },
+    {
+      "id": "f10",
+      "severity": "S3",
+      "kind": "dependency",
+      "title": "widgetbook/pubspec.lock no incluye disk_space_2 (desfase preexistente)",
+      "where": "app/pubspec.yaml:101",
+      "evidence": "pub get --enforce-lockfile en app/widgetbook ya fallaba en la base por flutter_cache_manager.",
+      "mechanism": "dependencias de la app no propagadas al lock anidado",
+      "family": "dependency:widgetbook-lock-drift"
+    }
+  ],
+  "recheck": [],
+  "coverage": {
+    "files_in_diff": 39,
+    "read_full": 37,
+    "skimmed": 2,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "app/pubspec.yaml",
+        "app/lib/core/assets/download_metrics.dart",
+        "app/lib/core/assets/downloadable_asset_manager.dart",
+        "app/lib/core/assets/downloadable_asset_providers.dart",
+        "app/lib/core/assets/downloadable_asset_state.dart",
+        "app/lib/core/assets/downloadable_asset_storage.dart",
+        "app/lib/core/assets/downloadable_index_record.dart",
+        "app/lib/core/assets/cache/cache_eviction_policy.dart",
+        "app/lib/core/assets/cache/cache_index_entry.dart",
+        "app/lib/core/assets/cache/cache_index_ownership.dart",
+        "app/lib/core/assets/cache/cache_index_reader.dart",
+        "app/lib/core/assets/cache/cache_limits_resolver.dart",
+        "app/lib/core/assets/cache/cache_limits.dart",
+        "app/lib/core/assets/cache/cache_release_telemetry.dart",
+        "app/lib/core/assets/cache/cache_room_keeper.dart",
+        "app/lib/core/assets/cache/device_class.dart",
+        "app/lib/core/assets/cache/eviction_candidates.dart",
+        "app/lib/core/assets/cache/free_space_reader.dart",
+        "app/lib/core/assets/cache/personal_media_ownership.dart",
+        "app/lib/core/assets/cache/platform_cache_room_keeper.dart",
+        "app/lib/core/assets/cache/platform_free_space_reader.dart",
+        "app/lib/core/assets/cache/public_cache_config.dart",
+        "app/test/core/assets/cache/cache_blocked_surface_test.dart",
+        "app/test/core/assets/cache/cache_candidates_test.dart",
+        "app/test/core/assets/cache/cache_eviction_free_space_test.dart",
+        "app/test/core/assets/cache/cache_eviction_policy_test.dart",
+        "app/test/core/assets/cache/cache_index_access_test.dart",
+        "app/test/core/assets/cache/cache_limits_test.dart",
+        "app/test/core/assets/cache/cache_policy_integration_test.dart",
+        "app/test/core/assets/cache/cache_telemetry_test.dart",
+        "app/test/core/assets/cache/cache_test_support.dart",
+        "app/test/core/assets/cache/device_class_test.dart",
+        "app/test/core/assets/cache/free_space_reader_test.dart",
+        "app/test/core/assets/cache/manager_cache_policy_test.dart",
+        "app/test/core/assets/cache/manager_policy_support.dart",
+        "docs/product/tecnologia/06_bibliotecas.md",
+        "docs/product/tecnologia/10_experiencia_y_datos.md"
+      ],
+      "skimmed": [
+        "app/test/core/assets/downloadable_asset_cache_queue_test.dart",
+        "app/test/core/assets/downloadable_asset_manager_test.dart"
+      ],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "app/lib/core/assets/cache/cache_eviction_policy.dart",
+        "lines": 233,
+        "blob": "6f73192031755ff3daea6a1be420cf2ecdd5865a",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_index_entry.dart",
+        "lines": 46,
+        "blob": "1086e8b61382e98a97fa2b72716b2714b981362f",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_index_ownership.dart",
+        "lines": 40,
+        "blob": "5a79694bf49d1eec89649cb6bfcafa661e4d27ea",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_index_reader.dart",
+        "lines": 74,
+        "blob": "48afd959c3f228652ee7eb9837aa32e1d92244f3",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_limits_resolver.dart",
+        "lines": 77,
+        "blob": "f856de1297917d56d19a6842060bdf06ef1bd68b",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_limits.dart",
+        "lines": 56,
+        "blob": "4bcd2e5bf32785cde2c14a4bf404c206821fa5d7",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_release_telemetry.dart",
+        "lines": 100,
+        "blob": "91de7d8763b7d011030758d8998ec776e67b7324",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/cache_room_keeper.dart",
+        "lines": 165,
+        "blob": "8cff362d41ebe7aad913f7742ee22e79468afca0",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/device_class.dart",
+        "lines": 40,
+        "blob": "1b776df5d7a1bed21aaa4ab578d55580b12f3759",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/eviction_candidates.dart",
+        "lines": 115,
+        "blob": "2a6b0242b11f70b762a41af14dcad8dd256b2d16",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/free_space_reader.dart",
+        "lines": 15,
+        "blob": "a89007d1c863a6e6ac54a8039edde1a798d792bc",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/personal_media_ownership.dart",
+        "lines": 14,
+        "blob": "19422dcca5188433c3b54d10dc53828be1497708",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/platform_cache_room_keeper.dart",
+        "lines": 97,
+        "blob": "2c76f8bd6b0b3e268ee9d17ec3401e4389185c23",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/platform_free_space_reader.dart",
+        "lines": 57,
+        "blob": "840694db434e04a19511f8093e80df94aee3b8f7",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/cache/public_cache_config.dart",
+        "lines": 65,
+        "blob": "970cfe3bf872bbaa842be47ce59bc3327aa8ce91",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/download_metrics.dart",
+        "lines": 4,
+        "blob": "c45d40c29e8d2460c121d881cfe1bb00dae71c3a",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/downloadable_asset_manager.dart",
+        "lines": 64,
+        "blob": "7c0f638f6bebb1d1898b78f1753f1ae5fe322eac",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/downloadable_asset_providers.dart",
+        "lines": 8,
+        "blob": "0efb5c1e2d699d539a4c24969f03c9ea91584053",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/downloadable_asset_state.dart",
+        "lines": 6,
+        "blob": "a6d259b3eb72b98bf5c96b61ceca4791a8de6079",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/downloadable_asset_storage.dart",
+        "lines": 113,
+        "blob": "9acab4af7c179315691d9c8181cca60577902c2a",
+        "deleted": false
+      },
+      {
+        "path": "app/lib/core/assets/downloadable_index_record.dart",
+        "lines": 78,
+        "blob": "d693b9c42170eadbe046d11799efc2e2949d07ac",
+        "deleted": false
+      },
+      {
+        "path": "app/pubspec.lock",
+        "lines": 8,
+        "blob": "c3e3b69ed1b964fa9c58edd465fd583517a1ed67",
+        "deleted": false
+      },
+      {
+        "path": "app/pubspec.yaml",
+        "lines": 4,
+        "blob": "18e03b0c61102ea1beff9d768cec62b46c7bdd66",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_blocked_surface_test.dart",
+        "lines": 179,
+        "blob": "4d9e6342dbf8cd4d5456066d426cde2222a5335f",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_candidates_test.dart",
+        "lines": 396,
+        "blob": "d8d66243815f8de37f61d1fe86766ace9efe92c8",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_eviction_free_space_test.dart",
+        "lines": 86,
+        "blob": "5940c864708862fffeeb25c6cea35ec043aac2bc",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_eviction_policy_test.dart",
+        "lines": 553,
+        "blob": "a4bdc416bebca113e79bba858ab963ef7de27b28",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_index_access_test.dart",
+        "lines": 282,
+        "blob": "8c06118b59a7d1e9a0c4e8f8412728a8041be3ef",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_limits_test.dart",
+        "lines": 301,
+        "blob": "392e8eb9e4255340c2cb513a2332bbd9c9694ec7",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_policy_integration_test.dart",
+        "lines": 240,
+        "blob": "69e4f3a10ad1a12379e9d5b17de4a9007be92830",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_telemetry_test.dart",
+        "lines": 234,
+        "blob": "1673f82cf88a4f90ab80554331805f92247a6c8e",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/cache_test_support.dart",
+        "lines": 183,
+        "blob": "748d5659292b8d00ad9194496d643693d8b053e7",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/device_class_test.dart",
+        "lines": 50,
+        "blob": "369e1d5b29de9de7f0d2b22a2115d63db71fecb2",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/free_space_reader_test.dart",
+        "lines": 180,
+        "blob": "57b8e57077c18af109d635cc2fe461a2152af242",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/manager_cache_policy_test.dart",
+        "lines": 356,
+        "blob": "ed8b6dffc1a8c7a005df037f60f18cc8235f992d",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/cache/manager_policy_support.dart",
+        "lines": 129,
+        "blob": "a0ea1c11076f95059c29a8cdd75bc896c929eace",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/downloadable_asset_cache_queue_test.dart",
+        "lines": 24,
+        "blob": "6fea1575af8c403b66205baa8d4e158bb93a2fb7",
+        "deleted": false
+      },
+      {
+        "path": "app/test/core/assets/downloadable_asset_manager_test.dart",
+        "lines": 9,
+        "blob": "d4eed088ae0c829369ffe2021573b01c22b104c8",
+        "deleted": false
+      },
+      {
+        "path": "docs/product/tecnologia/06_bibliotecas.md",
+        "lines": 1,
+        "blob": "b9e1622ad2875afad5b5389ab524d06f4eb9f89f",
+        "deleted": false
+      },
+      {
+        "path": "docs/product/tecnologia/10_experiencia_y_datos.md",
+        "lines": 45,
+        "blob": "3e96173c3ce87019c6f0b9ac8fdebd7d2effbb68",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "app/pubspec.yaml": "18e03b0c61102ea1beff9d768cec62b46c7bdd66",
+      "app/lib/core/assets/download_metrics.dart": "c45d40c29e8d2460c121d881cfe1bb00dae71c3a",
+      "app/lib/core/assets/downloadable_asset_manager.dart": "7c0f638f6bebb1d1898b78f1753f1ae5fe322eac",
+      "app/lib/core/assets/downloadable_asset_providers.dart": "0efb5c1e2d699d539a4c24969f03c9ea91584053",
+      "app/lib/core/assets/downloadable_asset_state.dart": "a6d259b3eb72b98bf5c96b61ceca4791a8de6079",
+      "app/lib/core/assets/downloadable_asset_storage.dart": "9acab4af7c179315691d9c8181cca60577902c2a",
+      "app/lib/core/assets/downloadable_index_record.dart": "d693b9c42170eadbe046d11799efc2e2949d07ac",
+      "app/lib/core/assets/cache/cache_eviction_policy.dart": "6f73192031755ff3daea6a1be420cf2ecdd5865a",
+      "app/lib/core/assets/cache/cache_index_entry.dart": "1086e8b61382e98a97fa2b72716b2714b981362f",
+      "app/lib/core/assets/cache/cache_index_ownership.dart": "5a79694bf49d1eec89649cb6bfcafa661e4d27ea",
+      "app/lib/core/assets/cache/cache_index_reader.dart": "48afd959c3f228652ee7eb9837aa32e1d92244f3",
+      "app/lib/core/assets/cache/cache_limits_resolver.dart": "f856de1297917d56d19a6842060bdf06ef1bd68b",
+      "app/lib/core/assets/cache/cache_limits.dart": "4bcd2e5bf32785cde2c14a4bf404c206821fa5d7",
+      "app/lib/core/assets/cache/cache_release_telemetry.dart": "91de7d8763b7d011030758d8998ec776e67b7324",
+      "app/lib/core/assets/cache/cache_room_keeper.dart": "8cff362d41ebe7aad913f7742ee22e79468afca0",
+      "app/lib/core/assets/cache/device_class.dart": "1b776df5d7a1bed21aaa4ab578d55580b12f3759",
+      "app/lib/core/assets/cache/eviction_candidates.dart": "2a6b0242b11f70b762a41af14dcad8dd256b2d16",
+      "app/lib/core/assets/cache/free_space_reader.dart": "a89007d1c863a6e6ac54a8039edde1a798d792bc",
+      "app/lib/core/assets/cache/personal_media_ownership.dart": "19422dcca5188433c3b54d10dc53828be1497708",
+      "app/lib/core/assets/cache/platform_cache_room_keeper.dart": "2c76f8bd6b0b3e268ee9d17ec3401e4389185c23",
+      "app/lib/core/assets/cache/platform_free_space_reader.dart": "840694db434e04a19511f8093e80df94aee3b8f7",
+      "app/lib/core/assets/cache/public_cache_config.dart": "970cfe3bf872bbaa842be47ce59bc3327aa8ce91",
+      "app/test/core/assets/cache/cache_blocked_surface_test.dart": "4d9e6342dbf8cd4d5456066d426cde2222a5335f",
+      "app/test/core/assets/cache/cache_candidates_test.dart": "d8d66243815f8de37f61d1fe86766ace9efe92c8",
+      "app/test/core/assets/cache/cache_eviction_free_space_test.dart": "5940c864708862fffeeb25c6cea35ec043aac2bc",
+      "app/test/core/assets/cache/cache_eviction_policy_test.dart": "a4bdc416bebca113e79bba858ab963ef7de27b28",
+      "app/test/core/assets/cache/cache_index_access_test.dart": "8c06118b59a7d1e9a0c4e8f8412728a8041be3ef",
+      "app/test/core/assets/cache/cache_limits_test.dart": "392e8eb9e4255340c2cb513a2332bbd9c9694ec7",
+      "app/test/core/assets/cache/cache_policy_integration_test.dart": "69e4f3a10ad1a12379e9d5b17de4a9007be92830",
+      "app/test/core/assets/cache/cache_telemetry_test.dart": "1673f82cf88a4f90ab80554331805f92247a6c8e",
+      "app/test/core/assets/cache/cache_test_support.dart": "748d5659292b8d00ad9194496d643693d8b053e7",
+      "app/test/core/assets/cache/device_class_test.dart": "369e1d5b29de9de7f0d2b22a2115d63db71fecb2",
+      "app/test/core/assets/cache/free_space_reader_test.dart": "57b8e57077c18af109d635cc2fe461a2152af242",
+      "app/test/core/assets/cache/manager_cache_policy_test.dart": "ed8b6dffc1a8c7a005df037f60f18cc8235f992d",
+      "app/test/core/assets/cache/manager_policy_support.dart": "a0ea1c11076f95059c29a8cdd75bc896c929eace",
+      "docs/product/tecnologia/06_bibliotecas.md": "b9e1622ad2875afad5b5389ab524d06f4eb9f89f",
+      "docs/product/tecnologia/10_experiencia_y_datos.md": "3e96173c3ce87019c6f0b9ac8fdebd7d2effbb68"
+    },
+    "summary": {
+      "files": 39,
+      "reviewed_files": 37,
+      "lines": 4719,
+      "reviewed_lines": 4686,
+      "pct_lines": 99,
+      "excluded": [
+        "app/pubspec.lock"
+      ]
+    }
+  },
+  "verdict_expected_by_rubric": "iterar"
+}
