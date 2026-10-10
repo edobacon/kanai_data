@@ -168,34 +168,34 @@ Contrato: rollback: Eliminar tests/test_practice_house_keys.py.. Status: done
 Contrato: rollback: Revertir los asserts agregados en tests/test_practice_repair.py (git checkout del archivo al estado previo); no se borra el archivo.. Status: done
 
 #### S2.T1 — Etapa A (REQ-19): minerales, coherencia vibracional y escala RKL del generador scripts/build_practice_catalog.py. Sin anillos, Casa 12 ni profundidad (etapa B, sesión 4).
-Contrato: rollback: Revertir las subtasks en orden inverso y regenerar el JSON.. Status: pending
+Contrato: rollback: Revertir las subtasks en orden inverso y regenerar el JSON.. Status: done
 
 #### S2.T1.1 — Generar el catálogo de minerales (cornalina, amatista, cuarzo citrino, aguamarina con alias 'agua marina', lapislázuli y cuarzo rosado) con content_key, nombre, alias y el id de su pieza validado contra app/assets/manifest.json (schemaVersion 2, familia mineral-illustration): cornalina = mineral-carnelian; amatista = mineral-amethyst; cuarzo citrino = mineral-citrine-quartz; aguamarina = mineral-aquamarine; lapislázuli = mineral-lapis-lazuli; cuarzo rosado = mineral-rose-quartz. Informativos, sin producto ni código (DEC-120).
-Contrato: rollback: Quitar la sección minerals del generador y regenerar.. Status: pending
+Contrato: rollback: Quitar la sección minerals del generador y regenerar.. Status: done
 
 #### S2.T1.2 — Estructurar la coherencia vibracional de la etapa A (chakras como números, minerales como referencias al catálogo agrupados en conjunción 'y' o alternativa 'o', 3 minutos, 3 días y las dos formas de apoyo V-12). La Casa 7 (tm-src-tablero#p1044) queda con resolución editorial provisional: forma 'lapislázuli o (aguamarina y amatista)', la entrada provisional en correcciones_editoriales_practica.v1.json ya la crea S1.T6 (no volver a crearla), y el --check ADVIERTE nombrando el nodo y termina con código 0.
-Contrato: rollback: Quitar la coherencia del generador y regenerar.. Status: pending
+Contrato: rollback: Quitar la coherencia del generador y regenerar.. Status: done
 
 #### S2.T1.3 — Estructurar la escala RKL en tramos excluyentes (9.000 o más sin días; 8.000 a 8.999, 3 días; 5.000 a 7.999, 3 días repitiendo la acción; menos de 5.000, 9 días y nueva medición). El nodo operativo de menos de 5.000 no expone 'tecnología sagrada'; esa expresión queda solo en sourceText y su editorialResolutionId ya está registrado por S1.T12 (solo referenciarlo, no registrarlo aquí).
-Contrato: rollback: Quitar rklScale del generador y regenerar.. Status: pending
+Contrato: rollback: Quitar rklScale del generador y regenerar.. Status: done
 
 #### S2.T2 — Etapa A (REQ-19): pruebas de minerales, coherencia vibracional y escala RKL. Sin anillos, Casa 12 ni profundidad (etapa B, sesión 4).
-Contrato: rollback: Borrar tests/test_practice_catalog_content.py.. Status: pending
+Contrato: rollback: Borrar tests/test_practice_catalog_content.py.. Status: done
 
 #### S2.T2.1 — Crear tests/test_practice_catalog_content.py con un helper que genera el catálogo una sola vez (setUpClass) y la clase MineralsTest: exactamente 6 minerales con content_key único; aguamarina con alias 'agua marina'; ningún mineral con producto ni código; y, sobre una copia temporal del manifiesto sin el id de un mineral, la validación falla con un mensaje que nombra ese mineral.
-Contrato: rollback: Borrar tests/test_practice_catalog_content.py.. Status: pending
+Contrato: rollback: Borrar tests/test_practice_catalog_content.py.. Status: done
 
 #### S2.T2.2 — Asertar la coherencia de la Casa 7 en su forma provisional: grupo 'o' con lapislázuli y subgrupo 'y' con aguamarina y amatista, con su marca provisional y su editorialResolutionId propio. Asertar también la Casa 8 (alternativa aguamarina o lapislázuli), la Casa 9 (cuarzo citrino y una de esas dos) y la Casa 4 (cuarzo rosado).
-Contrato: rollback: Quitar CoherenceTest del archivo de pruebas.. Status: pending
+Contrato: rollback: Quitar CoherenceTest del archivo de pruebas.. Status: done
 
 #### S2.T2.3 — Agregar la clase RklScaleTest: el helper de consulta devuelve un solo tramo para 9.500/8.500/6.000/4.000 con 0/3/3/9 días y nueva medición solo en 4.000; QA-02-10-03 (5.000 → 3 días sin nueva medición); bordes 9.000 (sin días) y 8.999 (3 días); el texto operativo del tramo <5000 no contiene 'tecnología sagrada' y su sourceText sí, junto con un editorialResolutionId.
-Contrato: rollback: Quitar RklScaleTest del archivo de pruebas.. Status: pending
+Contrato: rollback: Quitar RklScaleTest del archivo de pruebas.. Status: done
 
 #### S2.T3 — Prueba de cierre de la sesión A (minerales, coherencia y escala RKL): comprobar que el sistema queda funcional con generador, esquema, --check y pruebas de minerales (ids del manifiesto app/assets/manifest.json), coherencia (Casa 4, 8, 9 y la Casa 7 provisional) y tramos RKL (9.500, 8.500, 6.000, 5.000 y 4.000) en verde, antes del gate de la sesión.
-Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: pending
+Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: done
 
 #### S2.T5 — Tarea de test (REQ-04) en tests/test_practice_catalog_coherencia.py: una referencia de mineral inexistente en el catálogo de minerales (content_key que no está entre los seis) hace fallar la validación del generador y del esquema, y el error nombra el nodo y el content_key faltante.
-Contrato: rollback: Eliminar tests/test_practice_catalog_coherencia.py.. Status: pending
+Contrato: rollback: Eliminar tests/test_practice_catalog_coherencia.py.. Status: done
 
 #### S3.T2 — Normalizar al linter de docs solo los docs del baseline (.docs-baseline.txt) que aparezcan realmente en el diff del ticket; no ampliar el diff a los demás docs del baseline. El documento nuevo docs/content/materiales_practica_y_reparacion.md debe nacer compliant.
 Contrato: rollback: Revertir los cambios de formato de esos docs y restaurar .docs-baseline.txt.. Status: pending
@@ -472,19 +472,19 @@ Ninguno.
 
 **Gate (auto)**: `python3 scripts/build_practice_catalog.py --check` pasa y el JSON generado tiene la ficha y el procedimiento de reparación de house-01 a house-11 (orientaciones, omisiones DEC-148, rótulos normalizados). La prueba de fidelidad y --check fallan si se edita a mano el Logo Shamkya de la Casa 3.
 
-### Session 2 · T3 · open
+### Session 2 · T3 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T1.3
-- [ ] S2.T2
-- [ ] S2.T2.1
-- [ ] S2.T2.2
-- [ ] S2.T2.3
-- [ ] S2.T3
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T1.3
+- [x] S2.T2
+- [x] S2.T2.1
+- [x] S2.T2.2
+- [x] S2.T2.3
+- [x] S2.T3
+- [x] S2.T5
 
 **Gate (auto)**: Etapa A. El generador con --check pasa y el JSON generado tiene la coherencia vibracional con minerales agrupados (y, o), el catálogo de 6 minerales con ids de pieza de app/assets/manifest.json, la escala RKL con tramos excluyentes y la entrada provisional de la Casa 7 que --check advierte sin fallar. Las pruebas de la etapa A pasan: python3 -m unittest discover -s tests -p 'test_practice*.py'. No contiene anillos, Casa 12 ni profundidad.
 
