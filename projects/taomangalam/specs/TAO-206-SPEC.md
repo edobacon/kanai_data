@@ -148,16 +148,16 @@ Contrato: rollback: Eliminar app/test/catalogos/arcanos_catalog_test.dart; el ca
 Contrato: rollback: Revertir solo la sección agregada a docs/content/SCHEMA.md con git checkout del archivo.. Status: done
 
 #### S3.T1 — Crear docs/content/catalogos/correcciones_editoriales_arcanos.v1.json con el patrón de los demás correcciones_editoriales_*.v1.json, y hacer que scripts/build_arcanos_catalog.py aplique esas correcciones para reconciliar nombres o palabras mágicas entre docs/content/imagenes/01_arcanos.md y docs/content/catalogos/casas.v1.json.
-Contrato: rollback: Borrar correcciones_editoriales_arcanos.v1.json y revertir la lectura de correcciones en el generador.. Status: pending
+Contrato: rollback: Borrar correcciones_editoriales_arcanos.v1.json y revertir la lectura de correcciones en el generador.. Status: done
 
 #### S3.T2 — Mantener lo ya descrito y sumar los dos casos vinculantes de REQ-09 en tests/test_arcanos_correcciones_editoriales.py: una discrepancia de nombre o palabra mágica no registrada hace fallar scripts/build_arcanos_catalog.py nombrando el arcano, y docs/content/catalogos/correcciones_editoriales_arcanos.v1.json valida contra la misma forma que los demás correcciones_editoriales_*.v1.json.
-Contrato: rollback: Eliminar tests/test_arcanos_correcciones_editoriales.py.. Status: pending
+Contrato: rollback: Eliminar tests/test_arcanos_correcciones_editoriales.py.. Status: done
 
 #### S3.T3 — Crear docs/content/catalogos/correcciones_editoriales_arcanos.v1.json con la misma forma que los demás correcciones_editoriales_*.v1.json y aplicarlo en scripts/build_arcanos_catalog.py: las correcciones registradas se aplican y quedan trazadas en el catálogo; una discrepancia de nombre o palabra mágica entre 01_arcanos.md y casas.v1.json no registrada hace fallar el generador nombrando el arcano. Reutilizar scripts/catalog_common.py.
-Contrato: rollback: Revertir el commit: eliminar correcciones_editoriales_arcanos.v1.json y la lógica de correcciones en scripts/build_arcanos_catalog.py; el catálogo vuelve a generarse sin correcciones.. Status: pending
+Contrato: rollback: Revertir el commit: eliminar correcciones_editoriales_arcanos.v1.json y la lógica de correcciones en scripts/build_arcanos_catalog.py; el catálogo vuelve a generarse sin correcciones.. Status: done
 
 #### S3.T4 — Escribir tests/test_arcanos_correcciones_editoriales.py: (a) el archivo correcciones_editoriales_arcanos.v1.json valida contra la misma forma que los demás correcciones_editoriales_*.v1.json; (b) una discrepancia no registrada hace fallar el generador nombrando el arcano; (c) una corrección registrada se aplica y queda trazada.
-Contrato: rollback: Eliminar tests/test_arcanos_correcciones_editoriales.py.. Status: pending
+Contrato: rollback: Eliminar tests/test_arcanos_correcciones_editoriales.py.. Status: done
 
 #### S4.T1 — Crear scripts/build_glosario_catalog.py con --check (patrón de scripts/catalog_common.py y scripts/build_house_catalog.py), el JSON Schema del glosario y docs/content/catalogos/correcciones_editoriales_glosario.v1.json. Generar docs/content/catalogos/glosario.v1.json desde los 16 términos de docs/content/10_registro_cierre_y_glosario.md: contentKey (ancla), término, definición breve, tags del front matter, text, sourceText, sourceRefs a docs/content/fuentes/02_como_usar_tao_mangalam.md y editorialResolutionId si el texto difiere. Omitir explicación ampliada, sinónimos, relacionados y contextos (sin null). catalogVersion con hash del contenido versionado almacenado junto al catálogo, marca provisional.
 Contrato: rollback: Eliminar scripts/build_glosario_catalog.py, el schema, correcciones_editoriales_glosario.v1.json y glosario.v1.json; no se tocan otros catálogos.. Status: done
@@ -410,13 +410,13 @@ Ninguno.
 
 **Gate (auto)**: El validador editorial falla sobre el fixture de QA-02-11-03 con un mensaje que nombra el capítulo y la clave, y pasa sobre el fixture válido. flutter test del cargador de arcanos pasa con 22 arcanos ordenados y su content_version.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
 
 ### Session 4 · continue
 
