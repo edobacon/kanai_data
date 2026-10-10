@@ -198,19 +198,19 @@ Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Sta
 Contrato: rollback: Eliminar tests/test_practice_catalog_coherencia.py.. Status: done
 
 #### S3.T2 — Normalizar al linter de docs solo los docs del baseline (.docs-baseline.txt) que aparezcan realmente en el diff del ticket; no ampliar el diff a los demás docs del baseline. El documento nuevo docs/content/materiales_practica_y_reparacion.md debe nacer compliant.
-Contrato: rollback: Revertir los cambios de formato de esos docs y restaurar .docs-baseline.txt.. Status: pending
+Contrato: rollback: Revertir los cambios de formato de esos docs y restaurar .docs-baseline.txt.. Status: done
 
 #### S3.T4 — Ejecutar el linter de docs con DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check, comprobar que el catálogo marca como provisional el documento de materiales hasta la aprobación de Contenido (REQ-10) y que .docs-baseline.txt no gana entradas nuevas (REQ-17).
-Contrato: rollback: Revertir las normalizaciones de formato aplicadas a los docs del baseline por esta tarea.. Status: pending
+Contrato: rollback: Revertir las normalizaciones de formato aplicadas a los docs del baseline por esta tarea.. Status: done
 
 #### S3.T5 — Primera tarea de la sesión 3 (NO test). Implementar en scripts/build_practice_catalog.py la sección `materials`, leída de docs/content/materiales_practica_y_reparacion.md (DEC-145). Cada material trae: `function` (enum cerrado de cinco: enlace, corrección, resonancia mineral, elemento de ritual, instrumento de medición), `whenUsed` (DEC-071), `isProduct` (true solo para kuberani y corrector energético: DEC-060, DEC-066, DEC-136) y `sourceRefs` (tm-src-como-usar#p0092, p0115, p0118, p0130). Los materiales de la sesión se referencian por contentKey de docs/content/catalogos/ritual_sesion.v1.json (material-mantel, material-tablero, material-dharani-deva, material-vela, material-campanilla, material-dados, material-pendulo), sin duplicar su texto. El catálogo marca la sección como provisional hasta la aprobación editorial de Contenido (TAO-216). Declarar la sección y el enum en docs/content/catalogos/practica.v1.schema.json y regenerar docs/content/catalogos/practica.v1.json.
-Contrato: rollback: Quitar la sección materials del generador scripts/build_practice_catalog.py y de practica.v1.schema.json, y regenerar practica.v1.json.. Status: pending
+Contrato: rollback: Quitar la sección materials del generador scripts/build_practice_catalog.py y de practica.v1.schema.json, y regenerar practica.v1.json.. Status: done
 
 #### S3.T6 — Probar la sección materials del generador con tests/test_practice_materials.py (nombre único del test de materiales): cinco funciones válidas, solo kuberani y corrector como producto con código, sourceRefs existentes, referencias a material-* de ritual_sesion.v1.json sin duplicar, y marca provisional del documento hasta la aprobación de Contenido.
-Contrato: rollback: Borrar tests/test_practice_materials.py.. Status: pending
+Contrato: rollback: Borrar tests/test_practice_materials.py.. Status: done
 
 #### S3.T7 — Escribir tests/test_practice_docs_baseline.py con la prueba de REQ-17: el conjunto de rutas de .docs-baseline.txt (una ruta por linea, ignorando lineas con #) no gana entradas respecto de origin/epic/EP-02 (obtener la version base con git show origin/epic/EP-02:.docs-baseline.txt y comparar conjuntos: el actual debe ser subconjunto del base).
-Contrato: rollback: Eliminar tests/test_practice_docs_baseline.py.. Status: pending
+Contrato: rollback: Eliminar tests/test_practice_docs_baseline.py.. Status: done
 
 #### S4.T1 — Prueba de cierre de la sesión B (anillos, Casa 12 y profundidad): comprobar que el sistema queda funcional con generador, --check y pruebas de anillos (repeticiones 3, 5, 5, 5, 5, 5, 7 y octavo sin número, acción del octavo con p0110 y p0111, mismos content_key de resultados.v1.json), cierre de Casa 12 (acciones finales, referencias por contentKey a la energización, sin reparación) y profundidad DEC-027 en verde, antes del gate de la sesión.
 Contrato: rollback: Eliminar los archivos de prueba agregados en esta task.. Status: pending
@@ -488,14 +488,14 @@ Ninguno.
 
 **Gate (auto)**: Etapa A. El generador con --check pasa y el JSON generado tiene la coherencia vibracional con minerales agrupados (y, o), el catálogo de 6 minerales con ids de pieza de app/assets/manifest.json, la escala RKL con tramos excluyentes y la entrada provisional de la Casa 7 que --check advierte sin fallar. Las pruebas de la etapa A pasan: python3 -m unittest discover -s tests -p 'test_practice*.py'. No contiene anillos, Casa 12 ni profundidad.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T2
-- [ ] S3.T4
-- [ ] S3.T5
-- [ ] S3.T6
-- [ ] S3.T7
+- [x] S3.T2
+- [x] S3.T4
+- [x] S3.T5
+- [x] S3.T6
+- [x] S3.T7
 
 **Gate (auto)**: El documento único de materiales existe en docs/content/materiales_practica_y_reparacion.md, pasa el linter de docs (DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check) y queda listo para la aprobación de Contenido. El catálogo tiene la sección de materiales con función, uso, producto, anclas y la marca de provisional, y la prueba tests/test_practice_catalog_materials.py pasa. Los docs del baseline que aparezcan en el diff pasan el linter.
 
