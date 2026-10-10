@@ -169,19 +169,19 @@ Contrato: rollback: Eliminar los dos archivos de test nuevos.. Status: done
 Contrato: rollback: Revertir los cambios de formato en los docs con git checkout de esos archivos.. Status: done
 
 #### S5.T1 — Extender el JSON Schema editorial común ya definido para Acerca de e Instructivo con los campos de los catálogos nuevos (glosario, bloques de Acerca de, capítulos con apartados) y el campo opcional editorialStatus con valor "provisional" por nodo. No crear un esquema paralelo: los esquemas de glosario.v1.json, acerca_de.v1.json e instructivo.v1.json referencian/extienden el común. Mantener el patrón de contentKey ^[a-z0-9]+(-[a-z0-9]+)*$ y catalogVersion obligatorio.
-Contrato: rollback: Eliminar scripts/build_acerca_instructivo_catalog.py, el schema editorial y acerca_de.v1.json.. Status: pending
+Contrato: rollback: Eliminar scripts/build_acerca_instructivo_catalog.py, el schema editorial y acerca_de.v1.json.. Status: done
 
 #### S5.T2 — Extender scripts/build_acerca_instructivo_catalog.py para generar docs/content/catalogos/instructivo.v1.json: nueve capítulos instructivo-cap-01 a instructivo-cap-09 con los títulos de HU-10-04 (docs/backlog/EP-10_biblioteca_ayuda_y_aprendizaje.md, desde la línea 613), apartados con content_key, texto y fuente, y referencias solo por content_key a procedimientos de ritual_sesion.v1.json (y practica.v1.json cuando exista), a términos de glosario.v1.json y a ilustraciones por id de app/assets/manifest.json. Lo no declarado se omite y queda marcado provisional.
-Contrato: rollback: Revertir la extensión del generador y eliminar instructivo.v1.json; acerca_de.v1.json no cambia.. Status: pending
+Contrato: rollback: Revertir la extensión del generador y eliminar instructivo.v1.json; acerca_de.v1.json no cambia.. Status: done
 
 #### S5.T3 — Escribir tests/test_catalogo_acerca_de.py y tests/test_catalogo_instructivo.py: claves de la Adenda 2, títulos de HU-10-04, catalogVersion obligatorio, patrón contentKey ^[a-z0-9]+(-[a-z0-9]+)*$, marca provisional, ausencia de origen, autoría y créditos, referencias solo por content_key sin copiar procedimientos, y --check falla si cambia el contenido sin subir catalogVersion.
-Contrato: rollback: Eliminar los dos archivos de test nuevos.. Status: pending
+Contrato: rollback: Eliminar los dos archivos de test nuevos.. Status: done
 
 #### S5.T4 — Ajustar scripts/validate_editorial_catalog.py para resolver términos contra docs/content/catalogos/glosario.v1.json (campo contentKey), procedimientos contra la lista explícita [ritual_sesion.v1.json, practica.v1.json si existe] e ilustraciones contra app/assets/manifest.json, y validar los catálogos reales de Acerca de e Instructivo. Reutiliza la validación de casas y manifiesto de scripts/catalog_common.py sin duplicarla. Cada falla nombra capítulo o apartado y clave.
-Contrato: rollback: Revertir los cambios en scripts/validate_editorial_catalog.py a su versión previa.. Status: pending
+Contrato: rollback: Revertir los cambios en scripts/validate_editorial_catalog.py a su versión previa.. Status: done
 
 #### S5.T5 — Implementar en scripts/catalog_common.py (reutilizado por los generadores de glosario, Acerca de e Instructivo) la lectura de approvals de correcciones_editoriales_<catálogo>.v1.json ({nodeKeys o "all", approvedBy, approvedAt, reference}) y la regla: se quita editorialStatus de los nodos cubiertos; sin aprobación el nodo sale con editorialStatus="provisional". No guardar approvedBy en el catálogo generado.
-Contrato: rollback: Revertir el commit en scripts/catalog_common.py y en los generadores; todos los nodos salen provisional sin lectura de approvals.. Status: pending
+Contrato: rollback: Revertir el commit en scripts/catalog_common.py y en los generadores; todos los nodos salen provisional sin lectura de approvals.. Status: done
 
 #### S6.T1 — Escribir los tests del validador contra los catálogos reales (el validador pasa sobre glosario, acerca_de e instructivo reales) y fixtures solo para los casos de error: término inexistente, procedimiento inexistente (QA-02-11-03, nombra capítulo y clave) e ilustración fuera del manifiesto; caso borde con practica.v1.json ausente. Archivo: tests/test_validador_catalogo_editorial.py.
 Contrato: rollback: Eliminar tests/test_validador_catalogo_editorial.py o revertir los casos agregados.. Status: pending
@@ -427,14 +427,14 @@ Ninguno.
 
 **Gate (auto)**: Pasan python3 -m unittest discover -s tests -p test_catalogo_glosario.py y el --check del generador de glosario, con 16 términos y sin campos null.
 
-### Session 5 · open
+### Session 5 · continue
 
 **Tasks:**
-- [ ] S5.T1
-- [ ] S5.T2
-- [ ] S5.T3
-- [ ] S5.T4
-- [ ] S5.T5
+- [x] S5.T1
+- [x] S5.T2
+- [x] S5.T3
+- [x] S5.T4
+- [x] S5.T5
 
 **Gate (auto)**: Se generan acerca_de.v1.json e instructivo.v1.json con 8 y 9 nodos, el --check de cada uno termina en 0 y pasan sus tests.
 
