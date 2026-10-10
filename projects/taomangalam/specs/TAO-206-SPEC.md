@@ -160,13 +160,13 @@ Contrato: rollback: Revertir el commit: eliminar correcciones_editoriales_arcano
 Contrato: rollback: Eliminar tests/test_arcanos_correcciones_editoriales.py.. Status: pending
 
 #### S4.T1 — Crear scripts/build_glosario_catalog.py con --check (patrón de scripts/catalog_common.py y scripts/build_house_catalog.py), el JSON Schema del glosario y docs/content/catalogos/correcciones_editoriales_glosario.v1.json. Generar docs/content/catalogos/glosario.v1.json desde los 16 términos de docs/content/10_registro_cierre_y_glosario.md: contentKey (ancla), término, definición breve, tags del front matter, text, sourceText, sourceRefs a docs/content/fuentes/02_como_usar_tao_mangalam.md y editorialResolutionId si el texto difiere. Omitir explicación ampliada, sinónimos, relacionados y contextos (sin null). catalogVersion con hash del contenido versionado almacenado junto al catálogo, marca provisional.
-Contrato: rollback: Eliminar scripts/build_glosario_catalog.py, el schema, correcciones_editoriales_glosario.v1.json y glosario.v1.json; no se tocan otros catálogos.. Status: pending
+Contrato: rollback: Eliminar scripts/build_glosario_catalog.py, el schema, correcciones_editoriales_glosario.v1.json y glosario.v1.json; no se tocan otros catálogos.. Status: done
 
 #### S4.T2 — Escribir tests/test_catalogo_glosario.py (16 términos y contentKey exactas, claves opcionales ausentes y nunca null, sourceRefs resolubles, marca provisional, cambio de contenido sin subir catalogVersion falla --check) y tests/test_glosario_correcciones_editoriales.py (forma igual a los demás correcciones_editoriales_*.v1.json y discrepancia no registrada falla nombrando el término).
-Contrato: rollback: Eliminar los dos archivos de test nuevos.. Status: pending
+Contrato: rollback: Eliminar los dos archivos de test nuevos.. Status: done
 
 #### S4.T3 — Verificar el linter de docs sobre los docs tocados por el ticket (docs/content/imagenes/01_arcanos.md, docs/content/SCHEMA.md y docs/development/commands.md): normalizar el patrón que el linter rechaza y confirmar compliance con el comando DOCS_DIFF_BASE=origin/main node scripts/dev/docs.mjs check, con .docs-baseline.txt como baseline (una ruta por línea, # para comentarios).
-Contrato: rollback: Revertir los cambios de formato en los docs con git checkout de esos archivos.. Status: pending
+Contrato: rollback: Revertir los cambios de formato en los docs con git checkout de esos archivos.. Status: done
 
 #### S5.T1 — Extender el JSON Schema editorial común ya definido para Acerca de e Instructivo con los campos de los catálogos nuevos (glosario, bloques de Acerca de, capítulos con apartados) y el campo opcional editorialStatus con valor "provisional" por nodo. No crear un esquema paralelo: los esquemas de glosario.v1.json, acerca_de.v1.json e instructivo.v1.json referencian/extienden el común. Mantener el patrón de contentKey ^[a-z0-9]+(-[a-z0-9]+)*$ y catalogVersion obligatorio.
 Contrato: rollback: Eliminar scripts/build_acerca_instructivo_catalog.py, el schema editorial y acerca_de.v1.json.. Status: pending
@@ -418,12 +418,12 @@ Ninguno.
 - [ ] S3.T3
 - [ ] S3.T4
 
-### Session 4 · open
+### Session 4 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
-- [ ] S4.T3
+- [x] S4.T1
+- [x] S4.T2
+- [x] S4.T3
 
 **Gate (auto)**: Pasan python3 -m unittest discover -s tests -p test_catalogo_glosario.py y el --check del generador de glosario, con 16 términos y sin campos null.
 
