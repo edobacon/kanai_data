@@ -130,22 +130,22 @@ Contrato: rollback: Eliminar tests/test_catalogo_arcanos.py; no hay otros efecto
 Contrato: rollback: Revertir el registro de arcanos en scripts/sync_app_catalogs.py, eliminar la copia en app/assets/catalogos/ y el hash almacenado junto a docs/content/catalogos/arcanos.v1.json.. Status: done
 
 #### S2.T1 — Crear el esquema editorial común docs/content/catalogos/editorial.v1.schema.json para Acerca de (bloques con claves de HU-10-15) e Instructivo (nueve capítulos de V-46 con apartados), con catalogVersion obligatorio y claves validadas por el patrón ^[a-z0-9]+(-[a-z0-9]+)*$, no por enum. Cada apartado lleva content_key, texto y fuente, y puede referenciar procedimiento, término del glosario e ilustración del manifiesto. Se prueba solo con fixtures en tests/fixtures/editorial/.
-Contrato: rollback: Eliminar docs/content/catalogos/editorial.v1.schema.json y los fixtures en tests/fixtures/editorial/.. Status: pending
+Contrato: rollback: Eliminar docs/content/catalogos/editorial.v1.schema.json y los fixtures en tests/fixtures/editorial/.. Status: done
 
 #### S2.T2 — Cargador Dart de solo lectura del catálogo de arcanos (mismo patrón y ubicación que el cargador de resultados de TAO-198). Lee el asset desde app/assets/catalogos/, ordena por número y expone content_key, número, nombre, alias y content_version (= catalogVersion). Lanza un error tipado si falta la versión. Registrar el asset en pubspec.yaml si el patrón lo exige.
-Contrato: rollback: Borrar el cargador y revertir el registro del asset en pubspec.yaml.. Status: pending
+Contrato: rollback: Borrar el cargador y revertir el registro del asset en pubspec.yaml.. Status: done
 
 #### S2.T3 — Escribir la única suite del esquema editorial y su validador, tests/test_catalogo_editorial.py (absorbe lo que antes estaba en S2.T6). Cubre: esquema de Acerca de e Instructivo con fixtures; catalogVersion (content_version) obligatorio en ambos, con un test que falla si falta; patrón de claves ^[a-z0-9]+(-[a-z0-9]+)*$ con un caso que lo viola y se rechaza; referencias rotas a procedimientos (lista explícita de catálogos), glosario (docs/content/catalogos/glosario.v1.json, campo contentKey) e ilustraciones del manifiesto, con falla que nombra el apartado o capítulo y la clave (QA-02-11-03). No incluye QA-02-11-02, que vive en la suite de arcanos de S1.T4.
-Contrato: rollback: Eliminar tests/test_catalogo_editorial.py; el esquema y el validador quedan intactos.. Status: pending
+Contrato: rollback: Eliminar tests/test_catalogo_editorial.py; el esquema y el validador quedan intactos.. Status: done
 
 #### S2.T4 — Implementar scripts/validate_editorial_catalog.py. Resuelve procedimientos por contentKey contra una lista explícita de catálogos de procedimientos (hoy docs/content/catalogos/ritual_sesion.v1.json, más el catálogo de TAO-207 cuando exista), no un glob. Las validaciones de casas y manifiesto solo se invocan desde las funciones de scripts/catalog_common.py definidas en S1.T1.3, sin reimplementarlas.
-Contrato: rollback: Revertir solo scripts/validate_editorial_catalog.py y su test (git checkout de esos archivos); no tocar la normalización de docs (S1.T2) ni el hash de catalogVersion (S1.T5).. Status: pending
+Contrato: rollback: Revertir solo scripts/validate_editorial_catalog.py y su test (git checkout de esos archivos); no tocar la normalización de docs (S1.T2) ni el hash de catalogVersion (S1.T5).. Status: done
 
 #### S2.T8 — Escribir app/test/catalogos/arcanos_catalog_test.dart para el cargador Dart de arcanos (confirmar con Glob que la ruta queda junto al test del cargador de resultados de TAO-198). Casos: el catálogo empaquetado entrega 22 arcanos ordenados 0..21, cada uno con content_key, y content_version igual a catalogVersion; un asset con arcanos desordenados se entrega ordenado por número; El Loco tiene número 0 y alias 22; un asset sin catalogVersion lanza un error tipado. Las assertions usan valores concretos.
-Contrato: rollback: Eliminar app/test/catalogos/arcanos_catalog_test.dart; el cargador y el catálogo quedan intactos.. Status: pending
+Contrato: rollback: Eliminar app/test/catalogos/arcanos_catalog_test.dart; el cargador y el catálogo quedan intactos.. Status: done
 
 #### S2.T9 — Escribir en docs/content/SCHEMA.md la sección del esquema editorial (Acerca de e Instructivo) y del catálogo de arcanos: campos, patrón de contentKey ^[a-z0-9]+(-[a-z0-9]+)*$, catalogVersion como content_version, referencias a procedimientos, glosario y manifiesto, y rechazo de campos de interpretación (DEC-048). Dejar el doc compliant con el linter de docs.
-Contrato: rollback: Revertir solo la sección agregada a docs/content/SCHEMA.md con git checkout del archivo.. Status: pending
+Contrato: rollback: Revertir solo la sección agregada a docs/content/SCHEMA.md con git checkout del archivo.. Status: done
 
 #### S3.T1 — Crear docs/content/catalogos/correcciones_editoriales_arcanos.v1.json con el patrón de los demás correcciones_editoriales_*.v1.json, y hacer que scripts/build_arcanos_catalog.py aplique esas correcciones para reconciliar nombres o palabras mágicas entre docs/content/imagenes/01_arcanos.md y docs/content/catalogos/casas.v1.json.
 Contrato: rollback: Borrar correcciones_editoriales_arcanos.v1.json y revertir la lectura de correcciones en el generador.. Status: pending
@@ -398,15 +398,15 @@ Ninguno.
 
 **Gate (auto)**: Pasan python3 -m unittest discover -s tests -p test_catalogo_arcanos.py y python3 -m unittest discover -s tests -p test_arcanos_correcciones_editoriales.py; el generador con --check termina en 0 y el linter de docs no reporta los archivos tocados.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T8
-- [ ] S2.T9
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T8
+- [x] S2.T9
 
 **Gate (auto)**: El validador editorial falla sobre el fixture de QA-02-11-03 con un mensaje que nombra el capítulo y la clave, y pasa sobre el fixture válido. flutter test del cargador de arcanos pasa con 22 arcanos ordenados y su content_version.
 
