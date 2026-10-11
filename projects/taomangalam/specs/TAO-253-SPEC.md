@@ -117,16 +117,16 @@ Contrato: rollback: Revertir el commit; operación nueva y la base efímera de p
 Contrato: rollback: Eliminar el archivo de test.. Status: done
 
 #### S4.T1 — Agregar al supersede las validaciones previas dentro de la transacción: revalidar que el paso es el último de la consulta (numero_paso máximo no rehecho), que la revisión vigente coincide con la de la vista previa (si no, error de última tirada cambiada) y que la consulta no está completada (error tipado de HU-06-15). Todos los rechazos ocurren antes de cualquier escritura.
-Contrato: rollback: Revertir el commit; el supersede vuelve a no revalidar.. Status: pending
+Contrato: rollback: Revertir el commit; el supersede vuelve a no revalidar.. Status: done
 
 #### S4.T2 — Agregar las ramas según el resultado corregido en la misma transacción: Retroceso con HU-06-14 (anillo, fuerza, casa de retorno, sin plan nuevo, plan_actual_id null), Cierre con HU-06-15 (completada), Retroceso vigente a Avance o Permanencia (genera el plan nuevo y la fase pasa a acciones_en_curso) y Retroceso a Retroceso (actualiza anillo, fuerza y retorno, sigue en espera).
-Contrato: rollback: Revertir el commit; el supersede queda solo con las ramas Avance y Permanencia.. Status: pending
+Contrato: rollback: Revertir el commit; el supersede queda solo con las ramas Avance y Permanencia.. Status: done
 
 #### S4.T3 — Si se actualiza el estado de HU-06-08/HU-06-07 en docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md u otro doc del baseline, dejarlo compliant con el linter sin tocar .docs-baseline.txt.
-Contrato: rollback: Revertir el commit de docs.. Status: pending
+Contrato: rollback: Revertir el commit de docs.. Status: done
 
 #### S4.T4 — Escribir test/motor/correccion/ramas_rechazos_test.dart: QA-06-07-02 (no última tirada), QA-06-07-04 (vista previa obsoleta, sin cambios en revisiones, planes ni unidades), consulta completada con el error de HU-06-15, 4 a 6 corregido a D12=3 que da Retroceso 4 a 3, D12=12 que da Cierre y completada, QA-06-07-05 (Retroceso a Avance y Retroceso a Retroceso) y QA-06-08-04 (providers de Inicio y rastro con un único estado confirmado y tarea vacía). Verificar además que git diff de .docs-baseline.txt queda vacío.
-Contrato: rollback: Eliminar el archivo de test.. Status: pending
+Contrato: rollback: Eliminar el archivo de test.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -162,13 +162,13 @@ Ninguno.
 
 **Gate (auto)**: Pasa test/motor/correccion/supersede_test.dart: la vista previa de 4 a 6 con D12=4 devuelve Permanencia frente a Avance sin cambiar ningún volcado de tablas, y la aceptación deja la revisión 2 vigente, la 1 sustituida, el plan sustituido y enlazado, el evento_plan y las proyecciones corregidas; con una falla inyectada, la revisión 1 sigue vigente.
 
-### Session 4 · T2 · open
+### Session 4 · T2 · continue
 
 **Tasks:**
-- [ ] S4.T1
-- [ ] S4.T2
-- [ ] S4.T3
-- [ ] S4.T4
+- [x] S4.T1
+- [x] S4.T2
+- [x] S4.T3
+- [x] S4.T4
 
 **Gate (auto)**: Pasa test/motor/correccion/ramas_rechazos_test.dart: el Avance de 4 a 6 corregido a D12=3 queda como Retroceso de 4 a 3 en espera sin plan, el corregido a D12=12 deja la consulta completada, el Retroceso corregido a Avance queda en acciones_en_curso, los rechazos tipados no escriben nada y los providers emiten un único estado confirmado (QA-06-08-04); pnpm run docs:check en verde.
 
