@@ -1,0 +1,245 @@
+---
+id: TAO-239-SPEC
+project: taomangalam
+ticket: TAO-239
+status: draft
+---
+
+# TAO-239 · HU-03a-08: el manifiesto se refresca al arrancar, descarta la caché si cambia el esquema, ofrece consultas a la interfaz y aclara su contrato y su versión
+
+## Resumen ejecutivo
+
+Qué se hace: completar el manifiesto de acceso que ya existe (ServicioManifiesto, CacheManifiestoDrift, PuertoManifiestoApi, interceptor de capacidad_denegada). La app pedirá el manifiesto al arrancar con conexión. La caché Drift guardará la versión del esquema y se descartará si esa versión cambia. La interfaz tendrá dos consultas nuevas: vistaHabilitada y deniegaPorTipoCuenta, esta última sobre capacidadesPorTipoCuenta. En development habrá un panel con la versión, el origen y las capacidades. En el servidor, GET /manifest emitirá impersonacion y modoDemostracion según lo que se decida en el intake, contará los 304 y 200 en logs sin cuerpo, y la documentación dirá que la versión es un hash calculado por petición y que el claim del access token es una constante en M1a.
+Qué NO se hace: el filtrado de menú y rutas (HU-01-11), la presentación de V-51 (HU-03a-13), los datos reales de impersonación (EP-14b), tablas de servidor y cambios en cuenta.ts (TAO-244).
+Cómo se sabe que funciona: una instalación nueva con red termina con el origen en servidor sin pasar por un capacidad_denegada; una caché con otra versión de esquema se descarta sin error; las consultas responden según vistas y capacidadesPorTipoCuenta; el Supertest valida los campos decididos; el panel muestra versión, origen y capacidades, también en modo avión.
+Tamaño: 3 puntos, 2 sesiones (T2 app + T1 servidor y documentación). Riesgo bajo.
+ADVERTENCIA: la decisión sobre impersonacion y modoDemostracion se toma en el intake. Este plan propone emitirlos (impersonacion: null, modoDemostracion: false) para no romper el contrato con el que EP-14b llenará esos datos. Si se decide retirarlos, la tarea S2.T1 se invierte y quita los campos del contrato y del cliente generado.
+
+Datos a confirmar antes de ejecutar:
+1) Decisión del intake: emitir impersonacion nulo y modoDemostracion o retirarlos del contrato de M1a. Confirmar en DEC-212, DEC-223 o DEC-232.
+2) Archivo fuente del contrato OpenAPI y comando que regenera server/contract/generated/api.d.ts y el paquete Dart tao_mangalam_api. Ver package.json de la raíz y de server/contract.
+3) Nombre de la tabla Drift de la caché del manifiesto y schemaVersion actual de AppDatabase (app/lib/data/drift/app_database.dart).
+4) Si ya existe un panel o una ruta de desarrollo en la app donde insertar la sección del manifiesto, o si hay que crearla. Ver el router de la app y las banderas de entorno development.
+5) Punto de arranque donde se inicializa ServicioManifiesto (main o bootstrap) para engancharle el refresco.
+6) Filtro pnpm y ruta exacta de los tests del servidor (server/test/manifiesto/) para el comando de verify.
+7) Qué DEC o qué documento de docs/ menciona la tabla manifiesto_acceso_version o una versión persistida que haya que corregir.
+
+## Requirements
+
+### REQ-01 `confirmed`
+> Fuente: Criterio de aceptación 1 y Adenda 1 (decisión 2) del request
+
+Al arrancar con conexión, la app pide el manifiesto al servidor con el ETag de la caché vigente mediante una función de arranque testeable, invocada desde el punto de entrada de la app. Si recibe 200, la caché pasa a ser la del servidor (origen servidor). Si recibe 304, conserva la caché. Sin red sigue con la caché o el empaquetado, sin error. Al recuperar la conexión, el refresco se reintenta usando el ObservadorDeRed existente y, si responde 200, la caché pasa a origen servidor. No espera a un capacidad_denegada ni al flujo legal.
+
+### REQ-02 `inferred`
+> Fuente: Request: Criterio de aceptación 2 y Requisitos transversales/Compatibilidad-migración (la caché lleva la versión del esquema del manifiesto); cache_test.dart como referencia de pruebas
+
+La caché Drift guarda la versión del esquema del manifiesto junto al manifiesto. Al leer, si la versión guardada es distinta de la constante actual, o si falta porque es una caché anterior a este cambio, la caché se descarta y la app usa el empaquetado o el servidor, sin lanzar error.
+
+### REQ-03 `confirmed`
+> Fuente: Request HU-03a-08, Alcance/Incluye: API interna para la interfaz; criterio de aceptación 3
+
+Manifiesto expone dos consultas para la interfaz: vistaHabilitada(clave), que es true si la clave está en vistas, y deniegaPorTipoCuenta(clave), que es true si la clave está en capacidadesPorTipoCuenta. Hoy ese campo solo se mapea y nadie lo consulta.
+
+### REQ-04 `confirmed`
+> Fuente: Request: alcance y criterio 4; respuesta del dev en el pedido de enmienda punto 1
+
+Decisión cerrada: el servidor emite impersonacion: null y modoDemostracion: false en M1a y ambos campos se mantienen en el contrato OpenAPI (no se retiran). Los datos reales de impersonación llegan con EP-14b. El cliente generado y el Supertest quedan alineados con esa decisión.
+
+### REQ-05 `inferred`
+> Fuente: Request TAO-239, Requisitos transversales: Observabilidad (304 y 200 contados en logs sin cuerpo); pedido de enmienda punto 2
+
+El servidor cuenta en los logs las respuestas 200 y 304 de GET /manifest sin registrar el cuerpo del manifiesto. Los tests de este comportamiento viven en server/test/manifiesto y los escribe la tarea que implementa el log (S2.T2).
+
+### REQ-06 `inferred`
+> Fuente: Request TAO-239, Alcance: dejar explícito que la versión del manifiesto es un hash por petición; pedido de enmienda punto 7
+
+La documentación y la DEC afectada dicen explícitamente que la versión del manifiesto es un hash calculado en cada petición y que el claim de versión del access token es una constante en M1a. Ninguna mención presenta manifiesto_acceso_version como tabla vigente: solo aparece dentro de la aclaración nueva o de notas históricas marcadas. Se verifica con pnpm run docs:check (docs/development/commands.md) y con revisión humana de las menciones, no con un grep de 0 resultados.
+
+### REQ-07 `confirmed`
+> Fuente: Request: Criterios de aceptación 5 (panel de desarrollo) y Alcance (panel de desarrollo); decisión del dev en esta enmienda; doc 18 §9
+
+Se extiende el panel interno existente en app/lib/features/dev_panel (según doc 18 §9 se compila solo en el sabor development) para mostrar la versión, el origen (servidor, caché o empaquetado) y la lista de capacidades del manifiesto vigente. No hay bandera de ejecución nueva, ni otro punto de entrada, ni otra pantalla. Fuera del sabor development el panel no existe.
+
+### REQ-08 `confirmed` `enforcement`
+> Fuente: Request: Ya entregado en main y requisitos transversales; pedido de enmienda punto 6
+
+Se reusan ServicioManifiesto, CacheManifiestoDrift, PuertoManifiesto, FuenteManifiestoEmpaquetado y el interceptor existentes, sin un cliente ni una caché paralelos. El manifiesto empaquetado ya existe en app/assets/manifiesto/estandar.json y no se vuelve a generar ni a crear. El manifiesto solo muestra u oculta, nunca autoriza (DEC-154). La caché no guarda tokens ni datos personales.
+
+### REQ-09 `confirmed` `enforcement`
+> Fuente: Pedido de enmienda punto 2; código existente alta_dispositivo_providers.dart
+
+El reintento por reconexión reusa ObservadorDeRed y ObservadorDeRedConnectivity (app/lib/features/cuenta/data/alta_dispositivo_providers.dart, provider observadorDeRed). connectivity_plus ya es dependencia: no se agrega otra dependencia ni otro mecanismo de detección de red.
+
+### REQ-10 `confirmed`
+> Fuente: Request: criterio 2 y Compatibilidad/migración; pedido de enmienda puntos 5 y 8
+
+El descarte de la caché por versión de esquema borra solo la copia local del manifiesto, que es regenerable desde el servidor o el empaquetado. No elimina tablas ni columnas y no toca otros datos locales. El paso de migración Drift que agrega la versión de esquema se prueba con una migración real desde el schemaVersion anterior.
+
+### REQ-11 `confirmed`
+> Fuente: Request: caso QA-03a-08-04 y No incluye (HU-01-11); pedido de enmienda punto 7
+
+La comprobación de que el menú muestra los destinos de Estándar en una instalación nueva en modo avión (QA-03a-08-04) es QA humana. El filtrado del menú pertenece a HU-01-11 y no se automatiza ni se reimplementa aquí; esta historia solo garantiza que el origen del manifiesto sea el empaquetado y se vea en el panel de desarrollo.
+## Tasks
+
+#### S1.T1 — Extraer del arranque de la app una función testeable (por ejemplo refrescarManifiestoAlArrancar) que invoque ServicioManifiesto con el ETag de la caché vigente y que el punto de entrada llame. Para la reconexión reusar ObservadorDeRed / ObservadorDeRedConnectivity (app/lib/features/cuenta/data/alta_dispositivo_providers.dart, provider observadorDeRed; connectivity_plus ya es dependencia): ante una falla de red, al emitir reconexión se reintenta el refresco y, si responde 200, la caché pasa a origen servidor. No agregar dependencias ni otro detector de red. Agregar tests: el arranque dispara el refresco (ejerciendo la función extraída), 200 reemplaza la caché, 304 la conserva, sin red usa caché o empaquetado sin error, y caso edge de falla de red seguida de reconexión con la caché pasando a origen servidor.
+Contrato: rollback: Revertir el commit: la app vuelve a refrescar solo ante capacidad_denegada o el flujo legal, y la caché vigente se conserva. Status: pending
+
+#### S1.T2 — Agregar a la caché Drift del manifiesto la columna de versión de esquema (aditiva y nullable) con su paso de migración desde el schemaVersion anterior. Regenerar el código Drift con build_runner y el snapshot de esquema de Drift si el proyecto lo usa. Lectura: si la versión guardada es distinta de la constante actual o es nula, descartar solo la copia local del manifiesto.
+Contrato: rollback: Drift no soporta downgrade automático. La columna es aditiva y nullable, y el cliente anterior la ignora (o su acceso es explícito sin romper). No se borran columnas ni tablas; para revertir el comportamiento se restaura el cliente anterior conservando la última copia válida del manifiesto.. Status: pending
+
+#### S1.T3 — Agregar en Manifiesto las consultas vistaHabilitada(clave), true si la clave está en vistas, y deniegaPorTipoCuenta(clave), true si la clave está en capacidadesPorTipoCuenta. Crear app/test/manifiesto/consultas_manifiesto_test.dart con los 4 test cases de REQ-03: vistaHabilitada true con clave presente, vistaHabilitada false con clave ausente, deniegaPorTipoCuenta true con clave presente y deniegaPorTipoCuenta false con clave ausente.
+Contrato: rollback: Revertir el commit: se quitan los dos métodos, que no tienen consumidores previos. Status: pending
+
+#### S1.T4 — Hecho verificado en el repo (rama main de taomangalam): el panel interno ya existe en app/lib/features/dev_panel (dev_panel_screen.dart, dev_environment.dart, dev_health_probe.dart, dev_simulation.dart, entre otros) y se abre desde app/lib/main_development.dart, es decir, se muestra solo en el sabor development. Por lo tanto se extiende, no se crea: no es un faltante. La tarea debe confirmar ese punto de entrada y definir qué datos del manifiesto vigente (versión, origen servidor, caché o empaquetado, y lista de capacidades) se agregan al panel existente, sin otra pantalla ni bandera nueva.
+Contrato: rollback: Revertir el commit: desaparece la entrada del panel, que no existe fuera de development. Status: pending
+
+#### S1.T6 — Escribir un test de migración Drift real que abra una base en el schemaVersion anterior de la app con una fila de caché del manifiesto sin versión de esquema, la migre al schemaVersion nuevo, y verifique que la caché se descarta sin error, que solo se borró la copia local del manifiesto y que las demás tablas quedan intactas. Usar el helper de migraciones de Drift ya presente en el proyecto si existe; si no, abrir la base con NativeDatabase en memoria y ejecutar la migración paso a paso.
+Contrato: rollback: Eliminar el archivo de test agregado; no afecta código de producción ni datos.. Status: pending
+
+#### S2.T1 — Contrato y cliente: regenerar el contrato OpenAPI y el cliente generado solo si faltan los campos impersonacion y modoDemostracion. Además, aunque el contrato ya los declare, obtenerManifiesto (server/src/capacidades/manifiesto.ts) debe emitir explícitamente impersonacion: null y modoDemostracion: false (decisión cerrada del dev, adenda 1). Ambos campos se mantienen en el contrato.
+Contrato: rollback: Revertir el commit de esta tarea: restaura el contrato y el cliente generado si se regeneraron, y quita la emisión explícita de impersonacion: null y modoDemostracion: false en obtenerManifiesto (server/src/capacidades/manifiesto.ts).. Status: pending
+
+#### S2.T2 — Implementar en el servidor el log que cuenta las respuestas 200 y 304 de GET /manifest sin registrar el cuerpo del manifiesto ni tokens. Escribir en server/test/manifiesto los tests TAO-239-TC-REQ-05-1 (200 sin claves capacidades ni vistas en el log), TAO-239-TC-REQ-05-2 (304 contado sin cuerpo) y TAO-239-TC-REQ-05-3 (sin token ni cuerpo en el log).
+Contrato: rollback: Revertir el commit: se quita la línea de log, sin efecto funcional. Status: pending
+
+#### S2.T3 — Dejar alineado el cliente generado (Dart) con el contrato: verificar que deserializa impersonacion y modoDemostracion, o regenerarlo solo si S2.T1 no lo hizo. Sin Supertest (vive únicamente en S2.T4).
+Contrato: rollback: Revertir el commit de esta tarea, que solo toca el cliente generado (Dart); no afecta el servidor, los tests ni la documentación.. Status: pending
+
+#### S2.T4 — Supertest de los campos decididos en el contrato: obtenerManifiesto responde impersonacion: null y modoDemostracion: false. Esta tarea cubre solo REQ-04.
+Contrato: rollback: Revertir los casos de test agregados. Status: pending
+
+#### S2.T5 — Actualizar la documentación y la DEC afectada para decir que la versión del manifiesto es un hash calculado en cada petición y que el claim de versión del access token es una constante en M1a. Ubicar los textos por nombre: el asset app/assets/manifiesto/estandar.json y la sección de EP-03a sobre obtenerManifiesto, sin citar números de línea. Cubre los casos TAO-239-TC-REQ-06-1, TAO-239-TC-REQ-06-2 y TAO-239-TC-REQ-06-3.
+Contrato: rollback: Revertir el commit de docs (git revert del commit que edita el backlog EP-03a y la DEC).. Status: pending
+
+#### S2.T6 — VERIFICACIÓN MANUAL: reunir la evidencia del ticket: un ejemplo de manifiesto de una cuenta de dispositivo sin tokens ni datos personales, y el registro de la prueba de la app con servidor local y luego sin red. El verify consiste en comprobar a mano que ese artefacto de evidencia existe en la evidencia del ticket; no hay comando automatizable.
+Contrato: rollback: Eliminar los archivos de evidencia generados; no hay cambios de código ni de datos que revertir.. Status: pending
+## Verificacion runtime
+
+1. **Qué:** Smoke de la vista afectada por TAO-239 · HU-03a-08: el manifiesto se refresca al arrancar, descarta la caché si cambia el esquema, ofrece consultas a la interfaz y aclara su contrato y su versión
+   - **Se debe ver:** La vista carga y responde sin errores.
+   - **Dónde:** vista afectada por el ticket
+
+## Cambios al modelo de datos
+
+- tipo: alter_additive | objetos: caché Drift del manifiesto (tabla local de AppDatabase).version_esquema | destructivo: no | tarea: S1.T2 | rollback: Revertir el commit y la migración Drift. La caché se vuelve a llenar sola desde el servidor o el empaquetado, así que perder la fila no deja ninguna capacidad habilitada de más
+
+## Enmiendas (refine_spec)
+
+### Enmienda 1
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Al arrancar con conexión, la app pide el manifiesto al servidor con el ETag de la caché vigente mediante una función de arranque testeable, 
+- REQ-04 (edit) `confirmed`: Decisión cerrada: el servidor emite impersonacion: null y modoDemostracion: false en M1a y ambos campos se mantienen en el contrato OpenAPI 
+- REQ-08 (edit) `confirmed`: Se reusan ServicioManifiesto, CacheManifiestoDrift, PuertoManifiesto, FuenteManifiestoEmpaquetado y el interceptor existentes, sin un client
+- REQ-09 (add) `confirmed`: El reintento por reconexión reusa ObservadorDeRed y ObservadorDeRedConnectivity (app/lib/features/cuenta/data/alta_dispositivo_providers.dar
+- REQ-10 (add) `confirmed`: El descarte de la caché por versión de esquema borra solo la copia local del manifiesto, que es regenerable desde el servidor o el empaqueta
+- REQ-11 (add) `confirmed`: La comprobación de que el menú muestra los destinos de Estándar en una instalación nueva en modo avión (QA-03a-08-04) es QA humana. El filtr
+
+**Tasks agregadas:**
+
+- S1: Escribir un test de migración Drift real que abra una base en el schemaVersion anterior de la app con una fila de caché del manifiesto sin versión de esquema, la migre al schemaVersion nuevo, y verifique que la caché se descarta sin error, que solo se borró la copia local del manifiesto y que las demás tablas quedan intactas. Usar el helper de migraciones de Drift ya presente en el proyecto si existe; si no, abrir la base con NativeDatabase en memoria y ejecutar la migración paso a paso. (valida: REQ-02, REQ-10, test; rollback: Eliminar el archivo de test agregado; no afecta código de producción ni datos.)
+
+**Task ops:**
+
+- edit S1.T1 { desc="Extraer del arranque de la app una función testeable (por ejemplo refrescarManifiestoAlArrancar) que invoque ServicioManifiesto con el ETag de la caché vigente y que el punto de entrada llame. Para la reconexión reusar ObservadorDeRed / ObservadorDeRedConnectivity (app/lib/features/cuenta/data/alta_dispositivo_providers.dart, provider observadorDeRed; connectivity_plus ya es dependencia): ante una falla de red, al emitir reconexión se reintenta el refresco y, si responde 200, la caché pasa a origen servidor. No agregar dependencias ni otro detector de red. Agregar tests: el arranque dispara el refresco (ejerciendo la función extraída), 200 reemplaza la caché, 304 la conserva, sin red usa caché o empaquetado sin error, y caso edge de falla de red seguida de reconexión con la caché pasando a origen servidor.", validates=["REQ-01","REQ-08","REQ-09"], isTest=false, verify=["cd app && flutter test test/features/manifiesto"] }
+- edit S1.T5 { desc="Documentar y verificar que el descarte de la caché por versión de esquema borra solo la copia local del manifiesto, que es regenerable desde el servidor o el empaquetado. No elimina tablas ni columnas ni otros datos locales. Dejar el texto de la task, del código y de la documentación alineado con esa redacción, sin ampliar el alcance.", rollback="Restaurar el cliente anterior conservando la última copia válida del manifiesto en caché; no habilitar capacidades ausentes. Comprobación: el cliente puede leer el manifiesto online y offline. Si hace falta, la copia local del manifiesto se regenera desde el servidor o el empaquetado.", validates=["REQ-02","REQ-10"] }
+- edit S2.T1 { verify=["pnpm -C server exec tsc --noEmit","pnpm -C server test -- test/manifiesto"] }
+- edit S2.T3 { verify=["pnpm docs:lint"] }
+
+### Enmienda 2
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Al arrancar con conexión, la app pide el manifiesto al servidor con el ETag de la caché vigente mediante una función de arranque testeable, 
+
+**Task ops:**
+
+- edit S1.T2 { desc="En CacheManifiestoDrift (y la migración Drift desde el schemaVersion anterior) guardar la versión de esquema del manifiesto junto al manifiesto. En CacheManifiestoDrift.leer(): si la versión guardada es distinta de la constante actual, o falta por ser una caché anterior, borrar solo la copia local del manifiesto y devolver null para usar el empaquetado o el servidor, sin lanzar error. Dejar en leer() un comentario en español que explique que la caché es regenerable y que el descarte no toca otras tablas ni datos. Sin tareas ni cambios de texto aparte.", validates=["REQ-02","REQ-10"], verify=["cd app && flutter test test/manifiesto/"] }
+- edit S1.T3 { desc="Agregar en Manifiesto las consultas vistaHabilitada(clave), true si la clave está en vistas, y deniegaPorTipoCuenta(clave), true si la clave está en capacidadesPorTipoCuenta. Crear app/test/manifiesto/consultas_manifiesto_test.dart con los 4 test cases de REQ-03: vistaHabilitada true con clave presente, vistaHabilitada false con clave ausente, deniegaPorTipoCuenta true con clave presente y deniegaPorTipoCuenta false con clave ausente.", validates=["REQ-03"], isTest=false, verify=["cd app && flutter test test/manifiesto/consultas_manifiesto_test.dart"] }
+- delete S1.T5
+- edit S1.T6 { verify=["cd app && flutter test test/manifiesto/"] }
+- edit S2.T1 { desc="Decisión cerrada: el servidor emite impersonacion: null y modoDemostracion: false en la respuesta de obtenerManifiesto (server/src/capacidades/manifiesto.ts). Ambos campos se mantienen en el contrato OpenAPI y no se retiran; los datos reales llegan con EP-14b.", validates=["REQ-04"], verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T3 { desc="Alinear con la decisión cerrada (impersonacion: null y modoDemostracion: false, ambos en el contrato) el Supertest de GET /manifest en server/test/manifiesto/ y el cliente generado de la app. El test afirma los valores concretos null y false en la respuesta 200.", validates=["REQ-04"], verify=["pnpm -C server test -- test/manifiesto"] }
+
+### Enmienda 3
+**REQs:**
+
+- REQ-03 (edit) `confirmed`: Manifiesto expone dos consultas para la interfaz: vistaHabilitada(clave), que es true si la clave está en vistas, y deniegaPorTipoCuenta(cla
+- REQ-07 (edit) `inferred`: Con la app en development hay un panel de desarrollo que muestra la versión, el origen (servidor, caché o empaquetado) y la lista de capacid
+
+**Tasks agregadas:**
+
+- S2: Editar docs/backlog/EP-03a_identidad_de_dispositivo_autorizacion_y_legal.md y la DEC afectada (DEC-153, DEC-161 o DEC-232, la que mencione manifiesto_acceso_version como tabla vigente) para decir que la versión del manifiesto es un hash calculado por petición (no existe la tabla manifiesto_acceso_version) y que el claim de versión del access token es una constante en M1a. Buscar manifiesto_acceso_version en docs/ para localizar todos los textos afectados y correr el lint de docs del repo (el ejecutor localiza el script en el package.json raíz). Solo texto de docs, sin tocar código. (valida: REQ-06; rollback: Revertir el commit de docs (git revert del commit que edita el backlog EP-03a y la DEC).)
+
+**Task ops:**
+
+- edit S1.T1 { verify=["cd app && flutter test test/manifiesto/"] }
+- edit S1.T4 { desc="Crear el panel de desarrollo, visible solo con la app en development, que muestra versión, origen (servidor, caché o empaquetado) y capacidades del manifiesto vigente, reusando ServicioManifiesto y los tipos existentes. Crear app/test/manifiesto/panel_desarrollo_test.dart con los test cases de REQ-07: development con manifiesto de servidor, development con caché vacía y FallaDeRed (origen empaquetado) y entorno distinto de development (el panel no existe).", validates=["REQ-07"], isTest=false, verify=["cd app && flutter test test/manifiesto/panel_desarrollo_test.dart"] }
+- edit S2.T1 { desc="Hacer que obtenerManifiesto en server/src/capacidades/manifiesto.ts emita impersonacion: null y modoDemostracion: false. Si ambos campos ya están en el contrato OpenAPI alcanza con que el servidor los emita; si no están, agregarlos y regenerar el contrato y el cliente Dart: el ejecutor localiza el comando en el package.json raíz o en server/contract. No retirar los campos del contrato.", verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T3 { desc="Agregar en server/test/manifiesto un Supertest de GET /manifest que verifique impersonacion null y modoDemostracion false según REQ-04, y dejar alineado el cliente generado con el contrato. Si el contrato no los declara, el ejecutor localiza el comando de regeneración del contrato y del cliente Dart en el package.json raíz o en server/contract.", rollback="Revertir los cambios del Supertest y del cliente generado (git revert del commit de esta task); no afecta docs.", verify=["pnpm -C server test -- test/manifiesto"] }
+
+### Enmienda 4
+**REQs:**
+
+- REQ-07 (edit) `confirmed`: Se extiende el panel interno existente en app/lib/features/dev_panel (según doc 18 §9 se compila solo en el sabor development) para mostrar 
+- REQ-06 (edit) `inferred`: La documentación y la DEC afectada dicen explícitamente que la versión del manifiesto es un hash calculado en cada petición y que el claim d
+- REQ-02 (edit) `inferred`: La caché Drift guarda la versión del esquema del manifiesto junto al manifiesto. Al leer, si la versión guardada es distinta de la constante
+- REQ-05 (edit) `inferred`: El servidor cuenta en los logs las respuestas 200 y 304 de GET /manifest sin registrar el cuerpo del manifiesto.
+
+**Tasks agregadas:**
+
+- S2: Evidencia solicitada por el request. (a) Con el servidor local levantado, obtener GET /manifest con un token de cuenta de dispositivo y guardar la respuesta como ejemplo de manifiesto de cuenta de dispositivo en la evidencia del ticket (sin tokens ni datos personales). (b) Ejecutar y registrar la prueba de la app con servidor local y luego sin red (arranque con red: origen servidor; sin red: se conserva la caché). Si alguno requiere persona o dispositivo, declararlo verificación manual (la QA humana de dispositivos ya está en REQ-11). Se ejecuta tras las tareas de código de la app y del servidor. (valida: REQ-01, REQ-04, test; rollback: Eliminar los archivos de evidencia generados; no hay cambios de código ni de datos que revertir.)
+
+**Task ops:**
+
+- edit S1.T4 { desc="Extender el panel interno existente en app/lib/features/dev_panel (según doc 18 §9 se compila solo en el sabor development) para mostrar versión, origen (servidor, caché o empaquetado) y capacidades del manifiesto vigente. No crear un panel nuevo, ni bandera de ejecución, ni otro punto de entrada, ni otra pantalla. Test: development con manifiesto de servidor; development con caché vacía y FallaDeRed (origen empaquetado); y que el panel solo existe en el sabor development.", validates=["REQ-07"], isTest=false, verify=["cd app && flutter test test/features/dev_panel"] }
+- edit S1.T2 { desc="Agregar a la caché Drift del manifiesto la columna de versión de esquema (aditiva y nullable) con su paso de migración desde el schemaVersion anterior. Regenerar el código Drift con build_runner y el snapshot de esquema de Drift si el proyecto lo usa. Lectura: si la versión guardada es distinta de la constante actual o es nula, descartar solo la copia local del manifiesto.", rollback="Drift no soporta downgrade automático. La columna es aditiva y nullable, y el cliente anterior la ignora (o su acceso es explícito sin romper). No se borran columnas ni tablas; para revertir el comportamiento se restaura el cliente anterior conservando la última copia válida del manifiesto." }
+- edit S2.T1 { desc="Regenerar contrato y cliente solo si los campos impersonacion (null) y modoDemostracion (false) faltan en el contrato OpenAPI de GET /manifest; si ya están, no tocar nada.", verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T2 { verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T3 { desc="Dejar alineado el cliente generado (Dart) con el contrato: verificar que deserializa impersonacion y modoDemostracion, o regenerarlo solo si S2.T1 no lo hizo. Sin Supertest (vive únicamente en S2.T4).", verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T4 { desc="Supertest de GET /manifest: 200 con impersonacion === null y modoDemostracion === false. No corre el lint de docs (lo hace S2.T5).", verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T5 { desc="Editar la documentación y la DEC afectada para dejar explícito que la versión del manifiesto es un hash por petición (no existe la tabla manifiesto_acceso_version) y que el claim de versión del access token es constante en M1a. Verificar con pnpm run docs:check (docs/development/commands.md). Revisión humana: ninguna mención presenta manifiesto_acceso_version como tabla vigente; solo aparece en la aclaración nueva o en notas históricas marcadas.", verify=["pnpm run docs:check"] }
+
+### Enmienda 5
+**REQs:**
+
+- REQ-05 (edit) `inferred`: El servidor cuenta en los logs las respuestas 200 y 304 de GET /manifest sin registrar el cuerpo del manifiesto. Los tests de este comportam
+- REQ-06 (edit) `inferred`: La documentación y la DEC afectada dicen explícitamente que la versión del manifiesto es un hash calculado en cada petición y que el claim d
+
+**Task ops:**
+
+- edit S1.T4 { desc="Hecho verificado en el repo (rama main de taomangalam): el panel interno ya existe en app/lib/features/dev_panel (dev_panel_screen.dart, dev_environment.dart, dev_health_probe.dart, dev_simulation.dart, entre otros) y se abre desde app/lib/main_development.dart, es decir, se muestra solo en el sabor development. Por lo tanto se extiende, no se crea: no es un faltante. La tarea debe confirmar ese punto de entrada y definir qué datos del manifiesto vigente (versión, origen servidor, caché o empaquetado, y lista de capacidades) se agregan al panel existente, sin otra pantalla ni bandera nueva." }
+- edit S2.T1 { desc="Contrato y cliente: regenerar el contrato OpenAPI y el cliente generado solo si faltan los campos impersonacion y modoDemostracion. Además, aunque el contrato ya los declare, obtenerManifiesto (server/src/capacidades/manifiesto.ts) debe emitir explícitamente impersonacion: null y modoDemostracion: false (decisión cerrada del dev, adenda 1). Ambos campos se mantienen en el contrato.", rollback="Revertir el commit de esta tarea: restaura el contrato y el cliente generado si se regeneraron, y quita la emisión explícita de impersonacion: null y modoDemostracion: false en obtenerManifiesto (server/src/capacidades/manifiesto.ts).", validates=["REQ-04"], verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T2 { desc="Implementar en el servidor el log que cuenta las respuestas 200 y 304 de GET /manifest sin registrar el cuerpo del manifiesto ni tokens. Escribir en server/test/manifiesto los tests TAO-239-TC-REQ-05-1 (200 sin claves capacidades ni vistas en el log), TAO-239-TC-REQ-05-2 (304 contado sin cuerpo) y TAO-239-TC-REQ-05-3 (sin token ni cuerpo en el log).", validates=["REQ-05"], isTest=false, verify=["pnpm -C server test -- test/manifiesto"] }
+- edit S2.T3 { rollback="Revertir el commit de esta tarea, que solo toca el cliente generado (Dart); no afecta el servidor, los tests ni la documentación." }
+- edit S2.T4 { desc="Supertest de los campos decididos en el contrato: obtenerManifiesto responde impersonacion: null y modoDemostracion: false. Esta tarea cubre solo REQ-04.", validates=["REQ-04"] }
+- edit S2.T5 { desc="Actualizar la documentación y la DEC afectada para decir que la versión del manifiesto es un hash calculado en cada petición y que el claim de versión del access token es una constante en M1a. Ubicar los textos por nombre: el asset app/assets/manifiesto/estandar.json y la sección de EP-03a sobre obtenerManifiesto, sin citar números de línea. Cubre los casos TAO-239-TC-REQ-06-1, TAO-239-TC-REQ-06-2 y TAO-239-TC-REQ-06-3.", validates=["REQ-06"] }
+- edit S2.T6 { desc="VERIFICACIÓN MANUAL: reunir la evidencia del ticket: un ejemplo de manifiesto de una cuenta de dispositivo sin tokens ni datos personales, y el registro de la prueba de la app con servidor local y luego sin red. El verify consiste en comprobar a mano que ese artefacto de evidencia existe en la evidencia del ticket; no hay comando automatizable.", isTest=false, verify=[] }
+## Sessions
+
+### Session 1 · T2 · open
+
+**Tasks:**
+- [ ] S1.T1
+- [ ] S1.T2
+- [ ] S1.T3
+- [ ] S1.T4
+- [ ] S1.T6
+
+**Gate (auto)**: Con la app en development, el panel muestra versión, origen y capacidades. Con servidor local el origen es servidor sin pasar por un capacidad_denegada; en modo avión es la caché o el empaquetado. Los tests de app/test/manifiesto/ pasan, incluido el descarte por versión de esquema.
+
+### Session 2 · T1 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+- [ ] S2.T4
+- [ ] S2.T5
+- [ ] S2.T6
+
+**Gate (auto)**: El Supertest de server/test/manifiesto/ valida impersonacion y modoDemostracion según la decisión, los logs muestran el conteo de 200 y 304 sin cuerpo, y el diff de docs/backlog y de la DEC deja explícitos el hash por petición y el claim constante.
+
+### Session 3 · T0 · open
+
+### Session 4 · T0 · open

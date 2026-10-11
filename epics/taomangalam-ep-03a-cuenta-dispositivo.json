@@ -1,0 +1,924 @@
+{
+  "id": "taomangalam-ep-03a-cuenta-dispositivo",
+  "projectId": "taomangalam",
+  "title": "EP-03a: sesión, capacidades y textos legales v1",
+  "objective": "Entregar la primera parte de EP-03a que no depende del dominio local: sesión con vigencias configurables y autorización por capacidad en el servidor, manifiesto de capacidades en la app, spike de integridad del dispositivo y redacción de los términos y la política de privacidad v1.",
+  "scope": [
+    "TAO-244 (HU-03a-02 y HU-03a-07): sesión con vigencias configurables y autorización por capacidad con denegación por defecto en el servidor.",
+    "TAO-239 (HU-03a-08): la app conoce y respeta las vistas y acciones habilitadas, también sin conexión. Depende de TAO-244.",
+    "TAO-221 (HU-03a-01): spike de integridad del dispositivo por plataforma y decisión de implementación.",
+    "TAO-222 y TAO-223 (HU-03a-14 y HU-03a-15): redacción de los términos de uso v1 y de la política de privacidad v1."
+  ],
+  "exclusions": [
+    "TAO-246, TAO-245, TAO-247, TAO-248 y TAO-233: dependen de TAO-249 (base Drift de EP-06) o de TAO-246 y van en una épica posterior.",
+    "Los entregables de assets de EP-02."
+  ],
+  "criteria": [
+    "Cada ticket cumple sus criterios de aceptación con los gates locales en verde",
+    "La autorización por capacidad deniega por defecto y queda declarada en el contrato",
+    "Los textos legales v1 quedan redactados y trazados a su fuente"
+  ],
+  "requiredChecks": [
+    "quality-gate"
+  ],
+  "ci": "remote",
+  "repo": "taomangalam",
+  "baseBranch": "main",
+  "branch": "epic/EP-03a-cuenta-dispositivo",
+  "tickets": [
+    {
+      "id": "TAO-221",
+      "title": "[HU-03a-01][Spike] Evaluar la verificación de integridad del dispositivo por plataforma para el alta automática y decidir su implementación",
+      "body": "> **ID estable:** `HU-03a-01` · **Estado:** `Ready` · **Orden recomendado:** `5` · **Puntos publicados:** `3`\n\n## Objetivo\n\nResultado: una decisión registrada (DEC nueva) sobre si el alta automática de la cuenta de\ndispositivo exige verificación de integridad, con qué mecanismo por plataforma y qué hace el\nservidor cuando la verificación falla o no está disponible. Consumidor: HU-03a-05, que la\nimplementa, y HU-03a-03, que envía la prueba desde la app.\n\n## Alcance\n\n##### Incluye\n\n- Evaluación de App Attest (iOS/iPadOS 15+) y Play Integrity (Android `minSdk` 24) para el alta\n  pública `autenticarCuentaDispositivo`: disponibilidad por versión de sistema, costo y cuotas,\n  dependencia de servicios de Google, latencia añadida al primer uso y verificación del lado del\n  servidor con Node (tecnologia/16 §pendientes, punto 3; doc 47 §5).\n- Comportamiento en dispositivos sin servicios de Google, emuladores y builds `development`, y qué\n  hacer si la verificación falla: rechazo con `integridad_dispositivo_fallida`, alta con límite más\n  estricto o alta sin verificación con registro en `intento_seguridad`.\n- Prueba de concepto mínima en ambos sistemas contra un endpoint de prueba, descartable.\n- Redacción de la DEC con la opción elegida, las descartadas y el impacto en el contrato (el código\n  `integridad_dispositivo_fallida` hoy está reservado) y en la estimación de HU-03a-05.\n\n##### No incluye\n\n- Implementación productiva de la verificación y del límite de frecuencia: HU-03a-05.\n- Alta de la cuenta de dispositivo: HU-03a-03.\n\n## Referencias canónicas\n\n- Vistas: ninguna\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-212, DEC-214, DEC-163, DEC-198\n- Datos: `intento_seguridad` (solo para describir el registro de fallos)\n- API: `autenticarCuentaDispositivo`\n- Capacidades: ninguna (operación `publica`)\n- Contenido/assets: ninguno\n\n## Criterios de aceptación\n\n- [ ] Dado el spike terminado, cuando se revisa la DEC nueva, entonces cubre para iOS y Android:\n  mecanismo, versión mínima soportada, costo y cuota, latencia medida en el primer uso y\n  comportamiento ante fallo o indisponibilidad.\n- [ ] Dado un Android sin servicios de Google o un emulador, cuando se ejecuta la prueba de\n  concepto, entonces el resultado observado queda documentado y la DEC dice qué responde el\n  servidor en ese caso.\n- [ ] Dada la DEC aprobada, cuando se revisa el contrato, entonces queda indicado si\n  `integridad_dispositivo_fallida` pasa de reservado a activo y qué campo de\n  `AltaCuentaDispositivoRequest` transporta la prueba, con el cambio de contrato enlazado.\n- [ ] Dada la DEC aprobada, cuando se revisa HU-03a-05, entonces su estimación se confirma o se\n  corrige en la tabla de la épica.\n\n## Requisitos transversales\n\n- Permisos: no aplica.\n- Offline/sync: la DEC define qué ocurre si la prueba no puede obtenerse sin red (el alta ya exige\n  conexión).\n- Seguridad/privacidad: la prueba de integridad no se guarda en logs; la DEC indica qué datos del\n  dispositivo recibe cada proveedor y si deben declararse en privacidad (HU-03a-15).\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: la DEC define qué se registra ante un fallo (resultado, sin la prueba cruda).\n- Compatibilidad/migración: la DEC indica qué pasa con instalaciones que no puedan producir la\n  prueba (versiones antiguas del sistema).\n\n## Casos de prueba\n\n- [ ] QA-03a-01-01 · Dado un iPhone físico con iOS 15 o superior, cuando la prueba de concepto\n  solicita la atestación, entonces se registra el resultado y el tiempo empleado.\n- [ ] QA-03a-01-02 · Dado un emulador Android sin Play Store (borde), cuando la prueba de concepto\n  solicita Play Integrity, entonces se documenta el error devuelto y la conducta propuesta.\n- [ ] QA-03a-01-03 · Dada una prueba de integridad reutilizada o alterada (borde), cuando llega al\n  endpoint de prueba, entonces la verificación del servidor la rechaza y el caso queda en la DEC.\n\n## Pruebas y evidencia\n\n- Unitarias: no aplica (código descartable).\n- Widget/integración/E2E: prueba de concepto en iOS y Android contra el endpoint de prueba.\n- QA humana y dispositivos: un iPhone físico, un Android físico con servicios de Google y un\n  emulador sin ellos.\n- Preview/captura/artifact: DEC nueva enlazada al issue, con tabla comparativa y mediciones.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 3 · Riesgo: alto\n- Bloqueada por: ninguna | Bloquea: HU-03a-05\n- Pendiente externo: cuentas de Apple Developer y Google Play Console con acceso a App Attest y\n  Play Integrity para la prueba de concepto; sin ellas no se puede iniciar.\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Backend\n- Plataforma: Todas\n- Esfuerzo: 3\n- Riesgo: Alto\n- Vista: -\n- Decisión: DEC-212, DEC-214, DEC-163, DEC-198\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-03a` · Estimación publicada: 3 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-03a-01-*` de esta historia.\n- Referencia externa: `GH-92` · https://github.com/edobacon/taomangalam/issues/92\n- Rollback: descartar el endpoint de prueba y no dejarlo desplegado; conservar solo la DEC y mediciones. Comprobación: el manifiesto y los despliegues no contienen el endpoint ni credenciales de proveedores.\n- Diseño: no aplica a interfaz; validar la tabla comparativa, las métricas y la decisión con Ingeniería y Seguridad.",
+      "revision": "fab7d8a2690a61a8755bb073a668917f24aafc0586e1ffb12e64d454544c8cfc",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-92"
+      ],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-222",
+      "title": "[HU-03a-14][Content] Redacción de los términos de uso v1",
+      "body": "> **ID estable:** `HU-03a-14` · **Estado:** `Ready` · **Orden recomendado:** `6` · **Puntos publicados:** `3`\n\n## Objetivo\n\nResultado: los términos de uso v1 en español, redactados, revisados por asesoría legal, aprobados\npor Producto y publicados como `documento_legal` de tipo `terminos` junto con la versión de la app\nque los incluye. Consumidor: V-51 (HU-01-13), HU-03a-10 (empaquetado y registro) y el portal\n(EP-16).\n\n## Alcance\n\n##### Incluye\n\n- Entregable: texto de términos v1 en español (DEC-049), en Markdown en `docs/legal/` (fuente\n  versionada de HU-03a-10, DEC-232), con número de versión, fecha de vigencia y hash.\n- Responsable funcional: Contenido/legal redacta con asesoría legal; Producto da la aceptación\n  funcional (doc 46 §9).\n- Cobertura mínima derivada de las decisiones vigentes: cuenta de dispositivo y cuenta completa y\n  qué habilita cada una (DEC-212); aceptación versionada y reaceptación que detiene el servicio\n  (DEC-208, DEC-225); códigos de producto de un solo uso validados en línea (DEC-213); limitación y\n  suspensión administrativa (DEC-020, DEC-056); soporte solo con cuenta completa (DEC-216); cierre\n  de sesión, borrado de datos y eliminación de cuenta (DEC-054, DEC-128, DEC-224); versión mínima\n  y actualizaciones (DEC-086); contenido del método entregado con la app (DEC-094).\n- Resumen breve para la tarjeta de V-51 (smartphone) además del texto completo.\n- Publicación (DEC-222): el texto se empaqueta en la compilación que lo incluye y el pipeline\n  registra el `documento_legal`; se lee con `GET /legal/documentos` y en M4 se muestra en el portal.\n\n##### No incluye\n\n- Política de privacidad: HU-03a-15.\n- Declaraciones de privacidad de las tiendas y revisión del consentimiento UE: HU-17-10 (M5).\n- Traducciones: fuera de V1 (DEC-049).\n- Código de empaquetado y registro: HU-03a-10.\n\n## Referencias canónicas\n\n- Vistas: V-51 (paso de flujo, EP-01) donde se presenta\n- Guía visual: no aplica (sin interfaz propia; la presentación de V-51 y su fondo los fija HU-01-13,\n  DEC-235).\n- Decisiones: DEC-020, DEC-049, DEC-054, DEC-056, DEC-086, DEC-094, DEC-128, DEC-208, DEC-212,\n  DEC-213, DEC-216, DEC-222, DEC-224, DEC-225\n- Datos: `documento_legal` (`tipo = terminos`, `version`, `vigente_desde`, `hash_contenido`,\n  `exige_reaceptacion`)\n- API: `obtenerDocumentosLegalesVigentes`, `obtenerDocumentoLegal`\n- Capacidades: `documento_legal.aceptar` (la ejerce la persona usuaria, no esta historia)\n- Contenido/assets: términos v1; estado faltante\n\n## Criterios de aceptación\n\n- [ ] Dado el borrador, cuando se revisa contra la cobertura mínima, entonces cada tema listado\n  tiene su apartado y ninguno contradice la DEC citada.\n- [ ] Dado el texto, cuando lo revisa la asesoría legal, entonces queda un registro de aprobación\n  con fecha, versión revisada y observaciones resueltas.\n- [ ] Dado el texto aprobado, cuando Producto lo revisa, entonces confirma por escrito la aceptación\n  funcional.\n- [ ] Dado el texto final, cuando se calcula su hash, entonces coincide con el empaquetado en la app\n  y con el registrado en `documento_legal` de staging.\n- [ ] Dado el texto, cuando se revisa la redacción, entonces está en español neutro, trata de tú,\n  sin guion largo y con el resumen breve para V-51.\n\n## Requisitos transversales\n\n- Permisos: no aplica.\n- Offline/sync: el texto viaja en la app para el primer uso sin red (DEC-219).\n- Seguridad/privacidad: el texto no incluye datos personales ni correos reales.\n- Accesibilidad/responsive: estructura con títulos para lector de pantalla y lectura en teléfono y\n  tablet (la presenta EP-01).\n- Observabilidad: no aplica.\n- Compatibilidad/migración: una corrección posterior exige versión nueva; si cambia derechos u\n  obligaciones, se marca `exige_reaceptacion`.\n\n## Casos de prueba\n\n- [ ] QA-03a-14-01 · Dado el texto aprobado, cuando se abre en V-51 en un teléfono con escala de\n  texto 200 %, entonces se lee completo sin cortes.\n- [ ] QA-03a-14-02 · Dado un cambio de una palabra después de la aprobación (borde), cuando corre\n  CI, entonces el hash no coincide y el cambio exige versión nueva y nueva aprobación.\n- [ ] QA-03a-14-03 · Dada la lista de cobertura mínima, cuando QA la recorre contra el texto,\n  entonces cada tema tiene su apartado.\n\n## Pruebas y evidencia\n\n- Unitarias: no aplica.\n- Widget/integración/E2E: chequeo de hash de HU-03a-10.\n- QA humana y dispositivos: lectura en teléfono y tablet dentro de V-51.\n- Preview/captura/artifact: PR con el texto, registro de aprobación legal y de Producto adjunto al\n  issue.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 3 · Riesgo: medio\n- Bloqueada por: ninguna | Bloquea: cierre de EP-03a (textos v1 publicados)\n- Pendiente externo: designar la asesoría legal que revisa y aprueba; sin ella el texto queda\n  provisional y M1a no cierra.\n- Pendiente externo: identidad legal del titular del servicio (razón social, domicilio y\n  jurisdicción aplicable); ningún documento del proyecto la fija.\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Contenido\n- Plataforma: Todas\n- Esfuerzo: 3\n- Riesgo: Medio\n- Vista: V-51\n- Decisión: DEC-020, DEC-049, DEC-054, DEC-056, DEC-086, DEC-094, DEC-128, DEC-208, DEC-212, DEC-213, DEC-216, DEC-222, DEC-224, DEC-225\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-03a` · Estimación publicada: 3 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-03a-14-*` de esta historia.\n- Referencia externa: `GH-93` · https://github.com/edobacon/taomangalam/issues/93\n- Rollback: retirar la publicación nueva sin borrar su versión ni su hash; conservar vigente solo una versión previamente aprobada. Comprobación: el registro legal y el endpoint público sirven el texto aprobado y su versión correspondiente.\n- Diseño: no aplica a diseño de interfaz; exige aprobación de asesoría legal y revisión de visualización/lectura en V-51 por EP-01.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisiones del dev: (1) la fecha de vigencia aún no está fijada; el encabezado lleva un marcador provisional y el hash se recalcula cuando se fije. (2) La versión 1.0 actual (docs/legal/terminos-v1.0.md) es un fixture técnico en borrador sin aprobación jurídica; el texto definitivo la reemplaza, sin versión 1.1 ni exige_reaceptacion. Supuesto a verificar al ejecutar: ninguna persona real aceptó esa 1.0. (3) Rutas y comandos verificados en main: fuente docs/legal/terminos-v1.0.md, copia de la app app/assets/legal/terminos-v1.0.md, copia del servidor server/legal/terminos-v1.0.md; pruebas: cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs.\n\n**Motivo**: Decisiones del dev al preparar la épica EP-03a (2026-10-10)",
+      "revision": "ce08be58691ee874473f1fe8d0d034f1491cbe94829b71945f5540e9ace3014e",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-93"
+      ],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/legal/terminos-v1.0.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "cd app && flutter test test/legal/"
+          ]
+        },
+        {
+          "path": "app/assets/legal/terminos-v1.0.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "cd app && flutter test test/legal/"
+          ]
+        },
+        {
+          "path": "server/legal/terminos-v1.0.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "node scripts/ci/ep01-legal-provider.mjs"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-223",
+      "title": "[HU-03a-15][Content] Redacción de la política de privacidad v1, con datos tratados, ubicación por tipo de cuenta y analítica por región",
+      "body": "> **ID estable:** `HU-03a-15` · **Estado:** `Ready` · **Orden recomendado:** `7` · **Puntos publicados:** `5`\n\n## Objetivo\n\nResultado: la política de privacidad v1 en español, que explica qué datos se tratan, dónde viven\nsegún el tipo de cuenta y cómo funciona la analítica por región, revisada por asesoría legal,\naprobada por Producto y publicada como `documento_legal` de tipo `privacidad` junto con la versión\nde la app que la incluye. Consumidor: V-51 (HU-01-13), HU-03a-10, el portal (EP-16) y las\ndeclaraciones de tiendas (HU-17-10).\n\n## Alcance\n\n##### Incluye\n\n- Entregable: texto de privacidad v1 en español (DEC-049), en Markdown en `docs/legal/` (fuente\n  versionada de HU-03a-10, DEC-232), con versión, vigencia y hash, más el resumen breve para V-51.\n- Responsable funcional: Contenido/legal redacta con asesoría legal; Producto da la aceptación\n  funcional; Operación/release confirma la ubicación de la infraestructura (doc 46 §9).\n- Datos por tipo de cuenta: con cuenta de dispositivo, las consultas quedan solo en el teléfono y\n  al servidor llegan identidad técnica del dispositivo, aceptaciones, consentimiento, usos de\n  producto y métricas si corresponde (DEC-212); con cuenta completa, correo, respaldo y\n  sincronización de los datos del recorrido, incluidos nombre y fecha de nacimiento de\n  consultantes, protegidos con cifrado en reposo (DEC-164), soporte (DEC-216) y medios en la nube\n  del propio usuario con el permiso guardado solo en el teléfono (DEC-044, DEC-227).\n- Analítica: propia y sin terceros (DEC-171), seudónima y no anónima (DEC-058), `opt_in` en UE/EEE\n  y en región desconocida, `opt_out` o `disabled` según la región, y cómo cambiarla desde Cuenta\n  (DEC-130).\n- Proveedores que tratan datos: alojamiento del servidor y base (DEC-164, DEC-195), registro de\n  errores sin datos personales (DEC-197) y correo transaccional (DEC-165).\n- Retención y eliminación: eliminación en un máximo de siete días, comprobante técnico de 90 días,\n  trazabilidad anonimizada de unidades y excepción legal (DEC-127, DEC-128), purga de cuentas de\n  dispositivo inactivas 12 meses (DEC-224), logs operativos de 7 días (DEC-197), portal de\n  eliminación (DEC-129).\n- Accesos administrativos auditados, incluida la impersonación para soporte (DEC-057, DEC-058).\n- Publicación igual que HU-03a-14 (DEC-222).\n\n##### No incluye\n\n- Términos de uso: HU-03a-14.\n- Declaraciones de privacidad de App Store y Google Play: HU-17-10 (M5).\n- Texto de la política regional de analítica en `politica_analitica_region`: HU-15-03.\n\n## Referencias canónicas\n\n- Vistas: V-51 (paso de flujo, EP-01) donde se presenta\n- Guía visual: no aplica (sin interfaz propia; la presentación de V-51 y su fondo los fija HU-01-13,\n  DEC-235).\n- Decisiones: DEC-044, DEC-049, DEC-057, DEC-058, DEC-127, DEC-128, DEC-129, DEC-130, DEC-164,\n  DEC-165, DEC-171, DEC-195, DEC-197, DEC-212, DEC-216, DEC-222, DEC-224, DEC-227\n- Datos: `documento_legal` (`tipo = privacidad`); como contenido descrito: `cuenta`,\n  `dispositivo`, `consentimiento_analitica`, `evento_metrica`, `sesion_uso`, `intento_seguridad`\n- API: `obtenerDocumentosLegalesVigentes`, `obtenerDocumentoLegal`\n- Capacidades: `documento_legal.aceptar` (la ejerce la persona usuaria)\n- Contenido/assets: privacidad v1; estado faltante\n\n## Criterios de aceptación\n\n- [ ] Dado el borrador, cuando se revisa contra el alcance, entonces explica datos por tipo de\n  cuenta, analítica por región, proveedores, retención, eliminación y accesos administrativos, sin\n  contradecir las DEC citadas.\n- [ ] Dado el apartado de analítica, cuando se revisa, entonces usa \"seudónima\" y nunca \"anónima\"\n  para las métricas (DEC-058).\n- [ ] Dado el texto, cuando lo revisa la asesoría legal, entonces queda un registro de aprobación\n  con fecha, versión y observaciones resueltas, incluido el tratamiento en UE/EEE.\n- [ ] Dado el texto aprobado, cuando Producto y Operación/release lo revisan, entonces confirman por\n  escrito la aceptación funcional y la ubicación de la infraestructura.\n- [ ] Dado el texto final, cuando se calcula su hash, entonces coincide con el empaquetado y con el\n  registrado en staging.\n\n## Requisitos transversales\n\n- Permisos: no aplica.\n- Offline/sync: el texto viaja en la app para el primer uso sin red (DEC-219).\n- Seguridad/privacidad: coherencia obligatoria con el redactor de logs (tecnologia/23 §3) y con lo\n  que emite la analítica (HU-15-05).\n- Accesibilidad/responsive: estructura con títulos para lector de pantalla y lectura en teléfono y\n  tablet.\n- Observabilidad: no aplica.\n- Compatibilidad/migración: si M2 u otro hito agrega un tratamiento no descrito, exige versión nueva\n  con `exige_reaceptacion`.\n\n## Casos de prueba\n\n- [ ] QA-03a-15-01 · Dada la lista de datos que el servidor recibe de una cuenta de dispositivo en\n  M1a, cuando QA la compara con el texto, entonces cada dato aparece descrito.\n- [ ] QA-03a-15-02 · Dado un evento de métrica real capturado en staging (borde), cuando se compara\n  con el apartado de analítica, entonces no contiene ningún dato que el texto excluya.\n- [ ] QA-03a-15-03 · Dado el texto abierto en una tablet en horizontal, cuando se lee en V-51,\n  entonces se muestra completo sin cortes.\n\n## Pruebas y evidencia\n\n- Unitarias: no aplica.\n- Widget/integración/E2E: chequeo de hash de HU-03a-10.\n- QA humana y dispositivos: lectura en teléfono y tablet; contraste de datos reales de staging.\n- Preview/captura/artifact: PR con el texto y registros de aprobación adjuntos al issue.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 5 · Riesgo: alto\n- Bloqueada por: ninguna | Bloquea: cierre de EP-03a (textos v1 publicados)\n- Pendiente externo: asesoría legal designada y su confirmación del consentimiento en UE/EEE\n  (P-227, cerrada en producto por DEC-130 pero con revisión legal prevista antes de publicar).\n- Pendiente externo: identidad legal del responsable del tratamiento y región de despliegue de\n  Railway (tecnologia/21 solo dice \"una región inicial\"), necesarias para declarar ubicación y\n  transferencias.\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Contenido\n- Plataforma: Todas\n- Esfuerzo: 5\n- Riesgo: Alto\n- Vista: V-51\n- Decisión: DEC-044, DEC-049, DEC-057, DEC-058, DEC-127, DEC-128, DEC-129, DEC-130, DEC-164, DEC-165, DEC-171, DEC-195, DEC-197, DEC-212, DEC-216, DEC-222, DEC-224, DEC-227\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-03a` · Estimación publicada: 5 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-03a-15-*` de esta historia.\n- Referencia externa: `GH-94` · https://github.com/edobacon/taomangalam/issues/94\n- Rollback: retirar la publicación nueva sin borrar versiones, hashes ni evidencia de aceptación; conservar vigente solo una versión previamente aprobada. Comprobación: la política publicada coincide con región, responsable y datos efectivamente tratados.\n- Diseño: no aplica a diseño de interfaz; exige aprobación de asesoría legal y revisión de visualización/lectura en V-51 por EP-01.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisión del dev: la fecha de vigencia de la política de privacidad v1 aún no está fijada; el encabezado lleva un marcador provisional y el hash se recalcula cuando se fije. Rutas verificadas en main: fuente docs/legal/privacidad-v1.0.md, copias app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md; pruebas: cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs.\n\n**Motivo**: Decisiones del dev al preparar la épica EP-03a (2026-10-10)",
+      "revision": "d8c45a1749ba1696fbddabff06353b58caf7895aced268656ecec8e73514a2e1",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-94"
+      ],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/legal/privacidad-v1.0.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "cd app && flutter test test/legal/"
+          ]
+        },
+        {
+          "path": "app/assets/legal/privacidad-v1.0.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "cd app && flutter test test/legal/"
+          ]
+        },
+        {
+          "path": "server/legal/privacidad-v1.0.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "node scripts/ci/ep01-legal-provider.mjs"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-239",
+      "title": "[HU-03a-08][Historia] Como persona usuaria, la app conoce qué vistas y acciones tengo habilitadas y las respeta también sin conexión",
+      "body": "> **ID estable:** `HU-03a-08` · **Estado:** `Ready` · **Orden recomendado:** `11` · **Puntos publicados:** `3`\n\n## Objetivo\n\nResultado: el manifiesto de acceso, que ya existe en servidor y app, se refresca al arrancar con\nconexión, descarta su caché cuando cambia el esquema, expone a la interfaz las consultas que faltan\ny deja explícito cómo se calcula su versión. Consumidor: HU-01-11, HU-04-05 y todas las vistas.\n\n## Ya entregado en main (no se rehace)\n\nExiste y está probado (EP-01, TAO-190 a TAO-193, y las historias de menú y rutas); el intake debe\nanclarse en ese código:\n\n- `GET /manifest` (`obtenerManifiesto`) con `version`, `ETag` y 304, capacidades efectivas,\n  `capacidadesPorTipoCuenta` y `legalPendiente`, exento del bloqueo legal\n  (`server/src/capacidades/manifiesto.ts`, `test/manifiesto/`).\n- Manifiesto del perfil Estándar empaquetado en la app, generado desde el seed con chequeo de CI que\n  nombra la capacidad distinta (`manifiesto-empaquetado.ts`, `pnpm manifiesto:empaquetar`).\n- App: caché Drift persistente usada sin conexión, reemplazo del empaquetado por el del servidor,\n  interceptor que vuelve a pedirlo ante `capacidad_denegada`, `Manifiesto.tieneCapacidad` y guardas de\n  rutas y menú.\n\n## Alcance\n\n##### Incluye\n\n- Pedir el manifiesto al arrancar con conexión (hoy solo se refresca ante `capacidad_denegada` o por\n  el flujo legal), de modo que una instalación nueva con red reemplace el empaquetado.\n- Versión del esquema del manifiesto en la caché local, con descarte si cambia.\n- API interna para la interfaz: \"vista habilitada\" y \"denegada por tipo de cuenta\", que consuman\n  `capacidadesPorTipoCuenta` (hoy solo se mapea).\n- Emitir `impersonacion` nulo y `modoDemostracion` en el servidor, o quitarlos del contrato de M1a;\n  se decide en el intake.\n- Dejar explícito que la versión del manifiesto es un hash calculado por petición (no hay tabla\n  `manifiesto_acceso_version`) y que el claim de versión del access token es una constante en M1a;\n  actualizar el texto de DEC o documentación afectada según corresponda.\n- Panel de desarrollo que muestre versión, origen (servidor, caché o empaquetado) y capacidades del\n  manifiesto vigente.\n\n##### No incluye\n\n- Filtrado del menú y de las rutas: HU-01-11 (ya adelantado).\n- Presentación de V-51 ante `legalPendiente`: HU-03a-13.\n- Datos de impersonación del manifiesto: EP-14b.\n\n## Referencias canónicas\n\n- Vistas: ninguna propia (todas las vistas consumen el manifiesto)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-153, DEC-154, DEC-161, DEC-212, DEC-223, DEC-232\n- Datos: `cuenta_perfil`, `perfil_capacidad`, caché local del manifiesto (Drift)\n- API: `obtenerManifiesto`\n- Capacidades: todas las del perfil Estándar; `capacidadesPorTipoCuenta` lista la fila de cuenta\n  completa para la cuenta de dispositivo\n- Contenido/assets: `assets/manifiesto/estandar.json` (ya generado)\n\n## Criterios de aceptación\n\n- [ ] Dada una instalación nueva con conexión, cuando arranca, entonces pide el manifiesto al\n  servidor y la caché pasa a ser la del servidor sin esperar a un `capacidad_denegada`.\n- [ ] Dada una caché guardada con otra versión de esquema, cuando arranca la app, entonces se descarta\n  y se usa el empaquetado o el servidor, sin error.\n- [ ] Dado un manifiesto, cuando la interfaz pregunta si una vista está habilitada o si una acción\n  está denegada por tipo de cuenta, entonces responde según `vistas` y `capacidadesPorTipoCuenta`.\n- [ ] Dada la respuesta de `obtenerManifiesto`, cuando se valida contra el contrato, entonces\n  `impersonacion` y `modoDemostracion` cumplen la decisión tomada (emitidos como nulo o retirados).\n- [ ] Dada la app en `development`, cuando se abre el panel de desarrollo, entonces muestra la versión\n  del manifiesto, su origen y sus capacidades.\n\n## Requisitos transversales\n\n- Permisos: el manifiesto solo muestra u oculta; nunca es seguridad (DEC-154).\n- Offline/sync: caché persistente usada sin red; se refresca al recuperar conexión.\n- Seguridad/privacidad: el manifiesto no contiene datos personales; la caché no guarda tokens.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: 304 y 200 contados en logs sin cuerpo.\n- Compatibilidad/migración: la caché lleva la versión del esquema del manifiesto.\n\n## Casos de prueba\n\n- [ ] QA-03a-08-01 · Dada una cuenta de dispositivo en staging, cuando la app abre, entonces el panel\n  de desarrollo muestra la versión del manifiesto y sus capacidades.\n- [ ] QA-03a-08-02 · Dada la app en modo avión tras un uso con red (borde), cuando se reabre,\n  entonces el manifiesto en caché sigue aplicándose.\n- [ ] QA-03a-08-04 · Dada una instalación nueva en modo avión (borde), cuando se abre la app,\n  entonces el panel de desarrollo muestra el manifiesto empaquetado como origen y el menú muestra los\n  destinos de Estándar.\n\n## Pruebas y evidencia\n\n- Unitarias: descarte de caché por versión de esquema; helpers de la API interna.\n- Widget/integración/E2E: prueba de la app con servidor local y sin red; Supertest de los campos\n  decididos en el contrato.\n- QA humana y dispositivos: smartphone y tablet con y sin red.\n- Preview/captura/artifact: ejemplo de manifiesto de una cuenta de dispositivo.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 3 · Riesgo: bajo\n- Bloqueada por: ninguna | Bloquea: HU-04-05\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Backend\n- Plataforma: Todas\n- Esfuerzo: 3\n- Riesgo: Bajo\n- Vista: -\n- Decisión: DEC-153, DEC-154, DEC-161, DEC-212, DEC-223, DEC-232\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-03a` · Estimación publicada: 3 puntos; tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-03a-08-*` de esta historia.\n- Referencia externa: `GH-98` · https://github.com/edobacon/taomangalam/issues/98\n- Rollback: restaurar el cliente anterior conservando la última copia válida del manifiesto en\n  caché; no habilitar capacidades ausentes. Comprobación: el cliente puede leer el manifiesto online\n  y offline.\n- Diseño: la interfaz de menú pertenece a EP-01; comprobar que la vista refleja el manifiesto sin\n  diseñar otra pantalla.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisiones del dev: (1) en M1a el servidor emite impersonacion: null y modoDemostracion: false en el manifiesto; no se retiran del contrato (los datos reales llegan con EP-14b). (2) Para detectar la recuperación de conexión se reusa ObservadorDeRed / ObservadorDeRedConnectivity (app/lib/features/cuenta/data/alta_dispositivo_providers.dart, sobre connectivity_plus, ya dependencia); no se agrega otra dependencia. (3) La ruta real del asset es app/assets/manifiesto/estandar.json.\n\n**Motivo**: Decisiones del dev al preparar la épica EP-03a (2026-10-10)",
+      "revision": "cf1d8fbacff5669298244f5e88c03d147801b77c0980475dabd567b36750bcf2",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-98"
+      ],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "server/src/capacidades/manifiesto.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/capacidades/manifiesto-empaquetado.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm manifiesto:empaquetar"
+          ]
+        },
+        {
+          "path": "app/assets/manifiesto/estandar.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm manifiesto:empaquetar"
+          ]
+        },
+        {
+          "path": "app/lib/features/cuenta/data/alta_dispositivo_providers.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "cd app && flutter test test/manifiesto/"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-244",
+      "title": "[HU-03a-02, HU-03a-07][Historia] Sesión con vigencias configurables y autorización por capacidad con denegación por defecto en el servidor",
+      "body": "> **IDs estables:** `HU-03a-02`, `HU-03a-07` · **Estado:** `Ready` · **Orden recomendado:** `3` · **Puntos publicados:** `5` (3 + 2)\n\n## Historias incluidas\n\n| Historia | Título corto | Puntos | Issue de origen | Orden interno |\n| --- | --- | --- | --- | --- |\n| HU-03a-02 | Vigencias y configuración pública desde claves sembradas | 3 | #90 (anfitrión) | 1 |\n| HU-03a-07 | Middleware de capacidad con denegación por defecto | 2 | #95 (absorbido) | 2 |\n\n## Objetivo\n\nResultado: las vigencias de la sesión y la configuración pública salen de claves de configuración sembradas en el catálogo real de cada entorno, la expiración del refresh queda probada y toda operación autenticada pasa por el middleware de capacidad, que deniega por defecto lo que no declara metadatos, cubre el router de cuenta, registra cada denegación y queda protegido por pruebas de cableado. Consumidor: HU-03a-05 (E5, issue #100), HU-03a-08 (E4, issue #98), HU-03a-09, HU-03a-13 (E6, issue #101), HU-15-03, HU-15-06, EP-03b y las épicas con API.\n\n## Ya entregado en main (no se rehace)\n\n### HU-03a-02\n\nLa emisión y renovación de sesión ya existe y está probada (EP-01, TAO-190 a TAO-193). El intake debe\nanclarse en ese código y no reimplementarlo:\n\n- Tabla `sesion_auth` con migración y `down.sql`; emisión de `TokenPair` con `jose`; `renovarToken`\n  con rotación, reuso que revoca la familia, revocación por sesión y por familia.\n- Autenticación bearer (`no_autenticado`, `token_expirado`), validación de la clave de firma al\n  arrancar y observabilidad con `accountRef`.\n- Pruebas en `server/src/test/auth/` (`session-emit`, `session-rotate`, `bearer-verify`) y la\n  migración en `server/src/test/migrations/sesion-auth.test.ts`.\n\n### HU-03a-07\n\nExiste y está probado (EP-01, TAO-190 a TAO-193); el intake debe anclarse en ese código:\n\n- Middleware `server/src/middleware/capacidad.ts` que lee `x-capacidad` y `x-requiere-cuenta` del\n  contrato (120 operaciones declaran ambas), calcula las capacidades efectivas (perfiles vigentes más\n  obligatorias) en cada petición sin caché, y responde 403 `capacidad_denegada` (con `capacidad`) y\n  403 `requiere_cuenta_completa`.\n- Chequeo de CI de metadatos del contrato (`ci-checks.ts` y regla `tm-operation-x-capacidad` de\n  Spectral). Pruebas `middleware-capacidad.test.ts`, `ci-capacidad.test.ts`.\n- Cableado en los routers de auth, manifiesto, aceptaciones legales y privacidad; el bloqueo por\n  versión legal ya está conectado (`version-legal-pendiente.ts`).\n\n## Alcance\n\n### HU-03a-02\n\n#### Incluye\n\n- Mecanismo de siembra del catálogo `configuracion_clave`, nombrado e idempotente, ejecutable por el\n  pipeline de despliegue con el rol de migración (precedente: el escenario `catalogo-capacidades`).\n  El rol de aplicación sigue con solo `SELECT` (DEC-222).\n- Claves de configuración para la vigencia del access token (15 minutos) y del refresh (30 días),\n  sembradas con esos valores y leídas por el servicio de emisión en lugar de las variables de\n  entorno `JWT_ACCESS_TTL_MINUTES` y `JWT_REFRESH_TTL_DAYS` (DEC-222, DEC-232).\n- Clave `accountDeletionPortalUrl` sembrada con un valor provisional por entorno (y\n  `soportePlazoSinRespuestaDias` si el contrato la usa), de modo que `GET /configuracion/publica`\n  responda 200 en staging y producción (hoy responde 503 sin esa clave).\n- Prueba de expiración del refresh con reloj falso (QA-03a-02-04, segunda mitad), que hoy no existe.\n\n#### No incluye\n\n- Emisión, rotación y bearer: ya entregados.\n- Alta y reautenticación de la cuenta de dispositivo: HU-03a-03 y HU-03a-04.\n- Límites de frecuencia y sus claves: HU-03a-05 (consume el mecanismo de siembra de esta historia).\n\n### HU-03a-07\n\n#### Incluye\n\n- Denegación por defecto: una operación autenticada que no se resuelve en el contrato o no declara\n  `x-capacidad` se rechaza en tiempo de ejecución (hoy llama `next()`); si se decide mantener el\n  comportamiento permisivo, dejarlo documentado con la justificación y la CI como red.\n- Aplicar el middleware en `routes/cuenta.ts` (`POST /cuenta/registro`, `PUT /cuenta/correo`) o\n  declarar y justificar la exención operación por operación, con prueba sobre el router real.\n- Prueba o chequeo estático de que toda operación autenticada del contrato monta el middleware en\n  `app.ts` (hoy las pruebas usan un router de prueba, no el cableado real).\n- Cruzar `CAPACIDADES_CUENTA_COMPLETA` con las operaciones que declaran `x-requiere-cuenta: completa`\n  (prueba o regla en el middleware), para que la nota 3 del catálogo 14 no dependa solo del contrato.\n- Registro de cada denegación con `errorCode`, capacidad y `accountRef`, muestreado.\n\n#### No incluye\n\n- Exclusiones de impersonación: EP-14b (queda el punto de extensión).\n- Bloqueo por versión legal pendiente: HU-03a-13 (ya conectado).\n- Autorización por operación dentro de `/sync`: EP-09.\n\n## Referencias canónicas\n\n- Vistas: ninguna\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-153, DEC-154, DEC-161, DEC-162, DEC-198, DEC-211, DEC-212, DEC-216, DEC-222, DEC-223, DEC-232\n- Datos: `configuracion_clave`, `configuracion_version`, `sesion_auth`, `capacidad`, `perfil_capacidad`, `cuenta_perfil`, `cuenta.tipo`\n- API: `renovarToken`, `obtenerConfiguracionPublica`; todas las operaciones con bearer (en M1a, por ejemplo, `registrarDispositivo` y `aceptarDocumentosLegales`)\n- Capacidades: todas las del registro; en particular la fila de cuenta completa\n- Contenido/assets: valor provisional de `accountDeletionPortalUrl` por entorno (lo fija Producto)\n\n## Criterios de aceptación\n\n### HU-03a-02\n\n- [ ] Dada una base vacía, cuando corre el seed del catálogo de configuración, entonces\n  `configuracion_clave` contiene las claves de vigencia de sesión con 15 minutos y 30 días y la clave\n  `accountDeletionPortalUrl`; ejecutarlo de nuevo no duplica ni altera filas.\n- [ ] Dada la configuración por defecto, cuando se emite un par, entonces `accessTokenExpiraEn`\n  queda 15 minutos después y la expiración del refresh en `sesion_auth` 30 días después; al cambiar\n  las claves de configuración, las nuevas emisiones usan los valores nuevos sin redesplegar.\n- [ ] Dado un entorno sembrado, cuando se llama a `GET /configuracion/publica`, entonces responde\n  200 con `accountDeletionPortalUrl` válida contra el contrato (no 503).\n- [ ] Dado un refresh emitido, cuando el reloj falso avanza 30 días y 1 segundo, entonces `renovarToken`\n  responde `refresh_invalido` y la sesión queda revocada con motivo de expiración.\n\n### HU-03a-07\n\n- [ ] Dada una operación autenticada sin `x-capacidad` o no resuelta en el contrato, cuando llega una\n  petición con bearer válido, entonces responde 403 y registra la operación (o, si se decide lo\n  contrario, queda documentado y una prueba fija el comportamiento).\n- [ ] Dada una cuenta de dispositivo, cuando llama a `POST /cuenta/registro` y `PUT /cuenta/correo`\n  por el router real, entonces cada operación aplica su capacidad y su tipo de cuenta declarados.\n- [ ] Dado el conjunto de operaciones autenticadas del contrato, cuando corre la prueba de cableado,\n  entonces cada una pasa por el middleware o figura en una lista de exenciones justificada.\n- [ ] Dada una capacidad de la fila de cuenta completa del catálogo, cuando la operación que la\n  declara no marca `x-requiere-cuenta: completa`, entonces falla la prueba nombrando la operación.\n- [ ] Dada una denegación, cuando se inspecciona el log, entonces trae `errorCode`, `capacidad` y\n  `accountRef` seudónimo, sin otras capacidades de la cuenta.\n\n## Requisitos transversales\n\n### HU-03a-02\n\n- Permisos: el rol de aplicación no escribe configuración; la siembra usa el rol de migración.\n- Offline/sync: no aplica.\n- Seguridad/privacidad: las claves sembradas no contienen secretos; la clave de firma sigue en el\n  gestor de secretos.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: el seed informa cuántas claves creó, actualizó o dejó igual.\n- Compatibilidad/migración: sin cambio de contrato; las variables de entorno de vigencia se retiran\n  solo cuando las claves estén sembradas en todos los entornos.\n\n### HU-03a-07\n\n- Permisos: es el control real; el manifiesto solo muestra u oculta (DEC-154).\n- Offline/sync: no aplica en el servidor.\n- Seguridad/privacidad: la respuesta no revela capacidades ajenas a la pedida.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: denegaciones registradas con muestreo para no saturar la cuota de logs.\n- Compatibilidad/migración: no aplica.\n\n## Casos de prueba\n\n### HU-03a-02\n\n- [ ] QA-03a-02-01 · Dado un staging recién desplegado, cuando se consulta `GET /v1/configuracion/publica`,\n  entonces responde 200 con la URL provisional del portal.\n- [ ] QA-03a-02-02 · Dada una vigencia de access token cambiada a 5 minutos en la base de\n  `development` (borde), cuando se emite una sesión nueva, entonces vence a los 5 minutos y la\n  anterior conserva su vigencia.\n- [ ] QA-03a-02-04 · Dado un reloj falso adelantado 30 días y 1 segundo tras la emisión (borde),\n  cuando se renueva, entonces responde `refresh_invalido`.\n\n### HU-03a-07\n\n- [ ] QA-03a-07-02 · Dada una cuenta de dispositivo que llama a `listarMisDispositivos` por la ruta\n  real (borde), cuando llega la petición, entonces responde 403 `requiere_cuenta_completa`.\n- [ ] QA-03a-07-03 · Dada una capacidad quitada en la base mientras la app está abierta (borde),\n  cuando la app repite la acción, entonces recibe `capacidad_denegada`.\n\n## Pruebas y evidencia\n\n### HU-03a-02\n\n- Unitarias: lectura de vigencias desde la configuración con reloj falso.\n- Widget/integración/E2E: seed idempotente contra PostgreSQL efímero; Supertest de\n  `obtenerConfiguracionPublica` en base sembrada.\n- QA humana y dispositivos: no aplica.\n- Preview/captura/artifact: log del seed y respuesta de `/configuracion/publica` en staging.\n\n### HU-03a-07\n\n- Unitarias: regla de denegación por defecto y cruce con la fila de cuenta completa.\n- Widget/integración/E2E: Supertest sobre rutas reales de cuenta y la prueba de cableado de todo el\n  contrato.\n- QA humana y dispositivos: no aplica.\n- Preview/captura/artifact: reporte de CI.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 5 (3 + 2) · Riesgo: medio\n- Bloqueada por: ninguna | Bloquea: HU-03a-05 (E5, issue #100), HU-15-03, HU-15-06\n- Orden interno: HU-03a-02 primero (mecanismo de siembra que HU-03a-05 consume), luego HU-03a-07.\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Backend\n- Plataforma: Backend\n- Esfuerzo: 5\n- Riesgo: Medio\n- Vista: -\n- Decisión: DEC-153, DEC-154, DEC-161, DEC-162, DEC-198, DEC-211, DEC-212, DEC-216, DEC-222, DEC-223, DEC-232\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-03a` · Estimación publicada: 5 puntos (3 + 2); tier por intake.\n- Fuentes por criterio/caso: referencias canónicas y casos `QA-03a-02-01`, `QA-03a-02-02`, `QA-03a-02-04`, `QA-03a-07-02` y `QA-03a-07-03` de este grupo.\n- Referencia externa: `GH-90` · https://github.com/edobacon/taomangalam/issues/90\n- Historias absorbidas: #95 (HU-03a-07)\n- Rollback: restaurar el SHA anterior y volver a leer las vigencias de las variables de entorno; conservar las claves ya sembradas, no borrar sesiones activas y revertir el endurecimiento del middleware sin abrir rutas protegidas. Comprobación: el smoke de auth confirma bearer válido, expiración y revocación, `/configuracion/publica` responde, las rutas públicas siguen accesibles y toda ruta autenticada conserva autorización.\n- Diseño: no aplica a interfaz; verificar que el seed no pise valores ajustados por operación y que QA compruebe contrato, rol y denegación de cada operación protegida.\n- Dato de ejecución: `jose` ya está en `server/package.json` (`^6.2.12`) y la emisión la usa; no se agrega ni se prueban otras versiones.",
+      "revision": "92dfb3a2c03960431c1f790834e56a26e1b48bd290717f0f7e5fed708c77abcb",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-90"
+      ],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "server/prisma/migrations/20261006010001_sesion_auth/down.sql",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/test/migrations/sesion-auth.test.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/middleware/capacidad.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/capacidades/ci-checks.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/test/s01/middleware-capacidad.test.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/test/s01/ci-capacidad.test.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/middleware/version-legal-pendiente.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/routes/cuenta.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/src/app.ts",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        },
+        {
+          "path": "server/package.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "pnpm --filter server test"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    }
+  ],
+  "externalEvidence": {},
+  "dependencyWork": [],
+  "contracts": [],
+  "readPaths": [],
+  "repositoryRoot": "/Users/edobacon/Workspace/taomangalam",
+  "readRequirements": [
+    {
+      "path": "/configuracion/publica",
+      "resource": "taomangalam/taomangalam/epic/EP-03a-cuenta-dispositivo/read/%2Fconfiguracion%2Fpublica",
+      "ticketIds": [
+        "TAO-244"
+      ],
+      "sources": [
+        "Ticket [HU-03a-02, HU-03a-07][Historia] Sesión con vigencias configurables y autorización por capacidad con denegación por defecto en el servidor"
+      ]
+    },
+    {
+      "path": "/sync",
+      "resource": "taomangalam/taomangalam/epic/EP-03a-cuenta-dispositivo/read/%2Fsync",
+      "ticketIds": [
+        "TAO-244"
+      ],
+      "sources": [
+        "Ticket [HU-03a-02, HU-03a-07][Historia] Sesión con vigencias configurables y autorización por capacidad con denegación por defecto en el servidor"
+      ]
+    }
+  ],
+  "mentionCatalog": {
+    "HU-01-13": {
+      "ticketId": "TAO-185",
+      "status": "closed"
+    },
+    "HU-01-11": {
+      "ticketId": "TAO-186",
+      "status": "closed"
+    },
+    "TAO-190": {
+      "ticketId": "TAO-190",
+      "status": "closed"
+    },
+    "TAO-193": {
+      "ticketId": "TAO-193",
+      "status": "closed"
+    },
+    "HU-03a-09": {
+      "ticketId": "TAO-217",
+      "status": "discarded"
+    },
+    "HU-03a-02": {
+      "ticketId": "TAO-234",
+      "status": "discarded"
+    },
+    "HU-03a-10": {
+      "ticketId": "TAO-235",
+      "status": "discarded"
+    },
+    "GH-92": {
+      "ticketId": "TAO-221",
+      "status": "open"
+    },
+    "HU-03a-01": {
+      "ticketId": "TAO-221",
+      "status": "open"
+    },
+    "GH-93": {
+      "ticketId": "TAO-222",
+      "status": "open"
+    },
+    "HU-03a-14": {
+      "ticketId": "TAO-222",
+      "status": "open"
+    },
+    "GH-94": {
+      "ticketId": "TAO-223",
+      "status": "open"
+    },
+    "HU-03a-15": {
+      "ticketId": "TAO-223",
+      "status": "open"
+    },
+    "HU-03a-07": {
+      "ticketId": "TAO-236",
+      "status": "discarded"
+    },
+    "HU-03a-03": {
+      "ticketId": "TAO-237",
+      "status": "discarded"
+    },
+    "HU-03a-08": {
+      "ticketId": "TAO-239",
+      "status": "open"
+    },
+    "HU-03a-04": {
+      "ticketId": "TAO-240",
+      "status": "discarded"
+    },
+    "HU-03a-05": {
+      "ticketId": "TAO-241",
+      "status": "discarded"
+    },
+    "HU-03a-13": {
+      "ticketId": "TAO-243",
+      "status": "discarded"
+    },
+    "GH-98": {
+      "ticketId": "TAO-239",
+      "status": "open"
+    },
+    "GH-90": {
+      "ticketId": "TAO-244",
+      "status": "open"
+    }
+  },
+  "mentionFamilies": [
+    "EPIC:TAOMANGALAM:4",
+    "GH:2",
+    "HU:3",
+    "TAO:2",
+    "TASK:5"
+  ],
+  "version": 6,
+  "dependencies": [
+    {
+      "from": "TAO-223",
+      "to": "TAO-221",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-221:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-223",
+      "to": "TAO-222",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-222:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-17-10",
+      "to": "TAO-222",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-222:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-17-10",
+      "to": "TAO-223",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-223:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-222",
+      "to": "TAO-223",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-223:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-15-03",
+      "to": "TAO-223",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-223:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-15-05",
+      "to": "TAO-223",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-223:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-04-05",
+      "to": "TAO-239",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-239:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-239",
+      "to": "TAO-244",
+      "origin": "inferred",
+      "reason": "Mención de contexto; la ficha declara Bloqueada por ninguna",
+      "source": "TAO-244:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-15-03",
+      "to": "TAO-244",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-244:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-15-06",
+      "to": "TAO-244",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-244:body",
+      "accepted": false,
+      "dismissed": true
+    }
+  ],
+  "order": [
+    "TAO-221",
+    "TAO-222",
+    "TAO-223",
+    "TAO-239",
+    "TAO-244"
+  ],
+  "decisionBank": [],
+  "history": [],
+  "events": [
+    {
+      "id": "7b377465-1c1f-46d7-9fbf-73c402f699ac",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:01:08.672Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "create",
+      "source": "kanai-server",
+      "durationMs": 83
+    },
+    {
+      "id": "c38a99f9-d221-4fec-ae90-ff37be6719f5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:02:22.151Z",
+      "kind": "plan_evaluated",
+      "planVersion": 1
+    },
+    {
+      "id": "80439e9a-2da3-4cfa-bd1a-4e5b00492c66",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:02:22.153Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 24
+    },
+    {
+      "id": "bf730cbc-4a8b-45f0-9f89-8445ae619ca9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:59.777Z",
+      "kind": "plan_evaluated",
+      "planVersion": 1
+    },
+    {
+      "id": "0d352926-a6a8-4153-a56d-2f095317a919",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:59.779Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 12
+    },
+    {
+      "id": "e7db0565-f31b-4607-916f-5cf5085638d9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-244",
+      "reason": "Mención de contexto; la ficha declara Bloqueada por ninguna",
+      "evidence": [
+        "{\"from\":\"TAO-239\",\"to\":\"TAO-244\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "fce04c1b-f64a-4d99-a565-dff9e6dcb2c7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-244",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-15-03\",\"to\":\"TAO-244\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "3ccf67af-072e-4239-a778-d935d7186a9e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-244",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-15-06\",\"to\":\"TAO-244\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "4305fe79-1631-4d0f-8ad8-39cf40725b5e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-239",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-04-05\",\"to\":\"TAO-239\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "cf3e9da5-b6ca-4d52-8494-c12e5cdcea9e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-221",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-223\",\"to\":\"TAO-221\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8c476035-b69f-4444-8ceb-daadc766dbb3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-222",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-223\",\"to\":\"TAO-222\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "3e00d1c3-cf9d-43d7-8147-0f9729656d3c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-222",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-17-10\",\"to\":\"TAO-222\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "3a8fc7b5-64d2-428c-981e-a1d95bce6998",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-223",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-17-10\",\"to\":\"TAO-223\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "12635721-165b-452d-b4f5-03c3e2982f7f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-223",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-222\",\"to\":\"TAO-223\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "cf874c00-0a48-4e35-8e00-c087e4612c4c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-223",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-15-03\",\"to\":\"TAO-223\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "24d2645d-61d0-4af2-82b5-2b5aa7429388",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-223",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-15-05\",\"to\":\"TAO-223\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7c09c06e-b61f-4606-98fb-38f3e793c8a4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-244",
+      "reason": "Alcance coincide con el objetivo de la épica A",
+      "evidence": [
+        "{\"ticketId\":\"TAO-244\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "1d13d00a-fb73-45dc-b0ba-1361ce01eaf0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-239",
+      "reason": "Alcance coincide con el objetivo de la épica A",
+      "evidence": [
+        "{\"ticketId\":\"TAO-239\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "15b63080-cf9a-4acc-ab08-63092f654175",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-221",
+      "reason": "Alcance coincide con el objetivo de la épica A",
+      "evidence": [
+        "{\"ticketId\":\"TAO-221\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "355a2ef9-647b-42f7-aef6-a993ad935bc3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-222",
+      "reason": "Alcance coincide con el objetivo de la épica A",
+      "evidence": [
+        "{\"ticketId\":\"TAO-222\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "83e5b11d-b47e-4f03-8893-32c43aea274d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-223",
+      "reason": "Alcance coincide con el objetivo de la épica A",
+      "evidence": [
+        "{\"ticketId\":\"TAO-223\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "22b68f43-a0bf-4f86-acfe-be55657e1315",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.123Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 2,
+      "reason": "16 decisiones; 16 cambios"
+    },
+    {
+      "id": "45d315ea-d603-4afb-90fa-2b121efca49e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:07.125Z",
+      "kind": "operation_completed",
+      "planVersion": 2,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 24
+    },
+    {
+      "id": "94f9b1f9-05f4-42ee-9110-f12f8b1daa32",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:26.628Z",
+      "kind": "plan_changed",
+      "planVersion": 3
+    },
+    {
+      "id": "1d06dbcd-41d6-43e6-8cea-a7e246b2f0fc",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:26.630Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 45
+    },
+    {
+      "id": "ba23f024-2330-4059-9764-c5db99a223f2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:50.375Z",
+      "kind": "plan_evaluated",
+      "planVersion": 3
+    },
+    {
+      "id": "a7a16cdd-2a01-422c-86b9-4e4ec69fc7ac",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:50.377Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 11
+    },
+    {
+      "id": "0120fc47-f796-4cc1-8072-ba99660edf8a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:56.992Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 251
+    },
+    {
+      "id": "0fa5a672-7890-4171-b63c-c41a1c278dc2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:05:10.225Z",
+      "kind": "plan_changed",
+      "planVersion": 4
+    },
+    {
+      "id": "0e23d559-a18a-47d2-85be-ae5bedf377dc",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:05:10.226Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 36
+    },
+    {
+      "id": "5584f49b-1543-4d71-86d5-ab184738c95d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:05:33.904Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 167
+    },
+    {
+      "id": "8738c6c1-c705-48a5-a43c-905c9d803908",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:17:59.463Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 243
+    },
+    {
+      "id": "ba7bb8e2-3a10-4828-b4ab-06037fb10f40",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:50:48.923Z",
+      "kind": "plan_changed",
+      "planVersion": 5
+    },
+    {
+      "id": "d4e898db-11aa-4d5e-ae85-f806ee308995",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:50:48.926Z",
+      "kind": "tickets_refreshed",
+      "planVersion": 5,
+      "reason": "TAO-222, TAO-223, TAO-239"
+    },
+    {
+      "id": "29502a7b-5bef-41f6-bedf-53fe699c5ba2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:50:48.928Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 67
+    },
+    {
+      "id": "5e63acbe-916d-47d7-a7e6-aa4b92ebbe44",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T23:30:56.287Z",
+      "kind": "plan_changed",
+      "planVersion": 6
+    },
+    {
+      "id": "3c7fc550-a6ce-46a1-890e-5171c7d4f8f1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T23:30:56.292Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 102
+    },
+    {
+      "id": "64001e80-8524-4a26-95f3-35a8f2700729",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T23:42:48.717Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 219
+    }
+  ]
+}

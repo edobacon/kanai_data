@@ -1,0 +1,2987 @@
+{
+  "id": "taomangalam-ep-06-dominio-local",
+  "projectId": "taomangalam",
+  "title": "EP-06: dominio local del método hasta proyecciones y corrección",
+  "objective": "Entregar el dominio local del método sobre Drift: base y repositorios, plan de energización, ciclo de vida de la consulta con inicio y cierre, tirada con clasificación del movimiento, conteo de días y proyecciones reactivas con corrección de la última tirada. Es la base que desbloquea el diagnóstico y reparación, el tablero y la cuenta de dispositivo.",
+  "scope": [
+    "TAO-249 (HU-06-01 y HU-06-02): base Drift con migración y capa de repositorios con transacciones.",
+    "TAO-250 (HU-06-05): plan de energización para avance y permanencia desde el contenido compilado.",
+    "TAO-251 (HU-06-03 y HU-06-15): ciclo de vida de la consulta con inicio por kuberani validado, descarte y cierre en Casa 12.",
+    "TAO-254 (HU-06-06): conteo de días continuados con confirmación y detección de día omitido.",
+    "TAO-252 (HU-06-14 y HU-06-04): tirada de tres dados con clasificación del movimiento y retroceso con fuerza del kipot.",
+    "TAO-253 (HU-06-08 y HU-06-07): proyecciones reactivas y corrección de la última tirada por supersede."
+  ],
+  "exclusions": [
+    "Diagnóstico, reparación, cierre completo y suite de invariantes (TAO-255 a TAO-258): épica posterior.",
+    "Pantallas y tablero de EP-07."
+  ],
+  "criteria": [
+    "Cada ticket cumple sus criterios de aceptación con los gates locales en verde",
+    "Los datos sobreviven reinicios y funcionan sin red",
+    "Las transacciones son idempotentes y las correcciones no borran historial"
+  ],
+  "requiredChecks": [
+    "quality-gate"
+  ],
+  "ci": "remote",
+  "repo": "taomangalam",
+  "baseBranch": "main",
+  "branch": "epic/EP-06-dominio-local",
+  "tickets": [
+    {
+      "id": "TAO-249",
+      "title": "[HU-06-01, HU-06-02][Historia] Base Drift local con migración a v4 del plan sin tirada y capa de repositorios que expone el dominio con transacciones y datos que sobreviven reinicios sin red",
+      "body": "> **IDs estables:** HU-06-01, HU-06-02 · **Estado:** Ready · **Orden recomendado:** 1 · **Puntos publicados:** 8 (5 + 3)\n\n## Historias incluidas\n\n| ID | Título corto | Puntos originales | Issue de origen | Orden interno |\n| --- | --- | ---: | --- | ---: |\n| HU-06-01 | Esquema Drift: brechas, migración a v4 y snapshots | 5 (publicada con 8, reducida por lo ya existente en main) | #148 (anfitrión) | 1 |\n| HU-06-02 | Repositorios y providers sobre Drift | 3 | #149 (absorbida) | 2 |\n\n## Objetivo\n\nResultado: la app tiene una base Drift versionada (v4) que admite un plan de práctica sin tirada, y\nuna capa de repositorios y providers Riverpod que es la única puerta al dominio, con escrituras\ntransaccionales y datos que sobreviven al cierre de la app y al reinicio del dispositivo sin red.\nConsumidores directos (los de `Bloquea`): HU-03b-12, HU-04-01, HU-09-01, HU-09-05, HU-15-05, HU-06-05\n(G2) y HU-06-03 (G3).\n\n## Alcance\n\n### HU-06-01\n\n**Ya cubierto en main (solo regresión; no reimplementar, nombrar el test existente al reportar):**\n\n- 14 tablas del dominio y espacio local único con `estado = local` y `cuenta_id` nulo:\n  `app/test/drift/schema_v1_test.dart` (instalación nueva).\n- Checks de dados (1–12, 1–8, 1–4), anillo según resultado, enums, unicidades\n  (`numero_paso`, `ciclo_id + local_date`, revisión) y revisión `vigente` única por paso:\n  `app/test/drift/checks_test.dart`.\n- ULID de 26 caracteres, `created_at`, `updated_at`, `version`, `device_origin_id`, DAO append-only\n  sin actualización ni borrado y \"esquema migrado coincide con instalación nueva\":\n  `app/test/drift/migration_test.dart`.\n- Índice de Inicio por `espacio_id + estado + updated_at`; los índices de historial son las\n  unicidades de paso y revisión.\n- `registro_legal_pendiente` ya existe desde el esquema v2 (`esquema_v2.dart`, `cola_legal_drift.dart`);\n  esta historia solo debe conservarla en la migración.\n\n**Trabajo nuevo:**\n\n- `plan_practica`: agregar la columna `paso_id` (hoy no existe; el plan solo guarda\n  `tirada_revision_id`) y volver nullable `tirada_revision_id` (hoy `NOT NULL` en `esquema_v1.dart`).\n- `versionEsquemaLocal = 4` (hoy 3 en `app_database.dart`) con `esquema_v4.dart` y migración 3 a 4.\n- Backfill de `paso_id` desde la revisión para los planes existentes y comprobación de referencias,\n  índices y unicidades.\n- Coherencia paso-revisión (SQLite no tiene check entre tablas): triggers BEFORE INSERT y BEFORE\n  UPDATE sobre `plan_practica` que exigen que la revisión pertenezca al mismo paso (doc 20, sección\n  `plan_practica`); el repositorio de HU-06-02 la refuerza como segunda barrera.\n- Snapshots congelados de las versiones 2 y 3 (hoy solo hay foto inline del DDL v1): definir dónde\n  viven (por ejemplo constantes DDL en `app/test/drift/fixtures`). No modificar snapshots históricos.\n- `onCreate` debe producir el mismo esquema final que el upgrade.\n\n**No incluye**:\n\n- Operación de supersede transaccional: es de HU-06-07 (G5). Aquí solo se exige que el DAO genérico\n  siga sin `update` ni `delete`.\n- Tablas de retroceso, intentos de reconocimiento y RKL: HU-06-09 a HU-06-11 (M1b), como migración\n  nueva sobre este esquema.\n- `nota`, `archivo_adjunto` y `recordatorio_local`: EP-08.\n- `sync_outbox`, `sync_cursor` y `sync_failure`: EP-09 (M2).\n- Esquema Prisma del servidor: el dominio de una cuenta de dispositivo vive solo en Drift\n  (tecnologia/20 §2).\n\n### HU-06-02\n\n**Incluye**:\n\n- Repositorios por agregado (consultante, consulta, recorrido y práctica) en `app/lib/data/`, y\n  providers en `features/<feature>/application/` (DEC-158, tecnologia/02). Aclarar la ubicación de\n  providers: hoy los de base viven en `features/cuenta/data/`.\n- Operación transaccional: cada comando del dominio escribe todas sus filas en una sola\n  transacción o ninguna.\n- Relleno automático de `updated_at`, incremento de `version`, `device_origin_id` y `espacio_id`\n  del espacio local. `device_origin_id` reutiliza `AppDatabase.deviceOriginId` y\n  `actualizarDispositivoDeOrigen` (ya existen, con `features/cuenta/data/alta_dispositivo.dart`);\n  no se crea otro servicio.\n- Borrado lógico por `deleted_at`; las lecturas por defecto excluyen filas borradas.\n- Lecturas reactivas (streams) que las vistas consumen como `AsyncValue`.\n- Catálogo único de errores tipados del dominio, con código estable y sin excepciones de Drift hacia\n  la interfaz. Se define aquí y las demás historias lo referencian: transición inválida, entidad\n  inexistente, validación, persistencia, reparación pendiente (HU-06-14), plan incompleto\n  (HU-06-05), consulta completada (HU-06-15), cierre en curso (HU-06-12), etapa ya resuelta\n  (HU-06-09) y conflicto de idempotencia (HU-06-04).\n- Puerto de validación de EP-11: contrato `ResultadoValidacionUnidad = {unidad, evento}`; la clave\n  de deduplicación es `unidad.id + evento.id`.\n- Regla verificada en CI: ningún widget ni archivo de `presentation/` importa Drift. El mecanismo es\n  una regla nueva en `app/custom_lint/lib/src/` con su test (hoy hay solo dos reglas) o un script en\n  `scripts/ci`, y su cableado en CI.\n\n**No incluye**:\n\n- Reglas del método (inicio, clasificación, planes, conteo): HU-06-03 a HU-06-07.\n- Cliente remoto y sync: EP-09.\n\n## Contexto de ejecución y contratos\n\nReutilizar `app/lib/data/drift/app_database.dart`, `esquema_v1.dart`, `esquema_v2.dart`,\n`esquema_v3.dart`, `dao/dao_mutables.dart` y `dao/dao_append_only.dart`. En main el esquema vigente\nes 3, las 14 tablas ya existen y `registro_legal_pendiente` también. HU-06-01 completa brechas e\ninvariantes; no crea una segunda base ni vuelve a la versión 1.\n\nContrato del plan: `plan_practica.paso_id` obligatorio y `tirada_revision_id` nullable únicamente\npara pasos sin tirada (`inicio`, `retorno_casa_1`, `retoma`). En los demás planes la revisión debe\npertenecer al mismo paso. No fabricar dados ni revisiones para iniciar. Migrar hacia adelante desde\n3. Append-only protege el payload histórico; `tirada_revision.estado` es una marca de vigencia\n(tecnologia/20 §4) que solo cambia con una operación de supersede transaccional (HU-06-07). Conservar\nIDs, identidad, cuenta vinculada si existe, cola legal y datos del recorrido.\n\nPara HU-06-02: reutilizar `appDatabaseProvider` de\n`app/lib/features/cuenta/data/alta_dispositivo_providers.dart` (abre `tao_mangalam.db` y gestiona su\ncierre); no reemplazarlo por otra conexión persistente. `consulta_summary.dart` es un modelo de\npresentación existente; no tomarlo como contrato completo del motor. Exponer transacciones,\nrepositorios tipados y streams de lectura; presentación no recibe `QueryRow` ni SQL. Entradas: IDs de\nespacio y consulta y comandos tipados; salidas: entidades o DTO inmutables y errores tipados.\nDefinir aquí el contexto transaccional compartido y la política de habilitación de tirada según\nestado, fase y plan. Los generadores y efectos posteriores usan el mismo contexto y no hacen commits\ninternos. Inyectar reloj, zona, fábrica de ULID y resultados de validación en pruebas. Una excepción\ndentro de la unidad de trabajo revierte todos sus cambios; los streams solo anuncian el estado\nconfirmado.\n\n- Baseline observado: `main` en `debeb05f10a325c428febd01ed509fae98de7c80`; actualizar el SHA al iniciar sin asumir que EP-02 ya está integrado.\n- Tratamiento visual: sin interfaz propia; las vistas citadas son consumidoras. No se exige arte raster para este motor.\n\n## Referencias canónicas\n\n- Vistas: ninguna\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-159, DEC-194, DEC-177, DEC-172, DEC-207, DEC-215, DEC-152, DEC-158\n- Fuente técnica complementaria: [Preparación e integración de EP-06](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md), secciones `HU-06-01` y `HU-06-02`.\n- Datos: tablas listadas en Alcance (tecnologia/20 §1, §2, §4, §5, §10 y §11)\n- API: ninguna\n- Capacidades: ninguna\n- Contenido/assets: ninguno\n\n## Criterios de aceptación\n\n### HU-06-01\n\n- [ ] Dada una instalación nueva, cuando la app abre la base por primera vez, entonces se crean\n  todas las tablas del Alcance en la versión vigente (4), con `plan_practica.paso_id` y\n  `tirada_revision_id` nullable, y existe un único `espacio_datos` con `estado = local` y\n  `cuenta_id` nulo. Regresión existente: `schema_v1_test.dart`; trabajo nuevo: la versión 4 y las\n  columnas del plan.\n- [ ] Dada una inserción con `d12 = 13`, `d8 = 0` o `d4 = 5` en `tirada_revision`, cuando se\n  ejecuta, entonces la base la rechaza por check. Regresión existente: `checks_test.dart`.\n- [ ] Dada una revisión con `resultado = avance` y `anillo_destino` no nulo, o con\n  `resultado = retroceso` y `anillo_destino` nulo, cuando se inserta, entonces la base la rechaza.\n  Regresión existente: `checks_test.dart`.\n- [ ] Dadas dos revisiones `vigente` para el mismo `paso_id`, cuando se inserta la segunda sin\n  marcar la primera como `sustituida`, entonces la base la rechaza. Regresión existente:\n  `checks_test.dart`.\n- [ ] Dados dos pasos con el mismo `numero_paso` en una consulta, o dos cumplimientos con el mismo\n  `ciclo_id` y `local_date`, cuando se inserta el segundo, entonces la base lo rechaza. Regresión\n  existente: `checks_test.dart`.\n- [ ] Dado un valor de enum fuera de la lista de tecnologia/20 (por ejemplo `consulta.estado =\n  archivada`), cuando se inserta, entonces la base lo rechaza. Regresión existente:\n  `checks_test.dart`.\n- [ ] Dada cualquier fila nueva de una entidad mutable, cuando se guarda, entonces tiene id ULID\n  válido de 26 caracteres, `created_at`, `updated_at`, `version = 1` y `device_origin_id`.\n  Regresión existente: `migration_test.dart`.\n- [ ] Dado el DAO de una tabla append-only, cuando se revisa su interfaz, entonces no expone\n  operaciones genéricas de actualización ni de borrado (la operación de supersede es de HU-06-07).\n  Regresión existente: `migration_test.dart`.\n- [ ] Dado un cambio de esquema posterior, cuando corre CI, entonces la prueba de migración desde\n  cada versión exportada hasta la actual pasa sobre una base efímera y conserva los datos de\n  prueba. Trabajo nuevo: snapshots congelados de las versiones 2 y 3 y migración 3 a 4.\n\n### HU-06-02\n\n- [ ] Dado un comando que escribe tres filas y falla en la tercera, cuando termina, entonces\n  ninguna de las tres queda en la base.\n- [ ] Dada una consulta guardada, cuando la app se cierra por completo y se vuelve a abrir en modo\n  avión, entonces el repositorio devuelve la misma consulta con los mismos valores.\n- [ ] Dada una actualización de una entidad mutable, cuando se guarda, entonces `version` aumenta\n  en 1 y `updated_at` cambia.\n- [ ] Dada una entidad con `deleted_at`, cuando se lista, entonces no aparece salvo en la lectura\n  explícita de borrados.\n- [ ] Dado un provider que observa una consulta, cuando otra parte de la app la modifica, entonces\n  el provider emite el valor nuevo sin recargar la vista.\n- [ ] Dado un archivo de `presentation/` que importa Drift, cuando corre CI, entonces el análisis\n  falla nombrando el archivo, mediante la regla y el cableado definidos en el Alcance.\n- [ ] Dado el catálogo de errores tipados, cuando se revisa su definición, entonces contiene los seis\n  errores de la guarda de tirada y de idempotencia listados en el Alcance, cada uno con código\n  estable, y las demás historias lo referencian sin redefinirlo (agregado por la revisión del\n  2026-10-10).\n- [ ] Dado el puerto de validación de EP-11, cuando se revisa su contrato, entonces recibe\n  `ResultadoValidacionUnidad = {unidad, evento}` y deduplica por `unidad.id + evento.id`\n  (agregado por la revisión del 2026-10-10).\n\n## Requisitos transversales\n\n- Permisos: no aplica (el esquema y los repositorios no evalúan capacidades; las vistas ocultan acciones según el manifiesto de EP-03a).\n- Offline/sync: la base es la fuente de verdad local (DEC-152); las convenciones preparan el sync\n  de EP-09 sin activarlo. Todo funciona sin red; no hay llamadas remotas en estos repositorios.\n- Seguridad/privacidad: la base vive en el sandbox de la app; no guarda códigos de producto, tokens\n  ni el secreto del dispositivo (tecnologia/20 §10). No se registran en logs datos de consultas ni\n  del consultante.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: una migración fallida registra versión origen, destino y error sin datos de la\n  persona. Los errores tipados llevan código estable para Sentry (HU-15-02), sin contenido de la\n  persona.\n- Compatibilidad/migración: baseline `schemaVersion = 3`; la migración 3 a 4 agrega prueba y\n  snapshot congelado, y conserva identidad, cola legal y datos del recorrido. Los repositorios leen\n  solo el esquema vigente.\n\n## Casos de prueba\n\n- [ ] QA-06-01-01 · Dada una base vacía, cuando se abre con el esquema vigente, entonces integridad lista las 14 tablas de dominio/locales, la cola legal existente y un solo espacio local.\n- [ ] QA-06-01-02 · Dada una revisión de tirada con `d4 = 0` (borde), cuando se inserta, entonces\n  falla por check y no queda fila escrita.\n- [ ] QA-06-01-03 · Dadas bases históricas congeladas 1, 2 y 3 con datos, cuando migran al esquema vigente, entonces los datos, IDs e identidad persisten y el esquema coincide con una instalación nueva.\n- [ ] QA-06-01-04 · Dada una base versión 3 con identidad, cola legal y planes ligados a una revisión, cuando migra al esquema de esta historia, entonces conserva sus IDs/datos, rellena paso_id correctamente y admite un plan de inicio sin tirada; rechaza un plan ligado a una revisión de otro paso.\n- [ ] QA-06-02-01 · Dada una consulta creada en un teléfono sin red, cuando se reinicia el\n  dispositivo y se abre la app sin red, entonces la consulta aparece con su título y estado.\n- [ ] QA-06-02-02 · Dado un comando que falla a mitad de la transacción (borde), cuando se consulta\n  la base, entonces no hay filas parciales.\n- [ ] QA-06-02-03 · Dado un widget de prueba que importa Drift, cuando corre el análisis, entonces\n  falla.\n- [ ] QA-06-02-04 · Dada una transacción que crea un paso y falla antes de actualizar la consulta, cuando se relee y se reabre la base, entonces no persiste ninguna escritura parcial ni se emite un resumen confirmado con ese paso.\n\n## Pruebas y evidencia\n\n- Unitarias: checks, unicidades y generación ULID; repositorios con base en memoria; transacciones y borrado lógico.\n- Widget/integración/E2E: prueba de migración con esquemas exportados sobre base efímera en CI; prueba de integración que cierra y reabre la base en dispositivo.\n- QA humana y dispositivos: reinicio real del dispositivo en modo avión en un teléfono y una tablet (HU-06-02).\n- Preview/captura/artifact: log de la prueba de migración en CI (doc 46 §8); salida de CI y video corto del reinicio sin red.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 8 · Riesgo: medio\n- Bloqueada por: HU-00-02 (cerrada, #4). HU-06-01 no depende de EP-03a ni de EP-02.\n- Bloquea: HU-03b-12, HU-04-01, HU-09-01, HU-09-05, HU-15-05, HU-06-05 (G2, #150), HU-06-03 (G3, #151)\n- Orden interno: HU-06-01 primero, luego HU-06-02 (HU-06-02 depende de HU-06-01).\n- Nota de coordinación: el servicio del código de dispositivo lo define HU-03a-03 y HU-06-02 lo consume reutilizando `AppDatabase.deviceOriginId`; ninguna de las dos bloquea a la otra, y quien llegue segundo reutiliza el servicio ya existente. G1 puede correr en paralelo con EP-03a.\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Datos\n- Plataforma: Todas\n- Esfuerzo: 8\n- Riesgo: Medio\n- Vista: -\n- Decisión: DEC-159, DEC-194, DEC-177, DEC-172, DEC-207, DEC-215, DEC-152, DEC-158\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-06` · Estimación publicada: 8 puntos (5 + 3); tier por intake.\n- Referencia externa: `GH-148` · URL canónica: https://github.com/edobacon/taomangalam/issues/148.\n- Historias absorbidas: #149 (HU-06-02)\n- Fuentes por criterio/caso: `docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md`, historias HU-06-01 y HU-06-02: Referencias canónicas, Criterios de aceptación y Casos de prueba `QA-06-01-01`, `QA-06-01-02`, `QA-06-01-03`, `QA-06-01-04`, `QA-06-02-01`, `QA-06-02-02`, `QA-06-02-03`, `QA-06-02-04`.\n- Rollback: HU-06-01 agrega la migración 3 a 4: no revertir de forma destructiva una migración ya aplicada; restaurar el comportamiento previo con una migración compatible hacia adelante (v5), conservando identidad, cola legal, IDs y datos del recorrido, y comprobar con la prueba de migración y `QA-06-01-01` a `QA-06-01-04`. HU-06-02 no tiene migración: revertir por commit, sin datos que compensar; comprobar con `QA-06-02-01` a `QA-06-02-04`.\n- Diseño: No aplica a interfaz propia; validar el resultado no visual con los criterios de prueba de las dos historias.\n- Evidencia adicional para intake: `QA-06-01-04` y `QA-06-02-04` y el contrato de cada historia; registrar archivo y nombre completo del test, resultado y estado antes/después. No declarar estas pruebas ejecutadas durante la preparación documental.\n- Flujo de entrega: DEC-239, rama acumuladora `epic/EP-06`, verificaciones locales por ticket y un PR final; sin PR/push/CI por historia.\n- Entrada a Kanai: solo al seleccionar este issue para ejecución y cerrar sus dependencias reales; el detalle documental Ready no acredita implementación ni cierre de dependencias.\n\n## Trazabilidad y condición de ejecución\n\n- Épica padre: #147.\n- Referencia externa: `GH-148` · [URL canónica](https://github.com/edobacon/taomangalam/issues/148).\n- Historias absorbidas: #149 (HU-06-02), cerrada como absorbida por este issue.\n- [Fuente de estas historias](https://github.com/edobacon/taomangalam/blob/main/docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md) · [Contratos de integración](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md) · [Modelo del plan sin tirada](https://github.com/edobacon/taomangalam/blob/main/docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md#plan_practica).\n- Estado de ejecución al publicar: dependencias GitHub cerradas; verificar baseline e intake antes de ejecutar.\n\n| Dependencia | Issue | Estado al publicar |\n| --- | --- | --- |\n| HU-00-02 | #4 | closed |\n\nEl estado anterior es una captura del 2026-10-10; consultar los issues para el estado vigente. Preparación completa no equivale a implementación. Solo el issue seleccionado se lleva a Kanai, con esta URL y referencia externa. Los puntos publicados no fijan el tier.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-10 - dev\n\nDecisiones del dev: (1) los providers nuevos de consultante, consulta, recorrido y práctica viven en features/<feature>/application/; appDatabaseProvider se queda en features/cuenta/data/ y solo se consume. (2) La política de tirada recibe un indicador planCompleto que calcula HU-06-05 (dueña de plan_incompleto). Habilitada: consulta.estado = activa, fase = lista_para_tirada y planCompleto verdadero. cierre_en_curso: estado = activa y fase = cierre_en_curso. transicion_invalida: cualquier otra combinación de estado (borrador, completada, descartada) y fase (preparacion, acciones_en_curso, esperando_material, esperando_conexion, lectura_pendiente, bloqueada_conflicto, completada). (3) La regla no-Drift detecta por ruta presentation/ y también clases que extienden Widget fuera de presentation/, con test case propio.\n\n**Motivo**: Decisiones del dev al preparar la épica EP-06 (2026-10-10)",
+      "revision": "3e67e06324f1f3be7aa4087c82f95dd26908ff81383428ae6092edb4a0819cf7",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-148"
+      ],
+      "scopeApproved": true,
+      "dependencies": [],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "app/test/drift/schema_v1_test.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/test/drift/checks_test.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/test/drift/migration_test.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/esquema_v1.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/esquema_v2.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/esquema_v3.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/esquema_v4.dart",
+          "kind": "deliverable",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "preparation": "El ticket crea el esquema v4 de Drift con las tablas del dominio local y su migración desde v3",
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/features/legal/data/cola_legal_drift.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/app_database.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/features/cuenta/data/alta_dispositivo.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/features/cuenta/data/alta_dispositivo_providers.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/dao/dao_mutables.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/data/drift/dao/dao_append_only.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "app/lib/features/consultas/domain/consulta_summary.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-250",
+      "title": "[HU-06-05][Historia] Generación del plan de energización para avance y permanencia desde el contenido compilado, con renovación del kuberani y bloqueo de la siguiente tirada",
+      "body": "> **IDs estables:** HU-06-05 · **Estado:** Blocked · **Orden recomendado:** 2 · **Puntos publicados:** 8\n\n## Historias incluidas\n\n| ID | Título corto | Puntos originales | Issue de origen | Orden interno |\n| --- | --- | ---: | --- | ---: |\n| HU-06-05 | Plan de energización, renovación del kuberani y bloqueo de tirada | 8 | #150 (anfitrión) | 1 |\n\nEste grupo tiene una sola historia y no absorbe otros issues.\n\n## Objetivo\n\nResultado: el motor genera desde el catálogo de casas el plan de energización de la casa alcanzada\n(inicio en Casa 1, avance y permanencia), agrega a la permanencia el retiro del kuberani y su\nrenovación validada, y bloquea la siguiente tirada hasta completar el plan. Consumidores directos\n(los de `Bloquea`): HU-06-03 (G3), HU-06-04 (G4), HU-06-06 (G6), HU-06-07 y HU-06-08 (G5), HU-06-12\n(EP-06b), HU-08-01 y HU-11-05.\n\n## Alcance\n\n### HU-06-05\n\n**Incluye**:\n\n- `plan_practica` con `via = consultante` (uso personal Estándar, DEC-116), `content_version` del\n  catálogo y `resumen_snapshot`, ligado a la `tirada_revision` (o al paso de inicio en Casa 1).\n- `accion_practica` desde el procedimiento de energización de la casa (HU-02-05): práctica diaria\n  con `dias_requeridos` y repeticiones de la fuente, `content_key` y `texto_snapshot`.\n- Permanencia (DEC-028, DEC-134): mismo procedimiento de energización de la casa, más dos acciones\n  previas en el orden del flujo obligatorio de DEC-134: retiro o quema del kuberani usado\n  (confirmación sin prueba, DEC-059) y renovación del kuberani (uso de producto con motivo\n  `kuberani_renovacion`, requiere el resultado de validación de EP-11). La práctica diaria se\n  habilita al confirmar la renovación. La acción `Renovar kuberani` que abre la validación vive en\n  V-07 y V-03 (DEC-231); el motor solo recibe el resultado.\n- Alcance de las acciones: esta historia solo completa acciones de confirmación (retiro, quema y\n  renovación). HU-06-06 (G6) completa las acciones diarias y dispara el paso del plan a `completado`.\n- Registro en historial de si la casa de la permanencia venía de una reparación (DEC-028); en M1a\n  siempre es falso porque no hay reparaciones.\n- Renovación sin red: plan y consulta en `esperando_conexion` con `motivo_bloqueo =\n  validar_kuberani_renovacion`; sin unidad: `esperando_material` con `motivo_bloqueo =\n  kuberani_renovacion` (DEC-231, tecnologia/20 §4). Ninguno reutiliza los motivos de inicio ni de\n  reposición.\n- `evento_plan` de activación con fecha local y zona: es el punto desde el que HU-06-06 cuenta los\n  días (DEC-232).\n- Estados del plan `pendiente`, `activo`, `esperando_material`, `esperando_conexion` y\n  `completado`; `evento_plan` de activación, material agregado y cumplimiento.\n- Al completar todas las acciones obligatorias: plan `completado` y consulta\n  `fase = lista_para_tirada`; mientras no, `fase = acciones_en_curso` y la tirada se rechaza con el\n  error tipado de plan incompleto del catálogo de HU-06-02 (G1).\n\n**No incluye**:\n\n- Conteo de días y día omitido: HU-06-06 (G6).\n- Sustitución del plan por corrección: HU-06-07 (G5).\n- Planes de reparación, coherencia y cierre: HU-06-10 a HU-06-12 (M1b).\n- Vía del consultor (flujo profesional, DEC-062): M3.\n- Recordatorios locales: EP-08.\n\n## Contexto de ejecución y contratos\n\nEntradas: contexto transaccional, paso, revisión opcional, casa, tipo de movimiento/vía y catálogo de\ncasas validado y versionado; salidas: plan, acciones, evento de activación y nueva fase. Construirlo\nsobre HU-06-02 y HU-02-05, antes de HU-06-03 y HU-06-04. Se prueba con pasos y revisiones válidos\nsembrados en Drift, sin depender del orquestador de registro.\n\nCasa 1 inicial usa paso sin revisión; avances y permanencias usan la revisión vigente del mismo paso.\nConservar `content_key`, versión y snapshots. Permanencia: retiro/quema, renovación validada,\nenergización; las esperas no activan días. El bloqueo se verifica con la política compartida de\nHU-06-02, y HU-06-04 (G4) prueba después la entrada pública.\n\nContenido: el catálogo de casas existe hoy solo en `origin/epic/EP-02`\n(`app/assets/catalogos/casas.v1.json`, `app/lib/catalogos/cargador_catalogo_casas.dart`). HU-02-05\ncorresponde a GH-72 y HU-02-04 a GH-71, ambos abiertos al preparar este lote. Exigir su integración en\nmain (o en la rama de origen de la épica EP-06a) antes de tomar esta historia: es un bloqueo externo.\nNo inventar un catálogo alternativo. El contrato OpenAPI vigente es 2.4.1 y ya incluye\n`kuberani_renovacion` y `validar_kuberani_renovacion` en `ContextoUsoUnidad.motivo` y `motivoBloqueo`:\nverificar compatibilidad del cliente generado, no agregarlos por duplicado.\n\n- Baseline observado: `main` en `debeb05f10a325c428febd01ed509fae98de7c80`; actualizar el SHA al iniciar sin asumir que EP-02 ya está integrado.\n- Tratamiento visual: sin interfaz propia; las vistas citadas son consumidoras. No se exige arte raster para este motor.\n\n## Referencias canónicas\n\n- Vistas: ninguna (la consumen V-05 y V-07, de EP-07)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-028, DEC-134, DEC-059, DEC-060, DEC-116, DEC-035, DEC-213, DEC-178, DEC-231, DEC-232\n- Fuente técnica complementaria: [Preparación e integración de EP-06](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md), sección `HU-06-05`.\n- Datos: `plan_practica`, `accion_practica`, `evento_plan`, `consulta.plan_actual_id`,\n  `consulta.fase`, `consulta.motivo_bloqueo`\n- API: ninguna (el resultado de `validarYUsarUnidad` llega desde EP-11)\n- Capacidades: ninguna en el motor\n- Contenido/assets: catálogo de casas de HU-02-05 (`content_key` y `content_version`), hoy solo en `origin/epic/EP-02`\n\n## Criterios de aceptación\n\n### HU-06-05\n\n- [ ] Dado el inicio en Casa 1, cuando se genera el plan, entonces tiene las acciones de\n  energización de la vía del consultante de Casa 1 con los días que declara el catálogo (3 días\n  según `docs/content/casas/01_casa_1.md`) y la versión del catálogo.\n- [ ] Dado un paso de avance a Casa 6 sembrado en Drift, cuando se genera el plan para ese paso,\n  entonces se crea el plan de energización de Casa 6, queda como `plan_actual_id` y la consulta pasa\n  a `acciones_en_curso`. (Reescrito: el registro público del avance es de HU-06-04.)\n- [ ] Dado un paso de permanencia en Casa 3 sembrado en Drift, cuando se genera el plan para ese\n  paso, entonces el plan tiene, en orden, retiro del kuberani usado, renovación del kuberani y la\n  energización de Casa 3, y la práctica diaria no admite cumplimientos antes de confirmar la\n  renovación. (Reescrito: el registro público de la permanencia es de HU-06-04.)\n- [ ] Dada la renovación con resultado \"sin conexión\", cuando se registra, entonces plan y consulta\n  quedan en `esperando_conexion` con `motivo_bloqueo = validar_kuberani_renovacion`, y un reintento\n  exitoso los devuelve a `activo` y `acciones_en_curso` con el motivo nulo.\n- [ ] Dada una consulta sin kuberani para renovar, cuando la persona lo indica, entonces queda en\n  `esperando_material` con `motivo_bloqueo = kuberani_renovacion`, conserva datos y acciones, y la\n  tirada sigue bloqueada (DEC-134).\n- [ ] Dado un plan que pasa a `activo`, cuando se revisa `evento_plan`, entonces existe un evento de\n  activación con `local_date` y `timezone_id`.\n- [ ] Dado un plan con todas sus acciones obligatorias completas (las de confirmación completadas por\n  esta historia y las diarias sembradas como completadas, porque su cumplimiento es de HU-06-06),\n  cuando se evalúa la finalización, entonces el plan queda `completado` y la consulta\n  `lista_para_tirada` en la misma transacción. (Reescrito: HU-06-06 dispara esta evaluación al\n  completar la última acción diaria.)\n- [ ] Dado un plan incompleto, cuando se evalúa la política compartida de habilitación de tirada de\n  HU-06-02, entonces se rechaza con el error tipado de plan incompleto.\n- [ ] Dada una acción generada, cuando se lee, entonces su `texto_snapshot` coincide con el texto\n  del catálogo de la versión registrada.\n\n## Requisitos transversales\n\n- Permisos: el motor no evalúa capacidades.\n- Offline/sync: todo el plan se genera y avanza sin red, salvo la renovación, que depende del\n  resultado en línea de EP-11. Las esperas no consumen días.\n- Seguridad/privacidad: el motor no recibe códigos, solo el resultado.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: cada cambio de estado del plan queda en `evento_plan` con fecha local y zona.\n- Compatibilidad/migración: el plan guarda `content_version` para leer registros viejos aunque el\n  catálogo cambie (DEC-178). Sin migración propia.\n\n## Casos de prueba\n\n- [ ] QA-06-05-01 · Dado un paso de inicio sembrado en Casa 1 (el inicio completo es de HU-06-03), cuando se lee su plan, entonces muestra la\n  energización de Casa 1 con 3 días y la consulta está en `acciones_en_curso`.\n- [ ] QA-06-05-02 · Dada una Permanencia cuya renovación falla por falta de red (borde), cuando se\n  intenta confirmar un cumplimiento con la operación de dominio mínima de esta historia (que solo\n  valida que la acción esté habilitada), entonces se rechaza hasta confirmar la renovación. (Reescrito:\n  marcar días como flujo completo es de HU-06-06.)\n- [ ] QA-06-05-03 · Dado un plan completo, cuando se evalúa la política compartida para admitir tirada, entonces se permite; dado uno incompleto (error), entonces se rechaza. HU-06-04 prueba después el registro público con esta política real.\n- [ ] QA-06-05-04 · Dado un paso de inicio sin tirada, cuando se genera su plan con el catálogo vigente, entonces contiene energización de Casa 1, conserva versión/snapshot y no crea ninguna tirada_revision; un fallo al insertar acciones revierte también plan y evento.\n\n## Pruebas y evidencia\n\n- Unitarias: generación de planes para las casas 1 a 11 en avance y permanencia; orden de acciones;\n  bloqueo de tirada; estados de espera.\n- Widget/integración/E2E: ciclo energización y permanencia completo con resultados simulados de\n  EP-11.\n- QA humana y dispositivos: revisión de Contenido de los textos de acciones contra la fuente.\n- Preview/captura/artifact: salida de CI.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 8 · Riesgo: alto\n- Bloqueada por: HU-06-02 (G1, #148), HU-02-05 (#72, externo), HU-02-04 (#71, externo)\n- Bloquea: HU-06-03 (G3, #151), HU-06-04 (G4, #153), HU-06-06 (G6, #152), HU-06-07 y HU-06-08 (G5, #156), HU-06-12 (G9, EP-06b), HU-08-01, HU-11-05\n- Orden interno: no aplica (una sola historia).\n- Nota de coordinación: tecnologia/20 §4 y el contrato OpenAPI 2.4.1 ya incluyen `kuberani_renovacion` y `validar_kuberani_renovacion`; comprobar que el cliente generado los conserva antes de esta historia (DEC-231, punto 4).\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Datos\n- Plataforma: Todas\n- Esfuerzo: 8\n- Riesgo: Alto\n- Vista: V-05, V-07\n- Decisión: DEC-028, DEC-134, DEC-059, DEC-060, DEC-116, DEC-035, DEC-213, DEC-178, DEC-231, DEC-232\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-06` · Estimación publicada: 8 puntos; tier por intake.\n- Referencia externa: `GH-150` · URL canónica: https://github.com/edobacon/taomangalam/issues/150.\n- Historias absorbidas: ninguna\n- Fuentes por criterio/caso: `docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md`, historia HU-06-05: Referencias canónicas, Criterios de aceptación y Casos de prueba `QA-06-05-01`, `QA-06-05-02`, `QA-06-05-03`, `QA-06-05-04`.\n- Rollback: handler y generador sin migración: revertir por commit, sin datos que compensar; los planes y eventos ya escritos en una base de prueba se descartan con la base efímera. Comprobación: ejecutar `QA-06-05-01`, `QA-06-05-02`, `QA-06-05-03` y `QA-06-05-04`.\n- Diseño: No aplica a interfaz propia; validar el resultado no visual con los criterios de prueba de esta historia.\n- Evidencia adicional para intake: `QA-06-05-04` y el contrato de esta historia; registrar archivo y nombre completo del test, resultado y estado antes/después. No declarar esta prueba ejecutada durante la preparación documental.\n- Flujo de entrega: DEC-239, rama acumuladora `epic/EP-06`, verificaciones locales por ticket y un PR final; sin PR/push/CI por historia.\n- Entrada a Kanai: solo al seleccionar este issue para ejecución y cerrar sus dependencias reales; el detalle documental Ready no acredita implementación ni cierre de dependencias.\n\n## Trazabilidad y condición de ejecución\n\n- Épica padre: #147.\n- Referencia externa: `GH-150` · [URL canónica](https://github.com/edobacon/taomangalam/issues/150).\n- [Fuente de esta historia](https://github.com/edobacon/taomangalam/blob/main/docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md) · [Contratos de integración](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md) · [Modelo del plan sin tirada](https://github.com/edobacon/taomangalam/blob/main/docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md#plan_practica).\n- Estado de ejecución al publicar: bloqueado hasta cerrar e integrar las dependencias siguientes.\n\n| Dependencia | Issue | Estado al publicar |\n| --- | --- | --- |\n| HU-06-02 (grupo G1) | #148 | open |\n| HU-02-05 | #72 | open |\n| HU-02-04 | #71 | verificar al publicar (no capturado en el cuerpo original) |\n\nEl estado anterior es una captura del 2026-10-10; consultar los issues para el estado vigente. Preparación completa no equivale a implementación. Solo el issue seleccionado se lleva a Kanai, con esta URL y referencia externa. Los puntos publicados no fijan el tier.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-11 - dev\n\nAdenda (decisiones del dev 2026-10-10, preguntas del juez). 1) En permanencia el plan nace en `pendiente` y el evento_plan de activación se emite recién al confirmar la renovación; las esperas no consumen días y HU-06-06 cuenta desde esa activación (DEC-232); agregar un test que lo verifique. 2) viene_de_reparacion=false se persiste en el payload del evento_plan de activación, sin columnas nuevas (REQ-08). 3) El producto_id del kuberani se lee del catálogo de productos por su código `kuberani`, sin literal fijo en el código. 4) Esta planificación se hizo con dependencyAck sobre TAO-249 (en desarrollo, por su spec); antes de integrar a main se debe revisar este ticket contra lo que TAO-249 dejó realmente.",
+      "revision": "ea88c48fe3d0265eabc64be0f2017847d17f0d2d7a10a9b53b6f7d8c9c7187aa",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-150"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-249",
+        "TAO-199",
+        "TAO-198"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "app/assets/catalogos/casas.v1.json",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test"
+          ]
+        },
+        {
+          "path": "app/lib/catalogos/cargador_catalogo_casas.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test"
+          ]
+        },
+        {
+          "path": "docs/content/casas/01_casa_1.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        },
+        {
+          "path": "docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-251",
+      "title": "[HU-06-03, HU-06-15][Historia] Ciclo de vida de la consulta con inicio en Casa 1 por kuberani validado, descarte, propósito inmutable y registro del cierre en Casa 12 con bloqueo definitivo de tiradas",
+      "body": "> **IDs estables:** HU-06-03, HU-06-15 · **Estado:** Blocked · **Orden recomendado:** 3 · **Puntos publicados:** 7 (5 + 2)\n\n## Historias incluidas\n\n| ID | Título corto | Puntos originales | Issue de origen | Orden interno |\n| --- | --- | ---: | --- | ---: |\n| HU-06-03 | Ciclo de vida de la consulta e inicio en Casa 1 | 5 | #151 (anfitrión) | 1 |\n| HU-06-15 | Cierre mínimo en Casa 12 y consulta completada | 2 | #154 (absorbida) | 2 |\n\n## Objetivo\n\nResultado: el motor crea consultas en borrador, las inicia en Casa 1 solo con un kuberani validado,\nlas descarta sin borrarlas, mantiene inmutable el propósito desde el inicio, lleva la fase y el\nmotivo de bloqueo con los valores cerrados del modelo y, al registrarse una tirada con D12 = 12,\nregistra el Cierre, deja la consulta `completada` en Casa 12 y rechaza para siempre nuevas tiradas.\nConsumidores directos (los de `Bloquea`): HU-05-06, HU-11-04, HU-07-18, HU-06-14 y HU-06-04 (G4),\nHU-06-07 y HU-06-08 (G5) y HU-06-12 (EP-06b).\n\n## Alcance\n\n### HU-06-03\n\n**Incluye**:\n\n- Crear consulta en `estado = borrador`, `fase = preparacion`, con propósito, título y la\n  revisión 1 de la descripción (DEC-035, DEC-117, DEC-215).\n- Editar título y agregar revisiones de descripción mientras la consulta esté en borrador o activa;\n  el propósito solo es editable en borrador. Una consulta descartada o completada rechaza la edición\n  de la descripción con error tipado.\n- `Dar inicio`: recibe el resultado de la validación del kuberani que entrega EP-11 (el motor no\n  valida códigos); con resultado exitoso, en una transacción: `estado = activa`, `casa_actual = 1`,\n  paso 1 de `tipo = inicio` con fecha local efectiva y zona, y solicitud del plan de Casa 1 a\n  HU-06-05 (G2).\n- Sin conexión al validar: `estado` sigue en `borrador`, `fase = esperando_conexion`,\n  `motivo_bloqueo = validar_kuberani_inicio` (DEC-213).\n- Sin kuberani: `fase = esperando_material`, `motivo_bloqueo = kuberani_inicio` (DEC-060).\n- Salida de ambas esperas: un reintento exitoso inicia la consulta; volver al borrador sin iniciar\n  deja `fase = preparacion` y `motivo_bloqueo` nulo.\n- Descartar solo desde borrador: `estado = descartada`, sin borrado físico ni lógico.\n- Máquina de estados con transiciones válidas explícitas; cualquier otra devuelve error tipado del\n  catálogo definido en HU-06-02 (G1).\n- Idempotencia del inicio: repetir el mismo resultado de EP-11 no crea otro paso ni otro plan; se\n  deduplica con la clave `unidad.id + evento.id` definida en HU-06-02 (DEC-233).\n\n**No incluye**:\n\n- Validación en línea del kuberani y su interfaz: EP-11 (HU-11-03, HU-11-04).\n- Plan de energización de Casa 1: HU-06-05 (G2); aquí se solicita y se verifica que quede vigente.\n- Espera por corrector o reposición tras reparación: HU-06-10 (M1b).\n- Pantallas de creación, detalle y descarte: EP-05.\n\n### HU-06-15\n\n**Incluye**:\n\n- Mediante el handler de esta historia dentro de la unidad de trabajo compartida, integrado después\n  por HU-06-04 (G4), para `resultado = cierre`: paso de `tipo = cierre` y revisión con\n  `casa_destino = 12`, sin `anillo_destino` ni `fuerza_kipot` porque la Casa 12 no tiene kipot que\n  corregir (DEC-032).\n- Consulta tras el Cierre (DEC-231, punto 2): `estado = completada`, `fase = completada`,\n  `casa_actual = 12`, `paso_actual_id` en el paso del Cierre, `plan_actual_id` nulo y `closed_at`\n  con el momento del paso.\n- Bloqueo definitivo: cualquier intento posterior de registrar una tirada se rechaza con el error\n  tipado de consulta completada.\n- La tirada que produjo el Cierre no se corrige: con la consulta completada, la corrección de la\n  última tirada (DEC-098) no aplica y el intento se rechaza con el mismo error tipado (DEC-233,\n  punto 1).\n- Un plan sin completar no puede existir en ese momento porque la tirada solo se admite en\n  `lista_para_tirada` (política compartida de HU-06-02, integrada por HU-06-04).\n- Estrategia de cierre inyectable: el cierre mínimo de M1a es la implementación por defecto y\n  HU-06-12 (M1b) la sustituye sin tocar el handler.\n- El DTO de cierre la identifica como completada; las proyecciones de Inicio y listado son de\n  HU-06-08 (G5), que consume este estado para separarla de las activas.\n\n**No incluye**:\n\n- Clasificación del movimiento (Casa 11 con D12 = 12 es Cierre y no Avance): HU-06-04 (G4).\n- Plan final de Casa 12, fase `cierre_en_curso` y completado tras cumplir las acciones finales:\n  HU-06-12 (M1b), que sustituye esta estrategia por la del cierre completo.\n- Pantalla de cierre con resumen y nueva consulta (V-14): EP-08 (M1b).\n- Presentación del resultado con la plantilla de Casa 12: HU-07-18.\n\n## Contexto de ejecución y contratos\n\nHU-06-03: recibir propósito, título y descripción, consultante del mismo espacio y resultado tipado de\nvalidación desde EP-11; no recibir el código físico. Emitir la consulta actualizada, paso de inicio y\nplan vigente generado por HU-06-05 en una sola transacción. El inicio no genera `tirada_revision`; el\nplan referencia `paso_id` y lleva `tirada_revision_id = null`. La dependencia HU-06-05 queda antes del\ninicio para probar el plan real, no un stub. Repetir el mismo comando de inicio no crea otro paso ni\nplan. Si la generación del plan falla, consulta y revisión de descripción conservan el estado\nanterior; no repetir el consumo remoto ya confirmado. Usar la referencia de operación de EP-11 para\ndeduplicar el resultado.\n\nHU-06-15: implementar una operación de dominio invocable con contexto transaccional y consulta lista:\ncrea el paso y la revisión de cierre, completa la consulta, fecha `closed_at` y deja `plan_actual_id`\nnulo. Devolver resumen tipado completado y política de rechazo para registro y corrección. Verificar\ndirectamente la operación sobre consultas válidas sembradas; HU-06-04 integra la entrada pública de\ndados y HU-06-08 las lecturas generales. No depender de esas dos historias para probar la atomicidad\nde este handler. No usar stub que omita escritura de estado. La estrategia de cierre queda explícita\ne intercambiable, con el comportamiento mínimo M1a verificable y sin reabrir consultas completadas.\n\n- Baseline observado: `main` en `debeb05f10a325c428febd01ed509fae98de7c80`; actualizar el SHA al iniciar sin asumir que EP-02 ya está integrado.\n- Tratamiento visual: sin interfaz propia; las vistas citadas son consumidoras. No se exige arte raster para este motor.\n\n## Verificación del handler (HU-06-15)\n\nEn esta historia «registrar» invoca directamente el handler real de dominio y su transacción sobre\nDrift, con consulta y paso válidos sembrados. No requiere el orquestador público HU-06-04 ni streams\nHU-06-08; esas integraciones tienen pruebas adicionales en sus historias. Las guardas se invocan\nmediante la política compartida real de HU-06-02.\n\n## Referencias canónicas\n\n- Vistas: ninguna (consumen V-02 y V-03, de EP-05; V-32 y V-07, de EP-07; V-01, V-03 y V-44, de EP-05)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-035, DEC-114, DEC-117, DEC-213, DEC-215, DEC-207, DEC-060, DEC-233, DEC-231, DEC-032, DEC-133, DEC-015, DEC-098\n- Fuente técnica complementaria: [Preparación e integración de EP-06](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md), secciones `HU-06-03` y `HU-06-15`.\n- Datos: `consulta` (`estado`, `fase`, `motivo_bloqueo`, `casa_actual`, `paso_actual_id`, `plan_actual_id`, `closed_at`),\n  `consulta_descripcion_revision`, `paso_recorrido` (`tipo = inicio` y `tipo = cierre`), `tirada_revision` (`resultado = cierre`)\n- API: ninguna (el resultado de `validarYUsarUnidad` llega desde EP-11)\n- Capacidades: ninguna en el motor; las vistas usan `consulta.crear`, `consulta.iniciar`,\n  `consulta.editar` y `consulta.descartar`\n- Contenido/assets: ninguno\n\n## Criterios de aceptación\n\n### HU-06-03\n\n- [ ] Dado un propósito y un título, cuando se crea la consulta sin red, entonces queda en\n  `borrador`, `fase = preparacion`, sin `casa_actual` y con la revisión 1 de la descripción.\n- [ ] Dado un borrador y un resultado de validación exitoso, cuando se da inicio, entonces en una\n  transacción queda `activa`, `casa_actual = 1`, existe el paso 1 `inicio` con `local_date` y\n  `timezone_id` del momento del inicio, y queda un plan vigente de Casa 1 generado por HU-06-05, con\n  `plan_actual_id` apuntando a él, `fase = acciones_en_curso` y el paso de inicio con\n  `tirada_revision_id` nulo. (Reescrito: antes decía solo \"se solicita el plan de Casa 1\".)\n- [ ] Dado un borrador y un resultado \"sin conexión\", cuando se intenta dar inicio, entonces sigue\n  en `borrador` con `fase = esperando_conexion` y `motivo_bloqueo = validar_kuberani_inicio`, sin\n  paso creado.\n- [ ] Dado un borrador en el que la persona indica que aún no tiene el kuberani, cuando se registra,\n  entonces queda `fase = esperando_material` y `motivo_bloqueo = kuberani_inicio`.\n- [ ] Dada una consulta en `esperando_conexion`, cuando llega un resultado exitoso tras reintentar,\n  entonces se inicia igual que desde `preparacion` y `motivo_bloqueo` queda nulo.\n- [ ] Dada una consulta `activa`, cuando se intenta cambiar el propósito, entonces se rechaza con\n  error tipado y el propósito no cambia; el título sí puede cambiar.\n- [ ] Dada una consulta `activa`, cuando se intenta descartar, entonces se rechaza; dado un\n  borrador, cuando se descarta, entonces queda `descartada` y sigue legible.\n- [ ] Dada una consulta en borrador o activa, cuando se edita la descripción, entonces se agrega una\n  revisión con número siguiente y la vigente es la de mayor número; ninguna revisión cambia.\n  (Acotado: antes decía \"en cualquier estado\".)\n- [ ] Dada una consulta descartada o completada, cuando se intenta editar la descripción, entonces\n  se rechaza con error tipado del catálogo de HU-06-02 y no se agrega ninguna revisión (agregado por\n  la revisión del 2026-10-10).\n\n### HU-06-15\n\n- [ ] Dada una consulta en Casa 7 lista para tirar, cuando se registra D12 12, D8 4 y D4 2,\n  entonces la revisión guarda Cierre de 7 a 12 sin anillo ni fuerza del kipot.\n- [ ] Dado el Cierre registrado, cuando se lee la consulta, entonces está `completada` con\n  `fase = completada`, `casa_actual = 12`, `plan_actual_id` nulo y `closed_at` igual al momento del\n  paso, todo en la misma transacción.\n- [ ] Dada una consulta `completada`, cuando se intenta registrar una tirada, entonces se rechaza\n  con el error tipado de consulta completada y no se escribe nada.\n- [ ] Dada una consulta `completada`, cuando se intenta corregir la tirada del Cierre, entonces se\n  rechaza con el error tipado de consulta completada, no se crea revisión nueva y la consulta sigue\n  completada (DEC-233).\n- [ ] Dada una consulta en Casa 11 (borde), cuando se invoca el handler de cierre con D12 12,\n  entonces escribe un paso de tipo cierre y una revisión con resultado cierre y `casa_destino = 12`.\n  (Reescrito: que D12 12 en Casa 11 sea Cierre y no Avance lo verifica el clasificador, HU-06-04.)\n- [ ] Dada la consulta completada, cuando se consulta el repositorio por estado, entonces no aparece\n  entre las activas y sí entre las completadas; HU-06-08 verifica después el stream de Inicio.\n- [ ] Dada la consulta completada, cuando la app se reinicia sin red, entonces conserva el estado y\n  el bloqueo.\n- [ ] Dada la estrategia de cierre, cuando se inyecta otra implementación, entonces el handler la\n  usa sin modificarse, y el cierre mínimo de M1a es la implementación por defecto (agregado por la\n  revisión del 2026-10-10; HU-06-12 la sustituye).\n\n## Requisitos transversales\n\n- Permisos: el motor no evalúa capacidades; las vistas ocultan acciones sin la capacidad.\n- Offline/sync: crear, editar, descartar y cerrar funcionan sin red; solo `Dar inicio` necesita el\n  resultado en línea de EP-11. Las fases de espera no consumen días (tecnologia/20 §4). Todo local.\n- Seguridad/privacidad: el motor nunca recibe ni guarda el código del kuberani.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: una transición rechazada devuelve el código de error y el estado de origen; el\n  rechazo por consulta completada devuelve un código estable.\n- Compatibilidad/migración: no existe `archivada` (DEC-207). En M1b, HU-06-12 intercala el plan\n  final y `cierre_en_curso`; las consultas completadas en M1a se conservan como están. Sin migración.\n\n## Casos de prueba\n\n- [ ] QA-06-03-01 · Dado un borrador creado sin red, cuando llega un resultado exitoso de\n  validación, entonces la consulta queda activa en Casa 1 con fecha de inicio igual al día del\n  inicio y no al de creación.\n- [ ] QA-06-03-02 · Dado un borrador en `esperando_conexion` (borde), cuando la persona vuelve a\n  editar el título, entonces la fase y el motivo no cambian.\n- [ ] QA-06-03-03 · Dada una consulta activa (error), cuando se invoca descartar, entonces se\n  rechaza con error tipado de transición inválida.\n- [ ] QA-06-03-04 · Dado un resultado exitoso de EP-11 aplicado dos veces al mismo inicio, cuando ambos intentos terminan, entonces hay un único paso inicio, un único plan de Casa 1, ninguna tirada ficticia y no hay una segunda solicitud de consumo remoto.\n- [ ] QA-06-15-01 · Dada una consulta en Casa 3, cuando se registra D12 12, entonces queda\n  `completada` en Casa 12.\n- [ ] QA-06-15-02 · Dada una consulta completada (error), cuando se invoca el registro de una\n  tirada, entonces se rechaza.\n- [ ] QA-06-15-03 · Dado un fallo simulado al escribir la consulta (borde), cuando se registra el\n  Cierre, entonces no queda ni la revisión ni el cambio de estado.\n- [ ] QA-06-15-04 · Dada una consulta completada por un Cierre (borde), cuando se invoca la\n  corrección de esa tirada con valores y motivo válidos, entonces se rechaza con el error tipado de\n  consulta completada y la revisión vigente sigue siendo la del Cierre.\n- [ ] QA-06-15-05 · Dado un cierre mínimo confirmado con una clave de operación, cuando se reabre la base y se reintenta esa clave, entonces conserva una sola revisión y el mismo closed_at; un comando nuevo se rechaza por consulta completada.\n- [ ] QA-06-15-06 · Dada una estrategia de cierre inyectada distinta de la mínima (agregado por la revisión del 2026-10-10), cuando se invoca el handler, entonces usa esa estrategia sin cambios en el handler; sin inyección, usa el cierre mínimo de M1a.\n\n## Pruebas y evidencia\n\n- Unitarias: tabla de transiciones válidas e inválidas; inmutabilidad del propósito; revisiones; transición a completada, bloqueo del registro y de la corrección (las proyecciones son de HU-06-08).\n- Widget/integración/E2E: flujo borrador, espera y reintento con resultados simulados de EP-11; registro de un Cierre y relectura tras reinicio en integración.\n- QA humana y dispositivos: no aplica (se verifica en HU-05-07, HU-07-18 y HU-07-12).\n- Preview/captura/artifact: salida de CI.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 7 · Riesgo: medio\n- Bloqueada por: HU-06-02 (G1, #148), HU-06-05 (G2, #150)\n- Bloquea: HU-05-06, HU-11-04, HU-07-18, HU-06-14 y HU-06-04 (G4, #153), HU-06-07 y HU-06-08 (G5, #156), HU-06-12 (G9, EP-06b)\n- Orden interno: HU-06-03 primero, luego HU-06-15 (HU-06-15 depende de HU-06-03).\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Datos\n- Plataforma: Todas\n- Esfuerzo: 7\n- Riesgo: Medio\n- Vista: V-02, V-03, V-32, V-07, V-01, V-44\n- Decisión: DEC-035, DEC-114, DEC-117, DEC-213, DEC-215, DEC-207, DEC-060, DEC-233, DEC-231, DEC-032, DEC-133, DEC-015, DEC-098\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-06` · Estimación publicada: 7 puntos (5 + 2); tier por intake.\n- Referencia externa: `GH-151` · URL canónica: https://github.com/edobacon/taomangalam/issues/151.\n- Historias absorbidas: #154 (HU-06-15)\n- Fuentes por criterio/caso: `docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md`, historias HU-06-03 y HU-06-15: Referencias canónicas, Criterios de aceptación y Casos de prueba `QA-06-03-01`, `QA-06-03-02`, `QA-06-03-03`, `QA-06-03-04`, `QA-06-15-01`, `QA-06-15-02`, `QA-06-15-03`, `QA-06-15-04`, `QA-06-15-05`, `QA-06-15-06`.\n- Rollback: handlers sin migración: revertir por commit, sin datos que compensar (las consultas, pasos y planes de una base de prueba se descartan con la base efímera). Comprobación: ejecutar `QA-06-03-01` a `QA-06-03-04` y `QA-06-15-01` a `QA-06-15-06`.\n- Diseño: No aplica a interfaz propia; validar el resultado no visual con los criterios de prueba de las dos historias.\n- Evidencia adicional para intake: `QA-06-03-04`, `QA-06-15-05` y `QA-06-15-06` y el contrato de cada historia; registrar archivo y nombre completo del test, resultado y estado antes/después. No declarar estas pruebas ejecutadas durante la preparación documental.\n- Flujo de entrega: DEC-239, rama acumuladora `epic/EP-06`, verificaciones locales por ticket y un PR final; sin PR/push/CI por historia.\n- Entrada a Kanai: solo al seleccionar este issue para ejecución y cerrar sus dependencias reales; el detalle documental Ready no acredita implementación ni cierre de dependencias.\n\n## Trazabilidad y condición de ejecución\n\n- Épica padre: #147.\n- Referencia externa: `GH-151` · [URL canónica](https://github.com/edobacon/taomangalam/issues/151).\n- Historias absorbidas: #154 (HU-06-15), cerrada como absorbida por este issue.\n- [Fuente de estas historias](https://github.com/edobacon/taomangalam/blob/main/docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md) · [Contratos de integración](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md) · [Modelo del plan sin tirada](https://github.com/edobacon/taomangalam/blob/main/docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md#plan_practica).\n- Estado de ejecución al publicar: bloqueado hasta cerrar e integrar las dependencias siguientes.\n\n| Dependencia | Issue | Estado al publicar |\n| --- | --- | --- |\n| HU-06-02 (grupo G1) | #148 | open |\n| HU-06-05 (grupo G2) | #150 | open |\n\nEl estado anterior es una captura del 2026-10-10; consultar los issues para el estado vigente. Preparación completa no equivale a implementación. Solo el issue seleccionado se lleva a Kanai, con esta URL y referencia externa. Los puntos publicados no fijan el tier.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-11 - dev\n\nAdenda (decisiones del dev 2026-10-10, preguntas del juez). El baseline de docs (.docs-baseline.txt) se compara contra el merge-base de la rama de la épica (epic/EP-06) al iniciar el ticket, no contra origin/main. Esta planificación se hizo con dependencyAck sobre TAO-249 (en desarrollo, por su spec); antes de integrar a main se debe revisar este ticket contra lo que TAO-249 dejó realmente.",
+      "revision": "21ee7e12021160858db7947e67525b17476c6d9a235d58ca1b66845be3604cce",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-151"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-250"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": ".docs-baseline.txt",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        },
+        {
+          "path": "docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-252",
+      "title": "[HU-06-14, HU-06-04][Historia] Retroceso con anillo y fuerza del kipot versionada que deja la consulta en espera de reparación, y registro de una tirada de tres dados con clasificación del movimiento, idempotencia y todas las combinaciones probadas",
+      "body": "> **IDs estables:** HU-06-14, HU-06-04 · **Estado:** Blocked · **Orden recomendado:** 4 · **Puntos publicados:** 8 (3 + 5)\n\n## Historias incluidas\n\n| ID | Título corto | Puntos originales | Issue de origen | Orden interno |\n| --- | --- | ---: | --- | ---: |\n| HU-06-14 | Retroceso: anillo, fuerza del kipot y espera de reparación | 3 | #153 (anfitrión) | 1 |\n| HU-06-04 | Registro de tirada, clasificación e idempotencia | 5 | #155 (absorbida) | 2 |\n\n## Objetivo\n\nResultado: el motor registra una sola tirada de tres dados por evento, valida sus rangos, clasifica el\nmovimiento y lo guarda de forma idempotente componiendo el plan de Avance y Permanencia (HU-06-05), el\nRetroceso (anillo del D8, fuerza del kipot del D4 con su versión, consulta en espera de la reparación\nsin plan y con la tirada bloqueada) y el Cierre (HU-06-15) en una sola transacción, con pruebas de\ntodas las combinaciones. Consumidores directos (los de `Bloquea`): HU-06-07 y HU-06-08 (G5), HU-06-09\n(EP-06b), HU-07-05, HU-07-13 y HU-07-14.\n\n## Alcance\n\n### HU-06-14\n\n**Incluye**:\n\n- Mediante el handler de esta historia dentro de la unidad de trabajo compartida, integrado después por\n  HU-06-04 (misma issue), para `resultado = retroceso`: `anillo_destino = d8`, `fuerza_kipot` según la\n  tabla de correspondencias versionada de DEC-131 (1 y 2 baja, 3 y 4 alta, DEC-132) y\n  `clasificacion_d4_version` con la versión vigente de esa tabla.\n- Consulta tras el retroceso (tecnologia/20 §4, DEC-231): `casa_actual = casa_destino`,\n  `paso_actual_id` en el paso del retroceso, `plan_actual_id` nulo, `fase = acciones_en_curso` y\n  `motivo_bloqueo` nulo. No se agrega fase ni motivo nuevo.\n- Guarda de tirada: con la reparación pendiente (fase `acciones_en_curso` sin plan actual y última\n  revisión vigente de Retroceso), registrar una tirada se rechaza con el error tipado de reparación\n  pendiente del catálogo de HU-06-02 (G1), distinto del de plan incompleto.\n- La espera no abre ciclos de práctica ni genera días omitidos: el handler no crea ciclos ni\n  cumplimientos.\n- DTO o resultado tipado del handler: devuelve casa y anillo de destino, fuerza y versión D4, para que\n  HU-06-08 (G5) construya el rastro y el resumen.\n\n**No incluye**:\n\n- Stream del rastro, proyección de resumen del último movimiento (Retroceso, casa de origen, casa de\n  retorno, anillo y fuerza), tarea vigente vacía y aviso de reparación en la vista: HU-06-08 (G5).\n- Tabla `diagnostico_retroceso`, intentos de reconocimiento, `Lectura pendiente` y recorrido\n  persistente: HU-06-09 (M1b), que continúa desde esta misma fase.\n- Plan de reparación, corrector y quema y reposición del kuberani: HU-06-10 (M1b).\n- Presentación y aviso \"La reparación estará disponible en la próxima versión\": HU-07-14 (V-07) y\n  EP-05 (V-03).\n\n### HU-06-04\n\n**Incluye**:\n\n- Función pura de clasificación (doc 03, reglas por resultado): `D12 = 12` es Cierre; D12 mayor que la\n  casa actual y distinto de 12 es Avance; igual es Permanencia; menor es Retroceso.\n- Registro de la tirada: paso lógico `tipo = tirada` con número siguiente, fecha local y zona, y\n  `tirada_revision` 1 `vigente` con `d12`, `d8`, `d4`, `resultado`, `casa_origen`, `casa_destino` y\n  `lanzada_por = consultante` en uso personal Estándar (tecnologia/20 §15).\n- D4 siempre guardado como número, sin interpretación en Avance ni en Permanencia (DEC-029, DEC-132,\n  DEC-134).\n- Validación de rangos (1–12, 1–8, 1–4) antes de escribir.\n- Solo se admite registrar con la consulta `activa` y `fase = lista_para_tirada` (la fase la habilita\n  HU-06-05); los demás casos se rechazan con los errores tipados del catálogo de HU-06-02.\n- Idempotencia: el paso lleva un id ULID generado al confirmar; repetir el registro con el mismo id no\n  crea un segundo paso ni una segunda revisión; el mismo id con dados distintos devuelve el error\n  tipado de conflicto de idempotencia del catálogo.\n- Actualización de proyecciones de la consulta (`casa_actual`, `paso_actual_id`) en la misma\n  transacción para Avance y Permanencia.\n- Orquestador de la entrada pública: compone el plan (HU-06-05), el retroceso (HU-06-14) y el cierre\n  (HU-06-15) en una sola transacción.\n- Pruebas de las 132 combinaciones de casa actual 1–11 por D12 1–12.\n\n**No incluye**:\n\n- Anillo, fuerza del kipot y espera de la reparación del Retroceso: HU-06-14 (misma issue, orden\n  interno 1). Diagnóstico y reconocimiento: HU-06-09 (M1b).\n- Consulta completada y bloqueo definitivo de tiradas: HU-06-15 (G3). Plan final y cierre en curso:\n  HU-06-12 (M1b).\n- Planes derivados: HU-06-05 (G2). Interfaz de registro: HU-07-05.\n- Pregunta de quién lanzó los dados en el flujo profesional: M3.\n\n## Contexto de ejecución y contratos\n\nHU-06-14: implementar una operación de dominio independiente del clasificador y de la entrada pública\nHU-06-04: recibe contexto transaccional, consulta lista y datos de retroceso válidos, escribe revisión\ny paso y el efecto mínimo, y devuelve posición casa/anillo y resumen tipado. No confirma su propia\ntransacción si la invoca el orquestador. Probar esta operación directamente con consultas y planes\ncompletos sembrados en Drift; HU-06-04 integra después clasificación y handler, y HU-06-08 compone los\nstreams generales. La guarda compartida rechaza otra tirada por reparación pendiente. El resultado\ntipado incluye casa/anillo, fuerza y versión D4; la persistencia queda `acciones_en_curso` sin plan. No\ncrear diagnóstico, reparación, ciclos ni días de práctica en M1a. Cubrir 1760 combinaciones: suma de\ndestinos menores para casas 2–11 (55) × D8 (8) × D4 (4).\n\nHU-06-04: entradas: consulta, ULID estable del comando y paso, D12/D8/D4, fecha local y zona; salida:\nmovimiento y estado confirmado con revisión, plan o cierre. El clasificador puro cubre 132 pares casa\n1–11 × D12 1–12 y valida además D8 1–8 y D4 1–4. Componer HU-06-05, HU-06-14 y HU-06-15, ya\nimplementados, dentro de la unidad de trabajo de HU-06-02. Ningún handler confirma por separado. El\norquestador despacha una sola vez: para retroceso y cierre el handler es dueño de insertar paso y\nrevisión; para avance y permanencia los inserta el orquestador y genera el plan. No duplicar\nescrituras entre ambos. Misma clave y mismo payload devuelve el resultado previo; misma clave con\ndados distintos devuelve conflicto tipado y no modifica datos. Retroceso y cierre se verifican aquí\npor la entrada pública completa; las pruebas previas de handlers directos no reemplazan esta\nintegración. No consumir unidades remotas al registrar o corregir dados.\n\n- Baseline observado: `main` en `debeb05f10a325c428febd01ed509fae98de7c80`; actualizar el SHA al iniciar sin asumir que EP-02 ya está integrado.\n- Tratamiento visual: sin interfaz propia; las vistas citadas son consumidoras. No se exige arte raster para este motor.\n\n## Verificación del handler (HU-06-14)\n\nEn esta historia «registrar» invoca directamente el handler real de dominio y su transacción sobre\nDrift, con consulta y paso válidos sembrados. No requiere el orquestador público HU-06-04 ni streams\nHU-06-08; esas integraciones tienen pruebas adicionales en sus historias. Las guardas se invocan\nmediante la política compartida real de HU-06-02.\n\n## Referencias canónicas\n\n- Vistas: ninguna (consumen V-32 y V-07, de EP-07; V-03, de EP-05; V-06, de EP-07)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-231, DEC-131, DEC-132, DEC-133, DEC-204, DEC-186, DEC-028, DEC-029, DEC-134, DEC-012\n- Fuente técnica complementaria: [Preparación e integración de EP-06](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md), secciones `HU-06-14` y `HU-06-04`.\n- Datos: `tirada_revision` (`anillo_destino`, `fuerza_kipot`, `clasificacion_d4_version`),\n  `consulta` (`casa_actual`, `paso_actual_id`, `plan_actual_id`, `fase`, `motivo_bloqueo`),\n  `paso_recorrido`\n- API: ninguna\n- Capacidades: ninguna en el motor; la vista usa `tirada.crear`\n- Contenido/assets: ninguno (la tabla de correspondencias del D4 es código versionado)\n\n## Criterios de aceptación\n\n### HU-06-14\n\n- [ ] Dada una consulta en Casa 8 lista para tirar, cuando se registra D12 3, D8 2 y D4 1,\n  entonces la revisión guarda Retroceso de 8 a 3, `anillo_destino = 2`, `fuerza_kipot` baja y la\n  versión vigente de la clasificación.\n- [ ] Dado un Retroceso con D4 3 o 4, cuando se registra, entonces `fuerza_kipot` es alta; con D4 1\n  o 2, baja.\n- [ ] Dado el Retroceso registrado, cuando se lee la consulta, entonces `casa_actual = 3`,\n  `paso_actual_id` apunta al paso nuevo, `plan_actual_id` es nulo, `fase = acciones_en_curso` y\n  `motivo_bloqueo` es nulo, todo escrito en la misma transacción que la revisión.\n- [ ] Dada la consulta esperando la reparación, cuando se intenta registrar otra tirada, entonces\n  se rechaza con el error tipado de reparación pendiente y no se escribe nada.\n- [ ] Dada la consulta esperando la reparación, cuando el handler termina, entonces no crea ciclos de\n  práctica ni cumplimientos. (Reescrito: antes decía \"durante cinco días no se informa ningún día\n  omitido\", que usaba HU-06-06, posterior en el grafo.)\n- [ ] Dado el resultado tipado del handler tras un inicio, un Avance a 8 y un Retroceso a 3 en el\n  anillo 2, cuando se lee, entonces la posición devuelta es Casa 3, anillo 2. (Reescrito: se verifica\n  con el resultado tipado y no con el stream, que es de HU-06-08.)\n- [ ] Dadas todas las combinaciones de casa actual 2–11 con D12 menor que la casa, D8 1–8 y D4 1–4,\n  cuando corren las pruebas, entonces cada una guarda el anillo igual al D8 y la fuerza de la\n  tabla.\n- [ ] Dado un Retroceso guardado, cuando la app se cierra y se reabre sin red, entonces la consulta\n  sigue esperando la reparación con los mismos datos.\n\n### HU-06-04\n\n- [ ] Dada una consulta en Casa 4 y `D12 = 7`, cuando se clasifica, entonces el resultado es\n  Avance con destino 7; con `D12 = 4`, Permanencia en 4; con `D12 = 2`, Retroceso a 2; con\n  `D12 = 12`, Cierre.\n- [ ] Dada una consulta en Casa 1 y `D12 = 1`, cuando se clasifica, entonces es Permanencia\n  (DEC-028).\n- [ ] Dada una consulta en Casa 11 y `D12 = 12`, cuando se clasifica, entonces es Cierre y no\n  Avance.\n- [ ] Dadas las 132 combinaciones de casa actual 1–11 por D12 1–12, cuando corren las pruebas,\n  entonces cada una produce el resultado de la tabla de doc 03.\n- [ ] Dados valores fuera de rango, cuando se intenta registrar, entonces se rechaza con error de\n  validación que nombra el dado y no se escribe nada.\n- [ ] Dada una consulta en `acciones_en_curso`, `esperando_conexion` o `esperando_material`, o\n  una consulta `completada`, cuando se intenta registrar una tirada, entonces se rechaza con el\n  error tipado que corresponda del catálogo de HU-06-02.\n- [ ] Dado un registro confirmado dos veces con el mismo id de paso (doble toque o reintento),\n  cuando termina, entonces existe un solo paso y una sola revisión.\n- [ ] Dado un Avance o una Permanencia registrados, cuando se lee la consulta, entonces\n  `casa_actual` y `paso_actual_id` reflejan el paso nuevo, y la revisión guarda el D4 sin\n  `fuerza_kipot`.\n- [ ] Dado el registro público de un Avance sobre una consulta lista para tirar, cuando termina,\n  entonces existen el paso y la revisión, se creó el plan de la casa de destino (HU-06-05), la\n  consulta quedó en `acciones_en_curso` con `plan_actual_id` apuntando a él, todo en un solo commit\n  (agregado por la revisión del 2026-10-10).\n- [ ] Dado el registro público de una Permanencia, un Retroceso y un Cierre, cuando termina cada uno,\n  entonces la Permanencia crea su plan de permanencia, el Retroceso deja la consulta esperando la\n  reparación sin plan (HU-06-14) y el Cierre la deja `completada` (HU-06-15), cada uno en un solo\n  commit (agregado por la revisión del 2026-10-10).\n- [ ] Dado un fallo al generar el plan de un Avance, cuando el registro termina, entonces se revierte\n  todo: no queda paso, revisión ni cambio en la consulta (agregado por la revisión del 2026-10-10).\n\n## Requisitos transversales\n\n- Permisos: el motor no evalúa capacidades.\n- Offline/sync: todo local; la revisión es append-only como el resto de `tirada_revision`; registrar la\n  tirada no requiere red (DEC-152).\n- Seguridad/privacidad: no aplica.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: el rechazo por reparación pendiente devuelve un código estable sin valores de la\n  persona; un rechazo del registro informa el motivo tipado sin los valores de la persona en logs.\n- Compatibilidad/migración: M1b agrega el diagnóstico sin migrar estas revisiones; cambiar los rangos\n  del D4 exige una versión nueva de la tabla y no reescribe revisiones guardadas (DEC-131). En Avance\n  y Permanencia `clasificacion_d4_version` y `fuerza_kipot` quedan nulas; en Retroceso las completa\n  HU-06-14. Sin migración de esquema.\n\n## Casos de prueba\n\n- [ ] QA-06-14-01 · Dada una consulta en Casa 11, cuando se registra D12 8, D8 7 y D4 3, entonces\n  queda en Casa 8 con anillo 7, fuerza alta y sin plan actual.\n- [ ] QA-06-14-02 · Dada una consulta en Casa 2 (borde), cuando se registra D12 1, D8 1 y D4 2,\n  entonces es un Retroceso a Casa 1 con anillo 1 y fuerza baja.\n- [ ] QA-06-14-03 · Dada una consulta esperando la reparación (error), cuando se invoca el registro\n  de una tirada, entonces se rechaza con el error de reparación pendiente.\n- [ ] QA-06-14-04 · Dado un handler de retroceso ejecutado dentro de la unidad de trabajo y un fallo al actualizar consulta, cuando se revierte, entonces no persiste paso ni revisión, y al reintentar con la misma clave existe un único retroceso confirmado.\n- [ ] QA-06-04-01 · Dada una consulta en Casa 5 lista para tirar, cuando se registra 9, 3, 2,\n  entonces se guarda un Avance a Casa 9 con los tres dados y la fecha local.\n- [ ] QA-06-04-02 · Dado un registro repetido con el mismo id por un reintento (borde), cuando\n  termina, entonces hay un solo paso en la consulta.\n- [ ] QA-06-04-03 · Dado `d8 = 9` (error), cuando se intenta registrar, entonces se rechaza\n  nombrando el D8.\n- [ ] QA-06-04-04 · Dada una tirada ya confirmada con un ULID, cuando se reintenta ese ULID con D12 diferente, entonces se devuelve conflicto, permanece el resultado original y no se crea paso, revisión ni plan adicional.\n- [ ] QA-06-04-05 · Dada la entrada pública con consultas listas para tirar (agregado por la revisión del 2026-10-10), cuando se registran un Avance, una Permanencia, un Retroceso y un Cierre, entonces cada uno compone su efecto (plan con fase `acciones_en_curso`, plan de permanencia, espera de reparación sin plan, consulta completada) en un solo commit; y cuando falla la generación del plan del Avance, entonces no queda ningún paso ni revisión.\n\n## Pruebas y evidencia\n\n- Unitarias: tabla de correspondencias del D4, combinaciones de retroceso, guarda de tirada y resultado tipado del handler (stream y resumen son de HU-06-08); tabla completa de combinaciones del clasificador; rangos; idempotencia; guardas de fase.\n- Widget/integración/E2E: registro de un Retroceso y relectura tras reinicio en integración; registro público de las cuatro clases de movimiento y relectura tras reinicio.\n- QA humana y dispositivos: no aplica (se verifica en HU-07-14, HU-07-12 y HU-07-05).\n- Preview/captura/artifact: salida de CI con el conteo de combinaciones probadas (1760 de retroceso y 132 de clasificación).\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 8 · Riesgo: medio\n- Bloqueada por: HU-06-03 y HU-06-15 (G3, #151), HU-06-05 (G2, #150)\n- Bloquea: HU-06-07 y HU-06-08 (G5, #156), HU-06-09 (G7, EP-06b), HU-07-05, HU-07-13, HU-07-14\n- Orden interno: HU-06-14 primero, luego HU-06-04 (HU-06-04 depende de HU-06-14 y compone su handler).\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Datos\n- Plataforma: Todas\n- Esfuerzo: 8\n- Riesgo: Medio\n- Vista: V-32, V-07, V-03, V-06\n- Decisión: DEC-231, DEC-131, DEC-132, DEC-133, DEC-204, DEC-186, DEC-028, DEC-029, DEC-134, DEC-012\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-06` · Estimación publicada: 8 puntos (3 + 5); tier por intake.\n- Referencia externa: `GH-153` · URL canónica: https://github.com/edobacon/taomangalam/issues/153.\n- Historias absorbidas: #155 (HU-06-04)\n- Fuentes por criterio/caso: `docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md`, historias HU-06-14 y HU-06-04: Referencias canónicas, Criterios de aceptación y Casos de prueba `QA-06-14-01`, `QA-06-14-02`, `QA-06-14-03`, `QA-06-14-04`, `QA-06-04-01`, `QA-06-04-02`, `QA-06-04-03`, `QA-06-04-04`, `QA-06-04-05`.\n- Rollback: handler y orquestador sin migración: revertir por commit, sin datos que compensar (los pasos y revisiones de una base de prueba se descartan con la base efímera). Comprobación: ejecutar `QA-06-14-01` a `QA-06-14-04` y `QA-06-04-01` a `QA-06-04-05`.\n- Diseño: No aplica a interfaz propia; validar el resultado no visual con los criterios de prueba de las dos historias.\n- Evidencia adicional para intake: `QA-06-14-04`, `QA-06-04-04` y `QA-06-04-05` y el contrato de cada historia; registrar archivo y nombre completo del test, resultado y estado antes/después. No declarar estas pruebas ejecutadas durante la preparación documental.\n- Flujo de entrega: DEC-239, rama acumuladora `epic/EP-06`, verificaciones locales por ticket y un PR final; sin PR/push/CI por historia.\n- Entrada a Kanai: solo al seleccionar este issue para ejecución y cerrar sus dependencias reales; el detalle documental Ready no acredita implementación ni cierre de dependencias.\n\n## Trazabilidad y condición de ejecución\n\n- Épica padre: #147.\n- Referencia externa: `GH-153` · [URL canónica](https://github.com/edobacon/taomangalam/issues/153).\n- Historias absorbidas: #155 (HU-06-04), cerrada como absorbida por este issue.\n- [Fuente de estas historias](https://github.com/edobacon/taomangalam/blob/main/docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md) · [Contratos de integración](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md) · [Modelo del plan sin tirada](https://github.com/edobacon/taomangalam/blob/main/docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md#plan_practica).\n- Estado de ejecución al publicar: bloqueado hasta cerrar e integrar las dependencias siguientes.\n\n| Dependencia | Issue | Estado al publicar |\n| --- | --- | --- |\n| HU-06-03 (grupo G3) | #151 | open |\n| HU-06-15 (grupo G3) | #154 (absorbida por #151) | open |\n| HU-06-05 (grupo G2) | #150 | open |\n\nEl estado anterior es una captura del 2026-10-10; consultar los issues para el estado vigente. Preparación completa no equivale a implementación. Solo el issue seleccionado se lleva a Kanai, con esta URL y referencia externa. Los puntos publicados no fijan el tier.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-11 - dev\n\nAdenda (decisiones del dev 2026-10-10, preguntas del juez). 1) fuerza_kipot usa los literales `baja` (D4 1 y 2) y `alta` (D4 3 y 4), según EP-06 y DEC-132. 2) SUPUESTO sin literal en la documentación: clasificacion_d4_version = `d4-v1` para la tabla D4 vigente en M1a; un cambio de rangos exige una versión nueva sin reescribir revisiones guardadas (DEC-131). Esta planificación se hizo con dependencyAck sobre TAO-249 (en desarrollo, por su spec); antes de integrar a main se debe revisar este ticket contra lo que TAO-249 dejó realmente.",
+      "revision": "9bf67e1e640e56646971d8b349c0b0788cb18447573aae5cb50fdc030acf703f",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-153"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-251"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-253",
+      "title": "[HU-06-08, HU-06-07][Historia] Proyecciones reactivas de consulta para Inicio, listado y tablero, y corrección de la última tirada por supersede con vista previa, plan sustituido y proyecciones recalculadas en una transacción",
+      "body": "> **IDs estables:** HU-06-08, HU-06-07 · **Estado:** Blocked · **Orden recomendado:** 5 · **Puntos publicados:** 8 (3 + 5)\n\n## Historias incluidas\n\n| ID | Título corto | Puntos originales | Issue de origen | Orden interno |\n| --- | --- | ---: | --- | ---: |\n| HU-06-08 | Proyecciones de consulta, rastro y recálculo | 3 | #156 (anfitrión) | 1 |\n| HU-06-07 | Corrección de la última tirada por supersede | 5 | #157 (absorbida) | 2 |\n\n## Objetivo\n\nResultado: el motor expone, de forma reactiva y sin recalcular en la interfaz, lo que Inicio, el listado\ny el tablero necesitan de cada consulta (casa actual, fase y motivo, último movimiento, tarea vigente y\nrastro con casa y anillo), y calcula la vista previa de una corrección de la última tirada para, al\naceptarla, crear una revisión nueva del mismo paso, sustituir el plan y recalcular las proyecciones en\nuna sola transacción, sin corregir nunca una tirada anterior. Consumidores directos (los de `Bloquea`):\nHU-05-02, HU-05-08, HU-07-02, HU-07-11 y, en EP-06b, HU-06-09 (G7), HU-06-10 (G8), HU-06-12 (G9) y\nHU-06-16 (G10).\n\n## Alcance\n\n### HU-06-08\n\n**Incluye**:\n\n- Resumen por consulta: título, estado, `fase`, `motivo_bloqueo`, `casa_actual`, último movimiento\n  (resultado, casa de origen y destino, fecha de la revisión vigente) y tarea vigente (acción\n  pendiente del plan actual con día n de m).\n- Resumen tras un Retroceso: el último movimiento informa Retroceso, casa de origen, casa de retorno,\n  anillo y fuerza, la tarea vigente queda vacía y la vista muestra el aviso de la reparación (movido\n  desde HU-06-14, que solo entrega el resultado tipado).\n- Lista de consultas del espacio local por estado, con el índice de Inicio de HU-06-01.\n- Secuencia del rastro: posiciones ordenadas por número de paso tomadas de la revisión vigente de cada\n  paso (inicio en Casa 1 y cada destino), excluyendo revisiones sustituidas y pasos con\n  `rehecho_por_paso_id` (la columna ya existe en `esquema_v1.dart`). El rastro consume casa y anillo del\n  resultado tipado de HU-06-14 (G4).\n- Operación de recálculo de las proyecciones desde pasos, revisiones y planes.\n- Actualización transaccional de `paso_actual_id`, `plan_actual_id` y `casa_actual` junto con cada\n  comando que los cambia.\n- Providers reactivos que emiten al cambiar cualquier dato que afecta la proyección.\n\n**No incluye**:\n\n- Orden por atención, filtros y búsqueda: HU-05-11.\n- Dibujo del tablero y animación: EP-07.\n\n### HU-06-07\n\n**Incluye**:\n\n- Vista previa pura, sin escribir: movimiento, destino y acciones actuales frente a los corregidos\n  (DEC-098).\n- Aceptar: nueva `tirada_revision` con número siguiente, `motivo_correccion_tipo`\n  (`error_tipeo`, `error_lectura_dado`, `otro`), texto obligatorio si es `otro`, fecha de corrección y\n  `sustituye_revision_id`; la anterior pasa a `sustituida`; el paso apunta a la revisión nueva. Los\n  datos `corregida_at`, `corregida_por_cuenta_id` y `sustituye_revision_id` ya existen en\n  `esquema_v1.dart`.\n- Plan anterior `sustituido` con `sustituido_por_plan_id`; plan nuevo generado por HU-06-05 desde la\n  revisión vigente; cumplimientos del plan anterior conservados como antecedente.\n- Corrección que produce un Retroceso: aplica HU-06-14 (anillo, fuerza del kipot, espera de la\n  reparación sin plan nuevo); corrección que produce un Cierre: aplica HU-06-15 (consulta\n  `completada`). Ambas en la misma transacción (DEC-231).\n- Corrección de un Retroceso vigente en M1a: a Avance o Permanencia (se genera el plan nuevo y la\n  consulta sale de la espera de reparación) o a otro Retroceso (se actualizan anillo, fuerza y casa de\n  retorno).\n- `corregida_por_cuenta_id` nulo cuando la corrección se hace sin cuenta, mientras el espacio sea\n  local; `corregida_at` siempre obligatorio desde la revisión 2 (DEC-232, tecnologia/20 §4).\n- Corrección de una Permanencia cuyo kuberani renovado ya se validó en línea: la unidad no se devuelve\n  ni vuelve a quedar disponible, y la vista previa incluye esa advertencia (DEC-232, punto 10).\n- `evento_plan` de sustitución con la aceptación de la advertencia.\n- Proyecciones (`casa_actual`, `paso_actual_id`, `plan_actual_id`, `fase`) recalculadas en la misma\n  transacción, con la operación de recálculo de HU-06-08.\n- Rechazo cuando el paso no es el último de la consulta.\n\n**No incluye**:\n\n- Interfaz del flujo de corrección y animación del recorrido corregido: HU-07-11.\n- Auditoría de servidor: la cuenta de dispositivo no sincroniza; se registra localmente en\n  `evento_plan`.\n- Recalcular un diagnóstico de retroceso con intentos de reconocimiento: HU-06-09 (M1b).\n- Corregir la tirada de un Cierre con la consulta ya `completada`: el rechazo lo define HU-06-15 (G3,\n  DEC-233) y esta historia lo reutiliza.\n\n## Contexto de ejecución y contratos\n\nHU-06-08: emitir DTO inmutable de consulta para Inicio, listado y tablero: `consulta_id`,\nestado/fase/motivo, casa/paso/plan actual, último movimiento, tarea vigente y rastro ordenado. Tomar\nrevisión vigente por paso, conservar historial consultable y aplicar marca rehecho al recorrido activo.\nHU-06-14 y HU-06-15 entregan los datos y resultados tipados de retroceso y cierre; esta historia\ncompone las lecturas y streams generales. No requiere ni implementa widgets de EP-05 ni EP-07. Tras\nrollback no emitir un estado intermedio; tras reinicio debe reconstruir exactamente el mismo resumen\ndesde Drift.\n\nHU-06-07: vista previa pura: misma consulta y catálogo producen las diferencias sin escribir.\nAceptación: nueva revisión, marca de vigencia anterior, plan sustituido y enlaces, evento y\nproyecciones en una transacción. Usar una operación específica de supersede; el DAO append-only\ngenérico conserva su prohibición de `update` y `delete`. Proteger dados, motivos, timestamps y\ncontenido histórico de la revisión sustituida. Cambiar únicamente la marca de vigencia autorizada por\ntecnologia/20; ante fallo revertir también esa marca, conservando exactamente una revisión vigente.\nRevalidar que sigue siendo la última tirada al aceptar la vista previa; no reembolsar ni consumir\nunidades. Fixture corregido: Avance 4 a 6 corregido a D12 = 3 pasa a Retroceso 4 a 3.\n\n- Baseline observado: `main` en `debeb05f10a325c428febd01ed509fae98de7c80`; actualizar el SHA al iniciar sin asumir que EP-02 ya está integrado.\n- Tratamiento visual: sin interfaz propia; las vistas citadas son consumidoras. No se exige arte raster para este motor.\n\n## Referencias canónicas\n\n- Vistas: ninguna (las consumen V-01, V-44 y V-32; V-06 y V-07, de EP-07)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-097, DEC-098, DEC-158, DEC-185, DEC-177, DEC-133, DEC-194, DEC-231, DEC-232, DEC-233\n- Fuente técnica complementaria: [Preparación e integración de EP-06](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md), secciones `HU-06-08` y `HU-06-07`.\n- Datos: `consulta` (proyecciones), `paso_recorrido.revision_vigente_id`, `paso_recorrido.rehecho_por_paso_id`, `tirada_revision` (`estado`, `sustituye_revision_id`, `motivo_correccion_tipo`,\n  `motivo_correccion`, `corregida_por_cuenta_id`, `corregida_at`), `plan_practica`\n  (`sustituye_plan_id`, `sustituido_por_plan_id`), `accion_practica`, `ciclo_practica`, `evento_plan`\n- API: ninguna\n- Capacidades: ninguna en el motor; la vista de corrección usa `tirada.corregir`\n- Contenido/assets: ninguno\n\n## Criterios de aceptación\n\n### HU-06-08\n\n- [ ] Dada una consulta con inicio, Avance a 3 y Permanencia en 3, cuando se lee el rastro, entonces\n  la secuencia es 1, 3, 3 con sus resultados.\n- [ ] Dada una tirada corregida, cuando se lee el rastro, entonces usa solo la revisión vigente.\n- [ ] Dada una consulta en `esperando_conexion`, cuando se lee su resumen, entonces informa esa fase\n  y el motivo `validar_kuberani_inicio` o el que corresponda.\n- [ ] Dado un plan con una acción de 3 días y 1 cumplido, cuando se lee la tarea vigente, entonces\n  indica la acción y \"día 2 de 3\".\n- [ ] Dado un borrador sin iniciar, cuando se lee su resumen, entonces no tiene casa actual ni\n  último movimiento.\n- [ ] Dado un día marcado desde otra vista, cuando cambia el cumplimiento, entonces el provider del\n  resumen emite el valor nuevo.\n- [ ] Dadas 50 consultas en el espacio, cuando se lista Inicio, entonces la lectura usa el índice\n  (verificado con el plan de consulta de SQLite) y no recorre los pasos de cada consulta.\n- [ ] Dada una consulta con inicio, Avance a 8 y Retroceso a 3 en el anillo 2, cuando se lee el rastro,\n  entonces la última posición es Casa 3, anillo 2, tomada de casa y anillo del resultado tipado de\n  HU-06-14 (agregado por la revisión del 2026-10-10; absorbe el criterio de rastro que estaba en\n  HU-06-14).\n- [ ] Dado un paso con `rehecho_por_paso_id`, cuando se lee el rastro, entonces el rastro lo omite\n  (agregado por la revisión del 2026-10-10).\n- [ ] Dada una consulta con Retroceso vigente, cuando se lee su resumen, entonces el último movimiento\n  informa Retroceso, casa de origen, casa de retorno, anillo y fuerza, y la tarea vigente es vacía\n  (movido desde HU-06-14).\n\n### HU-06-07\n\n- [ ] Dada la última tirada (Avance a 6 desde 4), cuando se pide la vista previa con D12 = 4,\n  entonces devuelve Permanencia en 4 frente a Avance a 6 con las acciones de ambos planes y no\n  escribe nada.\n- [ ] Dada la vista previa, cuando se cancela, entonces la base queda idéntica.\n- [ ] Dada la aceptación, cuando termina, entonces existe la revisión 2 `vigente`, la 1\n  `sustituida`, el plan anterior `sustituido` con enlace al nuevo y la consulta en la casa y fase\n  corregidas, todo en una transacción.\n- [ ] Dada una corrección con tipo `otro` sin texto, o sin tipo, cuando se acepta, entonces se\n  rechaza con error de validación.\n- [ ] Dada una tirada seguida de otra posterior, cuando se intenta corregir la anterior, entonces\n  se rechaza con error tipado.\n- [ ] Dado un plan anterior con días cumplidos, cuando se acepta la corrección, entonces esos\n  cumplimientos siguen legibles ligados al plan sustituido.\n- [ ] Dada una segunda corrección de la misma tirada, cuando se acepta, entonces crea la revisión 3\n  que sustituye a la 2.\n- [ ] Dado un espacio local sin cuenta, cuando se acepta una corrección, entonces la revisión nueva\n  guarda `corregida_at` y `corregida_por_cuenta_id` nulo sin error.\n- [ ] Dada una Permanencia con el kuberani renovado ya validado, cuando se pide la vista previa de\n  una corrección, entonces incluye la advertencia de que la unidad no se devuelve; al aceptar, la\n  unidad sigue usada y no se genera ninguna escritura hacia el servidor.\n- [ ] Dado un Avance a 6 desde Casa 4 corregido a D12 = 3, cuando se acepta, entonces la revisión\n  vigente es un Retroceso con anillo y fuerza, el plan anterior queda `sustituido` y la consulta\n  espera la reparación sin plan actual.\n- [ ] Dado un Avance corregido a D12 = 12, cuando se acepta, entonces la revisión vigente es un\n  Cierre y la consulta queda `completada`.\n- [ ] Dada una consulta `completada`, cuando se intenta corregir la tirada del Cierre, entonces se\n  rechaza con el error tipado de consulta completada definido por HU-06-15 y no se crea revisión\n  (agregado por la revisión del 2026-10-10: reutiliza el rechazo de HU-06-15).\n- [ ] Dado un Retroceso vigente corregido a Avance o a Permanencia, cuando se acepta, entonces se\n  genera el plan nuevo, la consulta sale de la espera de reparación y queda en `acciones_en_curso` con\n  `plan_actual_id` apuntando al plan nuevo (agregado por la revisión del 2026-10-10).\n- [ ] Dado un Retroceso vigente corregido a otro Retroceso, cuando se acepta, entonces la revisión\n  vigente guarda el anillo, la fuerza y la casa de retorno nuevos, y la consulta sigue esperando la\n  reparación sin plan (agregado por la revisión del 2026-10-10).\n\n## Requisitos transversales\n\n- Permisos: el motor no evalúa capacidades.\n- Offline/sync: todo local; funciona sin red; append-only para la fusión aditiva de M2.\n- Seguridad/privacidad: el motivo libre de la corrección no va a logs.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: la sustitución queda en `evento_plan` con fecha local y zona.\n- Compatibilidad/migración: las proyecciones son recalculables desde pasos, revisiones y planes. Sin migración.\n\n## Casos de prueba\n\n- [ ] QA-06-08-01 · Dada una consulta con dos avances, cuando se abre Inicio, entonces el resumen\n  muestra la casa actual, el último movimiento y la tarea con su día.\n- [ ] QA-06-08-02 · Dada una proyección borrada a mano en la base de prueba (borde), cuando se\n  recalcula, entonces coincide con la original.\n- [ ] QA-06-08-03 · Dada una consulta descartada, cuando se lista Inicio, entonces no aparece entre\n  las activas.\n- [ ] QA-06-08-04 · Dada una corrección de Avance a Retroceso aceptada, cuando se observan Inicio y rastro, entonces ambos reciben el mismo estado confirmado, casa/anillo nuevos y tarea vigente vacía, sin mezclar revisión nueva con plan anterior.\n- [ ] QA-06-07-01 · Dada una Permanencia registrada por error de tipeo, cuando se corrige a Avance\n  y se acepta, entonces la consulta queda en la casa nueva con su plan de energización.\n- [ ] QA-06-07-02 · Dada una tirada que ya tiene una posterior (error), cuando se intenta corregir,\n  entonces se rechaza y nada cambia.\n- [ ] QA-06-07-03 · Dada una falla simulada al generar el plan nuevo (borde), cuando se acepta,\n  entonces la transacción se revierte y la revisión 1 sigue vigente.\n- [ ] QA-06-07-04 · Dada una vista previa de corrección y una tirada posterior registrada antes de aceptarla, cuando se acepta la vista previa antigua, entonces se rechaza por última tirada cambiada y no se alteran revisiones, planes ni unidades.\n- [ ] QA-06-07-05 · Dado un Retroceso vigente (agregado por la revisión del 2026-10-10), cuando se corrige a Avance, entonces se genera el plan nuevo y la consulta sale de la espera de reparación; y cuando se corrige a otro Retroceso, entonces cambian anillo, fuerza y casa de retorno y sigue la espera sin plan.\n\n## Pruebas y evidencia\n\n- Unitarias: cálculo del resumen, tarea vigente y rastro; recálculo desde cero; vista previa, supersede, cadena de revisiones, rechazo de pasos intermedios, rollback.\n- Widget/integración/E2E: provider reactivo ante cambios de otra vista; corrección con reinicio posterior de la app.\n- QA humana y dispositivos: no aplica (se verifica en HU-07-11).\n- Preview/captura/artifact: salida de CI y medición de la lectura de Inicio con 50 consultas.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 8 · Riesgo: medio\n- Bloqueada por: HU-06-04 y HU-06-14 (G4, #153), HU-06-05 (G2, #150), HU-06-15 (G3, #151)\n- Bloquea: HU-05-02, HU-05-08, HU-07-02, HU-07-11, HU-06-09 (G7), HU-06-10 (G8), HU-06-12 (G9), HU-06-16 (G10)\n- Orden interno: HU-06-08 primero, luego HU-06-07 (HU-06-07 reutiliza la operación de recálculo de proyecciones de HU-06-08 dentro de su transacción).\n- Nota: este grupo y G6 (conteo de días) condicionan a toda EP-06b.\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Datos\n- Plataforma: Todas\n- Esfuerzo: 8\n- Riesgo: Medio\n- Vista: V-01, V-44, V-32, V-06, V-07\n- Decisión: DEC-097, DEC-098, DEC-158, DEC-185, DEC-177, DEC-133, DEC-194, DEC-231, DEC-232, DEC-233\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-06` · Estimación publicada: 8 puntos (3 + 5); tier por intake.\n- Referencia externa: `GH-156` · URL canónica: https://github.com/edobacon/taomangalam/issues/156.\n- Historias absorbidas: #157 (HU-06-07)\n- Fuentes por criterio/caso: `docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md`, historias HU-06-08 y HU-06-07: Referencias canónicas, Criterios de aceptación y Casos de prueba `QA-06-08-01`, `QA-06-08-02`, `QA-06-08-03`, `QA-06-08-04`, `QA-06-07-01`, `QA-06-07-02`, `QA-06-07-03`, `QA-06-07-04`, `QA-06-07-05`.\n- Rollback: proyecciones, supersede y vista previa sin migración: revertir por commit, sin datos que compensar (las revisiones y planes de una base de prueba se descartan con la base efímera; las proyecciones se recalculan desde pasos, revisiones y planes). Comprobación: ejecutar `QA-06-08-01` a `QA-06-08-04` y `QA-06-07-01` a `QA-06-07-05`.\n- Diseño: No aplica a interfaz propia; validar el resultado no visual con los criterios de prueba de las dos historias.\n- Evidencia adicional para intake: `QA-06-08-04`, `QA-06-07-04` y `QA-06-07-05` y el contrato de cada historia; registrar archivo y nombre completo del test, resultado y estado antes/después. No declarar estas pruebas ejecutadas durante la preparación documental.\n- Flujo de entrega: DEC-239, rama acumuladora `epic/EP-06`, verificaciones locales por ticket y un PR final; sin PR/push/CI por historia.\n- Entrada a Kanai: solo al seleccionar este issue para ejecución y cerrar sus dependencias reales; el detalle documental Ready no acredita implementación ni cierre de dependencias.\n\n## Trazabilidad y condición de ejecución\n\n- Épica padre: #147.\n- Referencia externa: `GH-156` · [URL canónica](https://github.com/edobacon/taomangalam/issues/156).\n- Historias absorbidas: #157 (HU-06-07), cerrada como absorbida por este issue.\n- [Fuente de estas historias](https://github.com/edobacon/taomangalam/blob/main/docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md) · [Contratos de integración](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md) · [Modelo del plan sin tirada](https://github.com/edobacon/taomangalam/blob/main/docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md#plan_practica).\n- Estado de ejecución al publicar: bloqueado hasta cerrar e integrar las dependencias siguientes.\n\n| Dependencia | Issue | Estado al publicar |\n| --- | --- | --- |\n| HU-06-04 (grupo G4) | #155 (absorbida por #153) | open |\n| HU-06-14 (grupo G4) | #153 | open |\n| HU-06-05 (grupo G2) | #150 | open |\n| HU-06-15 (grupo G3) | #154 (absorbida por #151) | open |\n\nEl estado anterior es una captura del 2026-10-10; consultar los issues para el estado vigente. Preparación completa no equivale a implementación. Solo el issue seleccionado se lleva a Kanai, con esta URL y referencia externa. Los puntos publicados no fijan el tier.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-11 - dev\n\nAdenda (decisión del dev 2026-10-10). Esta planificación se hizo con dependencyAck sobre TAO-249 (en desarrollo, por su spec); antes de integrar a main se debe revisar este ticket contra lo que TAO-249 dejó realmente.",
+      "revision": "23b660a83f93bd59defd45258a60c1ca948364faeb1129b1ec25d2176f383fda",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-156"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-252"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "app/lib/data/drift/esquema_v1.dart",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "flutter test test/drift"
+          ]
+        },
+        {
+          "path": "docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    },
+    {
+      "id": "TAO-254",
+      "title": "[HU-06-06][Historia] Conteo de días continuados con fecha local, confirmación y corrección de cumplimientos append-only y detección de día omitido con reinicio o continuación",
+      "body": "> **IDs estables:** HU-06-06 · **Estado:** Blocked · **Orden recomendado:** 6 · **Puntos publicados:** 5\n\n## Historias incluidas\n\n| ID | Título corto | Puntos originales | Issue de origen | Orden interno |\n| --- | --- | ---: | --- | ---: |\n| HU-06-06 | Conteo de días, cumplimientos y día omitido | 5 | #152 (anfitrión) | 1 |\n\nEste grupo tiene una sola historia y no absorbe otros issues. Corre en paralelo con G3, G4 y G5: solo depende de G2.\n\n## Objetivo\n\nResultado: el motor cuenta los días de práctica con la fecha local del dispositivo, registra\nconfirmaciones y correcciones append-only, detecta días omitidos e informa el retraso con sus dos\nsalidas, sin configurar nada. Consumidores directos (los de `Bloquea`): HU-05-03 (marcar un día desde\nInicio), HU-08-01, HU-08-16 (interfaz del caso 2) y, en EP-06b, HU-06-09 (G7), HU-06-10 (G8), HU-06-11 y\nHU-06-12 (G9).\n\n## Alcance\n\n### HU-06-06\n\n**Incluye**:\n\n- `ciclo_practica` por acción con número de ciclo, inicio, fin, estado y motivo de cierre. El primer\n  ciclo empieza en la fecha local de activación del plan (evento `activacion` de `evento_plan`), no\n  en la del registro de la tirada ni en la del primer día confirmado (DEC-232).\n- Confirmar el día: `cumplimiento_dia` con `local_date`, hora UTC y zona del momento; unicidad por\n  ciclo y fecha.\n- Desmarcar el mismo día: `cumplimiento_correccion` sin motivo; corregir un día anterior: exige\n  motivo y conserva el valor previo; `cumplimiento_dia.estado` es la proyección de la última\n  corrección (tecnologia/20 §5).\n- Acción completada cuando los días cumplidos consecutivos del ciclo alcanzan `dias_requeridos`; al\n  completar la última acción diaria obligatoria dispara la evaluación del plan `completado` de\n  HU-06-05 (G2).\n- Detección de día omitido (DEC-030, caso 1): días de retraso, día que tocaba y días que exige la\n  casa. Sin umbral de tolerancia: el umbral es 0, es decir, cualquier retraso de uno o más días se\n  informa y la persona elige en ese momento.\n- Dos salidas: `reinicio` (cierra el ciclo y abre otro desde el día 1) y `continuar_con_retraso`\n  (marca que la persona se aparta del método), ambas con los metadatos de DEC-030 en `evento_plan`.\n  Los metadatos del evento usan las claves JSON `dias_retraso`, `dia_que_tocaba` y `dias_exigidos`.\n- Guardas suaves de reloj (DEC-172): si la fecha local actual es anterior a la del último\n  cumplimiento, no se confirma ese día y se devuelve un aviso tipado; un cambio de zona no reescribe\n  fechas ya guardadas.\n- Las fases de espera y la renovación pendiente no generan días omitidos.\n\n**No incluye**:\n\n- Interfaz de práctica e historial (V-08, V-13): EP-08 (M1b).\n- Caso 2 de DEC-030 (indicación omitida): HU-06-16 (motor, EP-06b) y HU-08-16 (interfaz, EP-08, M1b,\n  DEC-234 punto 2).\n- Recordatorios: EP-08.\n\n## Contexto de ejecución y contratos\n\nEntradas: ciclo/acción, `local_date`, `timezone_id`, instante UTC y motivo de corrección si\ncorresponde. Salidas: cumplimiento vigente, evento o corrección histórica y resumen de días y fase.\nUsar el evento de activación de HU-06-05 como inicio del conteo, nunca la fecha del lanzamiento ni de\ncreación de la consulta.\n\nProbar medianoche, cambio de zona, reloj hacia atrás, doble confirmación, desmarcado permitido del\nmismo día y corrección posterior con motivo. La clave `ciclo + local_date` evita duplicados. Día\nomitido ofrece reiniciar o continuar con retraso según DEC-030; conservar cumplimientos y ciclos\nanteriores. Inyectar reloj y zona sin dormir ni depender de la fecha real del test.\n\n- Baseline observado: `main` en `debeb05f10a325c428febd01ed509fae98de7c80`; actualizar el SHA al iniciar sin asumir que EP-02 ya está integrado.\n- Tratamiento visual: sin interfaz propia; las vistas citadas son consumidoras. No se exige arte raster para este motor.\n\n## Referencias canónicas\n\n- Vistas: ninguna (la consumen V-01 de EP-05 y V-08 de EP-08)\n- Guía visual: no aplica (sin interfaz propia).\n- Decisiones: DEC-030, DEC-172, DEC-177, DEC-047, DEC-232\n- Fuente técnica complementaria: [Preparación e integración de EP-06](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md), sección `HU-06-06`.\n- Datos: `ciclo_practica`, `cumplimiento_dia`, `cumplimiento_correccion`, `evento_plan`\n  (`reinicio`, `continuar_con_retraso`; metadatos `dias_retraso`, `dia_que_tocaba`, `dias_exigidos`)\n- API: ninguna\n- Capacidades: ninguna en el motor; las vistas usan `practica.cumplir` y `practica.corregir`\n- Contenido/assets: `dias_requeridos` de las acciones generadas desde el catálogo de casas\n\n## Criterios de aceptación\n\n### HU-06-06\n\n- [ ] Dado un ciclo de 3 días, cuando se confirman tres días locales seguidos, entonces la acción\n  queda completada y el ciclo cerrado como cumplido.\n- [ ] Dada una confirmación de hoy, cuando se desmarca hoy, entonces se agrega una corrección sin\n  motivo, el día queda `desmarcado` y la confirmación original sigue en la base.\n- [ ] Dada una confirmación de ayer, cuando se intenta corregir sin motivo, entonces se rechaza;\n  con motivo, se agrega la corrección con el estado anterior y el nuevo.\n- [ ] Dado un ciclo con el último cumplimiento hace 3 días locales, cuando se evalúa, entonces se\n  informa retraso de 2 días, el día que tocaba y los días que exige la casa, sin avanzar el conteo.\n- [ ] Dado un plan activado el lunes sin ningún día confirmado, cuando se evalúa el miércoles,\n  entonces se informa retraso de 2 días y el día que tocaba es el lunes.\n- [ ] Dada una tirada registrada el domingo cuyo plan se activa el lunes, cuando se abre el ciclo,\n  entonces su inicio es el lunes.\n- [ ] Dado un retraso, cuando se elige reiniciar, entonces se cierra el ciclo con motivo\n  `reinicio`, se abre el ciclo siguiente desde el día 1 y `evento_plan` guarda los tres datos del\n  retraso (`dias_retraso`, `dia_que_tocaba`, `dias_exigidos`).\n- [ ] Dado un retraso, cuando se elige continuar, entonces el conteo sigue desde el día pendiente y\n  `evento_plan` registra `continuar_con_retraso` con los mismos datos.\n- [ ] Dado un reloj puesto un día atrás respecto del último cumplimiento, cuando se intenta\n  confirmar, entonces se devuelve el aviso de reloj y no se crea cumplimiento.\n- [ ] Dada una consulta en `esperando_conexion` o `esperando_material` varios días, cuando vuelve a\n  estar activa, entonces no se informa retraso por esos días.\n\n## Requisitos transversales\n\n- Permisos: el motor no evalúa capacidades.\n- Offline/sync: todo sin red; la fecha local del dispositivo es la fuente (DEC-172). Las\n  correcciones son append-only para fusionarse sin conflicto en M2.\n- Seguridad/privacidad: las notas del cumplimiento no se registran en logs.\n- Accesibilidad/responsive: no aplica.\n- Observabilidad: las decisiones ante retraso quedan en `evento_plan` con fecha y días de retraso.\n- Compatibilidad/migración: no aplica (sin migración).\n\n## Casos de prueba\n\n- [ ] QA-06-06-01 · Dado un plan de 3 días, cuando se confirman lunes, martes y miércoles,\n  entonces la acción se completa el miércoles.\n- [ ] QA-06-06-02 · Dado un día confirmado el lunes y nada el martes (borde), cuando se abre la app\n  el miércoles, entonces se informa 1 día de retraso con las dos salidas.\n- [ ] QA-06-06-03 · Dado un cambio de zona horaria entre dos confirmaciones, cuando se relee el\n  ciclo, entonces las fechas guardadas no cambian.\n- [ ] QA-06-06-04 · Dado un plan creado el día 1 y activado el día 3 tras una espera, cuando se calcula el primer día requerido, entonces es el día 3; los días 1 y 2 no aparecen como omitidos y un doble cumplimiento del día 3 no duplica la fila.\n\n## Pruebas y evidencia\n\n- Unitarias: conteo con reloj controlado, correcciones, retraso, reinicio, continuar, reloj hacia\n  atrás y cambio de zona.\n- Widget/integración/E2E: secuencia de días con reloj falso en integración.\n- QA humana y dispositivos: prueba manual cambiando la fecha del dispositivo en un teléfono.\n- Preview/captura/artifact: salida de CI.\n\n## Planificación\n\n- Hito: M1a · Prioridad: P1 · Puntos: 5 · Riesgo: alto\n- Bloqueada por: HU-06-05 (G2, #150)\n- Bloquea: HU-05-03, HU-08-01, HU-08-16, HU-06-09 (G7, EP-06b), HU-06-10 (G8, EP-06b), HU-06-11 y HU-06-12 (G9, EP-06b)\n- Orden interno: no aplica (una sola historia).\n\n## Campos de GitHub Projects\n\n- Prioridad: P1\n- Incremento: M1a\n- Área: Datos\n- Plataforma: Todas\n- Esfuerzo: 5\n- Riesgo: Alto\n- Vista: V-01, V-08\n- Decisión: DEC-030, DEC-172, DEC-177, DEC-047, DEC-232\n\n## Handoff a Kanai\n\n- Tipo de trabajo: `implement` · Módulo: `EP-06` · Estimación publicada: 5 puntos; tier por intake.\n- Referencia externa: `GH-152` · URL canónica: https://github.com/edobacon/taomangalam/issues/152.\n- Historias absorbidas: ninguna\n- Fuentes por criterio/caso: `docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md`, historia HU-06-06: Referencias canónicas, Criterios de aceptación y Casos de prueba `QA-06-06-01`, `QA-06-06-02`, `QA-06-06-03`, `QA-06-06-04`.\n- Rollback: conteo y cumplimientos sin migración: revertir por commit, sin datos que compensar; los ciclos y cumplimientos de una base de prueba se descartan con la base efímera y las correcciones son append-only. Comprobación: ejecutar `QA-06-06-01`, `QA-06-06-02`, `QA-06-06-03` y `QA-06-06-04`.\n- Diseño: No aplica a interfaz propia; validar el resultado no visual con los criterios de prueba de esta historia.\n- Evidencia adicional para intake: `QA-06-06-04` y el contrato de esta historia; registrar archivo y nombre completo del test, resultado y estado antes/después. No declarar esta prueba ejecutada durante la preparación documental.\n- Flujo de entrega: DEC-239, rama acumuladora `epic/EP-06`, verificaciones locales por ticket y un PR final; sin PR/push/CI por historia.\n- Entrada a Kanai: solo al seleccionar este issue para ejecución y cerrar sus dependencias reales; el detalle documental Ready no acredita implementación ni cierre de dependencias.\n\n## Trazabilidad y condición de ejecución\n\n- Épica padre: #147.\n- Referencia externa: `GH-152` · [URL canónica](https://github.com/edobacon/taomangalam/issues/152).\n- [Fuente de esta historia](https://github.com/edobacon/taomangalam/blob/main/docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md) · [Contratos de integración](https://github.com/edobacon/taomangalam/blob/main/docs/development/preparacion-ep06.md) · [Modelo del plan sin tirada](https://github.com/edobacon/taomangalam/blob/main/docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md#plan_practica).\n- Estado de ejecución al publicar: bloqueado hasta cerrar e integrar las dependencias siguientes.\n\n| Dependencia | Issue | Estado al publicar |\n| --- | --- | --- |\n| HU-06-05 (grupo G2) | #150 | open |\n\nEl estado anterior es una captura del 2026-10-10; consultar los issues para el estado vigente. Preparación completa no equivale a implementación. Solo el issue seleccionado se lleva a Kanai, con esta URL y referencia externa. Los puntos publicados no fijan el tier.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-11 - dev\n\nAdenda (decisiones del dev 2026-10-10, preguntas del juez). 1) Las fechas de entrada y salida de esperando_conexion, esperando_material y renovación pendiente salen del historial de eventos de plan de HU-06-05; el nombre de la API lo define TAO-250 y este ticket la consume vía contrato. 2) La firma de la evaluación de plan completado la define TAO-250 (HU-06-05); si no existe al iniciar, el ejecutor se detiene. Esta planificación se hizo con dependencyAck sobre TAO-249 (en desarrollo, por su spec); antes de integrar a main se debe revisar este ticket contra lo que TAO-249 dejó realmente.",
+      "revision": "80631d99a05893f4d83aa3391c2373ccbd0dfa8fdb55f25ed975843b74a7578a",
+      "repo": "taomangalam",
+      "aliases": [
+        "GH-152"
+      ],
+      "scopeApproved": true,
+      "dependencies": [
+        "TAO-250"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [
+        {
+          "path": "docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md",
+          "kind": "input",
+          "sourcePaths": [],
+          "requiredContent": [],
+          "checks": [
+            "existe el archivo"
+          ]
+        }
+      ],
+      "criteria": [
+        "Se cumplen los criterios de aceptación y los casos QA del cuerpo del ticket"
+      ]
+    }
+  ],
+  "externalEvidence": {
+    "TAO-199": [
+      "Ticket cerrado en Kanai; su entrega está en main (PR #191 de epic/EP-02, fb76e2e)"
+    ],
+    "TAO-198": [
+      "Ticket cerrado en Kanai; su entrega está en main (PR #191 de epic/EP-02, fb76e2e)"
+    ]
+  },
+  "dependencyWork": [],
+  "contracts": [],
+  "readPaths": [],
+  "repositoryRoot": "/Users/edobacon/Workspace/taomangalam",
+  "readRequirements": [],
+  "mentionCatalog": {
+    "HU-00-02": {
+      "ticketId": "TAO-091",
+      "status": "closed"
+    },
+    "GH-71": {
+      "ticketId": "TAO-198",
+      "status": "closed"
+    },
+    "HU-02-04": {
+      "ticketId": "TAO-198",
+      "status": "closed"
+    },
+    "GH-72": {
+      "ticketId": "TAO-199",
+      "status": "closed"
+    },
+    "HU-02-05": {
+      "ticketId": "TAO-199",
+      "status": "closed"
+    },
+    "HU-03a-03": {
+      "ticketId": "TAO-237",
+      "status": "discarded"
+    },
+    "TAO-249": {
+      "ticketId": "TAO-249",
+      "status": "open"
+    },
+    "GH-148": {
+      "ticketId": "TAO-249",
+      "status": "open"
+    },
+    "TAO-250": {
+      "ticketId": "TAO-250",
+      "status": "open"
+    },
+    "GH-150": {
+      "ticketId": "TAO-250",
+      "status": "open"
+    },
+    "HU-06-05": {
+      "ticketId": "TAO-250",
+      "status": "open"
+    },
+    "GH-151": {
+      "ticketId": "TAO-251",
+      "status": "open"
+    },
+    "GH-153": {
+      "ticketId": "TAO-252",
+      "status": "open"
+    },
+    "GH-156": {
+      "ticketId": "TAO-253",
+      "status": "open"
+    },
+    "GH-152": {
+      "ticketId": "TAO-254",
+      "status": "open"
+    },
+    "HU-06-06": {
+      "ticketId": "TAO-254",
+      "status": "open"
+    },
+    "HU-06-09": {
+      "ticketId": "TAO-255",
+      "status": "open"
+    },
+    "HU-06-10": {
+      "ticketId": "TAO-256",
+      "status": "open"
+    },
+    "HU-07-02": {
+      "ticketId": "TAO-260",
+      "status": "open"
+    },
+    "HU-07-05": {
+      "ticketId": "TAO-264",
+      "status": "open"
+    },
+    "HU-07-11": {
+      "ticketId": "TAO-268",
+      "status": "open"
+    },
+    "HU-07-12": {
+      "ticketId": "TAO-270",
+      "status": "open"
+    }
+  },
+  "mentionFamilies": [
+    "EPIC:TAOMANGALAM:4",
+    "GH:2",
+    "HU:3",
+    "TAO:2",
+    "TASK:5"
+  ],
+  "version": 9,
+  "dependencies": [
+    {
+      "from": "HU-06-01",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-02",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-03b-12",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-04-01",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-09-01",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-09-05",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-15-05",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-250",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-03",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-07",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-255",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-11",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-14",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-15",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-04",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-15-02",
+      "to": "TAO-249",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-249:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-249",
+      "to": "TAO-250",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-250:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "TAO-199",
+      "to": "TAO-250",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-250:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "TAO-198",
+      "to": "TAO-250",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-250:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-06-03",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-04",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-254",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-07",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-08",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-01",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-11-05",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-02",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-256",
+      "to": "TAO-250",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-250:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-250",
+      "to": "TAO-251",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-251:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-06-03",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-15",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-05-06",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-11-04",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-07-18",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-14",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-04",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-07",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-08",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-02",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-11-03",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-256",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-05-07",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-270",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-249",
+      "to": "TAO-251",
+      "origin": "inferred",
+      "reason": "Mención de contexto: la dependencia real de TAO-251 es TAO-250, que ya depende de TAO-249 (cadena 249>250>251).",
+      "source": "TAO-251:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-251",
+      "to": "TAO-252",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-252:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-06-14",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-04",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-250",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-15",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-07",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-08",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-255",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-264",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-07-13",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-07-14",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-02",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-256",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-254",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-270",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-03",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-249",
+      "to": "TAO-252",
+      "origin": "inferred",
+      "reason": "Mención de contexto: la cadena 249>250>251>252 ya cubre el orden.",
+      "source": "TAO-252:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-252",
+      "to": "TAO-253",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-253:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-06-08",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-07",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-05-02",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-05-08",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-260",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-268",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-255",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-256",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-16",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-14",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-01",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-05-11",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-250",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-15",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-04",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-249",
+      "to": "TAO-253",
+      "origin": "inferred",
+      "reason": "Mención de contexto: la cadena 249>250>251>252>253 ya cubre el orden.",
+      "source": "TAO-253:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-250",
+      "to": "TAO-254",
+      "origin": "declared",
+      "reason": "Dependencia declarada",
+      "source": "TAO-254:dependencies",
+      "accepted": true,
+      "dismissed": false
+    },
+    {
+      "from": "HU-05-03",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-01",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-08-16",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-255",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-256",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-11",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-12",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "HU-06-16",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    },
+    {
+      "from": "TAO-249",
+      "to": "TAO-254",
+      "origin": "inferred",
+      "reason": "Mención de contexto: TAO-254 depende de TAO-250, que ya depende de TAO-249.",
+      "source": "TAO-254:body",
+      "accepted": false,
+      "dismissed": true
+    }
+  ],
+  "order": [
+    "TAO-249",
+    "TAO-250",
+    "TAO-251",
+    "TAO-252",
+    "TAO-253",
+    "TAO-254"
+  ],
+  "approvedFingerprint": "728c503e36d54794f7d8c32a7cce20a4d95a304039923378ca2912416b8c7e73",
+  "approvedBy": "human-confirmed",
+  "dataModelAck": {
+    "digest": "2e1b167baf1fd444",
+    "reason": "Migración v3 a v4 de la base local, probada con snapshots congelados v1, v2 y v3; el plan se reconstruye conservando filas e ids, con rollback por migración hacia adelante.",
+    "by": "human-confirmed"
+  },
+  "accessCheck": {
+    "id": "6b2ed2a2-766f-43dd-8509-180f223c25a3",
+    "harness": "claude-code",
+    "harnessVersion": "2.1.294",
+    "harnessSessionId": "4eac4d59-cf8b-456b-935d-b2d2be93e7e0",
+    "binding": "f710e3d4e73fe8ed26a7e2449be61ccdf24fe7ddfa458ba3419392b0234c053b",
+    "issuedAt": "2026-10-11T00:47:05.163Z",
+    "expiresAt": "2026-10-11T01:02:05.163Z",
+    "validUntil": "2026-10-11T08:47:13.476Z",
+    "probes": [
+      {
+        "id": "3ab49667-2a18-427f-b46e-8bc6bb105b25",
+        "action": "read_repo",
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local",
+        "path": "/Users/edobacon/Workspace/taomangalam"
+      }
+    ],
+    "report": {
+      "checkId": "6b2ed2a2-766f-43dd-8509-180f223c25a3",
+      "harnessSessionId": "4eac4d59-cf8b-456b-935d-b2d2be93e7e0",
+      "results": [
+        {
+          "probeId": "3ab49667-2a18-427f-b46e-8bc6bb105b25",
+          "status": "readable",
+          "checkedAt": "2026-10-11T00:47:13.476Z",
+          "detail": "Lectura comprobada sin exponer contenido"
+        }
+      ]
+    }
+  },
+  "decisionBank": [],
+  "preparation": {
+    "at": "2026-10-11T00:43:05.456Z",
+    "by": "prepare",
+    "revisions": {
+      "TAO-249": "3e67e06324f1f3be7aa4087c82f95dd26908ff81383428ae6092edb4a0819cf7",
+      "TAO-250": "ea88c48fe3d0265eabc64be0f2017847d17f0d2d7a10a9b53b6f7d8c9c7187aa",
+      "TAO-251": "21ee7e12021160858db7947e67525b17476c6d9a235d58ca1b66845be3604cce",
+      "TAO-252": "9bf67e1e640e56646971d8b349c0b0788cb18447573aae5cb50fdc030acf703f",
+      "TAO-253": "23b660a83f93bd59defd45258a60c1ca948364faeb1129b1ec25d2176f383fda",
+      "TAO-254": "80631d99a05893f4d83aa3391c2373ccbd0dfa8fdb55f25ed975843b74a7578a"
+    }
+  },
+  "run": {
+    "id": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+    "planVersion": 9,
+    "fingerprint": "728c503e36d54794f7d8c32a7cce20a4d95a304039923378ca2912416b8c7e73",
+    "harness": "claude-code",
+    "harnessVersion": "2.1.294",
+    "harnessSessionId": "4eac4d59-cf8b-456b-935d-b2d2be93e7e0",
+    "teach": "teach",
+    "humanChecks": "defer",
+    "state": "running",
+    "ticketIds": [
+      "TAO-249",
+      "TAO-250",
+      "TAO-251",
+      "TAO-252",
+      "TAO-253",
+      "TAO-254"
+    ],
+    "current": 0,
+    "step": "verify",
+    "validated": {},
+    "grants": [
+      {
+        "actor": "dev",
+        "actions": [
+          "read_repo",
+          "write_repo",
+          "run_tests",
+          "kanai_tools",
+          "git_integrate"
+        ],
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local",
+        "expiresAt": "2026-10-12T00:45:00.000Z",
+        "revoked": false
+      }
+    ],
+    "capabilities": [
+      {
+        "action": "read_repo",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local"
+      },
+      {
+        "action": "write_repo",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local"
+      },
+      {
+        "action": "run_tests",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local"
+      },
+      {
+        "action": "kanai_tools",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local"
+      },
+      {
+        "action": "git_integrate",
+        "state": "granted",
+        "resource": "taomangalam/taomangalam/epic/EP-06-dominio-local"
+      }
+    ],
+    "requiredActions": [
+      "read_repo",
+      "write_repo",
+      "run_tests",
+      "kanai_tools",
+      "git_integrate"
+    ],
+    "maxAttempts": 3,
+    "attempts": {},
+    "dependencyReceipts": {},
+    "pendingKey": "aba0a566-47ce-4fec-bef0-42a0f39da8d2:TAO-249:{\"tool\":\"close_gate\",\"args\":{\"projectId\":\"taomangalam\",\"ticketId\":\"TAO-249\",\"sessionId\":\"TAO-249-S1\"}}",
+    "startedAt": "2026-10-11T00:53:03.673Z",
+    "deadline": "2026-10-12T00:45:00.000Z"
+  },
+  "history": [],
+  "events": [
+    {
+      "id": "3d86be97-0c35-414b-b689-deb94ac22093",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:02:03.328Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "create",
+      "source": "kanai-server",
+      "durationMs": 60
+    },
+    {
+      "id": "89d6954e-1aeb-44a0-a07f-25e13306c79d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:02:22.603Z",
+      "kind": "plan_evaluated",
+      "planVersion": 1
+    },
+    {
+      "id": "57b13166-05e3-4e25-b4a0-b3e89b4b6c8f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:02:22.605Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 27
+    },
+    {
+      "id": "e4206773-71c5-4e8a-bafd-348fc1e9a554",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-01\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "882d7bef-507d-4024-9b11-3ce5f7ba7c2d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-02\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0f96fa2a-6e72-42a8-aea1-d7d2c8e9bf6e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-03b-12\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2ec6d184-570b-42ad-8749-6bcdb072dfa9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-04-01\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e9143b86-391e-4361-83b5-3cc4b40c03ca",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-09-01\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "bbb22ee8-af5b-423d-b1e3-9b9a412356a2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-09-05\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0d26d137-05c2-4582-bbdd-07606c6ef5a7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-15-05\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b8a1be38-564e-444a-b3e3-ba549caf3f74",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-250\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "dd95d69e-5b13-4fbb-92e5-2098a635ed5a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-03\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8d2f4f6c-cb4e-4aa6-a57b-09bc47f2755c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-07\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1e222c4a-0f91-4e9c-b621-fe82f5e133e9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-255\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ece13823-8fda-4027-89ca-0836488b8cf7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-11\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1beaa9f8-02bb-4b42-aff5-06339c7f46f0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-14\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f906dff2-160e-4603-94c4-5fa7fbe1f387",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-15\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8be70303-2d9d-416f-a721-77f34bc60d09",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7871fd4a-8200-49f4-a329-fc9aaa4c9ca7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-04\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0e39a945-5d7a-463c-86f9-7dea7b0eab83",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-249",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-15-02\",\"to\":\"TAO-249\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a66276d6-a798-4fad-b10f-4425bf60c346",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-03\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2a203f8b-18a6-43ab-8283-a611d5fca103",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-04\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5f3b85ee-99b6-4cbf-88f1-faa2a6eaa3e9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-254\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b9bbfe62-9239-4fed-b74a-9a24cd47a7e0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-07\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "052b2421-41d2-4723-85fd-3a0532a4592c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-08\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8850ad58-8875-4f19-a3f8-6cccf35ff6a1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "75c3e58f-aee3-43a2-98b5-9bb8a4da89d0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-08-01\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e61199dd-71af-4729-91fd-d3548e2c0bbe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-11-05\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "83a37d71-427f-46e2-a2dd-2059905cf4cb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-02\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0d85261e-716a-4f2f-bd92-1f671a534fff",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-250",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-256\",\"to\":\"TAO-250\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "49cb09ab-de4e-492d-b3b6-fb4021767a80",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-03\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1fcc44a4-54f7-4242-bb6e-3a4df7a96889",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-15\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e5fe9311-1f88-406b-83f2-6bedbc02e1c9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-05-06\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "70bc0293-b205-4ae7-86a4-0ef6f5bab2dd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-11-04\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ad81e1ac-cebc-46db-a1fa-392dadec707d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-07-18\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "9d16ef2c-7134-49b3-b765-31eb62d0fe96",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-14\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7e303833-5874-4092-a32f-51c326642178",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-04\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "5df9a8f1-83bd-499c-bebd-89cd77bdd24f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-07\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ea052795-b5ca-4248-bba4-be8077595582",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-08\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "bb7cb63b-067f-4100-a841-7db85edfe5db",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ebeeca23-56bc-4013-8f15-f4554e62d931",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-02\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "73e6b2d2-e766-45a2-9c6a-ac009c4888e9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-11-03\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "139ccac9-c88d-4003-b84c-47c93104c4e0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-256\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "844428f1-a44e-4a4b-aa8c-4b96249fcf94",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-05-07\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8a97238e-8226-4892-9039-aeb2adafec7a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-270\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a125eff2-6e55-445f-8160-729e62e58ab3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-05-03\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "135e7c36-5ee9-4c6b-81e7-c602ecdd4db1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-08-01\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "a90d206c-ddfe-49d7-a528-db619073fd8f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-08-16\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "974e38ef-e25d-49b6-9605-172a028c210f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-255\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "22dd0b91-e0f4-4e1c-ba6e-b9ce9d2b0b3e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-256\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ffc9b017-1dcf-43ce-89d9-3218ab8690e3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-11\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "6167a1bb-a65b-460d-8c37-9569c8e52d1a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8ed60fc7-5ab3-46f7-bcbe-2145ef5b961f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-16\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2b63f37c-690f-42c8-9e55-9730814a91b2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-14\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "657e98ea-0e59-493d-be9b-c64d53ea3d4d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-04\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8f7dae19-77e5-446f-b66b-2746edf87fc3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-250\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "39eefb8f-1218-46a9-b2fa-7fbb322695dc",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-15\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "8c45c277-ed00-4e92-9b38-7f881dad0004",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-07\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2fcad4a1-e5a6-42ae-9003-fe4d891cc962",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-08\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d8f592d0-93af-4dbe-82c6-c075c9e8ff09",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-255\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "2f6c0e2b-3db1-4e43-b2bb-9c2112c7b4e8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-264\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b7c89a7b-03ec-43c2-a598-72dc2b62a199",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-07-13\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "3c86bc37-ce16-4039-a43f-bc6f09559885",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-07-14\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "fb8e3783-18db-4b4d-b8b4-fbaae73868b0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-02\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "af9ea29e-53e4-48f3-b425-d9cc0eac23a7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-256\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "c11fc608-b431-4e0d-bd08-1ce970a93555",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "cfbdd482-7065-4082-9a83-ab37eb38cc0c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-254\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "eb03ae09-6705-4870-9661-004bdeb3e030",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-270\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f194e38d-aae4-441c-b2d4-3fa2fcdb878e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-03\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "83684305-d1af-46e4-90c3-d5640c426432",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-08\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0fe824a6-19e7-4495-bba8-74c438504800",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-07\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ab75791a-41c0-44fd-817f-ff98bfa082d9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-05-02\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d4205770-8450-47ab-b449-8efe1bf695c3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-05-08\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "7a646965-cfe6-4e8b-86be-82ca81b4f2ba",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-260\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b3c77311-044c-4d73-bd0f-f49828b0f804",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-268\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "35fe0020-90cc-4a9a-9d95-ff44dc93e0e1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-255\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "96f307a1-f31f-4623-883b-3638183240a0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-256\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "4997573e-ec19-45ff-a5de-ee7f898d396e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-12\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "b23e6b92-ef76-4a36-a9e0-cc353682d20d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-16\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "829c0be1-e504-43c0-bba4-280454552998",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-14\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "697dc417-da5f-41c9-af02-e51c76fffe6e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-01\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "ebee25a7-0da2-4736-a098-b3431856575e",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-05-11\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "4f45f4b6-5a68-4028-9226-79bfdc3bd8b1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"TAO-250\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "1b2d88b1-635b-4ec5-ac90-852defa8da7f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-15\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "d68b4256-9e68-4fae-a687-079a444d6cc1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "dependency_decided",
+      "planVersion": 2,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto",
+      "evidence": [
+        "{\"from\":\"HU-06-04\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "68eec4f8-2b18-4345-ac30-0bdc0d83cf6a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.987Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 2,
+      "reason": "82 decisiones; 82 cambios"
+    },
+    {
+      "id": "9001721d-3849-428f-a166-a56fb26ff622",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:03:50.993Z",
+      "kind": "operation_completed",
+      "planVersion": 2,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 65
+    },
+    {
+      "id": "f3700900-2b63-4f7e-8685-e21861f41bf2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.005Z",
+      "kind": "dependency_decided",
+      "planVersion": 3,
+      "ticketId": "TAO-249",
+      "reason": "Alcance coincide con el objetivo de la épica B",
+      "evidence": [
+        "{\"ticketId\":\"TAO-249\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "b5a222d4-e42e-4da8-bc2c-4532572af88b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.005Z",
+      "kind": "dependency_decided",
+      "planVersion": 3,
+      "ticketId": "TAO-250",
+      "reason": "Alcance coincide con el objetivo de la épica B",
+      "evidence": [
+        "{\"ticketId\":\"TAO-250\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "a0a30e87-2787-4180-8493-0e3a0dc18252",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.005Z",
+      "kind": "dependency_decided",
+      "planVersion": 3,
+      "ticketId": "TAO-251",
+      "reason": "Alcance coincide con el objetivo de la épica B",
+      "evidence": [
+        "{\"ticketId\":\"TAO-251\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "2a72aefe-859a-484a-ad4a-bd7929e68e31",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.005Z",
+      "kind": "dependency_decided",
+      "planVersion": 3,
+      "ticketId": "TAO-252",
+      "reason": "Alcance coincide con el objetivo de la épica B",
+      "evidence": [
+        "{\"ticketId\":\"TAO-252\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "8e9f1213-a721-45ae-9b78-c5e62bd9ee95",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.006Z",
+      "kind": "dependency_decided",
+      "planVersion": 3,
+      "ticketId": "TAO-253",
+      "reason": "Alcance coincide con el objetivo de la épica B",
+      "evidence": [
+        "{\"ticketId\":\"TAO-253\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "88934872-7a21-4e89-9515-280e6ad4d557",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.006Z",
+      "kind": "dependency_decided",
+      "planVersion": 3,
+      "ticketId": "TAO-254",
+      "reason": "Alcance coincide con el objetivo de la épica B",
+      "evidence": [
+        "{\"ticketId\":\"TAO-254\",\"scopeApproved\":true,\"before\":false}"
+      ]
+    },
+    {
+      "id": "9830750e-a94a-42b4-8556-8bb1058774da",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.006Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 3,
+      "reason": "6 decisiones; 6 cambios"
+    },
+    {
+      "id": "406e36c6-b37f-41fe-b521-78dcca12cb5c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:09.010Z",
+      "kind": "operation_completed",
+      "planVersion": 3,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 56
+    },
+    {
+      "id": "92ee31ee-6184-4651-9fc9-2f52582e3ff7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:44.393Z",
+      "kind": "plan_changed",
+      "planVersion": 4
+    },
+    {
+      "id": "9db5819d-cbeb-44b8-b5bf-b0680d3b949f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:44.397Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 74
+    },
+    {
+      "id": "b2fae075-26fc-4011-a003-61f0bb0a67c0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:49.926Z",
+      "kind": "plan_evaluated",
+      "planVersion": 4
+    },
+    {
+      "id": "a577e3a6-04ee-403e-a7b6-362e9e486642",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:04:49.930Z",
+      "kind": "operation_completed",
+      "planVersion": 4,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 23
+    },
+    {
+      "id": "33de337b-d9b9-41fb-abab-1e69434ed578",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:05:19.324Z",
+      "kind": "plan_changed",
+      "planVersion": 5
+    },
+    {
+      "id": "ed038d50-1b52-4f93-a5b6-c0079a7df56b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:05:19.328Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 61
+    },
+    {
+      "id": "fdd07ec1-f510-47cb-bbec-cd3cc3603d4a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:05:33.638Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 12196
+    },
+    {
+      "id": "58910a11-d6e5-4f00-980f-3d5375ccbd95",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:18:11.989Z",
+      "kind": "operation_completed",
+      "planVersion": 5,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 12360
+    },
+    {
+      "id": "9b27de17-43a3-4536-b511-ef68dba9913d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:50:49.498Z",
+      "kind": "plan_changed",
+      "planVersion": 6
+    },
+    {
+      "id": "edd2ce15-5631-40e7-ba6b-fdf3588cdb2a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:50:49.503Z",
+      "kind": "tickets_refreshed",
+      "planVersion": 6,
+      "reason": "TAO-249"
+    },
+    {
+      "id": "d84c67ac-5e31-4778-94d0-f53cbbdcd2ba",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T22:50:49.506Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 78
+    },
+    {
+      "id": "46fe7dc2-c78b-48a7-ac4d-405d64beaf57",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-10T23:42:48.315Z",
+      "kind": "operation_completed",
+      "planVersion": 6,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 12831
+    },
+    {
+      "id": "3e634859-59b7-47f8-bcd3-88a1f14dbd9d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:08:48.401Z",
+      "kind": "plan_changed",
+      "planVersion": 7
+    },
+    {
+      "id": "7d393505-4a3b-443f-900a-e74d625d3872",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:08:48.406Z",
+      "kind": "tickets_refreshed",
+      "planVersion": 7,
+      "reason": "TAO-250, TAO-251, TAO-252, TAO-253, TAO-254"
+    },
+    {
+      "id": "25545354-b342-45a2-b8a0-9ebcff527df1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:08:48.409Z",
+      "kind": "operation_completed",
+      "planVersion": 7,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 93
+    },
+    {
+      "id": "ba8d615c-ac85-470f-9137-d7f9a163600c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:08:57.535Z",
+      "kind": "plan_evaluated",
+      "planVersion": 7
+    },
+    {
+      "id": "3bf3ba24-6330-4b6e-84ec-67f7212cd7eb",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:08:57.539Z",
+      "kind": "operation_completed",
+      "planVersion": 7,
+      "phase": "plan",
+      "source": "kanai-server",
+      "durationMs": 36
+    },
+    {
+      "id": "b3365ea6-5879-48d5-9b25-58b841d6acc3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:10.967Z",
+      "kind": "dependency_decided",
+      "planVersion": 8,
+      "ticketId": "TAO-251",
+      "reason": "Mención de contexto: la dependencia real de TAO-251 es TAO-250, que ya depende de TAO-249 (cadena 249>250>251).",
+      "evidence": [
+        "{\"from\":\"TAO-249\",\"to\":\"TAO-251\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "0b2ba723-d7e4-4f28-890d-2a0378c7d448",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:10.967Z",
+      "kind": "dependency_decided",
+      "planVersion": 8,
+      "ticketId": "TAO-252",
+      "reason": "Mención de contexto: la cadena 249>250>251>252 ya cubre el orden.",
+      "evidence": [
+        "{\"from\":\"TAO-249\",\"to\":\"TAO-252\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "f34ef759-27ae-4232-8d79-30ae4191be4c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:10.967Z",
+      "kind": "dependency_decided",
+      "planVersion": 8,
+      "ticketId": "TAO-253",
+      "reason": "Mención de contexto: la cadena 249>250>251>252>253 ya cubre el orden.",
+      "evidence": [
+        "{\"from\":\"TAO-249\",\"to\":\"TAO-253\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "e2016d16-786b-4360-a6c2-5aa3812f8671",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:10.967Z",
+      "kind": "dependency_decided",
+      "planVersion": 8,
+      "ticketId": "TAO-254",
+      "reason": "Mención de contexto: TAO-254 depende de TAO-250, que ya depende de TAO-249.",
+      "evidence": [
+        "{\"from\":\"TAO-249\",\"to\":\"TAO-254\",\"accepted\":false,\"before\":{\"accepted\":false,\"dismissed\":false}}"
+      ]
+    },
+    {
+      "id": "3247f6ef-46f2-4d00-8c27-5772434d9de8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:10.967Z",
+      "kind": "decisions_batch_applied",
+      "planVersion": 8,
+      "reason": "4 decisiones; 4 cambios"
+    },
+    {
+      "id": "b596f75d-a81f-4fed-ac5d-86a970440fb0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:10.971Z",
+      "kind": "operation_completed",
+      "planVersion": 8,
+      "phase": "decide_batch",
+      "source": "kanai-server",
+      "durationMs": 69
+    },
+    {
+      "id": "13fed354-0772-43af-82ea-33219e9fe6de",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:36.605Z",
+      "kind": "plan_changed",
+      "planVersion": 9
+    },
+    {
+      "id": "24221990-deb3-437a-9ced-18321d07442b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:09:36.609Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "phase": "update",
+      "source": "kanai-server",
+      "durationMs": 72
+    },
+    {
+      "id": "e4f3096a-32a3-4f98-be24-c90368b976a0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:42:03.546Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 2378
+    },
+    {
+      "id": "970ef4dd-f82c-47d3-a320-022d8a2e4cbe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:42:55.689Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 2256
+    },
+    {
+      "id": "1cafa653-ed7b-4d6b-96ac-cfe7307b029f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:43:05.456Z",
+      "kind": "epic_prepared",
+      "planVersion": 9
+    },
+    {
+      "id": "b3907d69-dc83-49e7-9220-22fc70106613",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:43:05.462Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 215
+    },
+    {
+      "id": "10964235-cea2-48e8-afa9-fc982718c5e3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:46:38.083Z",
+      "kind": "access_check_prepared",
+      "planVersion": 9
+    },
+    {
+      "id": "0c3e6f25-1691-4869-842f-aecc0182df63",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:46:47.089Z",
+      "kind": "access_check_reported",
+      "planVersion": 9,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "854f9b93-950d-428c-8030-794e0bffc150",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:47:05.171Z",
+      "kind": "access_check_prepared",
+      "planVersion": 9
+    },
+    {
+      "id": "176ba659-0e58-4778-bb3e-59d28d63d741",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:47:16.612Z",
+      "kind": "access_check_reported",
+      "planVersion": 9,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "ebd1d891-f586-4cc8-9eb6-fbf77b955219",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:53:03.603Z",
+      "kind": "plan_approved",
+      "planVersion": 9
+    },
+    {
+      "id": "493507c8-2edc-4332-91fb-323eac393a54",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:53:03.673Z",
+      "kind": "run_started",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2"
+    },
+    {
+      "id": "25165cf6-fed4-461d-9f53-c113bc1cf359",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:53:03.673Z",
+      "kind": "teach_selected",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "reason": "teach"
+    },
+    {
+      "id": "e16d824f-593a-4b21-8fa7-76bacf8e6768",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:53:03.683Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "phase": "launch",
+      "source": "kanai-server",
+      "durationMs": 117
+    },
+    {
+      "id": "df1c5355-12f7-4f03-9c11-1dc1a228df83",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:53:39.730Z",
+      "kind": "action_requested",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "ticketId": "TAO-249",
+      "phase": "execute"
+    },
+    {
+      "id": "fda31d78-984a-4854-a7d5-99ea2ce12b76",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T00:53:39.734Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 188
+    },
+    {
+      "id": "0914c7a5-101d-43fe-aa10-30b4a669f207",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T01:12:53.260Z",
+      "kind": "action_requested",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "ticketId": "TAO-249",
+      "phase": "execute"
+    },
+    {
+      "id": "768cced1-eb9e-4949-802c-7edbf73d36ed",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T01:12:53.266Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 219
+    },
+    {
+      "id": "9c9e1503-2660-44cb-aa63-43fc33dc7b84",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T01:17:08.694Z",
+      "kind": "action_requested",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "ticketId": "TAO-249",
+      "phase": "verify"
+    },
+    {
+      "id": "93612a8c-587c-4d99-9dcd-4de8e141b6c3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-11T01:17:08.698Z",
+      "kind": "operation_completed",
+      "planVersion": 9,
+      "runId": "aba0a566-47ce-4fec-bef0-42a0f39da8d2",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 194
+    }
+  ]
+}
