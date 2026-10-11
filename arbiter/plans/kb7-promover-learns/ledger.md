@@ -1,7 +1,7 @@
 ---
 plan_id: kb7-promover-learns
 created: 2026-10-11T13:51:42.272Z
-updated: 2026-10-11T13:51:42.272Z
+updated: 2026-10-11T14:09:13.907Z
 tags:
   projects:
     - kanai
@@ -29,16 +29,19 @@ tags:
 | corrida | fecha | head | veredicto | S0 / S1 / S2 / S3 / consulta | cobertura |
 | --- | --- | --- | --- | --- | --- |
 | kb7-promover-learns-r1 | 2026-10-11T14:02:00Z | 4ef00d104539496e4d432e29ecf1ca335784dbec | aprobable_con_nits | 0 / 0 / 0 / 1 / 0 | 11/11 completos, 0 sin leer |
+| kb7-promover-learns-r2 | 2026-10-11T14:28:00Z | 2381d17c | aprobable_con_nits | 0 / 0 / 0 / 1 / 0 | 4/4 completos, 0 sin leer |
+| kb7-promover-learns-r3 | 2026-10-11T14:38:00Z | 6e0097c355720c5986e1aa91f83bc3c4dd8d1b82 | aprobado | 0 / 0 / 0 / 0 / 0 | 3/3 completos, 0 sin leer |
 
 ## Abiertos (ultima corrida)
 
-| hallazgo | sev | kind | donde | titulo | nota |
-| --- | --- | --- | --- | --- | --- |
-| kb7-promover-learns-r1/f1 | S3 | maintainability | server/repo/learns.ts:196 | El evento nuevo learn_promoted no tiene etiqueta en la línea de tiempo del ticket, a diferencia de learn_added/refined/discarded |  |
+Ninguno.
 
 ## Corregidos
 
-Ninguno.
+| hallazgo | sev | donde | titulo | evidencia |
+| --- | --- | --- | --- | --- |
+| kb7-promover-learns-r1/f1 | S3 | server/repo/learns.ts:196 | El evento nuevo learn_promoted no tiene etiqueta en la línea de tiempo del ticket, a diferencia de learn_added/refined/discarded | re-chequeo: corregido |
+| kb7-promover-learns-r2/f1 | S3 | server/api/actions/execute.post.ts:79 | Una op desconocida sin learn devuelve la pista de learn faltante en vez de 'op debe ser add\|refine\|promote\|discard' | re-chequeo: corregido |
 
 ## Dejados de reportar sin cambio en el codigo (variacion del juez)
 

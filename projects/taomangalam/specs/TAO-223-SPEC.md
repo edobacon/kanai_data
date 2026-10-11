@@ -24,9 +24,9 @@ Datos resueltos al revisar el spec (antes eran datos a confirmar):
 ## Requirements
 
 ### REQ-01 `confirmed`
-> Fuente: Pedido de enmienda punto 1; Adenda 1; hecho verificado en repo (hash SHA-256 del archivo completo, calculado en ejecución)
+> Fuente: Pedido de enmienda; Adenda 1 (rutas verificadas y fuente privacidad-v1.0.md); Adenda 2 (registro de aprobaciones); hecho verificado: el hash se calcula sobre el archivo completo; Adenda 3 (ruta del registro en docs/legal/aprobaciones/)
 
-Existe en docs/legal/privacidad-v1.0.md el texto fuente de la política de privacidad en español (DEC-049), en Markdown, con versión y vigencia en el encabezado YAML existente (patrón de terminos-v1.0.md); su hash SHA-256 se calcula sobre el archivo completo y se anota en docs/legal/aprobaciones-privacidad-v1.0.md, no dentro del propio archivo. El archivo se REEMPLAZA (privacidad-v1.0.md, como fija la Adenda 1); no se crea otra versión. El contenido por tema lo cubren REQ-14 (datos por tipo de cuenta), REQ-15 (proveedores), REQ-16 (retención y eliminación), REQ-17 (accesos administrativos), REQ-02 (analítica) y REQ-03 (resumen para V-51), sin contradecir las DEC citadas. La identidad legal del responsable del tratamiento, la región de despliegue de Railway, la aprobación de asesoría legal y la aceptación de Producto son pendientes externos declarados en el texto o en el registro de aprobación: NO son tareas de código y NO bloquean la redacción (sí bloquean la sesión 3). Reemplaza el texto versionado de un archivo; no implica borrar datos existentes ni editar una versión ya publicada.
+Existe en docs/legal/privacidad-v1.0.md el texto fuente de la política de privacidad en español (DEC-049), en Markdown, con versión y vigencia en el encabezado YAML existente (patrón de terminos-v1.0.md); su hash SHA-256 se calcula sobre el archivo completo y se anota en docs/legal/aprobaciones/privacidad-v1.0.md (Adenda 3), no dentro del propio archivo. El archivo se REEMPLAZA (privacidad-v1.0.md, como fija la Adenda 1); no se crea otra versión. El contenido por tema lo cubren REQ-14 (datos por tipo de cuenta), REQ-15 (proveedores), REQ-16 (retención y eliminación), REQ-17 (accesos administrativos), REQ-02 (analítica) y REQ-03 (resumen para V-51), sin contradecir las DEC citadas. La identidad legal del responsable del tratamiento, la región de despliegue de Railway, la aprobación de asesoría legal y la aceptación de Producto son pendientes externos declarados en el texto o en el registro de aprobación: NO son tareas de código y NO bloquean la redacción (sí bloquean la sesión 3). Reemplaza el texto versionado de un archivo; no implica borrar datos existentes ni editar una versión ya publicada.
 
 ### REQ-02 `confirmed`
 > Fuente: Alcance: Incluye, analítica (DEC-171, DEC-058, DEC-130); Criterios de aceptación: apartado de analítica; Adenda 1
@@ -44,9 +44,9 @@ El resumen breve de la política de privacidad para V-51 es una sección del mis
 Las copias empaquetadas del texto en app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md coinciden en hash con la fuente docs/legal/privacidad-v1.0.md, de modo que el texto viaja en la app para el primer uso sin red (DEC-219). La propagación de las copias y la actualización del hash que consumen textos_legales_empaquetados.dart y la suite del servidor se hacen en S1.T6, con la regla de hash confirmada en S1.T1, en el mismo commit y la misma sesión, para no dejar los chequeos de hash en rojo entre sesiones. El gate de S1 y su reviewOutcome se evalúan sobre docs/legal/privacidad-v1.0.md según la Adenda 1 (sin condicionar a una rama 1.1 ni a una aprobación del dev para otra versión) y exigen que pasen cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs.
 
 ### REQ-05 `confirmed`
-> Fuente: Adenda 2, punto 1 (TAO-223-Q10/Q11/Q12); Criterios de aceptación: registro de aprobación
+> Fuente: Pedido de cambio (3); Adenda 2 y Adenda 3
 
-Queda el registro de aprobaciones docs/legal/aprobaciones-privacidad-v1.0.md, cuyo formato lo define esta historia (Adenda 2): encabezado con documento, versión 1.0, hash SHA-256 del texto y fecha de vigencia (o marcador provisional); una sección por revisor (Asesoría legal, Producto, Operación/release) con nombre o rol, fecha, veredicto (aprobado / aprobado con observaciones / rechazado), observaciones y cómo se resolvió cada una; en Asesoría legal, una línea explícita sobre el tratamiento en UE/EEE (P-227); en Operación/release, la región de despliegue confirmada; y al final la comparación de hash fuente vs app/assets vs server/legal vs staging con su resultado. TAO-222 reutilizará este formato como docs/legal/aprobaciones-terminos-v1.0.md; este ticket no depende de TAO-222. La detección de un hash registrado distinto de la fuente es humana: quien revisa compara el hash del registro con el de la fuente y con la fila de documento_legal de staging; la publicación queda pendiente hasta completar el registro (control manual, sin bloqueo automático ni chequeo automático; REQ-07 prohíbe scripts nuevos). Adjuntar el registro a GH-94 lo confirma el dev aparte; no es tarea del ejecutor.
+Queda el registro de aprobaciones docs/legal/aprobaciones/privacidad-v1.0.md (subcarpeta, Adenda 3, para no romper el listado de versiones de docs/legal; se crea el directorio docs/legal/aprobaciones/ si no existe), cuyo formato lo define esta historia (Adenda 2): encabezado con documento, versión 1.0, hash SHA-256 del texto y fecha de vigencia (o marcador provisional); una sección por revisor (Asesoría legal, Producto, Operación/release) con nombre o rol, fecha, veredicto (aprobado / aprobado con observaciones / rechazado), observaciones y cómo se resolvió cada una; en Asesoría legal, una línea explícita sobre el tratamiento en UE/EEE (P-227); en Operación/release, la región de despliegue confirmada; y al final la comparación de hash fuente vs app/assets vs server/legal vs staging con su resultado. Las rutas docs/legal/aprobaciones-privacidad-v1.0.md y docs/legal/aprobaciones-terminos-v1.0.md quedan obsoletas y no se usan. La estructura mínima de la Adenda 2 PREVALECE sobre el registro de términos de TAO-222 ya existente en docs/legal/aprobaciones/terminos-v1.0.md: el ejecutor lo lee (solo lectura) y compara; si hay diferencias de estructura se REPORTAN en las notas de la tarea, no se copian al registro de privacidad ni se alinea la estructura de privacidad hacia abajo para igualar a términos. Este ticket no modifica el archivo de términos y no hay dependencia de ejecución entre ambos tickets. La detección de un hash registrado distinto de la fuente es humana: quien revisa compara el hash del registro con el de la fuente y con la fila de documento_legal de staging; la publicación queda pendiente hasta completar el registro (control manual, sin bloqueo automático ni chequeo automático; REQ-07 prohíbe scripts nuevos). Adjuntar el registro a GH-94 lo confirma el dev aparte; no es tarea del ejecutor.
 
 ### REQ-06 `inferred`
 > Fuente: Requisitos transversales: Accesibilidad/responsive
@@ -59,9 +59,9 @@ El texto tiene una jerarquía de títulos Markdown sin saltos de nivel, para lec
 Reusar el patrón de TAO-222 (términos v1): misma ubicación de la fuente en docs/legal/, mismo formato de encabezado (versión, vigencia, hash), mismo mecanismo de empaquetado hacia app/assets/legal/ y server/legal/ y mismo chequeo de hash. No crear un script, una ruta ni un formato nuevos.
 
 ### REQ-08 `confirmed`
-> Fuente: Pedido de enmienda punto 2; hecho verificado: registro-version.ts rechaza vigente_desde no válido
+> Fuente: Pedido de enmienda; Adenda 1 (vigencia aún no fijada, marcador provisional y hash recalculado al fijarla); hecho verificado: el hash se calcula en ejecución y legal:registrar exige fecha válida; Adenda 3 (ruta del registro)
 
-El marcador provisional de vigencia va en el campo vigente_desde del encabezado YAML de docs/legal/privacidad-v1.0.md (vigente_desde: PENDIENTE-VIGENCIA), sin fecha inventada; la tarea S1.T4 se limita a dejar ese marcador. Como legal:registrar (server/src/legal/registro-version.ts) exige una fecha válida en vigente_desde, el marcador impide a propósito registrar o publicar esta versión antes de fijar la vigencia real. Al fijarse la fecha real (S3.T1) el hash del archivo completo cambia y se propaga copiando la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md; no hay hash que actualizar en textos_legales_empaquetados.dart ni en la suite del servidor (lo calculan en ejecución). El nuevo hash se anota en docs/legal/aprobaciones-privacidad-v1.0.md, todo en el mismo commit y la misma sesión.
+El marcador provisional de vigencia va en el campo vigente_desde del encabezado YAML de docs/legal/privacidad-v1.0.md (vigente_desde: PENDIENTE-VIGENCIA), sin fecha inventada; la tarea S1.T4 se limita a dejar ese marcador. Como legal:registrar (server/src/legal/registro-version.ts) exige una fecha válida en vigente_desde, el marcador impide a propósito registrar o publicar esta versión antes de fijar la vigencia real. Al fijarse la fecha real (S3.T1) el hash del archivo completo cambia y se propaga copiando la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md; no hay hash que actualizar en textos_legales_empaquetados.dart ni en la suite del servidor (lo calculan en ejecución). El nuevo hash se anota en docs/legal/aprobaciones/privacidad-v1.0.md, todo en el mismo commit y la misma sesión.
 
 ### REQ-09 `confirmed`
 > Fuente: Pedido de cambio punto 5; Adenda 2 punto 2
@@ -69,14 +69,14 @@ El marcador provisional de vigencia va en el campo vigente_desde del encabezado 
 S1.T1 es de SOLO LECTURA y es la primera tarea de la sesión 1: verifica que app/test/legal/empaquetado_test.dart y scripts/ci/ep01-legal-provider.mjs comparan contra docs/legal/; confirma en textos_legales_empaquetados.dart si el hash se calcula sobre el archivo completo o sin el encabezado; y lee puerto_analitica.dart registrando la referencia (símbolo o función, sin número de línea fijo) que confirma opt_in sin red o sin política válida, en sus notas y en el caso de prueba. No escribe ni reemplaza archivos. La comprobación en staging es el item de verificación humana de la sesión 5 (verificación) (REQ-18). legal:registrar no se ejecuta en ningún verify. S1.T6 y S3.T1 usan la regla de hash confirmada en S1.T1. Sin crear scripts ni formatos nuevos.
 
 ### REQ-10 `confirmed`
-> Fuente: Requisitos transversales: Seguridad/privacidad (tecnologia/23 §3); Adenda 2 punto 3
+> Fuente: Pedido de enmienda; requisito transversal de seguridad/privacidad del request; Adenda 2 (ubicación del redactor de logs, sección 3); Adenda 3 (ruta del registro)
 
-El texto de la política se contrasta con el redactor de logs (docs/product/tecnologia/23_observabilidad_logs_debug_y_costos.md, sección 3) y con DEC-197: el registro de errores sin datos personales y los logs operativos de 7 días descritos en la política no contradicen lo que el redactor omite o enmascara. El caso de revisión vive como sección '## Contraste con el redactor de logs' dentro de docs/legal/aprobaciones-privacidad-v1.0.md, con cada dato que la política declara excluido de logs y su resultado (coincide / contradicción).
+El texto de la política se contrasta con el redactor de logs (docs/product/tecnologia/23_observabilidad_logs_debug_y_costos.md, sección 3) y con DEC-197: el registro de errores sin datos personales y los logs operativos de 7 días descritos en la política no contradicen lo que el redactor omite o enmascara. El caso de revisión vive como sección '## Contraste con el redactor de logs' dentro de docs/legal/aprobaciones/privacidad-v1.0.md, con cada dato que la política declara excluido de logs y su resultado (coincide / contradicción).
 
 ### REQ-11 `confirmed`
-> Fuente: Pedido de enmienda punto 3; Planificación: pendientes externos del request
+> Fuente: Pedido de enmienda; Adenda 1 (vigencia pendiente y hash recalculado); Adenda 2 (acceso a staging como pendiente humano); pendientes externos del request (responsable y región de Railway); Adenda 3 (ruta del registro)
 
-La sesión 3 es de código y queda declarada bloqueada hasta que existan la fecha de vigencia real y la confirmación escrita de Operación/release y de asesoría legal de la identidad legal del responsable del tratamiento y de la región de despliegue de Railway. Su única tarea es S3.T1, que incorpora responsable y región al texto, fija la vigencia, recalcula y propaga. Su reviewOutcome es: el hash final con la vigencia real es idéntico en la fuente docs/legal/privacidad-v1.0.md y en las copias app/assets/legal/ y server/legal/, calculado sobre el archivo completo, y ese hash queda anotado en el encabezado de docs/legal/aprobaciones-privacidad-v1.0.md. La comparación con la fila de documento_legal de staging (acceso de solo lectura por el túnel), las aprobaciones de los revisores y QA-03a-15-02/03 siguen como items de verificación humana de la sesión 5 (verificación). La sesión 4 de review no lleva tareas.
+La sesión 3 es de código y queda declarada bloqueada hasta que existan la fecha de vigencia real y la confirmación escrita de Operación/release y de asesoría legal de la identidad legal del responsable del tratamiento y de la región de despliegue de Railway. Su única tarea es S3.T1, que incorpora responsable y región al texto, fija la vigencia, recalcula y propaga. Su reviewOutcome es: el hash final con la vigencia real es idéntico en la fuente docs/legal/privacidad-v1.0.md y en las copias app/assets/legal/ y server/legal/, calculado sobre el archivo completo, y ese hash queda anotado en el encabezado de docs/legal/aprobaciones/privacidad-v1.0.md. La comparación con la fila de documento_legal de staging (acceso de solo lectura por el túnel), las aprobaciones de los revisores y QA-03a-15-02/03 siguen como items de verificación humana de la sesión 5 (verificación). La sesión 4 de review no lleva tareas.
 
 ### REQ-12 `confirmed`
 > Fuente: Pedido de cambio punto 10; Requisitos transversales (Compatibilidad/migración)
@@ -112,31 +112,59 @@ El texto declara los accesos administrativos auditados, incluida la impersonaci�
 > Fuente: Pedido de cambio punto 5; Adenda 2 punto 2
 
 La comprobación en staging de si privacidad 1.0 ya está registrada en documento_legal y con qué hash NO es una tarea de código: la cubre el item de verificación con requiresHuman de la sesión 5 (verificación). Es solo lectura sobre documento_legal (tipo privacidad, versión 1.0) y su hash, sin ejecutar legal:registrar ni escribir en staging. Si no hay acceso a staging, queda como pendiente humano y no detiene S1, S2 ni S3.
+
+### REQ-19 `confirmed` `enforcement`
+> Fuente: Pedido de cambio (4); REQ-11, REQ-15, REQ-18
+
+La tarea S3.T1 conserva dos salvaguardas: (a) al incorporar responsable y región de despliegue al texto no se inventan transferencias internacionales: solo se declara lo confirmado por escrito por Operación/release y asesoría legal; (b) no consulta ni escribe en staging (la comparación con documento_legal de staging es el item de verificación humana de la sesión 5, REQ-18).
+
+### REQ-20 `confirmed` `enforcement`
+> Fuente: Pedido de cambio (2); Adenda 3
+
+Al reemplazar menciones de rutas obsoletas, cada ruta se reemplaza por separado y por su par correcto: docs/legal/aprobaciones-privacidad-v1.0.md pasa a docs/legal/aprobaciones/privacidad-v1.0.md y docs/legal/aprobaciones-terminos-v1.0.md pasa a docs/legal/aprobaciones/terminos-v1.0.md; una mención de términos nunca apunta al registro de privacidad.
+
+### REQ-21 `confirmed`
+> Fuente: Pedido de cambio, ajuste (1); REQ-05 (Adenda 3)
+
+Rollback de S2.T1: 'git rm -f docs/legal/aprobaciones/privacidad-v1.0.md'. No se borra el directorio docs/legal/aprobaciones/ porque ya existe por terminos-v1.0.md (TAO-222).
+
+### REQ-22 `confirmed` `enforcement`
+> Fuente: Pedido de cambio, ajuste (2); REQ-20
+
+El barrido de S1.T8 se acota a los archivos de este plan: docs/legal/privacidad-v1.0.md, sus copias en app/assets/legal/ y server/legal/, y los textos de las tareas y casos de este ticket. No se editan archivos de TAO-222 más allá de menciones de ruta (REQ-20) ni se barre el repo completo.
+
+### REQ-23 `confirmed`
+> Fuente: Pedido de cambio, ajuste (3); REQ-01, REQ-09
+
+El hash SHA-256 que S2.T1 anota en docs/legal/aprobaciones/privacidad-v1.0.md se calcula con la regla de hash confirmada en S1.T1 (SHA-256 del archivo completo).
 ## Tasks
 
 #### S1.T1 — (b) Confirmar en app/lib/features/legal/data/textos_legales_empaquetados.dart y app/test/legal/empaquetado_test.dart que el hash es SHA-256 del archivo completo calculado en ejecución y que no se guarda en ningún archivo (lectura previa ya lo indica; si el código dijera otra cosa, reportarlo antes de redactar). Tarea de SOLO LECTURA: no escribe ni reemplaza archivos; también verifica que app/test/legal/empaquetado_test.dart y scripts/ci/ep01-legal-provider.mjs comparan contra docs/legal/ y registra en sus notas la referencia (símbolo o función, sin número de línea) de puerto_analitica.dart que confirma opt_in sin red o sin política válida.
-Contrato: rollback: Sin cambios en el repo; descartar las notas y el archivo de huella temporal.. Status: pending
+Contrato: rollback: Sin cambios en el repo; descartar las notas y el archivo de huella temporal.. Status: done
 
 #### S1.T2 — Redactar el texto fuente de la política de privacidad v1 en docs/legal/privacidad-v1.0.md (reemplaza el archivo existente), cubriendo REQ-14, REQ-15, REQ-16, REQ-17, REQ-02 y REQ-12 sin contradecir las DEC citadas. En el apartado de analítica no escribir la palabra 'anónima', ni siquiera negada ('no anónima'), porque el verify de S1.T5 la rechaza; expresar DEC-058 como 'seudónima: se asocia a un identificador técnico y no a tu nombre o correo'. Mantener el encabezado YAML existente (patrón de terminos-v1.0.md).
-Contrato: rollback: git checkout -- docs/legal/privacidad-v1.0.md. Status: pending
+Contrato: rollback: git checkout -- docs/legal/privacidad-v1.0.md. Status: done
 
 #### S1.T3 — Redactar el resumen breve para V-51 como sección de docs/legal/privacidad-v1.0.md con el encabezado exacto '## Resumen' (terminos-v1.0.md no trae una sección de resumen que copiar: el título lo fija esta tarea). Se deriva del texto redactado en S1.T2 y debe mencionar 'cuenta de dispositivo', 'cuenta completa', 'seudónima' y 'eliminación', sin el patrón 'an[oó]nim[ao]s?'. Se ejecuta después de S1.T2.
-Contrato: rollback: git checkout -- docs/legal/privacidad-v1.0.md. Status: pending
+Contrato: rollback: git checkout -- docs/legal/privacidad-v1.0.md. Status: done
 
 #### S1.T4 — Dejar en el encabezado YAML de docs/legal/privacidad-v1.0.md el campo vigente_desde con el marcador provisional PENDIENTE-VIGENCIA, sin fecha inventada. Efecto buscado: legal:registrar (server/src/legal/registro-version.ts) rechaza el archivo hasta que se fije la fecha real, por lo que no se puede publicar por error. La propagacion a las copias la hace S1.T6.
-Contrato: rollback: Revertir el encabezado de docs/legal/privacidad-v1.0.md con git checkout al estado previo.. Status: pending
+Contrato: rollback: Revertir el encabezado de docs/legal/privacidad-v1.0.md con git checkout al estado previo.. Status: done
 
 #### S1.T5 — Verificar el apartado de analítica de docs/legal/privacidad-v1.0.md: extraer la sección desde su encabezado ## hasta el siguiente encabezado de nivel ## (incluye subtítulos ###); debe ser no vacía, no contener el patrón insensible a mayúsculas 'an[oó]nim[ao]s?' (cubre plurales) y contener 'seud[oó]nim'. Corregir el texto si falla. No usar grep de 'anonim' sobre todo el archivo, porque 'anonimizada' es obligatoria en retención.
-Contrato: rollback: git checkout -- docs/legal/privacidad-v1.0.md. Status: pending
+Contrato: rollback: git checkout -- docs/legal/privacidad-v1.0.md. Status: done
 
 #### S1.T6 — Copiar docs/legal/privacidad-v1.0.md sin cambios a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md, en el mismo commit y la misma sesion. No hay hash que editar a mano: lo calculan textos_legales_empaquetados.dart y las suites de empaquetado. Sin scripts ni formatos nuevos.
-Contrato: rollback: Revertir el commit de la tarea; las copias y los hashes vuelven juntos al estado previo.. Status: pending
+Contrato: rollback: Revertir el commit de la tarea; las copias y los hashes vuelven juntos al estado previo.. Status: done
 
 #### S1.T7 — Verificar el texto final de docs/legal/privacidad-v1.0.md: un apartado con titulo por cada tema del alcance (datos con cuenta de dispositivo, datos con cuenta completa, analitica, proveedores, retencion y eliminacion, accesos administrativos; REQ-14 a REQ-17), los plazos literales 7 dias, 90 dias y 12 meses, y la coincidencia de hash de la fuente con app/assets/legal y server/legal mediante cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. El contenido minimo de REQ-14 a REQ-17 (cifrado en reposo, impersonacion para soporte, portal de eliminacion, correo transaccional) se revisa de forma manual en el gate.
-Contrato: rollback: No hay cambios de código; si el chequeo falla, corregir el texto de privacidad-v1.0.md y repropagar las copias en la misma sesión.. Status: pending
+Contrato: rollback: No hay cambios de código; si el chequeo falla, corregir el texto de privacidad-v1.0.md y repropagar las copias en la misma sesión.. Status: done
 
-#### S2.T1 — Crear docs/legal/aprobaciones-privacidad-v1.0.md con el formato definido en la Adenda 2. El hash SHA-256 del encabezado del registro se obtiene con shasum -a 256 docs/legal/privacidad-v1.0.md (archivo completo).
-Contrato: rollback: git rm -f docs/legal/aprobaciones-privacidad-v1.0.md. Status: pending
+#### S1.T8 — Reemplazar las menciones de rutas obsoletas por ruta, de forma separada: docs/legal/aprobaciones-privacidad-v1.0.md pasa a docs/legal/aprobaciones/privacidad-v1.0.md, y docs/legal/aprobaciones-terminos-v1.0.md pasa a docs/legal/aprobaciones/terminos-v1.0.md. Nunca apuntar una mención de términos al registro de privacidad ni al revés. No modificar el contenido de docs/legal/aprobaciones/terminos-v1.0.md.
+Contrato: rollback: Revertir el commit de la corrección de rutas con git revert; no se borran versiones, hashes ni evidencia.. Status: done
+
+#### S2.T1 — Crear el registro de aprobaciones de privacidad en docs/legal/aprobaciones/privacidad-v1.0.md (crear el directorio docs/legal/aprobaciones/ si no existe; NO usar la ruta obsoleta docs/legal/aprobaciones-privacidad-v1.0.md) con la estructura mínima de la Adenda 2 definida en REQ-05: encabezado con documento, versión 1.0, hash SHA-256 y vigencia (o marcador provisional); secciones por revisor (Asesoría legal con línea UE/EEE, Producto, Operación/release con región de despliegue); y comparación final de hash fuente vs app/assets vs server/legal vs staging.
+Contrato: rollback: git rm -f docs/legal/aprobaciones/privacidad-v1.0.md (no borrar el directorio docs/legal/aprobaciones/: ya existe por terminos-v1.0.md).. Status: pending
 
 #### S2.T2 — Comprobar que las copias app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md coinciden con la fuente docs/legal/privacidad-v1.0.md bajo la regla de hash vigente (confirmada en S1.T1), corriendo cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. El resultado de esa comparación se anota en la sección final de docs/legal/aprobaciones-privacidad-v1.0.md. Sin cmp byte a byte, sin scripts nuevos y sin ejecutar legal:registrar.
 Contrato: rollback: Revertir la entrada de comparación en docs/legal/aprobaciones-privacidad-v1.0.md con git checkout.. Status: pending
@@ -144,7 +172,10 @@ Contrato: rollback: Revertir la entrada de comparación en docs/legal/aprobacion
 #### S2.T3 — Dejar el caso de revisión del contraste con docs/product/tecnologia/23_observabilidad_logs_debug_y_costos.md sección 3 y DEC-197 como sección '## Contraste con el redactor de logs' dentro de docs/legal/aprobaciones-privacidad-v1.0.md, con cada dato que la política declara excluido de logs y su resultado (coincide / contradicción).
 Contrato: rollback: Descartar el caso de revisión; sin cambios en el texto de la política salvo correcciones puntuales revertibles con git checkout.. Status: pending
 
-#### S3.T1 — Se ejecuta cuando existan la fecha de vigencia real y la confirmacion escrita de la identidad legal del responsable del tratamiento y de la region de despliegue de Railway (Operacion/release y asesoria legal). Solo codigo: incorporar el responsable y la region en el apartado de proveedores y ubicacion de docs/legal/privacidad-v1.0.md (sin inventar transferencias), reemplazar vigente_desde: PENDIENTE-VIGENCIA por la fecha real, copiar la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md y anotar el nuevo SHA-256 (shasum -a 256 del archivo completo) en el encabezado de docs/legal/aprobaciones-privacidad-v1.0.md, todo en un solo commit. No consulta ni escribe staging y no ejecuta legal:registrar: la comparacion con staging, las aprobaciones de los revisores y QA-03a-15-02/03 son items de verificacion humana de la sesion 5.
+#### S2.T4 — Leer docs/legal/aprobaciones/terminos-v1.0.md (solo lectura) y compararlo con docs/legal/aprobaciones/privacidad-v1.0.md. La estructura mínima de la Adenda 2 prevalece sobre el registro de términos de TAO-222: si hay diferencias de estructura se REPORTAN en las notas de la tarea; no se copian al registro de privacidad ni se alinea hacia abajo el de privacidad. No modificar el archivo de términos.
+Contrato: rollback: No requiere reversión: es una comprobación de solo lectura; si se ajusta el registro, git checkout -- docs/legal/aprobaciones/privacidad-v1.0.md.. Status: pending
+
+#### S3.T1 — Incorporar al texto docs/legal/privacidad-v1.0.md la identidad legal del responsable del tratamiento y la región de despliegue de Railway (solo con la confirmación escrita de Operación/release y asesoría legal), fijar la vigencia real en vigente_desde, recalcular el hash del archivo completo con la regla confirmada en S1.T1, copiar la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md y anotar el hash en docs/legal/aprobaciones/privacidad-v1.0.md, todo en el mismo commit. Salvaguardas: NO inventar transferencias internacionales (declarar solo lo confirmado por escrito) y NO consultar ni escribir en staging ni ejecutar legal:registrar.
 Contrato: rollback: Revertir el commit de la tarea; vuelven el marcador PENDIENTE-VIGENCIA y el hash previo en la fuente, las copias y el registro.. Status: pending
 ## Verificacion runtime
 
@@ -449,18 +480,77 @@ Ninguno.
 
 - edit S1.T2 { desc="Redactar el texto fuente de la política de privacidad v1 en docs/legal/privacidad-v1.0.md (reemplaza el archivo existente), cubriendo REQ-14, REQ-15, REQ-16, REQ-17, REQ-02 y REQ-12 sin contradecir las DEC citadas. En el apartado de analítica no escribir la palabra 'anónima', ni siquiera negada ('no anónima'), porque el verify de S1.T5 la rechaza; expresar DEC-058 como 'seudónima: se asocia a un identificador técnico y no a tu nombre o correo'. Mantener el encabezado YAML existente (patrón de terminos-v1.0.md)." }
 - edit S3.T1 { verify=["! grep -q 'PENDIENTE-VIGENCIA' docs/legal/privacidad-v1.0.md","grep -qE '^vigente_desde: [0-9]{4}-[0-9]{2}-[0-9]{2}$' docs/legal/privacidad-v1.0.md","grep -q \"$(shasum -a 256 docs/legal/privacidad-v1.0.md | cut -d' ' -f1)\" docs/legal/aprobaciones-privacidad-v1.0.md"] }
+
+### Enmienda 20
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Existe en docs/legal/privacidad-v1.0.md el texto fuente de la política de privacidad en español (DEC-049), en Markdown, con versión y vigenc
+- REQ-05 (edit) `confirmed`: Queda el registro de aprobaciones docs/legal/aprobaciones/privacidad-v1.0.md (subcarpeta, Adenda 3, para no romper el listado de versiones d
+- REQ-08 (edit) `confirmed`: El marcador provisional de vigencia va en el campo vigente_desde del encabezado YAML de docs/legal/privacidad-v1.0.md (vigente_desde: PENDIE
+- REQ-10 (edit) `confirmed`: El texto de la política se contrasta con el redactor de logs (docs/product/tecnologia/23_observabilidad_logs_debug_y_costos.md, sección 3) y
+- REQ-11 (edit) `confirmed`: La sesión 3 es de código y queda declarada bloqueada hasta que existan la fecha de vigencia real y la confirmación escrita de Operación/rele
+
+**Tasks agregadas:**
+
+- S1: Barrido de rutas de la Adenda 3: comprobar que el registro de aprobaciones de privacidad vive en docs/legal/aprobaciones/privacidad-v1.0.md y que ningún archivo bajo docs/legal, app/assets/legal ni server/legal referencia las rutas obsoletas docs/legal/aprobaciones-privacidad-v1.0.md ni docs/legal/aprobaciones-terminos-v1.0.md. Si alguna task o archivo de esta sesión usó la ruta con guion, corregirla a la subcarpeta. No crea el registro de términos (lo crea TAO-222 en docs/legal/aprobaciones/terminos-v1.0.md). Sin scripts ni formatos nuevos (REQ-07). (valida: REQ-01, REQ-05, REQ-10, test; rollback: Revertir el commit de la corrección de rutas con git revert; no se borran versiones, hashes ni evidencia.)
+
+### Enmienda 21
+**REQs:**
+
+- REQ-01 (edit) `confirmed`: Existe en docs/legal/privacidad-v1.0.md el texto fuente de la política de privacidad en español (DEC-049), en Markdown, con versión y vigenc
+- REQ-05 (edit) `confirmed`: Queda el registro de aprobaciones docs/legal/aprobaciones/privacidad-v1.0.md (subcarpeta, Adenda 3, para no romper el listado de versiones d
+- REQ-08 (edit) `confirmed`: El marcador provisional de vigencia va en el campo vigente_desde del encabezado YAML de docs/legal/privacidad-v1.0.md (vigente_desde: PENDIE
+- REQ-10 (edit) `confirmed`: El texto de la política se contrasta con el redactor de logs (docs/product/tecnologia/23_observabilidad_logs_debug_y_costos.md, sección 3) y
+- REQ-11 (edit) `confirmed`: La sesión 3 es de código y queda declarada bloqueada hasta que existan la fecha de vigencia real y la confirmación escrita de Operación/rele
+
+**Tasks agregadas:**
+
+- S2: Comprobar que el registro de aprobaciones existe en docs/legal/aprobaciones/privacidad-v1.0.md (ruta de la Adenda 3, subcarpeta) con la estructura de REQ-05, y que ninguna tarea ni reviewOutcome de S2 usa la ruta obsoleta docs/legal/aprobaciones-privacidad-v1.0.md. Comparar su formato con el de docs/legal/aprobaciones/terminos-v1.0.md (ya creado por TAO-222, solo lectura) para que no diverjan; no modificar el archivo de términos. (valida: REQ-05, REQ-10; rollback: No requiere reversión: es una comprobación de solo lectura; si se ajusta el registro, git checkout -- docs/legal/aprobaciones/privacidad-v1.0.md.)
+
+**Task ops:**
+
+- edit S1.T8 { desc="Barrido de referencias obsoletas limitado a los archivos del plan: confirmar que ninguno cita las rutas docs/legal/aprobaciones-privacidad-v1.0.md ni docs/legal/aprobaciones-terminos-v1.0.md (Adenda 3) y reemplazar toda aparición por docs/legal/aprobaciones/privacidad-v1.0.md. Esta tarea NO comprueba que el registro exista: esa comprobación pertenece a la sesión 2, donde se crea.", verify=[] }
+- edit S3.T1 { desc="Incorporar al texto docs/legal/privacidad-v1.0.md la identidad legal del responsable del tratamiento y la región de despliegue de Railway confirmadas por escrito, fijar la fecha real en vigente_desde (reemplaza PENDIENTE-VIGENCIA), copiar la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md, recalcular el hash SHA-256 del archivo completo con la regla confirmada en S1.T1 y anotarlo en docs/legal/aprobaciones/privacidad-v1.0.md (ruta de la Adenda 3), todo en el mismo commit y la misma sesión. No ejecutar legal:registrar ni crear scripts nuevos.", verify=["cmp docs/legal/privacidad-v1.0.md app/assets/legal/privacidad-v1.0.md","cmp docs/legal/privacidad-v1.0.md server/legal/privacidad-v1.0.md","node scripts/ci/ep01-legal-provider.mjs"] }
+
+### Enmienda 22
+**REQs:**
+
+- REQ-05 (edit) `confirmed`: Queda el registro de aprobaciones docs/legal/aprobaciones/privacidad-v1.0.md (subcarpeta, Adenda 3, para no romper el listado de versiones d
+- REQ-19 (add) `confirmed`: La tarea S3.T1 conserva dos salvaguardas: (a) al incorporar responsable y región de despliegue al texto no se inventan transferencias intern
+- REQ-20 (add) `confirmed`: Al reemplazar menciones de rutas obsoletas, cada ruta se reemplaza por separado y por su par correcto: docs/legal/aprobaciones-privacidad-v1
+
+**Task ops:**
+
+- edit S2.T1 { desc="Crear el registro de aprobaciones de privacidad en docs/legal/aprobaciones/privacidad-v1.0.md (crear el directorio docs/legal/aprobaciones/ si no existe; NO usar la ruta obsoleta docs/legal/aprobaciones-privacidad-v1.0.md) con la estructura mínima de la Adenda 2 definida en REQ-05: encabezado con documento, versión 1.0, hash SHA-256 y vigencia (o marcador provisional); secciones por revisor (Asesoría legal con línea UE/EEE, Producto, Operación/release con región de despliegue); y comparación final de hash fuente vs app/assets vs server/legal vs staging.", validates=["REQ-05"], verify=["test -f docs/legal/aprobaciones/privacidad-v1.0.md","test ! -e docs/legal/aprobaciones-privacidad-v1.0.md"] }
+- edit S1.T8 { desc="Reemplazar las menciones de rutas obsoletas por ruta, de forma separada: docs/legal/aprobaciones-privacidad-v1.0.md pasa a docs/legal/aprobaciones/privacidad-v1.0.md, y docs/legal/aprobaciones-terminos-v1.0.md pasa a docs/legal/aprobaciones/terminos-v1.0.md. Nunca apuntar una mención de términos al registro de privacidad ni al revés. No modificar el contenido de docs/legal/aprobaciones/terminos-v1.0.md.", validates=["REQ-05","REQ-20"] }
+- edit S2.T4 { desc="Leer docs/legal/aprobaciones/terminos-v1.0.md (solo lectura) y compararlo con docs/legal/aprobaciones/privacidad-v1.0.md. La estructura mínima de la Adenda 2 prevalece sobre el registro de términos de TAO-222: si hay diferencias de estructura se REPORTAN en las notas de la tarea; no se copian al registro de privacidad ni se alinea hacia abajo el de privacidad. No modificar el archivo de términos.", validates=["REQ-05"] }
+- edit S3.T1 { desc="Incorporar al texto docs/legal/privacidad-v1.0.md la identidad legal del responsable del tratamiento y la región de despliegue de Railway (solo con la confirmación escrita de Operación/release y asesoría legal), fijar la vigencia real en vigente_desde, recalcular el hash del archivo completo con la regla confirmada en S1.T1, copiar la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md y anotar el hash en docs/legal/aprobaciones/privacidad-v1.0.md, todo en el mismo commit. Salvaguardas: NO inventar transferencias internacionales (declarar solo lo confirmado por escrito) y NO consultar ni escribir en staging ni ejecutar legal:registrar.", validates=["REQ-08","REQ-11","REQ-19"] }
+
+### Enmienda 23
+**REQs:**
+
+- REQ-21 (add) `confirmed`: Rollback de S2.T1: 'git rm -f docs/legal/aprobaciones/privacidad-v1.0.md'. No se borra el directorio docs/legal/aprobaciones/ porque ya exis
+- REQ-22 (add) `confirmed`: El barrido de S1.T8 se acota a los archivos de este plan: docs/legal/privacidad-v1.0.md, sus copias en app/assets/legal/ y server/legal/, y 
+- REQ-23 (add) `confirmed`: El hash SHA-256 que S2.T1 anota en docs/legal/aprobaciones/privacidad-v1.0.md se calcula con la regla de hash confirmada en S1.T1 (SHA-256 d
+
+**Task ops:**
+
+- edit S2.T1 { rollback="git rm -f docs/legal/aprobaciones/privacidad-v1.0.md (no borrar el directorio docs/legal/aprobaciones/: ya existe por terminos-v1.0.md).", validates=["REQ-05","REQ-21","REQ-23"] }
+- edit S1.T8 { validates=["REQ-20","REQ-22"] }
+- edit S3.T1 { validates=["REQ-04"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
-- [ ] S1.T7
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
+- [x] S1.T7
+- [x] S1.T8
 
 **Gate (auto)**: Redaccion de privacidad v1.0: docs/legal/privacidad-v1.0.md reemplazado segun Adenda 1 con todos los apartados del alcance (datos con cuenta de dispositivo, datos con cuenta completa, analitica seudonima por region, proveedores, retencion y eliminacion, accesos administrativos) y los plazos 7 dias, 90 dias y 12 meses; resumen breve para V-51 coherente; copias app/assets/legal y server/legal con el mismo hash; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs.
 
@@ -470,18 +560,19 @@ Ninguno.
 - [ ] S2.T1
 - [ ] S2.T2
 - [ ] S2.T3
+- [ ] S2.T4
 
-**Gate (auto)**: La fuente y las copias de app/assets/legal/ y server/legal/ de privacidad-v1.0.md tienen el mismo hash según la regla confirmada en la primera tarea, los tests de hash de app y servidor pasan y el registro docs/legal/aprobaciones-privacidad-v1.0.md está creado (estado pendiente, versión, hash, fecha y observaciones), pendiente de las firmas externas. legal:registrar no se ejecuta.
+**Gate (auto)**: La fuente y las copias de app/assets/legal/ y server/legal/ de privacidad-v1.0.md tienen el mismo hash según la regla confirmada en la primera tarea, los tests de hash de app y servidor pasan y el registro docs/legal/aprobaciones/privacidad-v1.0.md está creado (estado pendiente, versión, hash, fecha y observaciones), pendiente de las firmas externas. legal:registrar no se ejecuta.
 
 ### Session 3 · T1 · open
 
 **Tasks:**
 - [ ] S3.T1
 
-**Gate (auto)**: Sesion de codigo que se ejecuta cuando existan la fecha de vigencia real y la confirmacion escrita (Operacion/release y asesoria legal) de la identidad legal del responsable del tratamiento y de la region de despliegue de Railway. Cumplida cuando: docs/legal/privacidad-v1.0.md declara responsable y region sin inventar transferencias; vigente_desde tiene la fecha real y no queda PENDIENTE-VIGENCIA; las copias app/assets/legal/ y server/legal/ son identicas a la fuente (SHA-256 del archivo completo) en un solo commit; el nuevo hash esta anotado en docs/legal/aprobaciones-privacidad-v1.0.md; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. La comparacion con staging y las aprobaciones humanas van en la sesion de verificacion S5.
+**Gate (auto)**: Sesion de codigo que se ejecuta cuando existan la fecha de vigencia real y la confirmacion escrita (Operacion/release y asesoria legal) de la identidad legal del responsable del tratamiento y de la region de despliegue de Railway. Cumplida cuando: docs/legal/privacidad-v1.0.md declara responsable y region sin inventar transferencias; vigente_desde tiene la fecha real y no queda PENDIENTE-VIGENCIA; las copias app/assets/legal/ y server/legal/ son identicas a la fuente (SHA-256 del archivo completo) en un solo commit; el nuevo hash esta anotado en docs/legal/aprobaciones/privacidad-v1.0.md; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. La comparacion con staging y las aprobaciones humanas van en la sesion de verificacion S5.
 
 ### Session 4 · T0 · open
 
 ### Session 5 · T0 · open
 
-**Gate (strong)**: Verificacion humana de privacidad v1.0, despues de la sesion de codigo que fija la vigencia real (S3). Cumplida cuando: el hash final de docs/legal/privacidad-v1.0.md coincide con la fila de documento_legal de staging (o queda anotado como pendiente humano si no hay acceso de solo lectura, REQ-18) y esta registrado en docs/legal/aprobaciones-privacidad-v1.0.md; los tres revisores registraron su veredicto; QA-03a-15-02 y QA-03a-15-03 pasan. No se escribe en staging ni se ejecuta legal:registrar.
+**Gate (strong)**: Verificacion humana de privacidad v1.0, despues de la sesion de codigo que fija la vigencia real (S3). Cumplida cuando: el hash final de docs/legal/privacidad-v1.0.md coincide con la fila de documento_legal de staging (o queda anotado como pendiente humano si no hay acceso de solo lectura, REQ-18) y esta registrado en docs/legal/aprobaciones/privacidad-v1.0.md; los tres revisores registraron su veredicto; QA-03a-15-02 y QA-03a-15-03 pasan. No se escribe en staging ni se ejecuta legal:registrar.
