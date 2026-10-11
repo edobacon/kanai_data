@@ -563,6 +563,6 @@ Ninguno.
 
 ### Session 4 · T0 · continue
 
-### Session 5 · T0 · open
+### Session 5 · T0 · continue
 
 **Gate (strong)**: Verificacion humana de privacidad v1.0, despues de la sesion de codigo que fija la vigencia real (S3). Cumplida cuando: el hash final de docs/legal/privacidad-v1.0.md coincide con la fila de documento_legal de staging (o queda anotado como pendiente humano si no hay acceso de solo lectura, REQ-18) y esta registrado en docs/legal/aprobaciones/privacidad-v1.0.md; los tres revisores registraron su veredicto; QA-03a-15-02 y QA-03a-15-03 pasan. No se escribe en staging ni se ejecuta legal:registrar.
