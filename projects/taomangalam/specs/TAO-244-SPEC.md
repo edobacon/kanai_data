@@ -111,13 +111,13 @@ Contrato: rollback: Revertir los dos archivos .md. Status: done
 Contrato: rollback: Borrar los dos archivos de prueba nuevos (seed-configuracion.test.ts y docs-seed-configuracion.test.ts). Status: done
 
 #### S2.T1 — El servicio de emisión lee la vigencia del access token y la del refresh desde configuracion_clave en cada emisión, con las variables JWT_ACCESS_TTL_MINUTES y JWT_REFRESH_TTL_DAYS solo como respaldo cuando falta la clave. Fuente de lectura: la última versión de configuracion_version de cada clave (misma resolución que server/src/models/public-configuration.ts), consultada en cada emisión. Las pruebas cambian el valor agregando una versión por la misma vía que config:set (ejecutarAplicacionVersion de server/src/configuracion/aplicar.ts), no editando filas.
-Contrato: rollback: Revertir el servicio de emisión al SHA anterior, que vuelve a leer las variables de entorno; las claves sembradas se conservan. Status: pending
+Contrato: rollback: Revertir el servicio de emisión al SHA anterior, que vuelve a leer las variables de entorno; las claves sembradas se conservan. Status: done
 
 #### S2.T2 — Sin cambio de código: confirmar que renovarToken ya devuelve refresh_invalido y revoca la familia con motivoRevocacion='refresh expirado' cuando expiraAt <= instante (server/src/auth/sesiones.ts). Si al ejecutar no fuera así, detenerse y reportar.
-Contrato: rollback: No aplica: no cambia código. Status: pending
+Contrato: rollback: No aplica: no cambia código. Status: done
 
 #### S2.T3 — Crear las pruebas nuevas de S2: server/src/test/auth/session-ttl-config.test.ts (accessTokenExpiraEn=900 por defecto, como número en segundos, igual que ya fijan session-emit.test.ts y login.test.ts; 300 al cambiar la clave a 300 sin reiniciar; la sesión previa conserva su vigencia; respaldo por variable de entorno cuando falta la clave), server/src/test/auth/session-refresh-expiry.test.ts (reloj falso: 30 días + 1 s da refresh_invalido y revocación por expiración; 30 días - 1 s rota) y server/src/test/configuracion/configuracion-publica.test.ts (Supertest sobre la app real en base sembrada: 200 con https://portal.taomangalam.cl/eliminar-cuenta válido contra el contrato, sin bearer). Regresión sin modificar: session-emit, session-rotate, bearer-verify y server/src/public-configuration.integration.test.ts.
-Contrato: rollback: Borrar los archivos de prueba nuevos. Status: pending
+Contrato: rollback: Borrar los archivos de prueba nuevos. Status: done
 
 #### S3.T1 — Contenedora de la denegación por defecto del middleware de capacidad. Agrupa exactamente S3.T1.1 (denegación por defecto), S3.T1.2 (log de denegación), S3.T1.3 (middleware en server/src/routes/cuenta.ts) y S3.T1.4 (lista de exenciones y cableado).
 Contrato: rollback: Revertir capacidad.ts, routes/cuenta.ts y app.ts al SHA anterior, sin abrir rutas protegidas que ya tenían middleware. Status: pending
@@ -241,12 +241,12 @@ Contrato: rollback: Borrar los archivos de prueba nuevos. Status: pending
 
 **Gate (auto)**: Tareas S1.T2 a S1.T4. Al correr el seed sobre una base efímera, el log muestra creadas=3 (4 solo si Producto fijó soportePlazoSinRespuestaDias), actualizadas=0 la primera vez y creadas=0, actualizadas=0 la segunda (actualizadas es siempre 0 por ON CONFLICT DO NOTHING); cada clave creada tiene una versión inicial en configuracion_version; un valor ajustado no se pisa; el seed con el rol de aplicación falla con permission denied; los docs describen el seed y su paso en el runbook. Verde: pnpm -C server exec vitest run src/test/configuracion/seed-configuracion.test.ts src/test/configuracion/docs-seed-configuracion.test.ts y la regresión pnpm -C server exec vitest run src/configuracion.integration.test.ts
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Tareas S2.T1 a S2.T3. accessTokenExpiraEn (número en segundos) vale 900 por defecto y 300 al cambiar sesion.access_ttl_segundos a 300 sin reiniciar; la expiración del refresh en sesion_auth queda 2592000 s después de la emisión; GET /v1/configuracion/publica responde 200 con https://portal.taomangalam.cl/eliminar-cuenta en la base sembrada; renovarToken responde refresh_invalido a los 30 días y 1 segundo. Verde: pnpm -C server exec vitest run src/test/auth/session-ttl-config.test.ts src/test/auth/session-refresh-expiry.test.ts src/test/configuracion/configuracion-publica.test.ts y la regresión pnpm -C server exec vitest run src/test/auth src/public-configuration.integration.test.ts
 
