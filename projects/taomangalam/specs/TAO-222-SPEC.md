@@ -299,10 +299,10 @@ Ninguno.
 
 **Gate (auto)**: SESIÓN DIFERIDA Y BLOQUEADA hasta que Producto fije la fecha real de vigencia (pendiente externo; decisión del dev). Cuando se desbloquee: el encabezado de docs/legal/terminos-v1.0.md lleva la fecha real, el hash se recalculó y las tres copias coinciden (cmp sin diferencias); pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs; docs/legal/aprobaciones-terminos-v1.0.md (creado en la sesión 1) queda actualizado con la versión y el hash finales. Adjuntar al issue GH-93 no es parte del gate: lo confirma el dev.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
 
 ### Session 4 · T0 · open
 
-### Session 5 · T0 · open
+### Session 5 · T0 · continue
 
 **Gate (auto)**: Verificaciones humanas con acceso externo, fuera del gate automático: estado de la 1.0 en staging, hash_contenido registrado en staging y lectura en V-51. Si no hay acceso a staging, se continúa con el reemplazo de la 1.0 y se reporta al dev; no detiene el trabajo.
