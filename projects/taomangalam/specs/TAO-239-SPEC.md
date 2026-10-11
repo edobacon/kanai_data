@@ -93,22 +93,22 @@ El origen del manifiesto vigente (servidor, caché o empaquetado) se expone desd
 ## Tasks
 
 #### S1.T1 — Depende de S1.T6: se ejecuta despues de que S1.T6 exponga OrigenManifiesto desde ServicioManifiesto. Implementar la funcion de arranque testeable que pide el manifiesto al servidor con el ETag de la cache vigente usando ServicioManifiesto, CacheManifiestoDrift y PuertoManifiesto existentes, e invocarla una sola vez desde el punto de entrada de la app sin bloquear el primer frame (REQ-01, REQ-12). Con 200 la cache pasa a origen servidor; con 304 se conserva; sin red, timeout o 5xx se registra y se ignora sin vaciar la cache. Reintentar al recuperar conexion reusando el provider observadorDeRed (ObservadorDeRedConnectivity, app/lib/features/cuenta/data/alta_dispositivo_providers.dart) sin agregar dependencias (REQ-09). Los tests del manifiesto viven en app/test/manifiesto/.
-Contrato: rollback: Revertir el commit: la app vuelve a refrescar solo ante capacidad_denegada o el flujo legal, y la caché vigente se conserva. Status: pending
+Contrato: rollback: Revertir el commit: la app vuelve a refrescar solo ante capacidad_denegada o el flujo legal, y la caché vigente se conserva. Status: done
 
 #### S1.T2 — Agregar a la caché Drift del manifiesto la columna de versión de esquema (aditiva y nullable) con su paso de migración desde el schemaVersion anterior. Regenerar el código Drift con build_runner y el snapshot de esquema de Drift si el proyecto lo usa. Lectura: si la versión guardada es distinta de la constante actual o es nula, descartar solo la copia local del manifiesto.
-Contrato: rollback: Drift no soporta downgrade automático. La columna es aditiva y nullable, y el cliente anterior la ignora (o su acceso es explícito sin romper). No se borran columnas ni tablas; para revertir el comportamiento se restaura el cliente anterior conservando la última copia válida del manifiesto.. Status: pending
+Contrato: rollback: Drift no soporta downgrade automático. La columna es aditiva y nullable, y el cliente anterior la ignora (o su acceso es explícito sin romper). No se borran columnas ni tablas; para revertir el comportamiento se restaura el cliente anterior conservando la última copia válida del manifiesto.. Status: done
 
 #### S1.T3 — Agregar en Manifiesto las consultas vistaHabilitada(clave), true si la clave está en vistas, y deniegaPorTipoCuenta(clave), true si la clave está en capacidadesPorTipoCuenta. Crear app/test/manifiesto/consultas_manifiesto_test.dart con los 4 test cases de REQ-03: vistaHabilitada true con clave presente, vistaHabilitada false con clave ausente, deniegaPorTipoCuenta true con clave presente y deniegaPorTipoCuenta false con clave ausente.
-Contrato: rollback: Revertir el commit: se quitan los dos métodos, que no tienen consumidores previos. Status: pending
+Contrato: rollback: Revertir el commit: se quitan los dos métodos, que no tienen consumidores previos. Status: done
 
 #### S1.T4 — Depende de S1.T6: se ejecuta despues de que S1.T6 exponga OrigenManifiesto desde ServicioManifiesto. Extender el panel interno existente en app/lib/features/dev_panel (solo sabor development) para mostrar la version, el origen (servidor, cache o empaquetado) leido desde ServicioManifiesto sin deducirlo en el panel, y la lista de capacidades del manifiesto vigente (REQ-07, REQ-13). Sin otra pantalla ni otro punto de entrada. El test nuevo va en app/test/features/dev_panel/dev_panel_manifiesto_test.dart.
-Contrato: rollback: Revertir el commit: desaparece la entrada del panel, que no existe fuera de development. Status: pending
+Contrato: rollback: Revertir el commit: desaparece la entrada del panel, que no existe fuera de development. Status: done
 
 #### S1.T5 — Escribir un test de migración Drift real que abra una base en el schemaVersion anterior de la app con una fila de caché del manifiesto sin versión de esquema, la migre al schemaVersion nuevo, y verifique que la caché se descarta sin error, que solo se borró la copia local del manifiesto y que las demás tablas quedan intactas. Usar el helper de migraciones de Drift ya presente en el proyecto si existe; si no, abrir la base con NativeDatabase en memoria y ejecutar la migración paso a paso.
-Contrato: rollback: Eliminar el archivo de test agregado; no afecta código de producción ni datos.. Status: pending
+Contrato: rollback: Eliminar el archivo de test agregado; no afecta código de producción ni datos.. Status: done
 
 #### S1.T6 — Agregar a ServicioManifiesto el origen del manifiesto vigente: enum OrigenManifiesto con los valores servidor | cache | empaquetado, expuesto como dato consultable para que lo lea el panel de app/lib/features/dev_panel (REQ-07). Actualizarlo en cada transición de fuente: servidor tras un 200, cache cuando se lee de CacheManifiestoDrift, empaquetado cuando se usa FuenteManifiestoEmpaquetado con app/assets/manifiesto/estandar.json. Reusar ServicioManifiesto, CacheManifiestoDrift, PuertoManifiesto y FuenteManifiestoEmpaquetado existentes, sin clases ni servicios paralelos. Cubrir con tests unitarios en app/test/manifiesto/ el manejo sin bloqueo ni excepción del pedido de arranque (REQ-12): respuesta 500, timeout, pedido demorado (la app muestra de inmediato la caché o el empaquetado) y doble invocación con un solo pedido en curso; en todos los casos la caché vigente no se vacía. Se ejecuta antes que S1.T1 y S1.T4, que dependen de esta tarea.
-Contrato: rollback: git revert del commit; la caché Drift no cambia.. Status: pending
+Contrato: rollback: git revert del commit; la caché Drift no cambia.. Status: done
 
 #### S2.T1 — En el servidor, emitir impersonacion: null y modoDemostracion: false en la respuesta de obtenerManifiesto (server/src/capacidades/manifiesto.ts), mantener ambos campos en el contrato OpenAPI y regenerar el contrato y el cliente generado. No toca el Supertest: el Supertest de REQ-04 vive solo en S2.T4.
 Contrato: rollback: Revertir el commit de esta tarea: restaura el contrato y el cliente generado si se regeneraron, y quita la emisión explícita de impersonacion: null y modoDemostracion: false en obtenerManifiesto (server/src/capacidades/manifiesto.ts).. Status: pending
@@ -264,15 +264,15 @@ Contrato: rollback: Eliminar los archivos de evidencia generados; no hay cambios
 - edit S2.T3 { rollback="Revertir el commit; solo toca PuertoManifiestoApi._desdeContrato y su test en app/test/manifiesto/, no el cliente generado.", verify=["cd app && flutter test test/manifiesto/"] }
 ## Sessions
 
-### Session 1 · T1 · open
+### Session 1 · T1 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
-- [ ] S1.T6
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
+- [x] S1.T6
 
 **Gate (auto)**: En la app, el arranque con conexión pide el manifiesto con ETag y lo refleja en el panel de desarrollo (versión, origen servidor/caché/empaquetado, capacidades): 200 reemplaza la caché, 304 la conserva, sin red usa caché o empaquetado, y la reconexión reintenta. Además, la caché Drift con versión de esquema descarta la copia desactualizada (test de migración real) y Manifiesto responde vistaHabilitada y deniegaPorTipoCuenta (consultas_manifiesto_test.dart). Se revisa con los tests de app y el panel en el sabor development.
 
