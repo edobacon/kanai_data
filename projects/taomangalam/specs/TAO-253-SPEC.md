@@ -96,16 +96,16 @@ Contrato: rollback: Revertir el commit; las proyecciones se recalculan desde los
 Contrato: rollback: Eliminar el archivo de test.. Status: done
 
 #### S2.T1 — Implementar la lectura del listado de Inicio por estado sobre el índice de HU-06-01, solo con columnas de consulta (proyecciones), sin joins a paso_recorrido por consulta y excluyendo descartadas de las activas (lectura acotada O(consultas)).
-Contrato: rollback: Revertir el commit; solo agrega una lectura.. Status: pending
+Contrato: rollback: Revertir el commit; solo agrega una lectura.. Status: done
 
 #### S2.T2 — Exponer los providers reactivos del resumen, del listado de Inicio y del rastro sobre los streams de TAO-249, observando consulta, paso_recorrido, tirada_revision, plan_practica, accion_practica y ciclo_practica (cumplimientos). Deben emitir solo tras el commit de la transacción y con distinct por igualdad de DTO.
-Contrato: rollback: Revertir el commit; los providers no tienen consumidores aún.. Status: pending
+Contrato: rollback: Revertir el commit; los providers no tienen consumidores aún.. Status: done
 
 #### S2.T3 — Conectar recalcularProyecciones (o la actualización directa equivalente) dentro de la transacción de cada comando existente que cambia paso_actual_id, plan_actual_id o casa_actual (registrar inicio y tirada, aplicar retroceso y cierre), sin cambiar sus firmas públicas. Antes de tocarlos, listar sus consumidores con grep y reportar el impacto.
-Contrato: rollback: Revertir el commit; los comandos vuelven a su escritura previa de proyecciones.. Status: pending
+Contrato: rollback: Revertir el commit; los comandos vuelven a su escritura previa de proyecciones.. Status: done
 
 #### S2.T4 — Escribir test/motor/proyecciones/inicio_reactivo_test.dart: 50 consultas sembradas con EXPLAIN QUERY PLAN impreso y verificado (USING INDEX sin SCAN paso_recorrido), QA-06-08-03 descartada excluida, conteo por estado, provider que emite al marcar un día desde otro repositorio, ausencia de emisión ante una transacción que lanza, y comando de tirada que deja las proyecciones actualizadas en la misma transacción. Correr además los tests existentes de test/drift como regresión de REQ-11.
-Contrato: rollback: Eliminar el archivo de test.. Status: pending
+Contrato: rollback: Eliminar el archivo de test.. Status: done
 
 #### S3.T1 — Implementar la vista previa pura vistaPreviaCorreccion(consultaId, pasoId, dadosCorregidos): calcula el movimiento y el destino corregidos con el motor de resultado existente y las acciones del plan que generaría HU-06-05 sin persistir, frente al actual, e incluye la advertencia unidadNoDevuelta si corrige una Permanencia con el kuberani renovado validado. Sin escrituras: solo lecturas, fuera de transacción de escritura.
 Contrato: rollback: Revertir el commit; operación nueva sin escrituras.. Status: pending
@@ -143,13 +143,13 @@ Ninguno.
 
 **Gate (auto)**: Pasa test/motor/proyecciones/resumen_rastro_test.dart con el resumen (borrador, esperando_conexion, día 2 de 3, Retroceso con anillo y fuerza) y el rastro (1,3,3; Casa 3 anillo 2; omite rehecho y sustituidas), y el recálculo reproduce las proyecciones borradas a mano.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: Pasa test/motor/proyecciones/inicio_reactivo_test.dart: el EXPLAIN QUERY PLAN con 50 consultas usa el índice sin SCAN de paso_recorrido, las descartadas no aparecen y el provider del resumen emite 'día 3 de 3' al marcar un día desde otro repositorio, sin emitir tras un rollback.
 
