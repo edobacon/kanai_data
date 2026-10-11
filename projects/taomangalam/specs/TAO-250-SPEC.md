@@ -94,13 +94,13 @@ Contrato: rollback: git revert del commit: el handler es nuevo y no hay datos qu
 Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S3.T1 — Evaluación de la finalización: si todas las acciones obligatorias están completas, en la misma transacción deja el plan en completado, la consulta en fase=lista_para_tirada y agrega un evento de cumplimiento con fecha local y zona. Si no, mantiene acciones_en_curso. HU-06-06 la invocará al completar la última acción diaria. El bloqueo se delega en la política compartida de habilitación de tirada de HU-06-02 (TAO-249), sin redefinir el error tipado.
-Contrato: rollback: git revert del commit: la evaluación es nueva y la política de HU-06-02 queda intacta.. Status: pending
+Contrato: rollback: git revert del commit: la evaluación es nueva y la política de HU-06-02 queda intacta.. Status: done
 
 #### S3.T2 — Actualizar la sección HU-06-05 de docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md con el estado de implementación y las rutas reales, solo si el flujo de entrega lo pide. Dejar compliant con el linter todo doc tocado (EP-06, modelo de datos v2, PLAN.md o docs/content/casas/01_casa_1.md), sin editar .docs-baseline.txt. Si se toca 01_casa_1.md, normalizar el patrón que el linter rechaza.
-Contrato: rollback: git revert del commit de docs.. Status: pending
+Contrato: rollback: git revert del commit de docs.. Status: done
 
 #### S3.T3 — Tests de finalización y bloqueo, más el ciclo integral. Casos: QA-06-05-03 (con el plan completo la política admite; con un plan incompleto rechaza con el error tipado de plan incompleto); las esperas también se rechazan; las acciones diarias sembradas como completadas llevan a completado y lista_para_tirada en una transacción; un fallo forzado al actualizar la consulta revierte el plan; el ciclo completo de permanencia (retiro, renovación sin conexión, reintento exitoso, acciones diarias sembradas, finalización y política admite) con resultados simulados de EP-11; y la comprobación de que .docs-baseline.txt no cambió.
-Contrato: rollback: git revert del commit de tests.. Status: pending
+Contrato: rollback: git revert del commit de tests.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -127,12 +127,12 @@ Ninguno.
 
 **Gate (auto)**: El test de permanencia en Casa 3 muestra el orden retiro, renovación y energización. QA-06-05-02 rechaza el cumplimiento antes de la renovación, y los resultados simulados de EP-11 (sin conexión, sin material y reintento exitoso) dejan los estados y motivos esperados.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: El test QA-06-05-03 pasa: con el plan completo, la política admite la tirada; con un plan incompleto o en espera, la rechaza con el error tipado de HU-06-02. La finalización deja completado y lista_para_tirada en una transacción, y pnpm run docs:check queda verde.
 
