@@ -174,9 +174,6 @@ Contrato: rollback: Descartar el caso de revisión; sin cambios en el texto de l
 
 #### S2.T4 — Leer docs/legal/aprobaciones/terminos-v1.0.md (solo lectura) y compararlo con docs/legal/aprobaciones/privacidad-v1.0.md. La estructura mínima de la Adenda 2 prevalece sobre el registro de términos de TAO-222: si hay diferencias de estructura se REPORTAN en las notas de la tarea; no se copian al registro de privacidad ni se alinea hacia abajo el de privacidad. No modificar el archivo de términos.
 Contrato: rollback: No requiere reversión: es una comprobación de solo lectura; si se ajusta el registro, git checkout -- docs/legal/aprobaciones/privacidad-v1.0.md.. Status: done
-
-#### S3.T1 — Incorporar al texto docs/legal/privacidad-v1.0.md la identidad legal del responsable del tratamiento y la región de despliegue de Railway (solo con la confirmación escrita de Operación/release y asesoría legal), fijar la vigencia real en vigente_desde, recalcular el hash del archivo completo con la regla confirmada en S1.T1, copiar la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md y anotar el hash en docs/legal/aprobaciones/privacidad-v1.0.md, todo en el mismo commit. Salvaguardas: NO inventar transferencias internacionales (declarar solo lo confirmado por escrito) y NO consultar ni escribir en staging ni ejecutar legal:registrar.
-Contrato: rollback: Revertir el commit de la tarea; vuelven el marcador PENDIENTE-VIGENCIA y el hash previo en la fuente, las copias y el registro.. Status: pending
 ## Verificacion runtime
 
 No aplica verificacion automatica en runtime: el entregable es texto legal sin interfaz propia. La estructura de titulos sin saltos de nivel (REQ-06) la comprueba el verify de S1.T2. La lectura en V-51 (tablet en horizontal, QA-03a-15-03), el contraste con un evento real de staging (QA-03a-15-02), la comparacion de hash con staging y las aprobaciones son items de verificacion humana de la sesion 5.
@@ -564,14 +561,7 @@ Ninguno.
 
 **Gate (auto)**: La fuente y las copias de app/assets/legal/ y server/legal/ de privacidad-v1.0.md tienen el mismo hash según la regla confirmada en la primera tarea, los tests de hash de app y servidor pasan y el registro docs/legal/aprobaciones/privacidad-v1.0.md está creado (estado pendiente, versión, hash, fecha y observaciones), pendiente de las firmas externas. legal:registrar no se ejecuta.
 
-### Session 3 · T1 · open
-
-**Tasks:**
-- [ ] S3.T1
-
-**Gate (auto)**: Sesion de codigo que se ejecuta cuando existan la fecha de vigencia real y la confirmacion escrita (Operacion/release y asesoria legal) de la identidad legal del responsable del tratamiento y de la region de despliegue de Railway. Cumplida cuando: docs/legal/privacidad-v1.0.md declara responsable y region sin inventar transferencias; vigente_desde tiene la fecha real y no queda PENDIENTE-VIGENCIA; las copias app/assets/legal/ y server/legal/ son identicas a la fuente (SHA-256 del archivo completo) en un solo commit; el nuevo hash esta anotado en docs/legal/aprobaciones/privacidad-v1.0.md; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. La comparacion con staging y las aprobaciones humanas van en la sesion de verificacion S5.
-
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
 
 ### Session 5 · T0 · open
 
