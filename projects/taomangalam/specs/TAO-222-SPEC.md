@@ -2,7 +2,7 @@
 id: TAO-222-SPEC
 project: taomangalam
 ticket: TAO-222
-status: draft
+status: approved
 ---
 
 # TAO-222 · Términos de uso v1 en español: texto completo, resumen para V-51, copias empaquetadas con hash coincidente y registro de aprobaciones
@@ -25,9 +25,9 @@ Existe el texto completo de los términos de uso en español, en Markdown en doc
 El resumen breve de los términos para la tarjeta de V-51 en smartphone es una sección con título propio dentro del mismo archivo docs/legal/terminos-v1.0.md (no un archivo aparte). Por estar dentro del archivo, entra en el hash y viaja en las copias app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md. Es coherente con el texto completo y no agrega obligaciones que este no contenga. La lectura en teléfono con escala de texto 200 % y en tablet en horizontal, sin cortes, es revisión humana de QA-03a-14-01 fuera del gate automático.
 
 ### REQ-03 `confirmed`
-> Fuente: Request: Criterios de aceptación (redacción) y Adenda 1; pedido de enmienda punto 7
+> Fuente: Pedido de cambio, punto 4; Adenda 1 decisión (1)
 
-La redacción del texto y del resumen en terminos-v1.0.md está en español neutro, trata de tú, no usa guion largo (U+2014), usa títulos Markdown jerárquicos para lector de pantalla y no incluye datos personales ni correos reales; lo que depende de pendientes externos (identidad legal del titular) va con marcadores explícitos de provisional. ADVERTENCIA para el ejecutor: no se puede verificar desde el spec si app/lib/features/legal/data/textos_legales_empaquetados.dart, scripts/ci/ep01-legal-provider.mjs o legal:registrar (pnpm -C server run legal:registrar) fallan con vigente_desde provisional, ni si el hash autorreferente funciona. La tarea de lectura S1.T1.3 lo confirma leyendo el código y, si falla, lo reporta al dev antes de continuar.
+La redacción del texto y del resumen en terminos-v1.0.md está en español neutro, trata de tú, no usa guion largo (U+2014), usa títulos Markdown jerárquicos para lector de pantalla y no incluye datos personales ni correos reales; lo que depende de pendientes externos (identidad legal del titular) va con marcadores explícitos de provisional. ADVERTENCIA para el ejecutor: no se puede verificar desde el spec si app/lib/features/legal/data/textos_legales_empaquetados.dart, scripts/ci/ep01-legal-provider.mjs o legal:registrar (pnpm -C server run legal:registrar) (server/scripts/registrar-version-legal.ts) fallan con vigente_desde provisional, ni si el hash autorreferente funciona. La tarea de lectura S1.T1.3 lo confirma leyendo el código y, si falla, lo reporta al dev antes de continuar.
 
 ### REQ-04 `confirmed`
 > Fuente: Request: Criterios de aceptación (hash) y QA-03a-14-02
@@ -40,37 +40,80 @@ El hash del texto final coincide entre las tres copias: fuente docs/legal/termin
 Queda en docs/legal/ un registro de aprobación docs/legal/aprobaciones-terminos-v1.0.md, creado por la tarea S1.T4 (no depende de la fecha de vigencia) con estado pendiente, versión, hash provisional que coincide con el encabezado del texto vigente en ese momento, fecha y observaciones (fecha, versión revisada, observaciones y su resolución de la asesoría legal, y la confirmación escrita de la aceptación funcional de Producto). S2.T1 lo actualiza con la versión y el hash finales; mientras falte la aprobación, el texto se marca como provisional. El ejecutor confirma LEYENDO el código del script de legal:registrar (server), sin ejecutarlo, que ignora los archivos que no siguen el patrón terminos-vX.Y.md / privacidad-vX.Y.md, de modo que aprobaciones-terminos-v1.0.md no se registra como documento legal. Los criterios de aprobación legal y de aceptación de Producto dependen de pendientes externos (designar la asesoría legal, identidad legal del titular y fecha de vigencia que fija Producto), por lo que la historia no cierra completa solo con código. Adjuntar los registros al issue GH-93 no es parte del trabajo automático: lo confirma y lo hace el dev.
 
 ### REQ-06 `confirmed`
-> Fuente: Adenda 1 (decisión 2) y pedido de enmienda punto 1
+> Fuente: Pedido de cambio, punto 1 y punto 11; Adenda 1 decisión (2)
 
-Regla de versión única. Por defecto se REEMPLAZA la 1.0: el texto definitivo se escribe en docs/legal/terminos-v1.0.md y sus copias app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md, sin versión 1.1 ni exige_reaceptacion. La primera tarea del ejecutor (S1.T1) verifica en staging, SOLO LECTURA, por el túnel (railway connect postgres --tunnel-only), si la 1.0 está registrada en documento_legal o tiene aceptaciones en aceptacion_documento_legal. Si está registrada, tiene aceptaciones, o NO puede verificarlo (sin acceso), el ejecutor SE DETIENE y consulta al dev; no usa credenciales de escritura, no ejecuta legal:registrar y no asume dry-run de legal:registrar. NOTA DE CONTINGENCIA: la rama 1.1 tocaría versionTerminosEmpaquetada y rutaTerminos (código de empaquetado de HU-03a-10, sin modificar ColaLegalDrift) y marcaría exige_reaceptacion; requiere aprobación explícita del dev antes de aplicarse. No hay migración ni se borran registros.
+Regla de versión única. Por defecto se REEMPLAZA la 1.0: el texto definitivo se escribe en docs/legal/terminos-v1.0.md y sus copias app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md, sin versión 1.1 ni exige_reaceptacion. La verificación en staging, SOLO LECTURA, por el túnel (railway connect postgres --tunnel-only), de si la 1.0 está registrada en documento_legal o tiene aceptaciones en aceptacion_documento_legal es un item de verificación humana de la sesión 5 (requiere acceso externo), fuera del gate automático. Decisión del dev: si no hay acceso a staging, se continúa con el reemplazo de la 1.0 y se reporta al dev que la verificación quedó pendiente (no se detiene el trabajo). Si la persona confirma que la 1.0 está registrada o tiene aceptaciones, el dev decide la contingencia antes de publicar. Nunca se usan credenciales de escritura ni se ejecuta legal:registrar. La verificación de la 1.0 en staging, el hash registrado en staging y la lectura en V-51 son items humanos de la sesión 5, fuera del gate de la sesión 1. NOTA DE CONTINGENCIA: la rama 1.1 tocaría versionTerminosEmpaquetada y rutaTerminos (código de empaquetado de HU-03a-10, sin modificar ColaLegalDrift) y marcaría exige_reaceptacion; requiere aprobación explícita del dev antes de aplicarse. No hay migración ni se borran registros.
+
+### REQ-07 `confirmed`
+> Fuente: Ticket TAO-222, Alcance/Cobertura mínima (DEC-212); Adenda 1 punto 2
+
+docs/legal/terminos-v1.0.md tiene un apartado con título Markdown propio sobre cuenta de dispositivo y cuenta completa, y explica qué habilita cada una (DEC-212). Su contenido no contradice DEC-212.
+
+### REQ-08 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-208, DEC-225); Adenda 1 punto 2
+
+El texto tiene un apartado con título propio sobre aceptación versionada y reaceptación que detiene el servicio hasta aceptar (DEC-208, DEC-225). No contradice esas DEC.
+
+### REQ-09 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-213)
+
+El texto tiene un apartado con título propio sobre códigos de producto de un solo uso validados en línea (DEC-213). No contradice DEC-213.
+
+### REQ-10 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-020, DEC-056)
+
+El texto tiene un apartado con título propio sobre limitación y suspensión administrativa (DEC-020, DEC-056). No contradice esas DEC.
+
+### REQ-11 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-216)
+
+El texto tiene un apartado con título propio que dice que el soporte se presta solo con cuenta completa (DEC-216). No contradice DEC-216.
+
+### REQ-12 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-054, DEC-128, DEC-224)
+
+El texto tiene un apartado con título propio sobre cierre de sesión, borrado de datos y eliminación de cuenta (DEC-054, DEC-128, DEC-224). No contradice esas DEC.
+
+### REQ-13 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-086)
+
+El texto tiene un apartado con título propio sobre versión mínima y actualizaciones (DEC-086). No contradice DEC-086.
+
+### REQ-14 `confirmed`
+> Fuente: Ticket TAO-222, Cobertura mínima (DEC-094)
+
+El texto tiene un apartado con título propio sobre el contenido del método entregado con la app (DEC-094). No contradice DEC-094.
 ## Tasks
 
-#### S1.T1 — Primero verificar en staging, SOLO LECTURA, por el túnel (railway connect postgres --tunnel-only), si la 1.0 está registrada en documento_legal o tiene aceptaciones en aceptacion_documento_legal; si está registrada, tiene aceptaciones o no se puede verificar, DETENERSE y consultar al dev (sin credenciales de escritura, sin ejecutar legal:registrar, sin asumir dry-run). Luego redactar el texto definitivo en docs/legal/terminos-v1.0.md reemplazando el fixture, con encabezado de versión 1.0, hash y marcador provisional de vigente_desde, sin versión 1.1 ni exige_reaceptacion.
-Contrato: rollback: Restaurar el contenido previo de docs/legal/terminos-v1.0.md con git revert del commit, sin migración ni borrado de registros.. Status: pending
-
-#### S1.T1.1 — Verificar en staging, SOLO LECTURA, por el túnel (railway connect postgres --tunnel-only), si la versión 1.0 de los términos está registrada en documento_legal o tiene aceptaciones en aceptacion_documento_legal. La versión a revisar corresponde al archivo docs/legal/terminos-v1.0.md (con sus copias app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md). Si está registrada, tiene aceptaciones, o no se puede verificar (sin acceso), DETENERSE y consultar al dev. No usar credenciales de escritura, no ejecutar legal:registrar ni asumir dry-run.
-Contrato: rollback: git checkout del archivo a su versión previa. Status: pending
+#### S1.T1 — Redactar el texto definitivo en docs/legal/terminos-v1.0.md reemplazando el fixture, con encabezado de versión 1.0, hash y marcador provisional VIGENTE_DESDE: PROVISIONAL, sin versión 1.1 ni exige_reaceptacion. Incluye los 8 apartados de cobertura mínima con título ## propio (REQ-07 a REQ-14) y una sección '## Resumen' (resumen breve para la tarjeta de V-51) dentro del mismo archivo. No consulta staging (eso es la verificación humana de la sesión 5).
+Contrato: rollback: git revert del commit que reescribe docs/legal/terminos-v1.0.md; sin migración ni borrado de registros.. Status: done
 
 #### S1.T1.2 — Leer el código existente para fijar el algoritmo de hash y si incluye o no el frontmatter: app/lib/features/legal/data/textos_legales_empaquetados.dart y app/test/legal/empaquetado_test.dart. Aplica a docs/legal/terminos-v1.0.md, app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md. Confirmar además que versionTerminosEmpaquetada y rutaTerminos ya apuntan a la versión 1.0. No modificar código.
-Contrato: rollback: git checkout del archivo a su versión previa. Status: pending
+Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: done
 
 #### S1.T1.3 — Leer el código de textos_legales_empaquetados.dart, scripts/ci/ep01-legal-provider.mjs y legal:registrar (pnpm -C server run legal:registrar, sin ejecutarlo) para confirmar si fallan con vigente_desde provisional en docs/legal/terminos-v1.0.md, app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md, y si el hash autorreferente funciona. Si falla, reportarlo al dev antes de continuar.
-Contrato: rollback: Tarea de solo lectura sin cambios que revertir; si dejó un archivo temporal, borrarlo.. Status: pending
+Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: done
 
 #### S1.T2 — Empaquetado del texto final, sin redactar. Copiar el texto final de docs/legal/terminos-v1.0.md a app/assets/legal/terminos-v1.0.md y a server/legal/terminos-v1.0.md, en el mismo commit que la redacción (S1.T1). No cambiar versionTerminosEmpaquetada ni rutaTerminos: ya apuntan a 1.0. Nota de contingencia: editarlos solo aplicaría a una rama 1.1 y requiere aprobación explícita del dev. La verificación visual en V-51 (QA-03a-14-01) es revisión humana fuera del gate.
-Contrato: rollback: Restaurar los tres archivos terminos-v1.0.md (docs/legal, app/assets/legal y server/legal) con git revert del commit.. Status: pending
+Contrato: rollback: Restaurar los tres archivos terminos-v1.0.md (docs/legal, app/assets/legal y server/legal) con git revert del commit.. Status: done
 
 #### S1.T3 — Regresión de la sesión: correr las pruebas de app/test/legal (chequeo de hash y cola-offline_test.dart) y el chequeo de hash del servidor; probar a mano QA-03a-14-02 (cambiar una palabra en docs/legal, confirmar que el chequeo falla y revertir) y revisar la redacción (guion largo, voseo, correos, jerarquía de títulos).
-Contrato: rollback: No deja cambios en archivos: la prueba manual de QA-03a-14-02 (cambio de una palabra para comprobar que el hash no coincide) se revierte al terminar.. Status: pending
+Contrato: rollback: No deja cambios en archivos: la prueba manual de QA-03a-14-02 (cambio de una palabra para comprobar que el hash no coincide) se revierte al terminar.. Status: done
 
 #### S1.T4 — Crear docs/legal/aprobaciones-terminos-v1.0.md (registro de aprobación, no depende de la fecha de vigencia) con estado pendiente, versión 1.0, hash provisional que coincide con el encabezado de docs/legal/terminos-v1.0.md vigente en ese momento, fecha y observaciones (asesoría legal con su resolución y confirmación escrita de Producto). Confirmar LEYENDO el código del script de legal:registrar (server) que ignora archivos que no siguen el patrón terminos-vX.Y.md / privacidad-vX.Y.md; no ejecutar legal:registrar.
-Contrato: rollback: git revert del commit que crea docs/legal/aprobaciones-terminos-v1.0.md; sin migración ni borrado de registros.. Status: pending
+Contrato: rollback: git revert del commit que crea docs/legal/aprobaciones-terminos-v1.0.md; sin migración ni borrado de registros.. Status: done
+
+#### S1.T5 — Recorrer docs/legal/terminos-v1.0.md contra la lista de cobertura mínima y confirmar que cada tema tiene su apartado con título ## propio y que ninguno contradice su DEC: cuenta de dispositivo y cuenta completa (DEC-212), aceptación versionada y reaceptación (DEC-208, DEC-225), códigos de un solo uso (DEC-213), limitación y suspensión (DEC-020, DEC-056), soporte solo con cuenta completa (DEC-216), cierre de sesión, borrado y eliminación de cuenta (DEC-054, DEC-128, DEC-224), versión mínima y actualizaciones (DEC-086), contenido del método (DEC-094). Si falta un tema o se contradice una DEC, corregir el texto en las tres copias a la vez o reportar al dev.
+Contrato: rollback: Tarea de revisión: si no corrige el texto no modifica archivos; si lo corrige, git revert del commit restaura las tres copias de terminos-v1.0.md a la vez.. Status: done
 
 #### S2.T1 — Actualizar el registro docs/legal/aprobaciones-terminos-v1.0.md (creado por S1.T4) con la versión y el hash finales del texto aprobado, y recalcular el hash en docs/legal/terminos-v1.0.md y sus copias app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md cuando se fije la fecha de vigencia. No ejecutar legal:registrar.
 Contrato: rollback: git revert del commit; el texto queda como en la sesión 1 marcado provisional. Status: pending
 
 #### S2.T2 — Comprobar que el hash final coincide entre docs/legal/terminos-v1.0.md, app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md y con el consignado en docs/legal/aprobaciones-terminos-v1.0.md (creado por S1.T4 y actualizado por S2.T1). No ejecutar legal:registrar.
-Contrato: rollback: No deja cambios. Status: pending
+Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: pending
+
+#### S2.T3 — Con la fecha real ya fijada (S2.T1), volver a recorrer la cobertura mínima en docs/legal/terminos-v1.0.md y confirmar que el hash coincide entre las tres copias.
+Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: pending
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La redacción del texto y del resumen está en español neutro, trata de tú, no usa guion largo (U+2014), usa títulos Markdown jerárquicos para lector de pantalla y no incluye datos personales ni correos reales; lo que depende de pendientes externos (identidad legal del titular) v
@@ -195,29 +238,71 @@ Ninguno.
 **Task ops:**
 
 - edit S1.T2 { desc="Empaquetado del texto final, sin redactar. Copiar el texto final de docs/legal/terminos-v1.0.md a app/assets/legal/terminos-v1.0.md y a server/legal/terminos-v1.0.md, en el mismo commit que la redacción (S1.T1). No cambiar versionTerminosEmpaquetada ni rutaTerminos: ya apuntan a 1.0. Nota de contingencia: editarlos solo aplicaría a una rama 1.1 y requiere aprobación explícita del dev. La verificación visual en V-51 (QA-03a-14-01) es revisión humana fuera del gate.", rollback="Restaurar los tres archivos terminos-v1.0.md (docs/legal, app/assets/legal y server/legal) con git revert del commit.", validates=["REQ-04","REQ-06"], verify=["cmp docs/legal/terminos-v1.0.md app/assets/legal/terminos-v1.0.md && cmp docs/legal/terminos-v1.0.md server/legal/terminos-v1.0.md","node scripts/ci/ep01-legal-provider.mjs"] }
+
+### Enmienda 8
+**REQs:**
+
+- REQ-07 (add) `confirmed`: docs/legal/terminos-v1.0.md tiene un apartado con título Markdown propio sobre cuenta de dispositivo y cuenta completa, y explica qué habili
+- REQ-08 (add) `confirmed`: El texto tiene un apartado con título propio sobre aceptación versionada y reaceptación que detiene el servicio hasta aceptar (DEC-208, DEC-
+- REQ-09 (add) `confirmed`: El texto tiene un apartado con título propio sobre códigos de producto de un solo uso validados en línea (DEC-213). No contradice DEC-213.
+- REQ-10 (add) `confirmed`: El texto tiene un apartado con título propio sobre limitación y suspensión administrativa (DEC-020, DEC-056). No contradice esas DEC.
+- REQ-11 (add) `confirmed`: El texto tiene un apartado con título propio que dice que el soporte se presta solo con cuenta completa (DEC-216). No contradice DEC-216.
+- REQ-12 (add) `confirmed`: El texto tiene un apartado con título propio sobre cierre de sesión, borrado de datos y eliminación de cuenta (DEC-054, DEC-128, DEC-224). N
+- REQ-13 (add) `confirmed`: El texto tiene un apartado con título propio sobre versión mínima y actualizaciones (DEC-086). No contradice DEC-086.
+- REQ-14 (add) `confirmed`: El texto tiene un apartado con título propio sobre el contenido del método entregado con la app (DEC-094). No contradice DEC-094.
+
+**Tasks agregadas:**
+
+- S2: Recorrer docs/legal/terminos-v1.0.md contra la lista de cobertura mínima y confirmar que cada tema (REQ-07 a REQ-14) tiene su apartado con título propio y que ninguno contradice su DEC. Después, con el texto ya redactado y copiado, confirmar que el hash coincide entre docs/legal/terminos-v1.0.md, app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md ejecutando cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. Si un tema falta o una DEC se contradice, reportar al dev. La aprobación de asesoría legal y de Producto, la identidad legal del titular y la fecha de vigencia son pendientes externos declarados, no parte de esta task. (valida: REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-12, REQ-13, REQ-14, REQ-04, test; rollback: No hay cambios de código que revertir: es una task de verificación. Si implicó ajustes al texto, revertir con git restore de las tres copias de terminos-v1.0.md a la vez para mantener el hash idéntico.)
+
+### Enmienda 9
+**REQs:**
+
+- REQ-06 (edit) `confirmed`: Regla de versión única. Por defecto se REEMPLAZA la 1.0: el texto definitivo se escribe en docs/legal/terminos-v1.0.md y sus copias app/asse
+- REQ-03 (edit) `confirmed`: La redacción del texto y del resumen en terminos-v1.0.md está en español neutro, trata de tú, no usa guion largo (U+2014), usa títulos Markd
+
+**Tasks agregadas:**
+
+- S1: Recorrer docs/legal/terminos-v1.0.md contra la lista de cobertura mínima y confirmar que cada tema tiene su apartado con título ## propio y que ninguno contradice su DEC: cuenta de dispositivo y cuenta completa (DEC-212), aceptación versionada y reaceptación (DEC-208, DEC-225), códigos de un solo uso (DEC-213), limitación y suspensión (DEC-020, DEC-056), soporte solo con cuenta completa (DEC-216), cierre de sesión, borrado y eliminación de cuenta (DEC-054, DEC-128, DEC-224), versión mínima y actualizaciones (DEC-086), contenido del método (DEC-094). Si falta un tema o se contradice una DEC, corregir el texto en las tres copias a la vez o reportar al dev. (valida: REQ-07, REQ-08, REQ-09, REQ-10, REQ-11, REQ-12, REQ-13, REQ-14, REQ-01; rollback: Tarea de revisión: si no corrige el texto no modifica archivos; si lo corrige, git revert del commit restaura las tres copias de terminos-v1.0.md a la vez.)
+
+**Task ops:**
+
+- edit S1.T1 { desc="Redactar el texto definitivo en docs/legal/terminos-v1.0.md reemplazando el fixture, con encabezado de versión 1.0, hash y marcador provisional VIGENTE_DESDE: PROVISIONAL, sin versión 1.1 ni exige_reaceptacion. Incluye los 8 apartados de cobertura mínima con título ## propio (REQ-07 a REQ-14) y una sección '## Resumen' (resumen breve para la tarjeta de V-51) dentro del mismo archivo. No consulta staging (eso es la verificación humana de la sesión 5).", rollback="git revert del commit que reescribe docs/legal/terminos-v1.0.md; sin migración ni borrado de registros.", validates=["REQ-01","REQ-02","REQ-03","REQ-06"], verify=["test -f docs/legal/terminos-v1.0.md && grep -n 'PROVISIONAL' docs/legal/terminos-v1.0.md && grep -n -i '^## .*resumen' docs/legal/terminos-v1.0.md"] }
+- edit S1.T1.2 { rollback="Tarea de solo lectura: no modifica archivos, no hay nada que revertir.", validates=["REQ-04","REQ-06"], verify=["grep -n 'sha256' app/lib/features/legal/data/textos_legales_empaquetados.dart && grep -n 'versionTerminosEmpaquetada\\|rutaTerminos' app/lib/features/legal/data/textos_legales_empaquetados.dart && grep -n -i 'hash' app/test/legal/empaquetado_test.dart"] }
+- edit S1.T1.3 { rollback="Tarea de solo lectura: no modifica archivos, no hay nada que revertir.", verify=["grep -n -i 'vigente' app/lib/features/legal/data/textos_legales_empaquetados.dart scripts/ci/ep01-legal-provider.mjs server/scripts/registrar-version-legal.ts"] }
+- edit S1.T2 { verify=["cmp docs/legal/terminos-v1.0.md app/assets/legal/terminos-v1.0.md && cmp docs/legal/terminos-v1.0.md server/legal/terminos-v1.0.md && node scripts/ci/ep01-legal-provider.mjs"] }
+- edit S1.T3 { verify=["(cd app && flutter test test/legal/) && node scripts/ci/ep01-legal-provider.mjs"] }
+- edit S1.T4 { verify=["test -f docs/legal/aprobaciones-terminos-v1.0.md && grep -n -i 'pendiente' docs/legal/aprobaciones-terminos-v1.0.md && grep -n -i 'terminos-v\\|privacidad-v' server/scripts/registrar-version-legal.ts"] }
+- edit S2.T3 { desc="Con la fecha real ya fijada (S2.T1), volver a recorrer la cobertura mínima en docs/legal/terminos-v1.0.md y confirmar que el hash coincide entre las tres copias.", rollback="Tarea de solo lectura: no modifica archivos, no hay nada que revertir.", validates=["REQ-04"], verify=["(cd app && flutter test test/legal/) && node scripts/ci/ep01-legal-provider.mjs"] }
+- edit S2.T2 { rollback="Tarea de solo lectura: no modifica archivos, no hay nada que revertir.", verify=["cmp docs/legal/terminos-v1.0.md app/assets/legal/terminos-v1.0.md && cmp docs/legal/terminos-v1.0.md server/legal/terminos-v1.0.md && node scripts/ci/ep01-legal-provider.mjs && (cd app && flutter test test/legal/)"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T1.1
-- [ ] S1.T1.2
-- [ ] S1.T1.3
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
+- [x] S1.T1
+- [x] S1.T1.2
+- [x] S1.T1.3
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+- [x] S1.T5
 
-**Gate (auto)**: docs/legal/terminos-v1.0.md con los 8 apartados, su resumen y el marcador provisional de vigencia, copiado a app/assets/legal/ y server/legal/ con el mismo nombre; cmp entre las tres copias sin diferencias; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs; existe docs/legal/aprobaciones-terminos-v1.0.md con estado pendiente y el hash del encabezado del texto, y la lectura del código de legal:registrar confirma que ignora ese archivo (no se ejecuta legal:registrar). Esta sesión no depende de la fecha de vigencia.
+**Gate (auto)**: docs/legal/terminos-v1.0.md con los 8 apartados de cobertura mínima con título ## propio (recorridos por S1.T5 contra sus DEC), la sección ## Resumen para V-51 y el marcador provisional de vigencia, copiado a app/assets/legal/ y server/legal/ con el mismo nombre; cmp entre las tres copias sin diferencias; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs; existe docs/legal/aprobaciones-terminos-v1.0.md con estado pendiente y el hash del encabezado del texto, y la lectura de server/scripts/registrar-version-legal.ts confirma que ignora ese archivo (no se ejecuta legal:registrar). Esta sesión no depende de la fecha de vigencia ni de acceso a staging: la verificación de la 1.0 en staging, el hash registrado en staging y la lectura en V-51 son items humanos de la sesión 5, fuera de este gate.
 
 ### Session 2 · T1 · open
 
 **Tasks:**
 - [ ] S2.T1
 - [ ] S2.T2
+- [ ] S2.T3
 
 **Gate (auto)**: SESIÓN DIFERIDA Y BLOQUEADA hasta que Producto fije la fecha real de vigencia (pendiente externo; decisión del dev). Cuando se desbloquee: el encabezado de docs/legal/terminos-v1.0.md lleva la fecha real, el hash se recalculó y las tres copias coinciden (cmp sin diferencias); pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs; docs/legal/aprobaciones-terminos-v1.0.md (creado en la sesión 1) queda actualizado con la versión y el hash finales. Adjuntar al issue GH-93 no es parte del gate: lo confirma el dev.
 
 ### Session 3 · T0 · open
 
 ### Session 4 · T0 · open
+
+### Session 5 · T0 · open
+
+**Gate (auto)**: Verificaciones humanas con acceso externo, fuera del gate automático: estado de la 1.0 en staging, hash_contenido registrado en staging y lectura en V-51. Si no hay acceso a staging, se continúa con el reemplazo de la 1.0 y se reporta al dev; no detiene el trabajo.

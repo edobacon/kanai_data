@@ -2,7 +2,7 @@
 id: TAO-221-SPEC
 project: taomangalam
 ticket: TAO-221
-status: draft
+status: approved
 ---
 
 # TAO-221 · Spike: verificación de integridad del dispositivo (App Attest y Play Integrity) para el alta automática y DEC de implementación

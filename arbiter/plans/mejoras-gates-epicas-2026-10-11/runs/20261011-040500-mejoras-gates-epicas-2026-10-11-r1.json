@@ -1,0 +1,759 @@
+{
+  "run_id": "mejoras-gates-epicas-2026-10-11-r1",
+  "plan_id": "mejoras-gates-epicas-2026-10-11",
+  "ts_start": "2026-10-11T03:45:00-03:00",
+  "ts_end": "2026-10-11T04:05:00-03:00",
+  "mode": "end_of_plan",
+  "base_ref_used": "8f131ed9",
+  "head_ref": "de1713ae",
+  "repo": "kanai-app",
+  "verdict": "iterar",
+  "max_severity": "S2",
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 4,
+    "S3": 3,
+    "consulta": 0
+  },
+  "plan_phase_ids": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "P5",
+    "P6",
+    "P7",
+    "P8",
+    "P9"
+  ],
+  "batches": 2,
+  "consumers": 30,
+  "lines_judged": 3156,
+  "judge_scope": "full",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "humanOnly reclasifica hallazgos de codigo como evidencia humana en cualquier gate de sesion",
+      "where": "server/dispatch/gateDecision.ts:118",
+      "evidence": "gate.ts:274 pasa humanEvidence en todo gate con sesion sin exigir que el criterio la mencione; onlyHumanEvidence aplica regex de texto libre (gateCriteriaLint.ts:544-551) y escala sin auto-fix un iterate por defectos de codigo con palabras como screenshot o validacion manual.",
+      "phase": "P4",
+      "family": "heuristic:human-evidence-finding-detection",
+      "open_class": true,
+      "outcome": "fixed",
+      "info_class": "none",
+      "shared_contract": true,
+      "also_at": [
+        "server/dispatch/gate.ts:274",
+        "server/dispatch/gateRegistry.ts:77",
+        "server/dispatch/gateCriteriaLint.ts:544"
+      ],
+      "suggested_fix": "Aplicar humanOnly solo si el criterio de la sesion menciona evidencia humana (humanEvidenceJudgeNote no es null); ante la duda mantener iterate.",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "security",
+      "title": "knownRed tapa por subcadena sin anclar, se declara sin confirmacion y el hallazgo de regresion sugiere declararlo",
+      "where": "server/dispatch/ciChecks.ts:262",
+      "evidence": "applyKnownRed usa matchesFlake (id.includes(p)); un directorio de 8+ caracteres como tests/unit/ oculta cualquier rojo debajo, incluidas regresiones nuevas; set_project_quality lo persiste sin withHumanAuthorization; gateDecision.ts:66 sugiere declararlo.",
+      "phase": "P1",
+      "family": "gate-integrity:knownred-masking",
+      "open_class": false,
+      "outcome": "fixed",
+      "info_class": "none",
+      "shared_contract": true,
+      "also_at": [
+        "server/dispatch/gateDecision.ts:66",
+        "server/mcp/tools.ts:1975",
+        "server/repo/qualityConfig.ts:100"
+      ],
+      "suggested_fix": "knownRed solo por id exacto archivo::nombre o archivo completo; no tapar con baseline con nombres lo que no estaba rojo en la base; sacar la sugerencia del hallazgo de regresion.",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S3",
+      "kind": "performance",
+      "title": "El N3 omitido por vacio no deja gate_run: integralPending sigue true y se reintenta en cada cierre",
+      "where": "server/dispatch/gate.ts:599",
+      "evidence": "skipEmptyIntegral solo registra la decision integral-empty; integralPending depende de gate_runs, por lo que withIntegralAfter e integralGateIfLast lo relanzan en cada cierre.",
+      "phase": "P2",
+      "family": "efficiency:integral-empty-retry",
+      "open_class": false,
+      "outcome": "pending",
+      "info_class": "none",
+      "outcome_note": "re-chequeo: sigue presente",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "KANAI_UNPUSHED_WARN_THRESHOLD no figura en docs/configuration.md",
+      "where": "docs/configuration.md:171",
+      "evidence": "reposHealth.ts:53-60 define la variable (default 10); solo docs/mcp.md:94 la menciona; las variables hermanas del plan si estan en configuration.md.",
+      "phase": "P7",
+      "family": "doc-gap:env-var-catalog",
+      "open_class": false,
+      "outcome": "fixed",
+      "info_class": "missing_doc_contract",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f5",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Las rutas de tolerancia a errores de realClosePending y del plazo por defecto no tienen test",
+      "where": "server/repo/realClosePending.ts:33-39",
+      "evidence": "readRealClose atrapa el fallo de listHumanChecks y humanCheckDueDays atrapa un config.yaml ilegible; ningun test los hace fallar (git grep en tests sin resultados).",
+      "phase": "P5",
+      "family": "test-gap:error-tolerance-paths",
+      "open_class": false,
+      "outcome": "pending",
+      "info_class": "missing_test_other",
+      "also_at": [
+        "server/repo/workflowConfig.ts:59-65"
+      ],
+      "outcome_note": "re-chequeo: sigue presente",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f6",
+      "severity": "S3",
+      "kind": "error_handling",
+      "title": "reachableStartHead trata cualquier error de git como no es ancestro y el N3 termina como nota vacia reconocible por la epica",
+      "where": "server/repo/ticketReviewBase.ts:16-19",
+      "evidence": "el catch sin discriminar devuelve null ante timeout o codigo 128; resolveTicketReviewBase lanza AccumulatorBaseError, gateLevels lo convierte en N3 vacio y integralAck lo deja elegible.",
+      "phase": "P2",
+      "family": "error-handling:infra-as-empty-n3",
+      "open_class": false,
+      "outcome": "fixed",
+      "info_class": "none",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f7",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "Cabeceras de tres tests citan Mejora 2, etiqueta interna que no existe en el repo",
+      "where": "tests/unit/epic-in-place-integral-ack.test.ts:1",
+      "evidence": "// Mejora 2: en tres archivos nuevos; los tests hermanos citan Fase N del roadmap, que si remite a un doc versionado.",
+      "phase": "P2",
+      "family": "stale:plan-label-in-comments",
+      "open_class": false,
+      "outcome": "fixed",
+      "info_class": "stale_trivial",
+      "also_at": [
+        "tests/unit/epic-in-place-integral-range.test.ts:1",
+        "tests/unit/integral-empty-skip.test.ts:1"
+      ],
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 71,
+    "read_full": 71,
+    "skimmed": 0,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        ".env.example",
+        "app/pages/verificaciones.vue",
+        "docs/configuration.md",
+        "docs/development/epic-execution.md",
+        "docs/gate-niveles.md",
+        "docs/guia-llm.md",
+        "docs/mcp-catalogo.md",
+        "docs/mcp.md",
+        "docs/modelos-backends.md",
+        "docs/orquestador-gates-autonomo.md",
+        "docs/verificaciones-pospuestas.md",
+        "server/api/dispatch/gate.post.ts",
+        "server/api/verificaciones/index.get.ts",
+        "server/cleaner/verify.ts",
+        "server/db/schema.ts",
+        "server/dispatch/ciChecks.ts",
+        "server/dispatch/gate.ts",
+        "server/dispatch/gateChecks.ts",
+        "server/dispatch/gateContext.ts",
+        "server/dispatch/gateCriteriaLint.ts",
+        "server/dispatch/gateDecision.ts",
+        "server/dispatch/gateLevels.ts",
+        "server/dispatch/gateOverride.ts",
+        "server/dispatch/gateRegistry.ts",
+        "server/dispatch/gateRegistryRun.ts",
+        "server/dispatch/gateTypes.ts",
+        "server/dispatch/humanChecks.ts",
+        "server/dispatch/judge.ts",
+        "server/dispatch/judgeInfra.ts",
+        "server/dispatch/openDecisions.ts",
+        "server/dispatch/planTicket.ts",
+        "server/dispatch/sandboxCheck.ts",
+        "server/dispatch/testBaseline.ts",
+        "server/dispatch/verification.ts",
+        "server/engine/guards/integral.ts",
+        "server/epics/bridge.ts",
+        "server/epics/compact.ts",
+        "server/epics/final.ts",
+        "server/epics/integralAck.ts",
+        "server/epics/policy.ts",
+        "server/epics/runner.ts",
+        "server/epics/schema.ts",
+        "server/epics/service.ts",
+        "server/mcp/epicTools.ts",
+        "server/mcp/tools.ts",
+        "server/repo/deliveryStatus.ts",
+        "server/repo/gateRuns.ts",
+        "server/repo/preGate.ts",
+        "server/repo/projectSettings.ts",
+        "server/repo/qualityConfig.ts",
+        "server/repo/realClosePending.ts",
+        "server/repo/reposHealth.ts",
+        "server/repo/ticketReviewBase.ts",
+        "server/repo/workflowConfig.ts",
+        "shared/human-checks.ts",
+        "skills/claude/kn-epic/SKILL.md",
+        "skills/claude/kn-execute-task/SKILL.md",
+        "tests/unit/branch-hygiene.test.ts",
+        "tests/unit/dual-judge.test.ts",
+        "tests/unit/epic-compact.test.ts",
+        "tests/unit/epic-in-place-integral-ack.test.ts",
+        "tests/unit/epic-in-place-integral-range.test.ts",
+        "tests/unit/gate-orchestration.test.ts",
+        "tests/unit/gate-registry-precheck.test.ts",
+        "tests/unit/gate-registry.test.ts",
+        "tests/unit/human-checks-due.test.ts",
+        "tests/unit/integral-empty-skip.test.ts",
+        "tests/unit/judge-infra.test.ts",
+        "tests/unit/open-decisions.test.ts",
+        "tests/unit/quality-config.test.ts",
+        "tests/unit/test-baseline.test.ts"
+      ],
+      "skimmed": [],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": ".env.example",
+        "lines": 6,
+        "blob": "f8b02a9fdfa22657d77d630afb78b5a644036e20",
+        "deleted": false
+      },
+      {
+        "path": "app/pages/verificaciones.vue",
+        "lines": 33,
+        "blob": "066c3460eb207c51fec0fec44781458b55abab9d",
+        "deleted": false
+      },
+      {
+        "path": "docs/configuration.md",
+        "lines": 4,
+        "blob": "32c1d797d94f8dcba71dbfe9e779395726d28717",
+        "deleted": false
+      },
+      {
+        "path": "docs/development/epic-execution.md",
+        "lines": 8,
+        "blob": "61e3dbe7a1516a54b7a7633203efee1e2656e5b8",
+        "deleted": false
+      },
+      {
+        "path": "docs/gate-niveles.md",
+        "lines": 5,
+        "blob": "578c1730b7b2df7cae7d8e68a0c734eecc3c5193",
+        "deleted": false
+      },
+      {
+        "path": "docs/guia-llm.md",
+        "lines": 8,
+        "blob": "892f9e1b534b7d8fa1deae40f3244f1da3ea0724",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp-catalogo.md",
+        "lines": 8,
+        "blob": "32e60d5886627f0e1c7ddd34272b0a50f019c0df",
+        "deleted": false
+      },
+      {
+        "path": "docs/mcp.md",
+        "lines": 9,
+        "blob": "02f4025fda17e342d2d6be6ecd8f14d1f6858351",
+        "deleted": false
+      },
+      {
+        "path": "docs/modelos-backends.md",
+        "lines": 13,
+        "blob": "9e47cb50e2de3cb4e4094ba516948d06c19aa4b7",
+        "deleted": false
+      },
+      {
+        "path": "docs/orquestador-gates-autonomo.md",
+        "lines": 10,
+        "blob": "63bdc8e11532ff7fc63bf017f9cae6ed49e6f859",
+        "deleted": false
+      },
+      {
+        "path": "docs/verificaciones-pospuestas.md",
+        "lines": 48,
+        "blob": "997109f129978c31f9c16b46be497c91d4eec444",
+        "deleted": false
+      },
+      {
+        "path": "server/api/dispatch/gate.post.ts",
+        "lines": 2,
+        "blob": "396bc7bdc96fed316c1271c278d78a529d3b43f9",
+        "deleted": false
+      },
+      {
+        "path": "server/api/verificaciones/index.get.ts",
+        "lines": 2,
+        "blob": "8e714e73c510cc1aa506699ccab7608360877b87",
+        "deleted": false
+      },
+      {
+        "path": "server/cleaner/verify.ts",
+        "lines": 4,
+        "blob": "a13c02444514c0eaaf456c7e7c885e9d79d83ba8",
+        "deleted": false
+      },
+      {
+        "path": "server/db/schema.ts",
+        "lines": 4,
+        "blob": "e16b210070b5fb3dffc35a24cb88ddcf8c694a27",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/ciChecks.ts",
+        "lines": 50,
+        "blob": "557ce2690637c0ad2186a20d6ba4af0cf91c7305",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gate.ts",
+        "lines": 54,
+        "blob": "22324285042e0dfcf795ac97340779f3809c9042",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateChecks.ts",
+        "lines": 7,
+        "blob": "7d7909df5716c45dd94dc01e41a383d1b6d3204d",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateContext.ts",
+        "lines": 38,
+        "blob": "73fbb774ad028ea4ea5fc101e87cc2d0eae546a0",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateCriteriaLint.ts",
+        "lines": 18,
+        "blob": "bf0988e89e2ee3d596cb84176fc610298b0b9677",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateDecision.ts",
+        "lines": 18,
+        "blob": "b2ac3030b60a1bbaf030f08832f323d376a9a3e5",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateLevels.ts",
+        "lines": 32,
+        "blob": "13a139887cebc03bac5ae8e0690e2f889ca476b6",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateOverride.ts",
+        "lines": 5,
+        "blob": "5672d331ca160e9e6e17be507d28e2c36d861a2a",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateRegistry.ts",
+        "lines": 87,
+        "blob": "5be9a6d79f3ce25093dc70b9f81bbaeacbc363ab",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateRegistryRun.ts",
+        "lines": 49,
+        "blob": "b0941c30f2410d5112594d11df8135c118674c51",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateTypes.ts",
+        "lines": 9,
+        "blob": "44f0df24336a7c159226025035a6c2fa0478224a",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/humanChecks.ts",
+        "lines": 69,
+        "blob": "670e1ae08e2f07783971ad16e8df1877754ce064",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/judge.ts",
+        "lines": 10,
+        "blob": "f375469ceb5337a93325ddee22dd9d6852a3955b",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/judgeInfra.ts",
+        "lines": 99,
+        "blob": "e09e39fa6b3afd2ba2d17291f100f42c88424cb7",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/openDecisions.ts",
+        "lines": 94,
+        "blob": "3658d754663734bde25d3c501cebe3346ffa4bb3",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/planTicket.ts",
+        "lines": 37,
+        "blob": "1562f9f3c2055789c48deef3010cc8237b2d1753",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/sandboxCheck.ts",
+        "lines": 5,
+        "blob": "3fc673e9765969b8b42262f3325d7303265e0d3b",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/testBaseline.ts",
+        "lines": 2,
+        "blob": "1acf96fc3717e20dcef6ff2694b932ecd0b2399b",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/verification.ts",
+        "lines": 31,
+        "blob": "d37dfb09f108955a017b0c9b629071176799b5a8",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/integral.ts",
+        "lines": 2,
+        "blob": "5966a34b49f0656985b3ac80ff8b5234cacb2e72",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/bridge.ts",
+        "lines": 5,
+        "blob": "879b79545322f9063e1f1b131c1099a1b076157d",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/compact.ts",
+        "lines": 125,
+        "blob": "115690cc0c86829b148f6b4d59c734186435cb13",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/final.ts",
+        "lines": 3,
+        "blob": "84fb04880a94ba57475f73048cbe8b3be67ce975",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/integralAck.ts",
+        "lines": 67,
+        "blob": "b612bdd3828412c3acfcb3211625b2e0b9ce98fe",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/policy.ts",
+        "lines": 38,
+        "blob": "a69091b889e6efc642b7a8d177c33aa94ba98261",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/runner.ts",
+        "lines": 4,
+        "blob": "64a78db42f1e706bc027a3576dffb20d57ae3fa3",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/schema.ts",
+        "lines": 2,
+        "blob": "21fc5bfb6a5c18f2b6acfda41811aa6b4e42eca6",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/service.ts",
+        "lines": 31,
+        "blob": "28b44f5591445cf2d31aa17549d10a97dfeaab3c",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/epicTools.ts",
+        "lines": 21,
+        "blob": "a9fbf414b8059bf82ef13ded5871caa8941cb0dd",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 84,
+        "blob": "beeb3d28f9b43a641de83c42b5a2daf93a172807",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/deliveryStatus.ts",
+        "lines": 42,
+        "blob": "06fef67883a5ad88b52fe9e623f04fd999f1abac",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/gateRuns.ts",
+        "lines": 11,
+        "blob": "8d57a7135fefb52cd88ef3b96c8bfce840583ff8",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/preGate.ts",
+        "lines": 43,
+        "blob": "4a1bfd872bbdfc4b0c43221105dddfe7ee43a67e",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/projectSettings.ts",
+        "lines": 6,
+        "blob": "be7f47065cedea3f42ee3c28d770a3426b94d1a3",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/qualityConfig.ts",
+        "lines": 24,
+        "blob": "0dbe934d6c5c9c2237256cae34da63a6d6e0a75e",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/realClosePending.ts",
+        "lines": 53,
+        "blob": "f80bb8b1199e1cbcbb4471d18b2bcdb264b6e1b3",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/reposHealth.ts",
+        "lines": 38,
+        "blob": "d5f77de0d22504a772e107a5c5d61cc454f64a43",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/ticketReviewBase.ts",
+        "lines": 23,
+        "blob": "fdc54cdbf69da13345829f45ec15de6d1849bb20",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/workflowConfig.ts",
+        "lines": 44,
+        "blob": "75b3e358e6bcee72df5b849a41f2fe97f43dd051",
+        "deleted": false
+      },
+      {
+        "path": "shared/human-checks.ts",
+        "lines": 94,
+        "blob": "f3c696511dcd6a9ccf25f7be2b1b932d3bd3bb65",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-epic/SKILL.md",
+        "lines": 9,
+        "blob": "338b7218b50b71769fbb8699d9c8053a99da3fee",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-execute-task/SKILL.md",
+        "lines": 4,
+        "blob": "7c917ebccb2bdd1b1084d7b4e81df2d3345e5d73",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/branch-hygiene.test.ts",
+        "lines": 153,
+        "blob": "9ebff4a40ba974de6ce1b76430854b5e3dcdad90",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/dual-judge.test.ts",
+        "lines": 18,
+        "blob": "db7cffad349d38759d7a31c01c34c40ea1cdc951",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-compact.test.ts",
+        "lines": 121,
+        "blob": "9626770d44621fac9d533ac074eae99ed55acf0d",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-in-place-integral-ack.test.ts",
+        "lines": 143,
+        "blob": "b26b18e447cc79bb455d67a6183ef7cdab438600",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/epic-in-place-integral-range.test.ts",
+        "lines": 116,
+        "blob": "8cd56fefddbaefafe2399cd5c0a22eae280082a3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-orchestration.test.ts",
+        "lines": 16,
+        "blob": "ab99d8c13cce1fe37f92c9537512195a2f83e45a",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-registry-precheck.test.ts",
+        "lines": 148,
+        "blob": "889539b69e61f47de1bd0553525da3d3b08cd326",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-registry.test.ts",
+        "lines": 171,
+        "blob": "3d73699a0dac9e29cba7954285782d6025d6cdf5",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/human-checks-due.test.ts",
+        "lines": 231,
+        "blob": "35082186f76048b6bdbcd30ff372d663fec53df3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/integral-empty-skip.test.ts",
+        "lines": 88,
+        "blob": "05326e872d8617764368d37d45b430b7ac54c973",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/judge-infra.test.ts",
+        "lines": 89,
+        "blob": "a09b368cb4c7328a2c027004f5833356c4a11b28",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/open-decisions.test.ts",
+        "lines": 120,
+        "blob": "753eb2f1beca205b06631562004dc56262bb4a1c",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/quality-config.test.ts",
+        "lines": 66,
+        "blob": "254a933c31242be51de638ba2f0bb5b5eedd977f",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/test-baseline.test.ts",
+        "lines": 25,
+        "blob": "1806604a8f5bede7936d9e57de2f3d5cc23b7f4f",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      ".env.example": "f8b02a9fdfa22657d77d630afb78b5a644036e20",
+      "app/pages/verificaciones.vue": "066c3460eb207c51fec0fec44781458b55abab9d",
+      "docs/configuration.md": "32c1d797d94f8dcba71dbfe9e779395726d28717",
+      "docs/development/epic-execution.md": "61e3dbe7a1516a54b7a7633203efee1e2656e5b8",
+      "docs/gate-niveles.md": "578c1730b7b2df7cae7d8e68a0c734eecc3c5193",
+      "docs/guia-llm.md": "892f9e1b534b7d8fa1deae40f3244f1da3ea0724",
+      "docs/mcp-catalogo.md": "32e60d5886627f0e1c7ddd34272b0a50f019c0df",
+      "docs/mcp.md": "02f4025fda17e342d2d6be6ecd8f14d1f6858351",
+      "docs/modelos-backends.md": "9e47cb50e2de3cb4e4094ba516948d06c19aa4b7",
+      "docs/orquestador-gates-autonomo.md": "63bdc8e11532ff7fc63bf017f9cae6ed49e6f859",
+      "docs/verificaciones-pospuestas.md": "997109f129978c31f9c16b46be497c91d4eec444",
+      "server/api/dispatch/gate.post.ts": "396bc7bdc96fed316c1271c278d78a529d3b43f9",
+      "server/api/verificaciones/index.get.ts": "8e714e73c510cc1aa506699ccab7608360877b87",
+      "server/cleaner/verify.ts": "a13c02444514c0eaaf456c7e7c885e9d79d83ba8",
+      "server/db/schema.ts": "e16b210070b5fb3dffc35a24cb88ddcf8c694a27",
+      "server/dispatch/ciChecks.ts": "557ce2690637c0ad2186a20d6ba4af0cf91c7305",
+      "server/dispatch/gate.ts": "22324285042e0dfcf795ac97340779f3809c9042",
+      "server/dispatch/gateChecks.ts": "7d7909df5716c45dd94dc01e41a383d1b6d3204d",
+      "server/dispatch/gateContext.ts": "73fbb774ad028ea4ea5fc101e87cc2d0eae546a0",
+      "server/dispatch/gateCriteriaLint.ts": "bf0988e89e2ee3d596cb84176fc610298b0b9677",
+      "server/dispatch/gateDecision.ts": "b2ac3030b60a1bbaf030f08832f323d376a9a3e5",
+      "server/dispatch/gateLevels.ts": "13a139887cebc03bac5ae8e0690e2f889ca476b6",
+      "server/dispatch/gateOverride.ts": "5672d331ca160e9e6e17be507d28e2c36d861a2a",
+      "server/dispatch/gateRegistry.ts": "5be9a6d79f3ce25093dc70b9f81bbaeacbc363ab",
+      "server/dispatch/gateRegistryRun.ts": "b0941c30f2410d5112594d11df8135c118674c51",
+      "server/dispatch/gateTypes.ts": "44f0df24336a7c159226025035a6c2fa0478224a",
+      "server/dispatch/humanChecks.ts": "670e1ae08e2f07783971ad16e8df1877754ce064",
+      "server/dispatch/judge.ts": "f375469ceb5337a93325ddee22dd9d6852a3955b",
+      "server/dispatch/judgeInfra.ts": "e09e39fa6b3afd2ba2d17291f100f42c88424cb7",
+      "server/dispatch/openDecisions.ts": "3658d754663734bde25d3c501cebe3346ffa4bb3",
+      "server/dispatch/planTicket.ts": "1562f9f3c2055789c48deef3010cc8237b2d1753",
+      "server/dispatch/sandboxCheck.ts": "3fc673e9765969b8b42262f3325d7303265e0d3b",
+      "server/dispatch/testBaseline.ts": "1acf96fc3717e20dcef6ff2694b932ecd0b2399b",
+      "server/dispatch/verification.ts": "d37dfb09f108955a017b0c9b629071176799b5a8",
+      "server/engine/guards/integral.ts": "5966a34b49f0656985b3ac80ff8b5234cacb2e72",
+      "server/epics/bridge.ts": "879b79545322f9063e1f1b131c1099a1b076157d",
+      "server/epics/compact.ts": "115690cc0c86829b148f6b4d59c734186435cb13",
+      "server/epics/final.ts": "84fb04880a94ba57475f73048cbe8b3be67ce975",
+      "server/epics/integralAck.ts": "b612bdd3828412c3acfcb3211625b2e0b9ce98fe",
+      "server/epics/policy.ts": "a69091b889e6efc642b7a8d177c33aa94ba98261",
+      "server/epics/runner.ts": "64a78db42f1e706bc027a3576dffb20d57ae3fa3",
+      "server/epics/schema.ts": "21fc5bfb6a5c18f2b6acfda41811aa6b4e42eca6",
+      "server/epics/service.ts": "28b44f5591445cf2d31aa17549d10a97dfeaab3c",
+      "server/mcp/epicTools.ts": "a9fbf414b8059bf82ef13ded5871caa8941cb0dd",
+      "server/mcp/tools.ts": "beeb3d28f9b43a641de83c42b5a2daf93a172807",
+      "server/repo/deliveryStatus.ts": "06fef67883a5ad88b52fe9e623f04fd999f1abac",
+      "server/repo/gateRuns.ts": "8d57a7135fefb52cd88ef3b96c8bfce840583ff8",
+      "server/repo/preGate.ts": "4a1bfd872bbdfc4b0c43221105dddfe7ee43a67e",
+      "server/repo/projectSettings.ts": "be7f47065cedea3f42ee3c28d770a3426b94d1a3",
+      "server/repo/qualityConfig.ts": "0dbe934d6c5c9c2237256cae34da63a6d6e0a75e",
+      "server/repo/realClosePending.ts": "f80bb8b1199e1cbcbb4471d18b2bcdb264b6e1b3",
+      "server/repo/reposHealth.ts": "d5f77de0d22504a772e107a5c5d61cc454f64a43",
+      "server/repo/ticketReviewBase.ts": "fdc54cdbf69da13345829f45ec15de6d1849bb20",
+      "server/repo/workflowConfig.ts": "75b3e358e6bcee72df5b849a41f2fe97f43dd051",
+      "shared/human-checks.ts": "f3c696511dcd6a9ccf25f7be2b1b932d3bd3bb65",
+      "skills/claude/kn-epic/SKILL.md": "338b7218b50b71769fbb8699d9c8053a99da3fee",
+      "skills/claude/kn-execute-task/SKILL.md": "7c917ebccb2bdd1b1084d7b4e81df2d3345e5d73",
+      "tests/unit/branch-hygiene.test.ts": "9ebff4a40ba974de6ce1b76430854b5e3dcdad90",
+      "tests/unit/dual-judge.test.ts": "db7cffad349d38759d7a31c01c34c40ea1cdc951",
+      "tests/unit/epic-compact.test.ts": "9626770d44621fac9d533ac074eae99ed55acf0d",
+      "tests/unit/epic-in-place-integral-ack.test.ts": "b26b18e447cc79bb455d67a6183ef7cdab438600",
+      "tests/unit/epic-in-place-integral-range.test.ts": "8cd56fefddbaefafe2399cd5c0a22eae280082a3",
+      "tests/unit/gate-orchestration.test.ts": "ab99d8c13cce1fe37f92c9537512195a2f83e45a",
+      "tests/unit/gate-registry-precheck.test.ts": "889539b69e61f47de1bd0553525da3d3b08cd326",
+      "tests/unit/gate-registry.test.ts": "3d73699a0dac9e29cba7954285782d6025d6cdf5",
+      "tests/unit/human-checks-due.test.ts": "35082186f76048b6bdbcd30ff372d663fec53df3",
+      "tests/unit/integral-empty-skip.test.ts": "05326e872d8617764368d37d45b430b7ac54c973",
+      "tests/unit/judge-infra.test.ts": "a09b368cb4c7328a2c027004f5833356c4a11b28",
+      "tests/unit/open-decisions.test.ts": "753eb2f1beca205b06631562004dc56262bb4a1c",
+      "tests/unit/quality-config.test.ts": "254a933c31242be51de638ba2f0bb5b5eedd977f",
+      "tests/unit/test-baseline.test.ts": "1806604a8f5bede7936d9e57de2f3d5cc23b7f4f"
+    },
+    "summary": {
+      "files": 71,
+      "reviewed_files": 71,
+      "lines": 3156,
+      "reviewed_lines": 3156,
+      "pct_lines": 100,
+      "excluded": []
+    }
+  },
+  "ticket": {
+    "resolution": "none"
+  },
+  "notes": "Sin ticket de Kanai. Dos jueces opus en paralelo (lotes de 1337 y 1819 lineas). Sin S0/S1, por lo que no hubo re-verify. 4 hallazgos S2 suben el veredicto a iterar por conteo.",
+  "verdict_expected_by_rubric": "iterar"
+}

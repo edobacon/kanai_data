@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Intake TAO-239 · Manifiesto de acceso en la app</title>
+<!-- ticket: TAO-239 · kind: intake · project: taomangalam · generated: 2026-10-11 -->
+</head>
+<body>
+<h1>Intake TAO-239 (HU-03a-08): la app conoce y respeta sus vistas y acciones habilitadas, también sin conexión</h1>
+
+<div class="panel tldr" data-dkc-block="tldr">
+<p><strong>Qué quedó resuelto en el intake:</strong> el manifiesto ya existe en servidor y app; faltan el refresco al arrancar y al recuperar red, la versión de esquema en la caché, la API interna para la interfaz, emitir <code>impersonacion: null</code> y <code>modoDemostracion: false</code>, documentar cómo se calcula la versión y el panel de desarrollo.</p>
+</div>
+
+<h2>Qué existe ya en main (verificado en fb76e2e)</h2>
+<ul>
+<li>Servidor: <code>server/src/capacidades/manifiesto.ts</code> calcula <code>version</code> como hash determinista del contenido (capacidades, tipo y estado de cuenta, legal pendiente) por petición, con <code>ETag</code>. El cuerpo emitido trae <code>version</code>, <code>cuentaId</code>, <code>tipoCuenta</code>, <code>estadoCuenta</code>, <code>vistas</code>, <code>capacidades</code>, <code>capacidadesPorTipoCuenta</code> (la fila de cuenta completa solo para cuentas de dispositivo), <code>legalPendiente</code> y <code>generadoAt</code>. <strong>No</strong> emite <code>impersonacion</code> ni <code>modoDemostracion</code>, que el contrato declara como opcionales (<code>impersonacion</code> admite objeto o null).</li>
+<li>El claim <code>versionManifiesto</code> del access token es la constante <code>'inicial'</code> (<code>server/src/auth/inicio-sesion.ts:79</code>); no hay tabla <code>manifiesto_acceso_version</code>.</li>
+<li>App: <code>app/lib/features/manifiesto/data/</code> con <code>ServicioManifiesto</code>. La carga inicial usa caché o empaquetado <em>sin tocar la red</em>; <code>refrescar()</code> solo se invoca desde <code>observarProblema</code> (ante <code>capacidad_denegada</code>) y el flujo legal. Con origen empaquetado no envía <code>If-None-Match</code>, de modo que la respuesta 200 reemplaza la caché.</li>
+<li><code>CacheManifiestoDrift</code> guarda el JSON en <code>preferencia_local</code> bajo la clave <code>manifiesto.cache</code>, sin versión de esquema; un JSON inválido lanza <code>FormatException</code>.</li>
+<li><code>OrigenManifiesto</code> ya distingue <code>empaquetado</code>, <code>cache</code> y <code>servidor</code>. <code>capacidadesPorTipoCuenta</code> se mapea en <code>manifiesto.dart</code> pero ningún consumidor lo usa.</li>
+<li>Asset empaquetado: <code>app/assets/manifiesto/estandar.json</code>. Detección de red: <code>ObservadorDeRed</code> / <code>ObservadorDeRedConnectivity</code> en <code>app/lib/features/cuenta/data/alta_dispositivo_providers.dart</code> (sobre connectivity_plus).</li>
+</ul>
+
+<h2>Qué cambia el ticket</h2>
+<ul>
+<li>Pedir el manifiesto al arrancar con conexión y al recuperar red (reusando <code>ObservadorDeRed</code>).</li>
+<li>Versión de esquema en la caché local con descarte si cambia (y tolerancia a la caché vieja sin versión).</li>
+<li>API interna "vista habilitada" y "denegada por tipo de cuenta" sobre <code>vistas</code> y <code>capacidadesPorTipoCuenta</code>.</li>
+<li>Servidor: emitir <code>impersonacion: null</code> y <code>modoDemostracion: false</code>, con prueba contra el contrato.</li>
+<li>Documentar que la versión es un hash por petición y que el claim del token es constante en M1a.</li>
+<li>Panel de desarrollo con versión, origen y capacidades.</li>
+</ul>
+
+<h2>Riesgos</h2>
+<div class="callout warning" data-dkc-block="callout">
+<p><strong>Cambio de versión del manifiesto:</strong> agregar campos al cuerpo puede cambiar el hash si <code>calcularVersion</code> se amplía; hoy el hash no incluye esos campos. Si se incluyen, todas las cachés existentes se invalidan en el primer 200, lo que es aceptable pero conviene dejarlo explícito.</p>
+</div>
+<ul>
+<li>El refresco al arrancar no debe bloquear la primera pantalla ni romper el uso sin red (QA-03a-08-02 y 04).</li>
+<li>Con una caché vieja sin versión de esquema, el descarte debe ser silencioso y caer en empaquetado o servidor.</li>
+<li>Requiere QA humana en smartphone y tablet con y sin red, y en staging para QA-03a-08-01.</li>
+</ul>
+
+<h2>Decisiones del dev ya tomadas</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li>En M1a el servidor emite <code>impersonacion: null</code> y <code>modoDemostracion: false</code>; no se retiran del contrato (los datos reales llegan con EP-14b).</li>
+<li>La recuperación de conexión se detecta con <code>ObservadorDeRed</code> / <code>ObservadorDeRedConnectivity</code>; no se agrega otra dependencia.</li>
+<li>La ruta real del asset es <code>app/assets/manifiesto/estandar.json</code>.</li>
+<li>Sin acceso a staging se continúa y la comprobación queda como pendiente humano.</li>
+</ul>
+</div>
+</body>
+</html>

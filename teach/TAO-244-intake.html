@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Intake TAO-244 · Vigencias de sesión y denegación por defecto</title>
+<!-- ticket: TAO-244 · kind: intake · project: taomangalam · generated: 2026-10-11 -->
+</head>
+<body>
+<h1>Intake TAO-244 (HU-03a-02 y HU-03a-07): vigencias de sesión configurables y autorización por capacidad con denegación por defecto</h1>
+
+<div class="panel tldr" data-dkc-block="tldr">
+<p><strong>Qué quedó resuelto en el intake:</strong> la emisión, rotación y el middleware de capacidad ya existen. Este ticket agrega un escenario de siembra del catálogo de configuración (con las claves de vigencia en segundos y la URL del portal), hace que la emisión lea esas claves en vez de variables de entorno, prueba la expiración del refresh, convierte en denegación los caminos permisivos del middleware, cablea el router de cuenta y registra las denegaciones con muestreo.</p>
+</div>
+
+<h2>Qué existe ya en main (verificado en fb76e2e)</h2>
+<ul>
+<li>Vigencias por entorno: <code>server/src/config.ts:91-92</code> define <code>JWT_ACCESS_TTL_MINUTES</code> (15) y <code>JWT_REFRESH_TTL_DAYS</code> (30); <code>server/src/app.ts:177-178</code> las pasa como <code>accessTtlMinutos</code> y <code>refreshTtlDias</code> a <code>server/src/auth/sesiones.ts</code> (líneas 33-34, 93, 96, 120).</li>
+<li>Siembras: <code>server/src/seeds/scenarios/</code> tiene <code>catalogo-capacidades</code> (idempotente, conexión <code>migration</code>), <code>politica-analitica</code>, <code>noop</code> y <code>verify</code>. No hay escenario para <code>configuracion_clave</code>; la clave <code>accountDeletionPortalUrl</code> hoy solo se inserta en pruebas (<code>public-configuration.integration.test.ts</code>, <code>release-provider-fixture.ts</code>).</li>
+<li>Middleware <code>server/src/middleware/capacidad.ts</code>: llama <code>next()</code> sin denegar cuando no hay autenticación, cuando la operación no se resuelve en el contrato y cuando no declara <code>x-capacidad</code> (además de <code>publica</code> y obligatorias). Aplica 403 <code>requiere_cuenta_completa</code> y <code>capacidad_denegada</code>. No registra las denegaciones.</li>
+<li><code>server/src/routes/cuenta.ts</code>: <code>POST /cuenta/registro</code> (línea 72) y <code>PUT /cuenta/correo</code> (línea 106) montan solo <code>opciones.autenticacion</code>, sin el middleware de capacidad. En <code>app.ts</code> el middleware se monta en otros routers (líneas 202, 236, 249, 269).</li>
+<li>El claim de versión del manifiesto en el token es constante (<code>inicio-sesion.ts:79</code>). <code>jose</code> ya está en <code>server/package.json</code>.</li>
+<li>No verifiqué en el código el 503 de <code>GET /configuracion/publica</code> sin la clave; lo afirma el ticket.</li>
+</ul>
+
+<h2>Qué cambia el ticket</h2>
+<ul>
+<li>Escenario de siembra nombrado e idempotente para <code>configuracion_clave</code> con rol de migración, que informa claves creadas, actualizadas o iguales y no pisa valores ajustados por operación.</li>
+<li>La emisión lee las vigencias de configuración (en segundos) en vez de las variables de entorno; las variables se retiran solo cuando las claves estén sembradas en todos los entornos.</li>
+<li>Prueba de expiración del refresh con reloj falso (30 días y 1 segundo).</li>
+<li>Denegación por defecto para operaciones autenticadas no resueltas o sin <code>x-capacidad</code>; cableado del router de cuenta; prueba de cableado real sobre <code>app.ts</code>; cruce de <code>CAPACIDADES_CUENTA_COMPLETA</code> con <code>x-requiere-cuenta: completa</code>; log de denegaciones muestreado con <code>errorCode</code>, <code>capacidad</code> y <code>accountRef</code>.</li>
+</ul>
+
+<h2>Riesgos</h2>
+<div class="callout warning" data-dkc-block="callout">
+<p><strong>Cambio de unidad y modelo de datos:</strong> las vigencias pasan de minutos y días (entorno) a segundos (configuración). Un error de conversión acorta o alarga sesiones. Además, sembrar el catálogo de configuración cae en el aviso de modelo de datos de la épica (se pide el reconocimiento al aprobar).</p>
+</div>
+<ul>
+<li>Endurecer el middleware puede cerrar rutas autenticadas hoy permisivas (por ejemplo las de cuenta); el rollback no debe abrir rutas protegidas.</li>
+<li><code>POST /cuenta/registro</code> lo usa una cuenta de dispositivo para pasar a completa: su capacidad declarada debe seguir permitiéndolo.</li>
+<li>La siembra necesita PostgreSQL efímero en pruebas; staging puede no estar accesible.</li>
+</ul>
+
+<h2>Decisiones del dev ya tomadas</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li>Claves de vigencia: <code>sesion.access_ttl_segundos = 900</code> y <code>sesion.refresh_ttl_segundos = 2592000</code>.</li>
+<li>URL provisional del portal de eliminación: <code>https://portal.taomangalam.cl/eliminar-cuenta</code>.</li>
+<li>Muestreo del log de denegaciones: 100 % en development y staging, 10 % en producción.</li>
+<li>Sin acceso a staging se continúa y la comprobación queda como pendiente humano.</li>
+</ul>
+</div>
+</body>
+</html>

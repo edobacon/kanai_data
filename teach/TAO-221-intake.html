@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>Intake TAO-221 · Spike de integridad del dispositivo</title>
+<!-- ticket: TAO-221 · kind: intake · project: taomangalam · generated: 2026-10-11 -->
+</head>
+<body>
+<h1>Intake TAO-221 (HU-03a-01): spike de integridad del dispositivo para el alta automática</h1>
+
+<div class="panel tldr" data-dkc-block="tldr">
+<p><strong>Qué quedó resuelto en el intake:</strong> el ticket no toca código productivo. Entrega una DEC nueva sobre App Attest y Play Integrity, el impacto en el contrato del alta y la revisión de puntos de HU-03a-05. La PoC es descartable. Está bloqueado por cuentas de proveedor hasta el 2026-12-01 (respuesta del dev).</p>
+</div>
+
+<h2>Qué existe ya en main (verificado en fb76e2e)</h2>
+<ul>
+<li>El alta pública <code>POST /auth/dispositivo</code> (<code>autenticarCuentaDispositivo</code>) existe en <code>server/src/routes/auth.ts</code> con <code>server/src/auth/registro-dispositivo.ts</code>; exige <code>Idempotency-Key</code> y el cuerpo <code>AltaCuentaDispositivoRequest</code> (201 al crear, 200 al reautenticar).</li>
+<li>El cliente de la app (<code>app/lib/features/cuenta/data/puerto_registro_api.dart</code>) envía <code>codigoDispositivo</code>, <code>secreto</code>, <code>dispositivo</code>, <code>locale</code> y <code>timezoneId</code>; traduce red caída, 429 y 5xx a <code>FallaDeRed</code> y la reaceptación legal a <code>VersionLegalPendiente</code>. No hay campo de prueba de integridad.</li>
+<li><code>integridad_dispositivo_fallida</code> existe solo como código reservado: enum <code>CodigoError</code> de <code>server/contract/openapi.yaml</code> (descrito como "Reservado ... spike previo a M1"), cliente Dart generado y <code>server/src/i18n/es.ts</code>. Ningún código del servidor lo lanza.</li>
+<li>No existe tabla ni modelo <code>intento_seguridad</code> en <code>server/prisma/schema.prisma</code> ni en las migraciones (solo <code>intento_login</code>); el contrato lo menciona en la descripción del alta.</li>
+<li>Android declara <code>minSdk = 24</code> (<code>app/android/app/build.gradle.kts:27</code>).</li>
+</ul>
+
+<h2>Qué cambia el ticket</h2>
+<ul>
+<li>DEC nueva con tabla comparativa por plataforma, mediciones de la PoC (QA-03a-01-01..03), conducta del servidor por caso (sin Google, emulador, build development, sistema antiguo, sin red, prueba inválida), privacidad y observabilidad.</li>
+<li>EP-03a: estado de <code>integridad_dispositivo_fallida</code> (reservado o activo) y el campo de <code>AltaCuentaDispositivoRequest</code> que transportará la prueba, sin alterar los campos actuales.</li>
+<li>Confirmación o corrección de los puntos de HU-03a-05 en la tabla de la épica.</li>
+<li>La PoC (endpoint Node local y clientes iOS y Android mínimos) no entra a la rama de entrega.</li>
+</ul>
+
+<h2>Riesgos</h2>
+<div class="callout warning" data-dkc-block="callout">
+<p><strong>Bloqueo externo:</strong> la sesión de PoC y mediciones no puede iniciarse antes de que App Attest y Play Integrity estén habilitados (2026-12-01 según el dev). La corrida debe pausar o diferir este ticket hasta entonces.</p>
+</div>
+<ul>
+<li>Requiere QA humana con iPhone físico iOS 15+, Android físico con Google y emulador sin Google.</li>
+<li>Como <code>intento_seguridad</code> no existe aún, la DEC describe qué se registraría sin asumir un esquema.</li>
+<li>Riesgo de dejar el endpoint de prueba o credenciales en el repo: el cierre lo verifica (REQ-07).</li>
+</ul>
+
+<h2>Decisiones del dev ya tomadas</h2>
+<div class="invariant" data-dkc-block="invariant">
+<p>Titular de las cuentas de Apple Developer, Google Play Console y Google Cloud: Paquidermo SpA. Habilitación de App Attest y Play Integrity para la PoC: 2026-12-01 (respuesta a TAO-221-Q1).</p>
+</div>
+</body>
+</html>
