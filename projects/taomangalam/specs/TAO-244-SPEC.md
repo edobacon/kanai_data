@@ -102,13 +102,13 @@ Retiro de las variables JWT_ACCESS_TTL_MINUTES y JWT_REFRESH_TTL_DAYS: este camb
 ## Tasks
 
 #### S1.T2 — Escenario de seed nombrado e idempotente del catálogo configuracion_clave, con INSERT ... ON CONFLICT DO NOTHING, ejecutable con el rol de migración. Las claves sesion.access_ttl_segundos y sesion.refresh_ttl_segundos se siembran con tipo INTEGER, alcance GLOBAL y sensibilidad INTERNA, para que no aparezcan en GET /configuracion/publica; accountDeletionPortalUrl con tipo STRING, GLOBAL y PUBLICA.
-Contrato: rollback: Quitar server/src/seeds/scenarios/configuracion-catalogo.ts y su entrada en server/src/seeds/registry.ts; las filas sembradas se conservan. Status: pending
+Contrato: rollback: Quitar server/src/seeds/scenarios/configuracion-catalogo.ts y su entrada en server/src/seeds/registry.ts; las filas sembradas se conservan. Status: done
 
 #### S1.T3 — Documentar el seed configuracion-catalogo en docs/development/configuration.md (uso, parámetros, ejecución con el rol de migración vía MIGRATION_DATABASE_URL, comando pnpm -C server db:seed y node dist/seeds/cli.js --scenario configuracion-catalogo en el servicio, ejemplo de salida con los conteos creadas, actualizadas y sin cambios, que 'actualizadas' es siempre 0 por ON CONFLICT DO NOTHING, y la política de no pisar valores ajustados) y agregar en docs/development/release-runbook.md el paso previo del seed con el rol de migración seguido del smoke de GET /v1/configuracion/publica, junto al precedente de catalogo-capacidades.
-Contrato: rollback: Revertir los dos archivos .md. Status: pending
+Contrato: rollback: Revertir los dos archivos .md. Status: done
 
 #### S1.T4 — Pruebas del seed y su documentación en server/src/test/configuracion/seed-configuracion.test.ts y server/src/test/configuracion/docs-seed-configuracion.test.ts: idempotencia (segunda corrida no duplica ni altera filas), valores sembrados, conteos informados, caso de que el seed con el rol de aplicación falla con permission denied y no inserta filas, y caso de que cada clave creada tiene exactamente una fila en configuracion_version. Los privilegios de configuracion_clave ya los cubre server/src/configuracion.integration.test.ts (línea 198), que se ejecuta sin modificarlo; no se crea privilegios-configuracion.test.ts.
-Contrato: rollback: Borrar los dos archivos de prueba nuevos (seed-configuracion.test.ts y docs-seed-configuracion.test.ts). Status: pending
+Contrato: rollback: Borrar los dos archivos de prueba nuevos (seed-configuracion.test.ts y docs-seed-configuracion.test.ts). Status: done
 
 #### S2.T1 — El servicio de emisión lee la vigencia del access token y la del refresh desde configuracion_clave en cada emisión, con las variables JWT_ACCESS_TTL_MINUTES y JWT_REFRESH_TTL_DAYS solo como respaldo cuando falta la clave. Fuente de lectura: la última versión de configuracion_version de cada clave (misma resolución que server/src/models/public-configuration.ts), consultada en cada emisión. Las pruebas cambian el valor agregando una versión por la misma vía que config:set (ejecutarAplicacionVersion de server/src/configuracion/aplicar.ts), no editando filas.
 Contrato: rollback: Revertir el servicio de emisión al SHA anterior, que vuelve a leer las variables de entorno; las claves sembradas se conservan. Status: pending
@@ -232,12 +232,12 @@ Contrato: rollback: Borrar los archivos de prueba nuevos. Status: pending
 - edit S1.T4 { verify=["pnpm -C server exec vitest run src/test/configuracion/seed-configuracion.test.ts src/test/configuracion/docs-seed-configuracion.test.ts","pnpm -C server exec vitest run src/configuracion.integration.test.ts","pnpm docs:check:changed"] }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
 
 **Gate (auto)**: Tareas S1.T2 a S1.T4. Al correr el seed sobre una base efímera, el log muestra creadas=3 (4 solo si Producto fijó soportePlazoSinRespuestaDias), actualizadas=0 la primera vez y creadas=0, actualizadas=0 la segunda (actualizadas es siempre 0 por ON CONFLICT DO NOTHING); cada clave creada tiene una versión inicial en configuracion_version; un valor ajustado no se pisa; el seed con el rol de aplicación falla con permission denied; los docs describen el seed y su paso en el runbook. Verde: pnpm -C server exec vitest run src/test/configuracion/seed-configuracion.test.ts src/test/configuracion/docs-seed-configuracion.test.ts y la regresión pnpm -C server exec vitest run src/configuracion.integration.test.ts
 
