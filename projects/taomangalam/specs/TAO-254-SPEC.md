@@ -77,22 +77,22 @@ Contrato: rollback: Revertir el commit.. Status: done
 Contrato: rollback: Borrar los archivos de test nuevos.. Status: done
 
 #### S2.T1 — Implementar el conteo y la detección de retraso del ciclo.
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S2.T1.1 — Conteo de días cumplidos consecutivos (ignora los desmarcados por proyección). Al llegar a dias_requeridos marca accion_practica completada y cierra ciclo_practica como cumplido con fin, en una transacción. Si era la última acción diaria obligatoria, invoca la evaluación de plan completado de HU-06-05 (API a confirmar).
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S2.T1.2 — evaluarRetraso: dia_que_tocaba = último cumplido + 1 o el inicio del ciclo; dias_retraso = hoy - dia_que_tocaba con umbral 0; dias_exigidos = dias_requeridos. Descontar los días en esperando_conexion, esperando_material o renovación pendiente según el estado de fase de HU-06-05. No modifica el conteo.
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S2.T2 — Implementar las salidas. reiniciar cierra el ciclo con motivo_cierre 'reinicio' y abre numero_ciclo + 1 con inicio hoy. continuarConRetraso deja el ciclo abierto y la próxima confirmación cuenta como el día pendiente. Las dos insertan evento_plan (tipo 'reinicio' o 'continuar_con_retraso') con metadatos JSON {dias_retraso, dia_que_tocaba, dias_exigidos}, todo en una sola transacción y sin tocar cumplimientos previos. Rechazan la llamada si no hay retraso.
-Contrato: rollback: Revertir el commit.. Status: pending
+Contrato: rollback: Revertir el commit.. Status: done
 
 #### S2.T3 — Si se registra el estado de HU-06-06 en docs (EP-06 backlog u otro doc del baseline), dejarlos compliant con el linter sin editar .docs-baseline.txt. Si no se toca ningún doc, la task se cierra sin cambios.
-Contrato: rollback: Revertir el commit de docs.. Status: pending
+Contrato: rollback: Revertir el commit de docs.. Status: done
 
 #### S2.T4 — Escribir los tests unitarios de retraso y salidas y el test de integración de secuencia de días con reloj falso: QA-06-06-01 (completado el miércoles), evaluación de plan completado, retraso a 3 días (2), activado el lunes sin confirmaciones y evaluado el miércoles (2, el lunes), QA-06-06-02 (1), fases de espera sin retraso, reinicio con ciclo 2 y metadatos, continuar con metadatos, conservación del ciclo 1 y rollback si falla el evento.
-Contrato: rollback: Borrar los archivos de test nuevos.. Status: pending
+Contrato: rollback: Borrar los archivos de test nuevos.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -109,15 +109,15 @@ Ninguno.
 
 **Gate (auto)**: En app/test/practica, los tests de apertura de ciclo, confirmación, correcciones y guarda de reloj pasan: inicio el lunes de activación, una sola fila ante la doble confirmación, desmarcado sin motivo con la original conservada, corrección de ayer rechazada sin motivo y aviso de reloj sin cumplimiento.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: Pasan el test de integración de secuencia de días con reloj falso y los unitarios de retraso: acción completada el miércoles, retraso 1 y 2 con dia_que_tocaba correcto, ninguna fase de espera cuenta como retraso, y evento_plan reinicio y continuar_con_retraso con dias_retraso, dia_que_tocaba y dias_exigidos. docs:check en verde si se tocaron docs.
 
