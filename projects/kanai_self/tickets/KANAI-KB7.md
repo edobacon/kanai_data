@@ -2,7 +2,7 @@
 id: KANAI-KB7
 project: kanai_self
 type: ticket
-status: in_progress
+status: discarded
 work_type: implement
 external: KANAI-KB7
 tier: T2
@@ -11,6 +11,7 @@ verification_policy: ask
 teach_policy: skip
 draft_policy: ask
 review_policy: auto
+review_judge: auto
 ---
 
 ## Request
@@ -36,3 +37,9 @@ Respetar el schema existente (records, learns en server/db/schema.ts). No romper
 - promoteLearn crea el record con el body del learn y marca el learn refined+refinedTo.
 - El endpoint responde el record; 404 si el learn no existe.
 - El test nuevo pasa y typecheck queda limpio.
+
+## Descarte
+
+**Motivo**: Ticket demo de dogfooding (prueba de ejecucion de codex sobre kanai-app-wt). La capacidad KB-7 se implemento aparte en la rama feat/kb7-promover-learns de kanai-app (promoteLearn + op promote de manage_learn); el resultado de la prueba no se integro.
+
+_Descartado el 2026-10-11._

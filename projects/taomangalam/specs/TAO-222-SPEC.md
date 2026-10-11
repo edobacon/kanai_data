@@ -301,7 +301,7 @@ Ninguno.
 
 ### Session 3 · T0 · continue
 
-### Session 4 · T0 · open
+### Session 4 · T0 · escalate
 
 ### Session 5 · T0 · continue
 
