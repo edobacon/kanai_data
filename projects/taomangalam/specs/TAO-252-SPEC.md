@@ -82,13 +82,13 @@ Contrato: rollback: git revert del commit; si se tocó el catálogo de HU-06-02,
 Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S2.T1 — Clasificador puro clasificarMovimiento(casaActual, d12) que devuelve resultado (avance, permanencia, retroceso, cierre) y casaDestino según doc 03 y DEC-028 (12 es cierre; mayor es avance; igual es permanencia; menor es retroceso), y validador de rangos que lanza un error de validación nombrando el dado (D12 1..12, D8 1..8, D4 1..4). Archivo propuesto: app/lib/dominio/tirada/clasificador.dart.
-Contrato: rollback: git revert del commit; función pura sin consumidores externos.. Status: pending
+Contrato: rollback: git revert del commit; función pura sin consumidores externos.. Status: done
 
 #### S2.T2 — Registro de Avance y Permanencia con idempotencia. Guardas de estado y fase de HU-06-02: activa y lista_para_tirada; el resto, error tipado. Búsqueda previa por el ULID del paso: si existe con los mismos dados devuelve el resultado previo; si los dados difieren, error de conflicto de idempotencia sin escribir. Inserta paso_recorrido y tirada_revision 1 vigente con D4 numérico y fuerza, anillo y versión nulos, y actualiza casa_actual y paso_actual_id en la misma transacción.
-Contrato: rollback: git revert del commit; sin migración.. Status: pending
+Contrato: rollback: git revert del commit; sin migración.. Status: done
 
 #### S2.T3 — Tests: 132 combinaciones del clasificador con print del conteo y los casos literales (Casa 4 con 7/4/2/12, Casa 1 con 1, Casa 11 con 12); rangos (QA-06-04-03 y bordes 0, 13, 5); guardas de fase (esperando_conexion, esperando_material, acciones_en_curso, completada); QA-06-04-01; QA-06-04-02 y QA-06-04-04 de idempotencia y conflicto, con conteos de filas antes y después.
-Contrato: rollback: git revert del commit de tests.. Status: pending
+Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S3.T1 — Orquestador de la entrada pública registrarTirada({consultaId, pasoUlid, d12, d8, d4, localDate, timezoneId}). Abre una sola unidad de trabajo de HU-06-02 y en orden valida rangos, chequea idempotencia, aplica las guardas (incluida la de reparación pendiente), clasifica y despacha una sola vez. Avance y Permanencia: registro de la sesión 2 más el generador de plan de HU-06-05 (fase acciones_en_curso, plan_actual_id). Retroceso: handler de la sesión 1. Cierre: handler de HU-06-15. Sin escrituras duplicadas, sin red ni unidades remotas y un único commit. Requiere #150 y #151 integrados en epic/EP-06.
 Contrato: rollback: git revert del commit; los handlers de las sesiones 1 y 2 siguen funcionando por sí solos.. Status: pending
@@ -114,12 +114,12 @@ Ninguno.
 
 **Gate (auto)**: Test visible en app/test/dominio/tirada/retroceso_handler_test.dart que pasa: imprime 'retroceso: 1760 combinaciones', cubre QA-06-14-01..04, la guarda de reparación pendiente y la relectura tras reabrir la base Drift.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Tests de clasificador y registro que pasan: imprimen 'clasificacion: 132 combinaciones', rechazan d8 = 9 nombrando D8, rechazan las fases no admitidas y muestran un solo paso ante un reintento con el mismo ULID o un conflicto con dados distintos.
 
