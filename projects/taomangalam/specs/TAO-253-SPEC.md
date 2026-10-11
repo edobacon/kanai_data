@@ -22,79 +22,78 @@ Datos a confirmar antes de ejecutar:
 
 ## Requirements
 
-#### REQ-01 `confirmed`
+### REQ-01 `confirmed`
 > Fuente: taomangalam/app/lib/data/drift/esquema_v1.dart:81
-> Necesidad: build
+
 El motor devuelve un resumen inmutable por consulta con consulta_id, título, estado, fase, motivo_bloqueo, casa_actual, paso_actual_id, plan_actual_id, último movimiento (resultado, casa de origen y destino, fecha de la revisión vigente) y tarea vigente (acción pendiente del plan actual con 'día n de m'). Tras un Retroceso, el último movimiento informa casa de origen, casa de retorno, anillo y fuerza, y la tarea vigente queda vacía con el aviso de reparación.
 
-#### REQ-02 `confirmed`
+### REQ-02 `confirmed`
 > Fuente: taomangalam/app/lib/data/drift/esquema_v1.dart:136
-> Necesidad: build
+
 El rastro de una consulta es la secuencia de posiciones (casa y anillo, con su resultado) ordenada por numero_paso. Se toma de la revisión vigente de cada paso (inicio en Casa 1 y cada destino), excluye las revisiones sustituidas y los pasos con rehecho_por_paso_id, y toma la casa y el anillo del resultado tipado de HU-06-14.
 
-#### REQ-03 `confirmed`
+### REQ-03 `confirmed`
 > Fuente: taomangalam/app/lib/data/drift/esquema_v1.dart:102
-> Necesidad: build
+
 El motor lista las consultas del espacio local por estado para Inicio. Usa el índice de Inicio de HU-06-01, lee solo las proyecciones de consulta sin recorrer los pasos de cada consulta (lectura acotada, O(consultas) y no O(pasos)) y excluye las descartadas de las activas.
 
-#### REQ-04 `confirmed`
+### REQ-04 `confirmed`
 > Fuente: taomangalam/app/lib/data/drift/esquema_v1.dart:91
-> Necesidad: build
+
 Existe una operación de recálculo que reconstruye casa_actual, paso_actual_id, plan_actual_id y fase desde pasos, revisiones vigentes y planes. Cada comando que cambia esas proyecciones las actualiza en su misma transacción, y tras un reinicio el resumen se reconstruye igual desde Drift.
 
-#### REQ-05 `confirmed`
+### REQ-05 `confirmed`
 > Fuente: inferred: capa reactiva de TAO-249 (HU-06-02)
-> Necesidad: build
+
 Providers reactivos del resumen, del listado de Inicio y del rastro, que emiten al cambiar cualquier dato que afecta la proyección (cumplimiento, paso, revisión, plan o consulta) y no emiten un estado intermedio ante un rollback.
 
-#### REQ-06 `confirmed`
+### REQ-06 `confirmed`
 > Fuente: taomangalam/app/lib/data/drift/esquema_v1.dart:152
-> Necesidad: build
+
 La vista previa de la corrección de la última tirada es pura: con la misma consulta y el mismo catálogo devuelve el movimiento, el destino y las acciones actuales frente a los corregidos sin escribir nada, e incluye la advertencia de unidad no devuelta cuando corrige una Permanencia cuyo kuberani renovado ya se validó en línea.
 
-#### REQ-07 `confirmed`
+### REQ-07 `confirmed`
 > Fuente: taomangalam/app/lib/data/drift/esquema_v1.dart:149
-> Necesidad: build
+
 Aceptar la corrección crea una tirada_revision con numero_revision siguiente, motivo_correccion_tipo (error_tipeo, error_lectura_dado, otro), texto obligatorio si es 'otro', corregida_at obligatorio, corregida_por_cuenta_id nulo en el espacio local y sustituye_revision_id. Además marca la anterior como sustituida, apunta paso.revision_vigente_id a la nueva, deja el plan anterior sustituido con sustituido_por_plan_id hacia el plan nuevo de HU-06-05 (los cumplimientos del anterior se conservan), registra un evento_plan de sustitución con fecha local y zona, y recalcula las proyecciones con REQ-04. Todo ocurre en una transacción, sin consumir ni reembolsar unidades.
 
-#### REQ-08 `confirmed`
+### REQ-08 `confirmed`
 > Fuente: inferred: error tipado de consulta completada de HU-06-15 (G3)
-> Necesidad: build
+
 La corrección se rechaza con error tipado, sin escrituras, cuando el paso no es el último de la consulta, cuando la última tirada cambió entre la vista previa y la aceptación, o cuando la consulta está completada (en este caso reutiliza el error de HU-06-15).
 
-#### REQ-09 `confirmed`
+### REQ-09 `confirmed`
 > Fuente: inferred: resultados tipados de HU-06-14 (G4) y HU-06-15 (G3)
-> Necesidad: build
+
 Una corrección que produce un Retroceso aplica HU-06-14 (anillo, fuerza, espera de la reparación sin plan nuevo) y una que produce un Cierre aplica HU-06-15 (consulta completada), en la misma transacción. Al corregir un Retroceso vigente a Avance o Permanencia se genera el plan nuevo y la consulta sale de la espera; al corregirlo a otro Retroceso se actualizan anillo, fuerza y casa de retorno.
 
-#### REQ-10 `confirmed`
+### REQ-10 `confirmed` `enforcement`
 > Fuente: inferred: DAO append-only de TAO-249 (HU-06-02)
-> Necesidad: build
+
 El supersede usa una operación específica que solo cambia la marca de vigencia autorizada por tecnologia/20. El DAO append-only genérico conserva su prohibición de update y delete, dados, motivos, timestamps y contenido de la revisión sustituida quedan intactos, ante un fallo se revierte también la marca (siempre hay exactamente una revisión vigente por paso) y el motivo libre no se escribe en logs.
 
-#### REQ-11 `confirmed`
+### REQ-11 `confirmed` `enforcement`
 > Fuente: taomangalam/app/lib/data/drift/app_database.dart:22
-> Necesidad: build
+
 Las proyecciones y la corrección se construyen sobre la capa existente: reutilizan la transacción y los streams de TAO-249, el generador de plan de HU-06-05 y los resultados tipados de HU-06-14 y HU-06-15, sobre las columnas que ya existen en el esquema (sin migración nueva) y sin widgets de EP-05 ni de EP-07.
 
-#### REQ-12 `confirmed`
+### REQ-12 `confirmed` `variant`
 > Fuente: sonda:card-lint-de-docs-4d9deffd06
-> Necesidad: build
-Todo documento que el ticket modifique (EP-06, SCHEMA.md, modelo de datos v2 o PLAN.md, que están en .docs-baseline.txt) queda compliant con el linter de docs sin tocar el baseline.
 
+Todo documento que el ticket modifique (EP-06, SCHEMA.md, modelo de datos v2 o PLAN.md, que están en .docs-baseline.txt) queda compliant con el linter de docs sin tocar el baseline.
 ## Tasks
 
 #### S1.T1 — Definir el DTO inmutable ResumenConsulta (consulta_id, titulo, estado, fase, motivo_bloqueo, casa_actual, paso_actual_id, plan_actual_id, UltimoMovimiento con resultado, casa_origen, casa_destino, fecha, y para Retroceso casa de retorno, anillo, fuerza y aviso de reparación; TareaVigente con acción, día n y m) y PosicionRastro (numero_paso, casa, anillo, resultado), con igualdad por valor. Ubicación inferida: app/lib/motor/proyecciones/.
-Contrato: rollback: Revertir el commit; son tipos nuevos sin consumidores.. Status: pending
+Contrato: rollback: Revertir el commit; son tipos nuevos sin consumidores.. Status: done
 
 #### S1.T2 — Implementar las lecturas de composición sobre la capa de TAO-249: resumen por consulta (último movimiento desde la revisión vigente del paso_actual_id; tarea vigente desde la acción pendiente de plan_actual_id contando cumplimientos para obtener 'día n de m'; Retroceso con el resultado tipado de HU-06-14 y la tarea vacía) y rastro (paso_recorrido ordenado por numero_paso, join a tirada_revision por revision_vigente_id, filtro rehecho_por_paso_id IS NULL y deleted_at IS NULL, casa y anillo desde el resultado tipado de HU-06-14).
-Contrato: rollback: Revertir el commit; solo agrega lecturas.. Status: pending
+Contrato: rollback: Revertir el commit; solo agrega lecturas.. Status: done
 
 #### S1.T3 — Implementar la operación recalcularProyecciones(consultaId, executor), que deriva casa_actual, paso_actual_id, plan_actual_id y fase desde pasos, revisiones vigentes y planes (el plan no sustituido más reciente; null si espera reparación o si es un Cierre) y las escribe dentro de la transacción recibida, sin abrir una propia, para que HU-06-07 la reutilice.
-Contrato: rollback: Revertir el commit; las proyecciones se recalculan desde los datos base.. Status: pending
+Contrato: rollback: Revertir el commit; las proyecciones se recalculan desde los datos base.. Status: done
 
 #### S1.T4 — Escribir test/motor/proyecciones/resumen_rastro_test.dart con Drift en memoria: casos de REQ-01 (borrador, esperando_conexion con validar_kuberani_inicio, día 2 de 3, Retroceso 8 a 3 anillo 2 con tarea vacía, QA-06-08-01), REQ-02 (1,3,3; Casa 3 anillo 2; revisión sustituida; rehecho omitido) y REQ-04 (QA-06-08-02 recálculo tras borrar a mano, reapertura de una base en archivo temporal con resumen igual).
-Contrato: rollback: Eliminar el archivo de test.. Status: pending
+Contrato: rollback: Eliminar el archivo de test.. Status: done
 
 #### S2.T1 — Implementar la lectura del listado de Inicio por estado sobre el índice de HU-06-01, solo con columnas de consulta (proyecciones), sin joins a paso_recorrido por consulta y excluyendo descartadas de las activas (lectura acotada O(consultas)).
 Contrato: rollback: Revertir el commit; solo agrega una lectura.. Status: pending
@@ -128,7 +127,49 @@ Contrato: rollback: Revertir el commit de docs.. Status: pending
 
 #### S4.T4 — Escribir test/motor/correccion/ramas_rechazos_test.dart: QA-06-07-02 (no última tirada), QA-06-07-04 (vista previa obsoleta, sin cambios en revisiones, planes ni unidades), consulta completada con el error de HU-06-15, 4 a 6 corregido a D12=3 que da Retroceso 4 a 3, D12=12 que da Cierre y completada, QA-06-07-05 (Retroceso a Avance y Retroceso a Retroceso) y QA-06-08-04 (providers de Inicio y rastro con un único estado confirmado y tarea vacía). Verificar además que git diff de .docs-baseline.txt queda vacío.
 Contrato: rollback: Eliminar el archivo de test.. Status: pending
-
 ## Cambios al modelo de datos
 
 Ninguno.
+
+## Sessions
+
+### Session 1 · T2 · continue
+
+**Tasks:**
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
+
+**Gate (auto)**: Pasa test/motor/proyecciones/resumen_rastro_test.dart con el resumen (borrador, esperando_conexion, día 2 de 3, Retroceso con anillo y fuerza) y el rastro (1,3,3; Casa 3 anillo 2; omite rehecho y sustituidas), y el recálculo reproduce las proyecciones borradas a mano.
+
+### Session 2 · T2 · open
+
+**Tasks:**
+- [ ] S2.T1
+- [ ] S2.T2
+- [ ] S2.T3
+- [ ] S2.T4
+
+**Gate (auto)**: Pasa test/motor/proyecciones/inicio_reactivo_test.dart: el EXPLAIN QUERY PLAN con 50 consultas usa el índice sin SCAN de paso_recorrido, las descartadas no aparecen y el provider del resumen emite 'día 3 de 3' al marcar un día desde otro repositorio, sin emitir tras un rollback.
+
+### Session 3 · T2 · open
+
+**Tasks:**
+- [ ] S3.T1
+- [ ] S3.T2
+- [ ] S3.T3
+
+**Gate (auto)**: Pasa test/motor/correccion/supersede_test.dart: la vista previa de 4 a 6 con D12=4 devuelve Permanencia frente a Avance sin cambiar ningún volcado de tablas, y la aceptación deja la revisión 2 vigente, la 1 sustituida, el plan sustituido y enlazado, el evento_plan y las proyecciones corregidas; con una falla inyectada, la revisión 1 sigue vigente.
+
+### Session 4 · T2 · open
+
+**Tasks:**
+- [ ] S4.T1
+- [ ] S4.T2
+- [ ] S4.T3
+- [ ] S4.T4
+
+**Gate (auto)**: Pasa test/motor/correccion/ramas_rechazos_test.dart: el Avance de 4 a 6 corregido a D12=3 queda como Retroceso de 4 a 3 en espera sin plan, el corregido a D12=12 deja la consulta completada, el Retroceso corregido a Avance queda en acciones_en_curso, los rechazos tipados no escriben nada y los providers emiten un único estado confirmado (QA-06-08-04); pnpm run docs:check en verde.
+
+### Session 5 · T0 · open
