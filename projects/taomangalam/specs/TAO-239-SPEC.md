@@ -288,7 +288,7 @@ Contrato: rollback: Eliminar los archivos de evidencia generados; no hay cambios
 
 **Gate (auto)**: ["Revisar la sesion con los tests del servidor en server/src/test/manifiesto (log de respuestas 200 y 304 sin cuerpo ni token; Supertest de impersonacion null y modoDemostracion false con validacion contra el schema del contrato) y los tests de app/test/manifiesto, con salida ejecutada.", "Revisar que la documentacion de HU-03a-08, la fila manifiesto_acceso_version y DEC-161 quedaron coherentes; los archivos editados no tienen issues en markdownlint, Vale, Lychee ni cspell (los errores globales de cspell en docs/legal son preexistentes de GH-94 y se reportan aparte).", "Evidencia automatica reunida: manifiesto de ejemplo de una cuenta de dispositivo capturado de una respuesta real. La prueba manual en simulador con servidor local y luego sin red es una verificacion humana diferida (humanChecks defer): queda registrada como pendiente con su motivo y no bloquea el cierre de la sesion."]
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
 
 **Gate (strong)**: QA humana en smartphone y tablet de los casos QA-03a-08-01, QA-03a-08-02 y QA-03a-08-04 (REQ-11): el panel de desarrollo muestra version, origen y capacidades correctos en cada escenario. Sin tareas de codigo.
 
