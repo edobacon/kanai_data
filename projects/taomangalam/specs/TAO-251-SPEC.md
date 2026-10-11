@@ -82,13 +82,13 @@ Contrato: rollback: Revertir el commit de la task; sin migración ni datos que c
 Contrato: rollback: Revertir el commit del archivo de test.. Status: done
 
 #### S3.T1 — Implementar el handler de cierre (resultado = cierre) para la unidad de trabajo compartida, con contexto transaccional y consulta lista. Crea el paso tipo = cierre y la tirada_revision (casa_destino = 12, anillo_destino y fuerza_kipot nulos) y delega a una estrategia de cierre inyectable cuyo default es el cierre mínimo M1a: estado y fase completada, casa_actual = 12, paso_actual_id en el cierre, plan_actual_id nulo y closed_at = momento del paso. Devuelve un resumen tipado completado. El rechazo de registro y de corrección sobre consultas completadas se resuelve con la política compartida real de HU-06-02 y un código estable, y se deduplica por clave de operación.
-Contrato: rollback: Revertir el commit de la task; sin migración ni datos que compensar.. Status: pending
+Contrato: rollback: Revertir el commit de la task; sin migración ni datos que compensar.. Status: done
 
 #### S3.T2 — Si se actualizan docs del ticket (p. ej. criterios en docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md), dejarlos compliant con el linter de docs sin tocar .docs-baseline.txt.
-Contrato: rollback: Revertir el commit de docs.. Status: pending
+Contrato: rollback: Revertir el commit de docs.. Status: done
 
 #### S3.T3 — Tests del handler de cierre sobre Drift real, con consultas y pasos válidos sembrados y sin depender de HU-06-04 ni de HU-06-08 (archivo propuesto: app/test/dominio/consulta_cierre_test.dart): Casa 7 con D12 12, D8 4 y D4 2; QA-06-15-01; Casa 11 como borde; QA-06-15-02 a 06 (fallo simulado, corrección rechazada, reapertura de la base en archivo temporal con la misma clave, estrategia inyectada y estrategia por defecto); y repositorio por estado activa o completada.
-Contrato: rollback: Revertir el commit del archivo de test.. Status: pending
+Contrato: rollback: Revertir el commit del archivo de test.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -111,12 +111,12 @@ Ninguno.
 
 **Gate (auto)**: En app/test, el test de inicio pasa: un borrador queda activo en Casa 1 con paso de inicio y plan vigente real de HU-06-05; las esperas sin conexión y sin kuberani fijan fase y motivo; el reintento inicia, y repetir el resultado no duplica paso ni plan.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: En app/test, el test del handler de cierre pasa: consulta completada en Casa 12 con closed_at del paso, rollback ante fallo, rechazo de registro y corrección, idempotencia tras reabrir la base y estrategia inyectada usada sin cambios; pnpm run docs:check queda en verde.
 
