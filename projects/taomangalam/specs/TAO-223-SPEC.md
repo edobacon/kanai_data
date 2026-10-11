@@ -164,16 +164,16 @@ Contrato: rollback: No hay cambios de código; si el chequeo falla, corregir el 
 Contrato: rollback: Revertir el commit de la corrección de rutas con git revert; no se borran versiones, hashes ni evidencia.. Status: done
 
 #### S2.T1 — Crear el registro de aprobaciones de privacidad en docs/legal/aprobaciones/privacidad-v1.0.md (crear el directorio docs/legal/aprobaciones/ si no existe; NO usar la ruta obsoleta docs/legal/aprobaciones-privacidad-v1.0.md) con la estructura mínima de la Adenda 2 definida en REQ-05: encabezado con documento, versión 1.0, hash SHA-256 y vigencia (o marcador provisional); secciones por revisor (Asesoría legal con línea UE/EEE, Producto, Operación/release con región de despliegue); y comparación final de hash fuente vs app/assets vs server/legal vs staging.
-Contrato: rollback: git rm -f docs/legal/aprobaciones/privacidad-v1.0.md (no borrar el directorio docs/legal/aprobaciones/: ya existe por terminos-v1.0.md).. Status: pending
+Contrato: rollback: git rm -f docs/legal/aprobaciones/privacidad-v1.0.md (no borrar el directorio docs/legal/aprobaciones/: ya existe por terminos-v1.0.md).. Status: done
 
 #### S2.T2 — Comprobar que las copias app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md coinciden con la fuente docs/legal/privacidad-v1.0.md bajo la regla de hash vigente (confirmada en S1.T1), corriendo cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs. El resultado de esa comparación se anota en la sección final de docs/legal/aprobaciones-privacidad-v1.0.md. Sin cmp byte a byte, sin scripts nuevos y sin ejecutar legal:registrar.
-Contrato: rollback: Revertir la entrada de comparación en docs/legal/aprobaciones-privacidad-v1.0.md con git checkout.. Status: pending
+Contrato: rollback: Revertir la entrada de comparación en docs/legal/aprobaciones-privacidad-v1.0.md con git checkout.. Status: done
 
 #### S2.T3 — Dejar el caso de revisión del contraste con docs/product/tecnologia/23_observabilidad_logs_debug_y_costos.md sección 3 y DEC-197 como sección '## Contraste con el redactor de logs' dentro de docs/legal/aprobaciones-privacidad-v1.0.md, con cada dato que la política declara excluido de logs y su resultado (coincide / contradicción).
-Contrato: rollback: Descartar el caso de revisión; sin cambios en el texto de la política salvo correcciones puntuales revertibles con git checkout.. Status: pending
+Contrato: rollback: Descartar el caso de revisión; sin cambios en el texto de la política salvo correcciones puntuales revertibles con git checkout.. Status: done
 
 #### S2.T4 — Leer docs/legal/aprobaciones/terminos-v1.0.md (solo lectura) y compararlo con docs/legal/aprobaciones/privacidad-v1.0.md. La estructura mínima de la Adenda 2 prevalece sobre el registro de términos de TAO-222: si hay diferencias de estructura se REPORTAN en las notas de la tarea; no se copian al registro de privacidad ni se alinea hacia abajo el de privacidad. No modificar el archivo de términos.
-Contrato: rollback: No requiere reversión: es una comprobación de solo lectura; si se ajusta el registro, git checkout -- docs/legal/aprobaciones/privacidad-v1.0.md.. Status: pending
+Contrato: rollback: No requiere reversión: es una comprobación de solo lectura; si se ajusta el registro, git checkout -- docs/legal/aprobaciones/privacidad-v1.0.md.. Status: done
 
 #### S3.T1 — Incorporar al texto docs/legal/privacidad-v1.0.md la identidad legal del responsable del tratamiento y la región de despliegue de Railway (solo con la confirmación escrita de Operación/release y asesoría legal), fijar la vigencia real en vigente_desde, recalcular el hash del archivo completo con la regla confirmada en S1.T1, copiar la fuente a app/assets/legal/privacidad-v1.0.md y server/legal/privacidad-v1.0.md y anotar el hash en docs/legal/aprobaciones/privacidad-v1.0.md, todo en el mismo commit. Salvaguardas: NO inventar transferencias internacionales (declarar solo lo confirmado por escrito) y NO consultar ni escribir en staging ni ejecutar legal:registrar.
 Contrato: rollback: Revertir el commit de la tarea; vuelven el marcador PENDIENTE-VIGENCIA y el hash previo en la fuente, las copias y el registro.. Status: pending
@@ -554,13 +554,13 @@ Ninguno.
 
 **Gate (auto)**: Redaccion de privacidad v1.0: docs/legal/privacidad-v1.0.md reemplazado segun Adenda 1 con todos los apartados del alcance (datos con cuenta de dispositivo, datos con cuenta completa, analitica seudonima por region, proveedores, retencion y eliminacion, accesos administrativos) y los plazos 7 dias, 90 dias y 12 meses; resumen breve para V-51 coherente; copias app/assets/legal y server/legal con el mismo hash; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: La fuente y las copias de app/assets/legal/ y server/legal/ de privacidad-v1.0.md tienen el mismo hash según la regla confirmada en la primera tarea, los tests de hash de app y servidor pasan y el registro docs/legal/aprobaciones/privacidad-v1.0.md está creado (estado pendiente, versión, hash, fecha y observaciones), pendiente de las firmas externas. legal:registrar no se ejecuta.
 
