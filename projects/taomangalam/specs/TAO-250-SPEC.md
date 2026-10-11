@@ -79,19 +79,19 @@ Contrato: rollback: git revert del commit: el generador es nuevo, no tiene consu
 Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S2.T1 — Extender el generador para la permanencia (DEC-028 y DEC-134). Antepone las acciones de retiro o quema del kuberani (confirmación sin prueba, DEC-059) y de renovación del kuberani (uso de producto con motivo kuberani_renovacion) a la energización de la casa, y registra en el historial viene_de_reparacion=false (M1a).
-Contrato: rollback: git revert del commit: se recupera el generador solo de inicio y avance.. Status: pending
+Contrato: rollback: git revert del commit: se recupera el generador solo de inicio y avance.. Status: done
 
 #### S2.T1.1 — Generación de las dos acciones de confirmación con orden 1 y 2, y desplazamiento de la energización a orden 3 en adelante. El flag de reparación se persiste donde lo defina tecnologia/20 (ver 'Datos a confirmar').
-Contrato: rollback: git revert del commit.. Status: pending
+Contrato: rollback: git revert del commit.. Status: done
 
 #### S2.T1.2 — Operación de dominio mínima para confirmar un cumplimiento: solo valida que la acción esté habilitada y rechaza las acciones diarias mientras la renovación no esté confirmada. El conteo de días queda fuera, porque es de HU-06-06.
-Contrato: rollback: git revert del commit.. Status: pending
+Contrato: rollback: git revert del commit.. Status: done
 
 #### S2.T2 — Handler de confirmaciones y del resultado de la renovación. Confirma el retiro o la quema. Ante un resultado exitoso de EP-11, completa la renovación y habilita la práctica diaria. Ante sin_conexion, deja el plan y la consulta en esperando_conexion con motivo_bloqueo=validar_kuberani_renovacion. Si no hay unidad, los deja en esperando_material con motivo_bloqueo=kuberani_renovacion. En un reintento exitoso, vuelve a activo y acciones_en_curso con el motivo nulo. Cada transición agrega un evento_plan con fecha local y zona. Las esperas no crean ciclos ni eventos de activación de días. El motor recibe solo el resultado, nunca códigos.
-Contrato: rollback: git revert del commit: el handler es nuevo y no hay datos que compensar.. Status: pending
+Contrato: rollback: git revert del commit: el handler es nuevo y no hay datos que compensar.. Status: done
 
 #### S2.T3 — Tests de permanencia y esperas con resultados simulados de EP-11. Casos: el orden en Casa 3; las casas 1 a 11 en permanencia; QA-06-05-02 (rechazo antes de la renovación y aceptación después); sin_conexion con el motivo validar_kuberani_renovacion; un reintento exitoso que vuelve a activo y acciones_en_curso con el motivo nulo; sin material, con kuberani_renovacion y las acciones conservadas; las esperas no agregan eventos de activación; los eventos de material agregado con local_date y timezone_id; viene_de_reparacion=false.
-Contrato: rollback: git revert del commit de tests.. Status: pending
+Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S3.T1 — Evaluación de la finalización: si todas las acciones obligatorias están completas, en la misma transacción deja el plan en completado, la consulta en fase=lista_para_tirada y agrega un evento de cumplimiento con fecha local y zona. Si no, mantiene acciones_en_curso. HU-06-06 la invocará al completar la última acción diaria. El bloqueo se delega en la política compartida de habilitación de tirada de HU-06-02 (TAO-249), sin redefinir el error tipado.
 Contrato: rollback: git revert del commit: la evaluación es nueva y la política de HU-06-02 queda intacta.. Status: pending
@@ -116,14 +116,14 @@ Ninguno.
 
 **Gate (auto)**: El test QA-06-05-01/04 pasa: el inicio en Casa 1 y el avance a Casa 6 generan un plan con acciones del catálogo, plan_actual_id, fase acciones_en_curso y evento de activación con local_date y timezone_id; un fallo forzado al insertar acciones no deja filas.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: El test de permanencia en Casa 3 muestra el orden retiro, renovación y energización. QA-06-05-02 rechaza el cumplimiento antes de la renovación, y los resultados simulados de EP-11 (sin conexión, sin material y reintento exitoso) dejan los estados y motivos esperados.
 
