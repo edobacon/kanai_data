@@ -91,13 +91,13 @@ Contrato: rollback: git revert del commit; sin migración.. Status: done
 Contrato: rollback: git revert del commit de tests.. Status: done
 
 #### S3.T1 — Orquestador de la entrada pública registrarTirada({consultaId, pasoUlid, d12, d8, d4, localDate, timezoneId}). Abre una sola unidad de trabajo de HU-06-02 y en orden valida rangos, chequea idempotencia, aplica las guardas (incluida la de reparación pendiente), clasifica y despacha una sola vez. Avance y Permanencia: registro de la sesión 2 más el generador de plan de HU-06-05 (fase acciones_en_curso, plan_actual_id). Retroceso: handler de la sesión 1. Cierre: handler de HU-06-15. Sin escrituras duplicadas, sin red ni unidades remotas y un único commit. Requiere #150 y #151 integrados en epic/EP-06.
-Contrato: rollback: git revert del commit; los handlers de las sesiones 1 y 2 siguen funcionando por sí solos.. Status: pending
+Contrato: rollback: git revert del commit; los handlers de las sesiones 1 y 2 siguen funcionando por sí solos.. Status: done
 
 #### S3.T2 — Actualizar solo si hace falta el estado de HU-06-14 y HU-06-04 en docs/backlog/EP-06_motor_local_de_dominio_y_persistencia.md y docs/PLAN.md, dejándolos compliant con el linter de docs sin tocar .docs-baseline.txt.
-Contrato: rollback: git revert del commit de docs.. Status: pending
+Contrato: rollback: git revert del commit de docs.. Status: done
 
 #### S3.T3 — Tests de integración por la entrada pública sobre Drift: QA-06-04-05 (Avance con plan y acciones_en_curso; Permanencia con plan de permanencia; Retroceso sin plan con anillo y fuerza; Cierre completada; 1 paso y 1 revisión cada uno); fallo inyectado en el generador de plan con rollback total (consulta, paso y revisión iguales a antes); reintento público con el mismo ULID tras Retroceso; relectura de las cuatro clases tras cerrar y reabrir la base; regresión de checks_test y migration_test.
-Contrato: rollback: git revert del commit de tests.. Status: pending
+Contrato: rollback: git revert del commit de tests.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -123,12 +123,12 @@ Ninguno.
 
 **Gate (auto)**: Tests de clasificador y registro que pasan: imprimen 'clasificacion: 132 combinaciones', rechazan d8 = 9 nombrando D8, rechazan las fases no admitidas y muestran un solo paso ante un reintento con el mismo ULID o un conflicto con dados distintos.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Test del orquestador público que pasa: registra Avance, Permanencia, Retroceso y Cierre cada uno en un solo commit, revierte todo si falla el plan del Avance y la relectura tras reabrir la base coincide; pnpm run docs:check en verde si se tocaron docs.
 
