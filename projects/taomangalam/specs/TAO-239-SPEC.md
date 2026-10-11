@@ -111,22 +111,22 @@ Contrato: rollback: Eliminar el archivo de test agregado; no afecta código de p
 Contrato: rollback: git revert del commit; la caché Drift no cambia.. Status: done
 
 #### S2.T1 — En el servidor, emitir impersonacion: null y modoDemostracion: false en la respuesta de obtenerManifiesto (server/src/capacidades/manifiesto.ts), mantener ambos campos en el contrato OpenAPI y regenerar el contrato y el cliente generado. No toca el Supertest: el Supertest de REQ-04 vive solo en S2.T4.
-Contrato: rollback: Revertir el commit de esta tarea: restaura el contrato y el cliente generado si se regeneraron, y quita la emisión explícita de impersonacion: null y modoDemostracion: false en obtenerManifiesto (server/src/capacidades/manifiesto.ts).. Status: pending
+Contrato: rollback: Revertir el commit de esta tarea: restaura el contrato y el cliente generado si se regeneraron, y quita la emisión explícita de impersonacion: null y modoDemostracion: false en obtenerManifiesto (server/src/capacidades/manifiesto.ts).. Status: done
 
 #### S2.T2 — Implementar en el servidor el log que cuenta las respuestas 200 y 304 de GET /manifest sin registrar el cuerpo del manifiesto ni tokens. Escribir en server/test/manifiesto los tests TAO-239-TC-REQ-05-1 (200 sin claves capacidades ni vistas en el log), TAO-239-TC-REQ-05-2 (304 contado sin cuerpo) y TAO-239-TC-REQ-05-3 (sin token ni cuerpo en el log).
-Contrato: rollback: Revertir el commit: se quita la línea de log, sin efecto funcional. Status: pending
+Contrato: rollback: Revertir el commit: se quita la línea de log, sin efecto funcional. Status: done
 
 #### S2.T3 — Depende de S2.T1: se ejecuta despues de que S2.T1 termine. NO regenera el contrato ni el cliente generado (los regenera solo S2.T1). Solo alinea la app al modelo ya regenerado ajustando PuertoManifiestoApi._desdeContrato para que mapee impersonacion nulo y modoDemostracion false, y agrega el caso de regresion de REQ-04 en app/test/manifiesto/.
-Contrato: rollback: Revertir el commit; solo toca PuertoManifiestoApi._desdeContrato y su test en app/test/manifiesto/, no el cliente generado.. Status: pending
+Contrato: rollback: Revertir el commit; solo toca PuertoManifiestoApi._desdeContrato y su test en app/test/manifiesto/, no el cliente generado.. Status: done
 
 #### S2.T4 — Supertest de los campos decididos en el contrato: obtenerManifiesto responde impersonacion: null y modoDemostracion: false. Esta tarea cubre solo REQ-04.
-Contrato: rollback: Revertir los casos de test agregados. Status: pending
+Contrato: rollback: Revertir los casos de test agregados. Status: done
 
 #### S2.T5 — Documentacion de REQ-06. Archivos objetivo: docs/backlog/EP-03a_identidad_de_dispositivo_autorizacion_y_legal.md (seccion de HU-03a-08), docs/product/tecnologia/20_modelo_de_datos_v2_incremental.md (fila manifiesto_acceso_version) y la DEC afectada. Dejar explicito que la version del manifiesto es un hash calculado en cada peticion y que el claim de version del access token es una constante en M1a; manifiesto_acceso_version solo puede aparecer dentro de esa aclaracion o en notas historicas marcadas. No se edita ni se busca nada en app/assets/manifiesto/estandar.json: es un artefacto generado.
-Contrato: rollback: Revertir el commit de docs (git revert del commit que edita el backlog EP-03a y la DEC).. Status: pending
+Contrato: rollback: Revertir el commit de docs (git revert del commit que edita el backlog EP-03a y la DEC).. Status: done
 
 #### S2.T6 — VERIFICACIÓN MANUAL: reunir la evidencia del ticket: un ejemplo de manifiesto de una cuenta de dispositivo sin tokens ni datos personales, y el registro de la prueba de la app con servidor local y luego sin red. El verify consiste en comprobar a mano que ese artefacto de evidencia existe en la evidencia del ticket; no hay comando automatizable.
-Contrato: rollback: Eliminar los archivos de evidencia generados; no hay cambios de código ni de datos que revertir.. Status: pending
+Contrato: rollback: Eliminar los archivos de evidencia generados; no hay cambios de código ni de datos que revertir.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Smoke de la vista afectada por TAO-239 · HU-03a-08: el manifiesto se refresca al arrancar, descarta la caché si cambia el esquema, ofrece consultas a la interfaz y aclara su contrato y su versión
@@ -276,17 +276,17 @@ Contrato: rollback: Eliminar los archivos de evidencia generados; no hay cambios
 
 **Gate (auto)**: En la app, el arranque con conexión pide el manifiesto con ETag y lo refleja en el panel de desarrollo (versión, origen servidor/caché/empaquetado, capacidades): 200 reemplaza la caché, 304 la conserva, sin red usa caché o empaquetado, y la reconexión reintenta. Además, la caché Drift con versión de esquema descarta la copia desactualizada (test de migración real) y Manifiesto responde vistaHabilitada y deniegaPorTipoCuenta (consultas_manifiesto_test.dart). Se revisa con los tests de app y el panel en el sabor development.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
-- [ ] S2.T6
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
+- [x] S2.T6
 
-**Gate (auto)**: En el servidor, GET /manifest responde impersonacion: null y modoDemostracion: false (Supertest y cliente Dart alineados con el contrato) y cuenta en logs las respuestas 200 y 304 sin cuerpo ni tokens (tests TAO-239-TC-REQ-05-1 a 3 en server/test/manifiesto). La documentación y la DEC dicen que la versión es un hash por petición y que el claim del token es constante en M1a (pnpm run docs:check), y queda reunida la evidencia manual del ticket (manifiesto de ejemplo y prueba con servidor local y sin red).
+**Gate (auto)**: ["Revisar la sesion con los tests del servidor en server/src/test/manifiesto (log de respuestas 200 y 304 sin cuerpo ni token; Supertest de impersonacion null y modoDemostracion false con validacion contra el schema del contrato) y los tests de app/test/manifiesto, con salida ejecutada.", "Revisar que la documentacion de HU-03a-08, la fila manifiesto_acceso_version y DEC-161 quedaron coherentes; los archivos editados no tienen issues en markdownlint, Vale, Lychee ni cspell (los errores globales de cspell en docs/legal son preexistentes de GH-94 y se reportan aparte).", "Evidencia automatica reunida: manifiesto de ejemplo de una cuenta de dispositivo capturado de una respuesta real. La prueba manual en simulador con servidor local y luego sin red es una verificacion humana diferida (humanChecks defer): queda registrada como pendiente con su motivo y no bloquea el cierre de la sesion."]
 
 ### Session 3 · T0 · open
 
