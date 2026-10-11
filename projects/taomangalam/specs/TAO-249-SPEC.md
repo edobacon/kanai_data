@@ -130,31 +130,31 @@ Contrato: rollback: Revertir por commit.. Status: done
 Contrato: rollback: Revertir el commit; nadie los consume todavia.. Status: done
 
 #### S3.T1 — Crear los providers Riverpod de recorrido en `features/recorrido/application/` y de practica en `features/practica/application/`, que exponen los repositorios y las lecturas reactivas como `AsyncValue`; consumen `appDatabaseProvider` con `ref.watch` sin moverlo.
-Contrato: rollback: Revertir el commit, sin migración involucrada.. Status: pending
+Contrato: rollback: Revertir el commit, sin migración involucrada.. Status: done
 
 #### S3.T2 — Definir solo el puerto de validación de EP-11: contrato `ResultadoValidacionUnidad = {unidad, evento}` con deduplicación por la clave `unidad.id + evento.id` y resultados inyectables en pruebas. No implementa ni duplica la política de tirada, que vive únicamente en S2.T6.
-Contrato: rollback: Revertir el commit. Nadie consume esto todavía.. Status: pending
+Contrato: rollback: Revertir el commit. Nadie consume esto todavía.. Status: done
 
 #### S3.T3 — Crear la regla de custom_lint en `app/custom_lint/lib/src/` (junto a las dos existentes) con dos detecciones: (a) archivo bajo `presentation/` que importa `package:drift`; (b) clase que extiende `Widget` (StatelessWidget, StatefulWidget, etc.) fuera de `presentation/` en un archivo que importa `package:drift`. El diagnóstico nombra el archivo. Una clase no-Widget en `application/` que importa drift no produce diagnóstico. Registrar la regla en el plugin.
-Contrato: rollback: Revertir el commit: quitar la regla, su registro, el paso de CI y el bloque de docs.. Status: pending
+Contrato: rollback: Revertir el commit: quitar la regla, su registro, el paso de CI y el bloque de docs.. Status: done
 
 #### S3.T4 — Escribir los tests de la regla no-Drift (casos (a), (b) y el negativo, cada uno con su propio test case), `app/test/data/repositorio_practica_test.dart` (coherencia paso-revisión como segunda barrera) y `app/test/data/puerto_validacion_ep11_test.dart` (contrato `ResultadoValidacionUnidad = {unidad, evento}` y deduplicación por `unidad.id + evento.id`). La creación de `politica_tirada_test.dart` ya no va aquí: se hace en S2.T6.
-Contrato: rollback: Revertir los tests y fixtures nuevos.. Status: pending
+Contrato: rollback: Revertir los tests y fixtures nuevos.. Status: done
 
 #### S3.T6 — Cablear la regla de no-Drift (REQ-10) en el workflow de CI resuelto al inicio de S3 (S3.T8), sin condicionales: el job de análisis ejecuta custom_lint y falla nombrando el archivo cuando se viola la regla. Documentar el comando en `docs/development/commands.md` (uso, parámetros y un ejemplo de la prueba de migración con snapshots y de la verificación de no-Drift en `presentation/`) junto con la nota de que no existe comando de generación de código Drift porque el esquema es SQL explícito (REQ-12), dejando los docs compliant con el linter sin tocar `.docs-baseline.txt` (REQ-13). Los checks de docs (grep de `commands.md`, git diff del baseline y `pnpm run docs:check`) se repiten a propósito en S3.T3 y no se quitan de ahí.
-Contrato: rollback: Revertir los cambios de docs y del cableado de CI.. Status: pending
+Contrato: rollback: Revertir los cambios de docs y del cableado de CI.. Status: done
 
 #### S3.T7 — Registrar la evidencia manual en dispositivo de `app/integration_test/persistencia_reinicio_test.dart` junto a QA-06-02-01 (reinicio real en modo avión en un teléfono y una tablet, con salida y video corto). Esta prueba no corre en CI ni en el gate local. No se verifica ningún estado de PR: el flujo DEC-239 no abre PR por historia.
-Contrato: rollback: Revertir la edición del criterio y la nota de evidencia manual.. Status: pending
+Contrato: rollback: Revertir la edición del criterio y la nota de evidencia manual.. Status: done
 
 #### S3.T8 — Resolver el workflow de CI al inicio de S3: confirmar primero que `pnpm run docs:check` corre limpio en la línea base (antes de modificar docs) y anotar el resultado. Luego localizar en `.github/workflows/` el workflow que corre el análisis de la app (flutter analyze) y definir en él el paso que ejecuta custom_lint, de modo que las reglas de `app/custom_lint/lib/src/` (incluida la de no-Drift de REQ-10) fallen el CI. Dejar escrito el nombre del workflow y del job para que S3.T6 lo cablee sin condicionales.
-Contrato: rollback: Revertir el commit que modifica el workflow; no hay datos que compensar.. Status: pending
+Contrato: rollback: Revertir el commit que modifica el workflow; no hay datos que compensar.. Status: done
 
 #### S3.T9 — Crear los repositorios por agregado de recorrido y practica en `app/lib/data/` con las mismas reglas de REQ-05: relleno automatico de `updated_at`, `version + 1`, `device_origin_id` y `espacio_id`; borrado logico por `deleted_at` con lectura explicita de borrados; entidades o DTO inmutables. El repositorio de practica valida la coherencia paso-revision como segunda barrera, antes del trigger de SQLite: la revision debe pertenecer al mismo paso, y se admite plan sin revision solo para los pasos `inicio`, `retorno_casa_1` y `retoma`. No agregar nada mas alla de REQ-05.
-Contrato: rollback: Revertir el commit; nadie los consume todavia.. Status: pending
+Contrato: rollback: Revertir el commit; nadie los consume todavia.. Status: done
 
 #### S3.T10 — Crear `app/integration_test/persistencia_reinicio_test.dart`, prueba de integracion que crea una consulta, cierra y reabre la base y comprueba que la consulta persiste con los mismos valores. No corre en CI ni en el gate local porque requiere dispositivo; su evidencia es manual en dispositivo y se registra junto a QA-06-02-01 (ver S3.T7).
-Contrato: rollback: Borrar el archivo de integration_test.. Status: pending
+Contrato: rollback: Borrar el archivo de integration_test.. Status: done
 ## Cambios al modelo de datos
 
 - tipo: alter_additive | objetos: plan_practica.paso_id | destructivo: no | tarea: S1.T1 | rollback: Solo hacia adelante: una migración v5 compatible que deje de usar la columna, conservando IDs, identidad, cola legal y recorrido. No se revierte de forma destructiva una migración aplicada.
@@ -307,18 +307,18 @@ Contrato: rollback: Borrar el archivo de integration_test.. Status: pending
 
 **Gate (auto)**: Los tests de repositorios en base en memoria están en verde: el comando que falla en la tercera fila no deja filas, `version` sube y `updated_at` cambia, los borrados quedan fuera del listado, y el provider de consulta emite el título nuevo sin recargar. Se ve el catálogo de 10 errores con sus códigos y `politica_tirada_test.dart` en verde con un test por cada combinación de la tabla de REQ-09.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
-- [ ] S3.T4
-- [ ] S3.T6
-- [ ] S3.T7
-- [ ] S3.T8
-- [ ] S3.T9
-- [ ] S3.T10
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
+- [x] S3.T4
+- [x] S3.T6
+- [x] S3.T7
+- [x] S3.T8
+- [x] S3.T9
+- [x] S3.T10
 
 **Gate (auto)**: Los repositorios de recorrido y práctica están en verde, con la segunda barrera paso-revisión. El puerto EP-11 deduplica por `unidad.id + evento.id`. Un widget fixture que importa drift en `presentation/` hace fallar el análisis local nombrando el archivo, y `commands.md` documenta los comandos sin tocar el baseline de docs. La comprobación en CI queda para el PR final de la épica (DEC-239).
 
