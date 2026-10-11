@@ -108,13 +108,13 @@ Contrato: rollback: Revertir el commit; los comandos vuelven a su escritura prev
 Contrato: rollback: Eliminar el archivo de test.. Status: done
 
 #### S3.T1 — Implementar la vista previa pura vistaPreviaCorreccion(consultaId, pasoId, dadosCorregidos): calcula el movimiento y el destino corregidos con el motor de resultado existente y las acciones del plan que generaría HU-06-05 sin persistir, frente al actual, e incluye la advertencia unidadNoDevuelta si corrige una Permanencia con el kuberani renovado validado. Sin escrituras: solo lecturas, fuera de transacción de escritura.
-Contrato: rollback: Revertir el commit; operación nueva sin escrituras.. Status: pending
+Contrato: rollback: Revertir el commit; operación nueva sin escrituras.. Status: done
 
 #### S3.T2 — Implementar la operación específica de supersede (fuera del DAO append-only genérico, que mantiene la prohibición de update y delete): en una transacción, validar motivo_correccion_tipo y el texto si es 'otro', insertar tirada_revision con numero_revision+1, sustituye_revision_id, corregida_at y corregida_por_cuenta_id null en el espacio local, cambiar solo estado='sustituida' de la anterior, apuntar paso.revision_vigente_id a la nueva, marcar el plan anterior sustituido con sustituido_por_plan_id hacia el plan nuevo de HU-06-05 (con sustituye_plan_id), conservar cumplimientos, insertar evento_plan de sustitución con fecha local, zona y aceptación de la advertencia, y llamar a recalcularProyecciones. No toca unidades ni la cola hacia el servidor, y el texto libre no va a logs.
-Contrato: rollback: Revertir el commit; operación nueva y la base efímera de prueba se descarta.. Status: pending
+Contrato: rollback: Revertir el commit; operación nueva y la base efímera de prueba se descarta.. Status: done
 
 #### S3.T3 — Escribir test/motor/correccion/supersede_test.dart: vista previa 4 a 6 con D12=4 y volcado idéntico tras cancelar, advertencia de kuberani, aceptación con revisión 2, plan sustituido, evento y proyecciones, validación de 'otro' sin texto y sin tipo, revisión 3, espacio sin cuenta, cumplimientos conservados, QA-06-07-01, QA-06-07-03 con falla inyectada, DAO genérico que sigue prohibiendo update y delete, campos de la sustituida intactos y logs sin el motivo libre.
-Contrato: rollback: Eliminar el archivo de test.. Status: pending
+Contrato: rollback: Eliminar el archivo de test.. Status: done
 
 #### S4.T1 — Agregar al supersede las validaciones previas dentro de la transacción: revalidar que el paso es el último de la consulta (numero_paso máximo no rehecho), que la revisión vigente coincide con la de la vista previa (si no, error de última tirada cambiada) y que la consulta no está completada (error tipado de HU-06-15). Todos los rechazos ocurren antes de cualquier escritura.
 Contrato: rollback: Revertir el commit; el supersede vuelve a no revalidar.. Status: pending
@@ -153,12 +153,12 @@ Ninguno.
 
 **Gate (auto)**: Pasa test/motor/proyecciones/inicio_reactivo_test.dart: el EXPLAIN QUERY PLAN con 50 consultas usa el índice sin SCAN de paso_recorrido, las descartadas no aparecen y el provider del resumen emite 'día 3 de 3' al marcar un día desde otro repositorio, sin emitir tras un rollback.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: Pasa test/motor/correccion/supersede_test.dart: la vista previa de 4 a 6 con D12=4 devuelve Permanencia frente a Avance sin cambiar ningún volcado de tablas, y la aceptación deja la revisión 2 vigente, la 1 sustituida, el plan sustituido y enlazado, el evento_plan y las proyecciones corregidas; con una falla inyectada, la revisión 1 sigue vigente.
 
