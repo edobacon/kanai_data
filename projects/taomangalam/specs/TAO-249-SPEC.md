@@ -112,22 +112,22 @@ Contrato: rollback: No hay cambios de código que revertir: si el dev no aprueba
 Contrato: rollback: Eliminar `app/test/drift/migracion_v4_test.dart`; no toca código de producción ni snapshots existentes.. Status: done
 
 #### S2.T1 — Crear el catálogo único de errores tipados en `app/lib/data/` (por ejemplo `errores_dominio.dart`) con una sealed class y los códigos estables `transicion_invalida`, `entidad_inexistente`, `validacion`, `persistencia`, `reparacion_pendiente`, `plan_incompleto`, `consulta_completada`, `cierre_en_curso`, `etapa_ya_resuelta` y `conflicto_idempotencia`, junto con el traductor de `SqliteException` y `DriftWrappedException` a esos códigos, sin contenido de la persona en el mensaje.
-Contrato: rollback: Revertir el commit. Nadie consume el catálogo todavía.. Status: pending
+Contrato: rollback: Revertir el commit. Nadie consume el catálogo todavía.. Status: done
 
 #### S2.T2 — Crear la unidad de trabajo transaccional compartida que envuelve AppDatabase.transaction. Cada comando del dominio escribe todas sus filas o ninguna. Los generadores y efectos posteriores reciben el mismo contexto y no hacen commits internos. Una excepción dentro de la unidad revierte todos los cambios. Los streams solo anuncian el estado confirmado: dentro de la transacción se llama a notifyUpdates con un TableUpdate por cada tabla tocada (el nombre de la tabla, como 'consulta' o 'plan_practica'), y Drift difiere esa notificación hasta el commit.
-Contrato: rollback: Revertir el commit, sin datos que compensar.. Status: pending
+Contrato: rollback: Revertir el commit, sin datos que compensar.. Status: done
 
 #### S2.T3 — Crear los providers Riverpod de consultante y consulta en `features/consultas/application/`, que exponen los repositorios y las lecturas reactivas como `AsyncValue`. Los providers consumen `appDatabaseProvider` con `ref.watch` sin moverlo de `app/lib/features/cuenta/data/alta_dispositivo_providers.dart`.
-Contrato: rollback: Revertir el commit. La presentación aún no los consume.. Status: pending
+Contrato: rollback: Revertir el commit. La presentación aún no los consume.. Status: done
 
 #### S2.T4 — Pruebas de la sesión en `app/test/data/` con base en memoria (`NativeDatabase.memory()`), reloj e ids inyectados: `unidad_trabajo_test.dart` cubre QA-06-02-02, QA-06-02-04 (stream sin emisión tras rollback, reapertura sobre archivo temporal) y la traducción de `SqliteException`. `repositorio_consulta_test.dart` cubre versión y `updated_at`, borrado lógico y persistencia tras cerrar y reabrir el archivo. `providers_consulta_test.dart` verifica con `ProviderContainer` que se emite el título nuevo. `errores_dominio_test.dart` hace snapshot de los 10 códigos y comprueba que no hay datos personales en `toString`.
-Contrato: rollback: Revertir los archivos de test nuevos.. Status: pending
+Contrato: rollback: Revertir los archivos de test nuevos.. Status: done
 
 #### S2.T6 — Implementar la política de habilitación de tirada una sola vez en la capa de repositorios, según la tabla de REQ-09 (recibe estado y fase de la consulta con los enums de `esquema_v1.dart` y el indicador `planCompleto` que calcula HU-06-05; no lee el plan). Crear `app/test/data/politica_tirada_test.dart` con un test por cada combinación de la tabla: HABILITADA (activa + lista_para_tirada + planCompleto true); `cierre_en_curso` (activa + cierre_en_curso); `plan_incompleto` (activa + lista_para_tirada + planCompleto false); `transicion_invalida` para estado borrador, completada y descartada (nunca `consulta_completada`) y para cada fase preparacion, acciones_en_curso, esperando_material, esperando_conexion, lectura_pendiente, bloqueada_conflicto y completada. Cada test usa assertions con valores concretos (resultado o código de error estable).
-Contrato: rollback: Revertir por commit.. Status: pending
+Contrato: rollback: Revertir por commit.. Status: done
 
 #### S2.T7 — Crear los repositorios por agregado de consultante y consulta en `app/lib/data/` sobre `DaoMutables`, usando la unidad de trabajo de S2.T2 y el catalogo de errores de S2.T1. Rellenan solos `updated_at`, `version + 1`, `device_origin_id` (via `AppDatabase.deviceOriginId`) y el `espacio_id` del espacio local. Excluyen por defecto las filas con `deleted_at` y ofrecen lectura explicita de borrados. Devuelven entidades o DTO inmutables, nunca `QueryRow` ni SQL.
-Contrato: rollback: Revertir el commit; nadie los consume todavia.. Status: pending
+Contrato: rollback: Revertir el commit; nadie los consume todavia.. Status: done
 
 #### S3.T1 — Crear los providers Riverpod de recorrido en `features/recorrido/application/` y de practica en `features/practica/application/`, que exponen los repositorios y las lecturas reactivas como `AsyncValue`; consumen `appDatabaseProvider` con `ref.watch` sin moverlo.
 Contrato: rollback: Revertir el commit, sin migración involucrada.. Status: pending
@@ -295,15 +295,15 @@ Contrato: rollback: Borrar el archivo de integration_test.. Status: pending
 
 **Gate (auto)**: `cd app && flutter test test/drift/` en verde con los tests nuevos de v4 y los existentes. Se ven `user_version = 4`, la columna `paso_id`, los triggers de coherencia y la migración desde los snapshots congelados v2 y v3.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T6
-- [ ] S2.T7
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T6
+- [x] S2.T7
 
 **Gate (auto)**: Los tests de repositorios en base en memoria están en verde: el comando que falla en la tercera fila no deja filas, `version` sube y `updated_at` cambia, los borrados quedan fuera del listado, y el provider de consulta emite el título nuevo sin recargar. Se ve el catálogo de 10 errores con sus códigos y `politica_tirada_test.dart` en verde con un test por cada combinación de la tabla de REQ-09.
 
