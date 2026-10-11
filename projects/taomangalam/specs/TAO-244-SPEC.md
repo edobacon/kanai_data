@@ -262,7 +262,7 @@ Contrato: rollback: Borrar los archivos de prueba nuevos. Status: done
 
 **Gate (auto)**: Tareas S3.T1 (S3.T1.1 a S3.T1.4) y S3.T2. 403 para una operación autenticada sin x-capacidad, no resuelta o con capacidad inexistente; capacidad_denegada o requiere_cuenta_completa en /cuenta/registro, /cuenta/correo y listarMisDispositivos por la app real; cableado-capacidad verde con la lista de exenciones justificada; cuenta-completa-cruce verde; entrada de log con errorCode, capacidad y accountRef seudónimo; middleware-capacidad y ci-capacidad verdes (middleware-capacidad adaptado solo si afirmaba el next() viejo, sin aflojar aserciones). Verde: los dos verify de S3.T2.
 
-### Session 4 · T0 · open
+### Session 4 · T0 · continue
 
 ### Session 5 · T0 · open
 
