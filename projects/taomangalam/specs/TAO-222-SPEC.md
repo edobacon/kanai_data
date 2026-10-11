@@ -107,13 +107,13 @@ Contrato: rollback: git revert del commit que crea docs/legal/aprobaciones-termi
 Contrato: rollback: Tarea de revisión: si no corrige el texto no modifica archivos; si lo corrige, git revert del commit restaura las tres copias de terminos-v1.0.md a la vez.. Status: done
 
 #### S2.T1 — Actualizar el registro docs/legal/aprobaciones-terminos-v1.0.md (creado por S1.T4) con la versión y el hash finales del texto aprobado, y recalcular el hash en docs/legal/terminos-v1.0.md y sus copias app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md cuando se fije la fecha de vigencia. No ejecutar legal:registrar.
-Contrato: rollback: git revert del commit; el texto queda como en la sesión 1 marcado provisional. Status: pending
+Contrato: rollback: git revert del commit; el texto queda como en la sesión 1 marcado provisional. Status: done
 
 #### S2.T2 — Comprobar que el hash final coincide entre docs/legal/terminos-v1.0.md, app/assets/legal/terminos-v1.0.md y server/legal/terminos-v1.0.md y con el consignado en docs/legal/aprobaciones-terminos-v1.0.md (creado por S1.T4 y actualizado por S2.T1). No ejecutar legal:registrar.
-Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: pending
+Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: done
 
 #### S2.T3 — Con la fecha real ya fijada (S2.T1), volver a recorrer la cobertura mínima en docs/legal/terminos-v1.0.md y confirmar que el hash coincide entre las tres copias.
-Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: pending
+Contrato: rollback: Tarea de solo lectura: no modifica archivos, no hay nada que revertir.. Status: done
 ## Verificacion runtime
 
 1. **Qué:** Verificar en runtime: La redacción del texto y del resumen está en español neutro, trata de tú, no usa guion largo (U+2014), usa títulos Markdown jerárquicos para lector de pantalla y no incluye datos personales ni correos reales; lo que depende de pendientes externos (identidad legal del titular) v
@@ -290,12 +290,12 @@ Ninguno.
 
 **Gate (auto)**: docs/legal/terminos-v1.0.md con los 8 apartados de cobertura mínima con título ## propio (recorridos por S1.T5 contra sus DEC), la sección ## Resumen para V-51 y el marcador provisional de vigencia, copiado a app/assets/legal/ y server/legal/ con el mismo nombre; cmp entre las tres copias sin diferencias; pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs; existe docs/legal/aprobaciones-terminos-v1.0.md con estado pendiente y el hash del encabezado del texto, y la lectura de server/scripts/registrar-version-legal.ts confirma que ignora ese archivo (no se ejecuta legal:registrar). Esta sesión no depende de la fecha de vigencia ni de acceso a staging: la verificación de la 1.0 en staging, el hash registrado en staging y la lectura en V-51 son items humanos de la sesión 5, fuera de este gate.
 
-### Session 2 · T1 · open
+### Session 2 · T1 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: SESIÓN DIFERIDA Y BLOQUEADA hasta que Producto fije la fecha real de vigencia (pendiente externo; decisión del dev). Cuando se desbloquee: el encabezado de docs/legal/terminos-v1.0.md lleva la fecha real, el hash se recalculó y las tres copias coinciden (cmp sin diferencias); pasan cd app && flutter test test/legal/ y node scripts/ci/ep01-legal-provider.mjs; docs/legal/aprobaciones-terminos-v1.0.md (creado en la sesión 1) queda actualizado con la versión y el hash finales. Adjuntar al issue GH-93 no es parte del gate: lo confirma el dev.
 
