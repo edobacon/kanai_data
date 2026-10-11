@@ -264,6 +264,6 @@ Contrato: rollback: Borrar los archivos de prueba nuevos. Status: done
 
 ### Session 4 · T0 · continue
 
-### Session 5 · T0 · open
+### Session 5 · T0 · continue
 
 **Gate (auto)**: Evidencia posterior al despliegue de HU-03a-02 en staging (QA-03a-02-01).
