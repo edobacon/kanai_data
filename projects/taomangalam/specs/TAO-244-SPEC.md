@@ -120,22 +120,22 @@ Contrato: rollback: No aplica: no cambia código. Status: done
 Contrato: rollback: Borrar los archivos de prueba nuevos. Status: done
 
 #### S3.T1 — Contenedora de la denegación por defecto del middleware de capacidad. Agrupa exactamente S3.T1.1 (denegación por defecto), S3.T1.2 (log de denegación), S3.T1.3 (middleware en server/src/routes/cuenta.ts) y S3.T1.4 (lista de exenciones y cableado).
-Contrato: rollback: Revertir capacidad.ts, routes/cuenta.ts y app.ts al SHA anterior, sin abrir rutas protegidas que ya tenían middleware. Status: pending
+Contrato: rollback: Revertir capacidad.ts, routes/cuenta.ts y app.ts al SHA anterior, sin abrir rutas protegidas que ya tenían middleware. Status: done
 
 #### S3.T1.1 — En server/src/middleware/capacidad.ts, responder 403 (y registrar la denegación) a una operación autenticada que no se resuelve en el contrato, que no declara x-capacidad o cuyo x-capacidad está presente pero no existe en el registro de capacidades, en vez de llamar a next(). Las peticiones sin autenticación (sin res.locals.autenticacion) siguen pasando. Antes de cambiar, revisar server/src/test/s01/middleware-capacidad.test.ts: si algún caso afirma que una operación autenticada fuera del contrato o sin x-capacidad sigue con next() (comportamiento viejo que este ticket cambia), adaptarlo para que espere 403 sin aflojar ninguna otra aserción; si no lo afirma, no se toca.
-Contrato: rollback: Revertir el bloque de resolución de capacidad.ts. Status: pending
+Contrato: rollback: Revertir el bloque de resolución de capacidad.ts. Status: done
 
 #### S3.T1.2 — Registro de cada denegación con errorCode, capacidad y accountRef seudónimo, muestreado. La entrada de log incluye además la operación (operationId cuando se resuelve; método y ruta normalizada cuando no se resuelve en el contrato). La tasa sigue el patrón REJECTION_LOG_SAMPLE_RATE de server/src/middleware/app-version.ts, pero se elige por APP_ENV (server/src/config.ts): 1.0 en development y staging, 0.1 en production; la prueba la inyecta por opción del middleware.
-Contrato: rollback: Quitar la llamada de log del middleware. Status: pending
+Contrato: rollback: Quitar la llamada de log del middleware. Status: done
 
 #### S3.T1.3 — Montar el middleware en server/src/routes/cuenta.ts para POST /cuenta/registro (línea 72) y PUT /cuenta/correo (línea 106) con la capacidad y el tipo de cuenta del contrato; si alguna se exime, declararla con su justificación en la lista de exenciones
-Contrato: rollback: Revertir routes/cuenta.ts. Status: pending
+Contrato: rollback: Revertir routes/cuenta.ts. Status: done
 
 #### S3.T1.4 — Lista de exenciones justificada (operationId y motivo) que consume la prueba de cableado; incluye solo operaciones públicas o exentas con justificación escrita
-Contrato: rollback: Borrar el módulo de exenciones. Status: pending
+Contrato: rollback: Borrar el módulo de exenciones. Status: done
 
 #### S3.T2 — Crear las pruebas nuevas de S3: server/src/test/capacidades/capacidad-denegacion-defecto.test.ts (403 sin x-capacidad, no resuelta y con capacidad inexistente; QA-03a-07-03 capacidad quitada en la base da capacidad_denegada en la siguiente petición), server/src/test/capacidades/capacidad-denegacion-log.test.ts (errorCode, capacidad y accountRef seudónimo, sin otras capacidades; muestreo forzado a 1.0 y a 0), server/src/test/cuenta/cuenta-capacidad.test.ts (router real de cuenta con cuenta de dispositivo y completa), server/src/test/capacidades/cableado-capacidad.test.ts (recorre las operaciones con bearer del contrato contra la app real de server/src/app.ts; incluye QA-03a-07-02: listarMisDispositivos con cuenta de dispositivo da 403 requiere_cuenta_completa; falla nombrando el operationId sin middleware ni exención) y server/src/test/capacidades/cuenta-completa-cruce.test.ts (CAPACIDADES_CUENTA_COMPLETA contra x-requiere-cuenta: completa, falla nombrando la operación). Regresión: server/src/test/s01/middleware-capacidad.test.ts (con la adaptación de S3.T1.1 solo si aplica) y server/src/test/s01/ci-capacidad.test.ts.
-Contrato: rollback: Borrar los archivos de prueba nuevos. Status: pending
+Contrato: rollback: Borrar los archivos de prueba nuevos. Status: done
 ## Cambios al modelo de datos
 
 - tipo: seed_catalog | objetos: configuracion_clave, configuracion_version | destructivo: no | tarea: S1.T2 | rollback: quitar el escenario configuracion-catalogo y su entrada en server/src/seeds/registry.ts; las claves y versiones sembradas se conservan, según el rollback del handoff; volver al SHA anterior, donde la emisión lee las variables de entorno.
@@ -250,15 +250,15 @@ Contrato: rollback: Borrar los archivos de prueba nuevos. Status: pending
 
 **Gate (auto)**: Tareas S2.T1 a S2.T3. accessTokenExpiraEn (número en segundos) vale 900 por defecto y 300 al cambiar sesion.access_ttl_segundos a 300 sin reiniciar; la expiración del refresh en sesion_auth queda 2592000 s después de la emisión; GET /v1/configuracion/publica responde 200 con https://portal.taomangalam.cl/eliminar-cuenta en la base sembrada; renovarToken responde refresh_invalido a los 30 días y 1 segundo. Verde: pnpm -C server exec vitest run src/test/auth/session-ttl-config.test.ts src/test/auth/session-refresh-expiry.test.ts src/test/configuracion/configuracion-publica.test.ts y la regresión pnpm -C server exec vitest run src/test/auth src/public-configuration.integration.test.ts
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T1.1
-- [ ] S3.T1.2
-- [ ] S3.T1.3
-- [ ] S3.T1.4
-- [ ] S3.T2
+- [x] S3.T1
+- [x] S3.T1.1
+- [x] S3.T1.2
+- [x] S3.T1.3
+- [x] S3.T1.4
+- [x] S3.T2
 
 **Gate (auto)**: Tareas S3.T1 (S3.T1.1 a S3.T1.4) y S3.T2. 403 para una operación autenticada sin x-capacidad, no resuelta o con capacidad inexistente; capacidad_denegada o requiere_cuenta_completa en /cuenta/registro, /cuenta/correo y listarMisDispositivos por la app real; cableado-capacidad verde con la lista de exenciones justificada; cuenta-completa-cruce verde; entrada de log con errorCode, capacidad y accountRef seudónimo; middleware-capacidad y ci-capacidad verdes (middleware-capacidad adaptado solo si afirmaba el next() viejo, sin aflojar aserciones). Verde: los dos verify de S3.T2.
 
