@@ -76,10 +76,10 @@ Contrato: rollback: Revertir el commit de la task; sin migración ni datos que c
 Contrato: rollback: Revertir el commit del archivo de test.. Status: done
 
 #### S2.T1 — Implementar el comando Dar inicio, que recibe el resultado tipado de validarYUsarUnidad de EP-11 (nunca el código del kuberani). Si el resultado es exitoso, en una transacción: estado = activa, casa_actual = 1, fecha_inicio, paso 1 tipo = inicio con occurred_at_utc, local_date y timezone_id de un reloj inyectable, plan de Casa 1 generado por HU-06-05 (paso_id del inicio, tirada_revision_id nulo), plan_actual_id, paso_actual_id, fase = acciones_en_curso y motivo_bloqueo nulo. Si falla la generación del plan, se revierte todo. Si es sin_conexion: fase = esperando_conexion y motivo = validar_kuberani_inicio. Si es sin kuberani: fase = esperando_material y motivo = kuberani_inicio. Volver al borrador: fase = preparacion y motivo nulo. Deduplicar con la clave unidad.id + evento.id de HU-06-02 sin repetir el consumo remoto.
-Contrato: rollback: Revertir el commit de la task; sin migración ni datos que compensar.. Status: pending
+Contrato: rollback: Revertir el commit de la task; sin migración ni datos que compensar.. Status: done
 
 #### S2.T2 — Tests de inicio sobre Drift real con resultados simulados de EP-11 y el generador real de HU-06-05 (archivo propuesto: app/test/dominio/consulta_inicio_test.dart): QA-06-03-01 (local_date del día de inicio y no del de creación), plan sin tirada, rollback ante fallo del plan, esperas y reintento, ausencia del código del kuberani y QA-06-03-04 (idempotencia, sin tiradas ficticias, puerto remoto con 0 invocaciones).
-Contrato: rollback: Revertir el commit del archivo de test.. Status: pending
+Contrato: rollback: Revertir el commit del archivo de test.. Status: done
 
 #### S3.T1 — Implementar el handler de cierre (resultado = cierre) para la unidad de trabajo compartida, con contexto transaccional y consulta lista. Crea el paso tipo = cierre y la tirada_revision (casa_destino = 12, anillo_destino y fuerza_kipot nulos) y delega a una estrategia de cierre inyectable cuyo default es el cierre mínimo M1a: estado y fase completada, casa_actual = 12, paso_actual_id en el cierre, plan_actual_id nulo y closed_at = momento del paso. Devuelve un resumen tipado completado. El rechazo de registro y de corrección sobre consultas completadas se resuelve con la política compartida real de HU-06-02 y un código estable, y se deduplica por clave de operación.
 Contrato: rollback: Revertir el commit de la task; sin migración ni datos que compensar.. Status: pending
@@ -103,11 +103,11 @@ Ninguno.
 
 **Gate (auto)**: En app/test, el test del ciclo de vida pasa: crear en borrador, editar título, descripción y propósito según estado, descartar desde borrador y rechazar transiciones inválidas con código y estado de origen.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
+- [x] S2.T1
+- [x] S2.T2
 
 **Gate (auto)**: En app/test, el test de inicio pasa: un borrador queda activo en Casa 1 con paso de inicio y plan vigente real de HU-06-05; las esperas sin conexión y sin kuberani fijan fase y motivo; el reintento inicia, y repetir el resultado no duplica paso ni plan.
 
