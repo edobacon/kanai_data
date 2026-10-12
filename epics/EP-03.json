@@ -1,0 +1,126 @@
+{
+  "id": "EP-03",
+  "projectId": "tao-v2",
+  "title": "EP-03 Acceso y sesión",
+  "objective": "Acceso, recuperación y sesión web; seed de perfiles y CLI de cuentas; estado de cuenta.",
+  "scope": [
+    "B1-02: Recuperar contraseña por correo",
+    "B1-03: Protección HTTP y límites: construcción nueva",
+    "B1-04: Sesión web, estado de cuenta efectivo, seed de perfiles y CLI de cuentas",
+    "B2-01: Registro y lectura legal de versiones"
+  ],
+  "exclusions": [],
+  "criteria": [
+    "Todos los tickets de la épica cerrados con sus criterios cumplidos y las verificaciones locales en verde: Acceso, recuperación y sesión web; seed de perfiles y CLI de cuentas; estado de cuenta."
+  ],
+  "requiredChecks": [
+    "quality-gate"
+  ],
+  "ci": "local",
+  "repo": "tao-v2",
+  "baseBranch": "epic/EP-03",
+  "branch": "epic/EP-03",
+  "tickets": [
+    {
+      "id": "TV2-007",
+      "title": "B1-02. Recuperar contraseña por correo",
+      "body": "# B1-02. Recuperar contraseña por correo\nTipo: implement\nMódulo: Backend\n\n## Contexto\n- Id MVP: B1-02 (referencia externa hasta tener el issue de GitHub de `edobacon/tao-v2`).\n- Épica: EP-03 Acceso y sesión. Proyecto `tao-v2`, repo único `tao-v2`, flujo de épica en sitio con rama acumuladora (`epicCi: local`).\n- Cambio frente al plan V3: = (`=` igual, `C` cambia alcance, `P` partido, `N` nuevo).\n- Fuente: fichas del KB del proyecto, carpeta `mvp` (`00-alcance-y-decisiones`, `05-epicas-y-orden-de-ejecucion` y la ficha de este ticket).\n\n## Alcance\nDentro:\nFlujo con plantilla de correo nueva (hoy hay 3 plantillas), TTL, límites y revocación de sesiones según contrato; usa `PropositoDesafio.recuperar_contrasena`, que ya existe.\n\nFuera: lo que no figura en el entregable. Lo diferido a v1 está en `21-extensiones-v1`.\n\n## Criterios de aceptación\nEl mensaje se lee automáticamente desde Mailpit; el código es de un solo uso, caduca y tiene límites; la respuesta no revela si existe la cuenta.\n\nNinguna aceptación se cierra con un doble que siempre devuelve éxito; una corrida que no se pudo hacer queda pendiente, no aprobada. Este ticket de backend cubre además los `x-errores` que declara el contrato para sus operaciones y no cuenta como verde si una suite de integración queda omitida.\n\n## Dependencias\nDepende de (relaciones `depends_on` a crear con `add_relation`; deben estar integrados en la rama acumuladora antes del intake):\n- B1-01. Dispositivo, configuración, lectura de cuenta y manifiesto\n\n## Recursos y cuentas\n- Recursos: R02, R03 (catálogo en `02-recursos-cuentas-y-assets`).\n- Datos y fixtures: Cuenta existente e inexistente, código vencido y usado, reintento.\n- Cuentas externas: ninguna. Las cuentas son ficticias y locales (dataset R09); contraseñas y códigos de prueba se generan en el seed y no se escriben en documentos ni reportes.\n\n## Assets y datos externos\n- Assets: ninguno propio salvo lo indicado en el alcance.\n- Datos externos: ninguno.\n\n## Verificación\nBackend. Chequeos del repo con Node 24: `pnpm run check`, `pnpm run check:ci` y `DOCS_DIFF_BASE=main pnpm docs:check` según corresponda. Al cerrar se registra SHA, recursos usados, cambios de contrato o datos, comando y casos ejecutados, salida y pendientes; nunca contraseñas, tokens, OTP ni códigos completos.\n\n## Riesgos\n- Sin riesgos específicos registrados en la ficha.",
+      "revision": "7a255e27d471ba2c7d8d3a0b0a42376ff93e1805bbf52c13b665cff3ddac6ed9",
+      "repo": "tao-v2",
+      "aliases": [],
+      "scopeApproved": false,
+      "dependencies": [
+        "TV2-006"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "El mensaje se lee automáticamente desde Mailpit; el código es de un solo uso, caduca y tiene límites; la respuesta no revela si existe la cuenta."
+      ]
+    },
+    {
+      "id": "TV2-008",
+      "title": "B1-03. Protección HTTP y límites: construcción nueva",
+      "body": "# B1-03. Protección HTTP y límites: construcción nueva\nTipo: implement\nMódulo: Backend\n\n## Contexto\n- Id MVP: B1-03 (referencia externa hasta tener el issue de GitHub de `edobacon/tao-v2`).\n- Épica: EP-03 Acceso y sesión. Proyecto `tao-v2`, repo único `tao-v2`, flujo de épica en sitio con rama acumuladora (`epicCi: local`).\n- Cambio frente al plan V3: C (`=` igual, `C` cambia alcance, `P` partido, `N` nuevo).\n- Fuente: fichas del KB del proyecto, carpeta `mvp` (`00-alcance-y-decisiones`, `05-epicas-y-orden-de-ejecucion` y la ficha de este ticket).\n\n## Alcance\nDentro:\n- helmet con CSP estricta (DEC-162) y sin CORS (la web es del mismo origen, D-01).\n- Rate limit nuevo: el contrato declara `x-rate-limit` en 12 operaciones (8 activas: `autenticarCuentaDispositivo`, `iniciarSesion`, `solicitarRecuperacion`, `verificarCodigoRecuperacion`, `reenviarCodigoCorreo`, `solicitarEliminacionCuenta`, `validarYUsarUnidad`, `consultarEstadoEliminacion`), pero hoy solo hay bloqueo por correo en login y topes por desafío. No hay limitador por IP ni por cuenta (DEC-163).\n- Redacción de logs; certificación de rotación de sesión y refresh concurrente.\n\nFuera: lo que no figura en el entregable. Lo diferido a v1 está en `21-extensiones-v1`.\n\n## Criterios de aceptación\nHTTP real verifica 401, 403 y 429; revocación efectiva; reportes sin secretos; respeta el contrato de refresh concurrente sin inventar otra política.\n\nNinguna aceptación se cierra con un doble que siempre devuelve éxito; una corrida que no se pudo hacer queda pendiente, no aprobada. Este ticket de backend cubre además los `x-errores` que declara el contrato para sus operaciones y no cuenta como verde si una suite de integración queda omitida.\n\n## Dependencias\nDepende de (relaciones `depends_on` a crear con `add_relation`; deben estar integrados en la rama acumuladora antes del intake):\n- B1-01. Dispositivo, configuración, lectura de cuenta y manifiesto\n- B1-02. Recuperar contraseña por correo\n\n## Recursos y cuentas\n- Recursos: R01, R02, R03 (catálogo en `02-recursos-cuentas-y-assets`).\n- Datos y fixtures: Tokens vencidos y reutilizados, refresh concurrente, rol sin permiso, reloj controlado.\n- Cuentas externas: ninguna. Las cuentas son ficticias y locales (dataset R09); contraseñas y códigos de prueba se generan en el seed y no se escriben en documentos ni reportes.\n\n## Assets y datos externos\n- Assets: ninguno propio salvo lo indicado en el alcance.\n- Datos externos: ninguno.\n\n## Verificación\nBackend. Chequeos del repo con Node 24: `pnpm run check`, `pnpm run check:ci` y `DOCS_DIFF_BASE=main pnpm docs:check` según corresponda. Al cerrar se registra SHA, recursos usados, cambios de contrato o datos, comando y casos ejecutados, salida y pendientes; nunca contraseñas, tokens, OTP ni códigos completos.\n\n## Riesgos\n- Información por confirmar: Valores de límite por ruta (los fija el contrato donde lo declara).",
+      "revision": "514bb992a906f20e7016770d3356e5692b7b9d8efac61355944722bcf3155f3c",
+      "repo": "tao-v2",
+      "aliases": [],
+      "scopeApproved": false,
+      "dependencies": [
+        "TV2-006",
+        "TV2-007"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "HTTP real verifica 401, 403 y 429; revocación efectiva; reportes sin secretos; respeta el contrato de refresh concurrente sin inventar otra política."
+      ]
+    },
+    {
+      "id": "TV2-009",
+      "title": "B1-04. Sesión web, estado de cuenta efectivo, seed de perfiles y CLI de cuentas",
+      "body": "# B1-04. Sesión web, estado de cuenta efectivo, seed de perfiles y CLI de cuentas\nTipo: implement\nMódulo: Backend\n\n## Contexto\n- Id MVP: B1-04 (referencia externa hasta tener el issue de GitHub de `edobacon/tao-v2`).\n- Épica: EP-03 Acceso y sesión. Proyecto `tao-v2`, repo único `tao-v2`, flujo de épica en sitio con rama acumuladora (`epicCi: local`).\n- Cambio frente al plan V3: N (absorbe B1-05) (`=` igual, `C` cambia alcance, `P` partido, `N` nuevo).\n- Repo y rutas: `server/contract/openapi.yaml` (nueva operación `POST /auth/web/login`), `server/src/auth/` (inicio de sesión, sesiones), `server/src/middleware/capacidad.ts`, `server/src/capacidades/` (seed y chequeo de CI), `server/scripts/` (CLI de cuentas).\n- Fuente: fichas del KB del proyecto, carpeta `mvp` (`00-alcance-y-decisiones`, `05-epicas-y-orden-de-ejecucion` y la ficha de este ticket).\n\n## Alcance\nDentro:\n- `iniciarSesionWeb`: login por email y contraseña sin `deviceCode`, solo cuentas completas y activas con perfil Administrador o Productor; emite sesión con `superficie=web` y claim `superficie`; Estándar y suspendidas se rechazan con una respuesta indistinguible de credenciales inválidas; no existe unión a dispositivo en la web (D-09). La lista de perfiles permitidos es configurable, no una constante.\n- Estado de cuenta efectivo (H-03), con la política decidida: el estado de la cuenta se verifica en cada petición contra la base (DEC-161), de modo que una suspensión surte efecto de inmediato y la ventana de 15 minutos del access token (DEC-232) no sirve de espera. Incluye `revocarSesionesDeCuenta` (hoy solo hay revocar por familia, por sesión y por dispositivo); chequeo de `estado` en el refresh (el contrato declara `cuenta_suspendida` y el código no lo aplica); `estado` en el `select` del middleware de capacidad (lee la base en cada petición y no agrega consultas).\n- Seed idempotente con perfiles Estándar, Productor y Administrador como filas de `perfil` con `esSistema=true` e ids deterministas (D-06); la lógica de negocio usa capacidades (`x-capacidad`), nunca compara nombres de perfil (hoy `registro-dispositivo.ts:225` busca el perfil por nombre). Se registra en la lista de seeds nombrados (`catalogo-capacidades`, `configuracion-catalogo`, `politica-analitica` existentes).\n- Extender el chequeo de CI de capacidades (`server/src/capacidades/ci-checks.ts`, hoy solo columna E) a las columnas Administrador y Productor del catálogo de vistas y capacidades (`docs/product/tecnologia/14_catalogo_de_vistas_y_capacidades.md`).\n- CLI de cuentas con perfil: crea una cuenta completa con correo verificado, `credencial_password` y `cuenta_perfil` para el perfil indicado (`--perfil administrador` o `--perfil productor`); sirve para el primer administrador y para cuentas Productor en entornos locales. No requiere dispositivo gracias al login web. Solo funciona en entorno local o de prueba.\n- Origen de una cuenta Productor (decidido): se registra como cuenta Estándar normal en la app y un Administrador le asigna el perfil Productor desde la web (W03); no hay autoalta de Productor. En entornos locales la CLI crea la cuenta directamente con el perfil.\n\nFuera: lo que no figura en el entregable. Lo diferido a v1 está en `21-extensiones-v1`.\n\n## Criterios de aceptación\nSupertest cubre Estándar rechazada, Administrador y Productor aceptados, suspendida rechazada, refresh de sesión web, que un token web no sirve donde se exige dispositivo, y \"token emitido antes de suspender\" con reloj controlado (el access token aún vigente también se rechaza apenas la cuenta se suspende, sin esperar su caducidad); el seed corre dos veces sin duplicar; la CLI crea ADM-1 y PRD-A con contraseña de prueba solo en entorno local y se niega a correr fuera de él; el CI falla si una capacidad de Administrador o Productor del catálogo no está en el seed.\n\nNinguna aceptación se cierra con un doble que siempre devuelve éxito; una corrida que no se pudo hacer queda pendiente, no aprobada. Este ticket de backend cubre además los `x-errores` que declara el contrato para sus operaciones y no cuenta como verde si una suite de integración queda omitida.\n\n## Dependencias\nDepende de (relaciones `depends_on` a crear con `add_relation`; deben estar integrados en la rama acumuladora antes del intake):\n- B1-03. Protección HTTP y límites: construcción nueva\n- X01. DEC del MVP: web de administración y productor, y recordatorios\n\n## Recursos y cuentas\n- Recursos: R02, R09 (catálogo en `02-recursos-cuentas-y-assets`).\n- Datos y fixtures: Perfiles, USR-A, USR-SUS, ADM-1, PRD-A del dataset R09.\n- Cuentas externas: ninguna. Las cuentas son ficticias y locales (dataset R09); contraseñas y códigos de prueba se generan en el seed y no se escriben en documentos ni reportes.\n\n## Assets y datos externos\n- Assets: ninguno propio salvo lo indicado en el alcance.\n- Datos externos: ninguno.\n\n## Verificación\nBackend. Chequeos del repo con Node 24: `pnpm run check`, `pnpm run check:ci` y `DOCS_DIFF_BASE=main pnpm docs:check` según corresponda. Al cerrar se registra SHA, recursos usados, cambios de contrato o datos, comando y casos ejecutados, salida y pendientes; nunca contraseñas, tokens, OTP ni códigos completos.\n\n## Riesgos\n- Información por confirmar: Forma exacta del contrato (openapi-diff como cambio compatible); si el middleware de versión debe tratar `X-Plataforma: web` (hoy lo ignora y solo evalúa ios y android); ULIDs fijos de los perfiles (los fija este ticket y los publica en la documentación).\n- Punto de extensión (nota de diseño, no alcance): `revocarSesionesDeCuenta` sirve luego para cierre remoto de sesiones.",
+      "revision": "b8f15eda14fe7131d0af532addafe2f7b16d8ec241a3ebc3571ab963fe9241bb",
+      "repo": "tao-v2",
+      "aliases": [],
+      "scopeApproved": false,
+      "dependencies": [
+        "TV2-008",
+        "TV2-001"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "Supertest cubre Estándar rechazada, Administrador y Productor aceptados, suspendida rechazada, refresh de sesión web, que un token web no sirve donde se exige dispositivo, y \"token emitido antes de suspender\" con reloj controlado (el access token aún vigente también se rechaza apenas la cuenta se suspende, sin esperar su caducidad); el seed corre dos veces sin duplicar; la CLI crea ADM-1 y PRD-A con contraseña de prueba solo en entorno local y se niega a correr fuera de él; el CI falla si una capacidad de Administrador o Productor del catálogo no está en el seed."
+      ]
+    },
+    {
+      "id": "TV2-010",
+      "title": "B2-01. Registro y lectura legal de versiones",
+      "body": "# B2-01. Registro y lectura legal de versiones\nTipo: improvement\nMódulo: Backend\n\n## Contexto\n- Id MVP: B2-01 (referencia externa hasta tener el issue de GitHub de `edobacon/tao-v2`).\n- Épica: EP-03 Acceso y sesión. Proyecto `tao-v2`, repo único `tao-v2`, flujo de épica en sitio con rama acumuladora (`epicCi: local`).\n- Cambio frente al plan V3: = (`=` igual, `C` cambia alcance, `P` partido, `N` nuevo).\n- Fuente: fichas del KB del proyecto, carpeta `mvp` (`00-alcance-y-decisiones`, `05-epicas-y-orden-de-ejecucion` y la ficha de este ticket).\n\n## Alcance\nDentro:\nRegistro de versiones y servicio de textos locales con hash; scripts adaptados para no requerir staging.\n\nFuera: lo que no figura en el entregable. Lo diferido a v1 está en `21-extensiones-v1`.\n\n## Criterios de aceptación\nLa API devuelve versión, hash y texto coherentes y recupera versiones históricas; sin URL remota.\n\nNinguna aceptación se cierra con un doble que siempre devuelve éxito; una corrida que no se pudo hacer queda pendiente, no aprobada. Este ticket de backend cubre además los `x-errores` que declara el contrato para sus operaciones y no cuenta como verde si una suite de integración queda omitida.\n\n## Dependencias\nDepende de (relaciones `depends_on` a crear con `add_relation`; deben estar integrados en la rama acumuladora antes del intake):\n- B1-01. Dispositivo, configuración, lectura de cuenta y manifiesto\n\n## Recursos y cuentas\n- Recursos: R02, R04 (catálogo en `02-recursos-cuentas-y-assets`).\n- Datos y fixtures: Textos provisionales existentes y una versión nueva de prueba con hash distinto.\n- Cuentas externas: ninguna. Las cuentas son ficticias y locales (dataset R09); contraseñas y códigos de prueba se generan en el seed y no se escriben en documentos ni reportes.\n\n## Assets y datos externos\n- Assets: ninguno propio salvo lo indicado en el alcance.\n- Datos externos: Aprobación definitiva de textos pendiente (se usa el fixture).\n\n## Verificación\nBackend. Chequeos del repo con Node 24: `pnpm run check`, `pnpm run check:ci` y `DOCS_DIFF_BASE=main pnpm docs:check` según corresponda. Al cerrar se registra SHA, recursos usados, cambios de contrato o datos, comando y casos ejecutados, salida y pendientes; nunca contraseñas, tokens, OTP ni códigos completos.\n\n## Riesgos\n- Sin riesgos específicos registrados en la ficha.",
+      "revision": "f2465204aca42207daa38b8fd6e0826a033b1856ec4f46b023a04123b2fb49a2",
+      "repo": "tao-v2",
+      "aliases": [],
+      "scopeApproved": false,
+      "dependencies": [
+        "TV2-006"
+      ],
+      "requirements": [],
+      "provides": [],
+      "assets": [],
+      "criteria": [
+        "La API devuelve versión, hash y texto coherentes y recupera versiones históricas; sin URL remota."
+      ]
+    }
+  ],
+  "externalEvidence": {},
+  "dependencyWork": [],
+  "contracts": [],
+  "readPaths": [],
+  "repositoryRoot": "/Users/edobacon/Workspace/tao-v2",
+  "readRequirements": [],
+  "mentionCatalog": {},
+  "mentionFamilies": [
+    "TV2:2"
+  ],
+  "version": 1,
+  "dependencies": [],
+  "order": [],
+  "decisionBank": [],
+  "history": [],
+  "events": [
+    {
+      "id": "87bfe8a4-4b1d-4c05-8a57-c821b4945aec",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T16:00:16.273Z",
+      "kind": "operation_completed",
+      "planVersion": 1,
+      "phase": "create",
+      "source": "kanai-server",
+      "durationMs": 33
+    }
+  ]
+}
