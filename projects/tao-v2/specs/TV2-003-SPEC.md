@@ -69,7 +69,7 @@ Ninguno.
 - REQ-03 (edit) `confirmed`: La matriz incluye la lista completa de suites con describe.skipIf (46 usos en el baseline), con archivo:línea, condición de omisión y una ma
 ## Sessions
 
-### Session 1 · T2 · iterate
+### Session 1 · T2 · continue
 
 **Tasks:**
 - [x] S1.T1

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="dkc-teach-format" content="v2">
+<title>TV2-065 · Estabilizar la suite de integración (intake)</title>
+<!-- ticket: TV2-065 · kind: intake · project: tao-v2 · generated: 2026-10-12 -->
+</head>
+<body>
+<h1>TV2-065 · Estabilizar la suite de integración</h1>
+<div class="panel tldr" data-dkc-block="tldr">
+<p><strong>Qué quedó resuelto en el intake:</strong> el ticket deja Vitest en <code>server/</code> estable en verde con Node 24 (648 pruebas, 0 fallas, 3 corridas seguidas) y <code>pnpm run check</code> con exit 0, sin omitir pruebas ni marcarlas como flaky. Nace porque TV2-003 midió inestabilidad preexistente y no la corrigió (adenda 2).</p>
+</div>
+<h2>Hechos medidos</h2>
+<div class="callout" data-dkc-block="callout">
+<ul>
+<li>Carrera de limpieza de bases efímeras: <code>app-release.integration</code> y <code>configuracion.integration</code> fallan en el <code>afterAll</code> con "permission denied to terminate process".</li>
+<li><code>verificacion-correo</code> devolvió 405 en lugar de 202 una vez en la suite completa; aislada pasa 3 de 3.</li>
+<li><code>pgboss.integration</code> espera 0 jobs y encuentra 1, de forma determinista en el entorno local. Causa probable sin confirmar: base compartida con el stack legacy en el puerto 54329.</li>
+<li>Corrida completa con Node 24 tras revertir las correcciones previas: 645 pasan, 2 omitidas, 1 falla (pgboss).</li>
+</ul>
+</div>
+<h2>Decisiones y límites</h2>
+<div class="invariant" data-dkc-block="invariant">
+<ul>
+<li>Este ticket no cambia el modelo de datos de la aplicación: los permisos de rol son de PostgreSQL en pruebas (motivo del dataModelAck).</li>
+<li>Fuera de alcance: parametrizar <code>compose.yaml</code> y los scripts <code>backend:*</code> (TV2-004) y el modelo de datos (TV2-005).</li>
+<li>Confirmar la causa raíz de cada falla antes de corregir; no taparla con reintentos o timeouts sin evidencia.</li>
+</ul>
+</div>
+<h2>Riesgos</h2>
+<p>La colisión con la base del stack legacy puede solaparse con TV2-004. Corregir la limpieza puede exigir permisos de rol que cambian el entorno local.</p>
+<h2>Aprendizajes</h2>
+<p>Un criterio de verde absoluto sobre una suite inestable atasca el gate. En tickets de medir y documentar, el criterio debe ser "sin regresiones frente al baseline".</p>
+</body>
+</html>
