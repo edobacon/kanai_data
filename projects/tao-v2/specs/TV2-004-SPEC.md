@@ -59,25 +59,25 @@ Los nuevos comandos y variables de corrida quedan documentados en docs/developme
 ## Tasks
 
 #### S1.T1 — Parametrizar compose.yaml. Renombrar el proyecto a tao-v2 y quitar los container_name fijos (taomangalam-postgres, taomangalam-mailpit, taomangalam-toxiproxy, taomangalam-server) y el nombre fijo del volumen; los puertos publicados (54329, 1025, 8025) pasan a variables con esos valores por defecto para desarrollo. Ajustar los consumidores .devcontainer/start-services.sh:3 y .devcontainer/README.md:16/20/38/44 para que el flujo de desarrollo siga funcionando, y agregar las variables a .env.example y server/.env.example.
-Contrato: rollback: git revert del commit de compose.yaml, .devcontainer/ y .env.example; docker compose -p tao-v2-<id> down -v para borrar lo creado por la corrida.. Status: pending
+Contrato: rollback: git revert del commit de compose.yaml, .devcontainer/ y .env.example; docker compose -p tao-v2-<id> down -v para borrar lo creado por la corrida.. Status: done
 
 #### S1.T2 — Agregar el script generate:server al package.json raíz (y, si no existe, el equivalente en server/package.json) que ejecute solo prisma generate sobre el schema del paquete server, sin pasar por pnpm generate (que exige Dart y Java).
-Contrato: rollback: Borrar las entradas generate:server de package.json y server/package.json (git revert).. Status: pending
+Contrato: rollback: Borrar las entradas generate:server de package.json y server/package.json (git revert).. Status: done
 
 #### S1.T3 — Implementar backend:prepare, backend:up y backend:down en scripts/dev/ con su registro en el package.json raíz. Llaman a los scripts que ya existen (dev:services, db:migrate:deploy, db:seed, dev) y no duplican su lógica.
-Contrato: rollback: git revert de scripts/dev/backend-*.mjs y de las entradas backend:* del package.json; backend:down manual o docker compose -p tao-v2-<id> down -v.. Status: pending
+Contrato: rollback: git revert de scripts/dev/backend-*.mjs y de las entradas backend:* del package.json; backend:down manual o docker compose -p tao-v2-<id> down -v.. Status: done
 
 #### S1.T3.1 — Módulo compartido scripts/dev/backend-run.mjs: lee .nvmrc (24) y aborta si process.version no coincide; resuelve el id de corrida (TAO_RUN_ID o uno generado) y el nombre de proyecto Compose tao-v2-{idCorrida}; busca puertos libres con un intento acotado (máximo 20 por servicio) y persiste el estado de la corrida en un archivo bajo un directorio ignorado por git.
-Contrato: rollback: Borrar scripts/dev/backend-run.mjs (git revert).. Status: pending
+Contrato: rollback: Borrar scripts/dev/backend-run.mjs (git revert).. Status: done
 
 #### S1.T3.2 — backend:prepare: corre generate:server, levanta los servicios con dev:services usando el proyecto y los puertos de la corrida, crea la base exclusiva, aplica db:migrate:deploy y db:seed (cuentas R09 USR-A y USR-B; el mecanismo queda listo para ADM-1 y PRD, que llegan con B1-04) y vacía la cola y el buzón de Mailpit. Las contraseñas generadas no se imprimen.
-Contrato: rollback: git revert de scripts/dev/backend-prepare.mjs; backend:down de la corrida.. Status: pending
+Contrato: rollback: git revert de scripts/dev/backend-prepare.mjs; backend:down de la corrida.. Status: done
 
 #### S1.T3.3 — backend:up y backend:down. up levanta el servidor (dev) y el worker contra la corrida y espera hasta que estén listos con un timeout acotado. down hace docker compose -p tao-v2-{idCorrida} down -v solo sobre la corrida y borra su archivo de estado, sin tocar otras corridas, el volumen de desarrollo ni los contenedores taomangalam-* del legacy.
-Contrato: rollback: git revert de scripts/dev/backend-up.mjs y backend-down.mjs.. Status: pending
+Contrato: rollback: git revert de scripts/dev/backend-up.mjs y backend-down.mjs.. Status: done
 
 #### S1.T4 — Pruebas y regresión de la sesión. scripts/dev/backend-run.test.mjs (node --test) cubre el guard de Node 24 contra .nvmrc, que dos ids den nombres de proyecto y volumen distintos y que la resolución de puertos evite 54329/1025/8025 cuando están ocupados. Además, prueba manual documentada de dos corridas simultáneas con el legacy arriba.
-Contrato: rollback: Borrar scripts/dev/backend-run.test.mjs (git revert).. Status: pending
+Contrato: rollback: Borrar scripts/dev/backend-run.test.mjs (git revert).. Status: done
 
 #### S2.T1 — Implementar backend:verify (scripts/dev/backend-verify.mjs). Primero chequea la salud de PostgreSQL (conexión a la base de la corrida), del worker y de Mailpit (API HTTP de la corrida), con timeout acotado, y aborta nombrando la dependencia caída. Después corre el script test existente con el reporter JSON de Vitest apuntando a la corrida.
 Contrato: rollback: git revert de scripts/dev/backend-verify.mjs y de la entrada backend:verify.. Status: pending
@@ -127,16 +127,16 @@ Ninguno.
 - REQ-05 (edit) `inferred`: Hay un archivo versionado de operaciones activas por alcance, derivado de docs/product/v3/backend_operaciones.csv (filas con releaseStatus=a
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T3.1
-- [ ] S1.T3.2
-- [ ] S1.T3.3
-- [ ] S1.T4
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T3.1
+- [x] S1.T3.2
+- [x] S1.T3.3
+- [x] S1.T4
 
 **Gate (auto)**: Con el stack legacy corriendo, dos corridas (TAO_RUN_ID=a y b) de pnpm backend:prepare && pnpm backend:up quedan arriba a la vez, docker ps muestra contenedores tao-v2-a-* y tao-v2-b-* con puertos distintos de 54329/1025/8025, y pnpm backend:down de a deja intactos b y el legacy.
 
