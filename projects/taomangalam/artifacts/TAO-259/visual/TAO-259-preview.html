@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spike tablero procedural</title>
+<style>
+:root{
+  --bg:#f4f2ee;--surface:#ffffff;--ink:#1d1b18;--muted:#6b665e;--line:#d9d4cb;
+  --accent:#3b5bdb;--ok:#2b8a3e;--warn:#b7791f;--err:#c92a2a;
+  --dev-bg:#16161a;--dev-surface:#202027;--dev-ink:#ecebf2;--dev-muted:#9a99a8;--dev-line:#34343e;
+  --grid:#5a5a68;--trail:#e0b44c;--trail-old:#e0b44c55;--yin:#ecebf2;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 16px 64px}
+header.doc h1{font-size:22px;margin:0 0 4px}
+header.doc p{margin:0;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.tag{font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 10px}
+.banner{margin:18px 0 8px;border:1px solid #e9c46a;background:#fff8e6;border-radius:10px;padding:12px 14px}
+.banner b{color:var(--warn)}
+h2.sec{font-size:17px;margin:36px 0 4px}
+p.sec-note{margin:0 0 14px;color:var(--muted);max-width:820px}
+.row{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.state{display:flex;flex-direction:column;gap:8px}
+.state-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.state-label span{display:inline-block;background:var(--ink);color:#fff;border-radius:4px;padding:1px 6px;margin-right:6px}
+
+/* Dispositivo */
+.phone{width:300px;height:620px;border-radius:34px;background:#000;padding:10px;box-shadow:0 8px 24px #0002}
+.tablet{width:900px;max-width:100%;height:560px;border-radius:26px;background:#000;padding:12px;box-shadow:0 8px 24px #0002}
+.screen{position:relative;width:100%;height:100%;border-radius:26px;background:var(--dev-bg);color:var(--dev-ink);overflow:hidden;display:flex;flex-direction:column}
+.tablet .screen{border-radius:16px;flex-direction:row}
+.status{height:22px;font-size:11px;display:flex;justify-content:space-between;padding:4px 18px 0;color:var(--dev-muted)}
+.appbar{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 8px;border-bottom:1px solid var(--dev-line)}
+.appbar .t{font-size:14px;font-weight:600}
+.appbar .s{font-size:10px;color:var(--dev-muted)}
+.pill{font-size:10px;border-radius:999px;padding:2px 8px;border:1px solid var(--dev-line);color:var(--dev-muted)}
+.pill.prov{border-color:#e0b44c88;color:#e0b44c}
+.body{flex:1;display:flex;flex-direction:column;gap:8px;padding:10px 12px;overflow:hidden}
+.lbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--dev-muted)}
+.seg{display:flex;background:var(--dev-surface);border:1px solid var(--dev-line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:none;color:var(--dev-ink);font:inherit;font-size:12px;padding:6px 0}
+.seg button.on{background:var(--accent);color:#fff}
+.seg button[disabled]{color:#5c5b68}
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.toggle{background:var(--dev-surface);border:1px solid var(--dev-line);border-radius:8px;padding:6px 8px}
+.toggle .k{font-size:9px;color:var(--dev-muted)}
+.toggle .v{font-size:11px;font-weight:600}
+.board{position:relative;align-self:center;width:236px;height:236px}
+.board svg{width:100%;height:100%;display:block}
+.hud{position:absolute;top:4px;left:4px;font:10px/1.35 ui-monospace,Menlo,monospace;background:#000a;border:1px solid var(--dev-line);border-radius:6px;padding:4px 6px}
+.hud .bad{color:#ff8787}
+.hud .good{color:#8ce99a}
+.plan{background:var(--dev-surface);border:1px solid var(--dev-line);border-radius:8px;padding:6px 8px}
+.planbar{display:flex;height:10px;border-radius:4px;overflow:hidden;margin:4px 0}
+.planbar i{display:block;height:100%}
+.planleg{display:flex;justify-content:space-between;font-size:9px;color:var(--dev-muted)}
+.cta{display:flex;gap:6px;margin-top:auto}
+.btn{flex:1;border-radius:10px;border:1px solid var(--dev-line);background:var(--dev-surface);color:var(--dev-ink);font:inherit;font-size:13px;padding:9px 0;text-align:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn[disabled]{opacity:.45}
+.progress{height:4px;background:var(--dev-line);border-radius:2px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent)}
+.empty{text-align:center;font-size:12px;color:var(--dev-muted);padding:2px 8px}
+.alert{border-radius:8px;padding:8px 10px;font-size:11px}
+.alert.err{background:#c92a2a22;border:1px solid #c92a2a88}
+.alert.err b{color:#ff8787}
+.alert.info{background:#3b5bdb22;border:1px solid #3b5bdb88}
+.alert.ok{background:#2b8a3e22;border:1px solid #2b8a3e88}
+.alert.ok b{color:#8ce99a}
+.kv{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:11px}
+.kv span:nth-child(even){font-family:ui-monospace,Menlo,monospace;text-align:right}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--dev-surface);border-top:1px solid var(--dev-line);border-radius:18px 18px 0 0;padding:10px 14px 16px;box-shadow:0 -8px 24px #0008}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--dev-line);margin:0 auto 8px}
+.scrim{position:absolute;inset:0;background:#0007}
+.dim{opacity:.55}
+
+/* Tablet */
+.t-board{flex:1.25;display:flex;flex-direction:column;border-right:1px solid var(--dev-line)}
+.t-board .board{width:420px;height:420px;margin:auto}
+.t-side{flex:1;display:flex;flex-direction:column;gap:10px;padding:14px 16px;overflow:hidden}
+.t-side .hud{position:static;background:var(--dev-surface)}
+
+/* Reporte */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;width:100%}
+.card h3{margin:0 0 4px;font-size:16px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}
+.meta div{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meta .k{font-size:11px;color:var(--muted)}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+thead th{background:#f7f5f1;font-weight:600}
+td.ok{color:var(--ok);font-weight:600}
+td.bad{color:var(--err);font-weight:600}
+.decision{margin-top:14px;border-left:4px solid var(--accent);background:#eef2ff;padding:10px 12px;border-radius:0 8px 8px 0}
+.decision p{margin:4px 0}
+.fallback{margin-top:10px;border-left:4px solid var(--warn);background:#fff8e6;padding:10px 12px;border-radius:0 8px 8px 0}
+.empty-card{border:1px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--muted)}
+ul.notes{margin:6px 0 0;padding-left:18px;color:var(--muted)}
+@media (max-width:640px){.tablet{display:none}.tablet-note{display:block!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Retícula DEC-074: 12 sectores, 8 anillos, corona interior, yin-yang, exclusión central -->
+    <symbol id="grid" viewBox="0 0 300 300">
+      <g fill="none" stroke="var(--grid)" stroke-width="1">
+        <circle cx="150" cy="150" r="140"/><circle cx="150" cy="150" r="127.4"/><circle cx="150" cy="150" r="114.8"/>
+        <circle cx="150" cy="150" r="102.1"/><circle cx="150" cy="150" r="89.5"/><circle cx="150" cy="150" r="76.9"/>
+        <circle cx="150" cy="150" r="64.3"/><circle cx="150" cy="150" r="51.6"/>
+        <circle cx="150" cy="150" r="39" stroke-dasharray="3 3"/>
+        <line x1="189" y1="150" x2="290" y2="150"/><line x1="183.8" y1="169.5" x2="271.2" y2="220"/>
+        <line x1="169.5" y1="183.8" x2="220" y2="271.2"/><line x1="150" y1="189" x2="150" y2="290"/>
+        <line x1="130.5" y1="183.8" x2="80" y2="271.2"/><line x1="116.2" y1="169.5" x2="28.8" y2="220"/>
+        <line x1="111" y1="150" x2="10" y2="150"/><line x1="116.2" y1="130.5" x2="28.8" y2="80"/>
+        <line x1="130.5" y1="116.2" x2="80" y2="28.8"/><line x1="150" y1="111" x2="150" y2="10"/>
+        <line x1="169.5" y1="116.2" x2="220" y2="28.8"/><line x1="183.8" y1="130.5" x2="271.2" y2="80"/>
+      </g>
+      <circle cx="150" cy="150" r="45.3" fill="none" stroke="var(--grid)" stroke-width="6" opacity=".35"/>
+      <circle cx="150" cy="150" r="26" fill="var(--dev-bg)" stroke="var(--yin)" stroke-width="1"/>
+      <path d="M150,124 A26,26 0 0,1 150,176 A13,13 0 0,1 150,150 A13,13 0 0,0 150,124 Z" fill="var(--yin)"/>
+      <circle cx="150" cy="137" r="3.5" fill="var(--yin)"/><circle cx="150" cy="163" r="3.5" fill="var(--dev-bg)"/>
+    </symbol>
+    <!-- Rastro antiguo agrupado por fundido -->
+    <symbol id="trail-old" viewBox="0 0 300 300">
+      <path d="M150,63 A87,87 0 0,1 237,150 A83,83 0 0,1 150,233 A80,80 0 0,1 70,150 A84,84 0 0,1 120,71 A96,96 0 0,1 246,150 A96,96 0 0,1 150,246 A70,70 0 0,1 80,150 A108,108 0 0,1 150,42 A108,108 0 0,1 258,150" fill="none" stroke="var(--trail-old)" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <!-- 8 pasos recientes, individuales -->
+    <symbol id="trail-recent" viewBox="0 0 300 300">
+      <g fill="none" stroke="var(--trail)" stroke-width="3.5" stroke-linecap="round">
+        <path d="M258,150 A108,108 0 0,1 243.5,204" opacity=".55"/>
+        <path d="M243.5,204 A108,108 0 0,1 204,243.5" opacity=".6"/>
+        <path d="M204,243.5 A102,102 0 0,1 150,252" opacity=".65"/>
+        <path d="M150,252 A102,102 0 0,1 99,238" opacity=".72"/>
+        <path d="M99,238 A114,114 0 0,1 51,207" opacity=".8"/>
+        <path d="M51,207 A114,114 0 0,1 36,150" opacity=".86"/>
+        <path d="M36,150 A121,121 0 0,1 45,90" opacity=".93"/>
+        <path d="M45,90 A121,121 0 0,1 89,46"/>
+      </g>
+      <circle cx="89" cy="46" r="5" fill="var(--trail)"/>
+    </symbol>
+    <!-- Reproducción parcial -->
+    <symbol id="trail-partial" viewBox="0 0 300 300">
+      <path d="M150,63 A87,87 0 0,1 237,150 A83,83 0 0,1 150,233 A80,80 0 0,1 70,150" fill="none" stroke="var(--trail-old)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M70,150 A84,84 0 0,1 120,71" fill="none" stroke="var(--trail)" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="120" cy="71" r="5" fill="var(--trail)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="doc">
+    <h1>TAO-259 · Spike de rendimiento del tablero procedural</h1>
+    <p>Maqueta de verificación del prototipo V-32 (destino contextual, solo prototipo) y del documento de resultados. Sin guía visual propia: el tablero usa solo trazos neutros para medir rendimiento, no la estética de producción (HU-07-02).</p>
+    <div class="tags">
+      <span class="tag">HU-07-01</span><span class="tag">GH-174</span><span class="tag">EP-07 · M1a · P0</span>
+      <span class="tag">DEC-167 · DEC-074 · DEC-186 · DEC-198</span><span class="tag">Teléfono vertical + tablet horizontal</span>
+    </div>
+  </header>
+
+  <div class="banner">
+    <b>Mediciones PROVISIONALES (Adenda 1).</b> Se mide en emulador Android y simulador iOS. Los tiempos de frame del emulador no representan a un teléfono de gama baja y el simulador iOS no tiene modo profile. Se verifican: la lógica de duración, la comparación relativa entre estrategias, que la retícula no se repinte sin cambios y que no queden controladores activos. El umbral de 60 fps queda pendiente de dispositivo real.
+  </div>
+
+  <!-- ===================== TELÉFONO ===================== -->
+  <h2 class="sec">1. Prototipo en teléfono vertical</h2>
+  <p class="sec-note">Una sola pantalla con selector de pasos (1, 8, 20, 100), dos pares de estrategias de pintado (doc 44 §19), el tablero, un HUD de medición y la barra del plan de reproducción (doc 44 §14). Todos los textos salen de l10n (regla no_hardcoded_ui_text).</p>
+
+  <div class="row">
+    <!-- A. Reposo / vacío -->
+    <div class="state">
+      <div class="state-label"><span>A</span>Reposo (vacío)</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>Emulador · Android 8.0</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">Prototipo V-32</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="lbl">Pasos del rastro</div>
+          <div class="seg"><button>1</button><button>8</button><button class="on">20</button><button>100</button></div>
+          <div class="toggles">
+            <div class="toggle"><div class="k">Retícula</div><div class="v">Cacheada (RepaintBoundary)</div></div>
+            <div class="toggle"><div class="k">Rastro</div><div class="v">Por segmentos</div></div>
+          </div>
+          <div class="board"><svg viewBox="0 0 300 300"><use href="#grid"/></svg></div>
+          <p class="empty">Aún no hay reproducciones. Elige los pasos y la estrategia, y pulsa Reproducir.</p>
+          <div class="plan">
+            <div class="lbl">Plan de reproducción · 20 pasos</div>
+            <div class="planbar"><i style="width:14%;background:#5c7cfa"></i><i style="width:40%;background:#e0b44c66"></i><i style="width:46%;background:#e0b44c"></i></div>
+            <div class="planleg"><span>Construcción 600 ms</span><span>Historial 1600 ms</span><span>8 recientes</span></div>
+          </div>
+          <div class="cta"><button class="btn primary">Reproducir</button><button class="btn" disabled>Correr ×3</button></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- B. Reproduciendo -->
+    <div class="state">
+      <div class="state-label"><span>B</span>Reproduciendo (carga)</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>Emulador · Android 8.0</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">Corrida 2 de 3 · 20 pasos</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="lbl">Pasos del rastro</div>
+          <div class="seg"><button disabled>1</button><button disabled>8</button><button class="on">20</button><button disabled>100</button></div>
+          <div class="toggles dim">
+            <div class="toggle"><div class="k">Retícula</div><div class="v">Cacheada (RepaintBoundary)</div></div>
+            <div class="toggle"><div class="k">Rastro</div><div class="v">Por segmentos</div></div>
+          </div>
+          <div class="board">
+            <svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-partial"/></svg>
+            <div class="hud">build p90 <span class="good">3,1 ms</span><br>raster p90 <span class="good">6,8 ms</span><br>lentos <span class="bad">2</span> · mem 142 MB</div>
+          </div>
+          <div class="plan">
+            <div class="lbl">Grabando traza de timeline · 1180 / 2840 ms</div>
+            <div class="progress"><i style="width:42%"></i></div>
+            <div class="planleg" style="margin-top:4px"><span>Fase: historial comprimido</span><span>paso 9 de 20</span></div>
+          </div>
+          <div class="cta"><button class="btn">Detener</button></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- C. Completado -->
+    <div class="state">
+      <div class="state-label"><span>C</span>Completado · 100 pasos</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>Emulador · Android 8.0</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">Reproducción terminada</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="lbl">Pasos del rastro</div>
+          <div class="seg"><button>1</button><button>8</button><button>20</button><button class="on">100</button></div>
+          <div class="board"><svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-old"/><use href="#trail-recent"/></svg></div>
+          <div class="alert ok"><b>Dentro del presupuesto.</b> 4480 ms de 4500 ms. 92 pasos agrupados por fundido, 8 individuales.</div>
+          <div class="plan">
+            <div class="kv">
+              <span>build p50 / p90 / p99</span><span>2,4 / 3,9 / 7,2 ms</span>
+              <span>raster p50 / p90 / p99</span><span>5,1 / 8,6 / 14,9 ms</span>
+              <span>Frames lentos (&gt;16,7 ms)</span><span>3 de 269</span>
+              <span>Segmento mínimo antes del agrupado</span><span>60 ms</span>
+              <span>Memoria pico</span><span>151 MB</span>
+            </div>
+          </div>
+          <div class="cta"><button class="btn">Guardar artifact</button><button class="btn primary">Repetir</button></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- D. Error -->
+    <div class="state">
+      <div class="state-label"><span>D</span>Error de medición</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:41</span><span>Simulador · iOS 15</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">Prototipo V-32</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="lbl">Pasos del rastro</div>
+          <div class="seg"><button>1</button><button class="on">8</button><button>20</button><button>100</button></div>
+          <div class="board dim"><svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-partial"/></svg></div>
+          <div class="alert err"><b>No se pudo guardar la traza de timeline.</b><br>El simulador de iOS no expone el modo profile. Los tiempos de frame de esta corrida no se registran; la duración total sí (1420 ms).</div>
+          <div class="alert info">La corrida queda marcada como incompleta en el artifact.</div>
+          <div class="cta"><button class="btn">Ver detalle</button><button class="btn primary">Reintentar</button></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <h2 class="sec">2. Estados de ciclo de vida y repintado</h2>
+  <p class="sec-note">E verifica QA-07-01-03 (sin controladores activos al volver de segundo plano). F verifica el criterio de la retícula: tablero quieto con 100 pasos, panel abierto encima y contador de repintados de retícula sin cambios.</p>
+
+  <div class="row">
+    <!-- E. Vuelta de segundo plano -->
+    <div class="state">
+      <div class="state-label"><span>E</span>Vuelta de segundo plano</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:42</span><span>Emulador · Android 8.0</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">Reproducción interrumpida</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="lbl">Pasos del rastro</div>
+          <div class="seg"><button>1</button><button>8</button><button class="on">20</button><button>100</button></div>
+          <div class="board"><svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-partial"/></svg></div>
+          <div class="alert info">La app pasó a segundo plano durante la reproducción. Se detuvo y se descartó la corrida.</div>
+          <div class="plan"><div class="kv">
+            <span>AnimationController activos</span><span>0</span>
+            <span>Ticker activos</span><span>0</span>
+            <span>Estado del rastro</span><span>conservado (paso 9)</span>
+          </div></div>
+          <div class="cta"><button class="btn primary">Reproducir de nuevo</button></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- F. Panel encima, retícula sin repintar -->
+    <div class="state">
+      <div class="state-label"><span>F</span>Panel abierto, tablero quieto</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:43</span><span>Emulador · Android 8.0</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">100 pasos · quieto</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="seg"><button>1</button><button>8</button><button>20</button><button class="on">100</button></div>
+          <div class="board">
+            <svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-old"/><use href="#trail-recent"/></svg>
+            <div class="hud">retícula repintada <span class="good">0</span><br>rastro repintado <span class="good">0</span></div>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">Panel de prueba</div>
+          <div class="kv">
+            <span>Repintados de retícula desde que se abrió</span><span>0</span>
+            <span>Repintados al desplazar la pantalla</span><span>0</span>
+            <span>Estrategia de retícula</span><span>cacheada</span>
+          </div>
+          <div class="alert ok" style="margin-top:8px"><b>Retícula estable.</b> La capa con RepaintBoundary no se repintó.</div>
+          <div class="cta" style="margin-top:10px"><button class="btn">Cerrar panel</button></div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- G. Repintado completo, para comparar -->
+    <div class="state">
+      <div class="state-label"><span>G</span>Comparación: repintado completo</div>
+      <div class="phone"><div class="screen">
+        <div class="status"><span>9:43</span><span>Emulador · Android 8.0</span></div>
+        <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">100 pasos · quieto</div></div><span class="pill prov">Provisional</span></div>
+        <div class="body">
+          <div class="toggles">
+            <div class="toggle"><div class="k">Retícula</div><div class="v">Repintado completo</div></div>
+            <div class="toggle"><div class="k">Rastro</div><div class="v">Único trazo</div></div>
+          </div>
+          <div class="board">
+            <svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-old"/><use href="#trail-recent"/></svg>
+            <div class="hud">retícula repintada <span class="bad">38</span><br>raster p90 <span class="bad">12,4 ms</span></div>
+          </div>
+          <div class="alert err"><b>La retícula se repinta al desplazar.</b> Con esta estrategia no se cumple el criterio; queda como referencia en la tabla.</div>
+          <div class="cta"><button class="btn primary">Volver a cacheada</button></div>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ===================== TABLET ===================== -->
+  <h2 class="sec">3. Prototipo en tablet horizontal</h2>
+  <p class="sec-note">Tablero más grande a la izquierda (requisito de responsive), controles y resultados a la derecha. Mismos estados que en teléfono; se muestra el estado completado con 100 pasos.</p>
+  <p class="sec-note tablet-note" style="display:none">La vista de tablet se oculta en pantallas angostas.</p>
+
+  <div class="tablet"><div class="screen">
+    <div class="t-board">
+      <div class="appbar"><div><div class="t">Spike tablero</div><div class="s">Emulador · tablet Android 8.0 · 1280×800</div></div><span class="pill prov">Provisional</span></div>
+      <div class="board"><svg viewBox="0 0 300 300"><use href="#grid"/><use href="#trail-old"/><use href="#trail-recent"/></svg></div>
+    </div>
+    <div class="t-side">
+      <div><div class="lbl">Pasos del rastro</div>
+        <div class="seg" style="margin-top:4px"><button>1</button><button>8</button><button>20</button><button class="on">100</button></div></div>
+      <div class="toggles">
+        <div class="toggle"><div class="k">Retícula</div><div class="v">Cacheada (RepaintBoundary)</div></div>
+        <div class="toggle"><div class="k">Rastro</div><div class="v">Por segmentos</div></div>
+      </div>
+      <div class="plan">
+        <div class="lbl">Plan de reproducción · 100 pasos</div>
+        <div class="planbar"><i style="width:13%;background:#5c7cfa"></i><i style="width:36%;background:#e0b44c66"></i><i style="width:51%;background:#e0b44c"></i></div>
+        <div class="planleg"><span>Construcción</span><span>92 agrupados por fundido</span><span>8 individuales</span></div>
+      </div>
+      <div class="alert ok"><b>Dentro del presupuesto.</b> 4490 ms de 4500 ms.</div>
+      <div class="plan"><div class="kv">
+        <span>build p50 / p90 / p99</span><span>2,9 / 4,6 / 8,8 ms</span>
+        <span>raster p50 / p90 / p99</span><span>6,3 / 10,2 / 17,4 ms</span>
+        <span>Frames lentos (&gt;16,7 ms)</span><span>6 de 270</span>
+        <span>Memoria pico</span><span>188 MB</span>
+        <span>Repintados de retícula en reposo</span><span>0</span>
+      </div></div>
+      <div class="cta"><button class="btn">Guardar artifact</button><button class="btn">Correr ×3</button><button class="btn primary">Repetir</button></div>
+    </div>
+  </div></div>
+
+  <!-- ===================== DOCUMENTO ===================== -->
+  <h2 class="sec">4. Documento de resultados del spike (artifact de la historia)</h2>
+  <p class="sec-note">Vista del documento enlazado desde HU-07-01 en EP-07 y desde DEC-167 (o la DEC nueva). Las cifras son ilustrativas para revisar el formato.</p>
+
+  <div class="row">
+    <div class="card">
+      <h3>Spike HU-07-01 · Rendimiento del tablero procedural</h3>
+      <div style="color:var(--muted);font-size:12px">Estado: cerrado con decisión PROVISIONAL · Fuente: integration_test + trazas de timeline · Artifact: results.json, trazas/*.json</div>
+
+      <div class="meta">
+        <div><div class="k">Dispositivos y versiones</div>Emulador Android 8.0 (API 26, 2 GB) · Simulador iPhone SE iOS 15 · Emulador tablet 1280×800 horizontal</div>
+        <div><div class="k">Método</div>Modo profile en Android; 3 corridas por combinación; frames lentos por encima de 16,7 ms</div>
+        <div><div class="k">Umbral (provisional)</div>p90 build + raster por debajo de 16,7 ms y menos del 2 % de frames lentos, sobre el objetivo de 60 fps del doc 44 §19</div>
+        <div><div class="k">Presupuesto de duración</div>boardHistoryBudget 1600 ms · boardReplayMax 4500 ms · segmento mínimo 60 ms</div>
+      </div>
+
+      <div class="tblwrap"><table>
+        <thead><tr><th>Estrategia</th><th>Dispositivo</th><th>Pasos</th><th>build p50/p90/p99</th><th>raster p50/p90/p99</th><th>Lentos</th><th>Duración</th><th>Memoria</th><th>Umbral</th></tr></thead>
+        <tbody>
+          <tr><td>Cacheada + segmentos</td><td>Android</td><td>1</td><td>1,1 / 1,6 / 2,4</td><td>2,2 / 3,0 / 4,1</td><td>0</td><td>600 ms</td><td>128 MB</td><td class="ok">Cumple</td></tr>
+          <tr><td>Cacheada + segmentos</td><td>Android</td><td>8</td><td>1,6 / 2,3 / 3,9</td><td>3,4 / 4,9 / 7,8</td><td>0</td><td>1560 ms</td><td>131 MB</td><td class="ok">Cumple</td></tr>
+          <tr><td>Cacheada + segmentos</td><td>Android</td><td>20</td><td>2,0 / 3,1 / 5,6</td><td>4,2 / 6,8 / 11,3</td><td>2</td><td>2840 ms</td><td>142 MB</td><td class="ok">Cumple</td></tr>
+          <tr><td>Cacheada + segmentos</td><td>Android</td><td>100</td><td>2,4 / 3,9 / 7,2</td><td>5,1 / 8,6 / 14,9</td><td>3</td><td>4480 ms</td><td>151 MB</td><td class="ok">Cumple</td></tr>
+          <tr><td>Cacheada + único trazo</td><td>Android</td><td>100</td><td>2,2 / 3,5 / 6,9</td><td>6,0 / 11,8 / 19,6</td><td>9</td><td>4480 ms</td><td>149 MB</td><td class="bad">No cumple</td></tr>
+          <tr><td>Completo + segmentos</td><td>Android</td><td>100</td><td>3,8 / 6,1 / 11,0</td><td>8,9 / 12,4 / 22,7</td><td>14</td><td>4480 ms</td><td>156 MB</td><td class="bad">No cumple</td></tr>
+          <tr><td>Cacheada + segmentos</td><td>Tablet</td><td>100</td><td>2,9 / 4,6 / 8,8</td><td>6,3 / 10,2 / 17,4</td><td>6</td><td>4490 ms</td><td>188 MB</td><td class="ok">Cumple</td></tr>
+          <tr><td>Cacheada + segmentos</td><td>iOS (simulador)</td><td>100</td><td>sin datos</td><td>sin datos</td><td>sin datos</td><td>4480 ms</td><td>sin datos</td><td>Solo duración</td></tr>
+        </tbody>
+      </table></div>
+
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">QA-07-01-01 · 20 pasos ×3 en Android: 2840 / 2838 / 2841 ms; memoria 142 / 142 / 143 MB, sin crecimiento entre corridas.</div>
+
+      <div class="decision">
+        <b>Decisión (PROVISIONAL):</b>
+        <p>Se confirma DEC-167 con retícula cacheada en una capa con RepaintBoundary y rastro por segmentos. Las otras dos combinaciones quedan descartadas por frames lentos y repintado de la retícula.</p>
+        <p>La geometría queda en un módulo puro independiente del renderer (DEC-074), así que cambiar de renderer no toca el dominio.</p>
+      </div>
+      <div class="fallback">
+        <b>Si en el Android de gama baja real ninguna estrategia alcanza el umbral:</b>
+        <p>1. Se elimina primero el fundido de los pasos antiguos (se dibujan con tono fijo). 2. Luego el resplandor de la corona interior. El estado y la posición del rastro no cambian.</p>
+      </div>
+      <ul class="notes">
+        <li>Pendiente: repetir la medición en un Android de gama baja, un iPhone con la versión mínima y una tablet físicos antes de cerrar el umbral.</li>
+        <li>Enlaces: HU-07-01 (EP-07) · DEC-167 · Consumidores: HU-07-02, HU-07-06, HU-07-10.</li>
+      </ul>
+    </div>
+
+    <div class="state" style="width:100%">
+      <div class="state-label"><span>H</span>Documento sin datos todavía</div>
+      <div class="empty-card">Todavía no hay resultados del benchmark. Corre <code>integration_test</code> con el perfil de rendimiento para generar results.json y las trazas de timeline.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

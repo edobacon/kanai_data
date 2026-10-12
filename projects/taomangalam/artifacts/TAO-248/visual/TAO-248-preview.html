@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAO-248 · Maqueta de verificación</title>
+<style>
+:root{
+  --bg:#f6f5f2;--surface:#ffffff;--ink:#1d1f23;--muted:#5d6370;--line:#e2e0da;
+  --accent:#2f5d8a;--accent-soft:#e6eef6;--ok:#2e7d4f;--ok-soft:#e5f3ea;
+  --warn:#9a6a00;--warn-soft:#fbf1d9;--err:#b03a2e;--err-soft:#f8e4e1;
+  --ref:#6b4fa3;--ref-soft:#efe9f8;--phone:#111317;--screen:#fbfbfa;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#15171b;--surface:#1d2026;--ink:#e8e9ec;--muted:#a3a8b3;--line:#30343c;
+    --accent:#8bb6e0;--accent-soft:#22303f;--ok:#7fcf9c;--ok-soft:#1c2e24;
+    --warn:#e4bb5c;--warn-soft:#332b17;--err:#f09186;--err-soft:#3a2220;
+    --ref:#b9a2e6;--ref-soft:#2a2438;--phone:#000;--screen:#202329;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 64px}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:18px;margin:40px 0 6px;padding-top:12px;border-top:1px solid var(--line)}
+h3{font-size:15px;margin:0 0 6px}
+p{margin:6px 0}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;margin:2px 4px 2px 0;border:1px solid transparent}
+.t-ref{background:var(--ref-soft);color:var(--ref);border-color:var(--ref)}
+.t-new{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.t-ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.t-warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.t-err{background:var(--err-soft);color:var(--err);border-color:var(--err)}
+.note{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ref);border-radius:8px;padding:12px 14px;margin:14px 0}
+.note.warn{border-left-color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+
+/* Flujo */
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:12px 0}
+.step{flex:1 1 140px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}
+.step b{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.step.new{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+
+/* Telefonos */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px;margin-top:14px}
+.case{display:flex;flex-direction:column;gap:8px}
+.case .cap{font-size:13px}
+.phone{background:var(--phone);border-radius:30px;padding:10px;width:100%;max-width:270px;margin:0 auto}
+.screen{background:var(--screen);border-radius:22px;height:500px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.status{display:flex;justify-content:space-between;font-size:11px;padding:8px 16px 4px;color:var(--muted)}
+.bar{padding:10px 16px;font-weight:600;border-bottom:1px solid var(--line);font-size:14px;display:flex;gap:8px;align-items:center}
+.body{padding:14px 16px;flex:1;font-size:13px;overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.ph{height:9px;background:var(--line);border-radius:4px;margin:6px 0}
+.ph.s{width:55%}.ph.m{width:80%}
+.btn{display:block;text-align:center;border-radius:10px;padding:10px;font-weight:600;font-size:13px;margin-top:8px}
+.btn.pri{background:var(--accent);color:#fff}
+.btn.sec{border:1px solid var(--line);color:var(--ink)}
+.btn.dis{background:var(--line);color:var(--muted)}
+.link{color:var(--accent);text-decoration:underline;font-size:12.5px}
+.sheet{position:absolute;inset:auto 0 0 0;top:70px;background:var(--surface);border-radius:18px 18px 0 0;border-top:1px solid var(--line);padding:16px;display:flex;flex-direction:column;box-shadow:0 -6px 20px rgba(0,0,0,.15)}
+.dim{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.doc{border:1px solid var(--line);border-radius:8px;padding:8px;flex:1;overflow:hidden;margin:8px 0;font-size:12px;color:var(--muted)}
+.banner{border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:8px}
+.banner.info{background:var(--accent-soft);color:var(--accent)}
+.banner.err{background:var(--err-soft);color:var(--err)}
+.banner.warn{background:var(--warn-soft);color:var(--warn)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;margin-right:6px}
+.pin{position:absolute;right:10px;top:40px;background:var(--accent);color:#fff;font-size:10.5px;padding:2px 7px;border-radius:999px}
+.focus{outline:2px dashed var(--accent);outline-offset:2px}
+
+/* Backoff */
+.timeline{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:12px;overflow-x:auto}
+.tl{display:flex;align-items:center;min-width:640px}
+.tick{display:flex;flex-direction:column;align-items:center;font-size:11.5px;gap:4px;width:64px;flex:none}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--err);background:var(--err-soft)}
+.dot.ok{border-color:var(--ok);background:var(--ok)}
+.gap{height:2px;background:var(--line);position:relative;flex:none}
+.gap span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap}
+
+/* Tablas y logs */
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:10px;font-size:13.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--bg);font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.scroll{overflow-x:auto}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font:12.5px/1.5 var(--mono);margin:8px 0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+ul.check{list-style:none;padding:0;margin:8px 0}
+ul.check li{padding:6px 0 6px 26px;position:relative;border-bottom:1px dashed var(--line);font-size:13.5px}
+ul.check li:before{content:"";position:absolute;left:2px;top:9px;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:3px}
+@media (prefers-reduced-motion:no-preference){.spin{animation:r 1s linear infinite}@keyframes r{to{transform:rotate(360deg)}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="muted mono">TAO-248 · HU-03a-12 + HU-03a-13 · EP-03a · M1a · P1</p>
+  <h1>Aceptación legal sin conexión: reintento, V-51 ante pendientes y traza del bloqueo</h1>
+  <p class="muted">Maqueta para verificar en qué momentos aparece V-51 y qué ve la persona en cada estado. No es un rediseño.</p>
+  <div class="note">
+    <h3>Esta historia no tiene interfaz propia</h3>
+    <p>V-51, su texto, su fondo y su aviso pertenecen a <b>HU-01-13</b> (DEC-235). Aquí solo se verifican los <b>disparadores</b> nuevos o modificados (201 con <code>pendientes</code>, 403, rechazo de la diferida), el <b>retorno conservado</b> y que el reintento con espera creciente <b>no agregue</b> elementos visibles.</p>
+  </div>
+  <div class="legend">
+    <span class="tag t-ref">Referencia HU-01-13 (no se modifica)</span>
+    <span class="tag t-new">Comportamiento nuevo de TAO-248</span>
+    <span class="tag t-ok">Existente en main</span>
+    <span class="tag t-warn">Pendiente de decisión</span>
+  </div>
+</header>
+
+<h2>1. Recorrido del primer uso sin red</h2>
+<div class="flow">
+  <div class="step"><b>1 · Sin red</b>Acepta términos y privacidad en V-51. Se guardan en <code>registro_legal_pendiente</code>.</div>
+  <div class="step"><b>2 · Uso local</b>Crea una consulta. El recorrido local no se bloquea.</div>
+  <div class="step"><b>3 · Vuelve la red</b>Orden fijo: alta de cuenta, cola legal, resto.</div>
+  <div class="step new"><b>4 · Servidor 5xx</b>Reintento con espera creciente y acotada. Misma <code>Idempotency-Key</code>.</div>
+  <div class="step new"><b>5 · 201</b>Se borra la entrada. Si trae <code>pendientes</code>, se presenta V-51 con el documento nuevo.</div>
+  <div class="step"><b>6 · Cola vacía</b>Continúan las demás operaciones.</div>
+</div>
+
+<h2>2. Estados de la app</h2>
+<p class="muted">Cada teléfono representa un estado a verificar en emulador (Adenda 1). Los textos marcados como referencia se copian de HU-01-13 y no se cambian.</p>
+
+<div class="grid">
+
+  <!-- A -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span>Modo avión</span></div>
+      <div class="bar">Inicio</div>
+      <div class="body">
+        <div class="card"><b>Consulta nueva</b><div class="ph m"></div><div class="ph s"></div></div>
+        <div class="card"><div class="ph m"></div><div class="ph s"></div></div>
+        <p class="muted" style="font-size:12px">Sin aviso nuevo de envío pendiente: la cola trabaja en segundo plano.</p>
+      </div>
+    </div></div>
+    <div class="cap"><span class="tag t-ok">Existente</span><b>A · Sin red, aceptaciones en cola.</b> Uso local libre. Verificar que no aparezca un banner nuevo por la cola.</div>
+  </div>
+
+  <!-- B -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:52</span><span>Wi-Fi</span></div>
+      <div class="bar">Inicio</div>
+      <div class="body">
+        <div class="card"><b>Consulta nueva</b><div class="ph m"></div><div class="ph s"></div></div>
+        <div class="card"><div class="ph m"></div><div class="ph s"></div></div>
+        <p class="muted" style="font-size:12px">Servidor responde 503. Intento 3 de N, próximo en 8 s. Nada de esto se muestra.</p>
+      </div>
+      <span class="pin">sin cambio visible</span>
+    </div></div>
+    <div class="cap"><span class="tag t-new">Nuevo</span><b>B · Red presente, servidor caído.</b> Reintento con espera creciente invisible. Sin spinner bloqueante ni pantalla de error.</div>
+  </div>
+
+  <!-- C -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:53</span><span>Wi-Fi</span></div>
+      <div class="bar">Consulta #12</div>
+      <div class="body"><div class="card"><div class="ph m"></div><div class="ph s"></div></div></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <span class="tag t-ref" style="align-self:flex-start">V-51 · HU-01-13</span>
+        <h3 style="margin-top:6px">Términos y condiciones</h3>
+        <div class="banner info">Actualizamos este documento. Revísalo para continuar</div>
+        <div class="doc">Versión 3 · vigente desde 10 oct 2026<div class="ph m"></div><div class="ph m"></div><div class="ph s"></div><div class="ph m"></div></div>
+        <span class="link">Ver documento completo</span>
+        <span class="btn pri">Aceptar y continuar</span>
+      </div>
+    </div></div>
+    <div class="cap"><span class="tag t-new">Nuevo</span><b>C · 201 con <code>pendientes</code>.</b> La diferida se registró, pero existe una versión nueva. V-51 aparece de inmediato con el documento nuevo (texto empaquetado o <code>urlPublicada</code>). Al aceptar, vuelve a <i>Consulta #12</i>.</div>
+  </div>
+
+  <!-- D -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:53</span><span>Wi-Fi</span></div>
+      <div class="bar">Consulta #12</div>
+      <div class="body"><div class="card"><div class="ph m"></div></div></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <span class="tag t-ref" style="align-self:flex-start">V-51 · carga</span>
+        <h3 style="margin-top:6px">Términos y condiciones</h3>
+        <div class="doc" style="display:flex;align-items:center;justify-content:center;color:var(--muted)"><span><span class="spin"></span>Cargando documento</span></div>
+        <span class="btn dis">Aceptar y continuar</span>
+      </div>
+    </div></div>
+    <div class="cap"><span class="tag t-ref">Referencia</span><b>D · Carga del documento nuevo.</b> Solo cuando la versión no está empaquetada y se obtiene con <code>obtenerDocumentoLegal</code>. Botón deshabilitado hasta tener el texto.</div>
+  </div>
+
+  <!-- E -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:54</span><span>Sin red</span></div>
+      <div class="bar">Consulta #12</div>
+      <div class="body"><div class="card"><div class="ph m"></div></div></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <span class="tag t-ref" style="align-self:flex-start">V-51 · error</span>
+        <h3 style="margin-top:6px">Términos y condiciones</h3>
+        <div class="banner err">No pudimos cargar el documento. Revisa tu conexión e inténtalo de nuevo.</div>
+        <div class="doc"></div>
+        <span class="btn sec">Reintentar</span>
+      </div>
+    </div></div>
+    <div class="cap"><span class="tag t-warn">Verificar texto</span><b>E · Error al obtener el documento nuevo.</b> El texto del error debe ser el de HU-01-13; si no existe, se pide allí, no se define en esta historia.</div>
+  </div>
+
+  <!-- F -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>8:10 (+1 día)</span><span>Wi-Fi</span></div>
+      <div class="bar">Bienvenida</div>
+      <div class="body"></div>
+      <div class="dim"></div>
+      <div class="sheet">
+        <span class="tag t-ref" style="align-self:flex-start">V-51 · HU-01-13</span>
+        <h3 style="margin-top:6px">Privacidad</h3>
+        <div class="doc"><div class="ph m"></div><div class="ph m"></div><div class="ph s"></div></div>
+        <span class="btn pri">Aceptar y continuar</span>
+      </div>
+    </div></div>
+    <div class="cap"><span class="tag t-ok">Existente</span><b>F · Diferida rechazada</b> (<code>aceptacion_fecha_invalida</code>, reloj adelantado). La entrada sale de la cola y V-51 vuelve a pedir la aceptación. QA-03a-12-04.</div>
+  </div>
+
+  <!-- G -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>11:02</span><span>4G</span></div>
+      <div class="bar">‹ Consulta #12 · Seguimiento</div>
+      <div class="body">
+        <div class="card"><div class="ph m"></div><div class="ph s"></div></div>
+        <div class="card"><div class="ph m"></div><div class="ph m"></div></div>
+        <span class="btn pri focus">Guardar seguimiento</span>
+        <p class="muted" style="font-size:12px;margin-top:10px">Al tocar: el servidor responde 403 <code>version_legal_pendiente</code>.</p>
+      </div>
+    </div></div>
+    <div class="cap"><span class="tag t-ok">Existente</span><b>G · Pantalla profunda, antes del bloqueo.</b> Acción con servidor sobre una cuenta pendiente. QA-03a-13-02.</div>
+  </div>
+
+  <!-- H -->
+  <div class="case">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>11:03</span><span>4G</span></div>
+      <div class="bar">‹ Consulta #12 · Seguimiento</div>
+      <div class="body">
+        <div class="banner warn" style="display:none"></div>
+        <div class="card"><div class="ph m"></div><div class="ph s"></div></div>
+        <div class="card"><div class="ph m"></div><div class="ph m"></div></div>
+        <span class="btn pri focus">Guardar seguimiento</span>
+        <p class="muted" style="font-size:12px;margin-top:10px">De vuelta tras aceptar en V-51: misma pantalla, misma posición, foco en el botón que originó la acción (HU-01-09).</p>
+      </div>
+      <span class="pin">retorno conservado</span>
+    </div></div>
+    <div class="cap"><span class="tag t-ok">Existente</span><b>H · Retorno tras aceptar.</b> Debe cumplirse igual en el caso C (disparo por 201 con <code>pendientes</code>), que es lo nuevo.</div>
+  </div>
+
+</div>
+
+<h2>3. Reintento con espera creciente (REQ-01)</h2>
+<p class="muted">Ejemplo ilustrativo. Los valores reales quedan en constantes con nombre (base, factor, tope, intentos por ciclo); no se muestran en la interfaz.</p>
+<div class="timeline">
+  <div class="tl">
+    <div class="tick"><div class="dot"></div>503<br>t=0</div>
+    <div class="gap" style="width:30px"><span>2 s</span></div>
+    <div class="tick"><div class="dot"></div>503</div>
+    <div class="gap" style="width:50px"><span>4 s</span></div>
+    <div class="tick"><div class="dot"></div>timeout</div>
+    <div class="gap" style="width:80px"><span>8 s</span></div>
+    <div class="tick"><div class="dot"></div>503</div>
+    <div class="gap" style="width:110px"><span>16 s</span></div>
+    <div class="tick"><div class="dot"></div>503</div>
+    <div class="gap" style="width:130px"><span>30 s (tope)</span></div>
+    <div class="tick"><div class="dot ok"></div>201<br>cola vacía</div>
+  </div>
+</div>
+<div class="two" style="margin-top:12px">
+  <div class="note"><h3>Se reintenta</h3><p>Red presente y servidor con 5xx o sin respuesta, mientras queden entradas. Misma <code>Idempotency-Key</code> en cada intento.</p></div>
+  <div class="note warn"><h3>No se reintenta</h3><p>Rechazos 4xx de la diferida (salen de la cola y se presenta V-51). Sin red: se espera la reconexión, como hoy. Al agotar el ciclo, se retoma al reconectar o reabrir la app.</p></div>
+</div>
+
+<h2>4. Regla de pendientes (REQ-05, REQ-06)</h2>
+<div class="scroll">
+<table>
+  <tr><th>Situación de la versión vigente</th><th>403 en operación no exenta</th><th><code>legalPendiente</code> del manifiesto</th><th>Estado</th></tr>
+  <tr><td>Nunca aceptada por la cuenta, sin <code>exige_reaceptacion</code></td><td>Bloquea (propuesta)</td><td>La incluye (propuesta)</td><td><span class="tag t-warn">Decide Producto</span></td></tr>
+  <tr><td>Con <code>exige_reaceptacion</code>, la aceptada es anterior</td><td>Bloquea</td><td>La incluye</td><td><span class="tag t-ok">Existente</span></td></tr>
+  <tr><td>Aceptada, versión nueva sin marca</td><td>No bloquea</td><td>No la incluye</td><td><span class="tag t-ok">Existente</span></td></tr>
+</table>
+</div>
+<p class="muted">El middleware y el manifiesto usan la misma fuente (<code>crearFuenteLegalPendiente</code>); la prueba unitaria fija las tres filas.</p>
+
+<h2>5. Traza en el servidor (REQ-03, REQ-07)</h2>
+<p class="muted">Sin interfaz. Forma ilustrativa de los logs: sin texto de documentos ni datos personales.</p>
+<div class="two">
+  <div>
+    <h3>Aceptación diferida registrada</h3>
+<pre>{
+  "evento": "aceptacion_legal_diferida",
+  "tipo": "terminos",
+  "versionId": "terminos-v2",
+  "diferida": true,
+  "diferenciaSegundos": 172800,
+  "diferenciaDias": 2
+}</pre>
+    <p class="muted" style="font-size:13px"><code>aceptada_at</code> = fecha original; <code>registrada_at</code> = recepción.</p>
+  </div>
+  <div>
+    <h3>Bloqueo por versión pendiente (muestreado)</h3>
+<pre>{
+  "evento": "bloqueo_version_legal",
+  "errorCode": "version_legal_pendiente",
+  "tiposPendientes": ["terminos"],
+  "operacion": "crearSeguimiento",
+  "muestreo": 0.1
+}</pre>
+    <p class="muted" style="font-size:13px">Tasa de muestreo en constante con nombre.</p>
+  </div>
+</div>
+
+<h2>6. Checklist de verificación visual</h2>
+<ul class="check">
+  <li>A y B: no hay elementos nuevos en pantalla por la cola ni por el reintento.</li>
+  <li>C: V-51 muestra el documento <b>nuevo</b> (no el ya aceptado) apenas llega el 201 con <code>pendientes</code>.</li>
+  <li>C y H: al aceptar, se vuelve a la pantalla de origen con su posición y foco.</li>
+  <li>D y E: carga y error de V-51 usan los textos de HU-01-13, sin textos nuevos inventados aquí.</li>
+  <li>F: tras el rechazo de la diferida, la cola queda vacía y V-51 vuelve a pedir la aceptación.</li>
+  <li>Movimiento reducido: el indicador de carga no anima con la preferencia activada.</li>
+  <li>Smartphone y tablet en emulador (Android, iPhone, tablet virtual), según Adenda 1.</li>
+</ul>
+
+</div>
+</body>
+</html>
