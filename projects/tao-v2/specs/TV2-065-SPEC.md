@@ -50,32 +50,32 @@ Contrato: rollback: git checkout -- server/src/app-release.integration.test.ts. 
 Contrato: rollback: git checkout -- server/src/configuracion.integration.test.ts. Status: done
 
 #### S1.T2 — Diagnosticar el 405 intermitente de verificacion-correo. Pasos: correrlo aislado y junto a los archivos que mutan estado global (process.env.DATABASE_URL, runtime Prisma, app). Registrar la causa encontrada y corregirla en el test o en el aislamiento de archivos de server/vitest.config.ts, sin omitir ni relajar aserciones.
-Contrato: rollback: git checkout -- server/src server/vitest.config.ts. Status: pending
+Contrato: rollback: git checkout -- server/src server/vitest.config.ts. Status: done
 
 #### S1.T3 — pgboss.integration: confirmar que el job sobrante viene del estado compartido con taomangalam-postgres (54329), consultando la tabla de jobs antes de correr. Después aislar la prueba en una base efímera propia de tao-v2 con el patrón de app-release.integration.test.ts:12-54 (nombre aleatorio, roleUrl local, CREATE y migrate en beforeAll, DROP en afterAll sin la carrera de REQ-01). No se toca compose.yaml.
 Contrato: rollback: git checkout -- server/src. Status: done
 
 #### S1.T4 — Quitar de la config de calidad los flakes conocidos ya resueltos (app-release.integration, configuracion.integration, verificacion-correo, pgboss.integration). La config está en scripts/dev/quality-ci.mjs, server/vitest.integration.ci.ts o server/vitest.config.ts, según lo que se confirme. Solo se quitan los que pasan en verde estable.
-Contrato: rollback: git checkout -- scripts/dev/quality-ci.mjs server/vitest.config.ts server/vitest.integration.ci.ts. Status: pending
+Contrato: rollback: git checkout -- scripts/dev/quality-ci.mjs server/vitest.config.ts server/vitest.integration.ci.ts. Status: done
 
 #### S1.T5 — Regresión y evidencia. Con Node 24 por .nvmrc (PATH antepuesto), correr `pnpm -C server exec vitest run` tres veces consecutivas y `pnpm run check`. Registrar en la sección Fallas de entorno preexistentes y Pendientes de docs/product/v3/matriz-evidencia-v1.md el SHA, los comandos, los totales ejecutados/pasados/fallidos/omitidos y la salida de cada corrida, comparados contra el baseline 645/648 con 2 omitidas. Una corrida que no se pudo hacer queda pendiente, no aprobada.
-Contrato: rollback: git checkout -- docs/product/v3/matriz-evidencia-v1.md. Status: pending
+Contrato: rollback: git checkout -- docs/product/v3/matriz-evidencia-v1.md. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
 - [x] S1.T1
 - [x] S1.T1.1
 - [x] S1.T1.2
-- [ ] S1.T2
+- [x] S1.T2
 - [x] S1.T3
-- [ ] S1.T4
-- [ ] S1.T5
+- [x] S1.T4
+- [x] S1.T5
 
 **Gate (auto)**: Criterio acotado a lo medido (adenda 1 del request): la suite completa de server/ corre 3 veces consecutivas con 0 fallas y el total ejecutado y los omitidos se registran tal como se miden (hoy 652 y 2 omitidos de email-docs); pnpm run check no empeora frente al baseline y sus 9 rojos Flutter preexistentes quedan documentados; el 405 de verificacion-correo se registra como no reproducido y su flake conocido se mantiene; solo se quitan de knownFlakes app-release.integration, configuracion.integration y pgboss.integration. No se exige 648 ni 0 omitidos ni check en 0.
 
