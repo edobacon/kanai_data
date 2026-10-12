@@ -53,22 +53,22 @@ Los documentos incorporados respetan los chequeos de docs existentes de tao-v2 c
 ## Tasks
 
 #### S1.T1 — Antes de copiar, verificar que .gitattributes cubre como objetos LFS las imágenes (png, jpg, webp, svg según las muestras), el video .mp4 y las fuentes (woff, woff2, ttf, otf) que se traen a docs/product/v3/ y docs/product/diseno-web/. Si algo no está cubierto, agregar la regla correspondiente (filter=lfs diff=lfs merge=lfs -text) y confirmarlo con git check-attr antes de continuar con la copia.
-Contrato: rollback: git revert del commit de incorporación; el origen en taomangalam queda intacto porque solo se copia.. Status: pending
+Contrato: rollback: git revert del commit de incorporación; el origen en taomangalam queda intacto porque solo se copia.. Status: done
 
 #### S1.T2 — Copiar los documentos 00 a 13, plan_v3.json, el CSV y las muestras desde taomangalam/docs/product/v3/ a docs/product/v3/ en tao-v2, y registrar en la misma tarea la entrada de navegación de docs/product/v3 en mkdocs.yml, para que docs:check y el chequeo de documentos huérfanos no fallen al cierre de S1. La entrada de navegación de diseno-web se mantiene en su sesión actual.
-Contrato: rollback: git revert del commit de correcciones; la copia original sigue en el commit anterior.. Status: pending
+Contrato: rollback: git revert del commit de correcciones; la copia original sigue en el commit anterior.. Status: done
 
 #### S1.T2.1 — D-07: pasar los recordatorios locales de excluidos a incluidos en README, 02, 03, 06, 09, plan_v3.json y tickets_recursos.csv.
-Contrato: rollback: git checkout de esos archivos al commit de incorporación.. Status: pending
+Contrato: rollback: git checkout de esos archivos al commit de incorporación.. Status: done
 
 #### S1.T2.2 — D-05 (cambio de correo solo con el correo pendiente) y D-10/D-12 (presentación pública, portal de eliminación, backoffice) en los documentos de V3 que los tratan; registrar presentación pública y portal de eliminación en el catálogo de vistas.
-Contrato: rollback: git checkout de los documentos tocados al commit de incorporación.. Status: pending
+Contrato: rollback: git checkout de los documentos tocados al commit de incorporación.. Status: done
 
 #### S1.T2.3 — Ajustar el conteo de tickets a 64 y el mapa de ids según 20-mapa-de-dependencias en los documentos, plan_v3.json y CSV de V3.
-Contrato: rollback: git checkout de los archivos tocados al commit de incorporación.. Status: pending
+Contrato: rollback: git checkout de los archivos tocados al commit de incorporación.. Status: done
 
 #### S1.T3 — Alinear los textos del plan V3 a las decisiones del MVP (D-05, D-07, D-10, D-12), el conteo de 64 tickets, el mapa de ids de 20-mapa-de-dependencias y las vistas nuevas en el catálogo. Los enlaces o citas a la DEC del MVP toman la ruta final del contrato C-dec-mvp que declara TV2-001 al integrarse; no se fija por cuenta propia. Verificar LFS, JSON.parse de plan_v3.json, número de columnas constante en tickets_recursos.csv y que los enlaces relativos de las maquetas HTML resuelven.
-Contrato: rollback: No modifica archivos de producto; si se agregó un ajuste de lint, git revert de ese commit.. Status: pending
+Contrato: rollback: No modifica archivos de producto; si se agregó un ajuste de lint, git revert de ese commit.. Status: done
 
 #### S2.T1 — Commitear docs/product/diseno-web/ (17 guías, variantes, maquetas, assets, manifiesto) con los cambios de docs/README.md y mkdocs.yml (agregar v3 y diseno-web a la navegación sin quitar las entradas existentes, como docs/archivo-v1/). En el README de diseno-web cambiar '65 fichas' por 64 y la guía 17 deja de figurar como pendiente y se asocia a W04.
 Contrato: rollback: git revert del commit; mkdocs.yml y docs/README.md vuelven a su estado anterior.. Status: pending
@@ -110,15 +110,15 @@ Ninguno.
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T2.1
-- [ ] S1.T2.2
-- [ ] S1.T2.3
-- [ ] S1.T3
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T2.1
+- [x] S1.T2.2
+- [x] S1.T2.3
+- [x] S1.T3
 
 **Gate (auto)**: docs/product/v3/ commiteado en la rama del ticket con imágenes y video en LFS (git lfs ls-files los lista) y el diff de textos muestra las correcciones D-05, D-07, D-10, D-12, 64 tickets y mapa de ids.
 
@@ -132,4 +132,3 @@ Ninguno.
 - [ ] S2.T5
 
 **Gate (auto)**: docs/product/diseno-web/ y contrato-visual.json commiteados, el chequeo del manifiesto termina en 0 (y falla con un hash alterado) y DOCS_DIFF_BASE=main pnpm docs:check pasa en verde con Node 24.
-
