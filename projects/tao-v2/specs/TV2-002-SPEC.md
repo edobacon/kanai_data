@@ -71,19 +71,19 @@ Contrato: rollback: git checkout de los archivos tocados al commit de incorporac
 Contrato: rollback: No modifica archivos de producto; si se agregó un ajuste de lint, git revert de ese commit.. Status: done
 
 #### S2.T1 — Commitear docs/product/diseno-web/ (17 guías, variantes, maquetas, assets, manifiesto) con los cambios de docs/README.md y mkdocs.yml (agregar v3 y diseno-web a la navegación sin quitar las entradas existentes, como docs/archivo-v1/). En el README de diseno-web cambiar '65 fichas' por 64 y la guía 17 deja de figurar como pendiente y se asocia a W04.
-Contrato: rollback: git revert del commit; mkdocs.yml y docs/README.md vuelven a su estado anterior.. Status: pending
+Contrato: rollback: git revert del commit; mkdocs.yml y docs/README.md vuelven a su estado anterior.. Status: done
 
 #### S2.T2 — Crear docs/product/design-system/contrato-visual.json como contrato visual propio de tao-v2 (reemplaza al heredado): tabla vista a familia de la app, familias de fondo y bloque web con la regla de diseno-web (backoffice neutro sin paisajes, público con ilustración); marcar productos y administracion como no usadas en el MVP. Dejar las rutas de 13_linea_visual_y_fondos.md apuntando a docs/product/design-system/contrato-visual.json.
-Contrato: rollback: git revert del commit; las referencias vuelven al contrato heredado.. Status: pending
+Contrato: rollback: git revert del commit; las referencias vuelven al contrato heredado.. Status: done
 
 #### S2.T3 — Crear el chequeo de docs que comprueba que las rutas declaradas en docs/product/design-system/contrato-visual.json y en el manifiesto de diseno-web existen y que los sha256 del manifiesto coinciden; sale con código distinto de cero si algo falla.
-Contrato: rollback: git revert del commit; se elimina el script y su enganche en package.json.. Status: pending
+Contrato: rollback: git revert del commit; se elimina el script y su enganche en package.json.. Status: done
 
 #### S2.T4 — Ajustar .cspell.json con los términos nuevos legítimos y corregir los hallazgos de markdownlint, Vale, lychee, frontmatter y huérfanos en las carpetas nuevas, sin agregar exclusiones de carpetas.
-Contrato: rollback: git revert del commit de ajustes de lint.. Status: pending
+Contrato: rollback: git revert del commit de ajustes de lint.. Status: done
 
 #### S2.T5 — Regresión de la sesión: correr el chequeo del manifiesto en verde y con un caso de falla (copia temporal con un hash alterado y una ruta inexistente, fuera del repo o revertida), y confirmar que la navegación previa de mkdocs.yml sigue intacta. Registrar SHA, comando, salida y pendientes sin credenciales.
-Contrato: rollback: Restaurar el archivo alterado con git checkout; la task no deja cambios commiteados salvo el registro.. Status: pending
+Contrato: rollback: Restaurar el archivo alterado con git checkout; la task no deja cambios commiteados salvo el registro.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -122,13 +122,13 @@ Ninguno.
 
 **Gate (auto)**: docs/product/v3/ commiteado en la rama del ticket con imágenes y video en LFS (git lfs ls-files los lista) y el diff de textos muestra las correcciones D-05, D-07, D-10, D-12, 64 tickets y mapa de ids.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: docs/product/diseno-web/ y contrato-visual.json commiteados, el chequeo del manifiesto termina en 0 (y falla con un hash alterado) y DOCS_DIFF_BASE=main pnpm docs:check pasa en verde con Node 24.
