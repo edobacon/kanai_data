@@ -236,8 +236,8 @@
     {
       "id": "TV2-065",
       "title": "B0-01b. Estabilizar la suite de integración: limpieza de bases efímeras y aislamiento de la base del stack legacy",
-      "body": "# B0-01b. Estabilizar la suite de integración\n\nTipo: improvement\nMódulo: Backend\n\n## Contexto\n- Origen: baseline medido en TV2-003 (B0-01). Vitest en `server/` con Node 24 no es estable en verde y TV2-003 lo dejó clasificado como falla de entorno preexistente, sin corregirlo (adenda 2).\n- Épica: EP-02 Base del servidor y registro. Debe ejecutarse antes de TV2-004 (B0-02), que de lo contrario hereda la inestabilidad.\n- Repo único `tao-v2`, rutas `server/src/test/`, `server/vitest.config.ts`, `compose.yaml`.\n\n## Alcance\nDentro:\n- Carrera de limpieza de bases efímeras: `app-release.integration` y `configuracion.integration` fallan en el `afterAll` con \"permission denied to terminate process\". Corregir la causa (permiso del rol, o no terminar conexiones ajenas), con reintentos solo si el timeout del hook los cubre.\n- 405 intermitente en `verificacion-correo` (pasa aislado, falla dentro de la suite completa): determinar la causa, por ejemplo interferencia entre archivos en paralelo, y corregirla.\n- `pgboss.integration` (\"migración idempotente\") encuentra 1 job donde espera 0: confirmar si la causa es el estado compartido con la base del stack legacy (`taomangalam-postgres`, puerto 54329) y aislar la base de pruebas de `tao-v2`.\n- Quitar de la config de calidad del proyecto los flakes conocidos que queden resueltos.\n\nFuera: parametrizar `compose.yaml` y los scripts `backend:*` (es de TV2-004), el modelo de datos (TV2-005), y las fallas de `unittest` y `node --test` clasificadas como entorno en TV2-003.\n\n## Criterios de aceptación\n`pnpm -C server exec vitest run` con Node 24 termina con 0 fallas y las 648 pruebas ejecutadas, en 3 corridas completas consecutivas. `pnpm run check` termina con exit 0. Ninguna prueba se omite ni se marca flaky para lograrlo. Las corridas quedan registradas con su salida, no solo con relato.\n\nNinguna aceptación se cierra con un doble que siempre devuelve éxito; una corrida que no se pudo hacer queda pendiente, no aprobada.\n\n## Dependencias\nDepende de TV2-003 (matriz de evidencia y baseline). Bloquea a TV2-004.\n\n## Recursos y cuentas\n- Recursos: PostgreSQL local de pruebas. Cuentas ficticias y locales; sin contraseñas ni tokens en documentos ni reportes.\n\n## Verificación\nBackend, Node 24 por `.nvmrc`: `pnpm -C server exec vitest run` tres veces seguidas y `pnpm run check`. Se registra SHA, comandos, totales ejecutados/pasados/fallidos y pendientes.\n\n## Riesgos\n- La colisión con la base del stack legacy puede requerir un puerto o una base propios, que se solapa con TV2-004: coordinar para no duplicar.\n- Corregir la limpieza puede exigir permisos de rol de PostgreSQL que cambian el entorno local.",
-      "revision": "e6c74f5bb2629cc0484fa35bdb0ebe81ad12837d5ea542e592fe7afe5400e50d",
+      "body": "# B0-01b. Estabilizar la suite de integración\n\nTipo: improvement\nMódulo: Backend\n\n## Contexto\n- Origen: baseline medido en TV2-003 (B0-01). Vitest en `server/` con Node 24 no es estable en verde y TV2-003 lo dejó clasificado como falla de entorno preexistente, sin corregirlo (adenda 2).\n- Épica: EP-02 Base del servidor y registro. Debe ejecutarse antes de TV2-004 (B0-02), que de lo contrario hereda la inestabilidad.\n- Repo único `tao-v2`, rutas `server/src/test/`, `server/vitest.config.ts`, `compose.yaml`.\n\n## Alcance\nDentro:\n- Carrera de limpieza de bases efímeras: `app-release.integration` y `configuracion.integration` fallan en el `afterAll` con \"permission denied to terminate process\". Corregir la causa (permiso del rol, o no terminar conexiones ajenas), con reintentos solo si el timeout del hook los cubre.\n- 405 intermitente en `verificacion-correo` (pasa aislado, falla dentro de la suite completa): determinar la causa, por ejemplo interferencia entre archivos en paralelo, y corregirla.\n- `pgboss.integration` (\"migración idempotente\") encuentra 1 job donde espera 0: confirmar si la causa es el estado compartido con la base del stack legacy (`taomangalam-postgres`, puerto 54329) y aislar la base de pruebas de `tao-v2`.\n- Quitar de la config de calidad del proyecto los flakes conocidos que queden resueltos.\n\nFuera: parametrizar `compose.yaml` y los scripts `backend:*` (es de TV2-004), el modelo de datos (TV2-005), y las fallas de `unittest` y `node --test` clasificadas como entorno en TV2-003.\n\n## Criterios de aceptación\n`pnpm -C server exec vitest run` con Node 24 termina con 0 fallas y las 648 pruebas ejecutadas, en 3 corridas completas consecutivas. `pnpm run check` termina con exit 0. Ninguna prueba se omite ni se marca flaky para lograrlo. Las corridas quedan registradas con su salida, no solo con relato.\n\nNinguna aceptación se cierra con un doble que siempre devuelve éxito; una corrida que no se pudo hacer queda pendiente, no aprobada.\n\n## Dependencias\nDepende de TV2-003 (matriz de evidencia y baseline). Bloquea a TV2-004.\n\n## Recursos y cuentas\n- Recursos: PostgreSQL local de pruebas. Cuentas ficticias y locales; sin contraseñas ni tokens en documentos ni reportes.\n\n## Verificación\nBackend, Node 24 por `.nvmrc`: `pnpm -C server exec vitest run` tres veces seguidas y `pnpm run check`. Se registra SHA, comandos, totales ejecutados/pasados/fallidos y pendientes.\n\n## Riesgos\n- La colisión con la base del stack legacy puede requerir un puerto o una base propios, que se solapa con TV2-004: coordinar para no duplicar.\n- Corregir la limpieza puede exigir permisos de rol de PostgreSQL que cambian el entorno local.\n\n## Adendas al request\n\n### Adenda 1 - 2026-10-12 - Eduardo Bacon\n\nCriterio de aceptacion acotado a lo medido (reemplaza las cifras literales del pedido). Se cumple cuando: (1) la suite completa de server/ corre 3 veces consecutivas con 0 fallas; el total ejecutado y los omitidos se registran tal como se miden (hoy 652 ejecutados y 2 omitidos de email-docs, que exige DOCS_DIFF_BASE), sin exigir 648 ni 0 omitidos; (2) pnpm run check no empeora frente al baseline: sus rojos preexistentes (9 tests Flutter que requieren el runner de provider) se documentan como preexistentes y no son de este ticket; (3) el 405 intermitente de verificacion-correo que no se pudo reproducir queda registrado como no reproducido y su flake conocido se mantiene en la config de calidad; (4) solo se quitan de knownFlakes los archivos cuya estabilidad se verifico en las 3 corridas (app-release.integration, configuracion.integration, pgboss.integration). El job residual de pgboss en la base compartida y las bases probe huerfanas quedan fuera de alcance y se reportan.\n\n**Motivo**: Decision del dev (opcion A): el criterio literal (648 tests, 0 omitidos, check en 0) no es alcanzable sin tocar codigo ajeno al ticket (runner Flutter, email-docs). Mismo criterio de baseline que TV2-003.",
+      "revision": "4d2e69c3ab92f24c2107317b0b235da2287eac2de8fbc27d3c672de508fc7d8e",
       "repo": "tao-v2",
       "aliases": [],
       "scopeApproved": true,
@@ -282,7 +282,13 @@
         "TV2-004"
       ],
       "value": "Archivo docs/product/v3/matriz-evidencia-v1.md con la evidencia por ticket v1 cerrado y la lista de suites con describe.skipIf, indicando cuales dependen de PostgreSQL; TV2-004 la usa como insumo del gate que falla con suites omitidas",
-      "status": "agreed"
+      "status": "agreed",
+      "delivered": {
+        "value": "Archivo docs/product/v3/matriz-evidencia-v1.md con la evidencia por ticket v1 cerrado y la lista de suites con describe.skipIf, indicando cuales dependen de PostgreSQL; TV2-004 la usa como insumo del gate que falla con suites omitidas",
+        "resolution": "Entregado en epic/EP-02 (commits 8e8ae02, fb4b283 y 800c2d9): 65 filas de tickets, 46 filas de describe.skipIf con su columna de dependencia de PostgreSQL, SHA auditado 44ab3d0, docs:check con exit 0.",
+        "at": "2026-10-12T21:54:11.927Z",
+        "diverged": false
+      }
     },
     {
       "id": "C-baseline-suite",
@@ -293,7 +299,13 @@
         "TV2-065"
       ],
       "value": "Seccion Fallas de entorno preexistentes y Pendientes de docs/product/v3/matriz-evidencia-v1.md con el baseline de Vitest en server/ con Node 24 (648 pruebas, 645 pasan y 2 omitidas en la corrida completa), la carrera de limpieza de bases efimeras, el 405 intermitente de verificacion-correo y la falla de pgboss.integration; TV2-065 corrige estas causas y compara contra ese baseline",
-      "status": "agreed"
+      "status": "agreed",
+      "delivered": {
+        "value": "Seccion Fallas de entorno preexistentes y Pendientes de docs/product/v3/matriz-evidencia-v1.md con el baseline de Vitest en server/ con Node 24 (648 pruebas, 645 pasan y 2 omitidas en la corrida completa), la carrera de limpieza de bases efimeras, el 405 intermitente de verificacion-correo y la falla de pgboss.integration; TV2-065 corrige estas causas y compara contra ese baseline",
+        "resolution": "Entregado en la misma matriz: 5 corridas de Vitest con 648 pruebas ejecutadas; carrera de limpieza (corridas 1 a 4), 405 de verificacion-correo (corrida 3) y pgboss.integration (corrida 5, 645 pasan, 1 falla, 2 omitidas) registradas como fallas de entorno preexistentes. Nota: pgboss no aparecio en las corridas 1 a 4 y depende del estado de la base.",
+        "at": "2026-10-12T21:54:11.927Z",
+        "diverged": false
+      }
     },
     {
       "id": "C-comandos-backend",
@@ -324,7 +336,7 @@
   "mentionCatalog": {
     "TV2-003": {
       "ticketId": "TV2-003",
-      "status": "in_progress"
+      "status": "ready_to_close"
     },
     "TV2-004": {
       "ticketId": "TV2-004",
@@ -338,7 +350,7 @@
   "mentionFamilies": [
     "TV2:2"
   ],
-  "version": 20,
+  "version": 21,
   "dependencies": [
     {
       "from": "TV2-003",
@@ -411,7 +423,7 @@
     "TV2-005",
     "TV2-006"
   ],
-  "approvedFingerprint": "81d1dbd85c9fbf93aa384660dfee472d5423a81ee303a6284bdb2bdebdcd18e6",
+  "approvedFingerprint": "c5c5265b48d1eab5273daff1b54ce2db87de7354124d6d8bfd7e195544db3c4a",
   "approvedBy": "human-confirmed",
   "dataModelAck": {
     "digest": "a05e888ca395686f",
@@ -419,30 +431,30 @@
     "by": "human-confirmed"
   },
   "accessCheck": {
-    "id": "69d792bb-c5ce-4ce1-aaa9-499a409c62cb",
+    "id": "9fc418e4-5dff-4d7c-ab5d-3f939da0a5d5",
     "harness": "claude-code",
     "harnessVersion": "2.1.294",
     "harnessSessionId": "79782356-8e4d-41bd-8060-bc0589f1682a",
-    "binding": "5064ce3921ae2c5aa5a6a133f0bf0f475af420ab72b6e12b74adb3cf7752c2c5",
-    "issuedAt": "2026-10-12T21:07:30.915Z",
-    "expiresAt": "2026-10-12T21:22:30.915Z",
-    "validUntil": "2026-10-13T05:07:37.532Z",
+    "binding": "edc24024b1857f2a7d1bcae6371ed4c4480920b6fddead936af07a9164a36751",
+    "issuedAt": "2026-10-12T21:53:40.173Z",
+    "expiresAt": "2026-10-12T22:08:40.173Z",
+    "validUntil": "2026-10-13T05:53:45.710Z",
     "probes": [
       {
-        "id": "5b44112c-8454-44af-9bb2-78a215b478d0",
+        "id": "c3102d16-def7-48f4-8e1c-b2fcf2c6c2ea",
         "action": "read_repo",
         "resource": "tao-v2/tao-v2/epic/EP-02",
         "path": "/Users/edobacon/Workspace/tao-v2"
       }
     ],
     "report": {
-      "checkId": "69d792bb-c5ce-4ce1-aaa9-499a409c62cb",
+      "checkId": "9fc418e4-5dff-4d7c-ab5d-3f939da0a5d5",
       "harnessSessionId": "79782356-8e4d-41bd-8060-bc0589f1682a",
       "results": [
         {
-          "probeId": "5b44112c-8454-44af-9bb2-78a215b478d0",
+          "probeId": "c3102d16-def7-48f4-8e1c-b2fcf2c6c2ea",
           "status": "readable",
-          "checkedAt": "2026-10-12T21:07:37.532Z",
+          "checkedAt": "2026-10-12T21:53:45.710Z",
           "detail": "Lectura comprobada sin exponer contenido"
         }
       ]
@@ -450,20 +462,20 @@
   },
   "decisionBank": [],
   "preparation": {
-    "at": "2026-10-12T21:06:29.496Z",
+    "at": "2026-10-12T21:53:13.026Z",
     "by": "prepare",
     "revisions": {
       "TV2-003": "8e6a537ad6573eb49efb6a007ed1e0a591308684c49a68167335d88fde8e037e",
       "TV2-004": "ce2c93ac79329c2b5916c77c410cef958d5464195f2a8686ae2ea730fe284b82",
       "TV2-005": "9e69f2d2b42b923a2cfedea5bf4c320056200ab0f4bb88e3ed4c29bea5222f1b",
       "TV2-006": "fbaa3f4a88827f02fecad97c8e944430c8010419437300727b85f8428f6dd420",
-      "TV2-065": "e6c74f5bb2629cc0484fa35bdb0ebe81ad12837d5ea542e592fe7afe5400e50d"
+      "TV2-065": "4d2e69c3ab92f24c2107317b0b235da2287eac2de8fbc27d3c672de508fc7d8e"
     }
   },
   "run": {
-    "id": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
-    "planVersion": 20,
-    "fingerprint": "81d1dbd85c9fbf93aa384660dfee472d5423a81ee303a6284bdb2bdebdcd18e6",
+    "id": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+    "planVersion": 21,
+    "fingerprint": "c5c5265b48d1eab5273daff1b54ce2db87de7354124d6d8bfd7e195544db3c4a",
     "harness": "claude-code",
     "harnessVersion": "2.1.294",
     "harnessSessionId": "79782356-8e4d-41bd-8060-bc0589f1682a",
@@ -477,9 +489,31 @@
       "TV2-006",
       "TV2-065"
     ],
-    "current": 0,
-    "step": "verify",
-    "validated": {},
+    "current": 1,
+    "step": "execute",
+    "validated": {
+      "TV2-003": {
+        "sha": "800c2d9683605bbdbedb7e00283bd310b8909673",
+        "evidence": [
+          "kanai:ticket/TV2-003/ready_to_close",
+          "TV2-003-TC-REQ-01-1: Conteo de filas '| TAO-' de la sección Matriz por ticket = 65; SHA del encabezado coincide con el commit 44ab3d0; DOCS_DIFF_BASE=main pnpm docs:check con Node 24 termina con código 0 (2026-10-12). Commits fb4b283 y 800c2d9.",
+          "TV2-003-TC-REQ-01-2: grep de secretos sobre docs/product/v3/matriz-evidencia-v1.md terminó con código 1 (sin resultados) tras la última edición; la matriz registra el resultado en 'Comandos ejecutados y totales'.",
+          "TV2-003-TC-REQ-02-1: Corrida 5 (2026-10-12, Node 24.21.0): 107 archivos, 648 pruebas: 645 pasan, 1 falla (pgboss.integration), 2 omitidas; ver matriz, sección Comandos ejecutados y totales. Criterio acotado por la adenda 2 de TV2-003; el verde absoluto se trata en TV2-065.",
+          "TV2-003-TC-REQ-02-2: Matriz, secciones Comandos ejecutados y Fallas de entorno preexistentes. Discrepancia aceptada por la persona (adenda 2). Los cambios de código que corregan entorno se revirtieron en 03c39b2.",
+          "TV2-003-TC-REQ-03-1: grep -rn 'describe.skipIf' server tests | wc -l = 46; filas '| `server/' de la sección Suites omitidas = 46 (2026-10-12).",
+          "TV2-003-TC-REQ-03-2: Matriz, sección Suites omitidas con describe.skipIf, párrafo inicial y tabla Otras omisiones fuera del conteo."
+        ],
+        "commits": [
+          "03c39b2f7dbb9f64c71ec1d64afbfabf3c84a89e",
+          "1e1eaa4965f441ad701e0245bf54e2005c1e3bff",
+          "800c2d9683605bbdbedb7e00283bd310b8909673",
+          "8e8ae0243a56fd6968ab58f708957a162f2a63af",
+          "d330a25039122a5f1a73f05445cdf39311f43870",
+          "d96dddc2af273ba7833282f110fe03b0ef760ee8",
+          "fb4b2835d08dc85b278a41f6dd867dbcf157cf45"
+        ]
+      }
+    },
     "grants": [
       {
         "actor": "eduardo.bacon@uplanner.com",
@@ -532,10 +566,10 @@
     "maxAttempts": 3,
     "attempts": {},
     "dependencyReceipts": {},
-    "pendingKey": "c45d1a82-fe7d-4572-8c15-b4b309573c2e:TV2-003:{\"tool\":\"close_gate\",\"args\":{\"projectId\":\"tao-v2\",\"ticketId\":\"TV2-003\",\"sessionId\":\"TV2-003-S1\"}}",
-    "startedAt": "2026-10-12T21:07:51.151Z",
+    "pendingKey": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e:TV2-065:{\"tool\":\"plan_task_execution\",\"args\":{\"projectId\":\"tao-v2\",\"ticketId\":\"TV2-065\",\"taskCode\":\"S1.T2\",\"sessionScope\":true}}",
+    "startedAt": "2026-10-12T21:54:01.317Z",
     "deadline": "2026-10-14T20:00:00.000Z",
-    "startSha": "03c39b2f7dbb9f64c71ec1d64afbfabf3c84a89e"
+    "startSha": "800c2d9683605bbdbedb7e00283bd310b8909673"
   },
   "history": [
     {
@@ -617,6 +651,106 @@
       "startedAt": "2026-10-12T19:07:40.479Z",
       "deadline": "2026-10-14T20:00:00.000Z",
       "startSha": "44ab3d0e3b55ede5fe060b82ac5ee4c92931dc15"
+    },
+    {
+      "id": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "planVersion": 20,
+      "fingerprint": "81d1dbd85c9fbf93aa384660dfee472d5423a81ee303a6284bdb2bdebdcd18e6",
+      "harness": "claude-code",
+      "harnessVersion": "2.1.294",
+      "harnessSessionId": "79782356-8e4d-41bd-8060-bc0589f1682a",
+      "teach": "skip",
+      "humanChecks": "defer",
+      "state": "cancelled",
+      "ticketIds": [
+        "TV2-003",
+        "TV2-004",
+        "TV2-005",
+        "TV2-006",
+        "TV2-065"
+      ],
+      "current": 1,
+      "step": "execute",
+      "validated": {
+        "TV2-003": {
+          "sha": "800c2d9683605bbdbedb7e00283bd310b8909673",
+          "evidence": [
+            "kanai:ticket/TV2-003/ready_to_close",
+            "TV2-003-TC-REQ-01-1: Conteo de filas '| TAO-' de la sección Matriz por ticket = 65; SHA del encabezado coincide con el commit 44ab3d0; DOCS_DIFF_BASE=main pnpm docs:check con Node 24 termina con código 0 (2026-10-12). Commits fb4b283 y 800c2d9.",
+            "TV2-003-TC-REQ-01-2: grep de secretos sobre docs/product/v3/matriz-evidencia-v1.md terminó con código 1 (sin resultados) tras la última edición; la matriz registra el resultado en 'Comandos ejecutados y totales'.",
+            "TV2-003-TC-REQ-02-1: Corrida 5 (2026-10-12, Node 24.21.0): 107 archivos, 648 pruebas: 645 pasan, 1 falla (pgboss.integration), 2 omitidas; ver matriz, sección Comandos ejecutados y totales. Criterio acotado por la adenda 2 de TV2-003; el verde absoluto se trata en TV2-065.",
+            "TV2-003-TC-REQ-02-2: Matriz, secciones Comandos ejecutados y Fallas de entorno preexistentes. Discrepancia aceptada por la persona (adenda 2). Los cambios de código que corregan entorno se revirtieron en 03c39b2.",
+            "TV2-003-TC-REQ-03-1: grep -rn 'describe.skipIf' server tests | wc -l = 46; filas '| `server/' de la sección Suites omitidas = 46 (2026-10-12).",
+            "TV2-003-TC-REQ-03-2: Matriz, sección Suites omitidas con describe.skipIf, párrafo inicial y tabla Otras omisiones fuera del conteo."
+          ],
+          "commits": [
+            "03c39b2f7dbb9f64c71ec1d64afbfabf3c84a89e",
+            "1e1eaa4965f441ad701e0245bf54e2005c1e3bff",
+            "800c2d9683605bbdbedb7e00283bd310b8909673",
+            "8e8ae0243a56fd6968ab58f708957a162f2a63af",
+            "d330a25039122a5f1a73f05445cdf39311f43870",
+            "d96dddc2af273ba7833282f110fe03b0ef760ee8",
+            "fb4b2835d08dc85b278a41f6dd867dbcf157cf45"
+          ]
+        }
+      },
+      "grants": [
+        {
+          "actor": "eduardo.bacon@uplanner.com",
+          "actions": [
+            "read_repo",
+            "write_repo",
+            "run_tests",
+            "kanai_tools",
+            "git_integrate"
+          ],
+          "resource": "tao-v2/tao-v2/epic/EP-02",
+          "expiresAt": "2026-10-14T20:00:00.000Z",
+          "revoked": false
+        }
+      ],
+      "capabilities": [
+        {
+          "action": "read_repo",
+          "state": "granted",
+          "resource": "tao-v2/tao-v2/epic/EP-02"
+        },
+        {
+          "action": "write_repo",
+          "state": "granted",
+          "resource": "tao-v2/tao-v2/epic/EP-02"
+        },
+        {
+          "action": "run_tests",
+          "state": "granted",
+          "resource": "tao-v2/tao-v2/epic/EP-02"
+        },
+        {
+          "action": "kanai_tools",
+          "state": "granted",
+          "resource": "tao-v2/tao-v2/epic/EP-02"
+        },
+        {
+          "action": "git_integrate",
+          "state": "granted",
+          "resource": "tao-v2/tao-v2/epic/EP-02"
+        }
+      ],
+      "requiredActions": [
+        "read_repo",
+        "write_repo",
+        "run_tests",
+        "kanai_tools",
+        "git_integrate"
+      ],
+      "maxAttempts": 3,
+      "attempts": {},
+      "dependencyReceipts": {},
+      "pendingKey": "c45d1a82-fe7d-4572-8c15-b4b309573c2e:TV2-065:{\"tool\":\"plan_task_execution\",\"args\":{\"projectId\":\"tao-v2\",\"ticketId\":\"TV2-065\",\"taskCode\":\"S1.T1.1\",\"sessionScope\":true}}",
+      "reason": "Ticket cambió respecto al plan de épica",
+      "startedAt": "2026-10-12T21:07:51.151Z",
+      "deadline": "2026-10-14T20:00:00.000Z",
+      "startSha": "03c39b2f7dbb9f64c71ec1d64afbfabf3c84a89e"
     }
   ],
   "events": [
@@ -1651,6 +1785,449 @@
       "phase": "next",
       "source": "kanai-server",
       "durationMs": 193
+    },
+    {
+      "id": "7b8572fd-3e42-480b-b922-898fe53e0bd1",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:15:34.990Z",
+      "kind": "action_requested",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-003",
+      "phase": "execute"
+    },
+    {
+      "id": "92df6cbc-5ebd-4aa2-9d29-dff54ae2745a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:15:34.992Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 160
+    },
+    {
+      "id": "7daaf714-f8f9-4f61-a657-e01f34661215",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:15:40.650Z",
+      "kind": "paused",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "reason": "Casos de aceptación sin evidencia de éxito: TV2-003-TC-REQ-01-1 (pending), TV2-003-TC-REQ-01-2 (pending), TV2-003-TC-REQ-02-1 (pending), TV2-003-TC-REQ-02-2 (pending), TV2-003-TC-REQ-03-1 (pending) y 1 más. Marca cada caso pass con su evidencia, o difiérelo con su motivo (defer_verification)."
+    },
+    {
+      "id": "d9bc073d-306e-4d6a-8e6e-95f33bbb6294",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:15:40.654Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 37
+    },
+    {
+      "id": "78a3f897-16de-43ad-b014-f01219c80124",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:20.753Z",
+      "kind": "resumed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e"
+    },
+    {
+      "id": "157190b8-645f-4300-a64a-3da2bfadaac5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:20.757Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "resume",
+      "source": "kanai-server",
+      "durationMs": 35
+    },
+    {
+      "id": "2d123275-6fd0-4556-917d-cbed219b0f1c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:22.697Z",
+      "kind": "ticket_verified",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-003",
+      "phase": "verify",
+      "evidence": [
+        "kanai:ticket/TV2-003/ready_to_close",
+        "TV2-003-TC-REQ-01-1: Conteo de filas '| TAO-' de la sección Matriz por ticket = 65; SHA del encabezado coincide con el commit 44ab3d0; DOCS_DIFF_BASE=main pnpm docs:check con Node 24 termina con código 0 (2026-10-12). Commits fb4b283 y 800c2d9.",
+        "TV2-003-TC-REQ-01-2: grep de secretos sobre docs/product/v3/matriz-evidencia-v1.md terminó con código 1 (sin resultados) tras la última edición; la matriz registra el resultado en 'Comandos ejecutados y totales'.",
+        "TV2-003-TC-REQ-02-1: Corrida 5 (2026-10-12, Node 24.21.0): 107 archivos, 648 pruebas: 645 pasan, 1 falla (pgboss.integration), 2 omitidas; ver matriz, sección Comandos ejecutados y totales. Criterio acotado por la adenda 2 de TV2-003; el verde absoluto se trata en TV2-065.",
+        "TV2-003-TC-REQ-02-2: Matriz, secciones Comandos ejecutados y Fallas de entorno preexistentes. Discrepancia aceptada por la persona (adenda 2). Los cambios de código que corregan entorno se revirtieron en 03c39b2.",
+        "TV2-003-TC-REQ-03-1: grep -rn 'describe.skipIf' server tests | wc -l = 46; filas '| `server/' de la sección Suites omitidas = 46 (2026-10-12).",
+        "TV2-003-TC-REQ-03-2: Matriz, sección Suites omitidas con describe.skipIf, párrafo inicial y tabla Otras omisiones fuera del conteo."
+      ]
+    },
+    {
+      "id": "c1596d35-b9af-4424-84ba-1ad5259ccd76",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:22.702Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 44
+    },
+    {
+      "id": "efdf9713-2d62-4d9c-bedd-67c998a6fc57",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:31.226Z",
+      "kind": "contract_delivered",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-003",
+      "reason": "El contrato C-matriz-evidencia se entregó como se acordó"
+    },
+    {
+      "id": "4fe47553-d0b6-4a2d-a907-5dbf5b13bb11",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:31.226Z",
+      "kind": "contract_delivered",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-003",
+      "reason": "El contrato C-baseline-suite se entregó como se acordó"
+    },
+    {
+      "id": "e0a31f36-416f-42c1-b229-80fe7acc8e95",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:31.226Z",
+      "kind": "ticket_integrated",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-003",
+      "phase": "integrate",
+      "evidence": [
+        "kanai:ticket/TV2-003/ready_to_close",
+        "TV2-003-TC-REQ-01-1: Conteo de filas '| TAO-' de la sección Matriz por ticket = 65; SHA del encabezado coincide con el commit 44ab3d0; DOCS_DIFF_BASE=main pnpm docs:check con Node 24 termina con código 0 (2026-10-12). Commits fb4b283 y 800c2d9.",
+        "TV2-003-TC-REQ-01-2: grep de secretos sobre docs/product/v3/matriz-evidencia-v1.md terminó con código 1 (sin resultados) tras la última edición; la matriz registra el resultado en 'Comandos ejecutados y totales'.",
+        "TV2-003-TC-REQ-02-1: Corrida 5 (2026-10-12, Node 24.21.0): 107 archivos, 648 pruebas: 645 pasan, 1 falla (pgboss.integration), 2 omitidas; ver matriz, sección Comandos ejecutados y totales. Criterio acotado por la adenda 2 de TV2-003; el verde absoluto se trata en TV2-065.",
+        "TV2-003-TC-REQ-02-2: Matriz, secciones Comandos ejecutados y Fallas de entorno preexistentes. Discrepancia aceptada por la persona (adenda 2). Los cambios de código que corregan entorno se revirtieron en 03c39b2.",
+        "TV2-003-TC-REQ-03-1: grep -rn 'describe.skipIf' server tests | wc -l = 46; filas '| `server/' de la sección Suites omitidas = 46 (2026-10-12).",
+        "TV2-003-TC-REQ-03-2: Matriz, sección Suites omitidas con describe.skipIf, párrafo inicial y tabla Otras omisiones fuera del conteo."
+      ]
+    },
+    {
+      "id": "73accf6d-0fe3-468d-a37f-470a0356e6a0",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:31.229Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "integrate",
+      "source": "kanai-server",
+      "durationMs": 353
+    },
+    {
+      "id": "60f300a7-cd28-4354-9390-b12d4fc473e5",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:35.323Z",
+      "kind": "action_requested",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-065",
+      "phase": "intake"
+    },
+    {
+      "id": "b1e26e14-b99d-454a-82c5-5039443d1b46",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:35.325Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 1452
+    },
+    {
+      "id": "ca494551-7514-42e3-b9cc-2d8ed517081c",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:39.892Z",
+      "kind": "action_requested",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "ticketId": "TV2-065",
+      "phase": "execute"
+    },
+    {
+      "id": "fa3002ca-dedc-47d7-8b7e-52ef616e38bd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:16:39.895Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 653
+    },
+    {
+      "id": "c4afb5c6-d46c-490b-8dd2-295ff747fb13",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:52:59.896Z",
+      "kind": "paused",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "reason": "Ticket cambió respecto al plan de épica"
+    },
+    {
+      "id": "912b6fca-f2d9-4653-9b25-b813aa08b9dd",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:52:59.899Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 560
+    },
+    {
+      "id": "b2f2e583-47b2-417c-9326-b38ee1f6a1ed",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:03.998Z",
+      "kind": "resumed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e"
+    },
+    {
+      "id": "95e55844-3256-465a-99e0-ec8e966b24a3",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:04.001Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "resume",
+      "source": "kanai-server",
+      "durationMs": 29
+    },
+    {
+      "id": "a9431f7b-6bff-48c8-b349-32af5d3c4cbe",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:07.297Z",
+      "kind": "paused",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "reason": "Ticket cambió respecto al plan de épica"
+    },
+    {
+      "id": "25528b1c-637f-438c-89df-45931f2bab6b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:07.299Z",
+      "kind": "operation_completed",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 632
+    },
+    {
+      "id": "299a2029-0580-4bdb-b862-9f388906db47",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:09.364Z",
+      "kind": "cancelled",
+      "planVersion": 20,
+      "runId": "c45d1a82-fe7d-4572-8c15-b4b309573c2e",
+      "reason": "plan_superseded"
+    },
+    {
+      "id": "aa81c05e-79f6-47db-b367-f03ff7c9c246",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:09.372Z",
+      "kind": "plan_changed",
+      "planVersion": 21
+    },
+    {
+      "id": "ece43058-35eb-4ed4-93c2-2895f2646b26",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:09.375Z",
+      "kind": "tickets_refreshed",
+      "planVersion": 21,
+      "reason": "TV2-065"
+    },
+    {
+      "id": "971580a5-1086-40ec-888d-9cc81384fb2b",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:09.378Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "phase": "refresh_tickets",
+      "source": "kanai-server",
+      "durationMs": 46
+    },
+    {
+      "id": "117f397b-8329-4eca-8e09-5340f365f44d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:13.026Z",
+      "kind": "epic_prepared",
+      "planVersion": 21
+    },
+    {
+      "id": "2383aece-280e-459b-94a0-7017a5a2ae2a",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:13.028Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "phase": "prepare",
+      "source": "kanai-server",
+      "durationMs": 890
+    },
+    {
+      "id": "f34c607a-6de2-4aed-81fa-ca9ab936faaa",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:40.179Z",
+      "kind": "access_check_prepared",
+      "planVersion": 21
+    },
+    {
+      "id": "1f6115b6-ea81-45b2-ada5-eb267786d8b9",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:53:48.293Z",
+      "kind": "access_check_reported",
+      "planVersion": 21,
+      "reason": "Accesos comprobados desde el harness"
+    },
+    {
+      "id": "fb671c95-d12c-4cdc-9478-f228aa3746ad",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:01.257Z",
+      "kind": "plan_approved",
+      "planVersion": 21
+    },
+    {
+      "id": "7b6b9c62-875a-4727-bac6-70178cf92d58",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:01.317Z",
+      "kind": "run_started",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e"
+    },
+    {
+      "id": "4045c88c-551b-4d53-a1cb-ecb89697beb7",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:01.317Z",
+      "kind": "teach_selected",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "reason": "skip"
+    },
+    {
+      "id": "e4c747c2-d6fa-4799-9b31-08e8ad5db318",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:01.322Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "phase": "launch",
+      "source": "kanai-server",
+      "durationMs": 106
+    },
+    {
+      "id": "090475bd-adbc-4102-92c4-6686e17fc8e8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:05.613Z",
+      "kind": "ticket_verified",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "ticketId": "TV2-003",
+      "phase": "verify",
+      "evidence": [
+        "kanai:ticket/TV2-003/ready_to_close",
+        "TV2-003-TC-REQ-01-1: Conteo de filas '| TAO-' de la sección Matriz por ticket = 65; SHA del encabezado coincide con el commit 44ab3d0; DOCS_DIFF_BASE=main pnpm docs:check con Node 24 termina con código 0 (2026-10-12). Commits fb4b283 y 800c2d9.",
+        "TV2-003-TC-REQ-01-2: grep de secretos sobre docs/product/v3/matriz-evidencia-v1.md terminó con código 1 (sin resultados) tras la última edición; la matriz registra el resultado en 'Comandos ejecutados y totales'.",
+        "TV2-003-TC-REQ-02-1: Corrida 5 (2026-10-12, Node 24.21.0): 107 archivos, 648 pruebas: 645 pasan, 1 falla (pgboss.integration), 2 omitidas; ver matriz, sección Comandos ejecutados y totales. Criterio acotado por la adenda 2 de TV2-003; el verde absoluto se trata en TV2-065.",
+        "TV2-003-TC-REQ-02-2: Matriz, secciones Comandos ejecutados y Fallas de entorno preexistentes. Discrepancia aceptada por la persona (adenda 2). Los cambios de código que corregan entorno se revirtieron en 03c39b2.",
+        "TV2-003-TC-REQ-03-1: grep -rn 'describe.skipIf' server tests | wc -l = 46; filas '| `server/' de la sección Suites omitidas = 46 (2026-10-12).",
+        "TV2-003-TC-REQ-03-2: Matriz, sección Suites omitidas con describe.skipIf, párrafo inicial y tabla Otras omisiones fuera del conteo."
+      ]
+    },
+    {
+      "id": "368fe87f-491e-4909-a36a-33033de3235d",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:05.616Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 47
+    },
+    {
+      "id": "e5ceed30-c7cb-446c-8e48-ad33c85a925f",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:11.928Z",
+      "kind": "contract_delivered",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "ticketId": "TV2-003",
+      "reason": "El contrato C-matriz-evidencia se entregó como se acordó"
+    },
+    {
+      "id": "2bf9a0b9-3d97-4c77-99be-00f6b8c7d8ef",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:11.928Z",
+      "kind": "contract_delivered",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "ticketId": "TV2-003",
+      "reason": "El contrato C-baseline-suite se entregó como se acordó"
+    },
+    {
+      "id": "9bc4a999-ff8b-4bf7-9813-e2af4ccbacb4",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:11.928Z",
+      "kind": "ticket_integrated",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "ticketId": "TV2-003",
+      "phase": "integrate",
+      "evidence": [
+        "kanai:ticket/TV2-003/ready_to_close",
+        "TV2-003-TC-REQ-01-1: Conteo de filas '| TAO-' de la sección Matriz por ticket = 65; SHA del encabezado coincide con el commit 44ab3d0; DOCS_DIFF_BASE=main pnpm docs:check con Node 24 termina con código 0 (2026-10-12). Commits fb4b283 y 800c2d9.",
+        "TV2-003-TC-REQ-01-2: grep de secretos sobre docs/product/v3/matriz-evidencia-v1.md terminó con código 1 (sin resultados) tras la última edición; la matriz registra el resultado en 'Comandos ejecutados y totales'.",
+        "TV2-003-TC-REQ-02-1: Corrida 5 (2026-10-12, Node 24.21.0): 107 archivos, 648 pruebas: 645 pasan, 1 falla (pgboss.integration), 2 omitidas; ver matriz, sección Comandos ejecutados y totales. Criterio acotado por la adenda 2 de TV2-003; el verde absoluto se trata en TV2-065.",
+        "TV2-003-TC-REQ-02-2: Matriz, secciones Comandos ejecutados y Fallas de entorno preexistentes. Discrepancia aceptada por la persona (adenda 2). Los cambios de código que corregan entorno se revirtieron en 03c39b2.",
+        "TV2-003-TC-REQ-03-1: grep -rn 'describe.skipIf' server tests | wc -l = 46; filas '| `server/' de la sección Suites omitidas = 46 (2026-10-12).",
+        "TV2-003-TC-REQ-03-2: Matriz, sección Suites omitidas con describe.skipIf, párrafo inicial y tabla Otras omisiones fuera del conteo."
+      ]
+    },
+    {
+      "id": "c9ce13ea-4bbb-40c7-a9b5-aacf1ad8a8d8",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:11.930Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "phase": "integrate",
+      "source": "kanai-server",
+      "durationMs": 337
+    },
+    {
+      "id": "d3b2f4fd-394f-4ec5-b200-691fb8559281",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:14.120Z",
+      "kind": "action_requested",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "ticketId": "TV2-065",
+      "phase": "execute"
+    },
+    {
+      "id": "f0b57c48-2bd9-41ac-a127-38caee531ab2",
+      "schemaVersion": 1,
+      "timestamp": "2026-10-12T21:54:14.122Z",
+      "kind": "operation_completed",
+      "planVersion": 21,
+      "runId": "39a53e9e-7e1c-4db5-a221-1f01c2abc11e",
+      "phase": "next",
+      "source": "kanai-server",
+      "durationMs": 682
     }
   ]
 }
