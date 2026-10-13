@@ -1,0 +1,369 @@
+{
+  "run_id": "kanai-mejoras-arbiter-r1",
+  "plan_id": "kanai-mejoras-arbiter-2026-10-13",
+  "ts_start": "2026-10-13T13:05:00Z",
+  "ts_end": "2026-10-13T13:15:00Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "5623f629",
+  "head_ref": "82826e8326a30f3b8bf22a4ff4566ac358d6f856",
+  "repo": "kanai-app",
+  "findings": {
+    "S0": 0,
+    "S1": 0,
+    "S2": 6,
+    "S3": 2
+  },
+  "max_severity": "S2",
+  "verdict": "iterar",
+  "batches": 1,
+  "consumers": 14,
+  "lines_judged": 710,
+  "plan_phase_ids": [
+    "F0",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6"
+  ],
+  "notes": "Primera ronda, un solo juez opus por lote (710 lineas). Sin S0/S1: no hay re-verify. Riesgo latente sin hallazgo: si se pasa projects a review_scope pero no tags.projects a arbiter_save_run, el plan_files guardado no marca excluded. La ficha de arbiter_save_run no menciona executorChecklist.",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "reviewExclude no valida los globs: una llave sin cerrar cuelga el servidor en un loop infinito",
+      "where": "server/repo/qualityConfig.ts:171",
+      "evidence": "globToRegex (probes/reader.ts) con '{' sin '}' deja i=-1 y el for no termina; lo disparan saveArbiterRun y review_scope via excludeMatcher.",
+      "phase": "F2",
+      "family": "input-validation:review-exclude-glob",
+      "also_at": [
+        "server/review/paths.ts:647",
+        "server/mcp/tools.ts:492"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "correctness",
+      "title": "'Piden una decision' nunca lista nada en planes de varios repos",
+      "where": "server/arbiter/ledger.ts:38",
+      "evidence": "streakRefs recorre todas las corridas sin filtrar por repo; con A1,B1,A2,B2 la racha de B corta en A2.",
+      "phase": "F4",
+      "family": "correctness:ledger-streak-per-repo",
+      "also_at": [
+        "server/arbiter/ledger.ts:77"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Los textos dicen que kn-dredd no juzga los reviewExclude, pero kn-dredd no pasa projects ni plan_id a review_scope",
+      "where": "server/mcp/tools.ts:483",
+      "evidence": "kn-dredd preenvio.md:160 y :200 llama a review_scope sin projects; solo aplican los patrones fijos.",
+      "phase": "F2",
+      "family": "doc-drift:review-exclude-kn-dredd",
+      "info_class": "contradiction_ai",
+      "info_floor": true,
+      "also_at": [
+        "server/mcp/tools.ts:492",
+        "server/repo/qualityConfig.ts:34",
+        "docs/mcp.md:110-112"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Textos que siguen diciendo que el servidor no valida family_rounds y que el coordinador marca sweep_missed_by_executor",
+      "where": "skills/claude/arbiter/SKILL.md:198",
+      "evidence": "SKILL.md:198-199 y 313-316 contradicen a families.ts, que recalcula y marca.",
+      "phase": "F3",
+      "family": "doc-drift:server-family-rounds",
+      "info_class": "contradiction_ai",
+      "info_floor": true,
+      "also_at": [
+        "skills/claude/arbiter/SKILL.md:313-316",
+        "docs/arbiter.md:169-170"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f5",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "Sin test del cableado de reviewExclude en arbiter_save_run ni de projects en review_scope",
+      "where": "server/arbiter/service.ts:114",
+      "evidence": "Los tests prueban planFiles, buildReviewScope y reviewExcludeFor por separado; ninguno llama a saveArbiterRun con un proyecto con reviewExclude.",
+      "phase": "F2",
+      "family": "test-gap:review-exclude-wiring",
+      "info_class": "missing_test_other",
+      "info_floor": true,
+      "also_at": [
+        "server/mcp/reviewTools.ts:86"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f6",
+      "severity": "S2",
+      "kind": "maintainability",
+      "title": "validate_head_ref y el aviso sin coverage del espejo Python no tienen test",
+      "where": "skills/claude/arbiter/scripts/arbiter-metrics.py:131",
+      "evidence": "tests/test_arbiter_metrics.py no menciona head_ref ni coverage.",
+      "phase": "F1",
+      "family": "test-gap:metrics-py-head-ref",
+      "info_class": "missing_test_other",
+      "info_floor": true,
+      "also_at": [
+        "skills/claude/arbiter/scripts/arbiter-metrics.py:197-199"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f7",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "Una corrida sin coverage devuelve dos avisos por la misma causa",
+      "where": "server/arbiter/validate.ts:157",
+      "evidence": "validateRun y enrichRunCoverage emiten un aviso cada uno.",
+      "phase": "F1",
+      "family": "noise:duplicate-coverage-warning",
+      "also_at": [
+        "server/arbiter/enrich.ts:27"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f8",
+      "severity": "S3",
+      "kind": "maintainability",
+      "title": "TS y Python difieren con head_ref null o numerico y con coverage null",
+      "where": "server/arbiter/validate.ts:426",
+      "evidence": "TS dice no es un commit con null, Python dice ausente; coverage null avisa en Python y no en TS.",
+      "phase": "F1",
+      "family": "mirror-drift:head-ref-validation",
+      "also_at": [
+        "skills/claude/arbiter/scripts/arbiter-metrics.py:134-139"
+      ],
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 22,
+    "read_full": 16,
+    "skimmed": 6,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "server/arbiter/types.ts",
+        "server/arbiter/enrich.ts",
+        "server/arbiter/families.ts",
+        "server/arbiter/ledger.ts",
+        "server/arbiter/service.ts",
+        "server/mcp/reviewTools.ts",
+        "server/review/coverageLedger.ts",
+        "server/review/paths.ts",
+        "skills/claude/arbiter/judge.md",
+        "skills/claude/arbiter/SKILL.md",
+        "tests/unit/arbiter-familias.test.ts",
+        "tests/unit/arbiter-higiene-datos.test.ts",
+        "tests/unit/arbiter-ledger-decisiones.test.ts",
+        "tests/unit/review-exclusiones.test.ts",
+        "docs/plan/implementacion/plan-mejoras-arbiter.md",
+        "docs/README.md"
+      ],
+      "skimmed": [
+        "server/arbiter/validate.ts",
+        "server/mcp/tools.ts",
+        "server/repo/qualityConfig.ts",
+        "server/review/scope.ts",
+        "skills/claude/arbiter/scripts/arbiter-metrics.py",
+        "docs/mcp.md"
+      ],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "docs/mcp.md",
+        "lines": 5,
+        "blob": "a00af596010d04e16f96da3fe91236ecc8469b8c",
+        "deleted": false
+      },
+      {
+        "path": "docs/plan/implementacion/plan-mejoras-arbiter.md",
+        "lines": 90,
+        "blob": "45b31dea5b45b18cd7ac837b8202014ce97611f0",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "1cfadc685fbfed2b3fd57a0f0c95ce66e564ad7d",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/enrich.ts",
+        "lines": 4,
+        "blob": "4778a71a1b6cb7227414b5eb747590e33ffcbeeb",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/families.ts",
+        "lines": 75,
+        "blob": "2fa906550ed610a30b249a049cf4a4d959f74a8f",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/ledger.ts",
+        "lines": 61,
+        "blob": "234d8e1f4e14995a704dbde1eeb3f8c8044579b7",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/service.ts",
+        "lines": 15,
+        "blob": "ec9b36e82e52e5633805292d703466934257226d",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/types.ts",
+        "lines": 8,
+        "blob": "63fe6fddfdfcc59aece8219423bd945731250a7c",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/validate.ts",
+        "lines": 16,
+        "blob": "be2ef6e27e0ce3b6203068319877cdb19fe72e36",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/reviewTools.ts",
+        "lines": 6,
+        "blob": "b1898648e2f9e29883da95e0c41b6349d93c0010",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 8,
+        "blob": "6cadb127523d3e048cae57cdbcc1360269e4e432",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/qualityConfig.ts",
+        "lines": 22,
+        "blob": "69303d1185ab1aede5ab26dbd07bad58a93088b8",
+        "deleted": false
+      },
+      {
+        "path": "server/review/coverageLedger.ts",
+        "lines": 4,
+        "blob": "43e7ba26cd71714a32b1558e34569e887c899be7",
+        "deleted": false
+      },
+      {
+        "path": "server/review/paths.ts",
+        "lines": 16,
+        "blob": "c3a26e82499661a66d4f7683841cbd0e19a8435f",
+        "deleted": false
+      },
+      {
+        "path": "server/review/scope.ts",
+        "lines": 8,
+        "blob": "5d6349f86218d2279d59bb5154be3df48f40337f",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/arbiter/judge.md",
+        "lines": 9,
+        "blob": "2e6f7e44e2a7ee019b3dc99150ea277a1d97ae72",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/arbiter/scripts/arbiter-metrics.py",
+        "lines": 25,
+        "blob": "b95320dd76cfe1c43ffbfbfc5e9260f8535ab6e4",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/arbiter/SKILL.md",
+        "lines": 20,
+        "blob": "a3e395833414d075768ad312850405c49de4dae3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/arbiter-familias.test.ts",
+        "lines": 126,
+        "blob": "c8bbedba4e6af54f50165c952b0fd9a05548d8cd",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/arbiter-higiene-datos.test.ts",
+        "lines": 43,
+        "blob": "dcdd97d323e82abe99f65af6ded88ef4dee1744f",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/arbiter-ledger-decisiones.test.ts",
+        "lines": 38,
+        "blob": "6d1c2e86255d4bc4030ff2ed88dbdb7692644ad3",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/review-exclusiones.test.ts",
+        "lines": 110,
+        "blob": "54f6c8462a8197f9003f5d598607f648dc5cf456",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "server/arbiter/types.ts": "63fe6fddfdfcc59aece8219423bd945731250a7c",
+      "server/arbiter/enrich.ts": "4778a71a1b6cb7227414b5eb747590e33ffcbeeb",
+      "server/arbiter/families.ts": "2fa906550ed610a30b249a049cf4a4d959f74a8f",
+      "server/arbiter/ledger.ts": "234d8e1f4e14995a704dbde1eeb3f8c8044579b7",
+      "server/arbiter/service.ts": "ec9b36e82e52e5633805292d703466934257226d",
+      "server/mcp/reviewTools.ts": "b1898648e2f9e29883da95e0c41b6349d93c0010",
+      "server/review/coverageLedger.ts": "43e7ba26cd71714a32b1558e34569e887c899be7",
+      "server/review/paths.ts": "c3a26e82499661a66d4f7683841cbd0e19a8435f",
+      "skills/claude/arbiter/judge.md": "2e6f7e44e2a7ee019b3dc99150ea277a1d97ae72",
+      "skills/claude/arbiter/SKILL.md": "a3e395833414d075768ad312850405c49de4dae3",
+      "tests/unit/arbiter-familias.test.ts": "c8bbedba4e6af54f50165c952b0fd9a05548d8cd",
+      "tests/unit/arbiter-higiene-datos.test.ts": "dcdd97d323e82abe99f65af6ded88ef4dee1744f",
+      "tests/unit/arbiter-ledger-decisiones.test.ts": "6d1c2e86255d4bc4030ff2ed88dbdb7692644ad3",
+      "tests/unit/review-exclusiones.test.ts": "54f6c8462a8197f9003f5d598607f648dc5cf456",
+      "docs/plan/implementacion/plan-mejoras-arbiter.md": "45b31dea5b45b18cd7ac837b8202014ce97611f0",
+      "docs/README.md": "1cfadc685fbfed2b3fd57a0f0c95ce66e564ad7d"
+    },
+    "summary": {
+      "files": 22,
+      "reviewed_files": 16,
+      "lines": 710,
+      "reviewed_lines": 626,
+      "pct_lines": 88,
+      "excluded": []
+    }
+  },
+  "verdict_expected_by_rubric": "iterar"
+}
