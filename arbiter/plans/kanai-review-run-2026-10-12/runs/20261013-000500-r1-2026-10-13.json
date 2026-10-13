@@ -1,0 +1,447 @@
+{
+  "run_id": "r1-2026-10-13",
+  "plan_id": "kanai-review-run-2026-10-12",
+  "ts_start": "2026-10-12T23:58:00Z",
+  "ts_end": "2026-10-13T00:05:00Z",
+  "mode": "end_of_plan",
+  "base_ref_used": "ea2cea30a49e998a25589e31ecf58f3d01007165",
+  "head_ref": "worktree",
+  "repo": "kanai-app",
+  "findings": {
+    "S2": 4,
+    "S3": 1,
+    "consulta": 1
+  },
+  "max_severity": "S2",
+  "verdict": "iterar",
+  "findings_detail": [
+    {
+      "id": "f1",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/engine/transitions.ts:196",
+      "title": "El motivo de reviewAck no queda auditado: falta en CLOSE_ACK_KEYS y no hay decision review-ack",
+      "evidence": "CLOSE_ACK_KEYS no incluye reviewAck; integralAck ademas deja recordDecision('integral-ack'); epicTools flags sin reviewAck.",
+      "family": "audit-gap:reviewack-close-acks",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f2",
+      "severity": "S2",
+      "kind": "correctness",
+      "where": "server/dispatch/gate.ts:606",
+      "title": "La review automatica corre aunque el N3 de la misma pasada haya iterado o escalado",
+      "evidence": "reviewGateIfPending no mira outcome.integral; con N3 en iterate gasta su unica corrida y una aprobacion previa no se reevalua.",
+      "family": "ordering:review-after-unapproved-n3",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f3",
+      "severity": "S2",
+      "kind": "maintainability",
+      "where": "server/mcp/tools.ts:3872",
+      "title": "Fichas y comentarios siguen diciendo que la review final no corre sola y es advisory",
+      "evidence": "propose_transition, closure.ts fixHint, gateSpecial docstring, planning.ts, session-policy.ts, kn-dredd ARCHITECTURE y CONFIGURATION sin mencionar reviewRun ni reviewAck.",
+      "family": "doc-drift:review-enforced",
+      "info_class": "contradiction_ai",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f4",
+      "severity": "S2",
+      "kind": "maintainability",
+      "where": "server/llm/epicAutonomyProfile.ts:94",
+      "title": "reviewAck no aparece en la guia de preparacion de epicas ni en la guia LLM",
+      "evidence": "epicAutonomyProfile.ts:94, docs/guia-llm.md:141 y kn-epic SKILL.md:169 no nombran reviewAck aunque deliver ahora lo exige.",
+      "family": "doc-missing:reviewack-epic-guidance",
+      "info_class": "missing_doc_contract",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f5",
+      "severity": "S3",
+      "kind": "correctness",
+      "where": "server/engine/guards/closure.ts:52",
+      "title": "reviewAck acepta cualquier texto no vacio; integralAck exige largo minimo",
+      "evidence": "closure.ts:52 y epics/reviewAck.ts:10-13 solo hacen trim() no vacio; integralAck usa MIN_ACK_REASON.",
+      "family": "consistency:ack-min-reason",
+      "outcome": "fixed",
+      "outcome_note": "re-chequeo: corregido",
+      "outcome_inferred": true
+    },
+    {
+      "id": "f6",
+      "severity": "consulta",
+      "kind": "correctness",
+      "where": "server/dispatch/gateSpecial.ts:192",
+      "title": "Una falla de infraestructura del juez queda como escalate y consume la unica corrida automatica",
+      "evidence": "Comportamiento previo de runReviewGate: sin veredicto parseable registra escalate; con enforced no se relanza sola.",
+      "family": "error-handling:review-infra-as-escalate",
+      "outcome": "pending"
+    }
+  ],
+  "coverage": {
+    "files_in_diff": 35,
+    "read_full": 34,
+    "skimmed": 1,
+    "not_read": 0,
+    "files": {
+      "read_full": [
+        "docs/README.md",
+        "docs/det-catalogo.md",
+        "docs/worklog-2026-10-12-review-final-obligatoria.md",
+        "server/data/localConfig.ts",
+        "server/db/migrations/meta/_journal.json",
+        "server/db/migrations/0057_review_run.sql",
+        "server/db/schema.ts",
+        "server/dispatch/gate.ts",
+        "server/dispatch/gateSpecial.ts",
+        "server/dispatch/gateTypes.ts",
+        "server/dispatch/reviewArbiterLedger.ts",
+        "server/arbiter/fromGate.ts",
+        "server/engine/autonomousClose.ts",
+        "server/engine/guards/catalog.ts",
+        "server/engine/guards/closure.ts",
+        "server/engine/render.ts",
+        "server/epics/bridge.ts",
+        "server/epics/service.ts",
+        "server/epics/reviewAck.ts",
+        "server/llm/nextActionState.ts",
+        "server/mcp/epicTools.ts",
+        "server/mcp/humanConfirm.ts",
+        "server/mcp/ticketConfigBatch.ts",
+        "server/mcp/tools.ts",
+        "server/mcp/transitionPayload.ts",
+        "server/migrate-up1/parse.ts",
+        "server/repo/closeAdvisories.ts",
+        "server/repo/projectSettings.ts",
+        "server/repo/tickets.ts",
+        "server/repo/reviewRun.ts",
+        "skills/claude/kn-dredd/README.md",
+        "tests/unit/gate-orchestration.test.ts",
+        "tests/unit/review-judge.test.ts",
+        "tests/unit/review-run.test.ts"
+      ],
+      "skimmed": [
+        "server/db/migrations/meta/0057_snapshot.json"
+      ],
+      "not_read": []
+    },
+    "plan_files": [
+      {
+        "path": "docs/det-catalogo.md",
+        "lines": 2,
+        "blob": "b4231be1453a1124202e1b1c85788805b9475de9",
+        "deleted": false
+      },
+      {
+        "path": "docs/guia-llm.md",
+        "lines": 2,
+        "blob": "b4ce178427526a9599749e79868773b1459a4c52",
+        "deleted": false
+      },
+      {
+        "path": "docs/README.md",
+        "lines": 1,
+        "blob": "c28326b111b89d3ae09f2f221abcb2660581b36a",
+        "deleted": false
+      },
+      {
+        "path": "docs/worklog-2026-10-12-review-final-obligatoria.md",
+        "lines": 64,
+        "blob": "5d8c10810fa0dae220b251aa11d9ea45cadc9cc0",
+        "deleted": false
+      },
+      {
+        "path": "server/arbiter/fromGate.ts",
+        "lines": 75,
+        "blob": "45a88d965396dc94aa099720c3e8493f8cd88365",
+        "deleted": false
+      },
+      {
+        "path": "server/data/localConfig.ts",
+        "lines": 3,
+        "blob": "e4a9da2ff0822b430ab7782277838e5011006313",
+        "deleted": false
+      },
+      {
+        "path": "server/db/migrations/0057_review_run.sql",
+        "lines": 1,
+        "blob": "262285c527ee17d8823f780b2fb0e1a50b791b4d",
+        "deleted": false
+      },
+      {
+        "path": "server/db/migrations/meta/_journal.json",
+        "lines": 7,
+        "blob": "5ec2f8a9bedfdc315c19955a459dd2178d762fb3",
+        "deleted": false
+      },
+      {
+        "path": "server/db/migrations/meta/0057_snapshot.json",
+        "lines": 3617,
+        "blob": "8434924f54b2f364880db7aab66fb814996935e2",
+        "deleted": false
+      },
+      {
+        "path": "server/db/schema.ts",
+        "lines": 7,
+        "blob": "b7105a5120000cad615f4ea5ad5e06475180d770",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gate.ts",
+        "lines": 38,
+        "blob": "46ed9f2e0d96f9a2839da743b6dd790ce786d796",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateSpecial.ts",
+        "lines": 11,
+        "blob": "0906ef14cbdb5e524a41fb14c81bb1c5a7dc63b9",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/gateTypes.ts",
+        "lines": 5,
+        "blob": "04827b59512389b7e8d17aa498016f1c6c11c837",
+        "deleted": false
+      },
+      {
+        "path": "server/dispatch/reviewArbiterLedger.ts",
+        "lines": 30,
+        "blob": "7da6da6df1fdc86d1c1aac00320d4ad389c5cd7c",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/autonomousClose.ts",
+        "lines": 2,
+        "blob": "03b6433210ea124de9bebce62d356d527f3b2f8d",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/catalog.ts",
+        "lines": 2,
+        "blob": "3ae111ba9b695450de0a7c6dab01f70b4766a4e8",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/guards/closure.ts",
+        "lines": 14,
+        "blob": "017d6c75d9856dc2675721a8df08ca27e3ec26f4",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/render.ts",
+        "lines": 1,
+        "blob": "ffdde2a1ebf4633664b047d9cd07162eecab2afe",
+        "deleted": false
+      },
+      {
+        "path": "server/engine/transitions.ts",
+        "lines": 4,
+        "blob": "76c2d68464e2c19af07fce795996ee0db48c222e",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/bridge.ts",
+        "lines": 4,
+        "blob": "613c0cf8da679dcee84eb53d12ffcad1802dd416",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/reviewAck.ts",
+        "lines": 33,
+        "blob": "a3abae0a15b93cdaabbd0b44513a9b97590e9fe2",
+        "deleted": false
+      },
+      {
+        "path": "server/epics/service.ts",
+        "lines": 5,
+        "blob": "820c2c2f3aea82a89b71d4a70e2c728fb6c8975a",
+        "deleted": false
+      },
+      {
+        "path": "server/llm/epicAutonomyProfile.ts",
+        "lines": 2,
+        "blob": "8c2b849313606f9964e8de3d802a4a7373ea437a",
+        "deleted": false
+      },
+      {
+        "path": "server/llm/nextActionState.ts",
+        "lines": 2,
+        "blob": "6ffe412b7706a26b0ecff9055008964810c1e0e2",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/epicTools.ts",
+        "lines": 4,
+        "blob": "c241b6cddeb8bf2e75e4d6fd49936656adf6664c",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/humanConfirm.ts",
+        "lines": 1,
+        "blob": "c5a2beaac7f06f911085ab8eac2e6140c44a56d1",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/ticketConfigBatch.ts",
+        "lines": 4,
+        "blob": "0189122c49074d444e049f51b4849d13ee1f8efd",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/tools.ts",
+        "lines": 35,
+        "blob": "7f9e590f0925ab7f5ef0cee95fbbe11b98bde96d",
+        "deleted": false
+      },
+      {
+        "path": "server/mcp/transitionPayload.ts",
+        "lines": 1,
+        "blob": "442972b72376b38851153bb95e85d1af6e4fb74a",
+        "deleted": false
+      },
+      {
+        "path": "server/migrate-up1/parse.ts",
+        "lines": 4,
+        "blob": "673dc79b01a03722ee1c2910359166490f16741b",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/closeAdvisories.ts",
+        "lines": 6,
+        "blob": "9724139a7c786d64a5207bbbfacdb5fd4a1a774c",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/planning.ts",
+        "lines": 2,
+        "blob": "5b2e10b1727ffdea74a09ba97d7430fd9ff19994",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/projectSettings.ts",
+        "lines": 1,
+        "blob": "57a8583cd3544f28d6c67aa69968a08f532e1b95",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/reviewRun.ts",
+        "lines": 58,
+        "blob": "853c1afea6378890c5827f9dbce71c66f6680515",
+        "deleted": false
+      },
+      {
+        "path": "server/repo/tickets.ts",
+        "lines": 16,
+        "blob": "ec109ca9c2dbca7f2a1d2eaac65fac97cc6607ed",
+        "deleted": false
+      },
+      {
+        "path": "shared/session-policy.ts",
+        "lines": 2,
+        "blob": "2a5b8ad8c793c2a8646459b69ab48fce42795f32",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-dredd/ARCHITECTURE.md",
+        "lines": 2,
+        "blob": "74128e986abc8380cc18b821b59b8f0452e65ff1",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-dredd/CONFIGURATION.md",
+        "lines": 2,
+        "blob": "8ffc22ab2a327be67aaf952f88bc3bded3d7e1ea",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-dredd/README.md",
+        "lines": 13,
+        "blob": "df592e67812a6a63d7367cc6a071eba3d0351a20",
+        "deleted": false
+      },
+      {
+        "path": "skills/claude/kn-epic/SKILL.md",
+        "lines": 2,
+        "blob": "9229f579b36f769d60c74076e96104b4de4b785b",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/gate-orchestration.test.ts",
+        "lines": 91,
+        "blob": "4f8cc490abacc6aa29f07e3c3661d73b3fa9985e",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/review-judge.test.ts",
+        "lines": 4,
+        "blob": "6dafd7a8f863173169462b30d295d79bfaf9cafb",
+        "deleted": false
+      },
+      {
+        "path": "tests/unit/review-run.test.ts",
+        "lines": 254,
+        "blob": "bfaa2e717d0db26c1995d18eaccac168e468b800",
+        "deleted": false
+      }
+    ],
+    "reviewed": {
+      "docs/README.md": "c28326b111b89d3ae09f2f221abcb2660581b36a",
+      "docs/det-catalogo.md": "b4231be1453a1124202e1b1c85788805b9475de9",
+      "docs/worklog-2026-10-12-review-final-obligatoria.md": "5d8c10810fa0dae220b251aa11d9ea45cadc9cc0",
+      "server/data/localConfig.ts": "e4a9da2ff0822b430ab7782277838e5011006313",
+      "server/db/migrations/meta/_journal.json": "5ec2f8a9bedfdc315c19955a459dd2178d762fb3",
+      "server/db/migrations/0057_review_run.sql": "262285c527ee17d8823f780b2fb0e1a50b791b4d",
+      "server/db/schema.ts": "b7105a5120000cad615f4ea5ad5e06475180d770",
+      "server/dispatch/gate.ts": "46ed9f2e0d96f9a2839da743b6dd790ce786d796",
+      "server/dispatch/gateSpecial.ts": "0906ef14cbdb5e524a41fb14c81bb1c5a7dc63b9",
+      "server/dispatch/gateTypes.ts": "04827b59512389b7e8d17aa498016f1c6c11c837",
+      "server/dispatch/reviewArbiterLedger.ts": "7da6da6df1fdc86d1c1aac00320d4ad389c5cd7c",
+      "server/arbiter/fromGate.ts": "45a88d965396dc94aa099720c3e8493f8cd88365",
+      "server/engine/autonomousClose.ts": "03b6433210ea124de9bebce62d356d527f3b2f8d",
+      "server/engine/guards/catalog.ts": "3ae111ba9b695450de0a7c6dab01f70b4766a4e8",
+      "server/engine/guards/closure.ts": "017d6c75d9856dc2675721a8df08ca27e3ec26f4",
+      "server/engine/render.ts": "ffdde2a1ebf4633664b047d9cd07162eecab2afe",
+      "server/epics/bridge.ts": "613c0cf8da679dcee84eb53d12ffcad1802dd416",
+      "server/epics/service.ts": "820c2c2f3aea82a89b71d4a70e2c728fb6c8975a",
+      "server/epics/reviewAck.ts": "a3abae0a15b93cdaabbd0b44513a9b97590e9fe2",
+      "server/llm/nextActionState.ts": "6ffe412b7706a26b0ecff9055008964810c1e0e2",
+      "server/mcp/epicTools.ts": "c241b6cddeb8bf2e75e4d6fd49936656adf6664c",
+      "server/mcp/humanConfirm.ts": "c5a2beaac7f06f911085ab8eac2e6140c44a56d1",
+      "server/mcp/ticketConfigBatch.ts": "0189122c49074d444e049f51b4849d13ee1f8efd",
+      "server/mcp/tools.ts": "7f9e590f0925ab7f5ef0cee95fbbe11b98bde96d",
+      "server/mcp/transitionPayload.ts": "442972b72376b38851153bb95e85d1af6e4fb74a",
+      "server/migrate-up1/parse.ts": "673dc79b01a03722ee1c2910359166490f16741b",
+      "server/repo/closeAdvisories.ts": "9724139a7c786d64a5207bbbfacdb5fd4a1a774c",
+      "server/repo/projectSettings.ts": "57a8583cd3544f28d6c67aa69968a08f532e1b95",
+      "server/repo/tickets.ts": "ec109ca9c2dbca7f2a1d2eaac65fac97cc6607ed",
+      "server/repo/reviewRun.ts": "853c1afea6378890c5827f9dbce71c66f6680515",
+      "skills/claude/kn-dredd/README.md": "df592e67812a6a63d7367cc6a071eba3d0351a20",
+      "tests/unit/gate-orchestration.test.ts": "4f8cc490abacc6aa29f07e3c3661d73b3fa9985e",
+      "tests/unit/review-judge.test.ts": "6dafd7a8f863173169462b30d295d79bfaf9cafb",
+      "tests/unit/review-run.test.ts": "bfaa2e717d0db26c1995d18eaccac168e468b800"
+    },
+    "summary": {
+      "files": 43,
+      "reviewed_files": 34,
+      "lines": 4434,
+      "reviewed_lines": 799,
+      "pct_lines": 18,
+      "excluded": []
+    }
+  },
+  "ticket": {
+    "resolution": "none"
+  },
+  "verdict_expected_by_rubric": "iterar"
+}

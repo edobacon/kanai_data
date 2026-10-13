@@ -55,13 +55,13 @@ Las operaciones se implementan contra el contrato existente, incluidos sus x-err
 ## Tasks
 
 #### S1.T2 — Hacer idempotente el alta de instalación por /devices sobre el modelo de TV2-005: upsert por la clave de instalación, ULID generado en el servicio y registrarAuditoria. Mantener la forma de respuesta del contrato y documentar /devices en el contrato y la doc como alta de versión del cliente, no como gestión de dispositivos.
-Contrato: rollback: Revertir el commit de la task: vuelve el alta previa y la documentación anterior.. Status: pending
+Contrato: rollback: Revertir el commit de la task: vuelve el alta previa y la documentación anterior.. Status: done
 
 #### S1.T3 — Tests de integración de la sesión: primero fijar la respuesta actual del alta; después cubrir el alta repetida sin duplicado, la URL de configuración que cambia con PUBLIC_BASE_URL, la URL rechazada en producción con http o un host no permitido, y los x-errores de ambas operaciones. Cada caso corre contra la base del seed R09, sin dobles de éxito.
-Contrato: rollback: Borrar los archivos de test agregados en la task.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en la task.. Status: done
 
 #### S1.T4 — Implementar REQ-02. Crear server/src/config/rutas-publicas.ts con la constante de ruta unica /eliminar-cuenta. Declarar PUBLIC_BASE_URL, PORTAL_ALLOWED_HOSTS y PORTAL_ALLOW_LOCALHOST_HTTP en server/.env.example (el puerto del servidor sale de PORT en ese archivo). Calcular accountDeletionPortalUrl a partir de PUBLIC_BASE_URL y la ruta. Validar que la URL sea HTTPS y que su host figure en PORTAL_ALLOWED_HOSTS, con la excepcion http://localhost solo si PORTAL_ALLOW_LOCALHOST_HTTP=true y NODE_ENV no es production. Crear server/src/config/rutas-publicas.test.ts con un caso aceptado, un host no permitido rechazado y el caso localhost.
-Contrato: rollback: Revertir los archivos de la task: eliminar server/src/config/rutas-publicas.ts y server/src/config/rutas-publicas.test.ts, y quitar de server/.env.example las líneas de PUBLIC_BASE_URL, PORTAL_ALLOWED_HOSTS y PORTAL_ALLOW_LOCALHOST_HTTP (git checkout -- server/.env.example y git clean sobre los dos archivos nuevos).. Status: pending
+Contrato: rollback: Revertir los archivos de la task: eliminar server/src/config/rutas-publicas.ts y server/src/config/rutas-publicas.test.ts, y quitar de server/.env.example las líneas de PUBLIC_BASE_URL, PORTAL_ALLOWED_HOSTS y PORTAL_ALLOW_LOCALHOST_HTTP (git checkout -- server/.env.example y git clean sobre los dos archivos nuevos).. Status: done
 
 #### S2.T1 — Implementar GET /cuenta (obtenerMiCuenta) según el contrato: resolver la cuenta solo desde la sesión autenticada (sesion_auth), sin aceptar un id de cuenta del cliente, y devolver los x-errores declarados (cuenta suspendida, no autenticado).
 Contrato: rollback: Revertir el commit de la task: quita la ruta y el servicio de cuenta.. Status: pending
@@ -110,12 +110,12 @@ Ninguno.
 - edit S1.T4 { desc="Implementar REQ-02. Crear server/src/config/rutas-publicas.ts con la constante de ruta unica /eliminar-cuenta. Declarar PUBLIC_BASE_URL, PORTAL_ALLOWED_HOSTS y PORTAL_ALLOW_LOCALHOST_HTTP en server/.env.example (el puerto del servidor sale de PORT en ese archivo). Calcular accountDeletionPortalUrl a partir de PUBLIC_BASE_URL y la ruta. Validar que la URL sea HTTPS y que su host figure en PORTAL_ALLOWED_HOSTS, con la excepcion http://localhost solo si PORTAL_ALLOW_LOCALHOST_HTTP=true y NODE_ENV no es production. Crear server/src/config/rutas-publicas.test.ts con un caso aceptado, un host no permitido rechazado y el caso localhost." }
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T2
-- [ ] S1.T3
-- [ ] S1.T4
+- [x] S1.T2
+- [x] S1.T3
+- [x] S1.T4
 
 **Gate (auto)**: POST /devices es idempotente y la configuración devuelve accountDeletionPortalUrl armada con PUBLIC_BASE_URL más /eliminar-cuenta; las pruebas de integración de ambos pasan y la documentación de /devices queda actualizada.
 
