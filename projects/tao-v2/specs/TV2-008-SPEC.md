@@ -56,13 +56,13 @@ Qué: las pruebas usan reloj controlado, cuentas ficticias del seed (R09) y HTTP
 ## Tasks
 
 #### S1.T1 — Montar helmet en la app HTTP del servidor (paquete server/, servicio server de tao-v2/.railway/railway.ts:11) con la CSP de DEC-162 como constante única, y confirmar que no hay middleware CORS registrado (si existe, retirarlo: D-01 mismo origen). Antes, confirmar si helmet ya es dependencia en server/package.json para no duplicarla.
-Contrato: rollback: Revertir el commit de la sesión: quitar el registro de helmet y la constante de CSP y, si se agregó, la dependencia de server/package.json y su lockfile.. Status: pending
+Contrato: rollback: Revertir el commit de la sesión: quitar el registro de helmet y la constante de CSP y, si se agregó, la dependencia de server/package.json y su lockfile.. Status: done
 
 #### S1.T2 — Configurar la redacción en el logger del servidor: rutas de campos password, contraseña, token, accessToken, refreshToken, código, otp y la cabecera authorization reemplazadas por un marcador fijo. Aplicar la misma lista al generador de reportes de verificación si escribe cuerpos o cabeceras.
-Contrato: rollback: Revertir el commit: quitar la configuración de redacción del logger y del reporte.. Status: pending
+Contrato: rollback: Revertir el commit: quitar la configuración de redacción del logger y del reporte.. Status: done
 
 #### S1.T3 — Escribir los tests de integración HTTP real de cabeceras (CSP, nosniff, ausencia de Access-Control-Allow-Origin con Origin ajeno y en preflight) y de redacción (log capturado de iniciarSesion y verificarCodigoRecuperacion sin los valores generados por el seed), con credenciales del seed y sin dobles de éxito.
-Contrato: rollback: Borrar los archivos de test agregados en esta task.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en esta task.. Status: done
 
 #### S2.T1 — Construir el limitador por IP y por cuenta como middleware del servidor con reloj inyectable y contador en memoria acotado (entradas con TTL igual a la ventana; válido porque el servicio corre con 1 réplica, tao-v2/.railway/railway.ts:22). Los valores salen del x-rate-limit del contrato a una tabla única por operación, y la respuesta 429 usa el cuerpo de x-errores del contrato.
 Contrato: rollback: Revertir el commit: borrar el módulo del limitador y su tabla de límites.. Status: pending
@@ -95,12 +95,12 @@ Ninguno.
 
 ## Sessions
 
-### Session 1 · T2 · open
+### Session 1 · T2 · continue
 
 **Tasks:**
-- [ ] S1.T1
-- [ ] S1.T2
-- [ ] S1.T3
+- [x] S1.T1
+- [x] S1.T2
+- [x] S1.T3
 
 **Gate (auto)**: curl -I a /health/ready del stack local muestra Content-Security-Policy de DEC-162 y ninguna cabecera Access-Control-Allow-Origin, y el test de redacción pasa con el log capturado sin secretos.
 
@@ -123,4 +123,3 @@ Ninguno.
 **Gate (auto)**: La suite de integración del backend corre con 0 omitidos y muestra en verde 401 (vencido y reutilizado), 403 (rol sin permiso), revocación efectiva, refresh concurrente según el contrato y cada x-errores de las operaciones del ticket; el reporte no contiene secretos.
 
 ### Session 4 · T0 · open
-
