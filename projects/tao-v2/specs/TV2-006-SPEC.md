@@ -64,13 +64,13 @@ Contrato: rollback: Borrar los archivos de test agregados en la task.. Status: d
 Contrato: rollback: Revertir los archivos de la task: eliminar server/src/config/rutas-publicas.ts y server/src/config/rutas-publicas.test.ts, y quitar de server/.env.example las líneas de PUBLIC_BASE_URL, PORTAL_ALLOWED_HOSTS y PORTAL_ALLOW_LOCALHOST_HTTP (git checkout -- server/.env.example y git clean sobre los dos archivos nuevos).. Status: done
 
 #### S2.T1 — Implementar GET /cuenta (obtenerMiCuenta) según el contrato: resolver la cuenta solo desde la sesión autenticada (sesion_auth), sin aceptar un id de cuenta del cliente, y devolver los x-errores declarados (cuenta suspendida, no autenticado).
-Contrato: rollback: Revertir el commit de la task: quita la ruta y el servicio de cuenta.. Status: pending
+Contrato: rollback: Revertir el commit de la task: quita la ruta y el servicio de cuenta.. Status: done
 
 #### S2.T2 — Crear la lista de alcance del MVP (releaseScope) en código con las operaciones y capacidades de la ficha 00-alcance-y-decisiones, y filtrar el manifiesto por la intersección entre el rol, resuelto en el servidor e ignorando rol o capacidades del payload, y releaseScope. Responder el x-error del contrato ante un manifiesto incompatible.
-Contrato: rollback: Revertir el commit de la task: el manifiesto vuelve a listar lo que concede el rol sin filtro de alcance.. Status: pending
+Contrato: rollback: Revertir el commit de la task: el manifiesto vuelve a listar lo que concede el rol sin filtro de alcance.. Status: done
 
 #### S2.T3 — Tests de integración de la sesión: la cuenta A no lee la B, la cuenta suspendida recibe su x-error, el manifiesto del rol Estándar excluye lo diferido y cada operación listada responde distinto de 404, el rol forzado por payload se ignora y el manifiesto incompatible devuelve su x-error. Además, regresión de que no hay migraciones nuevas en server/prisma/migrations.
-Contrato: rollback: Borrar los archivos de test agregados en la task.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en la task.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -119,12 +119,12 @@ Ninguno.
 
 **Gate (auto)**: POST /devices es idempotente y la configuración devuelve accountDeletionPortalUrl armada con PUBLIC_BASE_URL más /eliminar-cuenta; las pruebas de integración de ambos pasan y la documentación de /devices queda actualizada.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: GET /cuenta devuelve solo la cuenta del token con sus x-errores, y el manifiesto lista solo las capacidades del rol que están dentro de releaseScope; las pruebas de integración lo muestran y los chequeos completos pasan con Node 24.
 
