@@ -145,16 +145,16 @@ Contrato: rollback: Borrar el archivo de test de privilegios.. Status: done
 Contrato: rollback: Revertir cualquier ajuste al runner de verify hecho en esta subtarea.. Status: done
 
 #### S2.T1 — Generador único de ULID en server/src/ que reemplaza los ulid() manuales de desafio_verificacion e intento_login y los cuid() de cuenta, producto, unidad_producto y tablas expuestas por path. Se reusa la dependencia ulid ya presente en el servidor; no se agrega otra.
-Contrato: rollback: Revertir el módulo del generador de ids ULID y sus usos en el servicio. No se restaura cuid.. Status: pending
+Contrato: rollback: Revertir el módulo del generador de ids ULID y sus usos en el servicio. No se restaura cuid.. Status: done
 
 #### S2.T3 — Helper registrarAuditoria(tx, entrada) en server/src/ con entrada tipada (objeto, sin any) que solo acepta el cliente transaccional y escribe en evento_auditoria. Es el único punto de escritura de auditoría.
-Contrato: rollback: Borrar el módulo del helper.. Status: pending
+Contrato: rollback: Borrar el módulo del helper.. Status: done
 
 #### S2.T4 — Prueba de GET /admin/cuentas/{cuentaId} con una cuenta creada por el servicio con id ULID (200), un id malformado (400) y un ULID inexistente (404), sin fixture heredado.
-Contrato: rollback: Revertir el validador del parámetro al estado previo.. Status: pending
+Contrato: rollback: Revertir el validador del parámetro al estado previo.. Status: done
 
 #### S2.T5 — Tests de regresión de la sesión 2 sobre ids y auditoría, sin tocar GET /admin/cuentas (eso lo cubre S2.T4): (a) los ids nuevos generados por el servicio para cuenta, producto, unidad_producto, desafio_verificacion e intento_login cumplen el patrón ^[0-9A-HJKMNP-TV-Z]{26}$; (b) registrarAuditoria(tx, ...) deja exactamente 1 fila en evento_auditoria dentro de su transacción y esa fila se revierte (0 filas) cuando la transacción hace rollback.
-Contrato: rollback: Eliminar los archivos de test añadidos o ajustados por esta task; no hay cambios en código de producción ni en el esquema.. Status: pending
+Contrato: rollback: Eliminar los archivos de test añadidos o ajustados por esta task; no hay cambios en código de producción ni en el esquema.. Status: done
 ## Cambios al modelo de datos
 
 - tipo: alter_additive | objetos: sesion_auth.superficie, CHECK sesion_auth_superficie_chk | destructivo: no | tarea: S1.T1 | rollback: Migración inversa: DROP CONSTRAINT del CHECK y DROP COLUMN superficie.
@@ -232,13 +232,13 @@ Los ids no se reescriben: la base es nueva y todo id nuevo es ULID generado en e
 
 **Gate (auto)**: La migración única se aplica desde base vacía con el rol migrador, prisma migrate diff no muestra drift, y una suite de integración muestra UPDATE y DELETE rechazados en evento_auditoria, unidad_evento y aceptaciones.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T3
-- [ ] S2.T4
-- [ ] S2.T5
+- [x] S2.T1
+- [x] S2.T3
+- [x] S2.T4
+- [x] S2.T5
 
 **Gate (auto)**: Con una cuenta creada por el servicio (id ULID), GET /admin/cuentas/{cuentaId} responde 200, y 400 con un id malformado o 404 con un ULID inexistente según los x-errores del contrato. Las cuentas nuevas tienen id ULID y registrarAuditoria persiste o revierte junto con su transacción.
 
