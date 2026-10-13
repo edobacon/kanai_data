@@ -65,13 +65,13 @@ Contrato: rollback: Revertir el commit: quitar la configuración de redacción d
 Contrato: rollback: Borrar los archivos de test agregados en esta task.. Status: done
 
 #### S2.T1 — Construir el limitador por IP y por cuenta como middleware del servidor con reloj inyectable y contador en memoria acotado (entradas con TTL igual a la ventana; válido porque el servicio corre con 1 réplica, tao-v2/.railway/railway.ts:22). Los valores salen del x-rate-limit del contrato a una tabla única por operación, y la respuesta 429 usa el cuerpo de x-errores del contrato.
-Contrato: rollback: Revertir el commit: borrar el módulo del limitador y su tabla de límites.. Status: pending
+Contrato: rollback: Revertir el commit: borrar el módulo del limitador y su tabla de límites.. Status: done
 
 #### S2.T2 — Cablear el limitador en las 8 operaciones activas (autenticarCuentaDispositivo, iniciarSesion, solicitarRecuperacion, verificarCodigoRecuperacion, reenviarCodigoCorreo, solicitarEliminacionCuenta, validarYUsarUnidad, consultarEstadoEliminacion) por delante del bloqueo por correo y de los topes por desafío existentes, sin modificarlos.
-Contrato: rollback: Revertir el commit: quitar el middleware de las 8 rutas; el bloqueo por correo y los topes por desafío quedan intactos.. Status: pending
+Contrato: rollback: Revertir el commit: quitar el middleware de las 8 rutas; el bloqueo por correo y los topes por desafío quedan intactos.. Status: done
 
 #### S2.T3 — Escribir los tests de integración del limitador: caso parametrizado por las 8 operaciones (máximo aceptado, 429 en el siguiente, liberación al fin de la ventana con reloj controlado), aislamiento entre IPs, límite por cuenta desde IPs distintas y regresión del bloqueo por correo y de los topes por desafío de B1-02.
-Contrato: rollback: Borrar los archivos de test agregados en esta task.. Status: pending
+Contrato: rollback: Borrar los archivos de test agregados en esta task.. Status: done
 
 #### S3.T1 — Preparar los fixtures de certificación: reloj controlado para vencer el access token más allá de JWT_ACCESS_TTL_MINUTES (variable en tao-v2/.railway/railway.ts:33), cuenta del seed R09 con rol sin permiso, helper de sesión que obtiene access y refresh por HTTP real. Si falta un rol sin permiso en el seed, crearlo solo dentro del fixture de test, no en el seed de producción.
 Contrato: rollback: Borrar los helpers y fixtures agregados en esta task.. Status: pending
@@ -104,12 +104,12 @@ Ninguno.
 
 **Gate (auto)**: curl -I a /health/ready del stack local muestra Content-Security-Policy de DEC-162 y ninguna cabecera Access-Control-Allow-Origin, y el test de redacción pasa con el log capturado sin secretos.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: La suite parametrizada muestra, para cada una de las 8 operaciones activas, 429 al superar el x-rate-limit del contrato y liberación al avanzar el reloj controlado.
 
