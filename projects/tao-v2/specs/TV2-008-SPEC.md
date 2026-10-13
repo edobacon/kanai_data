@@ -74,13 +74,13 @@ Contrato: rollback: Revertir el commit: quitar el middleware de las 8 rutas; el 
 Contrato: rollback: Borrar los archivos de test agregados en esta task.. Status: done
 
 #### S3.T1 — Preparar los fixtures de certificación: reloj controlado para vencer el access token más allá de JWT_ACCESS_TTL_MINUTES (variable en tao-v2/.railway/railway.ts:33), cuenta del seed R09 con rol sin permiso, helper de sesión que obtiene access y refresh por HTTP real. Si falta un rol sin permiso en el seed, crearlo solo dentro del fixture de test, no en el seed de producción.
-Contrato: rollback: Borrar los helpers y fixtures agregados en esta task.. Status: pending
+Contrato: rollback: Borrar los helpers y fixtures agregados en esta task.. Status: done
 
 #### S3.T2 — Escribir los tests de certificación de sesión: 401 con access vencido y con refresh reutilizado, 403 con rol sin permiso, revocación que invalida el access vigente, rotación del refresh y refresh concurrente con Promise.all verificado contra la política literal del contrato, sin implementar otra. Si un test revela que el servidor no cumple el contrato, se corrige la ruta afectada en esta misma task y se reporta.
-Contrato: rollback: Borrar los tests agregados y revertir cualquier corrección de ruta hecha en esta task.. Status: pending
+Contrato: rollback: Borrar los tests agregados y revertir cualquier corrección de ruta hecha en esta task.. Status: done
 
 #### S3.T3 — Escribir la cobertura de x-errores: un caso por cada código que declara el contrato para las operaciones de este ticket (estado y cuerpo contra el esquema), y una guarda que hace fallar la corrida si la suite de integración tiene tests omitidos (skip o todo). Correr también la regresión de B1-01 y B1-02 con helmet y el limitador activos.
-Contrato: rollback: Borrar los tests y la guarda de omitidos agregados en esta task.. Status: pending
+Contrato: rollback: Borrar los tests y la guarda de omitidos agregados en esta task.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -113,12 +113,12 @@ Ninguno.
 
 **Gate (auto)**: La suite parametrizada muestra, para cada una de las 8 operaciones activas, 429 al superar el x-rate-limit del contrato y liberación al avanzar el reloj controlado.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
 **Gate (auto)**: La suite de integración del backend corre con 0 omitidos y muestra en verde 401 (vencido y reutilizado), 403 (rol sin permiso), revocación efectiva, refresh concurrente según el contrato y cada x-errores de las operaciones del ticket; el reporte no contiene secretos.
 
