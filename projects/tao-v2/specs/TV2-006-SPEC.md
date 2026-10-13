@@ -128,4 +128,4 @@ Ninguno.
 
 **Gate (auto)**: GET /cuenta devuelve solo la cuenta del token con sus x-errores, y el manifiesto lista solo las capacidades del rol que están dentro de releaseScope; las pruebas de integración lo muestran y los chequeos completos pasan con Node 24.
 
-### Session 3 · T0 · open
+### Session 3 · T0 · continue
