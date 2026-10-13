@@ -60,19 +60,19 @@ Contrato: rollback: Revertir el handler y el registro de la ruta; el contrato vu
 Contrato: rollback: Borrar el archivo de pruebas nuevo y los helpers de lectura de Mailpit que agregue.. Status: done
 
 #### S2.T1 — Operación de confirmación con un código de un solo uso que cambia la contraseña y revoca las sesiones de la cuenta. La task padre no se ejecuta directamente.
-Contrato: rollback: Revertir las subtasks en orden inverso.. Status: pending
+Contrato: rollback: Revertir las subtasks en orden inverso.. Status: done
 
 #### S2.T1.1 — Validación del código en la confirmación: busca el desafío vigente de PropositoDesafio.recuperar_contrasena de la cuenta, compara el hash en tiempo constante, rechaza un código vencido (TTL) o ya usado con el x-error del contrato y lo marca como usado en la misma transacción que el cambio de contraseña.
-Contrato: rollback: Revertir la función de validación y su uso en el handler de confirmación.. Status: pending
+Contrato: rollback: Revertir la función de validación y su uso en el handler de confirmación.. Status: done
 
 #### S2.T1.2 — Cambio de contraseña y revocación de sesiones: hashea la contraseña nueva con el mismo mecanismo que el alta y revoca todas las sesiones y refresh tokens vigentes de la cuenta (JWT_REFRESH_TTL_DAYS, railway.ts:34) con el servicio de sesiones que ya existe, en la misma transacción.
-Contrato: rollback: Revertir la llamada de revocación y el cambio de contraseña en el handler.. Status: pending
+Contrato: rollback: Revertir la llamada de revocación y el cambio de contraseña en el handler.. Status: done
 
 #### S2.T2 — Límites de la recuperación según el contrato: un máximo de intentos fallidos por código que lo invalida al agotarse, y un límite de solicitudes por cuenta en una ventana, con conteo acotado a esa ventana. Al pasarse se responde el x-error del contrato con la misma forma para una cuenta existente o inexistente.
-Contrato: rollback: Revertir el conteo de intentos y la verificación del límite de solicitudes en ambos handlers.. Status: pending
+Contrato: rollback: Revertir el conteo de intentos y la verificación del límite de solicitudes en ambos handlers.. Status: done
 
 #### S2.T3 — Pruebas de integración de la confirmación y los límites contra Postgres y Mailpit. Cubren un código válido leído desde Mailpit, el login con la contraseña nueva y con la anterior, un refresh token previo rechazado, un código usado, un código vencido con reloj controlado, intentos agotados, el límite de solicitudes con una cuenta existente y una inexistente, y el reintento que invalida el código anterior. Agregan un caso por cada x-error declarado para las dos operaciones y comprueban que la salida del servidor no contenga el código ni la contraseña.
-Contrato: rollback: Borrar el archivo de pruebas nuevo.. Status: pending
+Contrato: rollback: Borrar el archivo de pruebas nuevo.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -88,14 +88,14 @@ Ninguno.
 
 **Gate (auto)**: La operación de solicitud responde igual con una cuenta existente y con una inexistente, y Mailpit muestra el correo con la plantilla nueva solo para la cuenta existente. La prueba de integración que lo lee desde Mailpit pasa.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · continue
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T1.1
-- [ ] S2.T1.2
-- [ ] S2.T2
-- [ ] S2.T3
+- [x] S2.T1
+- [x] S2.T1.1
+- [x] S2.T1.2
+- [x] S2.T2
+- [x] S2.T3
 
 **Gate (auto)**: Con el código leído desde Mailpit, la confirmación cambia la contraseña y un refresh token anterior se rechaza. Un código usado, uno vencido, uno con intentos agotados y una solicitud de más devuelven cada uno su x-error del contrato. La suite de integración informa 0 omitidas.
 
