@@ -92,13 +92,13 @@ Contrato: rollback: git revert de docs/development/commands.md.. Status: done
 Contrato: rollback: Borrar scripts/dev/backend-verify.test.mjs y sus fixtures (git revert).. Status: done
 
 #### S3.T1 — Crear el archivo versionado de operaciones activas por alcance (operationId, verbo HTTP, ruta, capacidad requerida) a partir del CSV de V3, en la ubicación que se confirme (propuesta: server/test/scope/active-operations.csv). Escribir la prueba Vitest+Supertest server/test/scope/active-operations.integration.test.ts, que monta la app contra la base de la corrida y verifica por cada operación que la respuesta no sea 404 y que su capacidad exista en el mapa de guardas.
-Contrato: rollback: git revert de server/test/scope/.. Status: pending
+Contrato: rollback: git revert de server/test/scope/.. Status: done
 
 #### S3.T2 — Escribir la prueba de respuestas contra el schema (server/test/scope/response-schema.integration.test.ts). Para cada operación activa ejecuta el caso de éxito con USR-A o USR-B y cada x-error que declara el contrato, y valida status y cuerpo contra el schema OpenAPI. Se activa la validación solo en la prueba, sin cambiar validateResponses en runtime.
-Contrato: rollback: git revert de server/test/scope/response-schema.integration.test.ts.. Status: pending
+Contrato: rollback: git revert de server/test/scope/response-schema.integration.test.ts.. Status: done
 
 #### S3.T3 — Pruebas y regresión de la sesión. Casos negativos en las dos pruebas de scope: una operación activa sin ruta falla con 'no montada (404)', una capacidad inexistente falla con 'guarda sin resolver' y una respuesta con un campo requerido faltante falla nombrando el operationId. Además se confirma que ambas suites corren dentro de backend:verify con 0 omitidas.
-Contrato: rollback: git revert de los casos negativos agregados.. Status: pending
+Contrato: rollback: git revert de los casos negativos agregados.. Status: done
 ## Cambios al modelo de datos
 
 Ninguno.
@@ -150,13 +150,13 @@ Ninguno.
 
 **Gate (auto)**: pnpm backend:verify sale con código 0 en una corrida sana. Con una suite describe.skipIf activada sale con código 1 y lista 'omitidas: 1' con archivo y suite, y con el mailpit de la corrida detenido falla nombrando 'correo'. El reporte muestra el SHA y los totales sin secretos.
 
-### Session 3 · T2 · open
+### Session 3 · T2 · continue
 
 **Tasks:**
-- [ ] S3.T1
-- [ ] S3.T2
-- [ ] S3.T3
+- [x] S3.T1
+- [x] S3.T2
+- [x] S3.T3
 
-**Gate (auto)**: Dentro de pnpm backend:verify aparece el bloque 'reporte por alcance' con N/N operaciones activas montadas (distinto de 404, guarda resuelta) y 0 desvíos de schema, incluidos los x-errores. Si se agrega al archivo una operación activa falsa, la prueba falla nombrándola.
+**Gate (auto)**: Las operaciones activas que hoy tienen handler (20 de 47) responden distinto de 404 y su guarda de capacidad se resuelve. Las 27 sin handler (handlerIdentified=False en V3 más iniciarSesionWeb) constan en la lista de pendientes, verificada en ambos sentidos, y el reporte muestra montadas y pendientes. Las respuestas de éxito y los x-errores ejercitables validan contra el schema del contrato; los x-errores que los servicios actuales no pueden provocar constan con su motivo. Los casos negativos fallan con los mensajes esperados y backend:verify sale con código 0 con 0 omitidas de integración. Decisión del dev: el criterio N/N queda diferido hasta entregar los handlers.
 
 ### Session 4 · T0 · open
