@@ -140,7 +140,7 @@ Ninguno.
 
 **Gate (auto)**: Con el stack legacy corriendo, dos corridas (TAO_RUN_ID=a y b) de pnpm backend:prepare && pnpm backend:up quedan arriba a la vez, docker ps muestra contenedores tao-v2-a-* y tao-v2-b-* con puertos distintos de 54329/1025/8025, y pnpm backend:down de a deja intactos b y el legacy.
 
-### Session 2 · T2 · iterate
+### Session 2 · T2 · continue
 
 **Tasks:**
 - [x] S2.T1
