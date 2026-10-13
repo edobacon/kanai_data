@@ -80,16 +80,16 @@ Contrato: rollback: git revert de scripts/dev/backend-up.mjs y backend-down.mjs.
 Contrato: rollback: Borrar scripts/dev/backend-run.test.mjs (git revert).. Status: done
 
 #### S2.T1 — Implementar backend:verify (scripts/dev/backend-verify.mjs). Primero chequea la salud de PostgreSQL (conexión a la base de la corrida), del worker y de Mailpit (API HTTP de la corrida), con timeout acotado, y aborta nombrando la dependencia caída. Después corre el script test existente con el reporter JSON de Vitest apuntando a la corrida.
-Contrato: rollback: git revert de scripts/dev/backend-verify.mjs y de la entrada backend:verify.. Status: pending
+Contrato: rollback: git revert de scripts/dev/backend-verify.mjs y de la entrada backend:verify.. Status: done
 
 #### S2.T2 — Gate de suites omitidas. Parsear el reporte JSON de Vitest, contar las suites y pruebas omitidas de integración y, si hay más de cero, salir con código 1 listando archivo y suite, cruzadas con la lista describe.skipIf de docs/product/v3/matriz-evidencia-v1.md (contrato C-matriz-evidencia). Escribir el reporte de cierre con SHA, comando, totales ejecutados/pasados/omitidos y dependencias verificadas, enmascarando cualquier valor sensible.
-Contrato: rollback: git revert de scripts/dev/backend-skip-gate.mjs.. Status: pending
+Contrato: rollback: git revert de scripts/dev/backend-skip-gate.mjs.. Status: done
 
 #### S2.T3 — Documentar backend:prepare/up/verify/down y generate:server en docs/development/commands.md (variables de corrida, puertos por defecto y cómo convive con el legacy), para que la batería dev encuentre los comandos documentados.
-Contrato: rollback: git revert de docs/development/commands.md.. Status: pending
+Contrato: rollback: git revert de docs/development/commands.md.. Status: done
 
 #### S2.T4 — Pruebas y regresión de la sesión. scripts/dev/backend-verify.test.mjs con reportes JSON reales capturados como fixtures (0 omitidas pasa; 1 omitida falla y la lista), chequeo de salud contra un puerto cerrado de verdad (nada de doble que devuelva éxito) y que el reporte no contenga las contraseñas del seed.
-Contrato: rollback: Borrar scripts/dev/backend-verify.test.mjs y sus fixtures (git revert).. Status: pending
+Contrato: rollback: Borrar scripts/dev/backend-verify.test.mjs y sus fixtures (git revert).. Status: done
 
 #### S3.T1 — Crear el archivo versionado de operaciones activas por alcance (operationId, verbo HTTP, ruta, capacidad requerida) a partir del CSV de V3, en la ubicación que se confirme (propuesta: server/test/scope/active-operations.csv). Escribir la prueba Vitest+Supertest server/test/scope/active-operations.integration.test.ts, que monta la app contra la base de la corrida y verifica por cada operación que la respuesta no sea 404 y que su capacidad exista en el mapa de guardas.
 Contrato: rollback: git revert de server/test/scope/.. Status: pending
@@ -140,13 +140,13 @@ Ninguno.
 
 **Gate (auto)**: Con el stack legacy corriendo, dos corridas (TAO_RUN_ID=a y b) de pnpm backend:prepare && pnpm backend:up quedan arriba a la vez, docker ps muestra contenedores tao-v2-a-* y tao-v2-b-* con puertos distintos de 54329/1025/8025, y pnpm backend:down de a deja intactos b y el legacy.
 
-### Session 2 · T2 · open
+### Session 2 · T2 · iterate
 
 **Tasks:**
-- [ ] S2.T1
-- [ ] S2.T2
-- [ ] S2.T3
-- [ ] S2.T4
+- [x] S2.T1
+- [x] S2.T2
+- [x] S2.T3
+- [x] S2.T4
 
 **Gate (auto)**: pnpm backend:verify sale con código 0 en una corrida sana. Con una suite describe.skipIf activada sale con código 1 y lista 'omitidas: 1' con archivo y suite, y con el mailpit de la corrida detenido falla nombrando 'correo'. El reporte muestra el SHA y los totales sin secretos.
 
